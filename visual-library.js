@@ -191,3 +191,51 @@
   requestAnimationFrame(() => promoteVisibleGenre(requestedGenre()));
   scheduleRemainingArtwork();
 })();
+
+// Interaction recovery lives in this early, classic-script entrypoint so the
+// primary controls stay usable even when a later optional enhancement module
+// fails to parse or a mobile modal leaves `inert` behind after navigation.
+(() => {
+  const criticalModules = ['./playback-release-guard.js', './ux-input.js'];
+
+  // Load provider-aware Play routing independently of ux-next.js. Dynamic import
+  // participates in the browser's module cache, so a healthy ux-next.js import
+  // will not execute these modules twice.
+  for (const modulePath of criticalModules) {
+    import(modulePath).catch((error) => console.warn(`Optional GARBA runtime module failed: ${modulePath}`, error));
+  }
+
+  function providerOpen() {
+    return Boolean(document.getElementById('providerOverlay')?.classList.contains('open'));
+  }
+
+  function songSheetOpen() {
+    const sheet = document.getElementById('songSheet');
+    return Boolean(sheet && sheet.getAttribute('aria-hidden') === 'false');
+  }
+
+  function recoverStaleInert() {
+    const app = document.getElementById('app');
+    const topbar = document.querySelector('.topbar');
+    const mainPlayer = document.getElementById('mainPlayer');
+    const installBanner = document.getElementById('installBanner');
+
+    if (!providerOpen()) app?.removeAttribute('inert');
+    if (!songSheetOpen() && !providerOpen()) {
+      topbar?.removeAttribute('inert');
+      mainPlayer?.removeAttribute('inert');
+      installBanner?.removeAttribute('inert');
+    }
+  }
+
+  window.addEventListener('pageshow', recoverStaleInert);
+  window.addEventListener('popstate', () => requestAnimationFrame(recoverStaleInert));
+  window.addEventListener('focus', recoverStaleInert);
+
+  // Recover before the browser performs hit-testing for the first user gesture
+  // after a history restore or interrupted modal transition.
+  document.addEventListener('pointerdown', recoverStaleInert, { capture: true, passive: true });
+  document.addEventListener('touchstart', recoverStaleInert, { capture: true, passive: true });
+
+  requestAnimationFrame(recoverStaleInert);
+})();
