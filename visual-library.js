@@ -32,7 +32,8 @@
   };
 
   const allAssets = Object.values(library).flat().map((file) => `${base}${file}`);
-  window.GARBA_VISUAL_LIBRARY = { base, library, allAssets };
+  const warmed = new Set();
+  const warming = new Map();
 
   function isGenresRequest(input) {
     try {
@@ -53,15 +54,26 @@
     return result >>> 0;
   }
 
-  function candidateFor(genreId) {
+  function candidateFor(genreId, songId = null) {
     const candidates = library[genreId] || [];
     if (!candidates.length) return null;
     const params = new URLSearchParams(location.search);
-    const song = params.get('song') || '';
+    const song = songId ?? params.get('song') ?? '';
     // The first asset in every bucket is the art-directed primary. Shareable
     // song URLs deterministically rotate through the approved alternates.
     const index = song ? hash(`${genreId}:${song}`) % candidates.length : 0;
     return `${base}${candidates[index]}`;
+  }
+
+  function connectionConstrained() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!connection) return false;
+    return Boolean(connection.saveData || /(^|-)2g$/.test(connection.effectiveType || ''));
+  }
+
+  function requestedGenre() {
+    const params = new URLSearchParams(location.search);
+    return params.get('genre') || document.getElementById('app')?.dataset.genre || 'traditional';
   }
 
   async function exists(url) {
@@ -73,6 +85,61 @@
     }
   }
 
+  function warmImage(url) {
+    if (!url || connectionConstrained()) return Promise.resolve(false);
+    if (warmed.has(url)) return Promise.resolve(true);
+    if (warming.has(url)) return warming.get(url);
+
+    const promise = new Promise((resolve) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = async () => {
+        try { await image.decode?.(); } catch { /* decoded load is already usable */ }
+        warmed.add(url);
+        warming.delete(url);
+        resolve(true);
+      };
+      image.onerror = () => {
+        warming.delete(url);
+        resolve(false);
+      };
+      image.src = url;
+    });
+    warming.set(url, promise);
+    return promise;
+  }
+
+  async function promoteVisibleGenre(genreId) {
+    if (!genreId || connectionConstrained()) return;
+    const candidate = candidateFor(genreId);
+    if (!candidate || !(await warmImage(candidate))) return;
+
+    const app = document.getElementById('app');
+    if (!app || app.dataset.genre !== genreId) return;
+    const visible = document.querySelector('.world-layer.is-visible');
+    if (!visible) return;
+    visible.style.backgroundImage = `url("${candidate}")`;
+    visible.dataset.backgroundQuality = '2k-webp';
+  }
+
+  function observeWorldChanges() {
+    const app = document.getElementById('app');
+    if (!app || app.dataset.visualLazyBound === 'true') return;
+    app.dataset.visualLazyBound = 'true';
+    new MutationObserver(() => {
+      promoteVisibleGenre(app.dataset.genre);
+    }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
+  }
+
+  window.GARBA_VISUAL_LIBRARY = {
+    base,
+    library,
+    allAssets,
+    candidateFor,
+    promoteVisibleGenre,
+    connectionConstrained,
+  };
+
   window.fetch = async (input, init) => {
     if (!isGenresRequest(input)) return nativeFetch(input, init);
 
@@ -81,17 +148,28 @@
 
     try {
       const genres = await response.clone().json();
+      const currentGenre = requestedGenre();
+      const constrained = connectionConstrained();
       const enhanced = await Promise.all(genres.map(async (genre) => {
+        const backgrounds = (library[genre.id] || []).map((file) => `${base}${file}`);
         const candidate = candidateFor(genre.id);
-        if (!candidate || !(await exists(candidate))) return genre;
+        const metadata = { ...genre, backgrounds };
+
+        // Do not make app.js eagerly preload six large 2K worlds. Only promote
+        // the currently visible world during catalogue bootstrap. Other worlds
+        // keep their lightweight SVG until the user actually enters them.
+        if (constrained || genre.id !== currentGenre || !candidate || !(await exists(candidate))) {
+          return metadata;
+        }
+        warmed.add(candidate);
         return {
-          ...genre,
+          ...metadata,
           background: candidate,
-          backgrounds: (library[genre.id] || []).map((file) => `${base}${file}`),
           backgroundQuality: '2k-webp',
         };
       }));
 
+      queueMicrotask(observeWorldChanges);
       return new Response(JSON.stringify(enhanced), {
         status: 200,
         headers: {
@@ -104,4 +182,6 @@
       return response;
     }
   };
+
+  observeWorldChanges();
 })();
