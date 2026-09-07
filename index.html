@@ -26,8 +26,7 @@
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
-
-    <link rel="preload" as="image" href="assets/backgrounds/library/11-master-dark-courtyard.webp" type="image/webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" fetchpriority="high" />
 
     <style>
       html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #111323; }
@@ -37,6 +36,36 @@
       .world-layer { background-size: cover; background-position: center; background-repeat: no-repeat; }
     </style>
     <link rel="stylesheet" href="styles.css" />
+
+    <script>
+      // One-time production reset. Earlier builds installed a service worker that
+      // cached a large multi-script runtime. Clear it once and block re-registering
+      // that worker while the simplified runtime is being stabilised.
+      (() => {
+        const key = 'garba-simple-runtime-reset-v1';
+        if (!('serviceWorker' in navigator)) return;
+        try {
+          navigator.serviceWorker.register = async () => ({ unregister: async () => true });
+        } catch {
+          // Some browser implementations expose register as read-only.
+        }
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+        window.addEventListener('load', async () => {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((registration) => registration.unregister()));
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              await Promise.all(keys.filter((name) => name.startsWith('garba-shell-')).map((name) => caches.delete(name)));
+            }
+            if (navigator.serviceWorker.controller) location.reload();
+          } catch {
+            // The site remains usable even if browser storage APIs are restricted.
+          }
+        }, { once: true });
+      })();
+    </script>
 
     <script type="application/ld+json">
       {
@@ -48,11 +77,7 @@
         "operatingSystem": "Any",
         "description": "An open, community-built Gujarati Garba music catalogue and listening interface.",
         "isAccessibleForFree": true,
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
     </script>
   </head>
@@ -61,12 +86,7 @@
 
     <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed" data-loading="false" aria-busy="false">
       <div class="world" aria-hidden="true">
-        <div
-          class="world-layer is-visible"
-          id="worldA"
-          data-background-quality="2k-webp"
-          style="background-image:url('assets/backgrounds/library/11-master-dark-courtyard.webp'),url('assets/backgrounds/traditional.svg')"
-        ></div>
+        <div class="world-layer is-visible" id="worldA" style="background-image:url('assets/backgrounds/traditional.svg')"></div>
         <div class="world-layer" id="worldB"></div>
         <div class="world-vignette"></div>
         <div class="world-ambient" id="worldAmbient"></div>
@@ -79,7 +99,7 @@
           <button class="icon-button" id="searchButton" type="button" aria-label="Search songs" title="Search songs (/)" aria-keyshortcuts="/">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
           </button>
-          <button class="icon-button" id="shareButton" type="button" aria-label="Share current song" title="Share current song (Shift+S)" aria-keyshortcuts="Shift+S">
+          <button class="icon-button" id="shareButton" type="button" aria-label="Share current song" title="Share current song">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.25"></circle><circle cx="6" cy="12" r="2.25"></circle><circle cx="18" cy="19" r="2.25"></circle><path d="m8 11 7.8-4.6M8 13l7.8 4.6"></path></svg>
           </button>
           <button class="icon-button desktop-only" id="favouritesButton" type="button" aria-label="Show favourites" title="Favourites">
@@ -105,17 +125,13 @@
         </section>
 
         <section class="controls" aria-label="Playback controls">
-          <button class="transport" id="prevButton" type="button" aria-label="Previous song">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg>
-          </button>
+          <button class="transport" id="prevButton" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
           <button class="play-button" id="playButton" type="button" aria-label="Play">
             <span class="ambient-ring" aria-hidden="true"></span>
             <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg>
             <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
           </button>
-          <button class="transport" id="nextButton" type="button" aria-label="Next song">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg>
-          </button>
+          <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
         </section>
 
         <section class="progress-wrap" aria-label="Playback progress">
@@ -125,12 +141,12 @@
         </section>
 
         <nav class="genre-strip" id="genreStrip" aria-label="Genres">
-          <button class="genre-button active" type="button" data-genre="traditional" aria-current="true">Traditional</button>
-          <button class="genre-button" type="button" data-genre="dandiya">Dandiya</button>
-          <button class="genre-button" type="button" data-genre="devotional">Devotional</button>
-          <button class="genre-button" type="button" data-genre="folk">Folk</button>
-          <button class="genre-button" type="button" data-genre="sanedo">Sanedo</button>
-          <button class="genre-button" type="button" data-genre="fusion">Fusion</button>
+          <button class="genre-button active" type="button" data-genre="traditional" data-static-genre="true" aria-current="true">Traditional</button>
+          <button class="genre-button" type="button" data-genre="dandiya" data-static-genre="true">Dandiya</button>
+          <button class="genre-button" type="button" data-genre="devotional" data-static-genre="true">Devotional</button>
+          <button class="genre-button" type="button" data-genre="folk" data-static-genre="true">Folk</button>
+          <button class="genre-button" type="button" data-genre="sanedo" data-static-genre="true">Sanedo</button>
+          <button class="genre-button" type="button" data-genre="fusion" data-static-genre="true">Fusion</button>
         </nav>
 
         <div class="browse-actions" id="browseActions">
@@ -145,17 +161,12 @@
         <button class="sheet-handle" id="sheetHandle" type="button" aria-label="Resize song browser"><span></span></button>
         <div class="sheet-inner">
           <header class="sheet-header">
-            <div class="sheet-header-title">
-              <h2 id="sheetTitle">Songs</h2>
-              <span class="sheet-summary" id="sheetSummary" aria-live="polite"></span>
-            </div>
+            <div class="sheet-header-title"><h2 id="sheetTitle">Songs</h2><span class="sheet-summary" id="sheetSummary" aria-live="polite"></span></div>
             <label class="search-field" aria-label="Search songs and artists">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
               <input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" inputmode="search" enterkeyhint="search" />
             </label>
-            <button class="icon-button sheet-close" id="sheetClose" type="button" aria-label="Close songs">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
-            </button>
+            <button class="icon-button sheet-close" id="sheetClose" type="button" aria-label="Close songs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg></button>
           </header>
 
           <nav class="sheet-genres genre-strip" id="sheetGenreStrip" aria-label="Filter songs by genre"></nav>
@@ -163,10 +174,7 @@
 
           <div class="mini-player" aria-label="Compact player">
             <div class="mini-progress"><span id="miniProgress"></span></div>
-            <div class="mini-track">
-              <strong id="miniTitle">Ochhav Theme</strong>
-              <span id="miniArtist">Aditya Gadhvi</span>
-            </div>
+            <div class="mini-track"><strong id="miniTitle">Ochhav Theme</strong><span id="miniArtist">Aditya Gadhvi</span></div>
             <div class="mini-controls">
               <button class="transport" id="miniPrev" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
               <button class="transport mini-play" id="miniPlay" type="button" aria-label="Play"><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg></button>
@@ -177,32 +185,16 @@
       </aside>
 
       <div class="install-banner" id="installBanner" hidden>
-        <div>
-          <strong id="installTitle">Install GARBA</strong>
-          <span id="installText">Keep the full-screen player one tap away.</span>
-        </div>
-        <div class="install-actions">
-          <button id="installDismiss" type="button">Not now</button>
-          <button class="install-primary" id="installButton" type="button">Install</button>
-        </div>
+        <div><strong id="installTitle">Install GARBA</strong><span id="installText">Keep the full-screen player one tap away.</span></div>
+        <div class="install-actions"><button id="installDismiss" type="button">Not now</button><button class="install-primary" id="installButton" type="button">Install</button></div>
       </div>
 
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
       <audio id="audio" preload="metadata"></audio>
     </div>
 
-    <noscript>
-      <p>This music player needs JavaScript enabled. The catalogue and project documentation remain available in the public GitHub repository.</p>
-    </noscript>
-    <script src="visual-library.js"></script>
-    <script src="catalogue-bootstrap.js"></script>
-    <script src="direct-audio-bridge.js"></script>
-    <script src="playback-routes.js"></script>
-    <script src="playback-prewarm.js"></script>
-    <script src="playback-bridge.js"></script>
-    <script src="nonstop-browser.js"></script>
+    <noscript><p>This music player needs JavaScript enabled.</p></noscript>
+    <script src="simple-runtime.js"></script>
     <script type="module" src="app.js"></script>
-    <script type="module" src="ux-polish.js"></script>
-    <script type="module" src="ux-next.js"></script>
   </body>
 </html>
