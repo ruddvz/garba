@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
-  "songCount": 550,
-  "releaseCount": 68,
+  "version": "0.4.0",
+  "songCount": 575,
+  "releaseCount": 69,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -21,24 +21,28 @@
     "data/catalogue/songs/songs-14.json",
     "data/catalogue/songs/songs-15.json",
     "data/catalogue/songs/songs-16.json",
-    "data/catalogue/songs/songs-17.json"
+    "data/catalogue/songs/songs-17.json",
+    "data/catalogue/songs/songs-18.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
     "data/catalogue/releases/releases-02.json",
     "data/catalogue/releases/releases-03.json",
     "data/catalogue/releases/releases-04.json",
-    "data/catalogue/releases/releases-05.json"
+    "data/catalogue/releases/releases-05.json",
+    "data/catalogue/releases/releases-06.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
     "data/catalogue/free-sources/free-sources-02.json"
   ],
   "taxonomy": "data/taxonomy.json",
+  "playbackSources": "data/playback-sources.json",
+  "nonstopSets": "data/nonstop.json",
   "generatedFiles": {
     "songs": "data/songs.json",
     "releases": "data/releases.json",
     "freeSources": "data/free-audio-sources.json"
   },
-  "notes": "Run node scripts/build-catalogue.mjs to regenerate the combined JSON files from these chunked source-of-truth records."
+  "notes": "The browser bootstrap can assemble songs directly from these chunks; node scripts/build-catalogue.mjs may still generate combined JSON files for static exports."
 }
