@@ -1,0 +1,22 @@
+/* Official release fallbacks. These players appear only after Play is pressed. */
+.provider-dock.is-release-provider .provider-media,
+.provider-dock.is-release-provider .provider-media iframe {
+  height: 352px;
+  min-height: 352px;
+}
+
+@media (max-width: 700px) {
+  .provider-dock.is-release-provider .provider-media,
+  .provider-dock.is-release-provider .provider-media iframe {
+    height: min(352px, 44dvh);
+    min-height: min(352px, 44dvh);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .provider-dock.is-release-provider .provider-media,
+  .provider-dock.is-release-provider .provider-media iframe {
+    height: 240px;
+    min-height: 240px;
+  }
+}
