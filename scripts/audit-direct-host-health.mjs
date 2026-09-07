@@ -22,12 +22,14 @@ for (const [songId, entry] of Object.entries(tracks)) {
   }
 
   try {
+    const parsedAudioUrl = new URL(audioUrl);
+    const crossOrigin = parsedAudioUrl.origin !== expectedOrigin;
     const response = await fetch(audioUrl, {
       method: "GET",
       headers: {
         Range: "bytes=0-1",
         Origin: expectedOrigin,
-        "User-Agent": "GARBA-direct-audio-health/1.0",
+        "User-Agent": "GARBA-direct-audio-health/1.1",
       },
       redirect: "follow",
     });
@@ -43,7 +45,9 @@ for (const [songId, entry] of Object.entries(tracks)) {
     if (!contentType.startsWith("audio/") && contentType !== "application/octet-stream") {
       fail(songId, `unexpected Content-Type ${JSON.stringify(contentType || null)}`);
     }
-    if (cors && cors !== "*" && cors !== expectedOrigin) {
+    if (crossOrigin && !cors) {
+      fail(songId, `cross-origin audio response is missing Access-Control-Allow-Origin for ${expectedOrigin}`);
+    } else if (cors && cors !== "*" && cors !== expectedOrigin) {
       fail(songId, `CORS allows ${JSON.stringify(cors)} instead of * or ${expectedOrigin}`);
     }
 
@@ -57,6 +61,7 @@ for (const [songId, entry] of Object.entries(tracks)) {
       contentRange,
       acceptRanges: acceptRanges || null,
       cors: cors || null,
+      crossOrigin,
       bytesRead: body.byteLength,
     });
   } catch (error) {
