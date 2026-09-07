@@ -1,7 +1,7 @@
 {
-  "version": "0.5.3",
-  "songCount": 592,
-  "releaseCount": 86,
+  "version": "0.5.4",
+  "songCount": 594,
+  "releaseCount": 88,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -25,7 +25,8 @@
     "data/catalogue/songs/songs-18.json",
     "data/catalogue/songs/songs-19.json",
     "data/catalogue/songs/songs-20-aditya-essentials.json",
-    "data/catalogue/songs/songs-21-popular-essentials.json"
+    "data/catalogue/songs/songs-21-popular-essentials.json",
+    "data/catalogue/songs/songs-22-current-popular.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -36,7 +37,8 @@
     "data/catalogue/releases/releases-06.json",
     "data/catalogue/releases/releases-07.json",
     "data/catalogue/releases/releases-08-aditya-essentials.json",
-    "data/catalogue/releases/releases-09-popular-essentials.json"
+    "data/catalogue/releases/releases-09-popular-essentials.json",
+    "data/catalogue/releases/releases-10-current-popular.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
