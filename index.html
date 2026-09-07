@@ -37,36 +37,6 @@
     </style>
     <link rel="stylesheet" href="styles.css" />
 
-    <script>
-      // One-time production reset. Earlier builds installed a service worker that
-      // cached a large multi-script runtime. Clear it once and block re-registering
-      // that worker while the simplified runtime is being stabilised.
-      (() => {
-        const key = 'garba-simple-runtime-reset-v1';
-        if (!('serviceWorker' in navigator)) return;
-        try {
-          navigator.serviceWorker.register = async () => ({ unregister: async () => true });
-        } catch {
-          // Some browser implementations expose register as read-only.
-        }
-        if (sessionStorage.getItem(key)) return;
-        sessionStorage.setItem(key, '1');
-        window.addEventListener('load', async () => {
-          try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map((registration) => registration.unregister()));
-            if ('caches' in window) {
-              const keys = await caches.keys();
-              await Promise.all(keys.filter((name) => name.startsWith('garba-shell-')).map((name) => caches.delete(name)));
-            }
-            if (navigator.serviceWorker.controller) location.reload();
-          } catch {
-            // The site remains usable even if browser storage APIs are restricted.
-          }
-        }, { once: true });
-      })();
-    </script>
-
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
