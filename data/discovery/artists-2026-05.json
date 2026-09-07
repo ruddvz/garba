@@ -1,0 +1,20 @@
+{
+  "updated": "2026-09-07",
+  "method": "Current Garba discovery from official artist catalogue, current Garba playlist placement and official YouTube release.",
+  "artists": [
+    {
+      "id": "raag-mehta",
+      "name": "Raag Mehta",
+      "aliases": [],
+      "tier": "emerging-current",
+      "garbaFootprint": ["modern-garba", "navratri", "live"],
+      "notable": ["Norta Aave Re", "Nav Navrat"],
+      "signals": ["official-artist-channel", "current-playlist-2026", "apple-music-current"],
+      "sources": [
+        "https://www.youtube.com/watch?v=WrToXG4wkQM",
+        "https://music.apple.com/us/artist/raag-mehta/1369960049",
+        "https://open.spotify.com/playlist/2fpcLDFWZLsiSsJuBWY23Y"
+      ]
+    }
+  ]
+}
