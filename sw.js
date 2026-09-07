@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v9-a11y`;
+const VERSION = `${CACHE_PREFIX}v10-discovery`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -12,20 +12,24 @@ const SHELL = [
   './styles/part-3.css',
   './styles/part-4.css',
   './styles/part-5.css',
+  './styles/part-6.css',
   './app.js',
   './ux-polish.js',
+  './ux-next.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
   './manifest.webmanifest',
   './offline.html',
   './data/genres.json',
+  './data/taxonomy.json',
   './data/catalogue/index.json',
   './data/playback-sources.json',
   './data/playback-sources-current.json',
   './data/nonstop.json',
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
+  './assets/icons/icon-192.png',
   './assets/icons/maskable.svg',
   './assets/icons/apple-touch-icon.png',
   // Lightweight fallbacks remain precached. The approved high-resolution

@@ -18,9 +18,10 @@ const checkFile = async (file) => {
 };
 
 for (const file of [
-  'index.html', 'styles.css', 'styles/part-4.css', 'styles/part-5.css', 'app.js', 'visual-library.js',
-  'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js', 'sw.js',
-  'offline.html', 'manifest.webmanifest', 'assets/icons/apple-touch-icon.png',
+  'index.html', 'styles.css', 'styles/part-4.css', 'styles/part-5.css', 'styles/part-6.css',
+  'app.js', 'visual-library.js', 'catalogue-bootstrap.js', 'playback-bridge.js',
+  'ux-polish.js', 'ux-next.js', 'sw.js', 'offline.html', 'manifest.webmanifest',
+  'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png',
 ]) await checkFile(file);
 
 for (const expected of expectedGenres) if (!ids.has(expected)) fail(`Missing genre: ${expected}`);
@@ -54,12 +55,15 @@ for (const song of songs) {
 
 if (manifest.name !== 'GARBA' || manifest.short_name !== 'GARBA') fail('Manifest app name must be GARBA');
 if (manifest.display !== 'standalone') fail('Manifest display must be standalone');
-if (!Array.isArray(manifest.icons) || manifest.icons.length < 2) fail('Manifest needs standard and maskable icons');
+if (!Array.isArray(manifest.icons) || manifest.icons.length < 3) fail('Manifest needs PNG, scalable and maskable icons');
 for (const icon of manifest.icons || []) await checkFile(icon.src);
+const png192 = (manifest.icons || []).find((icon) => icon.src === 'assets/icons/icon-192.png');
+if (!png192 || png192.sizes !== '192x192' || png192.type !== 'image/png') fail('Manifest must expose the native 192x192 PNG launcher icon');
 
 const index = await readFile(path.join(root, 'index.html'), 'utf8');
 const appJs = await readFile(path.join(root, 'app.js'), 'utf8');
 const polishJs = await readFile(path.join(root, 'ux-polish.js'), 'utf8');
+const nextJs = await readFile(path.join(root, 'ux-next.js'), 'utf8');
 const visualJs = await readFile(path.join(root, 'visual-library.js'), 'utf8');
 const htmlIds = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicateHtmlIds = htmlIds.filter((id, position) => htmlIds.indexOf(id) !== position);
@@ -69,8 +73,8 @@ for (const id of referencedIds) if (!htmlIds.includes(id)) fail(`app.js referenc
 
 for (const marker of [
   'rel="manifest"', 'viewport-fit=cover', 'apple-mobile-web-app-capable',
-  'rel="apple-touch-icon"', 'assets/icons/apple-touch-icon.png',
-  'visual-library.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js',
+  'rel="apple-touch-icon"', 'assets/icons/apple-touch-icon.png', 'assets/icons/icon-192.png',
+  'visual-library.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js', 'ux-next.js',
   'id="browseActions"', 'id="shareButton"', 'data-loading="true"',
 ]) {
   if (!index.includes(marker)) fail(`index.html missing required marker: ${marker}`);
@@ -82,23 +86,30 @@ if (!visualJs.includes('2K visual library unavailable; using bundled fallback.')
 for (const marker of ['setupProviderAccessibility', 'syncSheetAccessibility', 'showCatalogueFailure', 'syncDurationTruth', 'search-awaiting-query']) {
   if (!polishJs.includes(marker)) fail(`UX polish missing required follow-up behavior: ${marker}`);
 }
+for (const marker of ['renderEnhancedSearch', 'improvedShare', 'syncThemeColor', 'syncMediaArtwork', 'dataSaver']) {
+  if (!nextJs.toLowerCase().includes(marker.toLowerCase())) fail(`Next UX layer missing required behavior: ${marker}`);
+}
 
 const cssEntry = await readFile(path.join(root, 'styles.css'), 'utf8');
 const cssImports = [...cssEntry.matchAll(/@import url\("([^"]+)"\)/g)].map((match) => match[1]);
 const css = cssEntry + (await Promise.all(cssImports.map((file) => readFile(path.join(root, file), 'utf8')))).join('\n');
-for (const importPath of ['styles/part-4.css', 'styles/part-5.css']) {
+for (const importPath of ['styles/part-4.css', 'styles/part-5.css', 'styles/part-6.css']) {
   if (!cssImports.includes(importPath)) fail(`styles.css must load ${importPath}`);
 }
-if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + polishJs + visualJs + css)) fail('Production UI still references a JPG/JPEG asset');
+if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + polishJs + nextJs + visualJs + css)) fail('Production UI still references a JPG/JPEG asset');
 for (const marker of [
   '@media (max-width: 700px)', '@media (min-width: 701px) and (max-width: 1100px)',
   '@media (max-height: 560px) and (orientation: landscape)', '@media (display-mode: standalone)',
-  'prefers-reduced-motion', '.retry-catalogue', '.search-empty-prompt',
+  'prefers-reduced-motion', '.retry-catalogue', '.search-empty-prompt', '.enhanced-search-row',
 ]) if (!css.includes(marker)) fail(`Responsive/PWA CSS marker missing: ${marker}`);
 
 const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
 for (const genre of genres) if (!sw.includes(`./${genre.background}`)) fail(`Service worker does not precache ${genre.background}`);
-for (const file of ['./styles/part-4.css', './styles/part-5.css', './ux-polish.js', './visual-library.js', './assets/icons/apple-touch-icon.png']) {
+for (const file of [
+  './styles/part-4.css', './styles/part-5.css', './styles/part-6.css',
+  './ux-polish.js', './ux-next.js', './visual-library.js',
+  './assets/icons/apple-touch-icon.png', './assets/icons/icon-192.png', './data/taxonomy.json',
+]) {
   if (!sw.includes(file)) fail(`Service worker does not precache ${file}`);
 }
 if (!(sw.includes("url.pathname.includes('/data/')") && sw.includes("url.pathname.endsWith('.json')") && sw.includes('networkFirst(request)'))) {
@@ -112,7 +123,7 @@ if (backgroundMb > 1.5) fail(`Bundled fallback background payload is ${backgroun
 if (failed) process.exit(1);
 console.log(`✓ ${genres.length} genres`);
 console.log(`✓ ${songs.length} catalogue rows`);
-console.log('✓ PWA shell, visual-library fallback, icons and Apple touch icon');
+console.log('✓ PWA shell, launcher icons, Apple touch icon and visual fallback');
 console.log('✓ responsive breakpoints: phone, tablet, desktop, short landscape');
-console.log('✓ UX polish: sharing, provider focus, mobile sheet modal, retry and unknown-duration states');
+console.log('✓ UX polish: rich fallback search, resilient sharing, media artwork, dynamic theme and data-saver states');
 console.log(`✓ bundled fallback background payload: ${backgroundMb.toFixed(2)} MB`);
