@@ -4,17 +4,18 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 ## Catalogue
 
-- [`catalogue/status.md`](catalogue/status.md) — current catalogue coverage and known gaps
-- [`catalogue/schema.md`](catalogue/schema.md) — canonical song/release schema
-- [`catalogue/rights.md`](catalogue/rights.md) — source, licensing and redistribution policy
-- [`catalogue/content-sources.md`](catalogue/content-sources.md) — source guidance
-- [`catalogue/song-catalog-contract.md`](catalogue/song-catalog-contract.md) — player/catalogue integration contract
+- [`catalogue/status.md`](catalogue/status.md): current catalogue coverage and known gaps
+- [`catalogue/schema.md`](catalogue/schema.md): canonical song/release schema
+- [`catalogue/rights.md`](catalogue/rights.md): source, licensing and redistribution policy
+- [`catalogue/content-sources.md`](catalogue/content-sources.md): source guidance
+- [`catalogue/song-catalog-contract.md`](catalogue/song-catalog-contract.md): player/catalogue integration contract
 
 ## Product
 
-- [`product/design-system.md`](product/design-system.md) — visual system and interaction direction
-- [`product/responsive-pwa.md`](product/responsive-pwa.md) — responsive and installed-app behaviour
-- [`product/ux-polish-pass.md`](product/ux-polish-pass.md) — product polish notes and remaining UX work
+- [`product/design-system.md`](product/design-system.md): visual system and interaction direction
+- [`product/playback-runtime-coverage.md`](product/playback-runtime-coverage.md): generated song-route and playback coverage contract
+- [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour
+- [`product/ux-polish-pass.md`](product/ux-polish-pass.md): product polish notes and remaining UX work
 
 ## Rights and partnerships
 
@@ -33,8 +34,10 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 ## Project
 
-- [`project/roadmap.md`](project/roadmap.md) — project-level roadmap
+- [`project/roadmap.md`](project/roadmap.md): project-level roadmap
 
 ## Naming convention
 
 Documentation files use lowercase kebab-case. `README.md` remains uppercase because it is the conventional directory entry point. New documents should be placed in the narrowest existing responsibility folder instead of being added directly under `docs/`.
+
+`docs/README.md` is the canonical documentation index. `npm run docs:validate` fails when a nested Markdown document is not indexed here, which prevents new documentation from becoming orphaned.
