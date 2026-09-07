@@ -19,6 +19,8 @@ let direct = 0;
 let exactTrackFallbacks = 0;
 let singleReleaseFallbacks = 0;
 let unchapteredYoutubeReleaseFallbacks = 0;
+let artistCatalogueFallbacks = 0;
+let playlistReferenceFallbacks = 0;
 const missing = [];
 
 function isExactTrackUrl(provider, sourceUrl) {
@@ -48,6 +50,17 @@ function isReleaseSpecificUrl(provider, sourceUrl) {
   return false;
 }
 
+function pageReferenceKind(provider, sourceUrl) {
+  try {
+    const pathname = new URL(sourceUrl).pathname.toLowerCase();
+    if ((provider === 'spotify' || provider === 'apple-music') && pathname.includes('/artist/')) return 'artist';
+    if (provider === 'spotify' && pathname.includes('/playlist/')) return 'playlist';
+  } catch {
+    return '';
+  }
+  return '';
+}
+
 const runtimeSongs = songs.map((song) => {
   const next = { ...song };
   if (song.audioUrl) {
@@ -66,6 +79,7 @@ const runtimeSongs = songs.map((song) => {
   next.playbackSourceType = route.sourceType || 'verified-provider-source';
   if (next.playbackSourceType === 'verified-release-source') {
     const release = releasesById.get(song.releaseId);
+    const pageKind = pageReferenceKind(next.playbackProvider, next.playbackSourceUrl);
     if (isExactTrackUrl(next.playbackProvider, next.playbackSourceUrl)) {
       next.playbackSourceType = 'verified-track-source';
       exactTrackFallbacks += 1;
@@ -80,6 +94,12 @@ const runtimeSongs = songs.map((song) => {
     ) {
       next.playbackSourceType = 'verified-unchaptered-youtube-release';
       unchapteredYoutubeReleaseFallbacks += 1;
+    } else if (pageKind === 'artist') {
+      next.playbackSourceType = 'verified-artist-catalogue-source';
+      artistCatalogueFallbacks += 1;
+    } else if (pageKind === 'playlist') {
+      next.playbackSourceType = 'verified-playlist-reference';
+      playlistReferenceFallbacks += 1;
     }
   }
   if (route.videoId) next.youtubeId = route.videoId;
@@ -97,4 +117,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${artistCatalogueFallbacks} artist catalogue references, ${playlistReferenceFallbacks} playlist references, ${missing.length} unresolved.`);
