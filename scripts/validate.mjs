@@ -17,11 +17,13 @@ const checkFile = async (file) => {
   catch { fail(`Missing file: ${file}`); return false; }
 };
 
-for (const file of ['index.html', 'styles.css', 'app.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'sw.js', 'offline.html', 'manifest.webmanifest']) await checkFile(file);
+for (const file of [
+  'index.html', 'styles.css', 'styles/part-4.css', 'app.js', 'visual-library.js',
+  'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js', 'sw.js',
+  'offline.html', 'manifest.webmanifest',
+]) await checkFile(file);
 
-for (const expected of expectedGenres) {
-  if (!ids.has(expected)) fail(`Missing genre: ${expected}`);
-}
+for (const expected of expectedGenres) if (!ids.has(expected)) fail(`Missing genre: ${expected}`);
 if (genres.length !== expectedGenres.length) fail(`Expected ${expectedGenres.length} genres, found ${genres.length}`);
 
 let backgroundBytes = 0;
@@ -57,39 +59,53 @@ for (const icon of manifest.icons || []) await checkFile(icon.src);
 
 const index = await readFile(path.join(root, 'index.html'), 'utf8');
 const appJs = await readFile(path.join(root, 'app.js'), 'utf8');
+const polishJs = await readFile(path.join(root, 'ux-polish.js'), 'utf8');
+const visualJs = await readFile(path.join(root, 'visual-library.js'), 'utf8');
 const htmlIds = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
-const duplicateHtmlIds = htmlIds.filter((id, index) => htmlIds.indexOf(id) !== index);
+const duplicateHtmlIds = htmlIds.filter((id, position) => htmlIds.indexOf(id) !== position);
 if (duplicateHtmlIds.length) fail(`Duplicate HTML ids: ${[...new Set(duplicateHtmlIds)].join(', ')}`);
 const referencedIds = [...appJs.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1]);
 for (const id of referencedIds) if (!htmlIds.includes(id)) fail(`app.js references missing element id: ${id}`);
-if (!index.includes('rel="manifest"')) fail('index.html is missing manifest link');
-if (!index.includes('viewport-fit=cover')) fail('index.html must support safe-area insets');
-if (!index.includes('apple-mobile-web-app-capable')) fail('index.html is missing iOS PWA metadata');
-if (!index.includes('catalogue-bootstrap.js')) fail('index.html must load the chunked catalogue bootstrap');
-if (!index.includes('playback-bridge.js')) fail('index.html must load provider playback bridge');
+
+for (const marker of [
+  'rel="manifest"', 'viewport-fit=cover', 'apple-mobile-web-app-capable',
+  'visual-library.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js',
+  'id="browseActions"', 'id="shareButton"', 'data-loading="true"',
+]) {
+  if (!index.includes(marker)) fail(`index.html missing required marker: ${marker}`);
+}
+if (index.includes('preload" as="image" href="assets/backgrounds/library/')) {
+  fail('Do not preload an optional 2K library asset before that binary is guaranteed to exist');
+}
+if (!visualJs.includes('2K visual library unavailable; using bundled fallback.')) fail('visual-library.js must retain a safe fallback path');
+if (!polishJs.includes('setupProviderAccessibility')) fail('UX polish should preserve provider-overlay keyboard/focus handling');
 
 const cssEntry = await readFile(path.join(root, 'styles.css'), 'utf8');
 const cssImports = [...cssEntry.matchAll(/@import url\("([^"]+)"\)/g)].map((match) => match[1]);
 const css = cssEntry + (await Promise.all(cssImports.map((file) => readFile(path.join(root, file), 'utf8')))).join('\n');
-if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + css)) fail('Production UI still references a JPG/JPEG asset');
-for (const marker of ['@media (max-width: 700px)', '@media (min-width: 701px) and (max-width: 1100px)', '@media (max-height: 560px) and (orientation: landscape)', '@media (display-mode: standalone)', 'prefers-reduced-motion']) {
-  if (!css.includes(marker)) fail(`Responsive/PWA CSS marker missing: ${marker}`);
-}
+if (!cssImports.includes('styles/part-4.css')) fail('styles.css must load the final polish layer');
+if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + polishJs + visualJs + css)) fail('Production UI still references a JPG/JPEG asset');
+for (const marker of [
+  '@media (max-width: 700px)', '@media (min-width: 701px) and (max-width: 1100px)',
+  '@media (max-height: 560px) and (orientation: landscape)', '@media (display-mode: standalone)',
+  'prefers-reduced-motion',
+]) if (!css.includes(marker)) fail(`Responsive/PWA CSS marker missing: ${marker}`);
 
 const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
-for (const genre of genres) {
-  if (!sw.includes(`./${genre.background}`)) fail(`Service worker does not precache ${genre.background}`);
-}
+for (const genre of genres) if (!sw.includes(`./${genre.background}`)) fail(`Service worker does not precache ${genre.background}`);
+for (const file of ['./styles/part-4.css', './ux-polish.js', './visual-library.js']) if (!sw.includes(file)) fail(`Service worker does not precache ${file}`);
 if (!(sw.includes("url.pathname.includes('/data/')") && sw.includes("url.pathname.endsWith('.json')") && sw.includes('networkFirst(request)'))) {
   fail('Service worker should network-first all JSON catalogue/discovery data');
 }
+if (!sw.includes("request.destination === 'script'") || !sw.includes('networkFirst(request)')) fail('Installed PWA should network-first scripts/styles for fixes');
 
 const backgroundMb = backgroundBytes / 1024 / 1024;
-if (backgroundMb > 1.5) fail(`Background payload is ${backgroundMb.toFixed(2)} MB; keep the six production worlds below 1.5 MB total`);
+if (backgroundMb > 1.5) fail(`Bundled fallback background payload is ${backgroundMb.toFixed(2)} MB; keep installation lightweight`);
 
 if (failed) process.exit(1);
 console.log(`✓ ${genres.length} genres`);
 console.log(`✓ ${songs.length} catalogue rows`);
-console.log(`✓ PWA shell, manifest and icons`);
-console.log(`✓ responsive breakpoints: phone, tablet, desktop, short landscape`);
-console.log(`✓ production background payload: ${backgroundMb.toFixed(2)} MB`);
+console.log('✓ PWA shell, manifest, visual-library fallback and icons');
+console.log('✓ responsive breakpoints: phone, tablet, desktop, short landscape');
+console.log('✓ UX polish: loading state, browse actions, sharing and provider focus management');
+console.log(`✓ bundled fallback background payload: ${backgroundMb.toFixed(2)} MB`);
