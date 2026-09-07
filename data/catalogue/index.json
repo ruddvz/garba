@@ -1,7 +1,7 @@
 {
-  "version": "0.5.4",
-  "songCount": 594,
-  "releaseCount": 88,
+  "version": "0.6.0",
+  "songCount": 638,
+  "releaseCount": 92,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -26,7 +26,8 @@
     "data/catalogue/songs/songs-19.json",
     "data/catalogue/songs/songs-20-aditya-essentials.json",
     "data/catalogue/songs/songs-21-popular-essentials.json",
-    "data/catalogue/songs/songs-22-current-popular.json"
+    "data/catalogue/songs/songs-22-current-popular.json",
+    "data/catalogue/songs/songs-23-gaman-santhal-garba.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -38,7 +39,8 @@
     "data/catalogue/releases/releases-07.json",
     "data/catalogue/releases/releases-08-aditya-essentials.json",
     "data/catalogue/releases/releases-09-popular-essentials.json",
-    "data/catalogue/releases/releases-10-current-popular.json"
+    "data/catalogue/releases/releases-10-current-popular.json",
+    "data/catalogue/releases/releases-11-gaman-santhal-garba.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
