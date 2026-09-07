@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v7-2k`;
+const VERSION = `${CACHE_PREFIX}v8-polish`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -10,7 +10,9 @@ const SHELL = [
   './styles/part-1.css',
   './styles/part-2.css',
   './styles/part-3.css',
+  './styles/part-4.css',
   './app.js',
+  './ux-polish.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
@@ -24,9 +26,9 @@ const SHELL = [
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
   './assets/icons/maskable.svg',
-  // Lightweight fallbacks remain precached. The 15 high-resolution WebPs
-  // are cached on first use so installing the PWA does not download every
-  // 2K scene at once.
+  // Lightweight fallbacks remain precached. The approved high-resolution
+  // WebPs are cached on first use so installing the PWA does not download
+  // the entire visual library at once.
   './assets/backgrounds/traditional.svg',
   './assets/backgrounds/dandiya.svg',
   './assets/backgrounds/devotional.svg',
@@ -58,11 +60,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
         .then((response) => {
-          const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put('./index.html', copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put('./index.html', copy));
+          }
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match('./index.html')) || caches.match('./offline.html'))
+        .catch(async () => (await caches.match(request, { ignoreSearch: true })) || (await caches.match('./index.html')) || caches.match('./offline.html'))
     );
     return;
   }
