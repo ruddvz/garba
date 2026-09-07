@@ -18,8 +18,8 @@ const checkFile = async (file) => {
 };
 
 for (const file of [
-  'index.html', 'styles.css', 'styles/part-4.css', 'styles/part-5.css', 'app.js', 'visual-library.js',
-  'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js', 'sw.js',
+  'index.html', 'styles.css', 'styles/part-4.css', 'styles/part-5.css', 'styles/part-6.css',
+  'app.js', 'visual-library.js', 'catalogue-bootstrap.js', 'player-engine.js', 'ux-polish.js', 'sw.js',
   'offline.html', 'manifest.webmanifest', 'assets/icons/apple-touch-icon.png',
 ]) await checkFile(file);
 
@@ -61,6 +61,7 @@ const index = await readFile(path.join(root, 'index.html'), 'utf8');
 const appJs = await readFile(path.join(root, 'app.js'), 'utf8');
 const polishJs = await readFile(path.join(root, 'ux-polish.js'), 'utf8');
 const visualJs = await readFile(path.join(root, 'visual-library.js'), 'utf8');
+const playerJs = await readFile(path.join(root, 'player-engine.js'), 'utf8');
 const htmlIds = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicateHtmlIds = htmlIds.filter((id, position) => htmlIds.indexOf(id) !== position);
 if (duplicateHtmlIds.length) fail(`Duplicate HTML ids: ${[...new Set(duplicateHtmlIds)].join(', ')}`);
@@ -70,41 +71,49 @@ for (const id of referencedIds) if (!htmlIds.includes(id)) fail(`app.js referenc
 for (const marker of [
   'rel="manifest"', 'viewport-fit=cover', 'apple-mobile-web-app-capable',
   'rel="apple-touch-icon"', 'assets/icons/apple-touch-icon.png',
-  'visual-library.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'ux-polish.js',
-  'id="browseActions"', 'id="shareButton"', 'data-loading="true"',
+  'visual-library.js', 'catalogue-bootstrap.js', 'player-engine.js', 'ux-polish.js',
+  'id="browseActions"', 'data-loading="true"', 'name="referrer"',
 ]) {
   if (!index.includes(marker)) fail(`index.html missing required marker: ${marker}`);
 }
 if (index.includes('preload" as="image" href="assets/backgrounds/library/')) {
-  fail('Do not preload an optional 2K library asset before that binary is guaranteed to exist');
+  fail('Do not preload an extracted 2K library asset in the source tree');
 }
 if (!visualJs.includes('2K visual library unavailable; using bundled fallback.')) fail('visual-library.js must retain a safe fallback path');
+if (!visualJs.includes("get('scene')")) fail('visual-library.js should keep stable genre defaults with opt-in scene variants');
 for (const marker of ['setupProviderAccessibility', 'syncSheetAccessibility', 'showCatalogueFailure', 'syncDurationTruth', 'search-awaiting-query']) {
   if (!polishJs.includes(marker)) fail(`UX polish missing required follow-up behavior: ${marker}`);
+}
+for (const marker of ['youtube.com/embed/', 'enablejsapi', 'playsinline', 'strict-origin-when-cross-origin', 'onAutoplayBlocked', 'provider-dock']) {
+  if (!playerJs.includes(marker)) fail(`Player engine missing required in-app provider behavior: ${marker}`);
+}
+if (playerJs.includes('window.open(') || playerJs.includes('youtube.com/results?search_query')) {
+  fail('Minimal player engine should not kick playback out to provider search/windows');
 }
 
 const cssEntry = await readFile(path.join(root, 'styles.css'), 'utf8');
 const cssImports = [...cssEntry.matchAll(/@import url\("([^"]+)"\)/g)].map((match) => match[1]);
 const css = cssEntry + (await Promise.all(cssImports.map((file) => readFile(path.join(root, file), 'utf8')))).join('\n');
-for (const importPath of ['styles/part-4.css', 'styles/part-5.css']) {
+for (const importPath of ['styles/part-4.css', 'styles/part-5.css', 'styles/part-6.css']) {
   if (!cssImports.includes(importPath)) fail(`styles.css must load ${importPath}`);
 }
-if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + polishJs + visualJs + css)) fail('Production UI still references a JPG/JPEG asset');
+if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + polishJs + visualJs + playerJs + css)) fail('Production UI still references a JPG/JPEG asset');
 for (const marker of [
   '@media (max-width: 700px)', '@media (min-width: 701px) and (max-width: 1100px)',
   '@media (max-height: 560px) and (orientation: landscape)', '@media (display-mode: standalone)',
-  'prefers-reduced-motion', '.retry-catalogue', '.search-empty-prompt',
+  'prefers-reduced-motion', '.retry-catalogue', '.search-empty-prompt', '.provider-dock',
 ]) if (!css.includes(marker)) fail(`Responsive/PWA CSS marker missing: ${marker}`);
 
 const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
 for (const genre of genres) if (!sw.includes(`./${genre.background}`)) fail(`Service worker does not precache ${genre.background}`);
-for (const file of ['./styles/part-4.css', './styles/part-5.css', './ux-polish.js', './visual-library.js', './assets/icons/apple-touch-icon.png']) {
+for (const file of ['./styles/part-4.css', './styles/part-5.css', './styles/part-6.css', './ux-polish.js', './visual-library.js', './player-engine.js', './assets/icons/apple-touch-icon.png']) {
   if (!sw.includes(file)) fail(`Service worker does not precache ${file}`);
 }
 if (!(sw.includes("url.pathname.includes('/data/')") && sw.includes("url.pathname.endsWith('.json')") && sw.includes('networkFirst(request)'))) {
   fail('Service worker should network-first all JSON catalogue/discovery data');
 }
 if (!sw.includes("request.destination === 'script'") || !sw.includes('networkFirst(request)')) fail('Installed PWA should network-first scripts/styles for fixes');
+if (!sw.includes('11-master-dark-courtyard.webp')) fail('Installed PWA should opportunistically cache approved 2K artwork');
 
 const backgroundMb = backgroundBytes / 1024 / 1024;
 if (backgroundMb > 1.5) fail(`Bundled fallback background payload is ${backgroundMb.toFixed(2)} MB; keep installation lightweight`);
@@ -112,7 +121,8 @@ if (backgroundMb > 1.5) fail(`Bundled fallback background payload is ${backgroun
 if (failed) process.exit(1);
 console.log(`✓ ${genres.length} genres`);
 console.log(`✓ ${songs.length} catalogue rows`);
-console.log('✓ PWA shell, visual-library fallback, icons and Apple touch icon');
+console.log('✓ minimal in-app provider player and provider-backed fallback behavior');
+console.log('✓ PWA shell, 2K visual-library fallback, icons and Apple touch icon');
 console.log('✓ responsive breakpoints: phone, tablet, desktop, short landscape');
-console.log('✓ UX polish: sharing, provider focus, mobile sheet modal, retry and unknown-duration states');
+console.log('✓ accessibility, retry, search and unknown-duration states');
 console.log(`✓ bundled fallback background payload: ${backgroundMb.toFixed(2)} MB`);
