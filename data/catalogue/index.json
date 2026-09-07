@@ -1,7 +1,7 @@
 {
-  "version": "0.11.0",
-  "songCount": 850,
-  "releaseCount": 131,
+  "version": "0.11.1",
+  "songCount": 880,
+  "releaseCount": 132,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -37,7 +37,8 @@
     "data/catalogue/songs/songs-30-atul-united-way.json",
     "data/catalogue/songs/songs-31-atul-rangrasiya-ramjo-2026.json",
     "data/catalogue/songs/songs-32-achal-hardik-core.json",
-    "data/catalogue/songs/songs-33-parthiv-palav-2007.json"
+    "data/catalogue/songs/songs-33-parthiv-palav-2007.json",
+    "data/catalogue/songs/songs-34-hardik-garbi2-2025.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -60,7 +61,8 @@
     "data/catalogue/releases/releases-18-atul-united-way.json",
     "data/catalogue/releases/releases-19-atul-rangrasiya-ramjo-2026.json",
     "data/catalogue/releases/releases-20-achal-hardik-core.json",
-    "data/catalogue/releases/releases-21-parthiv-palav-2007.json"
+    "data/catalogue/releases/releases-21-parthiv-palav-2007.json",
+    "data/catalogue/releases/releases-22-hardik-garbi2-2025.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
