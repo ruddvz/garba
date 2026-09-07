@@ -17,7 +17,7 @@ const checkFile = async (file) => {
   catch { fail(`Missing file: ${file}`); return false; }
 };
 
-for (const file of ['index.html', 'styles.css', 'app.js', 'sw.js', 'offline.html', 'manifest.webmanifest']) await checkFile(file);
+for (const file of ['index.html', 'styles-core.css', 'styles-responsive.css', 'app-core.js', 'app-interactions.js', 'app-bootstrap.js', 'sw.js', 'offline.html', 'manifest.webmanifest']) await checkFile(file);
 
 for (const expected of expectedGenres) {
   if (!ids.has(expected)) fail(`Missing genre: ${expected}`);
@@ -57,7 +57,7 @@ for (const icon of manifest.icons || []) await checkFile(icon.src);
 await checkFile('assets/icons/apple-touch-icon.png');
 
 const index = await readFile(path.join(root, 'index.html'), 'utf8');
-const appJs = await readFile(path.join(root, 'app.js'), 'utf8');
+const appJs = await Promise.all(['app-core.js', 'app-interactions.js', 'app-bootstrap.js'].map((file) => readFile(path.join(root, file), 'utf8'))).then((parts) => parts.join('\n'));
 const htmlIds = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 const duplicateHtmlIds = htmlIds.filter((id, index) => htmlIds.indexOf(id) !== index);
 if (duplicateHtmlIds.length) fail(`Duplicate HTML ids: ${[...new Set(duplicateHtmlIds)].join(', ')}`);
@@ -67,7 +67,7 @@ if (!index.includes('rel="manifest"')) fail('index.html is missing manifest link
 if (!index.includes('viewport-fit=cover')) fail('index.html must support safe-area insets');
 if (!index.includes('apple-mobile-web-app-capable')) fail('index.html is missing iOS PWA metadata');
 
-const css = await readFile(path.join(root, 'styles.css'), 'utf8');
+const css = await Promise.all(['styles-core.css', 'styles-responsive.css'].map((file) => readFile(path.join(root, file), 'utf8'))).then((parts) => parts.join('\n'));
 if (/\.(?:jpe?g)(?:["'?)\s]|$)/i.test(index + appJs + css)) fail('Production UI still references a JPG/JPEG asset');
 for (const marker of ['@media (max-width: 700px)', '@media (min-width: 701px) and (max-width: 1100px)', '@media (max-height: 560px) and (orientation: landscape)', '@media (display-mode: standalone)', 'prefers-reduced-motion']) {
   if (!css.includes(marker)) fail(`Responsive/PWA CSS marker missing: ${marker}`);
