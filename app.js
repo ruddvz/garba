@@ -57,6 +57,7 @@ const els = {
   songSheet: $('songSheet'),
   sheetHandle: $('sheetHandle'),
   sheetTitle: $('sheetTitle'),
+  sheetSummary: $('sheetSummary'),
   sheetClose: $('sheetClose'),
   sheetGenreStrip: $('sheetGenreStrip'),
   songList: $('songList'),
@@ -83,10 +84,32 @@ const els = {
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+const MAX_SEARCH_RESULTS = 120;
 
 const formatTime = (seconds = 0) => {
   const safe = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0;
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
+};
+
+const normaliseSearch = (value = '') => String(value)
+  .normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ')
+  .trim();
+
+const searchableSongText = (song) => normaliseSearch([
+  song.title,
+  song.artist,
+  song.genre,
+  song.category,
+  ...(Array.isArray(song.styles) ? song.styles : []),
+  song.releaseId,
+].filter(Boolean).join(' '));
+
+const knownDuration = (song, fallback = 0) => {
+  const value = Number(fallback || song?.durationSeconds || 0);
+  return Number.isFinite(value) && value > 0 ? value : 0;
 };
 
 const currentSong = () => state.songs.find((song) => song.id === state.songId) || null;
@@ -260,10 +283,15 @@ function renderPlayer() {
   els.songArtist.textContent = song.artist;
   els.miniTitle.textContent = song.title;
   els.miniArtist.textContent = song.artist;
-  els.durationTime.textContent = formatTime(state.duration || song.durationSeconds);
-  els.elapsedTime.textContent = formatTime(state.elapsed);
 
-  const ratio = state.duration ? Math.min(1, Math.max(0, state.elapsed / state.duration)) : 0;
+  const duration = knownDuration(song, state.duration);
+  const directSeek = Boolean(song.audioUrl && duration);
+  els.durationTime.textContent = duration ? formatTime(duration) : '—';
+  els.elapsedTime.textContent = directSeek ? formatTime(state.elapsed) : '—';
+  els.progress.disabled = !directSeek;
+  els.progress.setAttribute('aria-disabled', String(!directSeek));
+
+  const ratio = directSeek ? Math.min(1, Math.max(0, state.elapsed / duration)) : 0;
   els.progress.value = Math.round(ratio * 1000);
   els.progress.style.setProperty('--progress', `${ratio * 100}%`);
   els.miniProgress.style.width = `${ratio * 100}%`;
@@ -309,7 +337,7 @@ function configureAudio(song, restoreElapsed = 0) {
   setPlaying(false);
 
   state.elapsed = 0;
-  state.duration = song.durationSeconds || 0;
+  state.duration = knownDuration(song);
 
   if (song.audioUrl) {
     els.audio.src = song.audioUrl;
@@ -321,8 +349,8 @@ function configureAudio(song, restoreElapsed = 0) {
       };
       els.audio.addEventListener('loadedmetadata', setTime);
     }
-  } else if (restoreElapsed > 0) {
-    state.elapsed = Math.min(restoreElapsed, state.duration || restoreElapsed);
+  } else if (restoreElapsed > 0 && state.duration) {
+    state.elapsed = Math.min(restoreElapsed, state.duration);
   }
 }
 
@@ -391,8 +419,19 @@ function selectGenre(genreId) {
   }
 }
 
+function scoreSearchResult(song, query) {
+  const title = normaliseSearch(song.title);
+  const artist = normaliseSearch(song.artist);
+  if (title === query) return 0;
+  if (title.startsWith(query)) return 1;
+  if (artist.startsWith(query)) return 2;
+  if (title.includes(query)) return 3;
+  if (artist.includes(query)) return 4;
+  return 5;
+}
+
 function getSheetSongs() {
-  const query = els.searchInput.value.trim().toLowerCase();
+  const query = normaliseSearch(els.searchInput.value);
   let songs;
 
   if (state.sheetMode === 'favourites') {
@@ -400,13 +439,40 @@ function getSheetSongs() {
   } else if (state.sheetMode === 'queue') {
     songs = getUpNextSongs();
   } else if (state.sheetMode === 'search') {
+    if (!query) return [];
     songs = state.songs;
   } else {
     songs = state.songs.filter((song) => song.genre === state.sheetFilter);
   }
 
-  if (query) songs = songs.filter((song) => `${song.title} ${song.artist}`.toLowerCase().includes(query));
+  if (query) {
+    const terms = query.split(/\s+/).filter(Boolean);
+    songs = songs.filter((song) => {
+      const haystack = searchableSongText(song);
+      return terms.every((term) => haystack.includes(term));
+    });
+    if (state.sheetMode === 'search') {
+      songs = [...songs].sort((a, b) => scoreSearchResult(a, query) - scoreSearchResult(b, query)
+        || a.title.localeCompare(b.title));
+    }
+  }
   return songs;
+}
+
+function setSheetSummary(total, shown = total) {
+  if (!els.sheetSummary) return;
+  const hasQuery = Boolean(normaliseSearch(els.searchInput.value));
+  if (state.sheetMode === 'search' && !hasQuery) {
+    els.sheetSummary.textContent = `Search ${state.songs.length.toLocaleString()} songs`;
+  } else if (state.sheetMode === 'search') {
+    els.sheetSummary.textContent = total > shown ? `Showing ${shown} of ${total} results` : `${total} result${total === 1 ? '' : 's'}`;
+  } else if (state.sheetMode === 'favourites') {
+    els.sheetSummary.textContent = `${total} saved`;
+  } else if (state.sheetMode === 'queue') {
+    els.sheetSummary.textContent = `${total} up next`;
+  } else {
+    els.sheetSummary.textContent = `${total} song${total === 1 ? '' : 's'}`;
+  }
 }
 
 function renderSheet() {
@@ -416,7 +482,9 @@ function renderSheet() {
   els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'Favourites' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
-  const songs = getSheetSongs();
+  const allSongs = getSheetSongs();
+  const songs = state.sheetMode === 'search' ? allSongs.slice(0, MAX_SEARCH_RESULTS) : allSongs;
+  setSheetSummary(allSongs.length, songs.length);
   els.songList.innerHTML = '';
 
   if (!songs.length) {
@@ -424,15 +492,22 @@ function renderSheet() {
     empty.className = 'empty-state';
     const strong = document.createElement('strong');
     const copy = document.createElement('span');
+    const hasQuery = Boolean(normaliseSearch(els.searchInput.value));
     if (state.sheetMode === 'favourites') {
       strong.textContent = 'No favourites yet';
       copy.textContent = 'Tap the heart beside a song to keep it here.';
     } else if (state.sheetMode === 'queue') {
       strong.textContent = 'Nothing up next';
       copy.textContent = 'Choose a genre or another song to continue listening.';
+    } else if (state.sheetMode === 'search' && !hasQuery) {
+      strong.textContent = 'Search the collection';
+      copy.textContent = 'Search by song, artist, style, category, or release.';
+    } else if (state.sheetMode === 'search') {
+      strong.textContent = 'No matching songs';
+      copy.textContent = 'Try fewer words, another spelling, an artist, or a Garba style.';
     } else {
       strong.textContent = 'No songs found';
-      copy.textContent = els.searchInput.value ? 'Try a different search.' : 'This genre is waiting for catalogue data.';
+      copy.textContent = hasQuery ? 'Try a different search.' : 'This genre is waiting for catalogue data.';
     }
     empty.append(strong, copy);
     els.songList.append(empty);
@@ -452,7 +527,7 @@ function renderSheet() {
     const copy = document.createElement('button');
     copy.type = 'button';
     copy.className = 'song-copy';
-    copy.setAttribute('aria-label', `Play ${song.title} by ${song.artist}`);
+    copy.setAttribute('aria-label', `Select ${song.title} by ${song.artist}`);
     const title = document.createElement('strong');
     title.textContent = song.title;
     const artist = document.createElement('small');
@@ -462,7 +537,9 @@ function renderSheet() {
 
     const duration = document.createElement('span');
     duration.className = 'song-duration';
-    duration.textContent = formatTime(song.durationSeconds);
+    const seconds = knownDuration(song);
+    duration.textContent = seconds ? formatTime(seconds) : '—';
+    duration.title = seconds ? `Duration ${formatTime(seconds)}` : 'Duration unavailable';
 
     const favourite = document.createElement('button');
     favourite.type = 'button';
@@ -496,6 +573,7 @@ function setSheetSnap(snap) {
   els.app.dataset.sheetSnap = state.sheetSnap;
   const open = state.sheetSnap !== 'closed';
   els.songSheet.setAttribute('aria-hidden', String(!open));
+  els.songSheet.setAttribute('aria-modal', String(open && mobileQuery.matches));
   els.browseButton.setAttribute('aria-expanded', String(open));
   if (!open) {
     els.songSheet.classList.remove('searching');
@@ -727,6 +805,10 @@ function registerServiceWorker() {
   });
 }
 
+function isInteractiveShortcutTarget(target) {
+  return target instanceof Element && Boolean(target.closest('button, a[href], input, textarea, select, summary, iframe, [contenteditable="true"], [role="button"], [role="link"]'));
+}
+
 function wireEvents() {
   let searchTimer = null;
   els.playButton.addEventListener('click', togglePlay);
@@ -756,22 +838,21 @@ function wireEvents() {
   });
 
   els.progress.addEventListener('input', () => {
-    if (!state.duration) return;
+    if (els.progress.disabled || !state.duration || !els.audio.src) return;
     const next = Number(els.progress.value) / 1000 * state.duration;
-    if (els.audio.src) els.audio.currentTime = next;
-    else state.elapsed = next;
+    els.audio.currentTime = next;
     renderPlayer();
   });
 
   els.audio.addEventListener('play', () => { setPlaying(true); renderPlayer(); });
   els.audio.addEventListener('pause', () => { setPlaying(false); renderPlayer(); persistSession(); });
   els.audio.addEventListener('loadedmetadata', () => {
-    state.duration = els.audio.duration || currentSong()?.durationSeconds || 0;
+    state.duration = knownDuration(currentSong(), els.audio.duration);
     renderPlayer();
   });
   els.audio.addEventListener('timeupdate', () => {
     state.elapsed = els.audio.currentTime;
-    state.duration = els.audio.duration || state.duration;
+    state.duration = knownDuration(currentSong(), els.audio.duration || state.duration);
     renderPlayer();
     const rounded = Math.round(state.elapsed);
     if (rounded % 5 === 0 && rounded !== state.lastPersistedElapsed) {
@@ -782,17 +863,27 @@ function wireEvents() {
   els.audio.addEventListener('ended', () => changeSong(1));
 
   document.addEventListener('keydown', (event) => {
-    if (event.target instanceof HTMLInputElement) return;
+    if (event.key === 'Escape') {
+      if (els.songSheet.classList.contains('searching') && document.activeElement === els.searchInput) {
+        els.songSheet.classList.remove('searching');
+        els.searchInput.blur();
+      } else if (state.sheetSnap !== 'closed') {
+        closeSheet();
+      }
+      return;
+    }
+
+    if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey && !isInteractiveShortcutTarget(event.target)) {
+      event.preventDefault();
+      openSheet('search', { trigger: els.searchButton });
+      return;
+    }
+
+    if (isInteractiveShortcutTarget(event.target)) return;
     if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
     if (event.code === 'ArrowRight') changeSong(1);
     if (event.code === 'ArrowLeft') changeSong(-1);
-    if (event.code === 'Escape') {
-      if (els.songSheet.classList.contains('searching')) {
-        els.songSheet.classList.remove('searching');
-        els.searchInput.blur();
-      } else closeSheet();
-    }
-    if (event.key.toLowerCase() === 'f') toggleFavourite();
+    if (event.key.toLowerCase() === 'f' && !event.metaKey && !event.ctrlKey && !event.altKey) toggleFavourite();
   });
 
   window.addEventListener('offline', () => showToast('Offline. The app shell and cached catalogue remain available.'));
@@ -834,7 +925,7 @@ async function fetchCatalogue() {
 function makeCatalogueSignature(genres, songs) {
   return JSON.stringify({
     genres: genres.map((genre) => [genre.id, genre.label, genre.background, genre.accent]),
-    songs: songs.map((song) => [song.id, song.title, song.artist, song.genre, song.durationSeconds, song.audioUrl, song.youtubeId]),
+    songs: songs.map((song) => [song.id, song.title, song.artist, song.genre, song.category, song.styles, song.durationSeconds, song.audioUrl, song.youtubeId]),
   });
 }
 
@@ -860,7 +951,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
         state.songId = song.id;
         state.genreId = song.genre;
         state.sheetFilter = song.genre;
-        state.duration = song.durationSeconds || 0;
+        state.duration = knownDuration(song);
         state.elapsed = 0;
       }
     }
@@ -909,7 +1000,7 @@ async function init() {
     state.genreId = initial.genre.id;
     state.sheetFilter = initial.genre.id;
     state.songId = initial.song?.id || null;
-    state.duration = initial.song?.durationSeconds || 0;
+    state.duration = knownDuration(initial.song);
     els.app.dataset.genre = initial.genre.id;
     setAccent(initial.genre.accent);
     els.worldA.style.backgroundImage = `url("${initial.genre.background}")`;
