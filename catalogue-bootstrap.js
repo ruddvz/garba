@@ -2,6 +2,15 @@
   const nativeFetch = window.fetch.bind(window);
   const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
 
+  const PRIMARY_WEBP = {
+    traditional: 'assets/backgrounds/library/11-master-dark-courtyard.webp',
+    dandiya: 'assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
+    devotional: 'assets/backgrounds/library/03-devotional-garba-courtyard.webp',
+    folk: 'assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
+    sanedo: 'assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
+    fusion: 'assets/backgrounds/library/05-fusion-gujarati-neon.webp',
+  };
+
   const BOOT_GENRES = [
     { id: 'traditional', name: 'Traditional', label: 'Traditional Garba', background: 'assets/backgrounds/traditional.svg', accent: '#d6b06f' },
     { id: 'dandiya', name: 'Dandiya', label: 'Dandiya Raas', background: 'assets/backgrounds/dandiya.svg', accent: '#a77ad6' },
@@ -11,9 +20,6 @@
     { id: 'fusion', name: 'Fusion', label: 'Modern Fusion Garba', background: 'assets/backgrounds/fusion.svg', accent: '#a78bc4' },
   ];
 
-  // One real catalogue entry per visual genre. This tiny in-memory set exists only
-  // so the player can become interactive immediately. The complete generated
-  // catalogue replaces it in the background as soon as data/songs.json arrives.
   const BOOT_SONGS = [
     {
       id: 'ochhav-2023-01-ochhav-theme', title: 'Ochhav Theme', artist: 'Aditya Gadhvi', genre: 'traditional', durationSeconds: 79,
@@ -54,6 +60,7 @@
   let fullSongsText = null;
   let fullLoadPromise = null;
   let catalogueAnnounced = false;
+  let hydrationScheduled = false;
 
   function requestPath(input) {
     try {
@@ -63,6 +70,22 @@
     } catch {
       return '';
     }
+  }
+
+  function requestedGenre() {
+    try {
+      const id = new URL(location.href).searchParams.get('genre');
+      return BOOT_GENRES.some((genre) => genre.id === id) ? id : 'traditional';
+    } catch {
+      return 'traditional';
+    }
+  }
+
+  function bootGenresForRequest() {
+    const current = requestedGenre();
+    return BOOT_GENRES.map((genre) => genre.id === current
+      ? { ...genre, background: PRIMARY_WEBP[genre.id] || genre.background, backgroundQuality: '2k-webp' }
+      : genre);
   }
 
   const isSongsRequest = (input) => requestPath(input).endsWith('/data/songs.json');
@@ -90,9 +113,7 @@
   function announceFullCatalogue() {
     if (catalogueAnnounced || !fullSongsText) return;
     catalogueAnnounced = true;
-    const fire = () => setTimeout(() => window.dispatchEvent(new Event('online')), 0);
-    if (document.readyState === 'complete') fire();
-    else window.addEventListener('load', fire, { once: true });
+    setTimeout(() => window.dispatchEvent(new Event('online')), 0);
   }
 
   function startFullCatalogueLoad() {
@@ -120,23 +141,31 @@
     return fullLoadPromise;
   }
 
+  function scheduleFullCatalogueLoad() {
+    if (hydrationScheduled) return;
+    hydrationScheduled = true;
+
+    const afterLoad = () => {
+      const hydrate = () => startFullCatalogueLoad();
+      if ('requestIdleCallback' in window) requestIdleCallback(hydrate, { timeout: 2500 });
+      else setTimeout(hydrate, 1600);
+    };
+
+    if (document.readyState === 'complete') afterLoad();
+    else window.addEventListener('load', afterLoad, { once: true });
+  }
+
   window.fetch = async (input, init) => {
-    if (isGenresRequest(input)) return jsonResponse(BOOT_GENRES);
+    if (isGenresRequest(input)) return jsonResponse(bootGenresForRequest());
 
     if (isSongsRequest(input)) {
       if (fullSongsText) return jsonResponse(fullSongsText);
-      startFullCatalogueLoad();
       return jsonResponse(BOOT_SONGS);
     }
 
     return nativeFetch(input, init);
   };
 
-  // Release the skeleton synchronously, before the module player starts. This
-  // makes the first screen deterministic even on a slow iPhone connection.
   showReadyShell();
-
-  // Fetch the 1k+ song catalogue after first paint. It never blocks the player.
-  if ('requestIdleCallback' in window) requestIdleCallback(() => startFullCatalogueLoad(), { timeout: 500 });
-  else setTimeout(() => startFullCatalogueLoad(), 50);
+  scheduleFullCatalogueLoad();
 })();
