@@ -8,10 +8,11 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [songs, coverage, simple] = await Promise.all([
+const [songs, coverage, simple, app] = await Promise.all([
   readJson('data/songs.json'),
   readJson('data/playback-coverage.json'),
   read('simple-runtime.js'),
+  read('app.js'),
 ]);
 
 const missing = songs.filter((song) => !song.audioUrl && (!song.playbackProvider || !song.playbackSourceUrl));
@@ -35,7 +36,20 @@ for (const marker of [
   "song.playbackSourceType === 'verified-performance-chapter'",
 ]) if (!simple.includes(marker)) fail(`Simple runtime missing enriched-route marker: ${marker}`);
 
+for (const marker of [
+  'const SEARCH_RESULT_LIMIT = 160;',
+  "sheetSummary: $('sheetSummary')",
+  'state.sheetMatchCount = state.songs.length;',
+  "if (state.sheetMode === 'search' && songs.length > SEARCH_RESULT_LIMIT) return songs.slice(0, SEARCH_RESULT_LIMIT);",
+  "state.sheetMode === 'search' && !query",
+  'Keep typing to narrow the list.',
+  "if (event.key === '/')",
+  "openSheet('search', { trigger: els.searchButton });",
+]) if (!app.includes(marker)) fail(`Large-catalogue browser missing bounded-search marker: ${marker}`);
+
 if (failed) process.exit(1);
 console.log(`✓ all ${songs.length} generated songs carry a direct or provider playback route`);
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
+console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
+console.log('✓ the advertised / keyboard shortcut opens Search');
