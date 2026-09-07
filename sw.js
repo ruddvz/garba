@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v12-player-pwa`;
+const VERSION = `${CACHE_PREFIX}v13-provider-coverage`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -18,6 +18,7 @@ const SHELL = [
   './ux-polish.js',
   './ux-next.js',
   './ux-input.js',
+  './playback-routes.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
@@ -25,6 +26,9 @@ const SHELL = [
   './offline.html',
   './data/genres.json',
   './data/taxonomy.json',
+  './data/songs.json',
+  './data/playback-sources-generated.json',
+  './data/playback-coverage.json',
   './data/catalogue/index.json',
   './data/playback-sources.json',
   './data/playback-sources-current.json',
