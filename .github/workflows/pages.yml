@@ -29,12 +29,18 @@ jobs:
           cp index.html app.js visual-library.js catalogue-bootstrap.js playback-bridge.js styles.css manifest.webmanifest offline.html sw.js _site/
           cp -R styles assets data _site/
 
-          # Canonical visual pack: 15 approved 2K WebPs. Keeping the zip in
-          # the repository makes source history compact while Pages serves the
-          # actual image files with normal browser/CDN caching.
+          # Canonical visual pack: 15 approved 2K WebPs. Keeping one zip in
+          # Git keeps source history compact while Pages serves normal WebPs.
+          PACK=''
           if [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+
+          if [ -n "$PACK" ]; then
             mkdir -p _site/assets/backgrounds/library
-            unzip -oq assets/backgrounds/garba15-2k.zip -d _site/assets/backgrounds/library
+            unzip -oq "$PACK" -d _site/assets/backgrounds/library
             test "$(find _site/assets/backgrounds/library -maxdepth 1 -name '*.webp' | wc -l)" -eq 15
           else
             echo '2K visual pack not present yet; keeping SVG fallbacks for this deployment.'
