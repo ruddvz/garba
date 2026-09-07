@@ -1,7 +1,7 @@
 {
-  "version": "0.10.0",
-  "songCount": 789,
-  "releaseCount": 125,
+  "version": "0.10.1",
+  "songCount": 796,
+  "releaseCount": 127,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -34,7 +34,8 @@
     "data/catalogue/songs/songs-27-pooja-kalyani-ramzat.json",
     "data/catalogue/songs/songs-28-santvani-shakti.json",
     "data/catalogue/songs/songs-29-kairavi-buch.json",
-    "data/catalogue/songs/songs-30-atul-united-way.json"
+    "data/catalogue/songs/songs-30-atul-united-way.json",
+    "data/catalogue/songs/songs-31-atul-rangrasiya-ramjo-2026.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -54,7 +55,8 @@
     "data/catalogue/releases/releases-15-pooja-kalyani-ramzat.json",
     "data/catalogue/releases/releases-16-santvani-shakti.json",
     "data/catalogue/releases/releases-17-kairavi-buch.json",
-    "data/catalogue/releases/releases-18-atul-united-way.json"
+    "data/catalogue/releases/releases-18-atul-united-way.json",
+    "data/catalogue/releases/releases-19-atul-rangrasiya-ramjo-2026.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
