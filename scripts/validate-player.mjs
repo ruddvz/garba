@@ -7,11 +7,13 @@ const read = (file) => readFile(path.join(root, file), 'utf8');
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [index, bootstrap, prewarm, bridge, styles, playerCss, sw, pages, visuals, app, uxPolish, uxNext, uxInput] = await Promise.all([
+const [index, bootstrap, prewarm, bridge, routes, releaseGuard, styles, playerCss, sw, pages, visuals, app, uxPolish, uxNext, uxInput] = await Promise.all([
   read('index.html'),
   read('catalogue-bootstrap.js'),
   read('playback-prewarm.js'),
   read('playback-bridge.js'),
+  read('playback-routes.js'),
+  read('playback-release-guard.js'),
   read('styles.css'),
   read('styles/part-7.css'),
   read('sw.js'),
@@ -108,9 +110,50 @@ for (const marker of [
 for (const marker of ['setSheetBackgroundInert', 'syncSheetAccessibility', "shareButton?.addEventListener('click', shareCurrentTrack)"]) {
   if (!uxPolish.includes(marker)) fail(`Accessibility/share interaction contract missing: ${marker}`);
 }
-for (const marker of ['playButton?.click()', "setActionHandler('play'", 'providerSpaceGuard', 'stopImmediatePropagation']) {
+for (const marker of [
+  'playButton?.click()',
+  'installMediaSessionHandlers',
+  "setMediaAction('play'",
+  "setMediaAction('pause'",
+  "setMediaAction('seekto'",
+  "setMediaAction('previoustrack'",
+  "setMediaAction('nexttrack'",
+  'setTimeout(installMediaSessionHandlers, 0)',
+  'isInteractiveTarget(event.target)',
+  'providerSpaceGuard',
+  'stopImmediatePropagation',
+]) {
   if (!uxInput.includes(marker)) fail(`Playback input parity contract missing: ${marker}`);
 }
+
+for (const marker of [
+  'function announce(message)',
+  'function interceptProviderStop(event)',
+  'parts.media.replaceChildren();',
+  "window.addEventListener('offline'",
+  'closeActive: hideFallbackStage',
+  'routeCurrent()',
+  "announce('You are offline. Apple Music needs an internet connection.')",
+  "announce('You are offline. Verified provider sources need an internet connection.')",
+]) {
+  if (!routes.includes(marker)) fail(`Provider route resilience contract missing: ${marker}`);
+}
+if (routes.includes('if (!navigator.onLine) return;')) {
+  fail('Provider routes must never fail silently while offline');
+}
+
+for (const marker of [
+  'function isInteractiveTarget(target)',
+  'if (isInteractiveTarget(event.target)) return;',
+  'function interceptProviderStop(event)',
+  'media?.replaceChildren();',
+  "window.addEventListener('offline'",
+  'closeActive: closeRelease',
+  'routeCurrent()',
+]) {
+  if (!releaseGuard.includes(marker)) fail(`Verified release resilience contract missing: ${marker}`);
+}
+
 for (const marker of [
   'function recoverStaleInert()',
   "window.addEventListener('pageshow', recoverStaleInert)",
@@ -183,6 +226,9 @@ if (failed) process.exit(1);
 console.log('✓ first paint is a complete edge-to-edge player with a real 2K WebP');
 console.log('✓ every primary tap/click control has a DOM target and core event binding');
 console.log('✓ modal inert recovery and provider-aware input remain available before optional UI enhancements');
+console.log('✓ hardware/lock-screen controls route through the same player controls as pointer and keyboard input');
+console.log('✓ provider Close stops hidden embeds and offline transitions are visible to the user');
+console.log('✓ Space on focused controls is not stolen by global playback shortcuts');
 console.log('✓ the complete catalogue waits until after page load and browser idle time');
 console.log('✓ service-worker install no longer bulk-downloads catalogue or artwork');
 console.log('✓ all 15 approved WebPs remain available and warm progressively');
