@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "updatedAt": "2026-09-07",
+  "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
+  "contacts": [
+    {
+      "batchId": "hardik-rahul-sur-sagar",
+      "entity": "Sur Sagar Music",
+      "contactState": "ready-for-rights-inquiry",
+      "confidence": "high-official-channel",
+      "primaryRoute": "https://www.youtube.com/@SurSagarMusicOriginal",
+      "secondaryRoute": "https://www.instagram.com/sursagarmusic/",
+      "businessDomain": "senseworldmusic.com",
+      "evidence": [
+        "https://www.youtube.com/channel/UCQJLc3UGESs_l8Pe5F7bdCw",
+        "https://uk.linkedin.com/in/alpesh-patel-3a86aa10"
+      ],
+      "notes": "Verified Sur Sagar Music YouTube identifies the label as a Gujarati music label and current video descriptions provide its business website/email route. Ask specifically for master ownership and direct on-demand streaming rights for Garbi and Garbi 2."
+    },
+    {
+      "batchId": "atul-purohit-rutumbhara",
+      "entity": "Rutumbhara Entertainment Private Limited",
+      "contactState": "corporate-route-found-needs-licensing-authority-confirmation",
+      "confidence": "medium-corporate-registry",
+      "primaryRoute": "https://www.zaubacorp.com/RUTUMBHARA-ENTERTAINMENT-PRIVATE-LIMITED-U92412GJ2015PTC085436",
+      "evidence": [
+        "https://www.zaubacorp.com/RUTUMBHARA-ENTERTAINMENT-PRIVATE-LIMITED-U92412GJ2015PTC085436",
+        "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2"
+      ],
+      "notes": "Corporate-registry aggregations identify Atulbhai Bhikhabhai Purohit and Jigar Purohit as directors and expose a company correspondence route. Provider metadata repeatedly identifies Rutumbhara as copyright/phonogram owner. First contact must confirm who is authorised to license digital direct streaming and which releases the company controls."
+    },
+    {
+      "batchId": "hemant-chauhan-label-split",
+      "entity": "T-Series / Super Cassettes Industries Private Limited",
+      "contactState": "ready-for-digital-licensing-inquiry",
+      "confidence": "high-official-licensing-desk",
+      "primaryRoute": "https://www.tseries.com/contact-us",
+      "licensingInfo": "https://tseries.com/publishing",
+      "evidence": [
+        "https://www.tseries.com/contact-us",
+        "https://tseries.com/publishing"
+      ],
+      "notes": "Official T-Series contact page publishes a Mobile & Digital Platforms & Radio Licenses desk. Official publishing guidance states that Internet communication of copyrighted music requires a licence. Only request terms for Hemant Chauhan releases confirmed to be in the T-Series/Super Cassettes catalogue."
+    },
+    {
+      "batchId": "aditya-gadhvi-2245114",
+      "entity": "Aditya Gadhvi / management",
+      "contactState": "official-artist-route-found-rights-authority-unresolved",
+      "confidence": "medium-official-artist-presence",
+      "primaryRoute": "https://linktr.ee/adityagadhvi",
+      "secondaryRoute": "https://adityagadhvi.in/contact-us/",
+      "evidence": [
+        "https://linktr.ee/adityagadhvi",
+        "https://open.spotify.com/album/3u6f9V4fO8Yl6Z8R2S7uYQ"
+      ],
+      "notes": "Use the current official artist route to ask who controls the 2245114 Records DK masters. Do not rely on phone numbers displayed on the contact-site page without independent verification."
+    },
+    {
+      "batchId": "rutvi-pandya-ramzat",
+      "entity": "Rutvi Pandya / management",
+      "contactState": "contact-discovery-needed",
+      "confidence": "master-owner-signal-strong-contact-route-not-yet-authoritative",
+      "evidence": [
+        "https://open.spotify.com/album/2uDViDZc4RoX4Y8xJqQbcN"
+      ],
+      "notes": "Provider metadata strongly signals Rutvi Pandya as ©/℗ owner of the main Ramzat releases, but no sufficiently authoritative licensing/business contact route has yet been verified. Continue through official artist social/channel surfaces rather than third-party influencer databases."
+    },
+    {
+      "batchId": "geeta-rabari-official",
+      "entity": "Geeta Rabari Official / management",
+      "contactState": "contact-discovery-needed",
+      "confidence": "master-owner-subset-strong-contact-route-not-yet-authoritative",
+      "evidence": [
+        "https://open.spotify.com/album/3JrLR5W4mSWf0vOLhlMYS7"
+      ],
+      "notes": "Geeta Rabari Official controls a meaningful subset but the overall artist catalogue is mixed-owner. Third-party booking-agent pages are not sufficient licensing authority. Verify the official management route before outreach."
+    },
+    {
+      "batchId": "strategic-label-jigar-studio",
+      "entity": "Jigar Studio",
+      "contactState": "ready-for-catalogue-partnership-inquiry",
+      "confidence": "high-official-licensing-page",
+      "primaryRoute": "https://jigarstudio.com/",
+      "evidence": [
+        "https://jigarstudio.com/"
+      ],
+      "notes": "Strategic expansion lane rather than a currently mapped top-six batch. Jigar Studio publicly advertises a 3,000+ Gujarati catalogue and a licensing inquiry path for digital media. Ask whether its licence can cover on-demand direct audio streaming and obtain a machine-readable catalogue for overlap matching before negotiating track counts."
+    }
+  ]
+}
