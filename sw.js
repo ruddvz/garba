@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v4`;
+const VERSION = `${CACHE_PREFIX}v5`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -11,10 +11,18 @@ const SHELL = [
   './styles/part-2.css',
   './styles/part-3.css',
   './app.js',
+  './catalogue-bootstrap.js',
+  './playback-bridge.js',
   './manifest.webmanifest',
   './offline.html',
   './data/genres.json',
-  './data/songs.json',
+  './data/catalogue/index.json',
+  './data/playback-sources.json',
+  './data/playback-sources-current.json',
+  './data/playback-sources-generated.json',
+  './data/playback-coverage.json',
+  './data/nonstop.json',
+  './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
   './assets/icons/maskable.svg',
   './assets/backgrounds/traditional.svg',
@@ -57,7 +65,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/data/songs.json') || url.pathname.endsWith('/data/genres.json')) {
+  if (url.pathname.includes('/data/') && url.pathname.endsWith('.json')) {
     event.respondWith(networkFirst(request));
     return;
   }
