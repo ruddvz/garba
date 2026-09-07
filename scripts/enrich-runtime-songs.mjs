@@ -14,7 +14,21 @@ const manifests = await Promise.all(sourcePaths.map((file) => readJson(file)));
 const routes = Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {}));
 let enriched = 0;
 let direct = 0;
+let exactTrackFallbacks = 0;
 const missing = [];
+
+function isExactTrackUrl(provider, sourceUrl) {
+  try {
+    const url = new URL(sourceUrl);
+    const pathname = url.pathname.toLowerCase();
+    if (provider === 'spotify') return /\/(?:intl-[^/]+\/)?track\/[^/]+/.test(pathname);
+    if (provider === 'apple-music') return pathname.includes('/song/') || url.searchParams.has('i');
+    if (provider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname);
+  } catch {
+    return false;
+  }
+  return false;
+}
 
 const runtimeSongs = songs.map((song) => {
   const next = { ...song };
@@ -32,6 +46,10 @@ const runtimeSongs = songs.map((song) => {
   next.playbackProvider = route.provider;
   next.playbackSourceUrl = route.sourceUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(route.videoId)}`;
   next.playbackSourceType = route.sourceType || 'verified-provider-source';
+  if (next.playbackSourceType === 'verified-release-source' && isExactTrackUrl(next.playbackProvider, next.playbackSourceUrl)) {
+    next.playbackSourceType = 'verified-track-source';
+    exactTrackFallbacks += 1;
+  }
   if (route.videoId) next.youtubeId = route.videoId;
   if (Number.isFinite(Number(route.startSeconds))) {
     next.youtubeStartSeconds = Math.max(0, Math.floor(Number(route.startSeconds)));
@@ -47,4 +65,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${missing.length} unresolved.`);
