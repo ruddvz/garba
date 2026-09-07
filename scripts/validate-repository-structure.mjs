@@ -12,6 +12,7 @@ const exists = async (file) => {
 };
 const read = (file) => readFile(path.join(root, file), 'utf8');
 const readJson = async (file) => JSON.parse(await read(file));
+const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
   '.gitignore',
@@ -41,7 +42,7 @@ for (const file of requiredRootFiles) if (!await exists(file)) fail(`Missing req
 
 const rootJs = (await readdir(root)).filter((file) => file.endsWith('.js')).sort();
 const expectedRootJs = ['app.js', 'nonstop-browser.js', 'simple-runtime.js', 'sw.js'];
-if (JSON.stringify(rootJs) !== JSON.stringify(expectedRootJs)) {
+if (!same(rootJs, expectedRootJs)) {
   fail(`Root JavaScript must be production-only. Expected ${expectedRootJs.join(', ')}, found ${rootJs.join(', ')}`);
 } else ok('root JavaScript is production-only');
 
@@ -55,7 +56,7 @@ const styleLayers = [
   '60-runtime-and-provider.css',
 ];
 const actualStyles = (await readdir(path.join(root, 'styles'))).filter((file) => file.endsWith('.css')).sort();
-if (JSON.stringify(actualStyles) !== JSON.stringify(styleLayers)) {
+if (!same(actualStyles, styleLayers)) {
   fail(`Styles must use the ordered semantic layer set. Found: ${actualStyles.join(', ')}`);
 } else ok('styles use ordered semantic filenames');
 const styleEntry = await read('styles.css');
@@ -80,6 +81,44 @@ const optionalFiles = [
 for (const file of optionalFiles) if (!await exists(`src/optional/${file}`)) fail(`Missing retained optional module: src/optional/${file}`);
 if (!await exists('src/optional/README.md')) fail('src/optional/README.md must document the production boundary');
 
+const expectedScriptEntrypoints = [
+  'audit-direct-host-health.mjs',
+  'audit-youtube-health.mjs',
+  'build-catalogue.mjs',
+  'enrich-runtime-songs.mjs',
+  'generate-licensing-request.mjs',
+  'match-vendor-catalogue.mjs',
+  'plan-direct-ingest.mjs',
+  'report-hosting-readiness.mjs',
+  'report-label-acquisition.mjs',
+  'test-catalogue-matcher.mjs',
+  'validate-contact-map.mjs',
+  'validate-direct-audio.mjs',
+  'validate-discovery.mjs',
+  'validate-documentation.mjs',
+  'validate-hosting-rights.mjs',
+  'validate-master-intake.mjs',
+  'validate-outreach-queue.mjs',
+  'validate-publish-transaction.mjs',
+  'validate-repository-structure.mjs',
+  'validate-runtime-song-routes.mjs',
+  'validate-simple-runtime.mjs',
+];
+const actualScriptEntrypoints = (await readdir(path.join(root, 'scripts'))).filter((file) => file.endsWith('.mjs')).sort();
+if (!same(actualScriptEntrypoints, expectedScriptEntrypoints)) {
+  fail(`scripts/ entry points drifted. Expected ${expectedScriptEntrypoints.join(', ')}, found ${actualScriptEntrypoints.join(', ')}`);
+} else ok('scripts use one maintained action-oriented entry-point set');
+if (!await exists('scripts/README.md')) fail('scripts/README.md must document tooling responsibilities and naming');
+for (const stale of [
+  'scripts/hosting-readiness.mjs',
+  'scripts/label-acquisition-report.mjs',
+  'scripts/validate.mjs',
+  'scripts/validate-pages.mjs',
+  'scripts/validate-playback.mjs',
+  'scripts/validate-player.mjs',
+  'scripts/validate-visuals.mjs',
+]) if (await exists(stale)) fail(`Retired tooling must not remain executable in the active script directory: ${stale}`);
+
 const docsTop = await readdir(path.join(root, 'docs'), { withFileTypes: true });
 for (const entry of docsTop) {
   if (entry.isFile() && entry.name !== 'README.md') fail(`Documentation must be grouped by responsibility, found docs/${entry.name}`);
@@ -89,16 +128,30 @@ for (const folder of ['catalogue', 'operations', 'product', 'project', 'rights']
 }
 
 const catalogueIndex = await readJson('data/catalogue/index.json');
+const discovery = catalogueIndex.discovery || {};
+const discoveryArtists = discovery.artists || [];
+const discoveryRecommendations = discovery.recommendations || [];
 const requiredIndexedPaths = [
   ...(catalogueIndex.songChunks || []),
   ...(catalogueIndex.releaseChunks || []),
   ...(catalogueIndex.freeSourceChunks || []),
   ...(catalogueIndex.playbackSources || []),
+  ...discoveryArtists,
+  ...discoveryRecommendations,
   catalogueIndex.taxonomy,
   catalogueIndex.nonstopSets,
-  catalogueIndex.discovery?.setsIndex,
+  discovery.setsIndex,
 ].filter(Boolean);
 for (const file of requiredIndexedPaths) if (!await exists(file)) fail(`Catalogue manifest references missing file: ${file}`);
+
+if (new Set(requiredIndexedPaths).size !== requiredIndexedPaths.length) fail('Catalogue manifest contains duplicate file references');
+for (const file of discoveryArtists) {
+  if (!/^data\/discovery\/artists-\d{4}-\d{2}\.json$/.test(file)) fail(`Discovery artist shard must use artists-YYYY-NN.json: ${file}`);
+}
+for (const file of discoveryRecommendations) {
+  if (!/^data\/discovery\/recommendations-\d{4}-\d{2}\.json$/.test(file)) fail(`Discovery recommendation shard must use recommendations-YYYY-NN.json: ${file}`);
+}
+if (await exists('data/discovery/artists-2026.json')) fail('Legacy discovery filename artists-2026.json must be normalised to artists-2026-01.json');
 
 const compareCanonicalDir = async (dir, indexed) => {
   const actual = (await readdir(path.join(root, dir))).filter((file) => file.endsWith('.json')).map((file) => `${dir}/${file}`).sort();
@@ -119,6 +172,14 @@ for (const file of [
   'docs/README.md',
 ]) if (!await exists(file)) fail(`Missing repository organisation file: ${file}`);
 
+const packageJson = await readJson('package.json');
+const packageScripts = packageJson.scripts || {};
+if (!packageScripts.catalogue?.includes('scripts/enrich-runtime-songs.mjs')) fail('npm run catalogue must retain runtime playback-route enrichment');
+if (!packageScripts.check?.includes('scripts/validate-runtime-song-routes.mjs')) fail('npm run check must retain complete runtime song-route validation');
+if (!packageScripts.check?.includes('scripts/report-hosting-readiness.mjs')) fail('npm run check must use report-hosting-readiness.mjs');
+if (!packageScripts.check?.includes('scripts/report-label-acquisition.mjs')) fail('npm run check must use report-label-acquisition.mjs');
+if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');
+
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
@@ -127,6 +188,7 @@ if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages wor
 
 if (failed) process.exit(1);
 ok('catalogue source directories contain only manifest-indexed shards');
+ok('discovery shards use explicit ordered filenames and resolve through the manifest');
 ok('unindexed historical catalogue fragments are isolated in archive/');
 ok('documentation is grouped by responsibility');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
