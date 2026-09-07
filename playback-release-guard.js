@@ -17,7 +17,9 @@
   };
 
   const state = {
-    sources: {},
+    // Seed the release guard from the six-song boot map. This makes the first
+    // tap synchronous instead of waiting for the full playback manifest graph.
+    sources: { ...(window.GARBA_BOOT_PLAYBACK || {}) },
     ready: false,
     loading: null,
     active: false,
@@ -34,6 +36,10 @@
 
   function currentSongId() {
     return new URLSearchParams(location.search).get('song');
+  }
+
+  function currentSource() {
+    return state.sources[currentSongId()] || window.GARBA_BOOT_PLAYBACK?.[currentSongId()] || null;
   }
 
   function isReleaseFallback(source) {
@@ -184,10 +190,8 @@
     state.active = true;
   }
 
-  async function routeRelease(button) {
-    await state.loading;
+  function routeRelease(source = currentSource()) {
     if (audio?.getAttribute('src')) return false;
-    const source = state.sources[currentSongId()] || null;
     if (!isReleaseFallback(source)) return false;
     openRelease(source);
     return true;
@@ -196,46 +200,31 @@
   function interceptPlay(event) {
     const button = event.target.closest?.('#playButton, #miniPlay');
     if (!button || audio?.getAttribute('src')) return;
-    const source = state.sources[currentSongId()] || null;
-    if (state.ready && !isReleaseFallback(source)) return;
+
+    const source = currentSource();
+
+    // Crucial first-tap rule: never swallow a Play gesture merely because the
+    // full source manifests are still hydrating. Boot routes already tell us
+    // whether the current song is a release fallback. Non-release and unknown
+    // routes pass straight through to the normal in-app playback bridge.
+    if (!isReleaseFallback(source)) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    routeRelease(button).then((handled) => {
-      if (!handled) {
-        button.dataset.garbaReleaseGuardBypass = '1';
-        button.click();
-      }
-    });
-  }
-
-  function interceptBypass(event) {
-    const button = event.target.closest?.('#playButton, #miniPlay');
-    if (!button || button.dataset.garbaReleaseGuardBypass !== '1') return false;
-    delete button.dataset.garbaReleaseGuardBypass;
-    return true;
-  }
-
-  function captureClick(event) {
-    if (interceptBypass(event)) return;
-    interceptPlay(event);
+    routeRelease(source);
   }
 
   function interceptSpace(event) {
     if (event.code !== 'Space' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable) return;
     if (audio?.getAttribute('src')) return;
-    const source = state.sources[currentSongId()] || null;
-    if (state.ready && !isReleaseFallback(source)) return;
+
+    const source = currentSource();
+    if (!isReleaseFallback(source)) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
-    routeRelease(playButton).then((handled) => {
-      if (!handled) {
-        playButton.dataset.garbaReleaseGuardBypass = '1';
-        playButton.click();
-      }
-    });
+    routeRelease(source);
   }
 
   async function loadSources() {
@@ -247,11 +236,14 @@
     ];
     const paths = Array.isArray(configured) ? configured : [configured];
     const manifests = await Promise.all(paths.filter(Boolean).map(fetchJson));
-    state.sources = Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {}));
+    state.sources = {
+      ...(window.GARBA_BOOT_PLAYBACK || {}),
+      ...Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {})),
+    };
     state.ready = true;
   }
 
-  window.addEventListener('click', captureClick, true);
+  window.addEventListener('click', interceptPlay, true);
   window.addEventListener('keydown', interceptSpace, true);
 
   if (songTitle) {
@@ -267,7 +259,7 @@
   state.loading = loadSources().catch(() => { state.ready = true; });
   window.GARBA_RELEASE_GUARD = {
     get ready() { return state.ready; },
-    sourceFor(songId) { return state.sources[songId] || null; },
+    sourceFor(songId) { return state.sources[songId] || window.GARBA_BOOT_PLAYBACK?.[songId] || null; },
     isReleaseFallback,
   };
 })();

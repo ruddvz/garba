@@ -57,6 +57,17 @@
     },
   ];
 
+  // Expose only the tiny six-song boot routing map so the very first Play tap can
+  // be handled synchronously. The 1,169-song catalogue and source manifests still
+  // hydrate later, after first paint.
+  window.GARBA_BOOT_PLAYBACK = Object.fromEntries(BOOT_SONGS.map((song) => [song.id, {
+    provider: song.playbackProvider,
+    sourceUrl: song.playbackSourceUrl,
+    sourceType: song.playbackSourceType,
+    videoId: song.youtubeId || null,
+    startSeconds: song.youtubeStartSeconds || 0,
+  }]));
+
   let fullSongsText = null;
   let fullLoadPromise = null;
   let catalogueAnnounced = false;

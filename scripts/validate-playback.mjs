@@ -82,11 +82,17 @@ for (const marker of ['appleMusicEmbedUrl', 'openExternalSource', 'provider-exte
   if (!routes.includes(marker)) fail(`playback-routes.js missing provider coverage marker: ${marker}`);
 }
 
+const bootstrap = await readFile(path.join(root, 'catalogue-bootstrap.js'), 'utf8');
+for (const marker of ['window.GARBA_BOOT_PLAYBACK', 'playbackSourceType', 'playbackProvider']) {
+  if (!bootstrap.includes(marker)) fail(`catalogue-bootstrap.js missing first-tap playback marker: ${marker}`);
+}
+
 const guard = await readFile(path.join(root, 'playback-release-guard.js'), 'utf8');
-for (const marker of ['isReleaseFallback', 'verified-release-source', 'releaseEmbed', 'youtube-nocookie.com/embed/', 'embed.music.apple.com', 'open.spotify.com/embed/', 'GARBA_RELEASE_GUARD', 'stopImmediatePropagation']) {
+for (const marker of ['isReleaseFallback', 'verified-release-source', 'releaseEmbed', 'youtube-nocookie.com/embed/', 'embed.music.apple.com', 'open.spotify.com/embed/', 'GARBA_RELEASE_GUARD', 'stopImmediatePropagation', 'GARBA_BOOT_PLAYBACK']) {
   if (!guard.includes(marker)) fail(`playback-release-guard.js missing release-truth marker: ${marker}`);
 }
-if (!guard.includes("window.addEventListener('click', captureClick, true)")) fail('release guard must intercept at window capture before document-level playback routers');
+if (!guard.includes("window.addEventListener('click', interceptPlay, true)")) fail('release guard must intercept release-only Play at window capture before document-level playback routers');
+if (guard.includes('await state.loading;')) fail('release guard must never hold the first Play gesture while route manifests hydrate');
 
 const uxNext = await readFile(path.join(root, 'ux-next.js'), 'utf8');
 if (!uxNext.includes("import './playback-release-guard.js';")) fail('ux-next.js must load the release fallback guard');
@@ -114,7 +120,9 @@ console.log(`✓ exact/song-level playback routes: ${localAudio + songLevelProvi
 console.log(`✓ verified chaptered performance routes: ${verifiedPerformanceChapter}`);
 console.log(`✓ verified release navigation fallbacks: ${verifiedReleaseFallback}`);
 console.log(`✓ release fallback providers: ${[...releaseProviders.entries()].sort((a, b) => b[1] - a[1]).map(([provider, count]) => `${provider} ${count}`).join(', ')}`);
+console.log('✓ boot songs expose synchronous first-tap playback routes without hydrating the full catalogue');
 console.log('✓ chapter routes carry source-set, segment and timestamp provenance and are preferred before release navigation');
 console.log('✓ verified release fallbacks are intercepted before song-level players and never presented as a track-specific stream');
+console.log('✓ release routing never blocks the first Play gesture while manifests hydrate');
 console.log('✓ Spotify, Apple Music and YouTube release pages can embed as release context; other providers expose a clear verified source action');
 console.log('✓ installed PWA caches playback logic immediately and route metadata lazily on demand');
