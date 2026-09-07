@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v3`;
+const VERSION = `${CACHE_PREFIX}v4`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -7,13 +7,16 @@ const SHELL = [
   './',
   './index.html',
   './styles.css',
+  './styles/part-1.css',
+  './styles/part-2.css',
+  './styles/part-3.css',
   './app.js',
   './manifest.webmanifest',
   './offline.html',
   './data/genres.json',
   './data/songs.json',
   './assets/icons/icon.svg',
-  './assets/backgrounds/master.svg',
+  './assets/icons/maskable.svg',
   './assets/backgrounds/traditional.svg',
   './assets/backgrounds/dandiya.svg',
   './assets/backgrounds/devotional.svg',
