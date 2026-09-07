@@ -15,7 +15,7 @@
     "volume": null,
     "live": {"isLive": false, "venue": null},
     "sources": [
-      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=-k0A8aG719g", "kind": "official-artist-channel-audio"},
+      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=WrToXG4wkQM", "kind": "official-artist-channel-video"},
       {"platform": "Apple Music", "url": "https://music.apple.com/us/album/norta-aave-re-single/1838500978", "kind": "stream-store"},
       {"platform": "Amazon Music", "url": "https://music.amazon.com/tracks/B0FQ5SBQ96", "kind": "track"}
     ],
