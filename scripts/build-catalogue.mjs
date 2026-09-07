@@ -50,8 +50,10 @@ function youtubeIdFromUrl(url = "") {
 function chooseReleaseSource(release) {
   const sources = Array.isArray(release?.sources) ? release.sources : [];
   const scored = sources.map((source) => {
-    const provider = providerFromPlatform(source.platform);
     const url = source.url || "";
+    let provider = providerFromPlatform(source.platform);
+    const youtubeId = provider === "youtube" ? youtubeIdFromUrl(url) : null;
+    if (provider === "youtube" && !youtubeId) provider = "external";
     let score = 0;
     if (provider === "spotify") score += 60;
     if (provider === "youtube") score += 55;
