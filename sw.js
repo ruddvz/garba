@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v6`;
+const VERSION = `${CACHE_PREFIX}v7`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -10,7 +10,9 @@ const SHELL = [
   './styles/part-1.css',
   './styles/part-2.css',
   './styles/part-3.css',
+  './styles/part-4.css',
   './app.js',
+  './ux-polish.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
   './manifest.webmanifest',
@@ -54,11 +56,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put('./index.html', copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put('./index.html', copy));
+          }
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match('./index.html')) || caches.match('./offline.html'))
+        .catch(async () => (await caches.match(request, { ignoreSearch: true })) || (await caches.match('./index.html')) || caches.match('./offline.html'))
     );
     return;
   }
