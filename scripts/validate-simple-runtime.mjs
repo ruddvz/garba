@@ -57,6 +57,9 @@ for (const forbidden of [
 for (const marker of [
   'clearStaleInert',
   'interceptFallbackPlay',
+  'function interceptGlobalSpace(event)',
+  "target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable=\"false\"])')",
+  "document.addEventListener('keydown', interceptGlobalSpace)",
   'shareCurrent',
   'data-static-genre="true"',
   "fetch('data/songs.json'",
@@ -177,6 +180,7 @@ console.log(`✓ ${songs.length} songs and six genres remain available`);
 console.log(`✓ ${nonstopIndex.chunks.length} Nonstop discovery chunks remain available`);
 console.log('✓ primary player controls retain direct event bindings');
 console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
+console.log('✓ Space follows the provider-aware Play path without stealing native button/input behaviour');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
