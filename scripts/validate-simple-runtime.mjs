@@ -12,12 +12,13 @@ for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'styles.css', '
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, genres, songs] = await Promise.all([
+const [index, app, simple, genres, songs, playerCss] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
   readJson('data/genres.json'),
   readJson('data/songs.json'),
+  read('styles/part-7.css'),
 ]);
 
 const expectedGenres = ['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', 'fusion'];
@@ -47,7 +48,40 @@ for (const marker of [
   'shareCurrent',
   'data-static-genre="true"',
   "fetch('data/songs.json'",
-]) if (!simple.includes(marker)) fail(`Simple runtime missing interaction marker: ${marker}`);
+  'function ensureProviderStage()',
+  'function providerEmbed(',
+  'https://www.youtube-nocookie.com/embed/',
+  'https://open.spotify.com/embed/',
+  "url.hostname = 'embed.music.apple.com'",
+  'function externalProviderCard(',
+  "media?.replaceChildren(iframe)",
+  "$('providerMedia')?.replaceChildren()",
+  'function constrainedConnection()',
+  'function promoteCurrentVisual()',
+  "requestIdleCallback(run, { timeout: 1800 })",
+  "navigator.mediaSession.setActionHandler('play'",
+  "navigator.mediaSession.setActionHandler('pause'",
+  "navigator.mediaSession.setActionHandler('previoustrack'",
+  "navigator.mediaSession.setActionHandler('nexttrack'",
+  "window.addEventListener('offline'",
+  'Provider-backed songs need an internet connection',
+]) if (!simple.includes(marker)) fail(`Simple runtime missing launch-hardening marker: ${marker}`);
+
+if (simple.includes('window.open(')) fail('Primary Play must not automatically throw users out to a new provider tab');
+
+const expectedVisualFiles = [
+  '15-traditional-canopy-courtyard.webp',
+  '10-dandiya-silhouette-courtyard.webp',
+  '03-devotional-garba-courtyard.webp',
+  '14-gujarati-folk-courtyard.webp',
+  '04-colourful-garba-courtyard-a.webp',
+  '05-fusion-gujarati-neon.webp',
+];
+for (const visual of expectedVisualFiles) if (!simple.includes(visual)) fail(`Missing art-directed 2K visual mapping: ${visual}`);
+
+for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-dock.is-spotify', '.provider-dock.is-apple', '.provider-dock.is-external', '.provider-external-action']) {
+  if (!playerCss.includes(marker)) fail(`Provider UI styling missing marker: ${marker}`);
+}
 
 const ids = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 for (const id of [...app.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1])) {
@@ -74,3 +108,7 @@ console.log(`✓ simple production runtime uses only ${scriptSources.join(' + ')
 console.log(`✓ ${songs.length} songs and six genres remain available`);
 console.log('✓ stale service-worker caches are retired on first visit');
 console.log('✓ primary player controls retain direct event bindings');
+console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
+console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
+console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
+console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
