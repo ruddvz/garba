@@ -1,7 +1,7 @@
 {
-  "version": "1.2.1",
+  "version": "1.3.0",
   "updatedAt": "2026-09-07",
-  "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
+  "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared. Similar names, fan pages, booking pages and unrelated organisations must be explicitly disambiguated before outreach.",
   "contacts": [
     {
       "batchId": "hardik-rahul-sur-sagar",
@@ -11,11 +11,17 @@
       "primaryRoute": "https://www.youtube.com/@SurSagarMusicOriginal",
       "secondaryRoute": "https://www.instagram.com/sursagarmusic/",
       "businessDomain": "senseworldmusic.com",
+      "identity": {
+        "canonicalYouTubeHandle": "@SurSagarMusicOriginal",
+        "canonicalInstagramHandle": "@sursagarmusic",
+        "disambiguation": "Gujarati music label associated with current releases including Garbi and Geeta Rabari material; do not substitute similarly named singer/channels."
+      },
       "evidence": [
-        "https://www.youtube.com/channel/UCQJLc3UGESs_l8Pe5F7bdCw",
-        "https://uk.linkedin.com/in/alpesh-patel-3a86aa10"
+        "https://www.youtube.com/@SurSagarMusicOriginal",
+        "https://uk.linkedin.com/in/alpesh-patel-3a86aa10",
+        "https://open.spotify.com/album/6RveMtyJ00gDD4SNRiCQQH"
       ],
-      "notes": "Verified Sur Sagar Music YouTube identifies the label as a Gujarati music label and current video descriptions provide its business website/email route. Ask both for Garbi/Garbi 2 and for a larger machine-readable Garba/Raas catalogue that could be licensed as one direct-streaming batch."
+      "notes": "Alpesh Patel's current Sur Sagar Music profile lists the canonical YouTube and Instagram routes as company websites. Release metadata for Garbi identifies ©/℗ Sur Sagar. Ask both for Garbi/Garbi 2 and for a larger machine-readable Garba/Raas catalogue that could be licensed as one direct-streaming batch. The canonical handles are preferred over brittle or unverified raw channel-ID matches."
     },
     {
       "batchId": "strategic-label-soor-mandir",
@@ -25,12 +31,23 @@
       "primaryRoute": "https://www.youtube.com/@soormandir",
       "catalogueRoute": "http://soormandir.com",
       "secondaryRoute": "https://www.instagram.com/soormandir/",
+      "identity": {
+        "canonicalYouTubeHandle": "@soormandir",
+        "descriptionAnchor": "Soulful Gujarati Songs - Soor Mandir",
+        "geographicAnchor": "Gujarat, India",
+        "knownUnrelatedRoutes": [
+          "https://www.soormandir.org/"
+        ],
+        "disambiguation": "Gujarati commercial music label/catalogue with millions of YouTube subscribers and releases carrying ©/℗ Soor Mandir. Do not confuse it with the unrelated Soor Mandir Odissi/cultural institution in Cuttack, Odisha at soormandir.org."
+      },
       "evidence": [
+        "https://www.youtube.com/watch?v=L-8huZUeHc0",
         "https://www.youtube.com/watch?v=xcmJ2OSBoa0",
         "https://iprs.org/wp-content/uploads/2023/01/IPRS_Member_List_watermark.pdf",
-        "https://www.sec.gov/Archives/edgar/data/1611820/000119312516618753/d728446dex105.htm"
+        "https://www.sec.gov/Archives/edgar/data/1611820/000119312516618753/d728446dex105.htm",
+        "https://www.zaubacorp.com/SOOR-MANDIR-MUSIC-PRIVATE-LIMITED-U92490GJ2006PTC049454"
       ],
-      "notes": "The verified active Soor Mandir music channel identifies the label and points to soormandir.com, official socials and its app. IPRS member material lists SOOR MANDIR as an owner/publisher. An SEC-filed contract schedule records Soor Mandir as counterparty to digital-music and streaming/content licence agreements for Nokia Music/MixRadio, which is strong historical evidence of a licensable sound-recording catalogue. The old company record for SOOR MANDIR MUSIC PRIVATE LIMITED is shown as struck off, so do not address a new licence to that old corporate entity without confirmation. First inquiry must ask which current person/entity owns and can license the master catalogue, then request the roughly 245 Soor Mandir-labelled GARBA rows plus the separately-labelled Soor Mandir / SM Digital subset for ownership reconciliation."
+      "notes": "The verified active @soormandir YouTube channel identifies itself as the home of Soulful Gujarati Songs, labels its releases Soor Mandir and links related Gujarati music channels. IPRS member material lists SOOR MANDIR as an owner/publisher. An SEC-filed contract schedule records Soor Mandir as counterparty to digital-music and streaming/content licence agreements for Nokia Music/MixRadio, which is strong historical evidence of a licensable sound-recording catalogue. The old Gujarat company record for SOOR MANDIR MUSIC PRIVATE LIMITED is shown as struck off, so do not address a new licence to that old corporate entity without confirmation. The similarly named soormandir.org belongs to an Odisha Odissi/cultural institution and is explicitly excluded. First inquiry must ask which current person/entity owns and can license the master catalogue, then request the roughly 245 Soor Mandir-labelled GARBA rows plus the separately-labelled Soor Mandir / SM Digital subset for ownership reconciliation."
     },
     {
       "batchId": "atul-purohit-rutumbhara",
@@ -74,21 +91,31 @@
       "entity": "Rutvi Pandya / management",
       "contactState": "contact-discovery-needed",
       "confidence": "master-owner-signal-strong-contact-route-not-yet-authoritative",
+      "identity": {
+        "candidateInstagramHandle": "@rutvipandyamusic",
+        "candidateRouteStatus": "third-party indexes reproduce a public inquiry bio, but no directly verified official business/licensing surface has been retrieved"
+      },
       "evidence": [
         "https://www.youtube.com/watch?v=RKDi5F85ft4",
         "https://music.apple.com/us/album/rutvi-ni-ramzat/1647208847"
       ],
-      "notes": "Provider and official-release metadata strongly signal Rutvi Pandya as owner/label for the main Ramzat releases, but no sufficiently authoritative licensing/business contact route has yet been verified. Continue through official artist social/channel surfaces rather than third-party influencer databases."
+      "notes": "Provider and release metadata strongly signal Rutvi Pandya as owner/label for the main Ramzat releases, including newer releases carrying ℗ Rutvi Pandya. Search indexes consistently identify @rutvipandyamusic and reproduce an inquiry bio, but those third-party indexes are not sufficient licensing authority. Keep this lane in contact discovery until an official artist/channel/business surface is directly verified."
     },
     {
       "batchId": "geeta-rabari-official",
       "entity": "Geeta Rabari Official / management",
       "contactState": "contact-discovery-needed",
       "confidence": "master-owner-subset-strong-contact-route-not-yet-authoritative",
+      "identity": {
+        "canonicalArtistHandleSignal": "@geetabenrabariofficial",
+        "candidateManagementHandle": "@pruthvirabari79",
+        "candidateRouteStatus": "public bio indexes identify this as live-show/paid-promotion management, not verified master-rights licensing authority"
+      },
       "evidence": [
+        "https://www.youtube.com/@GeetaBenRabariOfficial",
         "https://www.youtube.com/watch?v=vy7f_tYi7VU"
       ],
-      "notes": "Geeta Rabari Official controls a meaningful subset but the overall artist catalogue is mixed-owner. Third-party booking-agent pages are not sufficient licensing authority. Verify the official management route before outreach."
+      "notes": "Geeta Rabari Official controls a meaningful subset but the overall artist catalogue is mixed-owner. The official artist identity is well corroborated, while third-party indexes reproduce a public management/booking route. Booking or paid-promotion management is not sufficient master-rights authority, so keep this lane in contact discovery until the official channel or management route directly confirms licensing responsibility."
     },
     {
       "batchId": "strategic-label-jigar-studio",
