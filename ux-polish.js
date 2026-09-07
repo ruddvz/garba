@@ -1,8 +1,12 @@
 const $ = (id) => document.getElementById(id);
 
 const app = $('app');
+const mainPlayer = $('mainPlayer');
+const topbar = document.querySelector('.topbar');
+const installBanner = $('installBanner');
 const songTitle = $('songTitle');
 const songArtist = $('songArtist');
+const genreEyebrow = $('genreEyebrow');
 const trackBlock = $('trackBlock');
 const searchButton = $('searchButton');
 const searchInput = $('searchInput');
@@ -11,15 +15,20 @@ const songList = $('songList');
 const sheetTitle = $('sheetTitle');
 const shareButton = $('shareButton');
 const playButton = $('playButton');
+const progress = $('progress');
+const durationTime = $('durationTime');
+const audio = $('audio');
 const toast = $('toast');
+const mobileQuery = matchMedia('(max-width: 700px)');
 
 const state = {
   songs: new Map(),
   sources: {},
   ready: false,
-  providerTrigger: null,
   providerOpen: false,
-  focusReturn: null,
+  providerFocusReturn: null,
+  sheetFocusReturn: null,
+  sheetModalActive: false,
 };
 
 function announce(message) {
@@ -73,11 +82,36 @@ function ensureSourceBadge() {
   return badge;
 }
 
+function removeRetryButton() {
+  $('retryCatalogueButton')?.remove();
+  app?.removeAttribute('data-catalogue-error');
+}
+
+function syncDurationTruth() {
+  const song = currentSong();
+  if (!song || !durationTime || !progress) return;
+
+  const localDuration = Number(audio?.duration);
+  const hasLocalDuration = Number.isFinite(localDuration) && localDuration > 0;
+  const durationKnown = song.durationSeconds != null || hasLocalDuration;
+
+  if (!durationKnown) {
+    durationTime.textContent = '—';
+    progress.disabled = true;
+    progress.setAttribute('aria-disabled', 'true');
+    progress.title = 'Duration not verified';
+  } else {
+    progress.disabled = false;
+    progress.removeAttribute('aria-disabled');
+    progress.removeAttribute('title');
+  }
+}
+
 function syncDocumentMetadata() {
   const song = currentSong();
   const title = cleanText(song?.title || songTitle?.textContent || 'GARBA');
   const artist = cleanText(song?.artist || songArtist?.textContent || '');
-  const isPlaceholder = /traditional demo|loading garba|add artist|preparing catalogue/i.test(`${title} ${artist}`);
+  const isPlaceholder = /traditional demo|loading garba|add artist|preparing catalogue|catalogue unavailable|check your connection/i.test(`${title} ${artist}`);
 
   if (!isPlaceholder && title && title !== 'GARBA') {
     document.title = artist ? `${title} · ${artist} · GARBA` : `${title} · GARBA`;
@@ -92,14 +126,13 @@ function syncDocumentMetadata() {
     app?.setAttribute('data-loading', 'false');
     app?.setAttribute('aria-busy', 'false');
     state.ready = true;
+    removeRetryButton();
   }
 
   const badge = ensureSourceBadge();
   const id = currentSongId();
   const source = id ? state.sources[id] : null;
-  const label = sourceLabel(source) || sourceLabel(song ? {
-    provider: song.playbackProvider,
-  } : null);
+  const label = sourceLabel(source) || sourceLabel(song ? { provider: song.playbackProvider } : null);
   badge.textContent = label;
   badge.classList.toggle('show', Boolean(label));
 
@@ -108,11 +141,41 @@ function syncDocumentMetadata() {
   } else if (playButton) {
     playButton.removeAttribute('title');
   }
+
+  syncDurationTruth();
+}
+
+function ensureSearchPrompt() {
+  if (!songList) return null;
+  let prompt = songList.querySelector('[data-ux-search-prompt]');
+  if (!prompt) {
+    prompt = document.createElement('div');
+    prompt.className = 'search-empty-prompt';
+    prompt.dataset.uxSearchPrompt = 'true';
+    prompt.innerHTML = '<strong>Search the collection</strong><span>Type a song or artist name to begin.</span>';
+    songList.prepend(prompt);
+  }
+  return prompt;
+}
+
+function syncSearchEmptyState() {
+  if (!songSheet || !songList || !searchInput) return;
+  const awaiting = songSheet.classList.contains('mode-search') && !searchInput.value.trim();
+  const prompt = ensureSearchPrompt();
+  songSheet.classList.toggle('search-awaiting-query', awaiting);
+  if (prompt) prompt.hidden = !awaiting;
 }
 
 function syncSheetSummary() {
   const summary = $('sheetSummary');
   if (!summary || !songList) return;
+  syncSearchEmptyState();
+
+  if (songSheet?.classList.contains('search-awaiting-query')) {
+    summary.textContent = 'Type to search';
+    return;
+  }
+
   const count = songList.querySelectorAll('.song-row').length;
   if (count) {
     summary.textContent = `${count.toLocaleString()} ${count === 1 ? 'song' : 'songs'}`;
@@ -152,6 +215,64 @@ async function shareCurrentTrack() {
   }
 }
 
+function visibleFocusable(root) {
+  return [...root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])')]
+    .filter((node) => node.getClientRects().length > 0 && !node.closest('[hidden]'));
+}
+
+function trapTab(event, root) {
+  if (event.key !== 'Tab') return;
+  const focusable = visibleFocusable(root);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function setSheetBackgroundInert(inert) {
+  for (const element of [topbar, mainPlayer, installBanner]) {
+    if (!element) continue;
+    if (inert) element.setAttribute('inert', '');
+    else element.removeAttribute('inert');
+  }
+}
+
+function syncSheetAccessibility({ moveFocus = true } = {}) {
+  if (!songSheet) return;
+  const open = songSheet.getAttribute('aria-hidden') === 'false';
+  const modal = open && mobileQuery.matches && !state.providerOpen;
+  songSheet.setAttribute('aria-modal', String(modal));
+
+  if (modal === state.sheetModalActive) return;
+  state.sheetModalActive = modal;
+
+  if (modal) {
+    state.sheetFocusReturn = document.activeElement instanceof HTMLElement && !songSheet.contains(document.activeElement)
+      ? document.activeElement
+      : state.sheetFocusReturn;
+    setSheetBackgroundInert(true);
+    if (moveFocus) {
+      requestAnimationFrame(() => {
+        const preferred = songSheet.querySelector('.searching input, .sheet-handle, .song-copy, button:not([disabled])');
+        preferred?.focus?.({ preventScroll: true });
+      });
+    }
+  } else {
+    setSheetBackgroundInert(false);
+    if (!open && !state.providerOpen) {
+      const target = state.sheetFocusReturn?.isConnected ? state.sheetFocusReturn : null;
+      state.sheetFocusReturn = null;
+      if (moveFocus && target) requestAnimationFrame(() => target.focus?.({ preventScroll: true }));
+    }
+  }
+}
+
 function setupProviderAccessibility(overlay) {
   if (!overlay || overlay.dataset.uxPolished === 'true') return;
   overlay.dataset.uxPolished = 'true';
@@ -164,33 +285,43 @@ function setupProviderAccessibility(overlay) {
     state.providerOpen = open;
 
     if (open) {
-      state.focusReturn = document.activeElement instanceof HTMLElement ? document.activeElement : playButton;
+      state.providerFocusReturn = document.activeElement instanceof HTMLElement ? document.activeElement : playButton;
+      setSheetBackgroundInert(false);
       app?.setAttribute('inert', '');
       requestAnimationFrame(() => overlay.querySelector('.provider-close')?.focus({ preventScroll: true }));
     } else {
       app?.removeAttribute('inert');
-      const target = state.focusReturn?.isConnected ? state.focusReturn : playButton;
-      state.focusReturn = null;
+      syncSheetAccessibility({ moveFocus: false });
+      const target = state.providerFocusReturn?.isConnected ? state.providerFocusReturn : playButton;
+      state.providerFocusReturn = null;
       requestAnimationFrame(() => target?.focus?.({ preventScroll: true }));
     }
   });
   observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
 
   overlay.addEventListener('keydown', (event) => {
-    if (event.key !== 'Tab' || !overlay.classList.contains('open')) return;
-    const focusable = [...overlay.querySelectorAll('a[href], button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])')]
-      .filter((node) => node.getClientRects().length > 0);
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    if (overlay.classList.contains('open')) trapTab(event, overlay);
   });
+}
+
+function showCatalogueFailure() {
+  if (!app || app.dataset.loading !== 'true' || state.ready) return;
+  app.dataset.loading = 'false';
+  app.dataset.catalogueError = 'true';
+  app.setAttribute('aria-busy', 'false');
+  if (genreEyebrow) genreEyebrow.textContent = 'Could not load songs';
+  if (songTitle) songTitle.textContent = 'Catalogue unavailable';
+  if (songArtist) songArtist.textContent = navigator.onLine === false ? 'You appear to be offline' : 'Check your connection and retry';
+
+  if (trackBlock && !$('retryCatalogueButton')) {
+    const retry = document.createElement('button');
+    retry.id = 'retryCatalogueButton';
+    retry.className = 'retry-catalogue';
+    retry.type = 'button';
+    retry.textContent = 'Retry';
+    retry.addEventListener('click', () => location.reload());
+    trackBlock.append(retry);
+  }
 }
 
 function setupObservers() {
@@ -202,9 +333,13 @@ function setupObservers() {
   }
   if (songSheet) {
     new MutationObserver(() => {
-      const open = songSheet.getAttribute('aria-hidden') === 'false';
-      songSheet.setAttribute('aria-modal', String(open && matchMedia('(max-width: 700px)').matches));
-    }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
+      syncSheetAccessibility();
+      syncSheetSummary();
+    }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden', 'class'] });
+
+    songSheet.addEventListener('keydown', (event) => {
+      if (state.sheetModalActive) trapTab(event, songSheet);
+    });
   }
 
   const bodyObserver = new MutationObserver(() => {
@@ -253,33 +388,32 @@ async function loadCatalogueContext() {
       Object.assign(state.sources, manifest?.songSources || {});
     }
   } catch {
-    // Core app owns the user-facing catalogue error state.
+    // The timeout below provides a truthful retry state if the shell remains stuck.
   } finally {
     syncDocumentMetadata();
+    syncDurationTruth();
   }
 }
 
 function init() {
   shareButton?.addEventListener('click', shareCurrentTrack);
-  window.addEventListener('online', syncNetworkStatus);
+  window.addEventListener('online', () => { syncNetworkStatus(); if (app?.dataset.catalogueError === 'true') announce('Back online. Retry the catalogue.'); });
   window.addEventListener('offline', syncNetworkStatus);
   window.addEventListener('popstate', () => requestAnimationFrame(syncDocumentMetadata));
   searchInput?.setAttribute('placeholder', 'Search songs or artists');
+  searchInput?.addEventListener('input', () => setTimeout(syncSheetSummary, 90));
+  audio?.addEventListener('loadedmetadata', syncDurationTruth);
+  mobileQuery.addEventListener?.('change', () => syncSheetAccessibility({ moveFocus: false }));
 
   setupObservers();
   setupKeyboardPolish();
   syncNetworkStatus();
   syncSheetSummary();
   syncDocumentMetadata();
+  syncSheetAccessibility({ moveFocus: false });
   loadCatalogueContext();
 
-  // Never leave the shell looking broken if a catalogue request stalls indefinitely.
-  setTimeout(() => {
-    if (app?.dataset.loading === 'true') {
-      app.dataset.loading = 'false';
-      app.setAttribute('aria-busy', 'false');
-    }
-  }, 9000);
+  setTimeout(showCatalogueFailure, 9000);
 }
 
 init();
