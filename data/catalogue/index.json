@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0",
+  "version": "0.5.1",
   "songCount": 585,
   "releaseCount": 79,
   "categoryCount": 19,
@@ -39,7 +39,11 @@
     "data/catalogue/free-sources/free-sources-02.json"
   ],
   "taxonomy": "data/taxonomy.json",
-  "playbackSources": ["data/playback-sources.json", "data/playback-sources-current.json"],
+  "playbackSources": [
+    "data/playback-sources-generated.json",
+    "data/playback-sources.json",
+    "data/playback-sources-current.json"
+  ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
     "artists": ["data/discovery/artists-2026.json", "data/discovery/artists-2026-02.json"],
@@ -49,7 +53,9 @@
   "generatedFiles": {
     "songs": "data/songs.json",
     "releases": "data/releases.json",
-    "freeSources": "data/free-audio-sources.json"
+    "freeSources": "data/free-audio-sources.json",
+    "releasePlayback": "data/playback-sources-generated.json",
+    "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. The browser playback bridge loads provider-specific current sources and segment-aware nonstop sets without bundling copyrighted audio."
+  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. Exact track mappings override generated verified-release fallbacks; chaptered nonstop/live performances are used before provider search."
 }
