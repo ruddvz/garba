@@ -8,12 +8,14 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [songs, coverage, simple, app] = await Promise.all([
+const [songs, releases, coverage, simple, app] = await Promise.all([
   readJson('data/songs.json'),
+  readJson('data/releases.json'),
   readJson('data/playback-coverage.json'),
   read('simple-runtime.js'),
   read('app.js'),
 ]);
+const releasesById = new Map(releases.map((release) => [release.id, release]));
 
 function isExactTrackUrl(song) {
   try {
@@ -28,10 +30,29 @@ function isExactTrackUrl(song) {
   return false;
 }
 
+function isReleaseSpecificUrl(song) {
+  try {
+    const url = new URL(song.playbackSourceUrl || '');
+    const pathname = url.pathname.toLowerCase();
+    if (song.playbackProvider === 'spotify') return pathname.includes('/album/');
+    if (song.playbackProvider === 'apple-music') return pathname.includes('/album/');
+    if (song.playbackProvider === 'amazon-music') return pathname.includes('/albums/');
+    if (song.playbackProvider === 'youtube') return url.hostname === 'youtu.be' || (url.hostname.includes('youtube.com') && pathname === '/watch');
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 const missing = songs.filter((song) => !song.audioUrl && (!song.playbackProvider || !song.playbackSourceUrl));
 const chapterRoutes = songs.filter((song) => song.playbackSourceType === 'verified-performance-chapter');
 const exactTrackRoutes = songs.filter((song) => song.playbackSourceType === 'verified-track-source');
+const singleReleaseRoutes = songs.filter((song) => song.playbackSourceType === 'verified-single-release-source');
 const misclassifiedExactTracks = songs.filter((song) => song.playbackSourceType === 'verified-release-source' && isExactTrackUrl(song));
+const misclassifiedSingleReleases = songs.filter((song) => {
+  if (song.playbackSourceType !== 'verified-release-source' || !isReleaseSpecificUrl(song)) return false;
+  return Number(releasesById.get(song.releaseId)?.songCount) === 1;
+});
 const brokenChapters = chapterRoutes.filter((song) => song.playbackProvider !== 'youtube' || !song.youtubeId || !Number.isFinite(Number(song.youtubeStartSeconds)) || Number(song.youtubeStartSeconds) < 0);
 const providers = new Map();
 for (const song of songs) {
@@ -42,6 +63,7 @@ for (const song of songs) {
 if (missing.length) fail(`${missing.length} generated songs are missing runtime provider fields (first: ${missing.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (brokenChapters.length) fail(`${brokenChapters.length} performance-chapter routes lost their YouTube ID or start time`);
 if (misclassifiedExactTracks.length) fail(`${misclassifiedExactTracks.length} exact provider track URLs are still labelled as release-level fallbacks`);
+if (misclassifiedSingleReleases.length) fail(`${misclassifiedSingleReleases.length} one-song release URLs are still labelled as multi-track release fallbacks`);
 if (coverage.songCount !== songs.length) fail(`Playback coverage songCount ${coverage.songCount} does not match ${songs.length} generated songs`);
 if (coverage.unresolvedWithoutVerifiedReleaseSource !== 0) fail(`Playback coverage still reports ${coverage.unresolvedWithoutVerifiedReleaseSource} unresolved songs`);
 
@@ -67,6 +89,7 @@ if (failed) process.exit(1);
 console.log(`✓ all ${songs.length} generated songs carry a direct or provider playback route`);
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
 console.log(`✓ ${exactTrackRoutes.length} exact provider track URLs are distinguished from release-level fallbacks`);
+console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');
