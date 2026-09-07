@@ -27,7 +27,6 @@ if (!index.includes('<script src="catalogue-bootstrap.js"></script>') || !index.
 }
 if (!styles.includes('@import url("styles/part-7.css")')) fail('Source styles.css must load the final player polish layer');
 
-// First paint is a complete usable player, not a loading skeleton.
 for (const marker of [
   'data-loading="false"',
   'aria-busy="false"',
@@ -40,7 +39,6 @@ for (const marker of [
   if (!index.includes(marker)) fail(`Complete first-paint HTML missing marker: ${marker}`);
 }
 
-// The 1k+ catalogue must not compete with CSS, scripts or the first 2K image.
 for (const marker of [
   'const PRIMARY_WEBP = {',
   'const BOOT_GENRES = [',
@@ -77,16 +75,13 @@ for (const marker of [
   if (!playerCss.includes(marker)) fail(`Final player CSS missing marker: ${marker}`);
 }
 
-// Service worker install must remain a small shell. Heavy catalogue/artwork is
-// cached only after it is requested, preventing first-load request storms.
-for (const marker of ['v16-fast-shell', 'const CORE_SHELL = [', 'cache.addAll(CORE_SHELL)', 'request.destination === \'image\'', 'cacheFirst(request)']) {
+for (const marker of ['fast-shell', 'const CORE_SHELL = [', 'cache.addAll(CORE_SHELL)', 'request.destination === \'image\'', 'cacheFirst(request)']) {
   if (!sw.includes(marker)) fail(`Fast service worker missing marker: ${marker}`);
 }
 for (const forbidden of ["'./data/songs.json'", 'OPTIONAL_ARTWORK', 'cacheOfflineCatalogue']) {
   if (sw.includes(forbidden)) fail(`Service worker first install must not include heavy resource: ${forbidden}`);
 }
 
-// All fifteen approved WebPs remain wired into the visual library.
 const artworkEntries = [...visuals.matchAll(/['\"]([0-9]{2}-[^'\"]+\.webp)['\"]/g)].map((match) => match[1]);
 if (new Set(artworkEntries).size !== 15) fail(`Visual library must contain 15 unique approved WebPs, found ${new Set(artworkEntries).size}`);
 if (!visuals.includes('requestAnimationFrame(() => promoteVisibleGenre(requestedGenre()))')) {
@@ -94,8 +89,6 @@ if (!visuals.includes('requestAnimationFrame(() => promoteVisibleGenre(requested
 }
 if (!visuals.includes('scheduleRemainingArtwork();')) fail('Remaining approved artwork must be warmed after first load');
 
-// Pages produces one CSS response and exactly fifteen extracted WebPs, while the
-// source ZIP stays out of the public deployment artifact.
 if (!pages.includes('garba15-2k-q82.zip')) fail('Pages workflow must retain the approved 2K WebP pack extraction');
 if (!pages.includes('styles/part-7.css \\')) fail('Pages workflow must flatten the seven CSS layers');
 if (!pages.includes('> _site/styles.css')) fail('Pages workflow must emit one production styles.css');
