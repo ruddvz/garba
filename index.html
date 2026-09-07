@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#15182a" />
+    <meta name="theme-color" content="#111323" />
     <meta name="color-scheme" content="dark" />
     <meta name="description" content="GARBA is an open, community-built Gujarati Garba music catalogue for songs, artists, releases, live sets and nonstop Garba." />
     <meta name="application-name" content="GARBA" />
@@ -26,8 +26,19 @@
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
-    <!-- Preload the bundled fallback. visual-library.js swaps to an approved 2K WebP only when that binary really exists. -->
-    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" type="image/svg+xml" fetchpriority="high" />
+
+    <!-- The first visual is a real approved 2K WebP, not a temporary placeholder. -->
+    <link rel="preload" as="image" href="assets/backgrounds/library/11-master-dark-courtyard.webp" type="image/webp" fetchpriority="high" />
+
+    <!-- Tiny critical layer prevents Safari from ever showing body margins or a blank
+         strip while the full production stylesheet is arriving. -->
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #111323; }
+      .app { position: fixed; inset: 0; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: #111323; }
+      .world, .world-layer { position: absolute; inset: 0; margin: 0; padding: 0; }
+      .world { overflow: hidden; }
+      .world-layer { background-size: cover; background-position: center; background-repeat: no-repeat; }
+    </style>
     <link rel="stylesheet" href="styles.css" />
 
     <script type="application/ld+json">
@@ -51,9 +62,14 @@
   <body>
     <a class="skip-link" href="#mainPlayer">Skip to player</a>
 
-    <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed" data-loading="true" aria-busy="true">
+    <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed" data-loading="false" aria-busy="false">
       <div class="world" aria-hidden="true">
-        <div class="world-layer is-visible" id="worldA"></div>
+        <div
+          class="world-layer is-visible"
+          id="worldA"
+          data-background-quality="2k-webp"
+          style="background-image:url('assets/backgrounds/library/11-master-dark-courtyard.webp'),url('assets/backgrounds/traditional.svg')"
+        ></div>
         <div class="world-layer" id="worldB"></div>
         <div class="world-vignette"></div>
         <div class="world-ambient" id="worldAmbient"></div>
@@ -81,10 +97,10 @@
 
       <main class="player-shell" id="mainPlayer" tabindex="-1">
         <section class="track-block" id="trackBlock" aria-label="Now playing" aria-live="polite" aria-atomic="true">
-          <p class="genre-eyebrow" id="genreEyebrow">Loading catalogue</p>
-          <h1 class="song-title" id="songTitle">Loading Garba…</h1>
+          <p class="genre-eyebrow" id="genreEyebrow">Traditional Garba</p>
+          <h1 class="song-title" id="songTitle">Ochhav Theme</h1>
           <div class="artist-row">
-            <p class="artist" id="songArtist">Preparing the collection</p>
+            <p class="artist" id="songArtist">Aditya Gadhvi</p>
             <button class="heart-button mobile-heart" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
             </button>
@@ -108,10 +124,17 @@
         <section class="progress-wrap" aria-label="Playback progress">
           <span class="time" id="elapsedTime">0:00</span>
           <input class="progress" id="progress" type="range" min="0" max="1000" value="0" aria-label="Seek" />
-          <span class="time" id="durationTime">0:00</span>
+          <span class="time" id="durationTime">1:19</span>
         </section>
 
-        <nav class="genre-strip" id="genreStrip" aria-label="Genres"></nav>
+        <nav class="genre-strip" id="genreStrip" aria-label="Genres">
+          <button class="genre-button active" type="button" data-genre="traditional" aria-current="true">Traditional</button>
+          <button class="genre-button" type="button" data-genre="dandiya">Dandiya</button>
+          <button class="genre-button" type="button" data-genre="devotional">Devotional</button>
+          <button class="genre-button" type="button" data-genre="folk">Folk</button>
+          <button class="genre-button" type="button" data-genre="sanedo">Sanedo</button>
+          <button class="genre-button" type="button" data-genre="fusion">Fusion</button>
+        </nav>
 
         <div class="browse-actions" id="browseActions">
           <button class="browse-button" id="browseButton" type="button" aria-expanded="false" aria-controls="songSheet">
@@ -144,8 +167,8 @@
           <div class="mini-player" aria-label="Compact player">
             <div class="mini-progress"><span id="miniProgress"></span></div>
             <div class="mini-track">
-              <strong id="miniTitle">Loading Garba…</strong>
-              <span id="miniArtist">Preparing the collection</span>
+              <strong id="miniTitle">Ochhav Theme</strong>
+              <span id="miniArtist">Aditya Gadhvi</span>
             </div>
             <div class="mini-controls">
               <button class="transport" id="miniPrev" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
