@@ -1,7 +1,7 @@
 {
-  "version": "0.8.1",
-  "songCount": 747,
-  "releaseCount": 114,
+  "version": "0.9.0",
+  "songCount": 754,
+  "releaseCount": 121,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -32,7 +32,8 @@
     "data/catalogue/songs/songs-25-rutvi-ramzat-2022-2023.json",
     "data/catalogue/songs/songs-26-rutvi-ramzat-2024-2026.json",
     "data/catalogue/songs/songs-27-pooja-kalyani-ramzat.json",
-    "data/catalogue/songs/songs-28-santvani-shakti.json"
+    "data/catalogue/songs/songs-28-santvani-shakti.json",
+    "data/catalogue/songs/songs-29-kairavi-buch.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -50,7 +51,8 @@
     "data/catalogue/releases/releases-13-rutvi-ramzat-2022-2023.json",
     "data/catalogue/releases/releases-14-rutvi-ramzat-2024-2026.json",
     "data/catalogue/releases/releases-15-pooja-kalyani-ramzat.json",
-    "data/catalogue/releases/releases-16-santvani-shakti.json"
+    "data/catalogue/releases/releases-16-santvani-shakti.json",
+    "data/catalogue/releases/releases-17-kairavi-buch.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
