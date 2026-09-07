@@ -17,7 +17,7 @@ const checkFile = async (file) => {
   catch { fail(`Missing file: ${file}`); return false; }
 };
 
-for (const file of ['index.html', 'styles.css', 'app.js', 'sw.js', 'offline.html', 'manifest.webmanifest']) await checkFile(file);
+for (const file of ['index.html', 'styles.css', 'app.js', 'catalogue-bootstrap.js', 'playback-bridge.js', 'sw.js', 'offline.html', 'manifest.webmanifest']) await checkFile(file);
 
 for (const expected of expectedGenres) {
   if (!ids.has(expected)) fail(`Missing genre: ${expected}`);
@@ -65,6 +65,8 @@ for (const id of referencedIds) if (!htmlIds.includes(id)) fail(`app.js referenc
 if (!index.includes('rel="manifest"')) fail('index.html is missing manifest link');
 if (!index.includes('viewport-fit=cover')) fail('index.html must support safe-area insets');
 if (!index.includes('apple-mobile-web-app-capable')) fail('index.html is missing iOS PWA metadata');
+if (!index.includes('catalogue-bootstrap.js')) fail('index.html must load the chunked catalogue bootstrap');
+if (!index.includes('playback-bridge.js')) fail('index.html must load provider playback bridge');
 
 const cssEntry = await readFile(path.join(root, 'styles.css'), 'utf8');
 const cssImports = [...cssEntry.matchAll(/@import url\("([^"]+)"\)/g)].map((match) => match[1]);
@@ -78,7 +80,9 @@ const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
 for (const genre of genres) {
   if (!sw.includes(`./${genre.background}`)) fail(`Service worker does not precache ${genre.background}`);
 }
-if (!sw.includes("endsWith('/data/songs.json')")) fail('Service worker should network-first the song catalogue');
+if (!(sw.includes("url.pathname.includes('/data/')") && sw.includes("url.pathname.endsWith('.json')") && sw.includes('networkFirst(request)'))) {
+  fail('Service worker should network-first all JSON catalogue/discovery data');
+}
 
 const backgroundMb = backgroundBytes / 1024 / 1024;
 if (backgroundMb > 1.5) fail(`Background payload is ${backgroundMb.toFixed(2)} MB; keep the six production worlds below 1.5 MB total`);
