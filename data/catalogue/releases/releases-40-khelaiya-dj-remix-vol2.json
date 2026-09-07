@@ -1,0 +1,32 @@
+[
+  {
+    "id": "khelaiya-dj-remix-vol2-2016",
+    "title": "Khelaiya DJ Remix, Vol. 2 (47 Non Stop DJ Dandiya)",
+    "artist": "Rupal Doshi, Kishore Manraja, Kirti-Girish",
+    "releaseDate": "2016-09-28",
+    "originalReleaseYear": 2016,
+    "digitalReleaseYear": 2020,
+    "label": "Ishtar Music / Venus Worldwide Entertainment",
+    "categories": ["dj-remix", "raas-dandiya", "mataji-devotional", "instrumental-cinematic"],
+    "visualGenre": "fusion",
+    "entryType": "album",
+    "songCount": 12,
+    "durationSeconds": 4534,
+    "series": "Khelaiya DJ Remix",
+    "volume": "2",
+    "live": {"isLive": false, "venue": null},
+    "sources": [
+      {"platform": "Apple Music", "url": "https://music.apple.com/us/song/1535894045", "kind": "official-original-edition-track"},
+      {"platform": "Spotify", "url": "https://open.spotify.com/track/2k45kKagxfKBRCbSPtpdYt", "kind": "official-original-edition-track"},
+      {"platform": "Amazon Music", "url": "https://music.amazon.es/albums/B08L7NCD5M", "kind": "official-2020-digital-edition"},
+      {"platform": "Qobuz", "url": "https://www.qobuz.com/us-en/album/khelaiya-dj-remix-vol-2-rupal-doshi-kishore-manraja-kirti-girish/yelsz9nkbwy6a", "kind": "official-lossless-purchase"},
+      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=5cAISqItql8", "kind": "official-distributor-topic-track"}
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified-multi-source",
+    "audioAvailability": "external-source-only",
+    "notes": "Original 2016 metadata is retained from Apple/Spotify/Qobuz. Amazon exposes a 2020 digital edition with the same 12-track sequence. The title's '47 Non Stop DJ Dandiya' branding does not mean this provider edition contains 47 separate files, so the database preserves the actual 12-track edition rather than inventing missing tracks."
+  }
+]
