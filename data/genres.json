@@ -3,42 +3,54 @@
     "id": "traditional",
     "name": "Traditional",
     "label": "Traditional Garba",
-    "background": "assets/backgrounds/traditional.svg",
+    "background": "assets/backgrounds/library/11-master-dark-courtyard.webp",
+    "backgroundFallback": "assets/backgrounds/traditional.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#d6b06f"
   },
   {
     "id": "dandiya",
     "name": "Dandiya",
     "label": "Dandiya Raas",
-    "background": "assets/backgrounds/dandiya.svg",
+    "background": "assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp",
+    "backgroundFallback": "assets/backgrounds/dandiya.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#a77ad6"
   },
   {
     "id": "devotional",
     "name": "Devotional",
     "label": "Devotional Garba",
-    "background": "assets/backgrounds/devotional.svg",
+    "background": "assets/backgrounds/library/03-devotional-garba-courtyard.webp",
+    "backgroundFallback": "assets/backgrounds/devotional.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#c78372"
   },
   {
     "id": "folk",
     "name": "Folk",
     "label": "Gujarati Folk",
-    "background": "assets/backgrounds/folk.svg",
+    "background": "assets/backgrounds/library/14-gujarati-folk-courtyard.webp",
+    "backgroundFallback": "assets/backgrounds/folk.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#9a9fc7"
   },
   {
     "id": "sanedo",
     "name": "Sanedo",
     "label": "Sanedo",
-    "background": "assets/backgrounds/sanedo.svg",
+    "background": "assets/backgrounds/library/08-colourful-garba-courtyard-b.webp",
+    "backgroundFallback": "assets/backgrounds/sanedo.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#c99872"
   },
   {
     "id": "fusion",
     "name": "Fusion",
     "label": "Modern Fusion Garba",
-    "background": "assets/backgrounds/fusion.svg",
+    "background": "assets/backgrounds/library/05-fusion-gujarati-neon.webp",
+    "backgroundFallback": "assets/backgrounds/fusion.svg",
+    "backgroundQuality": "2k-webp",
     "accent": "#a78bc4"
   }
 ]
