@@ -124,6 +124,7 @@
 
   function providerEmbed(song, sourceUrl, provider) {
     if (provider === 'youtube') {
+      if (song?.playbackSourceType === 'verified-unchaptered-youtube-release') return null;
       const videoId = youtubeVideoId(song, sourceUrl);
       if (!videoId) return null;
       const params = new URLSearchParams({ autoplay: '1', playsinline: '1', rel: '0', controls: '1' });
@@ -215,17 +216,20 @@
     const card = document.createElement('div');
     card.className = 'provider-external';
     const heading = document.createElement('strong');
-    heading.textContent = `Continue on ${name}`;
     const copy = document.createElement('span');
-    copy.textContent = song?.playbackSourceType === 'verified-release-source'
-      ? 'GARBA verified the release, but this provider does not offer a safe in-app embed for this source.'
-      : 'This verified source opens on the provider because a reliable in-app embed is not available.';
+    const unchapteredYoutubeRelease = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
+    heading.textContent = unchapteredYoutubeRelease ? 'Open the verified full release' : `Continue on ${name}`;
+    copy.textContent = unchapteredYoutubeRelease
+      ? `GARBA has a verified multi-song YouTube source, but no verified timestamp for ${song?.title || 'this song'}. The full release will open without pretending it starts at the selected song.`
+      : song?.playbackSourceType === 'verified-release-source'
+        ? 'GARBA verified the release, but this provider does not offer a safe in-app embed for this source.'
+        : 'This verified source opens on the provider because a reliable in-app embed is not available.';
     const action = document.createElement('a');
     action.className = 'provider-external-action';
     action.href = sourceUrl;
     action.target = '_blank';
     action.rel = 'noopener noreferrer';
-    action.textContent = `Open ${name}`;
+    action.textContent = unchapteredYoutubeRelease ? 'Open full release on YouTube' : `Open ${name}`;
     card.append(heading, copy, action);
     return card;
   }
@@ -287,7 +291,9 @@
 
     stage.classList.add('is-external');
     media?.replaceChildren(externalProviderCard(song, sourceUrl, provider));
-    if (note) note.textContent = `Verified source · ${name}`;
+    if (note) note.textContent = song.playbackSourceType === 'verified-unchaptered-youtube-release'
+      ? 'Verified full release · exact song timestamp not verified'
+      : `Verified source · ${name}`;
   }
 
   async function fallbackPlay() {
