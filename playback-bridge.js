@@ -1,9 +1,63 @@
 (() => {
-  let playback = { songSources: {} };
-  let nonstop = [];
+  const $ = (id) => document.getElementById(id);
+  const audio = $('audio');
+  const app = $('app');
+  const playButton = $('playButton');
+  const miniPlay = $('miniPlay');
+  const progress = $('progress');
+  const elapsedTime = $('elapsedTime');
+  const durationTime = $('durationTime');
+  const songTitle = $('songTitle');
+  const songArtist = $('songArtist');
+  const songSheet = $('songSheet');
 
-  const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-  const sourceRank = { 'official-artist-channel': 6, 'artist-channel': 5, 'verified-label-channel': 4, 'verified-distributor-channel': 3, 'official-streaming-catalogue': 3, 'verified-release-source': 2, 'community-upload': 1 };
+  const state = {
+    songs: new Map(),
+    sources: {},
+    sets: [],
+    ready: false,
+    provider: null,
+    player: null,
+    playerReady: false,
+    currentSongId: null,
+    currentVideoId: null,
+    requestedPlay: false,
+    playing: false,
+    duration: 0,
+    timer: null,
+    ytPromise: null,
+    stage: null,
+    mount: null,
+    note: null,
+    suppressMutation: false,
+    lastUrlSong: null,
+  };
+
+  const sourceRank = {
+    'official-artist-channel': 6,
+    'artist-channel': 5,
+    'verified-label-channel': 4,
+    'verified-distributor-channel': 3,
+    'official-streaming-catalogue': 3,
+    'verified-release-source': 2,
+    'community-upload': 1,
+  };
+
+  const normalise = (value = '') => String(value)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ')
+    .trim();
+
+  function toast(message) {
+    const target = $('toast');
+    if (!target) return;
+    target.textContent = message;
+    target.classList.add('show');
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => target.classList.remove('show'), 2400);
+  }
 
   async function fetchJson(path) {
     try {
@@ -14,276 +68,462 @@
     }
   }
 
-  function normaliseDiscoverySet(set) {
-    const source = set.source || {};
-    const lastKnownEnd = [...(set.segments || [])].reverse().find((segment) => Number.isFinite(segment.endSeconds))?.endSeconds || null;
-    return {
-      id: set.id,
-      title: set.title,
-      artist: Array.isArray(set.artists) ? set.artists.join(' & ') : (set.artist || ''),
-      year: set.year,
-      provider: source.provider,
-      videoId: source.videoId,
-      sourceUrl: source.url,
-      sourceType: set.officiality || set.setType || source.provider,
-      durationSeconds: set.durationSeconds || lastKnownEnd,
-      genres: set.genres || [],
-      featured: String(set.officiality || '').includes('official'),
-      verified: set.officiality !== 'community-upload',
-      segments: set.segments || [],
-      linkedReleaseId: set.linkedReleaseId || null,
-      notes: set.notes || '',
+  function currentSongIdentity() {
+    const id = new URLSearchParams(location.search).get('song');
+    const mapped = id ? state.songs.get(id) : null;
+    return mapped || {
+      id,
+      title: songTitle?.textContent?.trim() || 'Garba',
+      artist: songArtist?.textContent?.trim() || '',
+      audioUrl: audio?.getAttribute('src') || null,
     };
   }
 
-  async function loadData() {
-    const [catalogueIndex, legacyNonstop, setIndex] = await Promise.all([
-      fetchJson('data/catalogue/index.json'),
-      fetchJson('data/nonstop.json'),
-      fetchJson('data/discovery/sets/index.json'),
-    ]);
-
-    const configuredPlayback = catalogueIndex?.playbackSources || ['data/playback-sources.json', 'data/playback-sources-current.json'];
-    const playbackPaths = Array.isArray(configuredPlayback) ? configuredPlayback : [configuredPlayback];
-    const playbackManifests = await Promise.all(playbackPaths.map((path) => fetchJson(path)));
-    playback = {
-      songSources: Object.assign({}, ...playbackManifests.map((manifest) => manifest?.songSources || {})),
-    };
-
-    const mergedSets = new Map();
-    for (const set of legacyNonstop || []) mergedSets.set(set.id, { ...set, segments: set.segments || [] });
-
-    if (setIndex?.chunks?.length) {
-      const chunks = await Promise.all(setIndex.chunks.map((chunk) => fetchJson(`data/discovery/sets/${chunk}`)));
-      for (const chunk of chunks) {
-        for (const set of chunk?.sets || []) {
-          const normalised = normaliseDiscoverySet(set);
-          mergedSets.set(normalised.id, normalised);
-        }
-      }
+  function setPlaying(playing) {
+    state.playing = Boolean(playing);
+    app?.classList.toggle('is-playing', state.playing);
+    playButton?.classList.toggle('is-playing', state.playing);
+    miniPlay?.classList.toggle('is-playing', state.playing);
+    playButton?.setAttribute('aria-label', state.playing ? 'Pause' : 'Play');
+    miniPlay?.setAttribute('aria-label', state.playing ? 'Pause' : 'Play');
+    if ('mediaSession' in navigator) {
+      try { navigator.mediaSession.playbackState = state.playing ? 'playing' : 'paused'; } catch { /* unsupported */ }
     }
-    nonstop = [...mergedSets.values()];
   }
 
-  function injectStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-      .provider-overlay{position:fixed;inset:0;z-index:10000;background:rgba(8,9,16,.82);backdrop-filter:blur(18px);display:none;align-items:center;justify-content:center;padding:20px;color:#fff}
-      .provider-overlay.open{display:flex}.provider-panel{width:min(920px,100%);max-height:min(860px,92vh);overflow:auto;background:rgba(19,21,35,.96);border:1px solid rgba(255,255,255,.14);border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.55)}
-      .provider-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:rgba(19,21,35,.96);z-index:2}.provider-head h2{margin:0;font:600 20px/1.2 system-ui}.provider-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:38px;height:38px;border-radius:50%;font-size:22px;cursor:pointer}
-      .provider-body{padding:18px 20px 22px}.provider-frame{aspect-ratio:16/9;width:100%;border:0;border-radius:18px;background:#000}.provider-frame.spotify{aspect-ratio:auto;height:352px}.provider-copy{margin:12px 0 0;color:rgba(255,255,255,.7);font:14px/1.5 system-ui}.provider-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.provider-action{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;background:#fff;color:#111;text-decoration:none;font:600 14px system-ui;border:0;cursor:pointer}.provider-action.secondary{background:rgba(255,255,255,.09);color:#fff}
-      .nonstop-list{display:grid;gap:10px}.nonstop-item{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035)}.nonstop-item strong{display:block;font:600 15px/1.3 system-ui}.nonstop-item span{display:block;margin-top:4px;color:rgba(255,255,255,.6);font:13px/1.35 system-ui}.nonstop-play{border:0;border-radius:999px;min-height:38px;padding:0 14px;background:var(--accent,#d6b06f);color:#10111a;font:700 13px system-ui;cursor:pointer}
-      .nonstop-nav-button{font:700 18px/1 system-ui}.nonstop-section-button{margin-bottom:10px}.provider-source-note{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);font:12px/1 system-ui}.provider-chapters{margin-top:18px}.provider-chapters h3{margin:0 0 10px;font:600 14px/1.3 system-ui;color:rgba(255,255,255,.82)}.provider-chapter-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.provider-chapter{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);color:#fff;border-radius:12px;padding:9px 11px;cursor:pointer;font:13px/1.3 system-ui}.provider-chapter:hover,.provider-chapter:focus-visible{background:rgba(255,255,255,.09)}.provider-chapter-time{flex:0 0 auto;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums}.provider-chapter-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      @media(max-width:700px){.provider-overlay{padding:0;align-items:flex-end}.provider-panel{border-radius:24px 24px 0 0;max-height:88vh}.nonstop-item{grid-template-columns:1fr}.nonstop-play{width:100%}.provider-chapter-list{grid-template-columns:1fr}.provider-frame.spotify{height:352px}}
-    `;
-    document.head.append(style);
+  function setProgress(elapsed, duration) {
+    const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+    const safeElapsed = Number.isFinite(elapsed) && elapsed >= 0 ? elapsed : 0;
+    state.duration = safeDuration;
+    if (elapsedTime) elapsedTime.textContent = formatTime(safeElapsed);
+    if (durationTime && safeDuration) durationTime.textContent = formatTime(safeDuration);
+    if (progress && safeDuration) {
+      const ratio = Math.min(1, Math.max(0, safeElapsed / safeDuration));
+      progress.disabled = false;
+      progress.removeAttribute('aria-disabled');
+      progress.value = Math.round(ratio * 1000);
+      progress.style.setProperty('--progress', `${ratio * 100}%`);
+      const miniProgress = $('miniProgress');
+      if (miniProgress) miniProgress.style.width = `${ratio * 100}%`;
+    }
   }
 
-  function ensureOverlay() {
-    let overlay = document.getElementById('providerOverlay');
-    if (overlay) return overlay;
-    overlay = document.createElement('div');
-    overlay.id = 'providerOverlay';
-    overlay.className = 'provider-overlay';
-    overlay.innerHTML = `<section class="provider-panel" role="dialog" aria-modal="true" aria-labelledby="providerTitle"><header class="provider-head"><h2 id="providerTitle">Playback</h2><button class="provider-close" type="button" aria-label="Close">×</button></header><div class="provider-body" id="providerBody"></div></section>`;
-    overlay.addEventListener('click', (event) => { if (event.target === overlay) closeOverlay(); });
-    overlay.querySelector('.provider-close').addEventListener('click', closeOverlay);
-    document.body.append(overlay);
-    return overlay;
+  function formatTime(seconds = 0) {
+    const value = Math.max(0, Math.round(Number(seconds) || 0));
+    return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
   }
 
-  function closeOverlay() {
-    const overlay = document.getElementById('providerOverlay');
-    if (!overlay) return;
-    overlay.classList.remove('open');
-    const body = document.getElementById('providerBody');
-    if (body) body.innerHTML = '';
+  function ensureStage() {
+    if (state.stage) return state.stage;
+    const stage = document.createElement('section');
+    stage.id = 'providerStage';
+    stage.className = 'provider-dock';
+    stage.setAttribute('aria-label', 'Embedded playback');
+    stage.setAttribute('aria-hidden', 'true');
+    stage.innerHTML = `
+      <div class="provider-media" id="providerMedia"></div>
+      <div class="provider-dock-bar">
+        <span id="providerDockNote">Playing in GARBA</span>
+        <button type="button" id="providerDockStop" aria-label="Stop embedded playback">Stop</button>
+      </div>`;
+    document.body.append(stage);
+    state.stage = stage;
+    state.mount = stage.querySelector('#providerMedia');
+    state.note = stage.querySelector('#providerDockNote');
+    stage.querySelector('#providerDockStop')?.addEventListener('click', stopProvider);
+    return stage;
   }
 
-  const formatTime = (seconds = 0) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+  function showStage(note = 'Playing in GARBA') {
+    const stage = ensureStage();
+    if (state.note) state.note.textContent = note;
+    stage.classList.add('open');
+    stage.setAttribute('aria-hidden', 'false');
+  }
 
-  function openYouTube({ videoId, startSeconds = 0, title = 'Garba', artist = '', sourceUrl, sourceType, segments = [], notes = '' }) {
-    const overlay = ensureOverlay();
-    const body = document.getElementById('providerBody');
-    document.getElementById('providerTitle').textContent = title;
-    const start = Math.max(0, Number(startSeconds) || 0);
-    const baseWatchUrl = sourceUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
-    const joiner = baseWatchUrl.includes('?') ? '&' : '?';
-    const watchUrl = `${baseWatchUrl}${start ? `${joiner}t=${start}s` : ''}`;
-    const chapters = segments.length ? `<section class="provider-chapters"><h3>Jump to a song</h3><div class="provider-chapter-list">${segments.map((segment) => `<button class="provider-chapter" type="button" data-start="${Number(segment.startSeconds) || 0}"><span class="provider-chapter-time">${formatTime(Number(segment.startSeconds) || 0)}</span><span class="provider-chapter-title">${escapeHtml(segment.title)}</span></button>`).join('')}</div></section>` : '';
-    body.innerHTML = `<iframe class="provider-frame" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&playsinline=1&rel=0${start ? `&start=${start}` : ''}" title="${escapeHtml(title)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe><p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}Played from the cited YouTube source.${notes ? ` ${escapeHtml(notes)}` : ''}</p><span class="provider-source-note">${escapeHtml(sourceType || 'YouTube source')}</span>${chapters}<div class="provider-actions"><a class="provider-action" href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener">Open on YouTube</a></div>`;
-    body.querySelectorAll('.provider-chapter').forEach((button) => button.addEventListener('click', () => openYouTube({ videoId, startSeconds: Number(button.dataset.start) || 0, title, artist, sourceUrl, sourceType, segments, notes })));
-    overlay.classList.add('open');
-    document.getElementById('audio')?.pause();
+  function hideStage() {
+    if (!state.stage) return;
+    state.stage.classList.remove('open', 'needs-tap', 'is-loading', 'is-spotify');
+    state.stage.setAttribute('aria-hidden', 'true');
+  }
+
+  function stopTimer() {
+    clearInterval(state.timer);
+    state.timer = null;
+  }
+
+  function startTimer() {
+    stopTimer();
+    state.timer = setInterval(() => {
+      if (state.provider !== 'youtube' || !state.playerReady || !state.player) return;
+      try {
+        const elapsed = state.player.getCurrentTime();
+        const duration = state.player.getDuration();
+        setProgress(elapsed, duration);
+      } catch { /* player changing state */ }
+    }, 500);
+  }
+
+  function stopProvider() {
+    stopTimer();
+    state.requestedPlay = false;
+    state.playing = false;
+    if (state.provider === 'youtube' && state.playerReady && state.player) {
+      try { state.player.pauseVideo(); } catch { /* no-op */ }
+    }
+    state.provider = null;
+    setPlaying(false);
+    hideStage();
+  }
+
+  function loadYouTubeApi() {
+    if (window.YT?.Player) return Promise.resolve(window.YT);
+    if (state.ytPromise) return state.ytPromise;
+    state.ytPromise = new Promise((resolve) => {
+      const previous = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        try { previous?.(); } catch { /* keep our resolver alive */ }
+        resolve(window.YT);
+      };
+      if (!document.querySelector('script[data-garba-youtube-api]')) {
+        const script = document.createElement('script');
+        script.src = 'https://www.youtube.com/iframe_api';
+        script.async = true;
+        script.dataset.garbaYoutubeApi = 'true';
+        document.head.append(script);
+      }
+      const poll = setInterval(() => {
+        if (!window.YT?.Player) return;
+        clearInterval(poll);
+        resolve(window.YT);
+      }, 120);
+      setTimeout(() => clearInterval(poll), 10000);
+    });
+    return state.ytPromise;
+  }
+
+  function youtubeEmbedUrl(videoId, startSeconds = 0, autoplay = true) {
+    const params = new URLSearchParams({
+      enablejsapi: '1',
+      origin: location.origin,
+      playsinline: '1',
+      controls: '0',
+      disablekb: '1',
+      fs: '0',
+      rel: '0',
+      iv_load_policy: '3',
+      autoplay: autoplay ? '1' : '0',
+      start: String(Math.max(0, Number(startSeconds) || 0)),
+    });
+    return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`;
+  }
+
+  async function createYouTubePlayer(source, autoplay = true) {
+    showStage('Playing in GARBA');
+    state.stage?.classList.add('is-loading');
+    state.provider = 'youtube';
+    state.currentVideoId = source.videoId;
+    state.requestedPlay = autoplay;
+    state.playerReady = false;
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'garbaYouTubeFrame';
+    iframe.title = 'YouTube playback';
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.src = youtubeEmbedUrl(source.videoId, source.startSeconds || 0, autoplay);
+    state.mount.replaceChildren(iframe);
+
+    await loadYouTubeApi();
+    state.player = new window.YT.Player(iframe, {
+      events: {
+        onReady: (event) => {
+          state.playerReady = true;
+          state.stage?.classList.remove('is-loading');
+          try {
+            state.duration = event.target.getDuration() || state.duration;
+            if (state.requestedPlay) event.target.playVideo();
+          } catch { /* provider not ready */ }
+        },
+        onStateChange: (event) => {
+          const YTState = window.YT?.PlayerState || {};
+          if (event.data === YTState.PLAYING) {
+            state.stage?.classList.remove('needs-tap', 'is-loading');
+            if (state.note) state.note.textContent = 'Playing in GARBA';
+            setPlaying(true);
+            startTimer();
+          } else if (event.data === YTState.PAUSED || event.data === YTState.CUED) {
+            setPlaying(false);
+            stopTimer();
+          } else if (event.data === YTState.ENDED) {
+            setPlaying(false);
+            stopTimer();
+            setTimeout(() => $('nextButton')?.click(), 120);
+          }
+        },
+        onAutoplayBlocked: () => {
+          state.stage?.classList.remove('is-loading');
+          state.stage?.classList.add('needs-tap');
+          if (state.note) state.note.textContent = 'Tap the video once to allow sound';
+          setPlaying(false);
+        },
+        onError: () => {
+          state.stage?.classList.remove('is-loading');
+          if (state.note) state.note.textContent = 'This source cannot play here';
+          setPlaying(false);
+          toast('This recording cannot be embedded. Try another track.');
+        },
+      },
+    });
+  }
+
+  async function playYouTube(source) {
+    if (!navigator.onLine) {
+      toast('You are offline. Provider-backed songs need an internet connection.');
+      return;
+    }
+    audio?.pause();
+    showStage('Playing in GARBA');
+
+    if (state.provider === 'youtube' && state.playerReady && state.player && state.currentVideoId === source.videoId) {
+      try {
+        if (state.playing) state.player.pauseVideo();
+        else state.player.playVideo();
+      } catch { /* recreate below */ }
+      return;
+    }
+
+    if (state.provider === 'youtube' && state.playerReady && state.player) {
+      try {
+        state.provider = 'youtube';
+        state.currentVideoId = source.videoId;
+        state.requestedPlay = true;
+        state.player.loadVideoById({ videoId: source.videoId, startSeconds: Number(source.startSeconds) || 0 });
+        return;
+      } catch { /* rebuild */ }
+    }
+
+    await createYouTubePlayer(source, true);
   }
 
   function spotifyEmbedUrl(sourceUrl = '') {
     try {
       const url = new URL(sourceUrl);
       const parts = url.pathname.split('/').filter(Boolean).filter((part) => !part.startsWith('intl-'));
-      const typeIndex = parts.findIndex((part) => ['track','album','playlist','episode','show'].includes(part));
-      if (typeIndex < 0 || !parts[typeIndex + 1]) return null;
-      return `https://open.spotify.com/embed/${parts[typeIndex]}/${parts[typeIndex + 1]}`;
+      const index = parts.findIndex((part) => ['track', 'album', 'playlist', 'episode', 'show'].includes(part));
+      if (index < 0 || !parts[index + 1]) return null;
+      return `https://open.spotify.com/embed/${parts[index]}/${parts[index + 1]}?utm_source=generator&theme=0`;
     } catch {
       return null;
     }
   }
 
-  function openSpotify({ sourceUrl, title = 'Garba', artist = '', sourceType, alternate }) {
-    const embedUrl = spotifyEmbedUrl(sourceUrl);
-    if (!embedUrl) return openExternalSource({ sourceUrl, title, artist, sourceType });
-    const overlay = ensureOverlay();
-    const body = document.getElementById('providerBody');
-    document.getElementById('providerTitle').textContent = title;
-    const alternateAction = alternate?.sourceUrl ? `<a class="provider-action secondary" href="${escapeHtml(alternate.sourceUrl)}" target="_blank" rel="noopener">Official alternate source</a>` : '';
-    body.innerHTML = `<iframe class="provider-frame spotify" src="${escapeHtml(embedUrl)}" title="${escapeHtml(title)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="eager"></iframe><p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}Played with the provider's official embedded player. Availability depends on the provider and listener account.</p><span class="provider-source-note">${escapeHtml(sourceType || 'Spotify catalogue')}</span><div class="provider-actions"><a class="provider-action" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">Open on Spotify</a>${alternateAction}</div>`;
-    overlay.classList.add('open');
-    document.getElementById('audio')?.pause();
-  }
-
-  function openExternalSource({ sourceUrl, title = 'Garba', artist = '', sourceType }) {
-    const overlay = ensureOverlay();
-    const body = document.getElementById('providerBody');
-    document.getElementById('providerTitle').textContent = title;
-    body.innerHTML = `<p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}This verified catalogue item uses an external provider that is not embedded here.</p><span class="provider-source-note">${escapeHtml(sourceType || 'External source')}</span><div class="provider-actions"><a class="provider-action" href="${escapeHtml(sourceUrl || '#')}" target="_blank" rel="noopener">Open source</a></div>`;
-    overlay.classList.add('open');
-  }
-
-  function currentSongIdentity() {
-    const params = new URLSearchParams(location.search);
-    return { id: params.get('song'), title: document.getElementById('songTitle')?.textContent?.trim() || 'Garba song', artist: document.getElementById('songArtist')?.textContent?.trim() || '' };
-  }
-
-  function titleTokens(value = '') {
-    const aliases = new Map([
-      ['krushna','krishna'],['kanuda','kanudo'],['kanudo','kanudo'],['maagyo','magyo'],['mangyo','magyo'],['andhaari','andhari'],['andhari','andhari'],['vaaya','vaya'],['vaya','vaya'],['saambhlo','sambhlo'],['sambhlo','sambhlo'],['jhini','jini'],['jini','jini'],['lobadiyaliyu','lobdiyaliyu'],['lobdiyaliyu','lobdiyaliyu'],['chotile','chotila'],['chotila','chotila']
-    ]);
-    return String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ').trim().split(/\s+/).filter(Boolean).map((token) => aliases.get(token) || token);
+  function playSpotify(source) {
+    if (!navigator.onLine) {
+      toast('You are offline. Provider-backed songs need an internet connection.');
+      return;
+    }
+    const embed = spotifyEmbedUrl(source.sourceUrl);
+    if (!embed) {
+      toast('This track does not have an in-app stream yet.');
+      return;
+    }
+    stopTimer();
+    state.provider = 'spotify';
+    state.currentVideoId = null;
+    state.playerReady = false;
+    state.playing = false;
+    setPlaying(false);
+    showStage('Tap play once in the embedded player');
+    state.stage?.classList.add('is-spotify');
+    const iframe = document.createElement('iframe');
+    iframe.title = 'Spotify playback';
+    iframe.src = embed;
+    iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+    iframe.loading = 'eager';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    state.mount.replaceChildren(iframe);
   }
 
   function titleSimilarity(a, b) {
-    const aa = titleTokens(a);
-    const bb = titleTokens(b);
-    if (!aa.length || !bb.length) return 0;
-    if (aa.length === 1 || bb.length === 1) return aa.join(' ') === bb.join(' ') ? 1 : 0;
-    const aSet = new Set(aa);
-    const bSet = new Set(bb);
+    const aa = new Set(normalise(a).split(/\s+/).filter(Boolean));
+    const bb = new Set(normalise(b).split(/\s+/).filter(Boolean));
+    if (!aa.size || !bb.size) return 0;
     let shared = 0;
-    for (const token of aSet) if (bSet.has(token)) shared += 1;
-    const coverage = shared / Math.max(aSet.size, bSet.size);
-    const lengthPenalty = Math.abs(aSet.size - bSet.size) > 2 ? 0.12 : 0;
-    return Math.max(0, coverage - lengthPenalty);
+    for (const token of aa) if (bb.has(token)) shared += 1;
+    return shared / Math.max(aa.size, bb.size);
   }
 
-  function findPerformanceSource(song) {
+  function performanceFallback(song) {
+    if (!song?.title) return null;
     const candidates = [];
-    for (const set of nonstop) {
+    for (const set of state.sets) {
       if (set.provider !== 'youtube' || !set.videoId || !Array.isArray(set.segments)) continue;
       for (const segment of set.segments) {
-        const similarity = titleSimilarity(song.title, segment.title);
-        if (similarity < 0.84) continue;
-        const artistMatch = set.artist && song.artist && (set.artist.toLowerCase().includes(song.artist.toLowerCase()) || song.artist.toLowerCase().includes(set.artist.toLowerCase()));
-        const rank = (sourceRank[set.sourceType] || 0) * 10 + similarity * 10 + (artistMatch ? 8 : 0) + (set.featured ? 2 : 0);
-        candidates.push({ set, segment, rank });
+        const score = titleSimilarity(song.title, segment.title);
+        if (score < 0.84) continue;
+        candidates.push({
+          score: score * 100 + (sourceRank[set.sourceType] || 0) * 10,
+          provider: 'youtube',
+          videoId: set.videoId,
+          startSeconds: Number(segment.startSeconds) || 0,
+          sourceType: set.sourceType,
+        });
       }
     }
-    candidates.sort((a, b) => b.rank - a.rank);
-    const best = candidates[0];
-    if (!best) return null;
-    return {
-      provider: 'youtube',
-      videoId: best.set.videoId,
-      startSeconds: Number(best.segment.startSeconds) || 0,
-      sourceUrl: best.set.sourceUrl,
-      sourceType: best.set.sourceType,
-      segments: best.set.segments,
-      notes: `Available as a verified performance inside “${best.set.title}”. This may be a live/nonstop arrangement rather than the canonical studio recording.`,
-    };
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0] || null;
   }
 
-  function openProviderSearch(song) {
-    const overlay = ensureOverlay();
-    const body = document.getElementById('providerBody');
-    document.getElementById('providerTitle').textContent = song.title;
-    const query = encodeURIComponent(`${song.title} ${song.artist}`.trim());
-    body.innerHTML = `<p class="provider-copy">A verified direct playable source has not been attached to this catalogue record yet. Search a provider rather than presenting an unverified stream.</p><div class="provider-actions"><a class="provider-action" href="https://www.youtube.com/results?search_query=${query}" target="_blank" rel="noopener">Find on YouTube</a><a class="provider-action secondary" href="https://open.spotify.com/search/${query}" target="_blank" rel="noopener">Find on Spotify</a><a class="provider-action secondary" href="https://music.apple.com/us/search?term=${query}" target="_blank" rel="noopener">Find on Apple Music</a></div>`;
-    overlay.classList.add('open');
-  }
-
-  function playProvider(source, song) {
-    if (source?.provider === 'youtube' && source.videoId) return openYouTube({ ...source, title: song.title, artist: song.artist });
-    if (source?.provider === 'spotify' && source.sourceUrl) return openSpotify({ ...source, title: song.title, artist: song.artist });
-    if (source?.sourceUrl) return openExternalSource({ ...source, title: song.title, artist: song.artist });
-    const performance = findPerformanceSource(song);
-    if (performance) return openYouTube({ ...performance, title: song.title, artist: song.artist });
-    return openProviderSearch(song);
-  }
-
-  function openNonstop() {
-    const overlay = ensureOverlay();
-    const body = document.getElementById('providerBody');
-    document.getElementById('providerTitle').textContent = 'Nonstop Garba';
-    const ordered = [...nonstop].sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || (sourceRank[b.sourceType] || 0) - (sourceRank[a.sourceType] || 0) || (b.year || 0) - (a.year || 0));
-    body.innerHTML = `<div class="nonstop-list">${ordered.map((set) => `<article class="nonstop-item"><div><strong>${escapeHtml(set.title)}</strong><span>${escapeHtml(set.artist)} · ${escapeHtml(set.year || '')}${set.durationSeconds ? ` · ${Math.round(set.durationSeconds / 60)} min` : ''}${set.segments?.length ? ` · ${set.segments.length} chapters` : ''}</span><span class="provider-source-note">${escapeHtml(set.sourceType || set.provider)}</span></div><button class="nonstop-play" type="button" data-nonstop-id="${escapeHtml(set.id)}">${set.provider === 'youtube' ? 'Play nonstop' : 'Open source'}</button></article>`).join('')}</div>`;
-    body.querySelectorAll('[data-nonstop-id]').forEach((button) => button.addEventListener('click', () => {
-      const set = nonstop.find((item) => item.id === button.dataset.nonstopId);
-      if (!set) return;
-      if (set.provider === 'youtube' && set.videoId) return openYouTube({ ...set, startSeconds: 0, segments: set.segments || [] });
-      if (set.provider === 'spotify' && set.sourceUrl) return openSpotify(set);
-      if (set.sourceUrl) window.open(set.sourceUrl, '_blank', 'noopener');
-    }));
-    overlay.classList.add('open');
-  }
-
-  function addNonstopButton() {
-    const utilities = document.querySelector('.utilities');
-    if (utilities && !document.getElementById('nonstopButton')) {
-      const button = document.createElement('button');
-      button.id = 'nonstopButton';
-      button.className = 'icon-button nonstop-nav-button';
-      button.type = 'button';
-      button.title = 'Nonstop Garba';
-      button.setAttribute('aria-label', 'Browse nonstop Garba');
-      button.textContent = '∞';
-      button.addEventListener('click', openNonstop);
-      utilities.prepend(button);
+  function resolveSource(song) {
+    if (!song) return null;
+    const explicit = state.sources[song.id] || null;
+    if (explicit?.provider === 'youtube' && explicit.videoId) return explicit;
+    if (song.playbackProvider === 'youtube' && song.youtubeId) {
+      return { provider: 'youtube', videoId: song.youtubeId, startSeconds: song.youtubeStartSeconds || 0 };
     }
-
-    const browse = document.getElementById('browseButton');
-    if (browse && !document.getElementById('nonstopBrowseButton')) {
-      const sectionButton = document.createElement('button');
-      sectionButton.id = 'nonstopBrowseButton';
-      sectionButton.className = 'browse-button nonstop-section-button';
-      sectionButton.type = 'button';
-      sectionButton.innerHTML = '<span>Nonstop Garba</span><span aria-hidden="true">∞</span>';
-      sectionButton.addEventListener('click', openNonstop);
-      browse.parentNode.insertBefore(sectionButton, browse);
+    const performance = performanceFallback(song);
+    if (performance) return performance;
+    if (explicit?.provider === 'spotify' && explicit.sourceUrl) return explicit;
+    if (song.playbackProvider === 'spotify' && song.playbackSourceUrl) {
+      return { provider: 'spotify', sourceUrl: song.playbackSourceUrl };
     }
+    return explicit;
+  }
+
+  async function toggleProviderPlayback() {
+    const song = currentSongIdentity();
+    if (!song?.id) {
+      toast('Choose a song first.');
+      return;
+    }
+    if (song.audioUrl || audio?.getAttribute('src')) return false;
+    const source = resolveSource(song);
+    if (source?.provider === 'youtube' && source.videoId) {
+      state.currentSongId = song.id;
+      await playYouTube(source);
+      return true;
+    }
+    if (source?.provider === 'spotify' && source.sourceUrl) {
+      state.currentSongId = song.id;
+      playSpotify(source);
+      return true;
+    }
+    toast('This track does not have an in-app stream yet.');
+    return true;
   }
 
   function interceptPlay(event) {
     const button = event.target.closest?.('#playButton, #miniPlay');
     if (!button) return;
-    const audio = document.getElementById('audio');
-    if (audio?.getAttribute('src')) return;
     const song = currentSongIdentity();
-    const source = song.id ? playback.songSources?.[song.id] : null;
+    if (song?.audioUrl || audio?.getAttribute('src')) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    playProvider(source, song);
+    toggleProviderPlayback();
   }
 
-  document.addEventListener('click', interceptPlay, true);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && document.getElementById('providerOverlay')?.classList.contains('open')) {
-      event.stopImmediatePropagation();
-      closeOverlay();
-    }
-  }, true);
+  function interceptSpace(event) {
+    if (event.code !== 'Space' || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable) return;
+    const song = currentSongIdentity();
+    if (song?.audioUrl || audio?.getAttribute('src')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    toggleProviderPlayback();
+  }
 
-  injectStyles();
-  loadData().finally(() => {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNonstopButton, { once: true });
-    else addNonstopButton();
-  });
+  function interceptSeek(event) {
+    if (event.target !== progress || state.provider !== 'youtube' || !state.playerReady || !state.player || !state.duration) return;
+    event.stopImmediatePropagation();
+    const next = Number(progress.value) / 1000 * state.duration;
+    try { state.player.seekTo(next, true); } catch { /* no-op */ }
+    setProgress(next, state.duration);
+  }
+
+  function syncAfterSongChange() {
+    const song = currentSongIdentity();
+    if (!song?.id || song.id === state.lastUrlSong) return;
+    const previousWasPlaying = state.playing;
+    state.lastUrlSong = song.id;
+    state.currentSongId = song.id;
+    if (!state.provider) return;
+    const source = resolveSource(song);
+    if (source?.provider === 'youtube' && source.videoId) {
+      if (previousWasPlaying) playYouTube(source);
+      else stopProvider();
+    } else {
+      stopProvider();
+    }
+  }
+
+  async function loadContext() {
+    const index = await fetchJson('data/catalogue/index.json');
+    const playbackPaths = Array.isArray(index?.playbackSources) ? index.playbackSources : [index?.playbackSources].filter(Boolean);
+    const [songs, ...manifests] = await Promise.all([
+      fetchJson('data/songs.json'),
+      ...playbackPaths.map((path) => fetchJson(path)),
+    ]);
+    if (Array.isArray(songs)) state.songs = new Map(songs.map((song) => [song.id, song]));
+    state.sources = Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {}));
+
+    const setIndex = await fetchJson('data/discovery/sets/index.json');
+    const chunks = await Promise.all((setIndex?.chunks || []).map((chunk) => fetchJson(`data/discovery/sets/${chunk}`)));
+    state.sets = chunks.flatMap((chunk) => chunk?.sets || []).map((set) => ({
+      provider: set.source?.provider,
+      videoId: set.source?.videoId,
+      sourceType: set.officiality || set.setType || set.source?.provider,
+      segments: set.segments || [],
+    }));
+    state.ready = true;
+    state.lastUrlSong = currentSongIdentity()?.id || null;
+  }
+
+  function setupMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const install = () => {
+      if (!state.provider) return;
+      try { navigator.mediaSession.setActionHandler('play', () => toggleProviderPlayback()); } catch { /* unsupported */ }
+      try { navigator.mediaSession.setActionHandler('pause', () => state.player?.pauseVideo?.()); } catch { /* unsupported */ }
+      try { navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (state.provider === 'youtube' && state.playerReady && Number.isFinite(details.seekTime)) state.player.seekTo(details.seekTime, true);
+      }); } catch { /* unsupported */ }
+    };
+    document.addEventListener('click', () => setTimeout(install, 0), true);
+  }
+
+  function init() {
+    ensureStage();
+    loadYouTubeApi();
+    loadContext();
+
+    document.addEventListener('click', interceptPlay, true);
+    document.addEventListener('keydown', interceptSpace, true);
+    progress?.addEventListener('input', interceptSeek, true);
+
+    if (songTitle) new MutationObserver(() => setTimeout(syncAfterSongChange, 0)).observe(songTitle, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('popstate', () => setTimeout(syncAfterSongChange, 0));
+    window.addEventListener('offline', () => {
+      if (state.provider) {
+        stopProvider();
+        toast('Offline. Provider-backed songs pause until you reconnect.');
+      }
+    });
+
+    if (songSheet) {
+      new MutationObserver(() => {
+        const open = songSheet.getAttribute('aria-hidden') === 'false';
+        if (open && matchMedia('(max-width: 700px)').matches && state.provider === 'youtube' && state.playing) {
+          try { state.player?.pauseVideo?.(); } catch { /* no-op */ }
+          hideStage();
+        } else if (!open && state.provider === 'youtube') {
+          showStage(state.playing ? 'Playing in GARBA' : 'Ready to play');
+        }
+      }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
+    }
+
+    setupMediaSession();
+  }
+
+  init();
 })();
