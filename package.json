@@ -4,7 +4,8 @@
   "private": true,
   "description": "Immersive, responsive, installable Gujarati Garba music player.",
   "scripts": {
+    "catalogue": "node scripts/build-catalogue.mjs",
     "serve": "python3 -m http.server 4173",
-    "check": "node --check app.js && node --check sw.js && node scripts/validate.mjs"
+    "check": "npm run catalogue && node --check app.js && node --check sw.js && node scripts/validate.mjs"
   }
 }
