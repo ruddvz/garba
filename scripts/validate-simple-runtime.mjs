@@ -8,14 +8,15 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'styles.css', 'data/genres.json', 'data/songs.json']) {
+for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'sw.js', 'styles.css', 'data/genres.json', 'data/songs.json']) {
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, genres, songs, playerCss] = await Promise.all([
+const [index, app, simple, sw, genres, songs, playerCss] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
+  read('sw.js'),
   readJson('data/genres.json'),
   readJson('data/songs.json'),
   read('styles/part-7.css'),
@@ -37,10 +38,14 @@ if (scriptSources.length !== expectedScripts.length) fail(`Expected exactly ${ex
 for (const marker of [
   'assets/backgrounds/traditional.svg',
   'data-static-genre="true"',
-  "navigator.serviceWorker.register = async ()",
-  "registration.unregister()",
-  "name.startsWith('garba-shell-')",
+  '<link rel="manifest" href="manifest.webmanifest"',
 ]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);
+
+for (const forbidden of [
+  'navigator.serviceWorker.register = async ()',
+  'registration.unregister()',
+  'garba-simple-runtime-reset-v1',
+]) if (index.includes(forbidden)) fail(`Production index must not disable the restored PWA: ${forbidden}`);
 
 for (const marker of [
   'clearStaleInert',
@@ -83,6 +88,30 @@ for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-doc
   if (!playerCss.includes(marker)) fail(`Provider UI styling missing marker: ${marker}`);
 }
 
+for (const marker of [
+  "const CACHE_PREFIX = 'garba-live-'",
+  "const LEGACY_PREFIX = 'garba-shell-'",
+  'const CORE_SHELL = [',
+  "'./simple-runtime.js'",
+  "'./app.js'",
+  "'./manifest.webmanifest'",
+  "'./offline.html'",
+  'await cache.addAll(CORE_SHELL)',
+  'await self.skipWaiting()',
+  'await self.clients.claim()',
+  'request.mode === \'navigate\'',
+  "url.pathname.endsWith('/data/songs.json')",
+  "url.pathname.includes('/assets/backgrounds/library/')",
+  'event.respondWith(cacheFirst(request))',
+  'event.respondWith(staleWhileRevalidate(request))',
+]) if (!sw.includes(marker)) fail(`Minimal PWA worker missing marker: ${marker}`);
+
+for (const forbidden of ['self.registration.unregister()', 'client.navigate(client.url)']) {
+  if (sw.includes(forbidden)) fail(`Restored PWA worker must remain registered: ${forbidden}`);
+}
+
+if (!app.includes("navigator.serviceWorker.register('./sw.js')")) fail('Core app must register the minimal service worker');
+
 const ids = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 for (const id of [...app.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1])) {
   if (!ids.includes(id)) fail(`app.js references missing element id: ${id}`);
@@ -106,9 +135,10 @@ for (const marker of [
 if (failed) process.exit(1);
 console.log(`✓ simple production runtime uses only ${scriptSources.join(' + ')}`);
 console.log(`✓ ${songs.length} songs and six genres remain available`);
-console.log('✓ stale service-worker caches are retired on first visit');
 console.log('✓ primary player controls retain direct event bindings');
 console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
+console.log('✓ minimal PWA shell is installable again without reviving the old heavy cache graph');
+console.log('✓ visited catalogue data and 2K artwork can be reused offline while provider media remains network-bound');
