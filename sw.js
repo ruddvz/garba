@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v13-provider-coverage`;
+const VERSION = `${CACHE_PREFIX}v14-release-guard`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -18,6 +18,7 @@ const SHELL = [
   './ux-polish.js',
   './ux-next.js',
   './ux-input.js',
+  './playback-release-guard.js',
   './playback-routes.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
