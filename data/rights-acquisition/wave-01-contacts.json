@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "updatedAt": "2026-09-07",
   "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
   "contacts": [
@@ -16,6 +16,20 @@
         "https://uk.linkedin.com/in/alpesh-patel-3a86aa10"
       ],
       "notes": "Verified Sur Sagar Music YouTube identifies the label as a Gujarati music label and current video descriptions provide its business website/email route. Ask both for Garbi/Garbi 2 and for a larger machine-readable Garba/Raas catalogue that could be licensed as one direct-streaming batch."
+    },
+    {
+      "batchId": "strategic-label-soor-mandir",
+      "entity": "Soor Mandir",
+      "contactState": "active-brand-owner-publisher-route-found-legal-licensor-needs-confirmation",
+      "confidence": "high-active-brand-medium-legal-entity",
+      "primaryRoute": "https://www.youtube.com/@soormandir",
+      "catalogueRoute": "http://soormandir.com",
+      "secondaryRoute": "https://www.instagram.com/soormandir/",
+      "evidence": [
+        "https://www.youtube.com/watch?v=xcmJ2OSBoa0",
+        "https://iprs.org/wp-content/uploads/2023/01/IPRS_Member_List_watermark.pdf"
+      ],
+      "notes": "The verified active Soor Mandir music channel identifies the label and points to soormandir.com, official socials and its app. IPRS member material lists SOOR MANDIR as an owner/publisher. The old company record for SOOR MANDIR MUSIC PRIVATE LIMITED is shown as struck off, so do not address a licence to that old corporate entity without confirmation. First inquiry must ask which current person/entity owns and can license the master catalogue, then request the roughly 245 Soor Mandir-labelled GARBA rows plus the separately-labelled Soor Mandir / SM Digital subset for ownership reconciliation."
     },
     {
       "batchId": "atul-purohit-rutumbhara",
