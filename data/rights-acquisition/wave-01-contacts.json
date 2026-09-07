@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "updatedAt": "2026-09-07",
   "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
   "contacts": [
@@ -50,8 +50,7 @@
       "primaryRoute": "https://linktr.ee/adityagadhvi",
       "secondaryRoute": "https://adityagadhvi.in/contact-us/",
       "evidence": [
-        "https://linktr.ee/adityagadhvi",
-        "https://open.spotify.com/album/3u6f9V4fO8Yl6Z8R2S7uYQ"
+        "https://linktr.ee/adityagadhvi"
       ],
       "notes": "Use the current official artist route to ask who controls the 2245114 Records DK masters. Do not rely on phone numbers displayed on the contact-site page without independent verification."
     },
@@ -61,9 +60,10 @@
       "contactState": "contact-discovery-needed",
       "confidence": "master-owner-signal-strong-contact-route-not-yet-authoritative",
       "evidence": [
-        "https://open.spotify.com/album/2uDViDZc4RoX4Y8xJqQbcN"
+        "https://www.youtube.com/watch?v=RKDi5F85ft4",
+        "https://music.apple.com/us/album/rutvi-ni-ramzat/1647208847"
       ],
-      "notes": "Provider metadata strongly signals Rutvi Pandya as ©/℗ owner of the main Ramzat releases, but no sufficiently authoritative licensing/business contact route has yet been verified. Continue through official artist social/channel surfaces rather than third-party influencer databases."
+      "notes": "Provider and official-release metadata strongly signal Rutvi Pandya as owner/label for the main Ramzat releases, but no sufficiently authoritative licensing/business contact route has yet been verified. Continue through official artist social/channel surfaces rather than third-party influencer databases."
     },
     {
       "batchId": "geeta-rabari-official",
@@ -71,7 +71,7 @@
       "contactState": "contact-discovery-needed",
       "confidence": "master-owner-subset-strong-contact-route-not-yet-authoritative",
       "evidence": [
-        "https://open.spotify.com/album/3JrLR5W4mSWf0vOLhlMYS7"
+        "https://www.youtube.com/watch?v=vy7f_tYi7VU"
       ],
       "notes": "Geeta Rabari Official controls a meaningful subset but the overall artist catalogue is mixed-owner. Third-party booking-agent pages are not sufficient licensing authority. Verify the official management route before outreach."
     },
