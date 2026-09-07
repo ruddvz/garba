@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v8-polish`;
+const VERSION = `${CACHE_PREFIX}v9-a11y`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -11,6 +11,7 @@ const SHELL = [
   './styles/part-2.css',
   './styles/part-3.css',
   './styles/part-4.css',
+  './styles/part-5.css',
   './app.js',
   './ux-polish.js',
   './visual-library.js',
@@ -26,6 +27,7 @@ const SHELL = [
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
   './assets/icons/maskable.svg',
+  './assets/icons/apple-touch-icon.png',
   // Lightweight fallbacks remain precached. The approved high-resolution
   // WebPs are cached on first use so installing the PWA does not download
   // the entire visual library at once.
@@ -82,7 +84,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Artwork is immutable per filename/version and is ideal for cache-first.
+  // Artwork and app icons are immutable per filename/version and are ideal for cache-first.
   if (request.destination === 'image') {
     event.respondWith(cacheFirst(request));
   }
