@@ -8,11 +8,11 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'sw.js', 'styles.css', 'data/genres.json', 'data/songs.json']) {
+for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'nonstop-browser.js', 'sw.js', 'styles.css', 'data/genres.json', 'data/songs.json', 'data/discovery/sets/index.json']) {
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, sw, genres, songs, playerCss] = await Promise.all([
+const [index, app, simple, sw, genres, songs, playerCss, nonstopIndex] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
@@ -20,17 +20,19 @@ const [index, app, simple, sw, genres, songs, playerCss] = await Promise.all([
   readJson('data/genres.json'),
   readJson('data/songs.json'),
   read('styles/part-7.css'),
+  readJson('data/discovery/sets/index.json'),
 ]);
 
 const expectedGenres = ['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', 'fusion'];
 if (genres.length !== expectedGenres.length) fail(`Expected six genres, found ${genres.length}`);
 for (const genre of expectedGenres) if (!genres.some((entry) => entry.id === genre)) fail(`Missing genre: ${genre}`);
 if (!Array.isArray(songs) || songs.length < 1) fail('Catalogue must contain songs');
+if (!Array.isArray(nonstopIndex?.chunks) || nonstopIndex.chunks.length < 1) fail('Nonstop discovery index must contain set chunks');
 
 const scriptSources = [...index.matchAll(/<script[^>]+src="([^"]+)"/g)].map((match) => match[1]);
-const expectedScripts = ['simple-runtime.js', 'app.js'];
+const expectedScripts = ['simple-runtime.js', 'nonstop-browser.js', 'app.js'];
 for (const script of expectedScripts) if (!scriptSources.includes(script)) fail(`Missing production runtime script: ${script}`);
-for (const forbidden of ['visual-library.js', 'catalogue-bootstrap.js', 'direct-audio-bridge.js', 'playback-routes.js', 'playback-prewarm.js', 'playback-bridge.js', 'nonstop-browser.js', 'ux-polish.js', 'ux-next.js']) {
+for (const forbidden of ['visual-library.js', 'catalogue-bootstrap.js', 'direct-audio-bridge.js', 'playback-routes.js', 'playback-prewarm.js', 'playback-bridge.js', 'ux-polish.js', 'ux-next.js']) {
   if (scriptSources.includes(forbidden)) fail(`Heavy/optional script must not load on first page: ${forbidden}`);
 }
 if (scriptSources.length !== expectedScripts.length) fail(`Expected exactly ${expectedScripts.length} runtime scripts, found ${scriptSources.length}`);
@@ -38,6 +40,7 @@ if (scriptSources.length !== expectedScripts.length) fail(`Expected exactly ${ex
 for (const marker of [
   'assets/backgrounds/traditional.svg',
   'data-static-genre="true"',
+  'nonstop-browser.js',
   '<link rel="manifest" href="manifest.webmanifest"',
 ]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);
 
@@ -133,8 +136,9 @@ for (const marker of [
 ]) if (!app.includes(marker)) fail(`Core app lost interaction binding: ${marker}`);
 
 if (failed) process.exit(1);
-console.log(`✓ simple production runtime uses only ${scriptSources.join(' + ')}`);
+console.log(`✓ production runtime uses ${scriptSources.join(' + ')}`);
 console.log(`✓ ${songs.length} songs and six genres remain available`);
+console.log(`✓ ${nonstopIndex.chunks.length} Nonstop discovery chunks remain available`);
 console.log('✓ primary player controls retain direct event bindings');
 console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
