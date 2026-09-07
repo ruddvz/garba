@@ -13,36 +13,47 @@
     }
   }
 
+  async function fetchJson(path) {
+    const response = await nativeFetch(path, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Catalogue source failed: ${path} (${response.status})`);
+    return response.json();
+  }
+
+  async function loadPlaybackSources(index) {
+    const configured = index.playbackSources || 'data/playback-sources.json';
+    const paths = Array.isArray(configured) ? configured : [configured];
+    const manifests = await Promise.all(paths.map(async (path) => {
+      try { return await fetchJson(path); }
+      catch { return { songSources: {} }; }
+    }));
+    return {
+      songSources: Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {})),
+    };
+  }
+
   async function loadSongsFromChunks() {
     if (songsPromise) return songsPromise;
     songsPromise = (async () => {
-      const indexResponse = await nativeFetch('data/catalogue/index.json', { cache: 'no-store' });
-      if (!indexResponse.ok) throw new Error(`Catalogue index failed: ${indexResponse.status}`);
-      const index = await indexResponse.json();
-      const chunks = await Promise.all(index.songChunks.map(async (path) => {
-        const response = await nativeFetch(path, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Song chunk failed: ${path} (${response.status})`);
-        return response.json();
-      }));
+      const index = await fetchJson('data/catalogue/index.json');
+      if (!Array.isArray(index.songChunks) || !index.songChunks.length) throw new Error('Catalogue index has no song chunks');
 
+      const chunks = await Promise.all(index.songChunks.map((path) => fetchJson(path)));
       const songs = chunks.flat();
-      let playback = { songSources: {} };
-      try {
-        const sourceResponse = await nativeFetch(index.playbackSources || 'data/playback-sources.json', { cache: 'no-store' });
-        if (sourceResponse.ok) playback = await sourceResponse.json();
-      } catch { /* playback metadata is optional */ }
+      const playback = await loadPlaybackSources(index);
 
       return songs.map((song) => {
         const source = playback.songSources?.[song.id];
-        return source ? {
+        if (!source) return song;
+        return {
           ...song,
           youtubeId: source.videoId || song.youtubeId || null,
           youtubeStartSeconds: source.startSeconds || 0,
-          playbackProvider: source.provider,
-          playbackSourceUrl: source.sourceUrl,
-          playbackSourceType: source.sourceType,
+          playbackProvider: source.provider || null,
+          playbackSourceUrl: source.sourceUrl || null,
+          playbackSourceType: source.sourceType || null,
+          playbackAlternate: source.alternate || null,
           audioAvailability: source.provider === 'youtube' ? 'youtube-official' : song.audioAvailability,
-        } : song;
+        };
       });
     })().catch((error) => {
       songsPromise = null;
