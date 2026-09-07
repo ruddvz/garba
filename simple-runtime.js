@@ -304,6 +304,21 @@
     fallbackPlay();
   }
 
+  function interceptGlobalSpace(event) {
+    if (event.code !== 'Space') return;
+    const target = event.target;
+    const interactive = target instanceof Element
+      && Boolean(target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
+    if (interactive) {
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (hasDirectAudio()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    fallbackPlay();
+  }
+
   function copyText(text) {
     if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
     return new Promise((resolve, reject) => {
@@ -425,6 +440,7 @@
   playButton?.addEventListener('click', interceptFallbackPlay, { capture: true });
   miniPlay?.addEventListener('click', interceptFallbackPlay, { capture: true });
   shareButton?.addEventListener('click', shareCurrent);
+  document.addEventListener('keydown', interceptGlobalSpace);
 
   if (songTitle) {
     new MutationObserver(() => {
