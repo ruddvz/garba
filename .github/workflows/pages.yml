@@ -27,22 +27,33 @@ jobs:
           rm -rf _site
           mkdir -p _site
 
-          # Runtime files. Production CSS is flattened below so the browser does
-          # not wait on seven chained @import requests before it can paint.
-          cp index.html *.js manifest.webmanifest offline.html _site/
+          # Copy only the production runtime. Optional/prototype browser modules live
+          # under src/optional and are intentionally excluded from the Pages artifact.
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            nonstop-browser.js \
+            sw.js \
+            manifest.webmanifest \
+            offline.html \
+            _site/
           cp -R assets data _site/
+
+          # Flatten the ordered source layers into one production stylesheet so the
+          # browser paints from one CSS request instead of an @import chain.
           cat \
-            styles/part-1.css \
-            styles/part-2.css \
-            styles/part-3.css \
-            styles/part-4.css \
-            styles/part-5.css \
-            styles/part-6.css \
-            styles/part-7.css \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
             > _site/styles.css
 
-          # Assert every local runtime script referenced by index.html exists in
-          # the deploy artifact so a successful validation cannot still ship a 404.
+          # Assert every local runtime script referenced by index.html exists in the
+          # deploy artifact so a successful validation cannot still ship a 404.
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             case "$src" in
               http://*|https://*|//*) continue ;;
@@ -50,16 +61,10 @@ jobs:
             test -f "_site/$src" || { echo "Missing deployed script: $src"; exit 1; }
           done
 
-          # Canonical visual pack: all 15 user-approved 2K WebPs. Source history
-          # keeps the packed file; Pages serves only the extracted WebPs.
-          PACK=''
-          if [ -f assets/backgrounds/garba15-2k.zip ]; then
-            PACK='assets/backgrounds/garba15-2k.zip'
-          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
-            PACK='assets/backgrounds/garba15-2k-q82.zip'
-          fi
-
-          test -n "$PACK" || { echo 'Required 15-image 2K WebP pack is missing.'; exit 1; }
+          # Canonical visual pack: all 15 approved 2K WebPs. Source history keeps the
+          # packed file; Pages serves only the extracted images.
+          PACK='assets/backgrounds/garba15-2k.zip'
+          test -f "$PACK" || { echo 'Required 15-image 2K WebP pack is missing.'; exit 1; }
           mkdir -p _site/assets/backgrounds/library
           unzip -oq "$PACK" -d _site/assets/backgrounds/library
 
@@ -72,9 +77,8 @@ jobs:
 
           # Do not ship the source ZIP to visitors. It duplicates every background
           # and is not needed at runtime.
-          rm -f _site/assets/backgrounds/garba15-2k*.zip
+          rm -f _site/assets/backgrounds/garba15-2k.zip
 
-          # Production CSS must be one request and must not contain imports.
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
           fi

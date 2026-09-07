@@ -1,7 +1,7 @@
-@import url("styles/part-1.css");
-@import url("styles/part-2.css");
-@import url("styles/part-3.css");
-@import url("styles/part-4.css");
-@import url("styles/part-5.css");
-@import url("styles/part-6.css");
-@import url("styles/part-7.css");
+@import url("styles/00-foundation-and-player.css");
+@import url("styles/10-browser-and-shell.css");
+@import url("styles/20-responsive-and-accessibility.css");
+@import url("styles/30-product-polish.css");
+@import url("styles/40-accessibility-states.css");
+@import url("styles/50-discovery-and-performance.css");
+@import url("styles/60-runtime-and-provider.css");

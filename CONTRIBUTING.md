@@ -1,76 +1,15 @@
 # Contributing to GARBA
 
-GARBA is trying to become the most useful open, community-built home for Garba music we can responsibly make. Contributions do not need to be code.
+GARBA is a source-first, community-built Garba catalogue and player. Contributions can be code, metadata, discovery evidence, rights corrections or product fixes.
 
-If you know an old release, a regional artist, a cassette track list, a live performance, a better Gujarati spelling, an official source, a missing nonstop set, a metadata correction, or a product bug, that is useful work.
+## Non-negotiable rules
 
-## The most important rule
+1. **Do not guess catalogue facts.** Unknown dates, durations, credits, release details and rights remain unknown until a source supports them.
+2. **Do not upload music you do not have the right to redistribute.** Public availability is not the same as redistribution permission.
+3. **Keep discovery leads separate from canonical metadata.** Community recommendations can be useful without being promoted immediately into the canonical catalogue.
+4. **Do not edit generated aggregates as competing sources of truth.** Change the canonical shard, then rebuild.
 
-**Do not guess catalogue facts and do not upload music you do not have the right to redistribute.**
-
-GARBA is source-first. A missing field can remain unknown. A plausible-looking invented date, duration, artist credit, track list, source, rating, or rights claim is worse than an explicit gap.
-
-The repository can link to legitimate provider pages and embeds while keeping copyrighted audio with the service or rights holder that is authorised to host it.
-
-Read [`docs/catalogue/RIGHTS.md`](docs/catalogue/RIGHTS.md) before adding audio or download sources.
-
-## Ways to contribute
-
-### Add missing music
-
-Open a **Missing song / release** issue and include as much of the following as you can verify:
-
-- song or release title;
-- artist(s);
-- approximate or exact year, if known;
-- album/release name, if applicable;
-- Garba style/category;
-- official artist, label, distributor, streaming, archive, or other reliable source URL;
-- whether the item is a single track, album, live set, nonstop set, or timestamped chapter;
-- Gujarati title/spelling if you know it;
-- notes about uncertain fields.
-
-A source is more important than filling every field.
-
-### Correct catalogue metadata
-
-When correcting a title, spelling, artist credit, year, duration, category, or source:
-
-1. identify the exact record;
-2. include the evidence for the correction;
-3. explain whether the previous value is demonstrably wrong or simply ambiguous;
-4. preserve alternate spellings/aliases when they are useful for discovery.
-
-### Add a live or nonstop set
-
-Long-form Garba is first-class catalogue material here. For timestamped sets, include the source URL and timestamps. Do not pretend a chapter is a separately released commercial track unless the source establishes that.
-
-### Improve the player
-
-Product contributions are welcome across:
-
-- accessibility;
-- mobile and tablet layouts;
-- keyboard navigation;
-- PWA/offline behaviour;
-- playback-provider integration;
-- search and discovery;
-- performance;
-- visual polish;
-- catalogue tooling and validation.
-
-Keep the courtyard/artwork visually dominant. Avoid turning the player into a stack of opaque cards.
-
-### Report a bug
-
-Use the bug-report issue template. Include:
-
-- device and browser;
-- whether the app was opened in a browser or installed as a PWA;
-- the exact song/genre URL when relevant;
-- what you expected;
-- what happened;
-- screenshots or screen recordings when they materially help.
+Read [`docs/catalogue/rights.md`](docs/catalogue/rights.md) before adding audio or download sources.
 
 ## Local setup
 
@@ -81,41 +20,76 @@ npm run serve
 
 Then open `http://localhost:4173`.
 
-`npm run check` rebuilds/validates the catalogue and checks the player, discovery data, playback mappings and PWA shell.
+`npm run check` rebuilds the catalogue and validates JavaScript syntax, runtime contracts, discovery data, direct-audio rights, hosting/publishing inputs, repository organisation and local documentation links.
 
-## Catalogue layout
+## Repository responsibilities
 
-The source of truth is chunked so large catalogue work stays reviewable:
+- Production browser files live at the root only when they are explicit runtime entry points.
+- Optional or retained browser experiments belong in `src/optional/`.
+- CSS source layers live in `styles/` and use ordered semantic names.
+- Canonical catalogue sources live under `data/catalogue/` and are listed by `data/catalogue/index.json`.
+- Discovery leads and live/nonstop research live under `data/discovery/`.
+- Rights-acquisition working data lives under `data/rights-acquisition/`.
+- Documentation belongs in the appropriate `docs/` responsibility folder. Start at [`docs/README.md`](docs/README.md).
 
-- `data/catalogue/songs/` — song records;
-- `data/catalogue/releases/` — release records;
-- `data/catalogue/free-sources/` — rights-audited free/access resources;
-- `data/discovery/` — artist, recommendation, live and nonstop discovery records;
-- `data/playback-sources*.json` — verified playback-provider mappings;
-- `data/taxonomy.json` — detailed music taxonomy;
-- `data/genres.json` — six visual player worlds.
+See [`data/README.md`](data/README.md) for the source/generated-data contract.
 
-Generated aggregate files should be rebuilt through the project scripts rather than edited as competing sources of truth.
+## Adding or correcting music
 
-## Pull-request expectations
+For a song, release, live set or correction, provide the strongest source you can find. Official artist, label, distributor and release pages are preferred for canonical metadata. Community posts, playlists and uploads can still be valuable discovery evidence when labelled accurately.
 
-A good PR is narrow enough to review and explicit about provenance.
+Useful fields include:
 
-Before opening one:
+- title;
+- artist(s);
+- year or release date, when known;
+- release/album name;
+- Garba category/style;
+- official or otherwise reliable source URL;
+- whether it is a track, release, live set, nonstop set or timestamped chapter;
+- Gujarati spelling/transliteration when known;
+- explicit notes about uncertain fields.
+
+For corrections, identify the exact record, provide the evidence and distinguish between “demonstrably wrong” and “ambiguous”. Preserve useful alternate spellings/aliases instead of deleting legitimate variants.
+
+## Catalogue shards
+
+Canonical shards are deliberately chunked to reduce merge conflicts.
+
+- `data/catalogue/songs/` — song records
+- `data/catalogue/releases/` — release records
+- `data/catalogue/free-sources/` — rights-audited free/access resources
+- `data/catalogue/archive/` — retained fragments that are intentionally not part of the build
+
+Established canonical shard numbers are append-only. Do not renumber existing shards simply to remove historical gaps. For new semantic shards, use the next sequence number plus a concise descriptive suffix.
+
+After changing canonical catalogue data, run `npm run check`. The build verifies the manifest counts and regenerates runtime aggregates.
+
+## Live and nonstop sets
+
+Long-form Garba is first-class material. Include the source URL and timestamps when available. A timestamped chapter is a segment of a performance, not automatically a separately released commercial track.
+
+## Player changes
+
+Product contributions are welcome for accessibility, responsive layouts, keyboard navigation, PWA/offline behaviour, playback-provider integration, search, discovery, performance and visual polish.
+
+Keep the visual world dominant. Avoid replacing the experience with a stack of opaque dashboard cards.
+
+If a new browser module needs to ship in production, add it deliberately. Update the HTML/runtime reference, deployment allowlist, service-worker contract if applicable and validation. Do not rely on a filename glob to deploy it.
+
+## Pull requests
+
+Before opening a PR:
 
 1. run `npm run check`;
-2. keep unrelated refactors out of a catalogue correction;
+2. keep unrelated catalogue and product changes separate where possible;
 3. avoid overwriting another active contribution lane;
-4. explain the sources used for metadata changes;
-5. call out anything that remains uncertain;
-6. do not claim device/browser validation you did not actually perform.
+4. explain metadata sources and provenance;
+5. call out unresolved uncertainty;
+6. do not claim browser/device validation you did not perform.
 
-## Rights and licensing
+## Rights and licence status
 
-The repository is public and intended to become a fully licensed open-source/community-data project. A formal repository-wide software/data licence still needs to be chosen. Until that is added, do not assume that public visibility alone grants unrestricted reuse rights.
+The repository is public, but a repository-wide software/data licence still needs to be selected. Do not assume public visibility alone grants unrestricted reuse. Underlying recordings, compositions, artwork, embeds and other third-party material retain their own rights and licence terms.
 
-Underlying songs, recordings, artwork, embeds and third-party material retain their own copyrights and licence terms regardless of the eventual repository licence.
-
-## Community standard
-
-Be precise, respectful and useful. Garba spans regions, languages, generations, devotional traditions, commercial music, local communities and diaspora scenes. Different spellings, classifications and memories can all be sincere. When sources disagree, record the disagreement instead of turning it into a fight.
+Be precise and respectful. When reliable sources disagree, record the disagreement rather than inventing certainty.
