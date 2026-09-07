@@ -5,6 +5,7 @@
   const trackBlock = document.getElementById('trackBlock');
   const songTitle = document.getElementById('songTitle');
   const songSheet = document.getElementById('songSheet');
+  const toast = document.getElementById('toast');
 
   const PROVIDER_NAMES = {
     youtube: 'YouTube',
@@ -30,6 +31,14 @@
     } catch {
       return null;
     }
+  }
+
+  function announce(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(announce.timer);
+    announce.timer = setTimeout(() => toast.classList.remove('show'), 2400);
   }
 
   function currentSongId() {
@@ -115,11 +124,15 @@
     const stage = document.getElementById('providerStage');
     const media = document.getElementById('providerMedia');
     const note = document.getElementById('providerDockNote');
-    return stage && media ? { stage, media, note } : null;
+    const stop = document.getElementById('providerDockStop');
+    return stage && media ? { stage, media, note, stop } : null;
   }
 
   function resetStageClasses(stage) {
-    stage.classList.remove('is-loading', 'needs-tap', 'is-spotify', 'is-apple', 'is-external');
+    stage.classList.remove(
+      'is-loading', 'needs-tap', 'is-spotify', 'is-apple', 'is-external',
+      'is-release', 'is-youtube-release'
+    );
   }
 
   function openStage(kind, noteText) {
@@ -129,8 +142,18 @@
     parts.stage.classList.add('open', kind);
     parts.stage.setAttribute('aria-hidden', 'false');
     if (parts.note) parts.note.textContent = noteText;
+    if (parts.stop) {
+      parts.stop.textContent = 'Close';
+      parts.stop.setAttribute('aria-label', 'Close provider source');
+    }
     state.activeFallback = kind;
     return parts;
+  }
+
+  function restoreStageStop(parts) {
+    if (!parts?.stop) return;
+    parts.stop.textContent = 'Stop';
+    parts.stop.setAttribute('aria-label', 'Stop embedded playback');
   }
 
   function appleMusicEmbedUrl(sourceUrl = '') {
@@ -146,7 +169,7 @@
 
   function openAppleMusic(source) {
     if (!navigator.onLine) {
-      document.getElementById('toast')?.replaceChildren(document.createTextNode('You are offline. Apple Music needs an internet connection.'));
+      announce('You are offline. Apple Music needs an internet connection.');
       return;
     }
     const embed = appleMusicEmbedUrl(source.sourceUrl);
@@ -167,7 +190,10 @@
   }
 
   function openExternalSource(source) {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) {
+      announce('You are offline. Verified provider sources need an internet connection.');
+      return;
+    }
     if (!source?.sourceUrl) return delegateToCore(playButton);
     audio?.pause();
     const info = presentation(source);
@@ -196,12 +222,20 @@
   }
 
   function hideFallbackStage() {
-    if (!state.activeFallback) return;
+    if (!state.activeFallback) return false;
     const parts = stageParts();
-    if (!parts) return;
+    if (!parts) {
+      state.activeFallback = null;
+      return false;
+    }
     parts.stage.classList.remove('open', 'is-apple', 'is-external');
     parts.stage.setAttribute('aria-hidden', 'true');
+    // Removing the iframe is essential: simply hiding an Apple Music embed can
+    // leave audio playing invisibly after the user presses Close or goes offline.
+    parts.media.replaceChildren();
+    restoreStageStop(parts);
     state.activeFallback = null;
+    return true;
   }
 
   function delegateToCore(button) {
@@ -245,6 +279,13 @@
     routeButton(playButton);
   }
 
+  function interceptProviderStop(event) {
+    if (!state.activeFallback || !event.target.closest?.('#providerDockStop')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    hideFallbackStage();
+  }
+
   async function loadRoutes() {
     const index = await fetchJson('data/catalogue/index.json');
     const configured = index?.playbackSources || [
@@ -259,6 +300,7 @@
     syncStatus();
   }
 
+  window.addEventListener('click', interceptProviderStop, true);
   document.addEventListener('click', interceptPlay, true);
   document.addEventListener('keydown', interceptSpace, true);
 
@@ -281,11 +323,17 @@
     }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
   }
 
+  window.addEventListener('offline', () => {
+    if (hideFallbackStage()) announce('Offline. Provider playback paused until you reconnect.');
+  });
+
   state.loading = loadRoutes().catch(() => { state.ready = true; syncStatus(); });
   window.GARBA_PLAYBACK_ROUTES = {
     get ready() { return state.ready; },
     sourceFor(songId) { return state.sources[songId] || null; },
     refresh: syncStatus,
+    closeActive: hideFallbackStage,
+    routeCurrent() { return routeButton(playButton); },
   };
 
   ensureStatus();
