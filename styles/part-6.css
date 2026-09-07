@@ -1,166 +1,85 @@
-/* Minimal player, responsive and genre-art tuning. Loaded last. */
+/* Discovery, device and data-saver refinements layered after the core UI. */
 
-.source-badge { display: none !important; }
-
-/* Keep the UI lighter than the artwork. */
-.track-block::before {
-  inset: -24px -42px -20px;
-  background: radial-gradient(ellipse at center, rgba(7,9,18,.24), rgba(7,9,18,.075) 55%, transparent 78%);
-}
-.utilities .icon-button { background: rgba(8,10,18,.10); }
-.play-button { background: rgba(9,12,22,.16); }
-.browse-actions { gap: 0; }
-
-/* The approved 2K courtyard pack is art-directed per genre. */
-.app[data-genre="traditional"] .world-layer { background-position: center 48%; }
-.app[data-genre="dandiya"] .world-layer { background-position: center 49%; }
-.app[data-genre="devotional"] .world-layer { background-position: center 47%; }
-.app[data-genre="folk"] .world-layer { background-position: center 49%; }
-.app[data-genre="sanedo"] .world-layer { background-position: center 49%; }
-.app[data-genre="fusion"] .world-layer { background-position: center 50%; }
-
-/* In-app provider playback. The YouTube viewport remains visible and unobscured. */
-.provider-dock {
-  position: fixed;
-  z-index: 18;
-  top: max(92px, calc(var(--safe-top) + 68px));
-  right: max(20px, var(--safe-right));
-  width: min(356px, calc(100vw - 40px));
-  border: 1px solid rgba(246,236,215,.13);
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(8,11,20,.96);
-  box-shadow: 0 22px 60px rgba(0,0,0,.38);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-8px) scale(.985);
-  transition: opacity 180ms ease, transform 220ms var(--ease), visibility 0s linear 220ms;
-}
-.provider-dock.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-  transition-delay: 0s;
-}
-.provider-media {
-  width: 100%;
-  height: 200px;
-  min-width: 200px;
-  min-height: 200px;
-  background: #050609;
-}
-.provider-media iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-width: 200px;
-  min-height: 200px;
-  border: 0;
-  background: #050609;
-}
-.provider-dock.is-spotify .provider-media { height: 152px; min-height: 152px; }
-.provider-dock.is-spotify .provider-media iframe { min-height: 152px; }
-.provider-dock-bar {
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 10px 0 12px;
-  border-top: 1px solid rgba(246,236,215,.09);
-  color: rgba(246,236,215,.54);
+.enhanced-search-note {
+  padding: 8px 2px 11px;
+  color: rgba(246,236,215,.48);
   font-size: 11px;
-  letter-spacing: .01em;
-}
-.provider-dock-bar button {
-  min-height: 30px;
-  border: 0;
-  border-radius: 8px;
-  padding: 0 7px;
-  background: transparent;
-  color: rgba(246,236,215,.76);
-  cursor: pointer;
-}
-.provider-dock-bar button:hover { background: rgba(246,236,215,.07); color: var(--ivory); }
-.provider-dock.is-loading .provider-dock-bar span::after { content: "…"; }
-.provider-dock.needs-tap .provider-dock-bar span { color: var(--ivory); }
-
-/* Compact laptops and tablets should keep the whole player above the fold. */
-@media (min-width: 701px) and (max-height: 760px) {
-  .player-shell { padding-top: 82px; padding-bottom: 16px; }
-  .genre-eyebrow { margin-bottom: 5px; }
-  .song-title { font-size: clamp(38px, 4.25vw, 58px); }
-  .artist { margin-top: 8px; }
-  .controls { margin-top: 14px; }
-  .progress-wrap { margin-top: 14px; }
-  .genre-strip { padding-top: 10px; }
-  .browse-actions { margin-top: 8px; }
-  .provider-dock { top: max(74px, calc(var(--safe-top) + 54px)); }
+  line-height: 1.4;
+  letter-spacing: .035em;
+  text-transform: uppercase;
 }
 
-@media (min-width: 1101px) and (min-aspect-ratio: 2/1) {
-  .player-shell { padding-top: 92px; padding-bottom: 22px; }
-  .track-block { max-width: min(760px, 52vw); }
-  .song-title { font-size: clamp(44px, 3.65vw, 66px); }
-  .genre-strip { max-width: min(760px, 62vw); }
+.enhanced-search-row .enhanced-search-arrow {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  min-height: 40px;
+  color: color-mix(in srgb, var(--accent) 72%, var(--ivory));
+  font-size: 18px;
+  opacity: .72;
+  transition: transform 160ms ease, opacity 160ms ease;
 }
 
-@media (min-width: 701px) and (max-width: 1024px) {
-  .sheet { width: min(900px, 92vw); }
-  .provider-dock { width: min(336px, calc(100vw - 44px)); }
+@media (hover: hover) {
+  .enhanced-search-row:hover .enhanced-search-arrow {
+    transform: translateX(3px);
+    opacity: 1;
+  }
+}
+
+.source-badge[data-metadata-only="true"] {
+  color: rgba(246,236,215,.52);
+}
+.source-badge[data-metadata-only="true"]::before {
+  background: rgba(246,236,215,.42);
+  box-shadow: none;
+}
+
+.app.page-hidden .world-ambient,
+.app.page-hidden .ambient-ring {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+.app[data-save-data="true"] .world-ambient,
+.app[data-save-data="true"] .ambient-ring {
+  display: none;
+}
+.app[data-save-data="true"] .sheet,
+.app[data-save-data="true"] .utilities .icon-button,
+.app[data-save-data="true"] .source-badge,
+.app[data-save-data="true"] .network-status,
+.app[data-save-data="true"] .retry-catalogue {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.app[data-save-data="true"] .world-layer {
+  transition-duration: 180ms;
+}
+
+.sheet-handle[aria-expanded="true"] span {
+  background: color-mix(in srgb, var(--accent) 42%, rgba(246,236,215,.34));
 }
 
 @media (max-width: 700px) {
-  .app[data-genre="traditional"] .world-layer { background-position: center 46%; }
-  .app[data-genre="dandiya"] .world-layer { background-position: center 47%; }
-  .app[data-genre="devotional"] .world-layer { background-position: center 46%; }
-  .app[data-genre="folk"] .world-layer { background-position: center 45%; }
-  .app[data-genre="sanedo"] .world-layer { background-position: center 47%; }
-  .app[data-genre="fusion"] .world-layer { background-position: center 47%; }
-
-  .topbar { padding-top: max(18px, var(--safe-top)); }
-  .track-block::before { inset: -20px -8px -18px; }
-  .song-title { font-size: clamp(36px, 10vw, 46px); }
-  .artist { font-size: clamp(15px, 4.25vw, 18px); }
-  .controls { margin-top: 4px; }
-  .progress-wrap { margin-top: 0; }
-  .genre-strip { padding-top: 12px; }
-  .browse-actions { margin-top: 2px; }
-  .install-banner {
-    width: calc(100vw - 24px);
-    bottom: max(12px, calc(var(--safe-bottom) + 8px));
-    padding: 12px 12px 12px 14px;
-    border-radius: 15px;
+  .enhanced-search-note {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-inline: -2px;
+    padding: 9px 2px 10px;
+    background: linear-gradient(to bottom, rgba(12,16,29,.98), rgba(12,16,29,.88));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
-
-  .provider-dock {
-    z-index: 19;
-    top: auto;
-    right: 12px;
-    bottom: max(82px, calc(var(--safe-bottom) + 70px));
-    width: calc(100vw - 24px);
-    border-radius: 14px;
-  }
-  .provider-media { height: 200px; }
-  .provider-dock.is-spotify .provider-media { height: 152px; }
+  .enhanced-search-row { min-height: 72px; }
 }
 
-@media (max-width: 390px) {
-  .provider-dock { right: 8px; width: calc(100vw - 16px); }
-  .provider-dock-bar { padding-inline: 10px 8px; }
-  .provider-dock-bar span { max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-contrast: more) {
+  .enhanced-search-note { color: rgba(246,236,215,.78); }
+  .enhanced-search-row .enhanced-search-arrow { color: var(--ivory); opacity: 1; }
 }
 
-@media (max-height: 560px) and (orientation: landscape) {
-  .provider-dock {
-    top: max(48px, calc(var(--safe-top) + 38px));
-    right: max(10px, var(--safe-right));
-    bottom: auto;
-    width: 300px;
-  }
-  .provider-media { height: 200px; }
-}
-
-@media (display-mode: standalone) {
-  .install-banner { display: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .enhanced-search-row .enhanced-search-arrow { transition: none; }
 }
