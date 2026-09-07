@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -7,6 +7,7 @@ const CORE_SHELL = [
   './index.html',
   './styles.css',
   './simple-runtime.js',
+  './nonstop-browser.js',
   './app.js',
   './manifest.webmanifest',
   './offline.html',
@@ -90,7 +91,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/data/songs.json') || url.pathname.endsWith('/data/genres.json')) {
+  if (
+    url.pathname.endsWith('/data/songs.json')
+    || url.pathname.endsWith('/data/genres.json')
+    || url.pathname.includes('/data/discovery/sets/')
+  ) {
     event.respondWith(networkFirst(request));
     return;
   }
