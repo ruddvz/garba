@@ -73,7 +73,14 @@ for (const script of runtimeFiles) {
 const nextUx = await readFile(path.join(root, 'ux-next.js'), 'utf8');
 const inputUx = await readFile(path.join(root, 'ux-input.js'), 'utf8');
 if (!nextUx.includes("import './ux-input.js';")) fail('ux-next.js must load playback input parity');
-for (const marker of ['playButton?.click()', "setActionHandler('play'", 'providerSpaceGuard', 'stopImmediatePropagation']) {
+for (const marker of [
+  'playButton?.click()',
+  'installMediaSessionHandlers',
+  "setMediaAction('play'",
+  "setMediaAction('pause'",
+  'providerSpaceGuard',
+  'stopImmediatePropagation',
+]) {
   if (!inputUx.includes(marker)) fail(`ux-input.js missing playback parity guard: ${marker}`);
 }
 
@@ -82,4 +89,4 @@ console.log(`✓ Pages deploys ${localScripts.length} document scripts and ${run
 console.log('✓ Pages verifies all 15 WebPs and excludes the source ZIP');
 console.log('✓ production CSS is flattened to one request');
 console.log('✓ service-worker shell covers the complete document/module runtime graph');
-console.log('✓ keyboard and Media Session Play route through the provider-aware Play control');
+console.log('✓ keyboard and Media Session controls route through the provider-aware DOM controls');
