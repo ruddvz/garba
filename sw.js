@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v12-provider-truth`;
+const VERSION = `${CACHE_PREFIX}v13-provider-coverage`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -13,11 +13,12 @@ const SHELL = [
   './styles/part-4.css',
   './styles/part-5.css',
   './styles/part-6.css',
+  './styles/part-7.css',
   './app.js',
   './ux-polish.js',
   './ux-next.js',
   './ux-input.js',
-  './playback-status.js',
+  './playback-routes.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
@@ -26,20 +27,17 @@ const SHELL = [
   './data/genres.json',
   './data/taxonomy.json',
   './data/songs.json',
-  './data/catalogue/index.json',
   './data/playback-sources-generated.json',
+  './data/playback-coverage.json',
+  './data/catalogue/index.json',
   './data/playback-sources.json',
   './data/playback-sources-current.json',
-  './data/playback-coverage.json',
   './data/nonstop.json',
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/maskable.svg',
   './assets/icons/apple-touch-icon.png',
-  // Lightweight fallbacks remain precached. The approved high-resolution
-  // WebPs are cached on first use so installing the PWA does not download
-  // the entire visual library at once.
   './assets/backgrounds/traditional.svg',
   './assets/backgrounds/dandiya.svg',
   './assets/backgrounds/devotional.svg',
@@ -48,8 +46,34 @@ const SHELL = [
   './assets/backgrounds/fusion.svg'
 ];
 
+const OPTIONAL_ARTWORK = [
+  './assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
+  './assets/backgrounds/library/02-rhythmic-drums-courtyard-a.webp',
+  './assets/backgrounds/library/03-devotional-garba-courtyard.webp',
+  './assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
+  './assets/backgrounds/library/05-fusion-gujarati-neon.webp',
+  './assets/backgrounds/library/06-fusion-abstract-neon.webp',
+  './assets/backgrounds/library/07-dandiya-purple-courtyard.webp',
+  './assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
+  './assets/backgrounds/library/09-warm-stage-courtyard.webp',
+  './assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
+  './assets/backgrounds/library/11-master-dark-courtyard.webp',
+  './assets/backgrounds/library/12-rhythmic-drums-courtyard-b.webp',
+  './assets/backgrounds/library/13-traditional-marigold-courtyard.webp',
+  './assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
+  './assets/backgrounds/library/15-traditional-canopy-courtyard.webp'
+];
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil((async () => {
+    const cache = await caches.open(SHELL_CACHE);
+    await cache.addAll(SHELL);
+    await Promise.allSettled(OPTIONAL_ARTWORK.map(async (url) => {
+      const response = await fetch(url, { cache: 'no-store' });
+      if (response.ok) await cache.put(url, response);
+    }));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
@@ -87,13 +111,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS/CSS are network-first so fixes reach installed PWAs immediately.
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'manifest') {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // Artwork and app icons are immutable per filename/version and are ideal for cache-first.
   if (request.destination === 'image') {
     event.respondWith(cacheFirst(request));
   }

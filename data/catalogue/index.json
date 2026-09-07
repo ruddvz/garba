@@ -1,7 +1,7 @@
 {
-  "version": "0.11.1",
-  "songCount": 880,
-  "releaseCount": 132,
+  "version": "0.14.0",
+  "songCount": 945,
+  "releaseCount": 146,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -38,7 +38,10 @@
     "data/catalogue/songs/songs-31-atul-rangrasiya-ramjo-2026.json",
     "data/catalogue/songs/songs-32-achal-hardik-core.json",
     "data/catalogue/songs/songs-33-parthiv-palav-2007.json",
-    "data/catalogue/songs/songs-34-hardik-garbi2-2025.json"
+    "data/catalogue/songs/songs-34-hardik-garbi2-2025.json",
+    "data/catalogue/songs/songs-35-ramzat5-2024.json",
+    "data/catalogue/songs/songs-36-current-staples-2023-2026.json",
+    "data/catalogue/songs/songs-37-taal4-2025.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -62,7 +65,10 @@
     "data/catalogue/releases/releases-19-atul-rangrasiya-ramjo-2026.json",
     "data/catalogue/releases/releases-20-achal-hardik-core.json",
     "data/catalogue/releases/releases-21-parthiv-palav-2007.json",
-    "data/catalogue/releases/releases-22-hardik-garbi2-2025.json"
+    "data/catalogue/releases/releases-22-hardik-garbi2-2025.json",
+    "data/catalogue/releases/releases-23-ramzat5-2024.json",
+    "data/catalogue/releases/releases-24-current-staples-2023-2026.json",
+    "data/catalogue/releases/releases-25-taal4-2025.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
@@ -87,5 +93,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. Exact track mappings override generated verified-release fallbacks; chaptered nonstop/live performances are used before provider search. Atul Purohit United Way editions retain distinct original/digital track segmentations rather than being collapsed as duplicates. Saybo preserves the 2022 Soor Mandir digital edition with a documented older archival lineage."
+  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. Exact track mappings override generated verified-release fallbacks; chaptered nonstop/live performances are used before provider search. Atul Purohit United Way editions retain distinct original/digital track segmentations rather than being collapsed as duplicates. Saybo preserves the 2022 Soor Mandir digital edition with a documented older archival lineage. Ramzat 5 preserves both the 27-track album and the separate 58:55 continuous master. Taal 4.0 preserves the 26-track studio album, separate 55:51 continuous master, and separate chaptered performance set. Current-staple records use exact artist/label/provider sources rather than playlist-only evidence."
 }

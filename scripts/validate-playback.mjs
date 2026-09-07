@@ -19,6 +19,7 @@ let exactProvider = 0;
 let verifiedReleaseFallback = 0;
 const unrouted = [];
 const invalidRoutes = [];
+const providers = new Map();
 
 for (const song of songs) {
   if (song.audioUrl) {
@@ -36,6 +37,8 @@ for (const song of songs) {
   const provider = String(source.provider || '').trim();
   const sourceUrl = String(source.sourceUrl || '').trim();
   const youtubeVideo = provider === 'youtube' && String(source.videoId || '').trim();
+  providers.set(provider, (providers.get(provider) || 0) + 1);
+
   if (!provider) invalidRoutes.push(`${song.id}: missing provider`);
   if (sourceUrl && !/^https:\/\//.test(sourceUrl)) invalidRoutes.push(`${song.id}: non-HTTPS sourceUrl`);
   if (!sourceUrl && !youtubeVideo) invalidRoutes.push(`${song.id}: provider route has no sourceUrl/videoId`);
@@ -55,17 +58,35 @@ if (coverage.verifiedReleaseFallback !== verifiedReleaseFallback) fail(`Coverage
 if (coverage.unresolvedWithoutVerifiedReleaseSource !== 0) fail(`Playback coverage still has ${coverage.unresolvedWithoutVerifiedReleaseSource} unresolved songs`);
 if (localAudio + exactProvider + verifiedReleaseFallback !== songs.length) fail('Playback route totals do not cover the full song catalogue');
 
-const runtime = await readFile(path.join(root, 'playback-status.js'), 'utf8');
-for (const marker of ['playbackSources', 'verified-release-source', 'Verified release', 'dataset.playbackProvider', 'GARBA_PLAYBACK_STATUS']) {
-  if (!runtime.includes(marker)) fail(`playback-status.js missing route-truth marker: ${marker}`);
+const core = await readFile(path.join(root, 'playback-bridge.js'), 'utf8');
+for (const marker of ['playYouTube(source)', 'playSpotify(source)', 'stopImmediatePropagation', 'provider-dock']) {
+  if (!core.includes(marker)) fail(`playback-bridge.js missing in-app core marker: ${marker}`);
 }
 
+const routes = await readFile(path.join(root, 'playback-routes.js'), 'utf8');
+for (const marker of [
+  'appleMusicEmbedUrl', "source.provider === 'apple-music'", 'openExternalSource',
+  'provider-external-action', 'garbaRouteBypass', 'GARBA_PLAYBACK_ROUTES',
+  'verified-release-source',
+]) {
+  if (!routes.includes(marker)) fail(`playback-routes.js missing provider coverage marker: ${marker}`);
+}
+if (routes.includes('window.open(') || core.includes('window.open(')) fail('Playback routing must not force popups with window.open');
+
 const html = await readFile(path.join(root, 'index.html'), 'utf8');
-if (!html.includes('src="playback-status.js"')) fail('index.html must load playback-status.js');
+const routeIndex = html.indexOf('src="playback-routes.js"');
+const bridgeIndex = html.indexOf('src="playback-bridge.js"');
+if (routeIndex < 0) fail('index.html must load playback-routes.js');
+if (bridgeIndex < 0 || routeIndex > bridgeIndex) fail('playback-routes.js must load before playback-bridge.js so unsupported providers can be intercepted first');
+
+const css = await readFile(path.join(root, 'styles/part-7.css'), 'utf8');
+for (const marker of ['.playback-status', '.provider-dock.is-apple', '.provider-external-action']) {
+  if (!css.includes(marker)) fail(`Final player CSS missing provider coverage marker: ${marker}`);
+}
 
 const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
 for (const file of [
-  './playback-status.js',
+  './playback-routes.js',
   './data/songs.json',
   './data/playback-sources-generated.json',
   './data/playback-coverage.json',
@@ -74,8 +95,10 @@ for (const file of [
 }
 
 if (failed) process.exit(1);
-console.log(`✓ ${songs.length}/${songs.length} songs have an actionable playback route`);
+console.log(`✓ ${songs.length}/${songs.length} songs have an actionable provider route`);
 console.log(`✓ exact/direct provider mappings: ${localAudio + exactProvider}`);
 console.log(`✓ verified release fallbacks: ${verifiedReleaseFallback}`);
+console.log(`✓ providers routed: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name} ${count}`).join(', ')}`);
+console.log('✓ YouTube/Spotify stay in the core player; Apple Music embeds in-app; other verified providers degrade to a clear source action');
 console.log('✓ provider status distinguishes exact sources from release-level fallbacks');
 console.log('✓ offline PWA shell includes generated songs and playback routing data');
