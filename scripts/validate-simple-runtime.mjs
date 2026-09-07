@@ -12,10 +12,11 @@ for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'nonstop-browse
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, sw, genres, songs, playerCss, nonstopIndex] = await Promise.all([
+const [index, app, simple, nonstop, sw, genres, songs, playerCss, nonstopIndex] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
+  read('nonstop-browser.js'),
   read('sw.js'),
   readJson('data/genres.json'),
   readJson('data/songs.json'),
@@ -77,6 +78,26 @@ for (const marker of [
 
 if (simple.includes('window.open(')) fail('Primary Play must not automatically throw users out to a new provider tab');
 
+for (const marker of [
+  'function loadSetsOnce(',
+  'function hydrateBrowser(',
+  'function trapFocus(',
+  'function destroyPlayer()',
+  "state.overlay.setAttribute('aria-hidden', 'false')",
+  "state.overlay.setAttribute('aria-hidden', 'true')",
+  "$('app').inert = true",
+  "$('app').inert = false",
+  "queueMicrotask(() => target?.focus?.({ preventScroll: true }))",
+  "window.addEventListener('offline'",
+  "window.addEventListener('online'",
+  'Nonstop playback needs an internet connection',
+  'Try an artist, year, set title, or a song contained in a timestamped chapter.',
+  'state.segments',
+]) {
+  if (!nonstop.includes(marker)) fail(`Nonstop browser missing live UX marker: ${marker}`);
+}
+if (nonstop.includes('state.sets = await loadSets();')) fail('Nonstop set data must load lazily on browser open, not during page startup');
+
 const expectedVisualFiles = [
   '15-traditional-canopy-courtyard.webp',
   '10-dandiya-silhouette-courtyard.webp',
@@ -96,6 +117,7 @@ for (const marker of [
   "const LEGACY_PREFIX = 'garba-shell-'",
   'const CORE_SHELL = [',
   "'./simple-runtime.js'",
+  "'./nonstop-browser.js'",
   "'./app.js'",
   "'./manifest.webmanifest'",
   "'./offline.html'",
@@ -104,6 +126,7 @@ for (const marker of [
   'await self.clients.claim()',
   'request.mode === \'navigate\'',
   "url.pathname.endsWith('/data/songs.json')",
+  "url.pathname.includes('/data/discovery/sets/')",
   "url.pathname.includes('/assets/backgrounds/library/')",
   'event.respondWith(cacheFirst(request))',
   'event.respondWith(staleWhileRevalidate(request))',
@@ -144,5 +167,6 @@ console.log('✓ provider-backed Play stays inside GARBA when a safe embed is av
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
-console.log('✓ minimal PWA shell is installable again without reviving the old heavy cache graph');
-console.log('✓ visited catalogue data and 2K artwork can be reused offline while provider media remains network-bound');
+console.log('✓ minimal PWA shell stays installable without reviving the old heavy cache graph');
+console.log('✓ Nonstop data waits for intent, traps focus correctly, restores focus on close and fails visibly offline');
+console.log('✓ visited Nonstop set data can be reused through the service worker while provider media stays network-bound');
