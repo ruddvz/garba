@@ -30,6 +30,7 @@ for (const [songId, entry] of Object.entries(tracks)) {
   const proofUrl = String(rights.proofUrl || '').trim();
   const licenseName = String(rights.licenseName || '').trim();
   const rightsHolder = String(rights.rightsHolder || '').trim();
+  const sha256 = String(entry.sha256 || '').trim();
 
   if (!audioUrl) fail(`${songId}: missing audioUrl`);
   if (audioUrl && !isHttps(audioUrl) && !isLocalAudioPath(audioUrl)) {
@@ -44,11 +45,11 @@ for (const [songId, entry] of Object.entries(tracks)) {
   if (!proofUrl || !isHttps(proofUrl)) fail(`${songId}: rights.proofUrl must be an HTTPS evidence URL`);
   if (!String(rights.verifiedAt || '').match(/^\d{4}-\d{2}-\d{2}$/)) fail(`${songId}: rights.verifiedAt must be YYYY-MM-DD`);
 
-  if (entry.sha256 && !/^[a-f0-9]{64}$/i.test(String(entry.sha256))) {
-    fail(`${songId}: sha256 must be a 64-character hexadecimal digest`);
+  if (!/^[a-f0-9]{64}$/i.test(sha256)) {
+    fail(`${songId}: sha256 is required and must be the 64-character digest of the published encoded audio bytes`);
   }
 }
 
 if (failed) process.exit(1);
-console.log(`✓ ${Object.keys(tracks).length} direct-audio entries have explicit redistribution evidence`);
+console.log(`✓ ${Object.keys(tracks).length} direct-audio entries have explicit redistribution evidence and encoded-byte checksums`);
 console.log('✓ direct audio cannot silently point at YouTube, Apple Music, Amazon, Spotify, SoundCloud, Bandcamp or Pixabay pages');
