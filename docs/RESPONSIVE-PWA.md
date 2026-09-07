@@ -1,6 +1,6 @@
 # Responsive and PWA behaviour
 
-This document is the implementation contract for the player shell. The song catalogue is intentionally separate so another agent can update song data without touching UI code.
+This document is the implementation contract for the player shell. Catalogue collection remains separate so song/release work can continue without colliding with UI changes.
 
 ## Breakpoint strategy
 
@@ -10,25 +10,26 @@ The interface is fluid first. Breakpoints only change behaviour when the interac
 
 - Full courtyard composition.
 - Player stays centred in the dark architectural opening.
-- Search, favourites and queue remain in the top-right utility group.
-- Song browser is a centred 74vw translucent panel, capped at 1120 px.
+- Search, share, favourites, queue and Nonstop remain compact utilities rather than a second navigation bar.
+- Song browser is a centred translucent panel, capped so rows remain readable on wide monitors.
 - Genre labels are text-led, never card-led.
 
 ### Tablet / compact desktop: 701–1100 px
 
 - Player remains the same product, not a stretched mobile layout.
 - Typography and control sizes reduce via `clamp()`.
-- Song browser expands to about 88–92vw.
-- Portrait tablets use a slightly higher background crop and a narrower player measure.
-- iPad portrait and landscape are both first-class layouts.
+- Song browser expands to use more of the available width.
+- Portrait tablets use a higher background crop and narrower player measure.
+- iPad portrait and landscape are first-class layouts.
 
 ### Phone: 700 px and below
 
-- Brand stays top-left. Search and queue stay top-right.
-- Favourite moves into the track block.
-- Track title is art-directed for the dark arch and capped to avoid dominating the screen.
-- Genre navigation is intentionally horizontally scrollable. It must not squeeze six labels into one phone width.
+- Brand and essential utilities remain reachable at the top edge.
+- Favourite stays with the current-track identity.
+- Track typography is art-directed for the dark central architecture and constrained for long verified titles.
+- Genre navigation scrolls horizontally instead of squeezing six labels into one phone width.
 - Browse Songs becomes a draggable bottom sheet.
+- Provider playback opens as a bottom-aligned modal surface with safe-area spacing.
 
 ### Short landscape screens
 
@@ -36,7 +37,7 @@ A height-based query handles phones rotated to landscape and short browser windo
 
 - Track title and controls become compact.
 - Genre strip remains reachable.
-- Browse Songs moves to a fixed low-priority action near the lower-right safe area.
+- Browse/Nonstop actions move away from the centre player.
 - The sheet uses taller snap heights to preserve useful list space.
 
 ## Mobile sheet states
@@ -45,83 +46,108 @@ The mobile browser has four runtime states:
 
 - `closed`: completely off-screen.
 - `collapsed`: compact mini-player only.
-- `medium`: 56dvh, the default Browse Songs state.
-- `full`: 82dvh for search or deliberate expansion.
+- `medium`: default browsing state.
+- `full`: expanded search/browse state.
 
-The drag handle supports:
+The drag handle supports upward/downward movement between those states. The song list itself is not the drag target, preventing scroll/drag conflicts.
 
-- swipe up: collapsed → medium → full;
-- swipe down: full → medium → collapsed → closed;
-- tap: cycles between useful open states.
+When the sheet acts as a mobile modal:
 
-The song list itself is not used as the drag target, preventing scroll/drag conflicts.
+- background player controls become inert;
+- keyboard focus stays inside the sheet;
+- closing restores focus to the control that opened it;
+- Escape clears an active search first, then closes the sheet.
 
 ## Safe areas
 
-All major edge controls use `env(safe-area-inset-*)` through shared variables. This matters for:
+Major edge controls use `env(safe-area-inset-*)`. This matters for:
 
 - iPhones with Dynamic Island/notches;
 - home-indicator spacing;
 - standalone PWA mode;
-- landscape device cut-outs.
+- landscape cut-outs.
 
 ## Motion
 
-- World changes crossfade in about 900 ms.
-- Track text exits upward, is replaced once, then enters from below. Outgoing and incoming titles never overlap.
-- Playback controls stay geometrically stable during a genre change.
-- `prefers-reduced-motion` collapses transitions to effectively instant state changes.
+- World changes use restrained crossfades rather than moving the whole interface.
+- Track text exits before incoming text appears, preventing overlapping titles.
+- Playback controls stay geometrically stable during song/genre changes.
+- `prefers-reduced-motion` removes non-essential animation.
+- Decorative work pauses when the page is hidden.
+
+## 2K courtyard loading
+
+The deployed Pages artifact contains the approved 15-image 2K WebP visual pack, while lightweight SVG worlds remain bundled as safe fallbacks.
+
+`visual-library.js` deliberately does **not** preload every 2K world at startup:
+
+- only the currently visible genre is promoted to its 2K WebP during initial catalogue bootstrap;
+- other genre records keep lightweight SVG backgrounds until the listener enters that world;
+- on genre change, the appropriate approved 2K image is decoded on demand and then replaces the visible fallback;
+- deterministic song URLs may select an approved alternate from the same genre bucket;
+- Save-Data and 2G-class connections keep the lightweight fallback instead of forcing multi-megabyte artwork downloads.
+
+This preserves the visual quality of the supplied courtyard library without turning first load into a six-background download.
 
 ## PWA
 
 `manifest.webmanifest` provides:
 
 - standalone display;
-- maskable and regular icons;
+- native PNG, scalable SVG and maskable launcher artwork;
 - home-screen shortcuts for Traditional, Dandiya and Browse Songs;
-- dark startup/background colours.
+- dark startup/background colours;
+- focus-existing launch behaviour where supported.
 
-`sw.js` uses two policies:
+The service worker separates content by update sensitivity:
 
-- app shell, UI and background worlds: cache-first after install;
-- `data/songs.json` and `data/genres.json`: network-first so catalogue updates from the song agent are not trapped behind an old service-worker cache.
+- catalogue/discovery JSON: network-first so new collection work is visible quickly;
+- JavaScript, CSS and the manifest: network-first so fixes reach installed PWAs without waiting for a cache cycle;
+- immutable artwork/icons: cache-first after first use;
+- lightweight SVG visual fallbacks: precached with the shell;
+- 2K WebPs: cached only when actually requested, not during PWA installation.
 
-If the network is unavailable, the shell, cached catalogue and visual worlds remain available. External streaming audio is not forcibly downloaded for offline use.
+Navigation falls back to the cached app shell/offline page when the network is unavailable. External provider audio/video is never silently downloaded for offline use.
 
 ## Installation UX
 
-- Chromium-family browsers use `beforeinstallprompt` and show a restrained install banner after a delay.
-- iOS Safari receives a concise Add to Home Screen instruction because iOS does not expose the same programmatic prompt.
-- Installation nudges are suppressed for seven days after dismissal.
-- No install prompt is shown while the song browser is open.
+- Chromium-family browsers use `beforeinstallprompt` when available.
+- iOS Safari receives concise Add to Home Screen guidance.
+- Installation nudges are suppressed after dismissal.
+- Install prompts do not compete with an open song browser.
 
-## OS media controls
+## Playback and OS media controls
 
-The Media Session API is wired for browsers that support it:
+Pointer, touch, keyboard Space and supported Media Session Play actions all route through the same Play control. This is important because the playback bridge may resolve a catalogue record to local audio, an approved YouTube source, Spotify, another cited provider, a verified performance inside a nonstop set, or a provider-search fallback.
+
+Media Session support includes the actions browsers expose from:
 
 - play / pause;
 - previous / next;
 - seek backward / forward / to position;
-- lock-screen/control-centre metadata.
+- lock-screen/control-centre metadata and GARBA artwork.
 
-Metadata comes only from the current catalogue row. The UI layer does not invent song facts.
+Unknown catalogue durations stay unknown in the UI rather than being presented as `0:00`.
 
-## Catalogue resilience
+## Catalogue and discovery resilience
 
-The app refreshes the song and genre JSON when connectivity returns and when a previously open tab becomes visible after the catalogue has been stale for more than five minutes. A changed catalogue is adopted without forcing the current playing source to restart.
+The catalogue remains source-driven. Search begins with exact title/artist matching and can fall back to taxonomy-aware discovery across Garba categories, styles and aliases when ordinary matching returns nothing.
 
-Long song titles receive compact typography classes automatically. This keeps verified real-world titles from breaking the dark-arch composition on narrow phones or compact tablets.
+The app refreshes catalogue data after reconnecting and when a previously open tab becomes visible after its catalogue has gone stale. A loading failure becomes an explicit retry state instead of an indefinite spinner.
 
-## QA matrix before production release
+## QA matrix before calling the product complete
 
-The responsive CSS explicitly covers these classes of viewport. They remain release-gate targets for real-device/browser QA after deployment to an HTTPS origin:
+Static CI covers document/runtime integrity, imported modules, service-worker coverage, catalogue generation, discovery data and Pages artifact construction. Real-device visual/interaction QA is still a separate release gate and should include:
 
-- 360–390 px phones and larger modern phones;
-- iPhone portrait and short landscape with safe areas;
-- iPad Mini / standard iPad portrait and landscape;
-- 1024–1100 px compact desktop/tablet windows;
-- common 1366, 1440, 1920 and wider desktop widths;
-- standalone PWA display mode;
-- reduced-motion mode and keyboard navigation.
+- small and large iPhones in Safari;
+- installed iOS PWA behavior;
+- Android Chrome and installed PWA behavior;
+- iPad portrait and landscape;
+- desktop Safari/Chrome/Firefox-class browsers;
+- keyboard-only navigation and provider modals;
+- reduced-motion and increased-contrast preferences;
+- offline, reconnect and stale-cache scenarios;
+- Save-Data/slow-network behavior;
+- YouTube, Spotify, external-source and Nonstop playback paths.
 
-The current environment can statically validate the responsive/PWA contract, but its managed browser blocks local origins. Do not mark visual browser/device QA complete until the app is available on a real HTTPS preview or production origin.
+Do not mark those browser/device scenarios as verified until they have actually been exercised on the relevant environments.
