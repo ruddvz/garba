@@ -92,8 +92,20 @@ const uxNext = await readFile(path.join(root, 'ux-next.js'), 'utf8');
 if (!uxNext.includes("import './playback-release-guard.js';")) fail('ux-next.js must load the release fallback guard');
 
 const sw = await readFile(path.join(root, 'sw.js'), 'utf8');
-for (const file of ['./playback-release-guard.js','./playback-routes.js','./data/songs.json','./data/playback-sources-generated.json','./data/playback-coverage.json']) {
-  if (!sw.includes(file)) fail(`Service worker must precache playback runtime dependency: ${file}`);
+for (const file of ['./playback-release-guard.js', './playback-routes.js']) {
+  if (!sw.includes(file)) fail(`Service worker core shell must include playback runtime dependency: ${file}`);
+}
+// Heavy generated route metadata must not delay PWA installation. It is fetched
+// network-first and cached in the runtime cache when playback/catalogue code asks
+// for it, so subsequent offline sessions can reuse data the user actually visited.
+for (const forbidden of ["'./data/songs.json'", "'./data/playback-sources-generated.json'", "'./data/playback-coverage.json'"]) {
+  if (sw.includes(forbidden)) fail(`Service worker install must not bulk-precache playback data: ${forbidden}`);
+}
+if (!(sw.includes("url.pathname.includes('/data/')") && sw.includes("url.pathname.endsWith('.json')") && sw.includes('networkFirst(request)'))) {
+  fail('Playback/catalogue JSON must be cached network-first on demand');
+}
+if (!sw.includes('const RUNTIME_CACHE') || !sw.includes('cache.put(request, response.clone())')) {
+  fail('On-demand playback metadata must populate the runtime cache');
 }
 
 if (failed) process.exit(1);
@@ -105,4 +117,4 @@ console.log(`✓ release fallback providers: ${[...releaseProviders.entries()].s
 console.log('✓ chapter routes carry source-set, segment and timestamp provenance and are preferred before release navigation');
 console.log('✓ verified release fallbacks are intercepted before song-level players and never presented as a track-specific stream');
 console.log('✓ Spotify, Apple Music and YouTube release pages can embed as release context; other providers expose a clear verified source action');
-console.log('✓ installed PWA caches release-routing logic and generated route metadata');
+console.log('✓ installed PWA caches playback logic immediately and route metadata lazily on demand');

@@ -17,22 +17,33 @@ for (const genre of ['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', '
 
 for (const marker of [
   'function connectionConstrained()',
-  'function warmImage(url)',
+  'function warmImage(url,',
   'async function promoteVisibleGenre(genreId)',
-  "genre.id !== currentGenre",
+  'function scheduleRemainingArtwork()',
+  'genre.id !== currentGenre',
   "backgroundQuality: '2k-webp'",
   "attributeFilter: ['data-genre']",
+  'requestAnimationFrame(() => promoteVisibleGenre(requestedGenre()))',
   '2K visual library unavailable; using bundled fallback.',
 ]) {
   if (!source.includes(marker)) fail(`Visual lazy-loading contract missing: ${marker}`);
 }
 
-if (!source.includes('connection.saveData') || !source.includes("2g$")) {
-  fail('2K visual loading must respect Save-Data and 2G-class connections');
+if (!source.includes('connection.saveData') || !source.includes('2g$')) {
+  fail('Visual loading must detect Save-Data and 2G-class connections');
+}
+if (!source.includes('if (background && connectionConstrained()) return Promise.resolve(false);')) {
+  fail('Constrained connections must skip speculative warming of non-visible artwork');
+}
+if (!source.includes('await warmImage(url, { background: true });')) {
+  fail('Remaining artwork must be warmed only as background work');
+}
+if (!source.includes("window.addEventListener('load', afterLoad, { once: true })")) {
+  fail('Speculative artwork warming must wait until after window load');
 }
 
 if (failed) process.exit(1);
 console.log(`✓ ${uniqueWebps.size} approved 2K WebPs mapped across six genre worlds`);
-console.log('✓ initial bootstrap promotes only the current world to 2K');
-console.log('✓ genre changes promote decoded 2K art on demand');
-console.log('✓ Save-Data/2G connections retain lightweight visual fallbacks');
+console.log('✓ visible genre art is promoted to real 2K WebP on first paint and genre changes');
+console.log('✓ the other artwork is deferred until after load/idle time');
+console.log('✓ Save-Data/2G connections skip speculative background warming');
