@@ -113,7 +113,23 @@ for (const [songId, record] of Object.entries(records)) {
 
   if (state === "published") {
     if (hostingState !== "cleared") fail(`${songId}: published requires hosting-rights state cleared`);
-    if (!directTracks[songId]) fail(`${songId}: published requires a matching data/direct-audio.json entry`);
+    const direct = directTracks[songId];
+    if (!direct) fail(`${songId}: published requires a matching data/direct-audio.json entry`);
+
+    const publication = record.publication || {};
+    if (!isSha256(publication.encodedSha256)) fail(`${songId}: published requires publication.encodedSha256`);
+    if (!nonEmpty(publication.audioUrl)) fail(`${songId}: published requires publication.audioUrl`);
+    if (!nonEmpty(publication.profileId)) fail(`${songId}: published requires publication.profileId`);
+    if (!isDate(publication.publishedAt)) fail(`${songId}: published requires publication.publishedAt YYYY-MM-DD`);
+
+    if (direct) {
+      if (String(publication.encodedSha256 || "").toLowerCase() !== String(direct.sha256 || "").toLowerCase()) {
+        fail(`${songId}: publication.encodedSha256 must equal data/direct-audio.json sha256`);
+      }
+      if (String(publication.audioUrl || "").trim() !== String(direct.audioUrl || "").trim()) {
+        fail(`${songId}: publication.audioUrl must equal data/direct-audio.json audioUrl`);
+      }
+    }
   } else if (directTracks[songId]) {
     fail(`${songId}: direct-audio entry exists while master-intake state is ${state}; publish state atomically with the direct entry`);
   }
@@ -122,4 +138,4 @@ for (const [songId, record] of Object.entries(records)) {
 if (failed) process.exit(1);
 console.log(`✓ ${Object.keys(records).length} authorised master-intake records are valid`);
 console.log("✓ source masters are restricted to WAV/FLAC from rights-holder or authorised supply paths");
-console.log("✓ publishing is gated on cleared rights plus a matching direct-audio entry");
+console.log("✓ published records bind the exact encoded checksum and audio URL to cleared rights and direct audio");
