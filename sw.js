@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v17-fast-shell-direct-audio`;
+const VERSION = `${CACHE_PREFIX}v18-fast-shell-nonstop`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -16,6 +16,7 @@ const CORE_SHELL = [
   './direct-audio-bridge.js',
   './playback-routes.js',
   './playback-bridge.js',
+  './nonstop-browser.js',
   './ux-polish.js',
   './ux-next.js',
   './ux-input.js',
