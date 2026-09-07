@@ -1,7 +1,7 @@
 {
-  "version": "0.14.0",
-  "songCount": 945,
-  "releaseCount": 146,
+  "version": "0.14.1",
+  "songCount": 949,
+  "releaseCount": 150,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -41,7 +41,8 @@
     "data/catalogue/songs/songs-34-hardik-garbi2-2025.json",
     "data/catalogue/songs/songs-35-ramzat5-2024.json",
     "data/catalogue/songs/songs-36-current-staples-2023-2026.json",
-    "data/catalogue/songs/songs-37-taal4-2025.json"
+    "data/catalogue/songs/songs-37-taal4-2025.json",
+    "data/catalogue/songs/songs-38-standalone-staples.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -68,7 +69,8 @@
     "data/catalogue/releases/releases-22-hardik-garbi2-2025.json",
     "data/catalogue/releases/releases-23-ramzat5-2024.json",
     "data/catalogue/releases/releases-24-current-staples-2023-2026.json",
-    "data/catalogue/releases/releases-25-taal4-2025.json"
+    "data/catalogue/releases/releases-25-taal4-2025.json",
+    "data/catalogue/releases/releases-26-standalone-staples.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
