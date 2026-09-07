@@ -40,17 +40,28 @@ for (const script of runtimeFiles) {
   catch { fail(`runtime graph references missing local script: ${script}`); }
 }
 
-if (!workflow.includes('cp index.html *.js styles.css manifest.webmanifest offline.html _site/')) {
+// The production workflow deliberately flattens styles into one response, so the
+// runtime copy command need only prove every root JavaScript file is copied.
+if (!/cp\s+index\.html\s+\*\.js\s+manifest\.webmanifest\s+offline\.html\s+_site\//.test(workflow)) {
   fail('Pages build must copy every root runtime JavaScript file with *.js');
 }
 if (!workflow.includes('Missing deployed script: $src')) {
   fail('Pages build must assert every index.html script exists in _site');
 }
-if (!workflow.includes("garba15-2k-q82.zip")) {
+if (!workflow.includes('garba15-2k-q82.zip')) {
   fail('Pages build must support the checked-in 15-image 2K visual pack');
 }
-if (!workflow.includes("find _site/assets/backgrounds/library -maxdepth 1 -name '*.webp' | wc -l")) {
+if (!/find _site\/assets\/backgrounds\/library[^\n]+-name '\*\.webp'[^\n]+wc -l/.test(workflow) || !workflow.includes('Expected 15 WebPs')) {
   fail('Pages build must verify all 15 extracted WebPs');
+}
+if (!workflow.includes("file \"$image\" | grep -q 'Web/P image'")) {
+  fail('Pages build must verify extracted artwork is valid WebP data');
+}
+if (!workflow.includes("rm -f _site/assets/backgrounds/garba15-2k*.zip")) {
+  fail('Pages build must not publish the source artwork ZIP');
+}
+if (!workflow.includes("grep -q '@import' _site/styles.css")) {
+  fail('Pages build must enforce one flattened production stylesheet');
 }
 
 for (const script of runtimeFiles) {
@@ -68,6 +79,7 @@ for (const marker of ['playButton?.click()', "setActionHandler('play'", 'provide
 
 if (failed) process.exit(1);
 console.log(`✓ Pages deploys ${localScripts.length} document scripts and ${runtimeFiles.size - localScripts.length} imported runtime modules`);
-console.log('✓ Pages verifies the 15-image WebP visual pack when present');
+console.log('✓ Pages verifies all 15 WebPs and excludes the source ZIP');
+console.log('✓ production CSS is flattened to one request');
 console.log('✓ service-worker shell covers the complete document/module runtime graph');
 console.log('✓ keyboard and Media Session Play route through the provider-aware Play control');
