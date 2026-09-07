@@ -24,8 +24,17 @@
 
 ## Phase 2: catalogue and playback integration
 
-- [ ] Replace placeholder catalogue with the verified song-agent handoff
-- [ ] Decide and implement authorised playback provider(s)
+- [x] Replace placeholder catalogue with the verified song-agent handoff
+- [x] Inline playback engine: verified YouTube sources play through a hidden
+      IFrame API instance driven directly by the transport controls
+      (play/pause/seek/next/prev/Media Session/keyboard), instead of a
+      separate modal — no tab or overlay opens for the common case
+- [x] `npm run catalogue`'s verified-release-source fallback is wired into
+      the live playback-source list, giving most of the catalogue *some*
+      resolvable source instead of only the ~40 curated song mappings
+- [ ] Decide and implement authorised playback provider(s) for the songs
+      whose only verified source is Apple Music/Amazon Music (no public
+      JS-controllable embed exists for either without app-specific auth)
 - [ ] Validate every final duration/source against the catalogue
 - [ ] Decide whether queue remains automatic Up Next or gains explicit Add to Queue actions
 - [ ] Shuffle / Surprise me

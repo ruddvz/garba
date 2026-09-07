@@ -114,7 +114,7 @@
     body.innerHTML = `<iframe class="provider-frame" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&playsinline=1&rel=0${start ? `&start=${start}` : ''}" title="${escapeHtml(title)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe><p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}Played from the cited YouTube source.${notes ? ` ${escapeHtml(notes)}` : ''}</p><span class="provider-source-note">${escapeHtml(sourceType || 'YouTube source')}</span>${chapters}<div class="provider-actions"><a class="provider-action" href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener">Open on YouTube</a></div>`;
     body.querySelectorAll('.provider-chapter').forEach((button) => button.addEventListener('click', () => openYouTube({ videoId, startSeconds: Number(button.dataset.start) || 0, title, artist, sourceUrl, sourceType, segments, notes })));
     overlay.classList.add('open');
-    document.getElementById('audio')?.pause();
+    window.dispatchEvent(new CustomEvent('garba:pause-inline'));
   }
 
   function spotifyEmbedUrl(sourceUrl = '') {
@@ -138,7 +138,7 @@
     const alternateAction = alternate?.sourceUrl ? `<a class="provider-action secondary" href="${escapeHtml(alternate.sourceUrl)}" target="_blank" rel="noopener">Official alternate source</a>` : '';
     body.innerHTML = `<iframe class="provider-frame spotify" src="${escapeHtml(embedUrl)}" title="${escapeHtml(title)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="eager"></iframe><p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}Played with the provider's official embedded player. Availability depends on the provider and listener account.</p><span class="provider-source-note">${escapeHtml(sourceType || 'Spotify catalogue')}</span><div class="provider-actions"><a class="provider-action" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">Open on Spotify</a>${alternateAction}</div>`;
     overlay.classList.add('open');
-    document.getElementById('audio')?.pause();
+    window.dispatchEvent(new CustomEvent('garba:pause-inline'));
   }
 
   function openExternalSource({ sourceUrl, title = 'Garba', artist = '', sourceType }) {
@@ -147,11 +147,6 @@
     document.getElementById('providerTitle').textContent = title;
     body.innerHTML = `<p class="provider-copy">${escapeHtml(artist)}${artist ? ' · ' : ''}This verified catalogue item uses an external provider that is not embedded here.</p><span class="provider-source-note">${escapeHtml(sourceType || 'External source')}</span><div class="provider-actions"><a class="provider-action" href="${escapeHtml(sourceUrl || '#')}" target="_blank" rel="noopener">Open source</a></div>`;
     overlay.classList.add('open');
-  }
-
-  function currentSongIdentity() {
-    const params = new URLSearchParams(location.search);
-    return { id: params.get('song'), title: document.getElementById('songTitle')?.textContent?.trim() || 'Garba song', artist: document.getElementById('songArtist')?.textContent?.trim() || '' };
   }
 
   function titleTokens(value = '') {
@@ -175,7 +170,7 @@
     return Math.max(0, coverage - lengthPenalty);
   }
 
-  function findPerformanceSource(song) {
+  function findPerformanceMatch(song) {
     const candidates = [];
     for (const set of nonstop) {
       if (set.provider !== 'youtube' || !set.videoId || !Array.isArray(set.segments)) continue;
@@ -194,6 +189,7 @@
       provider: 'youtube',
       videoId: best.set.videoId,
       startSeconds: Number(best.segment.startSeconds) || 0,
+      endSeconds: Number.isFinite(best.segment.endSeconds) ? Number(best.segment.endSeconds) : null,
       sourceUrl: best.set.sourceUrl,
       sourceType: best.set.sourceType,
       segments: best.set.segments,
@@ -208,15 +204,6 @@
     const query = encodeURIComponent(`${song.title} ${song.artist}`.trim());
     body.innerHTML = `<p class="provider-copy">A verified direct playable source has not been attached to this catalogue record yet. Search a provider rather than presenting an unverified stream.</p><div class="provider-actions"><a class="provider-action" href="https://www.youtube.com/results?search_query=${query}" target="_blank" rel="noopener">Find on YouTube</a><a class="provider-action secondary" href="https://open.spotify.com/search/${query}" target="_blank" rel="noopener">Find on Spotify</a><a class="provider-action secondary" href="https://music.apple.com/us/search?term=${query}" target="_blank" rel="noopener">Find on Apple Music</a></div>`;
     overlay.classList.add('open');
-  }
-
-  function playProvider(source, song) {
-    if (source?.provider === 'youtube' && source.videoId) return openYouTube({ ...source, title: song.title, artist: song.artist });
-    if (source?.provider === 'spotify' && source.sourceUrl) return openSpotify({ ...source, title: song.title, artist: song.artist });
-    if (source?.sourceUrl) return openExternalSource({ ...source, title: song.title, artist: song.artist });
-    const performance = findPerformanceSource(song);
-    if (performance) return openYouTube({ ...performance, title: song.title, artist: song.artist });
-    return openProviderSearch(song);
   }
 
   function openNonstop() {
@@ -261,19 +248,6 @@
     }
   }
 
-  function interceptPlay(event) {
-    const button = event.target.closest?.('#playButton, #miniPlay');
-    if (!button) return;
-    const audio = document.getElementById('audio');
-    if (audio?.getAttribute('src')) return;
-    const song = currentSongIdentity();
-    const source = song.id ? playback.songSources?.[song.id] : null;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    playProvider(source, song);
-  }
-
-  document.addEventListener('click', interceptPlay, true);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && document.getElementById('providerOverlay')?.classList.contains('open')) {
       event.stopImmediatePropagation();
@@ -282,8 +256,25 @@
   }, true);
 
   injectStyles();
-  loadData().finally(() => {
+  const ready = loadData();
+  ready.finally(() => {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addNonstopButton, { once: true });
     else addNonstopButton();
   });
+
+  // The main player (app.js) plays YouTube-sourced tracks inline through the
+  // YouTube IFrame API directly — no modal needed for the common case. This
+  // bridge now only supplies source lookups plus the fallback surfaces for
+  // providers that cannot be driven from the main play button (Spotify,
+  // Apple/Amazon links, unresolved tracks) and the standalone Nonstop browser.
+  window.GarbaPlayback = {
+    ready,
+    songSourceFor: (songId) => (songId ? playback.songSources?.[songId] || null : null),
+    findPerformanceMatch,
+    openYouTubeModal: (options) => openYouTube(options),
+    openSpotifyModal: (options) => openSpotify(options),
+    openExternalModal: (options) => openExternalSource(options),
+    openSearchModal: (song) => openProviderSearch(song),
+    closeOverlay,
+  };
 })();

@@ -64,3 +64,33 @@
   .retry-catalogue { border-color: rgba(246,236,215,.58); }
   .search-empty-prompt { color: rgba(246,236,215,.78); }
 }
+
+/* Audio-only YouTube playback host: real (non-display:none) so the IFrame
+   API keeps running in the background, but placed off-screen and inert. */
+.yt-host {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  left: -9999px;
+  top: -9999px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.source-badge {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.source-badge:hover,
+.source-badge:focus-visible { opacity: .85; }
+
+.play-button:disabled,
+.mini-play:disabled {
+  opacity: .55;
+  cursor: wait;
+  pointer-events: none;
+}

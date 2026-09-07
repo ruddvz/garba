@@ -62,22 +62,31 @@ function currentSong() {
   return (id && state.songs.get(id)) || null;
 }
 
+const PROVIDER_NAMES = {
+  youtube: 'YouTube',
+  spotify: 'Spotify',
+  bandcamp: 'Bandcamp',
+  soundcloud: 'SoundCloud',
+  'apple-music': 'Apple Music',
+  'amazon-music': 'Amazon Music',
+  qobuz: 'Qobuz',
+};
+
 function sourceLabel(source) {
   const provider = String(source?.provider || '').toLowerCase();
-  if (provider === 'youtube') return 'YouTube source';
-  if (provider === 'spotify') return 'Spotify source';
-  if (provider === 'bandcamp') return 'Bandcamp source';
-  if (provider) return `${provider} source`;
-  return '';
+  if (!provider) return '';
+  return `${PROVIDER_NAMES[provider] || provider} source`;
 }
 
 function ensureSourceBadge() {
   let badge = $('sourceBadge');
   if (badge) return badge;
-  badge = document.createElement('span');
+  badge = document.createElement('button');
   badge.id = 'sourceBadge';
+  badge.type = 'button';
   badge.className = 'source-badge';
   badge.setAttribute('aria-live', 'polite');
+  badge.addEventListener('click', () => playButton?.click());
   trackBlock?.append(badge);
   return badge;
 }
@@ -135,6 +144,7 @@ function syncDocumentMetadata() {
   const label = sourceLabel(source) || sourceLabel(song ? { provider: song.playbackProvider } : null);
   badge.textContent = label;
   badge.classList.toggle('show', Boolean(label));
+  badge.setAttribute('aria-label', label ? `Play/pause · ${label}` : '');
 
   if (playButton && label && !playButton.classList.contains('is-playing')) {
     playButton.title = `Play using ${label.replace(' source', '')}`;
