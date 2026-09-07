@@ -1,7 +1,7 @@
 {
-  "version": "0.7.0",
-  "songCount": 719,
-  "releaseCount": 108,
+  "version": "0.8.0",
+  "songCount": 746,
+  "releaseCount": 113,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -30,7 +30,8 @@
     "data/catalogue/songs/songs-23-gaman-santhal-garba.json",
     "data/catalogue/songs/songs-24-gaman-santhal-more.json",
     "data/catalogue/songs/songs-25-rutvi-ramzat-2022-2023.json",
-    "data/catalogue/songs/songs-26-rutvi-ramzat-2024-2026.json"
+    "data/catalogue/songs/songs-26-rutvi-ramzat-2024-2026.json",
+    "data/catalogue/songs/songs-27-pooja-kalyani-ramzat.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -46,7 +47,8 @@
     "data/catalogue/releases/releases-11-gaman-santhal-garba.json",
     "data/catalogue/releases/releases-12-gaman-santhal-more.json",
     "data/catalogue/releases/releases-13-rutvi-ramzat-2022-2023.json",
-    "data/catalogue/releases/releases-14-rutvi-ramzat-2024-2026.json"
+    "data/catalogue/releases/releases-14-rutvi-ramzat-2024-2026.json",
+    "data/catalogue/releases/releases-15-pooja-kalyani-ramzat.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
