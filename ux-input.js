@@ -20,7 +20,16 @@ function stopGlobalSpaceOnInteractive(container) {
 }
 
 function setupProviderSpaceGuard() {
-  const bind = () => stopGlobalSpaceOnInteractive(document.getElementById('providerOverlay'));
+  const bind = () => {
+    const overlay = document.getElementById('providerOverlay');
+    if (!overlay || overlay.dataset.providerSpaceGuard === 'true') return;
+    overlay.dataset.providerSpaceGuard = 'true';
+    overlay.addEventListener('keydown', (event) => {
+      // A playback-provider dialog is its own interaction surface. Never let
+      // Space inside the modal leak through to the global transport shortcut.
+      if (event.code === 'Space') event.stopPropagation();
+    });
+  };
   bind();
   new MutationObserver(bind).observe(document.body, { childList: true });
 }
@@ -32,6 +41,7 @@ function setupPlaybackInputParity() {
   // pointer/touch clicks. This also avoids a separate, inconsistent code path.
   document.addEventListener('keydown', (event) => {
     if (event.code !== 'Space' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (document.getElementById('providerOverlay')?.classList.contains('open')) return;
     if (isInteractiveTarget(event.target)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
