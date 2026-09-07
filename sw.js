@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v11-input-parity`;
+const VERSION = `${CACHE_PREFIX}v12-provider-truth`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -17,6 +17,7 @@ const SHELL = [
   './ux-polish.js',
   './ux-next.js',
   './ux-input.js',
+  './playback-status.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
@@ -24,9 +25,12 @@ const SHELL = [
   './offline.html',
   './data/genres.json',
   './data/taxonomy.json',
+  './data/songs.json',
   './data/catalogue/index.json',
+  './data/playback-sources-generated.json',
   './data/playback-sources.json',
   './data/playback-sources-current.json',
+  './data/playback-coverage.json',
   './data/nonstop.json',
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
