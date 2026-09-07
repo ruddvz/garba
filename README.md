@@ -73,11 +73,11 @@ garba/
 │   └── README.md               # source vs generated-data contract
 ├── docs/
 │   ├── catalogue/              # schema, status, sources and catalogue rights
-│   ├── product/                # design, responsive/PWA and UX notes
+│   ├── product/                # design, playback, responsive/PWA and UX notes
 │   ├── rights/                 # partnership and licensing operations
 │   ├── operations/             # hosting, ingestion and publishing procedures
 │   ├── project/                # roadmap
-│   └── README.md               # documentation index
+│   └── README.md               # canonical documentation index
 ├── scripts/                    # catalogue, validation and operations tooling
 └── .github/                    # issues and CI/Pages workflows
 ```
@@ -110,7 +110,7 @@ npm run serve
 
 Then open `http://localhost:4173`.
 
-`npm run check` rebuilds the catalogue and validates the runtime, data contracts, repository structure and documentation links.
+`npm run check` rebuilds the catalogue and validates the runtime, data contracts, repository structure and documentation links/index coverage.
 
 PWA installation requires HTTPS or a browser-recognised local development origin.
 
@@ -133,6 +133,7 @@ Start at [`docs/README.md`](docs/README.md). The main references are:
 - [`docs/catalogue/rights.md`](docs/catalogue/rights.md)
 - [`docs/catalogue/song-catalog-contract.md`](docs/catalogue/song-catalog-contract.md)
 - [`docs/product/design-system.md`](docs/product/design-system.md)
+- [`docs/product/playback-runtime-coverage.md`](docs/product/playback-runtime-coverage.md)
 - [`docs/product/responsive-pwa.md`](docs/product/responsive-pwa.md)
 - [`docs/project/roadmap.md`](docs/project/roadmap.md)
 
