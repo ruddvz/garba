@@ -7,7 +7,7 @@ const read = (file) => readFile(path.join(root, file), 'utf8');
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [index, bootstrap, prewarm, bridge, styles, playerCss, sw, pages, visuals] = await Promise.all([
+const [index, bootstrap, prewarm, bridge, styles, playerCss, sw, pages, visuals, app, uxPolish, uxNext, uxInput] = await Promise.all([
   read('index.html'),
   read('catalogue-bootstrap.js'),
   read('playback-prewarm.js'),
@@ -17,6 +17,10 @@ const [index, bootstrap, prewarm, bridge, styles, playerCss, sw, pages, visuals]
   read('sw.js'),
   read('.github/workflows/pages.yml'),
   read('visual-library.js'),
+  read('app.js'),
+  read('ux-polish.js'),
+  read('ux-next.js'),
+  read('ux-input.js'),
 ]);
 
 for (const marker of ['YT.Player', 'youtube.com/embed/', 'spotifyEmbedUrl', 'stopImmediatePropagation', 'provider-dock', 'playYouTube']) {
@@ -55,6 +59,66 @@ for (const marker of [
   'fetchpriority="high"',
 ]) {
   if (!index.includes(marker)) fail(`Complete first-paint HTML missing marker: ${marker}`);
+}
+
+// The production player can look healthy while being functionally dead if a
+// control is renamed, a listener disappears, or a modal leaves the app inert.
+// Keep the complete primary interaction surface under a static contract in CI.
+for (const id of [
+  'playButton', 'prevButton', 'nextButton', 'progress',
+  'browseButton', 'searchButton', 'favouritesButton', 'queueButton',
+  'mobileFavourite', 'sheetHandle', 'sheetClose', 'searchInput',
+  'miniPlay', 'miniPrev', 'miniNext', 'installButton', 'installDismiss',
+  'shareButton',
+]) {
+  if (!index.includes(`id="${id}"`)) fail(`Primary interaction control missing from index.html: ${id}`);
+}
+
+for (const marker of [
+  "els.playButton.addEventListener('click', togglePlay)",
+  "els.miniPlay.addEventListener('click', togglePlay)",
+  "els.prevButton.addEventListener('click', () => changeSong(-1))",
+  "els.nextButton.addEventListener('click', () => changeSong(1))",
+  "els.miniPrev.addEventListener('click', () => changeSong(-1))",
+  "els.miniNext.addEventListener('click', () => changeSong(1))",
+  "els.browseButton.addEventListener('click'",
+  "els.sheetClose.addEventListener('click', closeSheet)",
+  "els.mobileFavourite.addEventListener('click', () => toggleFavourite())",
+  "els.favouritesButton.addEventListener('click', () => openSheet('favourites'",
+  "els.queueButton.addEventListener('click', () => openSheet('queue'",
+  "els.searchButton.addEventListener('click', () => openSheet('search'",
+  "els.progress.addEventListener('input'",
+  "button.addEventListener('click', () => onSelect(genre.id))",
+  "els.sheetHandle.addEventListener('pointerdown', start)",
+  "els.sheetHandle.addEventListener('pointerup', end)",
+  "els.installDismiss.addEventListener('click'",
+  "els.installButton.addEventListener('click'",
+]) {
+  if (!app.includes(marker)) fail(`Core player interaction binding missing: ${marker}`);
+}
+
+for (const marker of [
+  "import './playback-release-guard.js';",
+  "import './ux-input.js';",
+  'genreEyebrow?.textContent',
+  "shareButton?.addEventListener('click', improvedShare, { capture: true })",
+]) {
+  if (!uxNext.includes(marker)) fail(`UI enhancement interaction contract missing: ${marker}`);
+}
+for (const marker of ['setSheetBackgroundInert', 'syncSheetAccessibility', "shareButton?.addEventListener('click', shareCurrentTrack)"]) {
+  if (!uxPolish.includes(marker)) fail(`Accessibility/share interaction contract missing: ${marker}`);
+}
+for (const marker of ['playButton?.click()', "setActionHandler('play'", 'providerSpaceGuard', 'stopImmediatePropagation']) {
+  if (!uxInput.includes(marker)) fail(`Playback input parity contract missing: ${marker}`);
+}
+for (const marker of [
+  'function recoverStaleInert()',
+  "window.addEventListener('pageshow', recoverStaleInert)",
+  "document.addEventListener('pointerdown', recoverStaleInert",
+  "document.addEventListener('touchstart', recoverStaleInert",
+  "import(modulePath).catch",
+]) {
+  if (!visuals.includes(marker)) fail(`Early interaction recovery contract missing: ${marker}`);
 }
 
 for (const marker of [
@@ -107,14 +171,18 @@ if (!visuals.includes('requestAnimationFrame(() => promoteVisibleGenre(requested
 }
 if (!visuals.includes('scheduleRemainingArtwork();')) fail('Remaining approved artwork must be warmed after first load');
 
-if (!pages.includes('garba15-2k-q82.zip')) fail('Pages workflow must retain the approved 2K WebP pack extraction');
+if (!pages.includes('garba15-2k-q82.zip')) fail('Pages workflow must retain the approved 2K WebP pack extraction fallback');
 if (!pages.includes('styles/part-7.css \\')) fail('Pages workflow must flatten the seven CSS layers');
 if (!pages.includes('> _site/styles.css')) fail('Pages workflow must emit one production styles.css');
 if (!pages.includes('WEBP_COUNT=')) fail('Pages workflow must verify all 15 WebPs are deployed');
-if (!pages.includes('rm -f _site/assets/backgrounds/garba15-2k*.zip')) fail('Pages workflow must remove the source image ZIP from the public artifact');
+if (!pages.includes('rm -f _site/assets/backgrounds/garba15-2k*.zip') && !pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
+  fail('Pages workflow must remove source image ZIPs from the public artifact');
+}
 
 if (failed) process.exit(1);
 console.log('✓ first paint is a complete edge-to-edge player with a real 2K WebP');
+console.log('✓ every primary tap/click control has a DOM target and core event binding');
+console.log('✓ modal inert recovery and provider-aware input remain available before optional UI enhancements');
 console.log('✓ the complete catalogue waits until after page load and browser idle time');
 console.log('✓ service-worker install no longer bulk-downloads catalogue or artwork');
 console.log('✓ all 15 approved WebPs remain available and warm progressively');
