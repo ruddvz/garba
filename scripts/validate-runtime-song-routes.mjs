@@ -48,10 +48,21 @@ const missing = songs.filter((song) => !song.audioUrl && (!song.playbackProvider
 const chapterRoutes = songs.filter((song) => song.playbackSourceType === 'verified-performance-chapter');
 const exactTrackRoutes = songs.filter((song) => song.playbackSourceType === 'verified-track-source');
 const singleReleaseRoutes = songs.filter((song) => song.playbackSourceType === 'verified-single-release-source');
+const unchapteredYoutubeRoutes = songs.filter((song) => song.playbackSourceType === 'verified-unchaptered-youtube-release');
 const misclassifiedExactTracks = songs.filter((song) => song.playbackSourceType === 'verified-release-source' && isExactTrackUrl(song));
 const misclassifiedSingleReleases = songs.filter((song) => {
   if (song.playbackSourceType !== 'verified-release-source' || !isReleaseSpecificUrl(song)) return false;
   return Number(releasesById.get(song.releaseId)?.songCount) === 1;
+});
+const misclassifiedUnchapteredYoutube = songs.filter((song) => {
+  if (song.playbackSourceType !== 'verified-release-source' || song.playbackProvider !== 'youtube' || !isReleaseSpecificUrl(song)) return false;
+  if (Number.isFinite(Number(song.youtubeStartSeconds))) return false;
+  return Number(releasesById.get(song.releaseId)?.songCount) > 1;
+});
+const brokenUnchapteredYoutube = unchapteredYoutubeRoutes.filter((song) => {
+  if (song.playbackProvider !== 'youtube' || !isReleaseSpecificUrl(song)) return true;
+  if (Number.isFinite(Number(song.youtubeStartSeconds))) return true;
+  return Number(releasesById.get(song.releaseId)?.songCount) <= 1;
 });
 const brokenChapters = chapterRoutes.filter((song) => song.playbackProvider !== 'youtube' || !song.youtubeId || !Number.isFinite(Number(song.youtubeStartSeconds)) || Number(song.youtubeStartSeconds) < 0);
 const providers = new Map();
@@ -64,6 +75,8 @@ if (missing.length) fail(`${missing.length} generated songs are missing runtime 
 if (brokenChapters.length) fail(`${brokenChapters.length} performance-chapter routes lost their YouTube ID or start time`);
 if (misclassifiedExactTracks.length) fail(`${misclassifiedExactTracks.length} exact provider track URLs are still labelled as release-level fallbacks`);
 if (misclassifiedSingleReleases.length) fail(`${misclassifiedSingleReleases.length} one-song release URLs are still labelled as multi-track release fallbacks`);
+if (misclassifiedUnchapteredYoutube.length) fail(`${misclassifiedUnchapteredYoutube.length} unchaptered multi-song YouTube routes are still allowed to look like exact song playback`);
+if (brokenUnchapteredYoutube.length) fail(`${brokenUnchapteredYoutube.length} unchaptered YouTube routes do not match the multi-song release contract`);
 if (coverage.songCount !== songs.length) fail(`Playback coverage songCount ${coverage.songCount} does not match ${songs.length} generated songs`);
 if (coverage.unresolvedWithoutVerifiedReleaseSource !== 0) fail(`Playback coverage still reports ${coverage.unresolvedWithoutVerifiedReleaseSource} unresolved songs`);
 
@@ -72,6 +85,9 @@ for (const marker of [
   "params.set('start'",
   "song.playbackSourceType === 'verified-release-source'",
   "song.playbackSourceType === 'verified-performance-chapter'",
+  "song?.playbackSourceType === 'verified-unchaptered-youtube-release'",
+  'Open the verified full release',
+  'exact song timestamp not verified',
 ]) if (!simple.includes(marker)) fail(`Simple runtime missing enriched-route marker: ${marker}`);
 
 for (const marker of [
@@ -90,6 +106,7 @@ console.log(`✓ all ${songs.length} generated songs carry a direct or provider 
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
 console.log(`✓ ${exactTrackRoutes.length} exact provider track URLs are distinguished from release-level fallbacks`);
 console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
+console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes open as full releases instead of pretending to start at a selected song`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');
