@@ -1,7 +1,7 @@
 {
-  "version": "0.10.1",
-  "songCount": 796,
-  "releaseCount": 127,
+  "version": "0.11.1",
+  "songCount": 880,
+  "releaseCount": 132,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -35,7 +35,10 @@
     "data/catalogue/songs/songs-28-santvani-shakti.json",
     "data/catalogue/songs/songs-29-kairavi-buch.json",
     "data/catalogue/songs/songs-30-atul-united-way.json",
-    "data/catalogue/songs/songs-31-atul-rangrasiya-ramjo-2026.json"
+    "data/catalogue/songs/songs-31-atul-rangrasiya-ramjo-2026.json",
+    "data/catalogue/songs/songs-32-achal-hardik-core.json",
+    "data/catalogue/songs/songs-33-parthiv-palav-2007.json",
+    "data/catalogue/songs/songs-34-hardik-garbi2-2025.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -56,7 +59,10 @@
     "data/catalogue/releases/releases-16-santvani-shakti.json",
     "data/catalogue/releases/releases-17-kairavi-buch.json",
     "data/catalogue/releases/releases-18-atul-united-way.json",
-    "data/catalogue/releases/releases-19-atul-rangrasiya-ramjo-2026.json"
+    "data/catalogue/releases/releases-19-atul-rangrasiya-ramjo-2026.json",
+    "data/catalogue/releases/releases-20-achal-hardik-core.json",
+    "data/catalogue/releases/releases-21-parthiv-palav-2007.json",
+    "data/catalogue/releases/releases-22-hardik-garbi2-2025.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
@@ -81,5 +87,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. Exact track mappings override generated verified-release fallbacks; chaptered nonstop/live performances are used before provider search. Atul Purohit United Way editions retain distinct original/digital track segmentations rather than being collapsed as duplicates."
+  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. Exact track mappings override generated verified-release fallbacks; chaptered nonstop/live performances are used before provider search. Atul Purohit United Way editions retain distinct original/digital track segmentations rather than being collapsed as duplicates. Saybo preserves the 2022 Soor Mandir digital edition with a documented older archival lineage."
 }
