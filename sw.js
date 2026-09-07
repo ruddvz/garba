@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v5`;
+const VERSION = `${CACHE_PREFIX}v6`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -19,8 +19,6 @@ const SHELL = [
   './data/catalogue/index.json',
   './data/playback-sources.json',
   './data/playback-sources-current.json',
-  './data/playback-sources-generated.json',
-  './data/playback-coverage.json',
   './data/nonstop.json',
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
