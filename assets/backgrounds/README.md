@@ -2,11 +2,11 @@
 
 The production artwork is the approved 15-image courtyard set. Source masters remain outside normal runtime delivery; GitHub Pages expands one optimised 2K WebP bundle during deployment.
 
-Expected repository bundle:
+Canonical repository bundle:
 
 `assets/backgrounds/garba15-2k.zip`
 
-The ZIP contains exactly these 15 files at its root, each 2048px wide WebP:
+The ZIP contains exactly these 15 files at its root, each 2048px-wide WebP:
 
 1. `01-bollywood-garba-courtyard.webp`
 2. `02-rhythmic-drums-courtyard-a.webp`
@@ -33,6 +33,8 @@ The ZIP contains exactly these 15 files at its root, each 2048px wide WebP:
 - Sanedo: 08, 04
 - Fusion: 05, 06, 01
 
-The first image in each bucket is the default. `visual-library.js` deterministically rotates approved alternates for shareable song URLs while falling back to the lightweight SVG world if a WebP is unavailable.
+The first image in each bucket is the default. Production runtime code selects approved alternates deterministically for shareable song URLs and falls back to the lightweight SVG world if a WebP is unavailable.
 
-The Pages workflow extracts the ZIP into `assets/backgrounds/library/` in the deploy artifact. The PWA precaches only lightweight fallbacks and caches 2K artwork on demand, avoiding a 15-image download at install time.
+An older visual-library prototype is retained at `src/optional/visual-library.js`; it is not part of the current production first-load path.
+
+The Pages workflow extracts the canonical ZIP into `assets/backgrounds/library/` in the deploy artifact. The PWA precaches only lightweight fallbacks and caches 2K artwork on demand, avoiding a 15-image download at install time. The source ZIP itself is removed from the deployed artifact.

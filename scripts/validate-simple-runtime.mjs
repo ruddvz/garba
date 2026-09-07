@@ -20,7 +20,7 @@ const [index, app, simple, nonstop, sw, genres, songs, playerCss, nonstopIndex] 
   read('sw.js'),
   readJson('data/genres.json'),
   readJson('data/songs.json'),
-  read('styles/part-7.css'),
+  read('styles/60-runtime-and-provider.css'),
   readJson('data/discovery/sets/index.json'),
 ]);
 
@@ -33,8 +33,11 @@ if (!Array.isArray(nonstopIndex?.chunks) || nonstopIndex.chunks.length < 1) fail
 const scriptSources = [...index.matchAll(/<script[^>]+src="([^"]+)"/g)].map((match) => match[1]);
 const expectedScripts = ['simple-runtime.js', 'nonstop-browser.js', 'app.js'];
 for (const script of expectedScripts) if (!scriptSources.includes(script)) fail(`Missing production runtime script: ${script}`);
-for (const forbidden of ['visual-library.js', 'catalogue-bootstrap.js', 'direct-audio-bridge.js', 'playback-routes.js', 'playback-prewarm.js', 'playback-bridge.js', 'ux-polish.js', 'ux-next.js']) {
-  if (scriptSources.includes(forbidden)) fail(`Heavy/optional script must not load on first page: ${forbidden}`);
+const optionalBasenames = ['visual-library.js', 'catalogue-bootstrap.js', 'direct-audio-bridge.js', 'playback-routes.js', 'playback-prewarm.js', 'playback-bridge.js', 'playback-release-guard.js', 'ux-input.js', 'ux-polish.js', 'ux-next.js'];
+for (const forbidden of optionalBasenames) {
+  if (scriptSources.some((source) => source === forbidden || source.endsWith(`/${forbidden}`))) {
+    fail(`Optional module must not load on first page: ${forbidden}`);
+  }
 }
 if (scriptSources.length !== expectedScripts.length) fail(`Expected exactly ${expectedScripts.length} runtime scripts, found ${scriptSources.length}`);
 
