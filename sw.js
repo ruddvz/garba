@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v14-release-guard`;
+const VERSION = `${CACHE_PREFIX}v15-full-offline`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -28,6 +28,8 @@ const SHELL = [
   './data/genres.json',
   './data/taxonomy.json',
   './data/songs.json',
+  './data/releases.json',
+  './data/free-audio-sources.json',
   './data/playback-sources-generated.json',
   './data/playback-coverage.json',
   './data/catalogue/index.json',
@@ -65,14 +67,68 @@ const OPTIONAL_ARTWORK = [
   './assets/backgrounds/library/15-traditional-canopy-courtyard.webp'
 ];
 
+function localPath(path) {
+  if (!path) return null;
+  return path.startsWith('./') ? path : `./${path.replace(/^\//, '')}`;
+}
+
+async function cacheResponse(cache, url) {
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (response.ok) await cache.put(url, response.clone());
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function cacheOfflineCatalogue(cache) {
+  const paths = new Set([
+    './data/songs.json',
+    './data/releases.json',
+    './data/free-audio-sources.json',
+    './data/playback-coverage.json',
+  ]);
+
+  try {
+    const response = await fetch('./data/catalogue/index.json', { cache: 'no-store' });
+    if (response.ok) {
+      const index = await response.json();
+      for (const key of ['songChunks', 'releaseChunks', 'freeSourceChunks', 'playbackSources']) {
+        const values = Array.isArray(index[key]) ? index[key] : [index[key]].filter(Boolean);
+        for (const value of values) paths.add(localPath(value));
+      }
+      const discovery = index.discovery || {};
+      for (const key of ['artists', 'recommendations']) {
+        const values = Array.isArray(discovery[key]) ? discovery[key] : [discovery[key]].filter(Boolean);
+        for (const value of values) paths.add(localPath(value));
+      }
+      if (discovery.setsIndex) paths.add(localPath(discovery.setsIndex));
+      if (index.nonstopSets) paths.add(localPath(index.nonstopSets));
+    }
+  } catch {
+    // The core shell remains installable even when catalogue expansion is unavailable.
+  }
+
+  try {
+    const response = await fetch('./data/discovery/sets/index.json', { cache: 'no-store' });
+    if (response.ok) {
+      const setIndex = await response.json();
+      for (const chunk of setIndex.chunks || []) paths.add(`./data/discovery/sets/${chunk}`);
+    }
+  } catch {
+    // Live-set discovery is optional offline.
+  }
+
+  await Promise.allSettled([...paths].filter(Boolean).map((url) => cacheResponse(cache, url)));
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(SHELL);
-    await Promise.allSettled(OPTIONAL_ARTWORK.map(async (url) => {
-      const response = await fetch(url, { cache: 'no-store' });
-      if (response.ok) await cache.put(url, response);
-    }));
+    await Promise.allSettled(OPTIONAL_ARTWORK.map((url) => cacheResponse(cache, url)));
+    await cacheOfflineCatalogue(cache);
     await self.skipWaiting();
   })());
 });
