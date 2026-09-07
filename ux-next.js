@@ -9,7 +9,6 @@ const sheetClose = $('sheetClose');
 const browseButton = $('browseButton');
 const shareButton = $('shareButton');
 const mobileFavourite = $('mobileFavourite');
-const playButton = $('playButton');
 const songTitle = $('songTitle');
 const songArtist = $('songArtist');
 const genreEyebrow = $('genreEyebrow');
@@ -53,18 +52,6 @@ function formatDuration(seconds) {
   if (!Number.isFinite(seconds) || seconds <= 0) return '—';
   const rounded = Math.round(seconds);
   return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, '0')}`;
-}
-
-function currentSongId() {
-  return new URLSearchParams(location.search).get('song');
-}
-
-function currentSong() {
-  const id = currentSongId();
-  if (id && nextState.songs.has(id)) return nextState.songs.get(id);
-  const title = normalize(songTitle?.textContent);
-  const artist = normalize(songArtist?.textContent);
-  return [...nextState.songs.values()].find((song) => normalize(song.title) === title && (!artist || normalize(song.artist) === artist)) || null;
 }
 
 function syncThemeColor() {
@@ -172,22 +159,6 @@ function syncMediaArtwork() {
     });
   } catch {
     // Some embedded browsers expose Media Session without accepting artwork.
-  }
-}
-
-function syncTrustState() {
-  const badge = $('sourceBadge');
-  const song = currentSong();
-  if (!badge || !song) return;
-  const playable = Boolean(song.audioUrl || song.youtubeId || song.playbackReady || song.playbackSourceUrl);
-  if (!playable && !badge.textContent.trim()) {
-    badge.textContent = 'Metadata only';
-    badge.classList.add('show');
-    badge.dataset.metadataOnly = 'true';
-  } else if (playable && badge.dataset.metadataOnly === 'true') {
-    badge.textContent = '';
-    badge.classList.remove('show');
-    delete badge.dataset.metadataOnly;
   }
 }
 
@@ -342,7 +313,6 @@ async function loadNextContext() {
   } catch {
     // Core catalogue handling remains authoritative when this enhancement cannot load.
   } finally {
-    syncTrustState();
     scheduleEnhancedSearch();
   }
 }
@@ -376,7 +346,6 @@ function initNext() {
     new MutationObserver(() => {
       syncControlLabels();
       syncMediaArtwork();
-      syncTrustState();
     }).observe(songTitle.parentElement, { childList: true, subtree: true, characterData: true });
   }
 
