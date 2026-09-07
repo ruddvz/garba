@@ -1,0 +1,72 @@
+[
+  {
+    "id": "demo-traditional-01",
+    "title": "Traditional demo 01",
+    "artist": "Add artist",
+    "genre": "traditional",
+    "durationSeconds": 270,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-traditional-02",
+    "title": "Traditional demo 02",
+    "artist": "Add artist",
+    "genre": "traditional",
+    "durationSeconds": 235,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-dandiya-01",
+    "title": "Dandiya demo 01",
+    "artist": "Add artist",
+    "genre": "dandiya",
+    "durationSeconds": 248,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-devotional-01",
+    "title": "Devotional demo 01",
+    "artist": "Add artist",
+    "genre": "devotional",
+    "durationSeconds": 286,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-folk-01",
+    "title": "Folk demo 01",
+    "artist": "Add artist",
+    "genre": "folk",
+    "durationSeconds": 252,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-sanedo-01",
+    "title": "Sanedo demo 01",
+    "artist": "Add artist",
+    "genre": "sanedo",
+    "durationSeconds": 229,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  },
+  {
+    "id": "demo-fusion-01",
+    "title": "Fusion demo 01",
+    "artist": "Add artist",
+    "genre": "fusion",
+    "durationSeconds": 261,
+    "audioUrl": null,
+    "youtubeId": null,
+    "placeholder": true
+  }
+]
