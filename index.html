@@ -17,7 +17,8 @@
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
     <link rel="preload" as="image" href="assets/backgrounds/library/15-traditional-canopy-courtyard.webp" fetchpriority="high" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-core.css" />
+    <link rel="stylesheet" href="styles-responsive.css" />
   </head>
   <body>
     <a class="skip-link" href="#mainPlayer">Skip to player</a>
@@ -134,6 +135,8 @@
     </div>
 
     <noscript>This music player needs JavaScript enabled.</noscript>
-    <script type="module" src="app.js"></script>
+    <script src="app-core.js"></script>
+    <script src="app-interactions.js"></script>
+    <script src="app-bootstrap.js"></script>
   </body>
 </html>
