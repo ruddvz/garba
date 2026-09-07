@@ -92,7 +92,7 @@ for (const marker of [
   "window.addEventListener('online'",
   'Nonstop playback needs an internet connection',
   'Try an artist, year, set title, or a song contained in a timestamped chapter.',
-  'state.segments',
+  'set.segments',
 ]) {
   if (!nonstop.includes(marker)) fail(`Nonstop browser missing live UX marker: ${marker}`);
 }
