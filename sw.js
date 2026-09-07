@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -21,6 +21,14 @@ const CORE_SHELL = [
   './assets/backgrounds/folk.svg',
   './assets/backgrounds/sanedo.svg',
   './assets/backgrounds/fusion.svg',
+];
+
+const FRESH_RUNTIME_SUFFIXES = [
+  '/index.html',
+  '/styles.css',
+  '/simple-runtime.js',
+  '/nonstop-browser.js',
+  '/app.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -79,6 +87,8 @@ async function networkFirst(request, fallback = null) {
   }
 }
 
+const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
@@ -88,6 +98,11 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request, './index.html'));
+    return;
+  }
+
+  if (isFreshRuntime(url.pathname)) {
+    event.respondWith(networkFirst(request));
     return;
   }
 
