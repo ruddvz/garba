@@ -3,7 +3,7 @@
   let nonstop = [];
 
   const escapeHtml = (value = '') => String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-  const sourceRank = { 'official-artist-channel': 6, 'artist-channel': 5, 'verified-label-channel': 4, 'verified-distributor-channel': 3, 'official-streaming-catalogue': 3, 'community-upload': 1 };
+  const sourceRank = { 'official-artist-channel': 6, 'artist-channel': 5, 'verified-label-channel': 4, 'verified-distributor-channel': 3, 'official-streaming-catalogue': 3, 'verified-release-source': 2, 'community-upload': 1 };
 
   async function fetchJson(path) {
     try {
@@ -37,18 +37,17 @@
   }
 
   async function loadData() {
-    const [basePlayback, currentPlayback, legacyNonstop, setIndex] = await Promise.all([
-      fetchJson('data/playback-sources.json'),
-      fetchJson('data/playback-sources-current.json'),
+    const [catalogueIndex, legacyNonstop, setIndex] = await Promise.all([
+      fetchJson('data/catalogue/index.json'),
       fetchJson('data/nonstop.json'),
       fetchJson('data/discovery/sets/index.json'),
     ]);
 
+    const configuredPlayback = catalogueIndex?.playbackSources || ['data/playback-sources.json', 'data/playback-sources-current.json'];
+    const playbackPaths = Array.isArray(configuredPlayback) ? configuredPlayback : [configuredPlayback];
+    const playbackManifests = await Promise.all(playbackPaths.map((path) => fetchJson(path)));
     playback = {
-      songSources: {
-        ...(basePlayback?.songSources || {}),
-        ...(currentPlayback?.songSources || {}),
-      },
+      songSources: Object.assign({}, ...playbackManifests.map((manifest) => manifest?.songSources || {})),
     };
 
     const mergedSets = new Map();
