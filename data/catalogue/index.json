@@ -1,0 +1,44 @@
+{
+  "version": "0.3.0",
+  "songCount": 550,
+  "releaseCount": 68,
+  "categoryCount": 19,
+  "freeSourceCount": 20,
+  "songChunks": [
+    "data/catalogue/songs/songs-01.json",
+    "data/catalogue/songs/songs-02.json",
+    "data/catalogue/songs/songs-03.json",
+    "data/catalogue/songs/songs-04.json",
+    "data/catalogue/songs/songs-05.json",
+    "data/catalogue/songs/songs-06.json",
+    "data/catalogue/songs/songs-07.json",
+    "data/catalogue/songs/songs-08.json",
+    "data/catalogue/songs/songs-09.json",
+    "data/catalogue/songs/songs-10.json",
+    "data/catalogue/songs/songs-11.json",
+    "data/catalogue/songs/songs-12.json",
+    "data/catalogue/songs/songs-13.json",
+    "data/catalogue/songs/songs-14.json",
+    "data/catalogue/songs/songs-15.json",
+    "data/catalogue/songs/songs-16.json",
+    "data/catalogue/songs/songs-17.json"
+  ],
+  "releaseChunks": [
+    "data/catalogue/releases/releases-01.json",
+    "data/catalogue/releases/releases-02.json",
+    "data/catalogue/releases/releases-03.json",
+    "data/catalogue/releases/releases-04.json",
+    "data/catalogue/releases/releases-05.json"
+  ],
+  "freeSourceChunks": [
+    "data/catalogue/free-sources/free-sources-01.json",
+    "data/catalogue/free-sources/free-sources-02.json"
+  ],
+  "taxonomy": "data/taxonomy.json",
+  "generatedFiles": {
+    "songs": "data/songs.json",
+    "releases": "data/releases.json",
+    "freeSources": "data/free-audio-sources.json"
+  },
+  "notes": "Run node scripts/build-catalogue.mjs to regenerate the combined JSON files from these chunked source-of-truth records."
+}
