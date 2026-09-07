@@ -25,6 +25,7 @@ const state = {
   sheetFilter: 'traditional',
   sheetMode: 'all',
   sheetSnap: 'closed',
+  sheetMatchCount: 0,
   toastTimer: null,
   transitionToken: 0,
   installPrompt: null,
@@ -57,6 +58,7 @@ const els = {
   songSheet: $('songSheet'),
   sheetHandle: $('sheetHandle'),
   sheetTitle: $('sheetTitle'),
+  sheetSummary: $('sheetSummary'),
   sheetClose: $('sheetClose'),
   sheetGenreStrip: $('sheetGenreStrip'),
   songList: $('songList'),
@@ -83,6 +85,7 @@ const els = {
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+const SEARCH_RESULT_LIMIT = 160;
 
 const formatTime = (seconds = 0) => {
   const safe = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0;
@@ -400,12 +403,18 @@ function getSheetSongs() {
   } else if (state.sheetMode === 'queue') {
     songs = getUpNextSongs();
   } else if (state.sheetMode === 'search') {
+    if (!query) {
+      state.sheetMatchCount = state.songs.length;
+      return [];
+    }
     songs = state.songs;
   } else {
     songs = state.songs.filter((song) => song.genre === state.sheetFilter);
   }
 
   if (query) songs = songs.filter((song) => `${song.title} ${song.artist}`.toLowerCase().includes(query));
+  state.sheetMatchCount = songs.length;
+  if (state.sheetMode === 'search' && songs.length > SEARCH_RESULT_LIMIT) return songs.slice(0, SEARCH_RESULT_LIMIT);
   return songs;
 }
 
@@ -416,8 +425,19 @@ function renderSheet() {
   els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'Favourites' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
+  const query = els.searchInput.value.trim();
   const songs = getSheetSongs();
   els.songList.innerHTML = '';
+
+  if (els.sheetSummary) {
+    if (state.sheetMode === 'search') {
+      if (!query) els.sheetSummary.textContent = `${state.songs.length.toLocaleString()} songs`;
+      else if (state.sheetMatchCount > songs.length) els.sheetSummary.textContent = `Showing ${songs.length} of ${state.sheetMatchCount.toLocaleString()}`;
+      else els.sheetSummary.textContent = `${state.sheetMatchCount.toLocaleString()} ${state.sheetMatchCount === 1 ? 'match' : 'matches'}`;
+    } else {
+      els.sheetSummary.textContent = `${state.sheetMatchCount.toLocaleString()} ${state.sheetMatchCount === 1 ? 'song' : 'songs'}`;
+    }
+  }
 
   if (!songs.length) {
     const empty = document.createElement('div');
@@ -430,9 +450,12 @@ function renderSheet() {
     } else if (state.sheetMode === 'queue') {
       strong.textContent = 'Nothing up next';
       copy.textContent = 'Choose a genre or another song to continue listening.';
+    } else if (state.sheetMode === 'search' && !query) {
+      strong.textContent = `Search ${state.songs.length.toLocaleString()} songs`;
+      copy.textContent = 'Type a song or artist name to see matching results.';
     } else {
       strong.textContent = 'No songs found';
-      copy.textContent = els.searchInput.value ? 'Try a different search.' : 'This genre is waiting for catalogue data.';
+      copy.textContent = query ? 'Try a different search.' : 'This genre is waiting for catalogue data.';
     }
     empty.append(strong, copy);
     els.songList.append(empty);
@@ -475,6 +498,15 @@ function renderSheet() {
     row.append(idx, copy, duration, favourite);
     fragment.append(row);
   });
+
+  if (state.sheetMode === 'search' && state.sheetMatchCount > songs.length) {
+    const hint = document.createElement('div');
+    hint.className = 'search-result-hint';
+    hint.setAttribute('role', 'status');
+    hint.textContent = `Showing the first ${songs.length} of ${state.sheetMatchCount.toLocaleString()} matches. Keep typing to narrow the list.`;
+    fragment.append(hint);
+  }
+
   els.songList.append(fragment);
 }
 
@@ -783,6 +815,11 @@ function wireEvents() {
 
   document.addEventListener('keydown', (event) => {
     if (event.target instanceof HTMLInputElement) return;
+    if (event.key === '/') {
+      event.preventDefault();
+      openSheet('search', { trigger: els.searchButton });
+      return;
+    }
     if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
     if (event.code === 'ArrowRight') changeSong(1);
     if (event.code === 'ArrowLeft') changeSong(-1);
