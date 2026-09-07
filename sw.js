@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v10-player`;
+const VERSION = `${CACHE_PREFIX}v11-player-polish`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -13,8 +13,10 @@ const SHELL = [
   './styles/part-4.css',
   './styles/part-5.css',
   './styles/part-6.css',
+  './styles/part-7.css',
   './app.js',
   './ux-polish.js',
+  './ux-next.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './player-engine.js',
@@ -27,6 +29,7 @@ const SHELL = [
   './data/nonstop.json',
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
+  './assets/icons/icon-192.png',
   './assets/icons/maskable.svg',
   './assets/icons/apple-touch-icon.png',
   './assets/backgrounds/traditional.svg',
@@ -59,8 +62,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(SHELL);
-    // Artwork is optional during local/source previews, but Pages exposes all
-    // fifteen WebPs. Cache every successful response for a rich offline PWA.
     await Promise.allSettled(OPTIONAL_ARTWORK.map(async (url) => {
       const response = await fetch(url, { cache: 'no-store' });
       if (response.ok) await cache.put(url, response);
@@ -104,7 +105,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Code is network-first so installed PWAs pick up fixes without a reinstall.
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'manifest') {
     event.respondWith(networkFirst(request));
     return;
