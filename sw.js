@@ -6,8 +6,11 @@ const RUNTIME_CACHE = `${VERSION}:runtime`;
 const SHELL = [
   './',
   './index.html',
-  './styles.css',
-  './app.js',
+  './styles-core.css',
+  './styles-responsive.css',
+  './app-core.js',
+  './app-interactions.js',
+  './app-bootstrap.js',
   './manifest.webmanifest',
   './offline.html',
   './data/genres.json',
