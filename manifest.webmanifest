@@ -2,7 +2,7 @@
   "id": "./",
   "name": "GARBA",
   "short_name": "GARBA",
-  "description": "An immersive Gujarati Garba music collection.",
+  "description": "An open, community-built Gujarati Garba music catalogue for songs, artists, releases, live sets and nonstop Garba.",
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
@@ -19,6 +19,13 @@
     "music",
     "entertainment"
   ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  },
   "icons": [
     {
       "src": "assets/icons/icon.svg",
@@ -37,16 +44,19 @@
     {
       "name": "Traditional Garba",
       "short_name": "Traditional",
+      "description": "Open the Traditional Garba world.",
       "url": "./?genre=traditional"
     },
     {
-      "name": "Dandiya",
+      "name": "Dandiya Raas",
       "short_name": "Dandiya",
+      "description": "Open the Dandiya Raas world.",
       "url": "./?genre=dandiya"
     },
     {
       "name": "Browse songs",
       "short_name": "Songs",
+      "description": "Open the Garba song browser.",
       "url": "./?browse=1"
     }
   ]
