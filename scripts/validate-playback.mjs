@@ -65,7 +65,7 @@ for (const marker of ['playYouTube(source)', 'playSpotify(source)', 'stopImmedia
 
 const routes = await readFile(path.join(root, 'playback-routes.js'), 'utf8');
 for (const marker of [
-  'appleMusicEmbedUrl', "source.provider === 'apple-music'", 'openExternalSource',
+  'appleMusicEmbedUrl', "source?.provider === 'apple-music'", 'openExternalSource',
   'provider-external-action', 'garbaRouteBypass', 'GARBA_PLAYBACK_ROUTES',
   'verified-release-source',
 ]) {
