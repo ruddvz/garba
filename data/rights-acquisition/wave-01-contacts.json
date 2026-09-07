@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "updatedAt": "2026-09-07",
   "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
   "contacts": [
@@ -15,7 +15,7 @@
         "https://www.youtube.com/channel/UCQJLc3UGESs_l8Pe5F7bdCw",
         "https://uk.linkedin.com/in/alpesh-patel-3a86aa10"
       ],
-      "notes": "Verified Sur Sagar Music YouTube identifies the label as a Gujarati music label and current video descriptions provide its business website/email route. Ask specifically for master ownership and direct on-demand streaming rights for Garbi and Garbi 2."
+      "notes": "Verified Sur Sagar Music YouTube identifies the label as a Gujarati music label and current video descriptions provide its business website/email route. Ask both for Garbi/Garbi 2 and for a larger machine-readable Garba/Raas catalogue that could be licensed as one direct-streaming batch."
     },
     {
       "batchId": "atul-purohit-rutumbhara",
@@ -80,11 +80,26 @@
       "entity": "Jigar Studio",
       "contactState": "ready-for-catalogue-partnership-inquiry",
       "confidence": "high-official-licensing-page",
-      "primaryRoute": "https://jigarstudio.com/",
+      "primaryRoute": "https://jigarstudio.com/contact-us/",
+      "catalogueRoute": "https://jigarstudio.com/catalogue/",
       "evidence": [
-        "https://jigarstudio.com/"
+        "https://jigarstudio.com/",
+        "https://jigarstudio.com/contact-us/"
       ],
-      "notes": "Strategic expansion lane rather than a currently mapped top-six batch. Jigar Studio publicly advertises a 3,000+ Gujarati catalogue and a licensing inquiry path for digital media. Ask whether its licence can cover on-demand direct audio streaming and obtain a machine-readable catalogue for overlap matching before negotiating track counts."
+      "notes": "Strategic expansion lane rather than a currently mapped top-six batch. Jigar Studio says it has 3,000+ released tracks, identifies itself as a Gujarati independent label/production house, and invites licensing/partnership enquiries. Ask whether on-demand direct streaming is available, what Garba/Raas subset it controls, and request a machine-readable catalogue before negotiating track counts."
+    },
+    {
+      "batchId": "strategic-label-saregama-gujarati",
+      "entity": "Saregama India Limited",
+      "contactState": "ready-for-custom-scope-inquiry",
+      "confidence": "high-official-licensing-team",
+      "primaryRoute": "https://business.saregama.com/contact-us",
+      "catalogueRoute": "https://www.saregama.com/artist/list/gujarati_5",
+      "evidence": [
+        "https://business.saregama.com/contact-us",
+        "https://www.saregama.com/artist/list/gujarati_5"
+      ],
+      "notes": "Saregama publishes an official music-licensing contact and a substantial Gujarati artist catalogue including Praful Dave and traditional repertoire. Its self-service web licensing is primarily designed for social/sync use, so GARBA must request a bespoke on-demand direct-streaming licence rather than assume those products cover the player."
     }
   ]
 }
