@@ -1,3 +1,4 @@
+import './playback-release-guard.js';
 import './ux-input.js';
 
 const $ = (id) => document.getElementById(id);
@@ -144,7 +145,7 @@ function syncMediaArtwork() {
   const title = String(songTitle?.textContent || '').trim();
   if (!title || /loading|catalogue unavailable/i.test(title)) return;
   const artist = String(songArtist?.textContent || '').trim();
-  const album = String(genreEyebrow?.textContent || 'GARBA').trim();
+  const album = String(genreEyebrow/.textContent || 'GARBA').trim();
   const key = `${title}\u0000${artist}\u0000${album}`;
   if (key === nextState.lastMediaKey) return;
   nextState.lastMediaKey = key;
