@@ -1,7 +1,7 @@
 {
-  "version": "0.4.0",
-  "songCount": 575,
-  "releaseCount": 69,
+  "version": "0.5.0",
+  "songCount": 585,
+  "releaseCount": 79,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -22,7 +22,8 @@
     "data/catalogue/songs/songs-15.json",
     "data/catalogue/songs/songs-16.json",
     "data/catalogue/songs/songs-17.json",
-    "data/catalogue/songs/songs-18.json"
+    "data/catalogue/songs/songs-18.json",
+    "data/catalogue/songs/songs-19.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -30,19 +31,25 @@
     "data/catalogue/releases/releases-03.json",
     "data/catalogue/releases/releases-04.json",
     "data/catalogue/releases/releases-05.json",
-    "data/catalogue/releases/releases-06.json"
+    "data/catalogue/releases/releases-06.json",
+    "data/catalogue/releases/releases-07.json"
   ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
     "data/catalogue/free-sources/free-sources-02.json"
   ],
   "taxonomy": "data/taxonomy.json",
-  "playbackSources": "data/playback-sources.json",
+  "playbackSources": ["data/playback-sources.json", "data/playback-sources-current.json"],
   "nonstopSets": "data/nonstop.json",
+  "discovery": {
+    "artists": ["data/discovery/artists-2026.json", "data/discovery/artists-2026-02.json"],
+    "recommendations": ["data/discovery/recommendations-2026-01.json", "data/discovery/recommendations-2026-02.json", "data/discovery/recommendations-2026-03.json"],
+    "setsIndex": "data/discovery/sets/index.json"
+  },
   "generatedFiles": {
     "songs": "data/songs.json",
     "releases": "data/releases.json",
     "freeSources": "data/free-audio-sources.json"
   },
-  "notes": "The browser bootstrap can assemble songs directly from these chunks; node scripts/build-catalogue.mjs may still generate combined JSON files for static exports."
+  "notes": "Canonical songs/releases stay separate from recommendation and live-performance discovery. The browser playback bridge loads provider-specific current sources and segment-aware nonstop sets without bundling copyrighted audio."
 }
