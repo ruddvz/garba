@@ -138,6 +138,34 @@ for (const forbidden of ['self.registration.unregister()', 'client.navigate(clie
 
 if (!app.includes("navigator.serviceWorker.register('./sw.js')")) fail('Core app must register the minimal service worker');
 
+for (const marker of [
+  "sheetSummary: $('sheetSummary')",
+  'const MAX_SEARCH_RESULTS = 120',
+  'const normaliseSearch =',
+  'const searchableSongText =',
+  'song.category',
+  'song.styles',
+  'function scoreSearchResult(',
+  'if (!query) return [];',
+  'allSongs.slice(0, MAX_SEARCH_RESULTS)',
+  'Search the collection',
+  'Search by song, artist, style, category, or release.',
+  "duration.textContent = seconds ? formatTime(seconds) : '—'",
+  "els.durationTime.textContent = duration ? formatTime(duration) : '—'",
+  'els.progress.disabled = !directSeek',
+  'function isInteractiveShortcutTarget(',
+  "if (event.key === '/'",
+  "els.songSheet.setAttribute('aria-modal', String(open && mobileQuery.matches))",
+]) {
+  if (!app.includes(marker)) fail(`Catalogue browser missing search/truthfulness marker: ${marker}`);
+}
+for (const forbidden of [
+  '`${song.title} ${song.artist}`.toLowerCase().includes(query)',
+  'duration.textContent = formatTime(song.durationSeconds)',
+]) {
+  if (app.includes(forbidden)) fail(`Catalogue browser regressed to old behavior: ${forbidden}`);
+}
+
 const ids = [...index.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
 for (const id of [...app.matchAll(/\$\('([^']+)'\)/g)].map((match) => match[1])) {
   if (!ids.includes(id)) fail(`app.js references missing element id: ${id}`);
@@ -170,3 +198,6 @@ console.log('✓ offline state and Media Session controls share the launch-safe 
 console.log('✓ minimal PWA shell stays installable without reviving the old heavy cache graph');
 console.log('✓ Nonstop data waits for intent, traps focus correctly, restores focus on close and fails visibly offline');
 console.log('✓ visited Nonstop set data can be reused through the service worker while provider media stays network-bound');
+console.log('✓ catalogue search is ranked, taxonomy-aware, bounded and does not render the whole library before a query');
+console.log('✓ unknown durations and non-direct seek state are presented truthfully');
+console.log('✓ global player shortcuts no longer steal keys from focused interactive controls');
