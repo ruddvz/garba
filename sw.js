@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v12-player-pwa`;
+const VERSION = `${CACHE_PREFIX}v13-provider-offline`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -14,6 +14,7 @@ const SHELL = [
   './styles/part-5.css',
   './styles/part-6.css',
   './styles/part-7.css',
+  './styles/part-8.css',
   './app.js',
   './ux-polish.js',
   './ux-next.js',
@@ -60,14 +61,44 @@ const OPTIONAL_ARTWORK = [
   './assets/backgrounds/library/15-traditional-canopy-courtyard.webp'
 ];
 
+async function cacheResponse(cache, url) {
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (response.ok) await cache.put(url, response.clone());
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function cacheOfflineCatalogue(cache) {
+  const paths = new Set(['./data/songs.json', './data/releases.json', './data/playback-coverage.json']);
+  try {
+    const indexResponse = await fetch('./data/catalogue/index.json', { cache: 'no-store' });
+    if (indexResponse.ok) {
+      const index = await indexResponse.json();
+      for (const path of index.songChunks || []) paths.add(`./${path}`);
+      for (const path of index.playbackSources || []) paths.add(`./${path}`);
+    }
+  } catch { /* the core shell still installs without optional catalogue expansion */ }
+
+  try {
+    const setIndexResponse = await fetch('./data/discovery/sets/index.json', { cache: 'no-store' });
+    if (setIndexResponse.ok) {
+      const setIndex = await setIndexResponse.json();
+      for (const chunk of setIndex.chunks || []) paths.add(`./data/discovery/sets/${chunk}`);
+    }
+  } catch { /* discovery is optional offline */ }
+
+  await Promise.allSettled([...paths].map((url) => cacheResponse(cache, url)));
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(SHELL_CACHE);
     await cache.addAll(SHELL);
-    await Promise.allSettled(OPTIONAL_ARTWORK.map(async (url) => {
-      const response = await fetch(url, { cache: 'no-store' });
-      if (response.ok) await cache.put(url, response);
-    }));
+    await Promise.allSettled(OPTIONAL_ARTWORK.map((url) => cacheResponse(cache, url)));
+    await cacheOfflineCatalogue(cache);
     await self.skipWaiting();
   })());
 });
