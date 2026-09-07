@@ -117,8 +117,16 @@ for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-doc
 
 for (const marker of [
   "const CACHE_PREFIX = 'garba-live-'",
+  "const CACHE_NAME = `${CACHE_PREFIX}v3`",
   "const LEGACY_PREFIX = 'garba-shell-'",
   'const CORE_SHELL = [',
+  'const FRESH_RUNTIME_SUFFIXES = [',
+  "'/styles.css'",
+  "'/simple-runtime.js'",
+  "'/nonstop-browser.js'",
+  "'/app.js'",
+  'const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));',
+  'if (isFreshRuntime(url.pathname)) {',
   "'./simple-runtime.js'",
   "'./nonstop-browser.js'",
   "'./app.js'",
@@ -131,10 +139,12 @@ for (const marker of [
   "url.pathname.endsWith('/data/songs.json')",
   "url.pathname.includes('/data/discovery/sets/')",
   "url.pathname.includes('/assets/backgrounds/library/')",
+  'event.respondWith(networkFirst(request))',
   'event.respondWith(cacheFirst(request))',
   'event.respondWith(staleWhileRevalidate(request))',
 ]) if (!sw.includes(marker)) fail(`Minimal PWA worker missing marker: ${marker}`);
 
+if (sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v2`")) fail('PWA runtime cache must not remain on the stale v2 contract');
 for (const forbidden of ['self.registration.unregister()', 'client.navigate(client.url)']) {
   if (sw.includes(forbidden)) fail(`Restored PWA worker must remain registered: ${forbidden}`);
 }
@@ -170,6 +180,7 @@ console.log('✓ provider-backed Play stays inside GARBA when a safe embed is av
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
+console.log('✓ core runtime assets are network-first with cached offline fallback');
 console.log('✓ minimal PWA shell stays installable without reviving the old heavy cache graph');
 console.log('✓ Nonstop data waits for intent, traps focus correctly, restores focus on close and fails visibly offline');
 console.log('✓ visited Nonstop set data can be reused through the service worker while provider media stays network-bound');
