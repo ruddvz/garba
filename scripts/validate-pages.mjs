@@ -14,9 +14,30 @@ const localScripts = [...index.matchAll(/<script[^>]+src="([^"]+)"/g)]
   .map((match) => match[1])
   .filter((src) => !/^(?:https?:)?\/\//.test(src));
 
-for (const script of localScripts) {
+const runtimeFiles = new Set(localScripts);
+const pending = [...localScripts];
+while (pending.length) {
+  const script = pending.shift();
+  let source = '';
+  try {
+    source = await readFile(path.join(root, script), 'utf8');
+  } catch {
+    fail(`index/import graph references missing local script: ${script}`);
+    continue;
+  }
+
+  for (const match of source.matchAll(/(?:import\s+(?:[^'";]+?\s+from\s+)?|import\s*\()(['"])(\.\.?\/[^'"]+)\1/g)) {
+    const imported = path.posix.normalize(path.posix.join(path.posix.dirname(script), match[2]));
+    if (!runtimeFiles.has(imported)) {
+      runtimeFiles.add(imported);
+      pending.push(imported);
+    }
+  }
+}
+
+for (const script of runtimeFiles) {
   try { await access(path.join(root, script)); }
-  catch { fail(`index.html references missing local script: ${script}`); }
+  catch { fail(`runtime graph references missing local script: ${script}`); }
 }
 
 if (!workflow.includes('cp index.html *.js styles.css manifest.webmanifest offline.html _site/')) {
@@ -32,13 +53,21 @@ if (!workflow.includes("find _site/assets/backgrounds/library -maxdepth 1 -name 
   fail('Pages build must verify all 15 extracted WebPs');
 }
 
-for (const script of localScripts) {
+for (const script of runtimeFiles) {
   if (!serviceWorker.includes(`'./${script}'`) && !serviceWorker.includes(`"./${script}"`)) {
-    fail(`Service worker shell does not include document runtime script: ${script}`);
+    fail(`Service worker shell does not include runtime module: ${script}`);
   }
 }
 
+const nextUx = await readFile(path.join(root, 'ux-next.js'), 'utf8');
+const inputUx = await readFile(path.join(root, 'ux-input.js'), 'utf8');
+if (!nextUx.includes("import './ux-input.js';")) fail('ux-next.js must load playback input parity');
+for (const marker of ['playButton?.click()', "setActionHandler('play'", 'providerSpaceGuard', 'stopImmediatePropagation']) {
+  if (!inputUx.includes(marker)) fail(`ux-input.js missing playback parity guard: ${marker}`);
+}
+
 if (failed) process.exit(1);
-console.log(`✓ Pages deploys ${localScripts.length} local runtime scripts`);
+console.log(`✓ Pages deploys ${localScripts.length} document scripts and ${runtimeFiles.size - localScripts.length} imported runtime modules`);
 console.log('✓ Pages verifies the 15-image WebP visual pack when present');
-console.log('✓ service-worker shell covers every document runtime script');
+console.log('✓ service-worker shell covers the complete document/module runtime graph');
+console.log('✓ keyboard and Media Session Play route through the provider-aware Play control');

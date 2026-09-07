@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v10-discovery`;
+const VERSION = `${CACHE_PREFIX}v11-input-parity`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -16,6 +16,7 @@ const SHELL = [
   './app.js',
   './ux-polish.js',
   './ux-next.js',
+  './ux-input.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',

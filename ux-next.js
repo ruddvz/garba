@@ -1,3 +1,5 @@
+import './ux-input.js';
+
 const $ = (id) => document.getElementById(id);
 
 const app = $('app');
