@@ -50,17 +50,23 @@ jobs:
             test -f "_site/$src" || { echo "Missing deployed script: $src"; exit 1; }
           done
 
-          # Canonical visual pack: all 15 user-approved 2K WebPs. Source history
-          # keeps the packed file; Pages serves only the extracted WebPs.
+          # Canonical visual pack: prefer the approved 2048px Q90 export. Keep the
+          # older Q82 pack only as a temporary fallback while repository history is
+          # migrated. Pages always serves extracted WebPs, never the source ZIP.
           PACK=''
-          if [ -f assets/backgrounds/garba15-2k.zip ]; then
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+            echo '4690046d30ecd5400b3fc953a2a93f877d64921a69955d2b5dc6aa0bd65a769d  assets/backgrounds/garba15-2048-q90.zip' | sha256sum -c -
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
             PACK='assets/backgrounds/garba15-2k.zip'
           elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
             PACK='assets/backgrounds/garba15-2k-q82.zip'
           fi
 
           test -n "$PACK" || { echo 'Required 15-image 2K WebP pack is missing.'; exit 1; }
+          echo "Deploying visual pack: $PACK"
           mkdir -p _site/assets/backgrounds/library
+          rm -f _site/assets/backgrounds/library/*.webp
           unzip -oq "$PACK" -d _site/assets/backgrounds/library
 
           WEBP_COUNT="$(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')"
@@ -70,9 +76,9 @@ jobs:
             file "$image" | grep -q 'Web/P image' || { echo "Not a valid WebP: $image"; exit 1; }
           done < <(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | sort)
 
-          # Do not ship the source ZIP to visitors. It duplicates every background
-          # and is not needed at runtime.
-          rm -f _site/assets/backgrounds/garba15-2k*.zip
+          # Do not ship source archives to visitors. They duplicate every
+          # background and are not needed at runtime.
+          rm -f _site/assets/backgrounds/garba15-*.zip
 
           # Production CSS must be one request and must not contain imports.
           if grep -q '@import' _site/styles.css; then
