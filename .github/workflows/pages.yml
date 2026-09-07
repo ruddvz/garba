@@ -26,7 +26,7 @@ jobs:
         run: |
           rm -rf _site
           mkdir -p _site
-          cp index.html app.js visual-library.js catalogue-bootstrap.js playback-bridge.js styles.css manifest.webmanifest offline.html sw.js _site/
+          cp index.html app.js visual-library.js catalogue-bootstrap.js player-engine.js ux-polish.js styles.css manifest.webmanifest offline.html sw.js _site/
           cp -R styles assets data _site/
 
           # Canonical visual pack: 15 approved 2K WebPs. Keeping one zip in
