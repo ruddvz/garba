@@ -127,6 +127,8 @@
       const videoId = youtubeVideoId(song, sourceUrl);
       if (!videoId) return null;
       const params = new URLSearchParams({ autoplay: '1', playsinline: '1', rel: '0', controls: '1' });
+      const startSeconds = Math.max(0, Number(song?.youtubeStartSeconds || 0));
+      if (startSeconds > 0) params.set('start', String(Math.floor(startSeconds)));
       return {
         src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`,
         title: 'YouTube playback',
@@ -271,7 +273,15 @@
       iframe.referrerPolicy = 'strict-origin-when-cross-origin';
       iframe.setAttribute('allowfullscreen', '');
       media?.replaceChildren(iframe);
-      if (note) note.textContent = provider === 'youtube' ? 'Playing in GARBA · tap the video if autoplay is blocked' : `Playing via ${name}`;
+      if (note) {
+        if (song.playbackSourceType === 'verified-release-source') {
+          note.textContent = `Verified release · ${name} · choose ${song.title}`;
+        } else if (song.playbackSourceType === 'verified-performance-chapter') {
+          note.textContent = 'Verified live version · starts at the mapped song chapter';
+        } else {
+          note.textContent = provider === 'youtube' ? 'Playing in GARBA · tap the video if autoplay is blocked' : `Playing via ${name}`;
+        }
+      }
       return;
     }
 
