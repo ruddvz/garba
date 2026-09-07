@@ -56,7 +56,7 @@ if (coverage.unresolvedWithoutVerifiedReleaseSource !== 0) fail(`Playback covera
 if (localAudio + exactProvider + verifiedReleaseFallback !== songs.length) fail('Playback route totals do not cover the full song catalogue');
 
 const runtime = await readFile(path.join(root, 'playback-status.js'), 'utf8');
-for (const marker of ['playbackSources', 'verified-release-source', 'Verified release', 'data-playback-provider', 'GARBA_PLAYBACK_STATUS']) {
+for (const marker of ['playbackSources', 'verified-release-source', 'Verified release', 'dataset.playbackProvider', 'GARBA_PLAYBACK_STATUS']) {
   if (!runtime.includes(marker)) fail(`playback-status.js missing route-truth marker: ${marker}`);
 }
 
