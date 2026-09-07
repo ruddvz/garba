@@ -44,23 +44,18 @@
     }
   }
 
-  function hash(value = '') {
-    let result = 2166136261;
-    for (let index = 0; index < value.length; index += 1) {
-      result ^= value.charCodeAt(index);
-      result = Math.imul(result, 16777619);
-    }
-    return result >>> 0;
-  }
-
   function candidateFor(genreId) {
     const candidates = library[genreId] || [];
     if (!candidates.length) return null;
-    const params = new URLSearchParams(location.search);
-    const song = params.get('song') || '';
-    // The first asset in every bucket is the art-directed primary. Shareable
-    // song URLs deterministically rotate through the approved alternates.
-    const index = song ? hash(`${genreId}:${song}`) % candidates.length : 0;
+
+    // The first image in every bucket is the art-directed production default.
+    // Alternate approved images are opt-in through ?scene=2, ?scene=3, etc.,
+    // rather than changing every time the song changes. That keeps the world
+    // stable and avoids distracting flashes while still retaining all 15 assets.
+    const requested = Number(new URLSearchParams(location.search).get('scene'));
+    const index = Number.isFinite(requested) && requested > 0
+      ? Math.min(candidates.length - 1, Math.floor(requested - 1))
+      : 0;
     return `${base}${candidates[index]}`;
   }
 
