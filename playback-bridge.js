@@ -29,6 +29,7 @@
     stage: null,
     mount: null,
     note: null,
+    sourceLink: null,
     suppressMutation: false,
     lastUrlSong: null,
   };
@@ -124,12 +125,16 @@
       <div class="provider-media" id="providerMedia"></div>
       <div class="provider-dock-bar">
         <span id="providerDockNote">Playing in GARBA</span>
-        <button type="button" id="providerDockStop" aria-label="Stop embedded playback">Stop</button>
+        <div class="provider-dock-actions">
+          <a id="providerDockSource" href="#" target="_blank" rel="noopener" hidden>Open source</a>
+          <button type="button" id="providerDockStop" aria-label="Stop embedded playback">Stop</button>
+        </div>
       </div>`;
     document.body.append(stage);
     state.stage = stage;
     state.mount = stage.querySelector('#providerMedia');
     state.note = stage.querySelector('#providerDockNote');
+    state.sourceLink = stage.querySelector('#providerDockSource');
     stage.querySelector('#providerDockStop')?.addEventListener('click', stopProvider);
     return stage;
   }
@@ -143,8 +148,33 @@
 
   function hideStage() {
     if (!state.stage) return;
-    state.stage.classList.remove('open', 'needs-tap', 'is-loading', 'is-spotify');
+    state.stage.classList.remove('open', 'needs-tap', 'is-loading', 'is-spotify', 'is-release', 'is-apple', 'is-youtube-release');
     state.stage.setAttribute('aria-hidden', 'true');
+  }
+
+  function setSourceAction(url = '', label = 'Open source') {
+    ensureStage();
+    if (!state.sourceLink) return;
+    if (!url) {
+      state.sourceLink.hidden = true;
+      state.sourceLink.removeAttribute('href');
+      return;
+    }
+    state.sourceLink.href = url;
+    state.sourceLink.textContent = label;
+    state.sourceLink.hidden = false;
+  }
+
+  function providerDisplayName(provider = '') {
+    const names = {
+      youtube: 'YouTube', spotify: 'Spotify', 'apple-music': 'Apple Music',
+      'amazon-music': 'Amazon Music', bandcamp: 'Bandcamp', qobuz: 'Qobuz', soundcloud: 'SoundCloud', external: 'provider',
+    };
+    return names[String(provider).toLowerCase()] || 'provider';
+  }
+
+  function isReleaseFallback(source) {
+    return String(source?.sourceType || '').toLowerCase() === 'verified-release-source';
   }
 
   function stopTimer() {
@@ -172,6 +202,7 @@
       try { state.player.pauseVideo(); } catch { /* no-op */ }
     }
     state.provider = null;
+    setSourceAction();
     setPlaying(false);
     hideStage();
   }
@@ -220,6 +251,7 @@
 
   async function createYouTubePlayer(source, autoplay = true) {
     showStage('Playing in GARBA');
+    setSourceAction();
     state.stage?.classList.add('is-loading');
     state.provider = 'youtube';
     state.currentVideoId = source.videoId;
@@ -319,6 +351,81 @@
     }
   }
 
+  function appleMusicEmbedUrl(sourceUrl = '') {
+    try {
+      const url = new URL(sourceUrl);
+      if (url.hostname !== 'music.apple.com' && !url.hostname.endsWith('.music.apple.com')) return null;
+      url.hostname = 'embed.music.apple.com';
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  function releaseFrame(source) {
+    const provider = String(source?.provider || '').toLowerCase();
+    if (provider === 'spotify') {
+      const src = spotifyEmbedUrl(source.sourceUrl);
+      if (!src) return null;
+      return { src, title: 'Spotify verified release', className: 'is-spotify' };
+    }
+    if (provider === 'apple-music') {
+      const src = appleMusicEmbedUrl(source.sourceUrl);
+      if (!src) return null;
+      return { src, title: 'Apple Music verified release', className: 'is-apple' };
+    }
+    if (provider === 'youtube' && source.videoId) {
+      const params = new URLSearchParams({ playsinline: '1', controls: '1', rel: '0' });
+      return { src: `https://www.youtube.com/embed/${encodeURIComponent(source.videoId)}?${params.toString()}`, title: 'YouTube verified release', className: 'is-youtube-release' };
+    }
+    return null;
+  }
+
+  function openVerifiedRelease(source, song) {
+    if (!navigator.onLine) {
+      toast('You are offline. Verified provider releases need an internet connection.');
+      return;
+    }
+
+    stopTimer();
+    if (state.provider === 'youtube' && state.playerReady && state.player) {
+      try { state.player.pauseVideo(); } catch { /* no-op */ }
+    }
+    state.provider = 'release';
+    state.currentVideoId = null;
+    state.playerReady = false;
+    state.requestedPlay = false;
+    setPlaying(false);
+
+    const provider = providerDisplayName(source.provider);
+    const title = song?.title || 'this track';
+    showStage(`Verified release on ${provider} · select “${title}”`);
+    state.stage?.classList.add('is-release');
+    setSourceAction(source.sourceUrl, `Open on ${provider}`);
+
+    const frame = releaseFrame(source);
+    if (frame) {
+      state.stage?.classList.add(frame.className);
+      const iframe = document.createElement('iframe');
+      iframe.title = frame.title;
+      iframe.src = frame.src;
+      iframe.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      iframe.loading = 'eager';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      state.mount.replaceChildren(iframe);
+      return;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'provider-release-card';
+    const heading = document.createElement('strong');
+    heading.textContent = 'Verified release source';
+    const copy = document.createElement('span');
+    copy.textContent = `${provider} has a verified release for this catalogue entry. Use Open source and select “${title}” on the provider.`;
+    card.append(heading, copy);
+    state.mount.replaceChildren(card);
+  }
+
   function playSpotify(source) {
     if (!navigator.onLine) {
       toast('You are offline. Provider-backed songs need an internet connection.');
@@ -336,6 +443,7 @@
     state.playing = false;
     setPlaying(false);
     showStage('Tap play once in the embedded player');
+    setSourceAction(source.sourceUrl, 'Open on Spotify');
     state.stage?.classList.add('is-spotify');
     const iframe = document.createElement('iframe');
     iframe.title = 'Spotify playback';
@@ -348,7 +456,7 @@
 
   function titleSimilarity(a, b) {
     const aa = new Set(normalise(a).split(/\s+/).filter(Boolean));
-    const bb = new Set(normalise(b).split(/\s+/).filter(Boolean));
+    const bb = new Set(normalize(b).split(/\s+/).filter(Boolean));
     if (!aa.size || !bb.size) return 0;
     let shared = 0;
     for (const token of aa) if (bb.has(token)) shared += 1;
@@ -379,15 +487,21 @@
   function resolveSource(song) {
     if (!song) return null;
     const explicit = state.sources[song.id] || null;
-    if (explicit?.provider === 'youtube' && explicit.videoId) return explicit;
+    const exact = explicit && !isReleaseFallback(explicit) ? explicit : null;
+
+    if (exact?.provider === 'youtube' && exact.videoId) return exact;
     if (song.playbackProvider === 'youtube' && song.youtubeId) {
-      return { provider: 'youtube', videoId: song.youtubeId, startSeconds: song.youtubeStartSeconds || 0 };
+      return { provider: 'youtube', videoId: song.youtubeId, startSeconds: song.youtubeStartSeconds || 0, sourceType: 'song-direct' };
     }
+
+    // Prefer a timestamped performance match over a release-level URL. A release
+    // page is useful provenance, but it is not proof that playback starts on this song.
     const performance = performanceFallback(song);
     if (performance) return performance;
-    if (explicit?.provider === 'spotify' && explicit.sourceUrl) return explicit;
+
+    if (exact?.provider === 'spotify' && exact.sourceUrl) return exact;
     if (song.playbackProvider === 'spotify' && song.playbackSourceUrl) {
-      return { provider: 'spotify', sourceUrl: song.playbackSourceUrl };
+      return { provider: 'spotify', sourceUrl: song.playbackSourceUrl, sourceType: 'song-direct' };
     }
     return explicit;
   }
@@ -400,17 +514,24 @@
     }
     if (song.audioUrl || audio?.getAttribute('src')) return false;
     const source = resolveSource(song);
+    state.currentSongId = song.id;
+    if (isReleaseFallback(source)) {
+      openVerifiedRelease(source, song);
+      return true;
+    }
     if (source?.provider === 'youtube' && source.videoId) {
-      state.currentSongId = song.id;
       await playYouTube(source);
       return true;
     }
     if (source?.provider === 'spotify' && source.sourceUrl) {
-      state.currentSongId = song.id;
       playSpotify(source);
       return true;
     }
-    toast('This track does not have an in-app stream yet.');
+    if (source?.sourceUrl) {
+      openVerifiedRelease({ ...source, sourceType: source.sourceType || 'provider-source' }, song);
+      return true;
+    }
+    toast('No verified playback route is attached to this track yet.');
     return true;
   }
 
@@ -448,6 +569,7 @@
     state.lastUrlSong = song.id;
     state.currentSongId = song.id;
     if (!state.provider) return;
+    if (state.provider === 'release') { stopProvider(); return; }
     const source = resolveSource(song);
     if (source?.provider === 'youtube' && source.videoId) {
       if (previousWasPlaying) playYouTube(source);

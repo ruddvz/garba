@@ -164,3 +164,79 @@
 @media (display-mode: standalone) {
   .install-banner { display: none !important; }
 }
+
+
+/* Playback truth: distinguish exact song routes from release-level discovery. */
+.playback-status-pill {
+  display: none;
+  width: fit-content;
+  margin: 8px auto 0;
+  padding: 5px 9px;
+  border: 1px solid rgba(246,236,215,.13);
+  border-radius: 999px;
+  background: rgba(8,11,20,.24);
+  color: rgba(246,236,215,.66);
+  font: 600 10px/1 var(--sans);
+  letter-spacing: .045em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.playback-status-pill.show { display: inline-flex; }
+.playback-status-pill[data-kind="official"]::before,
+.playback-status-pill[data-kind="verified"]::before,
+.playback-status-pill[data-kind="direct"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.playback-status-pill[data-kind="release"] {
+  color: rgba(246,236,215,.58);
+  border-style: dashed;
+}
+
+.provider-dock-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.provider-dock-actions a,
+.provider-dock-actions button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: transparent;
+  color: rgba(246,236,215,.76);
+  font: inherit;
+  text-decoration: none;
+}
+.provider-dock-actions a:hover,
+.provider-dock-actions a:focus-visible,
+.provider-dock-actions button:hover,
+.provider-dock-actions button:focus-visible { background: rgba(246,236,215,.07); color: var(--ivory); }
+.provider-dock.is-release .provider-media { min-height: 152px; height: 176px; }
+.provider-dock.is-release.is-youtube-release .provider-media { min-height: 200px; height: 200px; }
+.provider-release-card {
+  min-height: 152px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 24px;
+  text-align: center;
+  color: rgba(246,236,215,.66);
+  font: 13px/1.45 var(--sans);
+}
+.provider-release-card strong { color: var(--ivory); font-size: 14px; }
+.provider-release-card span { max-width: 34ch; }
+
+@media (max-width: 700px) {
+  .playback-status-pill { margin-top: 6px; font-size: 9px; }
+  .provider-dock-bar { min-height: 40px; }
+  .provider-dock-bar > span { max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
