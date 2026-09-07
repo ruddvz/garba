@@ -74,7 +74,7 @@
       .provider-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:rgba(19,21,35,.96);z-index:2}.provider-head h2{margin:0;font:600 20px/1.2 system-ui}.provider-close{border:0;background:rgba(255,255,255,.08);color:#fff;width:38px;height:38px;border-radius:50%;font-size:22px;cursor:pointer}
       .provider-body{padding:18px 20px 22px}.provider-frame{aspect-ratio:16/9;width:100%;border:0;border-radius:18px;background:#000}.provider-frame.spotify{aspect-ratio:auto;height:352px}.provider-copy{margin:12px 0 0;color:rgba(255,255,255,.7);font:14px/1.5 system-ui}.provider-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.provider-action{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:999px;background:#fff;color:#111;text-decoration:none;font:600 14px system-ui;border:0;cursor:pointer}.provider-action.secondary{background:rgba(255,255,255,.09);color:#fff}
       .nonstop-list{display:grid;gap:10px}.nonstop-item{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(255,255,255,.035)}.nonstop-item strong{display:block;font:600 15px/1.3 system-ui}.nonstop-item span{display:block;margin-top:4px;color:rgba(255,255,255,.6);font:13px/1.35 system-ui}.nonstop-play{border:0;border-radius:999px;min-height:38px;padding:0 14px;background:var(--accent,#d6b06f);color:#10111a;font:700 13px system-ui;cursor:pointer}
-      .nonstop-nav-button{font:700 18px/1 system-ui}.provider-source-note{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);font:12px/1 system-ui}.provider-chapters{margin-top:18px}.provider-chapters h3{margin:0 0 10px;font:600 14px/1.3 system-ui;color:rgba(255,255,255,.82)}.provider-chapter-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.provider-chapter{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);color:#fff;border-radius:12px;padding:9px 11px;cursor:pointer;font:13px/1.3 system-ui}.provider-chapter:hover,.provider-chapter:focus-visible{background:rgba(255,255,255,.09)}.provider-chapter-time{flex:0 0 auto;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums}.provider-chapter-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .nonstop-nav-button{font:700 18px/1 system-ui}.nonstop-section-button{margin-bottom:10px}.provider-source-note{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);font:12px/1 system-ui}.provider-chapters{margin-top:18px}.provider-chapters h3{margin:0 0 10px;font:600 14px/1.3 system-ui;color:rgba(255,255,255,.82)}.provider-chapter-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.provider-chapter{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);color:#fff;border-radius:12px;padding:9px 11px;cursor:pointer;font:13px/1.3 system-ui}.provider-chapter:hover,.provider-chapter:focus-visible{background:rgba(255,255,255,.09)}.provider-chapter-time{flex:0 0 auto;color:rgba(255,255,255,.5);font-variant-numeric:tabular-nums}.provider-chapter-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       @media(max-width:700px){.provider-overlay{padding:0;align-items:flex-end}.provider-panel{border-radius:24px 24px 0 0;max-height:88vh}.nonstop-item{grid-template-columns:1fr}.nonstop-play{width:100%}.provider-chapter-list{grid-template-columns:1fr}.provider-frame.spotify{height:352px}}
     `;
     document.head.append(style);
@@ -155,6 +155,53 @@
     return { id: params.get('song'), title: document.getElementById('songTitle')?.textContent?.trim() || 'Garba song', artist: document.getElementById('songArtist')?.textContent?.trim() || '' };
   }
 
+  function titleTokens(value = '') {
+    const aliases = new Map([
+      ['krushna','krishna'],['kanuda','kanudo'],['kanudo','kanudo'],['maagyo','magyo'],['mangyo','magyo'],['andhaari','andhari'],['andhari','andhari'],['vaaya','vaya'],['vaya','vaya'],['saambhlo','sambhlo'],['sambhlo','sambhlo'],['jhini','jini'],['jini','jini'],['lobadiyaliyu','lobdiyaliyu'],['lobdiyaliyu','lobdiyaliyu'],['chotile','chotila'],['chotila','chotila']
+    ]);
+    return String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ').trim().split(/\s+/).filter(Boolean).map((token) => aliases.get(token) || token);
+  }
+
+  function titleSimilarity(a, b) {
+    const aa = titleTokens(a);
+    const bb = titleTokens(b);
+    if (!aa.length || !bb.length) return 0;
+    if (aa.length === 1 || bb.length === 1) return aa.join(' ') === bb.join(' ') ? 1 : 0;
+    const aSet = new Set(aa);
+    const bSet = new Set(bb);
+    let shared = 0;
+    for (const token of aSet) if (bSet.has(token)) shared += 1;
+    const coverage = shared / Math.max(aSet.size, bSet.size);
+    const lengthPenalty = Math.abs(aSet.size - bSet.size) > 2 ? 0.12 : 0;
+    return Math.max(0, coverage - lengthPenalty);
+  }
+
+  function findPerformanceSource(song) {
+    const candidates = [];
+    for (const set of nonstop) {
+      if (set.provider !== 'youtube' || !set.videoId || !Array.isArray(set.segments)) continue;
+      for (const segment of set.segments) {
+        const similarity = titleSimilarity(song.title, segment.title);
+        if (similarity < 0.84) continue;
+        const artistMatch = set.artist && song.artist && (set.artist.toLowerCase().includes(song.artist.toLowerCase()) || song.artist.toLowerCase().includes(set.artist.toLowerCase()));
+        const rank = (sourceRank[set.sourceType] || 0) * 10 + similarity * 10 + (artistMatch ? 8 : 0) + (set.featured ? 2 : 0);
+        candidates.push({ set, segment, rank });
+      }
+    }
+    candidates.sort((a, b) => b.rank - a.rank);
+    const best = candidates[0];
+    if (!best) return null;
+    return {
+      provider: 'youtube',
+      videoId: best.set.videoId,
+      startSeconds: Number(best.segment.startSeconds) || 0,
+      sourceUrl: best.set.sourceUrl,
+      sourceType: best.set.sourceType,
+      segments: best.set.segments,
+      notes: `Available as a verified performance inside “${best.set.title}”. This may be a live/nonstop arrangement rather than the canonical studio recording.`,
+    };
+  }
+
   function openProviderSearch(song) {
     const overlay = ensureOverlay();
     const body = document.getElementById('providerBody');
@@ -168,6 +215,8 @@
     if (source?.provider === 'youtube' && source.videoId) return openYouTube({ ...source, title: song.title, artist: song.artist });
     if (source?.provider === 'spotify' && source.sourceUrl) return openSpotify({ ...source, title: song.title, artist: song.artist });
     if (source?.sourceUrl) return openExternalSource({ ...source, title: song.title, artist: song.artist });
+    const performance = findPerformanceSource(song);
+    if (performance) return openYouTube({ ...performance, title: song.title, artist: song.artist });
     return openProviderSearch(song);
   }
 
@@ -189,16 +238,28 @@
 
   function addNonstopButton() {
     const utilities = document.querySelector('.utilities');
-    if (!utilities || document.getElementById('nonstopButton')) return;
-    const button = document.createElement('button');
-    button.id = 'nonstopButton';
-    button.className = 'icon-button nonstop-nav-button';
-    button.type = 'button';
-    button.title = 'Nonstop Garba';
-    button.setAttribute('aria-label', 'Browse nonstop Garba');
-    button.textContent = '∞';
-    button.addEventListener('click', openNonstop);
-    utilities.prepend(button);
+    if (utilities && !document.getElementById('nonstopButton')) {
+      const button = document.createElement('button');
+      button.id = 'nonstopButton';
+      button.className = 'icon-button nonstop-nav-button';
+      button.type = 'button';
+      button.title = 'Nonstop Garba';
+      button.setAttribute('aria-label', 'Browse nonstop Garba');
+      button.textContent = '∞';
+      button.addEventListener('click', openNonstop);
+      utilities.prepend(button);
+    }
+
+    const browse = document.getElementById('browseButton');
+    if (browse && !document.getElementById('nonstopBrowseButton')) {
+      const sectionButton = document.createElement('button');
+      sectionButton.id = 'nonstopBrowseButton';
+      sectionButton.className = 'browse-button nonstop-section-button';
+      sectionButton.type = 'button';
+      sectionButton.innerHTML = '<span>Nonstop Garba</span><span aria-hidden="true">∞</span>';
+      sectionButton.addEventListener('click', openNonstop);
+      browse.parentNode.insertBefore(sectionButton, browse);
+    }
   }
 
   function interceptPlay(event) {
