@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "updatedAt": "2026-09-07",
   "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared.",
   "contacts": [
@@ -21,15 +21,16 @@
       "batchId": "strategic-label-soor-mandir",
       "entity": "Soor Mandir",
       "contactState": "active-brand-owner-publisher-route-found-legal-licensor-needs-confirmation",
-      "confidence": "high-active-brand-medium-legal-entity",
+      "confidence": "high-catalogue-rights-signal-medium-current-legal-entity",
       "primaryRoute": "https://www.youtube.com/@soormandir",
       "catalogueRoute": "http://soormandir.com",
       "secondaryRoute": "https://www.instagram.com/soormandir/",
       "evidence": [
         "https://www.youtube.com/watch?v=xcmJ2OSBoa0",
-        "https://iprs.org/wp-content/uploads/2023/01/IPRS_Member_List_watermark.pdf"
+        "https://iprs.org/wp-content/uploads/2023/01/IPRS_Member_List_watermark.pdf",
+        "https://www.sec.gov/Archives/edgar/data/1611820/000119312516618753/d728446dex105.htm"
       ],
-      "notes": "The verified active Soor Mandir music channel identifies the label and points to soormandir.com, official socials and its app. IPRS member material lists SOOR MANDIR as an owner/publisher. The old company record for SOOR MANDIR MUSIC PRIVATE LIMITED is shown as struck off, so do not address a licence to that old corporate entity without confirmation. First inquiry must ask which current person/entity owns and can license the master catalogue, then request the roughly 245 Soor Mandir-labelled GARBA rows plus the separately-labelled Soor Mandir / SM Digital subset for ownership reconciliation."
+      "notes": "The verified active Soor Mandir music channel identifies the label and points to soormandir.com, official socials and its app. IPRS member material lists SOOR MANDIR as an owner/publisher. An SEC-filed contract schedule records Soor Mandir as counterparty to digital-music and streaming/content licence agreements for Nokia Music/MixRadio, which is strong historical evidence of a licensable sound-recording catalogue. The old company record for SOOR MANDIR MUSIC PRIVATE LIMITED is shown as struck off, so do not address a new licence to that old corporate entity without confirmation. First inquiry must ask which current person/entity owns and can license the master catalogue, then request the roughly 245 Soor Mandir-labelled GARBA rows plus the separately-labelled Soor Mandir / SM Digital subset for ownership reconciliation."
     },
     {
       "batchId": "atul-purohit-rutumbhara",
