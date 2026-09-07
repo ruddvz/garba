@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#15182a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="An immersive Gujarati Garba music collection." />
+    <meta name="application-name" content="GARBA" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="GARBA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>GARBA</title>
+
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" fetchpriority="high" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#mainPlayer">Skip to player</a>
+
+    <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed">
+      <div class="world" aria-hidden="true">
+        <div class="world-layer is-visible" id="worldA"></div>
+        <div class="world-layer" id="worldB"></div>
+        <div class="world-vignette"></div>
+        <div class="world-ambient" id="worldAmbient"></div>
+      </div>
+
+      <header class="topbar">
+        <a href="./" class="brand" aria-label="GARBA home">GARBA</a>
+        <nav class="utilities" aria-label="Player tools">
+          <button class="icon-button" id="searchButton" type="button" aria-label="Search songs" title="Search songs">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+          </button>
+          <button class="icon-button desktop-only" id="favouritesButton" type="button" aria-label="Show favourites" title="Favourites">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+          </button>
+          <button class="icon-button has-badge" id="queueButton" type="button" aria-label="Show queue" title="Up next">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7"></path><path d="M18 13v7M18 13l3 2"></path></svg>
+            <span class="utility-badge" id="queueBadge" aria-hidden="true"></span>
+          </button>
+        </nav>
+      </header>
+
+      <main class="player-shell" id="mainPlayer" tabindex="-1" aria-live="polite">
+        <section class="track-block" id="trackBlock" aria-label="Now playing">
+          <p class="genre-eyebrow" id="genreEyebrow">Traditional Garba</p>
+          <h1 class="song-title" id="songTitle">Traditional demo 01</h1>
+          <div class="artist-row">
+            <p class="artist" id="songArtist">Add artist</p>
+            <button class="heart-button mobile-heart" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="controls" aria-label="Playback controls">
+          <button class="transport" id="prevButton" type="button" aria-label="Previous song">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg>
+          </button>
+          <button class="play-button" id="playButton" type="button" aria-label="Play">
+            <span class="ambient-ring" aria-hidden="true"></span>
+            <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
+          </button>
+          <button class="transport" id="nextButton" type="button" aria-label="Next song">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg>
+          </button>
+        </section>
+
+        <section class="progress-wrap" aria-label="Playback progress">
+          <span class="time" id="elapsedTime">0:00</span>
+          <input class="progress" id="progress" type="range" min="0" max="1000" value="0" aria-label="Seek" />
+          <span class="time" id="durationTime">4:30</span>
+        </section>
+
+        <nav class="genre-strip" id="genreStrip" aria-label="Genres"></nav>
+
+        <button class="browse-button" id="browseButton" type="button" aria-expanded="false" aria-controls="songSheet">
+          <span>Browse songs</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"></path></svg>
+        </button>
+      </main>
+
+      <aside class="sheet" id="songSheet" role="dialog" aria-modal="false" aria-hidden="true" aria-labelledby="sheetTitle">
+        <button class="sheet-handle" id="sheetHandle" type="button" aria-label="Resize song browser"><span></span></button>
+        <div class="sheet-inner">
+          <header class="sheet-header">
+            <h2 id="sheetTitle">Songs</h2>
+            <label class="search-field" aria-label="Search songs">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+              <input id="searchInput" type="search" placeholder="Search" autocomplete="off" inputmode="search" />
+            </label>
+            <button class="icon-button sheet-close" id="sheetClose" type="button" aria-label="Close songs">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+            </button>
+          </header>
+
+          <nav class="sheet-genres genre-strip" id="sheetGenreStrip" aria-label="Filter songs by genre"></nav>
+          <div class="song-list" id="songList" role="list"></div>
+
+          <div class="mini-player" aria-label="Compact player">
+            <div class="mini-progress"><span id="miniProgress"></span></div>
+            <div class="mini-track">
+              <strong id="miniTitle">Traditional demo 01</strong>
+              <span id="miniArtist">Add artist</span>
+            </div>
+            <div class="mini-controls">
+              <button class="transport" id="miniPrev" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
+              <button class="transport mini-play" id="miniPlay" type="button" aria-label="Play"><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg></button>
+              <button class="transport" id="miniNext" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="install-banner" id="installBanner" hidden>
+        <div>
+          <strong id="installTitle">Install GARBA</strong>
+          <span id="installText">Keep the full-screen player one tap away.</span>
+        </div>
+        <div class="install-actions">
+          <button id="installDismiss" type="button">Not now</button>
+          <button class="install-primary" id="installButton" type="button">Install</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <audio id="audio" preload="metadata"></audio>
+    </div>
+
+    <noscript>This music player needs JavaScript enabled.</noscript>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
