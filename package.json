@@ -6,6 +6,6 @@
   "scripts": {
     "catalogue": "node scripts/build-catalogue.mjs",
     "serve": "python3 -m http.server 4173",
-    "check": "npm run catalogue && node --check app.js && node --check visual-library.js && node --check catalogue-bootstrap.js && node --check player-engine.js && node --check ux-polish.js && node --check sw.js && node scripts/validate.mjs && node scripts/validate-discovery.mjs"
+    "check": "npm run catalogue && node --check app.js && node --check visual-library.js && node --check catalogue-bootstrap.js && node --check player-engine.js && node --check ux-polish.js && node --check ux-next.js && node --check sw.js && node scripts/validate.mjs && node scripts/validate-discovery.mjs"
   }
 }
