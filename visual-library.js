@@ -34,6 +34,7 @@
   const allAssets = Object.values(library).flat().map((file) => `${base}${file}`);
   const warmed = new Set();
   const warming = new Map();
+  let warmAllScheduled = false;
 
   function isGenresRequest(input) {
     try {
@@ -59,8 +60,6 @@
     if (!candidates.length) return null;
     const params = new URLSearchParams(location.search);
     const song = songId ?? params.get('song') ?? '';
-    // The first asset in every bucket is the art-directed primary. Shareable
-    // song URLs deterministically rotate through the approved alternates.
     const index = song ? hash(`${genreId}:${song}`) % candidates.length : 0;
     return `${base}${candidates[index]}`;
   }
@@ -76,17 +75,11 @@
     return params.get('genre') || document.getElementById('app')?.dataset.genre || 'traditional';
   }
 
-  async function exists(url) {
-    try {
-      const response = await nativeFetch(url, { method: 'HEAD', cache: 'no-store' });
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  function warmImage(url) {
-    if (!url || connectionConstrained()) return Promise.resolve(false);
+  function warmImage(url, { background = false } = {}) {
+    if (!url) return Promise.resolve(false);
+    // The visible artwork is a product requirement, even on Save-Data/2G. Only
+    // speculative warming of the other 14 images is skipped on constrained links.
+    if (background && connectionConstrained()) return Promise.resolve(false);
     if (warmed.has(url)) return Promise.resolve(true);
     if (warming.has(url)) return warming.get(url);
 
@@ -94,7 +87,7 @@
       const image = new Image();
       image.decoding = 'async';
       image.onload = async () => {
-        try { await image.decode?.(); } catch { /* decoded load is already usable */ }
+        try { await image.decode?.(); } catch { /* loaded pixels are already usable */ }
         warmed.add(url);
         warming.delete(url);
         resolve(true);
@@ -105,12 +98,13 @@
       };
       image.src = url;
     });
+
     warming.set(url, promise);
     return promise;
   }
 
   async function promoteVisibleGenre(genreId) {
-    if (!genreId || connectionConstrained()) return;
+    if (!genreId) return;
     const candidate = candidateFor(genreId);
     if (!candidate || !(await warmImage(candidate))) return;
 
@@ -118,6 +112,7 @@
     if (!app || app.dataset.genre !== genreId) return;
     const visible = document.querySelector('.world-layer.is-visible');
     if (!visible) return;
+
     visible.style.backgroundImage = `url("${candidate}")`;
     visible.dataset.backgroundQuality = '2k-webp';
   }
@@ -126,9 +121,31 @@
     const app = document.getElementById('app');
     if (!app || app.dataset.visualLazyBound === 'true') return;
     app.dataset.visualLazyBound = 'true';
+
     new MutationObserver(() => {
       promoteVisibleGenre(app.dataset.genre);
     }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
+  }
+
+  function scheduleRemainingArtwork() {
+    if (warmAllScheduled || connectionConstrained()) return;
+    warmAllScheduled = true;
+
+    const run = async () => {
+      const visible = candidateFor(requestedGenre());
+      for (const url of allAssets) {
+        if (url === visible || warmed.has(url)) continue;
+        await warmImage(url, { background: true });
+      }
+    };
+
+    const afterLoad = () => {
+      if ('requestIdleCallback' in window) requestIdleCallback(() => run(), { timeout: 5000 });
+      else setTimeout(run, 2500);
+    };
+
+    if (document.readyState === 'complete') afterLoad();
+    else window.addEventListener('load', afterLoad, { once: true });
   }
 
   window.GARBA_VISUAL_LIBRARY = {
@@ -149,27 +166,14 @@
     try {
       const genres = await response.clone().json();
       const currentGenre = requestedGenre();
-      const constrained = connectionConstrained();
-      const enhanced = await Promise.all(genres.map(async (genre) => {
+      const enhanced = genres.map((genre) => {
         const backgrounds = (library[genre.id] || []).map((file) => `${base}${file}`);
         const candidate = candidateFor(genre.id);
         const metadata = { ...genre, backgrounds };
+        if (genre.id !== currentGenre || !candidate) return metadata;
+        return { ...metadata, background: candidate, backgroundQuality: '2k-webp' };
+      });
 
-        // Do not make app.js eagerly preload six large 2K worlds. Only promote
-        // the currently visible world during catalogue bootstrap. Other worlds
-        // keep their lightweight SVG until the user actually enters them.
-        if (constrained || genre.id !== currentGenre || !candidate || !(await exists(candidate))) {
-          return metadata;
-        }
-        warmed.add(candidate);
-        return {
-          ...metadata,
-          background: candidate,
-          backgroundQuality: '2k-webp',
-        };
-      }));
-
-      queueMicrotask(observeWorldChanges);
       return new Response(JSON.stringify(enhanced), {
         status: 200,
         headers: {
@@ -184,4 +188,6 @@
   };
 
   observeWorldChanges();
+  requestAnimationFrame(() => promoteVisibleGenre(requestedGenre()));
+  scheduleRemainingArtwork();
 })();

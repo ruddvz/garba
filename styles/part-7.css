@@ -2,6 +2,72 @@
 
 .source-badge { display: none !important; }
 
+/* Edge-to-edge viewport contract. Artwork always fills the actual browser viewport,
+   including the area beneath iPhone safe-area insets. Safe-area variables are only
+   for controls, never for the background itself. */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #111323;
+}
+
+.app {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100svh !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  background: #111323;
+}
+
+.world {
+  position: absolute !important;
+  inset: -3px !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.world-layer {
+  position: absolute !important;
+  inset: -3px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  transform-origin: center center;
+  image-rendering: auto;
+}
+
+.player-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0 !important;
+  box-sizing: border-box;
+}
+
 /* Playback truth stays visible without reviving the legacy source badge. */
 .playback-status {
   display: none;
@@ -181,7 +247,16 @@
   .app[data-genre="sanedo"] .world-layer { background-position: center 47%; }
   .app[data-genre="fusion"] .world-layer { background-position: center 47%; }
 
-  .topbar { padding-top: max(18px, var(--safe-top)); }
+  .topbar {
+    padding-top: max(18px, var(--safe-top));
+    padding-left: max(20px, var(--safe-left));
+    padding-right: max(20px, var(--safe-right));
+  }
+  .player-shell {
+    padding-left: max(18px, var(--safe-left));
+    padding-right: max(18px, var(--safe-right));
+    padding-bottom: max(12px, var(--safe-bottom));
+  }
   .track-block::before { inset: -20px -8px -18px; }
   .song-title { font-size: clamp(36px, 10vw, 46px); }
   .artist { font-size: clamp(15px, 4.25vw, 18px); }
@@ -199,9 +274,9 @@
   .provider-dock {
     z-index: 19;
     top: auto;
-    right: 12px;
+    right: max(12px, var(--safe-right));
     bottom: max(82px, calc(var(--safe-bottom) + 70px));
-    width: calc(100vw - 24px);
+    width: min(calc(100vw - 24px), calc(100vw - var(--safe-left) - var(--safe-right) - 24px));
     border-radius: 14px;
   }
   .provider-media { height: 200px; }
@@ -211,7 +286,7 @@
 }
 
 @media (max-width: 390px) {
-  .provider-dock { right: 8px; width: calc(100vw - 16px); }
+  .provider-dock { right: max(8px, var(--safe-right)); width: calc(100vw - 16px); }
   .provider-dock-bar { padding-inline: 10px 8px; }
   .provider-dock-bar span { max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
