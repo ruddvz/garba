@@ -26,15 +26,32 @@ if (!index.includes('<script src="catalogue-bootstrap.js"></script>') || !index.
 }
 if (!styles.includes('@import url("styles/part-7.css")')) fail('styles.css must load the final player polish layer');
 
-// First paint must use the generated single-file catalogue. Rebuilding 50+ song
-// chunks before rendering caused iOS Safari to remain behind the loading skeleton.
-for (const marker of ['fastGeneratedSongs', 'loadJsonBatched', 'installLoadingGuard', 'fetchWithTimeout(input, init, 8000)']) {
-  if (!bootstrap.includes(marker)) fail(`Mobile first-load guard missing marker: ${marker}`);
+// First paint must not wait for the 1k+ song catalogue. A tiny verified boot set
+// makes the player interactive synchronously and the generated catalogue hydrates
+// after first paint.
+for (const marker of [
+  'const BOOT_GENRES = [',
+  'const BOOT_SONGS = [',
+  'function showReadyShell()',
+  'function startFullCatalogueLoad()',
+  "if (isGenresRequest(input)) return jsonResponse(BOOT_GENRES);",
+  'return jsonResponse(BOOT_SONGS);',
+  "url.searchParams.set('full', String(Date.now()))",
+  "app.dataset.loading = 'false'",
+]) {
+  if (!bootstrap.includes(marker)) fail(`Instant mobile bootstrap missing marker: ${marker}`);
 }
-const fastPath = bootstrap.indexOf('const fast = await fastGeneratedSongs(input, init)');
-const chunkPath = bootstrap.indexOf('const songs = await loadSongsFromChunks()');
-if (fastPath < 0 || chunkPath < 0 || fastPath > chunkPath) fail('Generated songs.json must be attempted before chunk reconstruction');
-if (!bootstrap.includes("app.dataset.loading = 'false'")) fail('Catalogue bootstrap must be able to dismiss the loading skeleton independently');
+const shellRelease = bootstrap.indexOf('showReadyShell();');
+const backgroundStart = bootstrap.indexOf("requestIdleCallback(() => startFullCatalogueLoad()", shellRelease);
+if (shellRelease < 0 || backgroundStart < 0 || shellRelease > backgroundStart) {
+  fail('Loading skeleton must be released before background catalogue hydration starts');
+}
+if (!bootstrap.includes('if (fullSongsText) return jsonResponse(fullSongsText);')) {
+  fail('Hydrated catalogue must replace the boot set for subsequent catalogue reads');
+}
+if (!bootstrap.includes("window.dispatchEvent(new Event('online'))")) {
+  fail('Full catalogue hydration must trigger the existing refresh path');
+}
 
 for (const marker of [
   '.provider-dock', '.provider-media iframe', '.source-badge { display: none !important; }',
@@ -51,8 +68,9 @@ if (!pages.includes('garba15-2k-q82.zip')) fail('Pages workflow must retain the 
 if (!pages.includes("test \"$(find _site/assets/backgrounds/library -maxdepth 1 -name '*.webp' | wc -l)\" -eq 15")) fail('Pages workflow must verify all 15 WebPs are deployed');
 
 if (failed) process.exit(1);
-console.log('✓ first paint uses generated songs.json before bounded chunk fallback');
-console.log('✓ loading skeleton has an independent mobile-safe release guard');
+console.log('✓ first paint uses an in-memory verified boot catalogue');
+console.log('✓ the complete catalogue hydrates after first paint without blocking the player');
+console.log('✓ loading skeleton is released synchronously on mobile');
 console.log('✓ play stays inside GARBA through provider embeds');
 console.log('✓ final phone, tablet, laptop and landscape player CSS is loaded');
 console.log('✓ PWA caches the complete shell and all 15 approved WebP backgrounds when deployed');
