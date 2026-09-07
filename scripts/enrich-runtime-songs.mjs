@@ -6,7 +6,9 @@ const readJson = async (file) => JSON.parse(await readFile(path.join(root, file)
 
 const index = await readJson('data/catalogue/index.json');
 const songsPath = index.generatedFiles?.songs || 'data/songs.json';
-const songs = await readJson(songsPath);
+const releasesPath = index.generatedFiles?.releases || 'data/releases.json';
+const [songs, releases] = await Promise.all([readJson(songsPath), readJson(releasesPath)]);
+const releasesById = new Map(releases.map((release) => [release.id, release]));
 const sourcePaths = Array.isArray(index.playbackSources) ? index.playbackSources.filter(Boolean) : [];
 if (!sourcePaths.length) throw new Error('No playback source manifests are declared in data/catalogue/index.json');
 
@@ -15,6 +17,7 @@ const routes = Object.assign({}, ...manifests.map((manifest) => manifest?.songSo
 let enriched = 0;
 let direct = 0;
 let exactTrackFallbacks = 0;
+let singleReleaseFallbacks = 0;
 const missing = [];
 
 function isExactTrackUrl(provider, sourceUrl) {
@@ -24,6 +27,20 @@ function isExactTrackUrl(provider, sourceUrl) {
     if (provider === 'spotify') return /\/(?:intl-[^/]+\/)?track\/[^/]+/.test(pathname);
     if (provider === 'apple-music') return pathname.includes('/song/') || url.searchParams.has('i');
     if (provider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname);
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function isReleaseSpecificUrl(provider, sourceUrl) {
+  try {
+    const url = new URL(sourceUrl);
+    const pathname = url.pathname.toLowerCase();
+    if (provider === 'spotify') return pathname.includes('/album/');
+    if (provider === 'apple-music') return pathname.includes('/album/');
+    if (provider === 'amazon-music') return pathname.includes('/albums/');
+    if (provider === 'youtube') return url.hostname === 'youtu.be' || (url.hostname.includes('youtube.com') && pathname === '/watch');
   } catch {
     return false;
   }
@@ -46,9 +63,17 @@ const runtimeSongs = songs.map((song) => {
   next.playbackProvider = route.provider;
   next.playbackSourceUrl = route.sourceUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(route.videoId)}`;
   next.playbackSourceType = route.sourceType || 'verified-provider-source';
-  if (next.playbackSourceType === 'verified-release-source' && isExactTrackUrl(next.playbackProvider, next.playbackSourceUrl)) {
-    next.playbackSourceType = 'verified-track-source';
-    exactTrackFallbacks += 1;
+  if (next.playbackSourceType === 'verified-release-source') {
+    if (isExactTrackUrl(next.playbackProvider, next.playbackSourceUrl)) {
+      next.playbackSourceType = 'verified-track-source';
+      exactTrackFallbacks += 1;
+    } else {
+      const release = releasesById.get(song.releaseId);
+      if (Number(release?.songCount) === 1 && isReleaseSpecificUrl(next.playbackProvider, next.playbackSourceUrl)) {
+        next.playbackSourceType = 'verified-single-release-source';
+        singleReleaseFallbacks += 1;
+      }
+    }
   }
   if (route.videoId) next.youtubeId = route.videoId;
   if (Number.isFinite(Number(route.startSeconds))) {
@@ -65,4 +90,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${missing.length} unresolved.`);
