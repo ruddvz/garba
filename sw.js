@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v15-full-offline`;
+const VERSION = `${CACHE_PREFIX}v16-direct-audio`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -22,6 +22,7 @@ const SHELL = [
   './playback-routes.js',
   './visual-library.js',
   './catalogue-bootstrap.js',
+  './direct-audio-bridge.js',
   './playback-bridge.js',
   './manifest.webmanifest',
   './offline.html',
@@ -30,6 +31,7 @@ const SHELL = [
   './data/songs.json',
   './data/releases.json',
   './data/free-audio-sources.json',
+  './data/direct-audio.json',
   './data/playback-sources-generated.json',
   './data/playback-coverage.json',
   './data/catalogue/index.json',
@@ -87,6 +89,7 @@ async function cacheOfflineCatalogue(cache) {
     './data/songs.json',
     './data/releases.json',
     './data/free-audio-sources.json',
+    './data/direct-audio.json',
     './data/playback-coverage.json',
   ]);
 
