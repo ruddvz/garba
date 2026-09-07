@@ -1,0 +1,1 @@
+{"version":"0.4.0","updated":"2026-09-06","chunks":["sets-01.json","sets-02.json","sets-03.json","sets-04.json"],"policy":{"officialityOrder":["official-artist-channel","artist-channel","verified-label-channel","verified-distributor-channel","community-upload"],"defaultPlayback":"youtube-embed-visible","communitySources":"discovery-only-unless-no-better-source"}}
