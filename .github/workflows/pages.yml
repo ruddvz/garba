@@ -26,8 +26,21 @@ jobs:
         run: |
           rm -rf _site
           mkdir -p _site
-          cp index.html app.js visual-library.js catalogue-bootstrap.js playback-bridge.js styles.css manifest.webmanifest offline.html sw.js _site/
+
+          # Keep the Pages artifact aligned with index.html and the service-worker
+          # shell. Copy every root runtime JS file so a newly added enhancement
+          # cannot silently deploy as a 404 while repository validation still passes.
+          cp index.html *.js styles.css manifest.webmanifest offline.html _site/
           cp -R styles assets data _site/
+
+          # Assert the runtime files currently referenced by the document exist in
+          # the deploy artifact. This makes missing-script regressions fail the build.
+          for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
+            case "$src" in
+              http://*|https://*|//*) continue ;;
+            esac
+            test -f "_site/$src" || { echo "Missing deployed script: $src"; exit 1; }
+          done
 
           # Canonical visual pack: 15 approved 2K WebPs. Keeping one zip in
           # Git keeps source history compact while Pages serves normal WebPs.
