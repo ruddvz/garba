@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-shell-';
-const VERSION = `${CACHE_PREFIX}v6`;
+const VERSION = `${CACHE_PREFIX}v7-2k`;
 const SHELL_CACHE = `${VERSION}:shell`;
 const RUNTIME_CACHE = `${VERSION}:runtime`;
 
@@ -11,6 +11,7 @@ const SHELL = [
   './styles/part-2.css',
   './styles/part-3.css',
   './app.js',
+  './visual-library.js',
   './catalogue-bootstrap.js',
   './playback-bridge.js',
   './manifest.webmanifest',
@@ -23,6 +24,9 @@ const SHELL = [
   './data/discovery/sets/index.json',
   './assets/icons/icon.svg',
   './assets/icons/maskable.svg',
+  // Lightweight fallbacks remain precached. The 15 high-resolution WebPs
+  // are cached on first use so installing the PWA does not download every
+  // 2K scene at once.
   './assets/backgrounds/traditional.svg',
   './assets/backgrounds/dandiya.svg',
   './assets/backgrounds/devotional.svg',
@@ -52,7 +56,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then((response) => {
           const copy = response.clone();
           caches.open(RUNTIME_CACHE).then((cache) => cache.put('./index.html', copy));
@@ -68,7 +72,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (request.destination === 'image' || request.destination === 'style' || request.destination === 'script' || request.destination === 'manifest') {
+  // JS/CSS are network-first so fixes reach installed PWAs immediately.
+  if (request.destination === 'script' || request.destination === 'style' || request.destination === 'manifest') {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Artwork is immutable per filename/version and is ideal for cache-first.
+  if (request.destination === 'image') {
     event.respondWith(cacheFirst(request));
   }
 });
