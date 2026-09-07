@@ -46,6 +46,12 @@
     return String(source?.sourceType || '').toLowerCase() === 'verified-release-source';
   }
 
+  function isInteractiveTarget(target) {
+    return target instanceof Element && Boolean(target.closest(
+      'button, a[href], input, textarea, select, summary, iframe, [contenteditable="true"], [role="button"], [role="link"]'
+    ));
+  }
+
   function providerName(provider = '') {
     const key = String(provider).toLowerCase();
     return providerNames[key] || key.replace(/(^|-)([a-z])/g, (_, prefix, letter) => `${prefix ? ' ' : ''}${letter.toUpperCase()}`) || 'provider';
@@ -75,7 +81,6 @@
         <button type="button" id="providerDockStop" aria-label="Close provider source">Close</button>
       </div>`;
     document.body.append(stage);
-    stage.querySelector('#providerDockStop')?.addEventListener('click', closeRelease);
     return stage;
   }
 
@@ -127,14 +132,23 @@
     return null;
   }
 
+  function restoreStageStop(stage) {
+    const stop = stage?.querySelector('#providerDockStop');
+    if (!stop) return;
+    stop.textContent = 'Stop';
+    stop.setAttribute('aria-label', 'Stop embedded playback');
+  }
+
   function closeRelease() {
-    if (!state.active) return;
+    if (!state.active) return false;
     const stage = document.getElementById('providerStage');
     const media = document.getElementById('providerMedia');
     stage?.classList.remove('open', 'is-release', 'is-spotify', 'is-apple', 'is-youtube-release', 'is-external');
     stage?.setAttribute('aria-hidden', 'true');
     media?.replaceChildren();
+    restoreStageStop(stage);
     state.active = false;
+    return true;
   }
 
   function openRelease(source) {
@@ -147,6 +161,7 @@
     const stage = ensureStage();
     const media = stage.querySelector('#providerMedia');
     const note = stage.querySelector('#providerDockNote');
+    const stop = stage.querySelector('#providerDockStop');
     const name = providerName(source.provider);
     const title = String(songTitle?.textContent || 'this track').trim();
 
@@ -154,6 +169,10 @@
     stage.classList.add('open', 'is-release');
     stage.setAttribute('aria-hidden', 'false');
     if (note) note.textContent = `Verified release on ${name} · select “${title}”`;
+    if (stop) {
+      stop.textContent = 'Close';
+      stop.setAttribute('aria-label', 'Close verified release source');
+    }
 
     const embed = releaseEmbed(source);
     if (embed) {
@@ -216,7 +235,7 @@
 
   function interceptSpace(event) {
     if (event.code !== 'Space' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target?.isContentEditable) return;
+    if (isInteractiveTarget(event.target)) return;
     if (audio?.getAttribute('src')) return;
 
     const source = currentSource();
@@ -225,6 +244,13 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     routeRelease(source);
+  }
+
+  function interceptProviderStop(event) {
+    if (!state.active || !event.target.closest?.('#providerDockStop')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closeRelease();
   }
 
   async function loadSources() {
@@ -243,6 +269,7 @@
     state.ready = true;
   }
 
+  window.addEventListener('click', interceptProviderStop, true);
   window.addEventListener('click', interceptPlay, true);
   window.addEventListener('keydown', interceptSpace, true);
 
@@ -254,12 +281,16 @@
       if (songSheet.getAttribute('aria-hidden') === 'false' && matchMedia('(max-width: 700px)').matches) closeRelease();
     }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
   }
-  window.addEventListener('offline', closeRelease);
+  window.addEventListener('offline', () => {
+    if (closeRelease()) announce('Offline. Verified release playback paused until you reconnect.');
+  });
 
   state.loading = loadSources().catch(() => { state.ready = true; });
   window.GARBA_RELEASE_GUARD = {
     get ready() { return state.ready; },
     sourceFor(songId) { return state.sources[songId] || window.GARBA_BOOT_PLAYBACK?.[songId] || null; },
     isReleaseFallback,
+    closeActive: closeRelease,
+    routeCurrent() { return routeRelease(currentSource()); },
   };
 })();
