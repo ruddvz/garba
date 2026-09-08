@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "songSources": {
     "ochhav-2023-01-ochhav-theme": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA","sourceType":"official-artist-channel"},
     "ochhav-2023-02-ganesh-deva": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":79,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=79s","sourceType":"official-artist-channel"},
@@ -25,6 +25,7 @@
     "ochhav-2023-22-ghor-andhaari-re": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":2518,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=2518s","sourceType":"official-artist-channel"},
     "ochhav-2023-23-kanudo-maagyo-dene": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":2637,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=2637s","sourceType":"official-artist-channel"},
     "ochhav-2023-24-helo-maro-saambhlo": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":2740,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=2740s","sourceType":"official-artist-channel"},
-    "ochhav-2023-25-ram-stuti": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":2832,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=2832s","sourceType":"official-artist-channel"}
+    "ochhav-2023-25-ram-stuti": {"provider":"youtube","videoId":"V4f5I_xJVoA","startSeconds":2832,"sourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA&t=2832s","sourceType":"official-artist-channel"},
+    "bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014": {"provider":"youtube","videoId":"wVXTfjZaSqM","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=wVXTfjZaSqM","sourceType":"official-topic","releaseId":"bollywood-dandiya-2014","trackNumber":1,"evidenceType":"official-youtube-auto-generated-release-track"}
   }
 }
