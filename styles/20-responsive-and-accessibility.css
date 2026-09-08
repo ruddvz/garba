@@ -199,154 +199,274 @@ html body .sheet-genres .genre-button[data-genre].active {
   }
 }
 
-/* Transport identity pass. The console keeps the same footprint but reads as one
-   purpose-built Garba control surface instead of three generic buttons in glass. */
+/* Open player control system. Main-surface controls use space, hierarchy and light
+   instead of cards, pills, circles, borders or corner chrome. Hit targets stay large. */
+html body .app .utilities {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  gap: 4px !important;
+}
+
+html body .app .utilities .icon-button,
+html body .app .utilities .mobile-heart {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: rgba(246, 236, 215, .76) !important;
+  opacity: .86;
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease !important;
+}
+
+html body .app .utilities .mobile-heart.active {
+  background: transparent !important;
+  color: var(--accent) !important;
+  opacity: 1;
+}
+
 html body .app .controls {
-  background:
-    radial-gradient(circle at 50% -18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 48%),
-    linear-gradient(180deg, rgba(18, 20, 31, .46), rgba(8, 10, 18, .29)) !important;
-  border-color: rgba(246, 236, 215, .10) !important;
-  border-bottom-color: transparent !important;
-  box-shadow:
-    inset 0 1px 0 rgba(246, 236, 215, .08),
-    0 18px 48px rgba(0, 0, 0, .20),
-    0 0 34px color-mix(in srgb, var(--accent) 6%, transparent) !important;
+  width: min(330px, 78vw) !important;
+  min-height: 74px !important;
+  margin-top: 8px !important;
+  padding: 5px 14px 8px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  gap: clamp(30px, 4.4vw, 46px) !important;
 }
 
-html body .app .controls::before {
-  left: 29% !important;
-  right: 29% !important;
-  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--accent) 70%, var(--ivory)), transparent) !important;
-  opacity: .64;
-}
-
+html body .app .controls::before,
 html body .app .controls::after {
-  content: "";
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  bottom: -18px;
-  height: 28px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 13%, transparent), transparent 68%);
-  filter: blur(8px);
-  opacity: .72;
-  pointer-events: none;
+  content: none !important;
+  display: none !important;
 }
 
 html body .app .transport {
-  width: 48px;
-  height: 48px;
-  border: 1px solid color-mix(in srgb, var(--accent) 16%, rgba(246, 236, 215, .06));
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 38%, rgba(246, 236, 215, .07), transparent 48%),
-    rgba(8, 10, 18, .18);
-  box-shadow:
-    inset 0 0 0 1px rgba(246, 236, 215, .025),
-    0 7px 17px rgba(0, 0, 0, .12);
+  width: 48px !important;
+  height: 48px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: rgba(246, 236, 215, .76) !important;
+  opacity: .90;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.28));
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease !important;
 }
 
 html body .app .transport svg {
-  width: 25px;
-  height: 25px;
-  opacity: .84;
+  width: 27px !important;
+  height: 27px !important;
+  opacity: 1 !important;
 }
 
 html body .app .play-button {
-  border-color: color-mix(in srgb, var(--accent) 56%, rgba(246, 236, 215, .72)) !important;
-  background:
-    radial-gradient(circle at center, rgba(9, 11, 20, .88) 0 54%, transparent 55%),
-    repeating-conic-gradient(
-      from -5deg,
-      color-mix(in srgb, var(--accent) 18%, rgba(246, 236, 215, .08)) 0 3deg,
-      transparent 3deg 15deg
-    ),
-    rgba(10, 13, 22, .66) !important;
-  box-shadow:
-    inset 0 0 0 5px rgba(7, 9, 17, .46),
-    inset 0 0 0 6px color-mix(in srgb, var(--accent) 21%, transparent),
-    0 13px 32px rgba(0, 0, 0, .29),
-    0 0 30px color-mix(in srgb, var(--accent) 11%, transparent) !important;
+  width: 72px !important;
+  height: 72px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: var(--ivory) !important;
+  filter:
+    drop-shadow(0 3px 10px rgba(0,0,0,.36))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 14%, transparent));
+  transition: color 150ms ease, filter 180ms ease, opacity 150ms ease !important;
 }
 
 html body .app .play-button svg {
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .38));
+  width: 38px !important;
+  height: 38px !important;
+  filter: none !important;
+}
+
+html body .app .ambient-ring {
+  inset: -15px !important;
+  opacity: .18 !important;
+}
+
+html body .app.is-playing .ambient-ring {
+  opacity: .30 !important;
 }
 
 html body .app .progress-wrap {
-  position: relative;
-  background:
-    linear-gradient(180deg, rgba(8, 10, 18, .25), rgba(7, 9, 16, .43)) !important;
-  border-color: rgba(246, 236, 215, .09) !important;
-  border-top: 0 !important;
-  box-shadow:
-    inset 0 -1px 0 rgba(246, 236, 215, .035),
-    0 18px 42px rgba(0, 0, 0, .18) !important;
+  width: min(330px, 78vw) !important;
+  margin-top: -3px !important;
+  padding: 4px 8px 7px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 html body .app .progress-wrap::before {
-  content: "";
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--accent) 26%, rgba(246, 236, 215, .12)), transparent);
-  opacity: .72;
-  pointer-events: none;
+  content: none !important;
+  display: none !important;
+}
+
+html body .app .progress-wrap .time {
+  color: rgba(246, 236, 215, .52) !important;
+  font-size: 10px !important;
+}
+
+html body .app input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px !important;
+}
+
+html body .app input[type="range"]::-moz-range-track,
+html body .app input[type="range"]::-moz-range-progress {
+  height: 2px !important;
+}
+
+html body .app .sheet-close {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 @media (hover: hover) {
+  html body .app .utilities .icon-button:hover,
+  html body .app .utilities .mobile-heart:hover,
   html body .app .transport:hover {
-    border-color: color-mix(in srgb, var(--accent) 34%, rgba(246, 236, 215, .10));
-    background:
-      radial-gradient(circle at 50% 38%, rgba(246, 236, 215, .10), transparent 48%),
-      rgba(8, 10, 18, .30);
-    box-shadow:
-      inset 0 0 0 1px rgba(246, 236, 215, .035),
-      0 8px 22px rgba(0, 0, 0, .17),
-      0 0 18px color-mix(in srgb, var(--accent) 8%, transparent);
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--ivory) !important;
+    opacity: 1;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 24%, transparent)) !important;
   }
 
   html body .app .play-button:hover {
-    border-color: color-mix(in srgb, var(--accent) 72%, var(--ivory)) !important;
-    box-shadow:
-      inset 0 0 0 5px rgba(7, 9, 17, .42),
-      inset 0 0 0 6px color-mix(in srgb, var(--accent) 31%, transparent),
-      0 15px 36px rgba(0, 0, 0, .31),
-      0 0 38px color-mix(in srgb, var(--accent) 17%, transparent) !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: color-mix(in srgb, var(--accent) 68%, var(--ivory)) !important;
+    filter:
+      drop-shadow(0 3px 10px rgba(0,0,0,.34))
+      drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 24%, transparent)) !important;
   }
+}
+
+html body .app .utilities .icon-button:focus-visible,
+html body .app .utilities .mobile-heart:focus-visible,
+html body .app .transport:focus-visible,
+html body .app .play-button:focus-visible,
+html body .app .sheet-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, var(--ivory)) !important;
+  outline-offset: 4px !important;
 }
 
 @media (max-width: 700px) {
+  html body .app .utilities { gap: 1px !important; }
+
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  html body .app .controls {
+    width: min(312px, calc(100vw - 40px)) !important;
+    min-height: 66px !important;
+    gap: clamp(26px, 7.5vw, 36px) !important;
+    padding: 3px 12px 6px !important;
+  }
+
   html body .app .transport {
-    width: 44px;
-    height: 44px;
+    width: 44px !important;
+    height: 44px !important;
   }
 
   html body .app .transport svg {
-    width: 23px;
-    height: 23px;
+    width: 25px !important;
+    height: 25px !important;
   }
 
-  html body .app .controls::after {
-    left: 16%;
-    right: 16%;
-    bottom: -15px;
-    height: 22px;
-    opacity: .58;
+  html body .app .play-button {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  html body .app .play-button svg {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  html body .app .progress-wrap {
+    width: min(312px, calc(100vw - 40px)) !important;
+    margin-top: -2px !important;
+    padding-inline: 6px !important;
+  }
+
+  html body .app .sheet-close {
+    border: 0 !important;
+    background: transparent !important;
   }
 }
 
-@media (max-height: 560px) and (orientation: landscape) {
-  html body .app .transport {
-    width: 38px;
-    height: 38px;
+@media (max-width: 390px) {
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(294px, calc(100vw - 34px)) !important;
   }
 
-  html body .app .controls::after {
-    bottom: -10px;
-    height: 16px;
+  html body .app .controls { gap: 24px !important; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  html body .app .controls {
+    width: min(276px, 40vw) !important;
+    min-height: 46px !important;
+    margin-top: 2px !important;
+    padding: 0 8px 2px !important;
+    gap: 20px !important;
+  }
+
+  html body .app .transport {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  html body .app .play-button {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  html body .app .play-button svg {
+    width: 29px !important;
+    height: 29px !important;
+  }
+
+  html body .app .progress-wrap {
+    width: min(276px, 40vw) !important;
+    margin-top: 0 !important;
+    padding-block: 2px 3px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart,
+  html body .app .transport,
+  html body .app .play-button {
+    transition: none !important;
   }
 }
