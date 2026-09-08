@@ -1,0 +1,44 @@
+name: Audit issue 518 Nonstop taxonomy
+
+on:
+  push:
+    branches:
+      - codex/nonstop-taxonomy-backfill-518
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply exact canonical taxonomy
+        run: python3 .github/scripts/audit-issue-518-nonstop-taxonomy.py
+
+      - name: Validate repository
+        run: npm run check
+
+      - name: Validate patch whitespace
+        run: git diff --check
+
+      - name: Commit data-only result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            data/discovery/sets/sets-17-trupti-kaushal.json \
+            data/discovery/sets/sets-19-ramzat-2017.json \
+            data/discovery/sets/sets-20-ramzat-2-2018.json \
+            data/discovery/sets/sets-21-rangtaali-2017.json
+          git rm .github/scripts/audit-issue-518-nonstop-taxonomy.py .github/workflows/audit-issue-518-nonstop-taxonomy.yml
+          git commit -m "Backfill final four exact Nonstop taxonomy records"
+          git push origin HEAD:codex/nonstop-taxonomy-backfill-518
