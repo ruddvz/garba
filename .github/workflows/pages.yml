@@ -141,7 +141,7 @@ jobs:
 
           # Keep SEO titles/descriptions and canonical URLs page-specific while every
           # page shares the same branded OG/Twitter card and social copy.
-          node scripts/apply-universal-social-meta.mjs _site
+          node scripts/lib/apply-universal-social-meta.mjs _site
 
           SONG_PAGE_COUNT="$(find _site/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
           RELEASE_PAGE_COUNT="$(find _site/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
