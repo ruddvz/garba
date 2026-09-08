@@ -22,10 +22,10 @@ jobs:
         uses: actions/checkout@v6
       - name: Validate app
         run: npm run check
-      - name: Install SVG renderer
+      - name: Install social renderer
         run: |
           sudo apt-get update
-          sudo apt-get install -y librsvg2-bin
+          sudo apt-get install -y librsvg2-bin webp fonts-gfs-didot
       - name: Prepare static site
         run: |
           rm -rf _site
@@ -65,11 +65,6 @@ jobs:
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
           file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 icon is invalid'; exit 1; }
           file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 icon is invalid'; exit 1; }
-
-          # Generate the universal 1200x630 share card.
-          mkdir -p _site/assets/social
-          rsvg-convert -w 1200 -h 630 assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
-          file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
 
           # Homepage remains the primary player. Explore opens the catalogue while
           # Search, Favourites and Queue retain the lightweight in-player song sheet.
@@ -152,6 +147,17 @@ jobs:
           while IFS= read -r image; do
             file "$image" | grep -q 'Web/P image' || { echo "Not a valid WebP: $image"; exit 1; }
           done < <(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | sort)
+
+          # Build the universal social card from the exact approved courtyard artwork,
+          # not a regenerated version of it. The temporary PNG only bridges WebP into
+          # the SVG renderer and is removed immediately after the 1200x630 card exists.
+          OG_BACKGROUND='_site/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp'
+          test -f "$OG_BACKGROUND" || { echo 'Approved OG courtyard artwork is missing'; exit 1; }
+          mkdir -p _site/assets/social
+          dwebp "$OG_BACKGROUND" -quiet -o _site/assets/social/og-background.png
+          rsvg-convert -w 1200 -h 630 _site/assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
+          file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
+          rm -f _site/assets/social/og-background.png
           rm -f _site/assets/backgrounds/garba15-*.zip
 
           # Apply the universal social preview to every real HTML surface while
