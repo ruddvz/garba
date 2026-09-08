@@ -1,5 +1,5 @@
 {
-  "version": "0.16.7",
+  "version": "0.17.0",
   "songCount": 1169,
   "releaseCount": 211,
   "categoryCount": 19,
@@ -124,7 +124,8 @@
     "data/playback-sources-purva-current.json",
     "data/playback-sources-trupti-kaushal.json",
     "data/playback-sources-alpa-current.json",
-    "data/playback-sources-raag-mehta.json"
+    "data/playback-sources-raag-mehta.json",
+    "data/playback-sources-ranked-fallbacks.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -150,5 +151,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.16.7 normalises discovery shard naming and formats this manifest for reviewability without changing catalogue counts or metadata."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.0 adds release-specific exact routes for the highest-impact fallback backlog; ambiguous or unpublished timestamps remain fallbacks."
 }

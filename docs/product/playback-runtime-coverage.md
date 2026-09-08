@@ -11,6 +11,8 @@ The generated catalogue carries a verified source route for every song before Gi
 
 Curated song mappings override generated release-level mappings because manifests are merged in the declared order. The runtime still validates the result after merging, so a curated manifest cannot make one provider track count as several different songs merely by labelling it exact.
 
+The ranked fallback manifest uses release-specific song IDs. A YouTube chapter is promoted only when the provider publishes the timestamp, and a standalone track video is promoted only when the official label, official artist, or provider-generated track record identifies the named release. If a timestamp is missing or malformed, that song remains a release/provider fallback.
+
 ## Runtime meaning
 
 - `audioUrl`: first-party native audio playback. This is valid only when an authorised hosted master is available.
