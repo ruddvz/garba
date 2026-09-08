@@ -68,9 +68,9 @@ export function performanceArtistIdentity(song, set, segment = null) {
   const explicitSegmentOptIn = segment?.routingEligible === true;
 
   // Published chapter metadata is not automatically playback evidence. A whole
-  // set may default its chapter list to metadata-only, while a specifically
-  // verified chapter can opt back in with routingEligible:true.
-  if (segmentMetadataOnly || (setMetadataOnly && !explicitSegmentOptIn)) {
+  // set may default its chapter list to metadata-only. Opting one chapter back
+  // in requires both routingEligible:true and a chapter-specific performer credit.
+  if (segmentMetadataOnly || (setMetadataOnly && (!explicitSegmentOptIn || !segmentKeys.size))) {
     return identityResult({ compatible: false, status: 'metadata-only', shared, releaseMatch, songKeys, performerKeys });
   }
 
