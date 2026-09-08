@@ -72,10 +72,10 @@
       "url": "./?genre=dandiya"
     },
     {
-      "name": "Browse songs",
-      "short_name": "Songs",
-      "description": "Open the Garba song browser.",
-      "url": "./?browse=1"
+      "name": "Explore catalogue",
+      "short_name": "Explore",
+      "description": "Open the PlayGarba Explore catalogue.",
+      "url": "./catalogue/"
     }
   ]
 }
