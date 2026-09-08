@@ -838,6 +838,8 @@ watchCatalogueRenders();
       if (!(card instanceof HTMLElement)) return;
       const artistId = artistIdFromCollection(card.dataset.collectionId);
       if (!artistId) return;
+      if (card.dataset.artistIdentityDecorated === artistId) return;
+      card.dataset.artistIdentityDecorated = artistId;
       const artist = artistById.get(artistId);
       const name = artist?.name || card.querySelector('.collection-copy strong')?.textContent?.replace(/\s+Essentials$/i, '') || humanize(artistId);
       card.classList.add('artist-collection-card');
@@ -939,7 +941,7 @@ watchCatalogueRenders();
     queueMicrotask(() => { void refreshArtistIdentity(); });
   }
 
-  new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: true });
+  new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: false });
   new MutationObserver(queueArtistIdentity).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
   new MutationObserver(queueArtistIdentity).observe(releaseRail, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   window.addEventListener('popstate', queueArtistIdentity);
