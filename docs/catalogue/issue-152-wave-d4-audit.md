@@ -2,46 +2,38 @@
 
 Date: 2026-09-08
 
-Issue: #152, follow-up catalogue completeness for Kirtidan Gadhvi and collaborators.
+Issue: #152 / migration child #230.
 
-## Outcome
+## Final outcome
 
-Wave D4 adds the complete split-track `Rangili Ramzat 8 (Garba)` release credited to Umesh Barot, Osman Mir, Kirtidan Gadhvi and Rashmita Rabari:
+`Rangili Ramzat 8` remains a complete 17-track canonical 2025 album credited to Umesh Barot, Osman Mir, Kirtidan Gadhvi and Rashmita Rabari. The old Amazon track selections are now provenance only and are no longer executable.
 
-- 17 canonical songs
-- 1 canonical release
-- 17 exact Amazon Music song routes
-- 1 separate official continuous YouTube listening entry
+The separate verified official YouTube continuous edition remains available in `data/nonstop.json` as `rangili-ramzat-8-2-taali-kirtidan-2025` (`xT_1V0j4LXU`). It has no source-published 17-song chapter map. No split timestamp is calculated from the provider durations.
 
-No audio is downloaded or redistributed. No provider track ID, chapter timestamp or title is inferred.
+## YouTube-only split-track audit
 
-## Split-track album
+No split-track row currently has an independently verified exact YouTube recording identity. All 17 therefore remain deliberately non-playable:
 
-Amazon Music publishes the 17-track album on 2025-09-24 under Kirtidan Gadhvi. Its displayed track durations total 51:14. The Amazon album page exposes a distinct provider-published song href for every track, so all 17 canonical songs can use exact Amazon Music routes rather than an album-page fallback.
+- `rangili-ramzat-8-2025-01-pratham-ganpati-nu-name-tame-lejo`
+- `rangili-ramzat-8-2025-02-madi-taru-kanku-kharyu-ne-suraj-ugyo`
+- `rangili-ramzat-8-2025-03-birdali-bahuchar-madi`
+- `rangili-ramzat-8-2025-04-jamuna-ne-kanthe-kano-vansdi-vagadto`
+- `rangili-ramzat-8-2025-05-kumkum-na-pagla-padya`
+- `rangili-ramzat-8-2025-06-garbo-gabbar-gokh-thi-avyo`
+- `rangili-ramzat-8-2025-07-dholida-na-dhol`
+- `rangili-ramzat-8-2025-08-aavi-norta-ni-raat`
+- `rangili-ramzat-8-2025-09-kum-kum-pagle-madi-padharo-re`
+- `rangili-ramzat-8-2025-10-kaan-gopiyo-ne-bhan-bhulave`
+- `rangili-ramzat-8-2025-11-he-ri-sakhi-mangal-gao-ri`
+- `rangili-ramzat-8-2025-12-sanso-ki-mala-pe-simru-me-piyu-ka-nam`
+- `rangili-ramzat-8-2025-13-madi-pruthvi-na-pad-ma-pujani`
+- `rangili-ramzat-8-2025-14-vadaladi-varsi-re-sarovar-chali-gaya`
+- `rangili-ramzat-8-2025-15-dakor-na-thakor-tara-bandh-darvaja-khol`
+- `rangili-ramzat-8-2025-16-garbo-ghume-che`
+- `rangili-ramzat-8-2025-17-ghor-andhari-re-rataldi-ma-niklya-char-ashvar`
 
-Qobuz independently confirms the same 17-track release, the four main-artist credits and Kirtidan Gadhvi as composer/producer. Small one-second display differences exist on some tracks, including `Pratham Ganpati Nu Name Tame Lejo` and `Aavi Norta Ni Raat`; canonical durations follow Amazon's displayed values and the variance is documented rather than normalised silently.
+These rows are handed to issue #157 for the final YouTube evidence burn-down. Same-title older performances, neighbouring IDs and inferred chapter starts are rejected.
 
-The four credited main artists are preserved on every canonical song. This avoids treating the release as a Kirtidan-only recording and keeps the catalogue compatible with the repository's multi-artist routing safeguards.
+## Catalogue decision
 
-## Exact playback
-
-Each canonical track uses the song href directly exposed by Amazon's official album page. The exact-route manifest therefore contains 17 `amazon-music` routes with `official-amazon-album-track-link` evidence.
-
-This follows the same fail-closed pattern already used for Dhara Shah's `Rankar`: provider-published track links are exact; neighbouring IDs or release-level pages are not promoted to exact-track status.
-
-## Continuous 2 Taali edition
-
-A separate continuous `Rangili Ramzat 8 (2 Taali Garba)` edition is published through the official YouTube distribution for the same four artists. Provider metadata identifies it as a single 60:49 track released in September 2025.
-
-The YouTube recording is added to the Nonstop browser as a listening master. It is deliberately not split into 17 YouTube chapter routes because no official 17-chapter map has been verified. The continuous edition and the 17-track album therefore remain distinct catalogue/listening representations.
-
-## Remaining issue #152 backlog
-
-Issue #152 remains open. Highest-value follow-ups are:
-
-- Kirtidan Gadhvi: Rangili Ramzat 6, Nortani Raat and Nortani Raat 2, with exact provider-track routing where available
-- Geeta Rabari: Taal 2, Taal 3, Khamma 2 and other complete provider-backed Garba releases
-- Falguni Pathak: older non-stop/dandiya releases with recording-level duplicate reconciliation
-- Aditya Gadhvi: Amber Gaje and the final taxonomy-fit review of major modern/popular releases
-
-The next wave should continue to prefer complete authoritative releases and exact provider-published track links over compilation reuse, guessed chapter boundaries or title-only matching.
+The release itself is complete and retained. This migration closes #230 because every canonical row is now either truthful exact YouTube or explicitly unresolved/non-playable, with the continuous verified YouTube master preserved separately.
