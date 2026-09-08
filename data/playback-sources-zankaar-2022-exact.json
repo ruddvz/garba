@@ -1,11 +1,8 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "updated": "2026-09-08",
-  "note": "Conservative exact-song mappings for Zankaar [Clean] (2022). Independently verified official YouTube song uploads are preferred over exact Amazon Music track pages and exact Apple Music song pages. Tracks 1 and 17 remain conservative because no exact first-party track page was independently verified. No provider IDs, timestamps or neighbouring-track sequences were inferred.",
+  "note": "Conservative exact-song mappings for Zankaar [Clean] (2022). Independently verified official YouTube exact-song uploads are preferred, followed by exact Amazon Music and Apple Music pages only when they improve a fallback. Tracks 2, 3, 4, 12, 18 and 19 are intentionally omitted because PlayGarba already resolves those traditional titles to higher-priority verified YouTube performance chapters. Tracks 1 and 17 remain conservative because no exact first-party track page was independently verified. No provider IDs, timestamps or neighbouring-track sequences were inferred.",
   "songSources": {
-    "zankaar-2022-02": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC5351JF","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":2,"evidenceType":"official-amazon-music-track-page"},
-    "zankaar-2022-03": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1642089312","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":3,"evidenceType":"official-apple-music-song-page"},
-    "zankaar-2022-04": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC52W1Z6","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":4,"evidenceType":"official-amazon-music-track-page"},
     "zankaar-2022-05": {"provider":"youtube","videoId":"WnbthtnkrKQ","sourceUrl":"https://www.youtube.com/watch?v=WnbthtnkrKQ","sourceType":"official-artist-channel","releaseId":"zankaar-album-2022","trackNumber":5,"evidenceType":"provider-published-exact-song"},
     "zankaar-2022-06": {"provider":"youtube","videoId":"mUOUwFk4syg","sourceUrl":"https://www.youtube.com/watch?v=mUOUwFk4syg","sourceType":"official-artist-channel","releaseId":"zankaar-album-2022","trackNumber":6,"evidenceType":"provider-published-exact-song"},
     "zankaar-2022-07": {"provider":"apple-music","sourceUrl":"https://music.apple.com/in/song/1642089526","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":7,"evidenceType":"official-apple-music-song-page"},
@@ -13,12 +10,9 @@
     "zankaar-2022-09": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1642089528","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":9,"evidenceType":"official-apple-music-song-page"},
     "zankaar-2022-10": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC4ZKW3F","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":10,"evidenceType":"official-amazon-music-track-page"},
     "zankaar-2022-11": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC544L5V","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":11,"evidenceType":"official-amazon-music-track-page"},
-    "zankaar-2022-12": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC5541FC","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":12,"evidenceType":"official-amazon-music-track-page"},
     "zankaar-2022-13": {"provider":"apple-music","sourceUrl":"https://music.apple.com/ca/song/1642089532","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":13,"evidenceType":"official-apple-music-song-page"},
     "zankaar-2022-14": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC549BYK","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":14,"evidenceType":"official-amazon-music-track-page"},
     "zankaar-2022-15": {"provider":"apple-music","sourceUrl":"https://music.apple.com/in/song/1642089534","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":15,"evidenceType":"official-apple-music-song-page"},
-    "zankaar-2022-16": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC54X4LC","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":16,"evidenceType":"official-amazon-music-track-page"},
-    "zankaar-2022-18": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BC52VKNM","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":18,"evidenceType":"official-amazon-music-track-page"},
-    "zankaar-2022-19": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC59T2TP","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":19,"evidenceType":"official-amazon-music-track-page"}
+    "zankaar-2022-16": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0BC54X4LC","sourceType":"verified-track-source","releaseId":"zankaar-album-2022","trackNumber":16,"evidenceType":"official-amazon-music-track-page"}
   }
 }
