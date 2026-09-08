@@ -107,6 +107,8 @@ function summarisePhase(samples) {
   const keys = [
     'shellReadyMs',
     'catalogueReadyMs',
+    'songsResponseEndMs',
+    'catalogueHydrationAfterSongsResponseMs',
     'domContentLoadedMs',
     'loadEventMs',
     'firstContentfulPaintMs',
@@ -118,6 +120,9 @@ function summarisePhase(samples) {
     'longTaskMaxMs',
     'sameOriginTransferBytes',
     'catalogueTransferBytes',
+    'songsTransferBytes',
+    'songsEncodedBytes',
+    'songsDecodedBytes',
     'artworkTransferBytes',
     'backgroundLibraryTransferBytes',
     'backgroundLibraryRequestCount',
@@ -178,6 +183,23 @@ async function configureProfile(page, profile, { clearCache = false } = {}) {
 async function waitForFullCatalogue(page) {
   await page.waitForFunction(() => window.GARBA_CATALOGUE_READY === true, null, { timeout: 30_000 });
   return page.evaluate(() => performance.now());
+}
+
+async function collectCatalogueHydrationMetrics(page, catalogueReadyMs) {
+  return page.evaluate((readyAt) => {
+    const songsEntry = performance.getEntriesByType('resource').find((entry) => {
+      try { return new URL(entry.name).pathname === '/data/songs.json'; }
+      catch { return false; }
+    });
+    const responseEnd = songsEntry?.responseEnd ?? null;
+    return {
+      songsResponseEndMs: responseEnd,
+      catalogueHydrationAfterSongsResponseMs: Number.isFinite(responseEnd) ? Math.max(0, readyAt - responseEnd) : null,
+      songsTransferBytes: songsEntry?.transferSize || 0,
+      songsEncodedBytes: songsEntry?.encodedBodySize || 0,
+      songsDecodedBytes: songsEntry?.decodedBodySize || 0,
+    };
+  }, catalogueReadyMs);
 }
 
 async function measureSearch(page) {
@@ -350,6 +372,7 @@ async function measurePhase(page, options, phase) {
     }, null, { timeout: 15_000 });
     const shellReadyMs = await page.evaluate(() => performance.now());
     const catalogueReadyMs = await waitForFullCatalogue(page);
+    const catalogueHydration = await collectCatalogueHydrationMetrics(page, catalogueReadyMs);
 
     const search = await measureSearch(page);
     if (!search.matchedQuery || !search.resultCount) {
@@ -369,6 +392,7 @@ async function measurePhase(page, options, phase) {
       phase,
       shellReadyMs,
       catalogueReadyMs,
+      ...catalogueHydration,
       searchPresentationMs: search.duration,
       searchResultCount: search.resultCount,
       searchMatchedQuery: search.matchedQuery,
