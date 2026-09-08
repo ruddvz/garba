@@ -6,7 +6,7 @@
   "scripts": {
     "catalogue": "node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",
     "playback:report": "npm run catalogue && node scripts/report-playback-route-quality.mjs",
-    "seo:check": "node scripts/lib/generate-static-catalogue-pages.mjs --check",
+    "seo:check": "node scripts/lib/generate-static-catalogue-pages.mjs --check && rm -rf /tmp/playgarba-seo-check && node scripts/lib/generate-static-catalogue-pages.mjs /tmp/playgarba-seo-check && test \"$(find /tmp/playgarba-seo-check/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')\" -eq 1169 && test \"$(find /tmp/playgarba-seo-check/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')\" -ge 200 && test \"$(grep -o '<loc>' /tmp/playgarba-seo-check/sitemap.xml | wc -l | tr -d ' ')\" -ge 1300",
     "hosting:report": "node scripts/report-hosting-readiness.mjs",
     "rights:labels": "node scripts/report-label-acquisition.mjs",
     "rights:match": "node scripts/match-vendor-catalogue.mjs",
