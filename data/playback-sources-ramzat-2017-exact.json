@@ -1,0 +1,13 @@
+{
+  "version":"0.1.0",
+  "updated":"2026-09-08",
+  "note":"Issue #341 bounded YouTube-only additions for Sur Sagar's Ramzat - Non Stop Garba (2017). These rows are newly verified exact split recordings and intentionally exclude the ten exact Ramzat 2017 routes already owned by data/playback-sources-current.json. Continuous-master chapter boundaries remain discovery metadata and are not promoted as split-track routes.",
+  "songSources":{
+    "ramzat-2017-07-tun-kaali-ne-kalyaani-ma":{"provider":"youtube","videoId":"I2Qn0Xy86gI","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=I2Qn0Xy86gI","sourceType":"verified-label-channel","releaseId":"ramzat-2017","trackNumber":7,"evidenceType":"official-label-full-song-original-album-track"},
+    "ramzat-2017-14-sona-no-garbo":{"provider":"youtube","videoId":"q7IPPJKWbgc","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=q7IPPJKWbgc","sourceType":"verified-label-channel","releaseId":"ramzat-2017","trackNumber":14,"evidenceType":"official-label-full-song-original-album-track"},
+    "ramzat-2017-16-mer-karo-momai":{"provider":"youtube","videoId":"n9K21NuxSQs","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=n9K21NuxSQs","sourceType":"verified-label-channel","releaseId":"ramzat-2017","trackNumber":16,"evidenceType":"official-label-full-song-original-album-track"},
+    "ramzat-2017-22-moj-ma-rehti-re-mahakali":{"provider":"youtube","videoId":"cg0817MRoyM","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=cg0817MRoyM","sourceType":"verified-label-channel","releaseId":"ramzat-2017","trackNumber":22,"evidenceType":"official-label-full-song-original-album-track"},
+    "ramzat-2017-27-bahuchar-maa-na-dera-pachhal":{"provider":"youtube","videoId":"X7luwdfBjrI","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=X7luwdfBjrI","sourceType":"verified-label-channel","releaseId":"ramzat-2017","trackNumber":27,"evidenceType":"official-label-full-song-original-album-track"},
+    "ramzat-2017-32-khel-khel-re-bhavani-maa":{"provider":"youtube","videoId":"XSGJ7V4JTt0","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=XSGJ7V4JTt0","sourceType":"official-artist-channel","releaseId":"ramzat-2017","trackNumber":32,"evidenceType":"official-youtube-auto-generated-original-album-track"}
+  }
+}
