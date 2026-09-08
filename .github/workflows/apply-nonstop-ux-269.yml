@@ -1,0 +1,34 @@
+name: Apply Nonstop UX 269
+
+on:
+  push:
+    branches:
+      - codex/nonstop-ux-269
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/nonstop-ux-269
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply focused runtime patch
+        run: node scripts/lib/apply-nonstop-ux-269.mjs
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- nonstop-browser.js; then
+            echo "No patch required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nonstop-browser.js
+          git commit -m "Fix Nonstop transport and set genre UX"
+          git push origin HEAD:codex/nonstop-ux-269
