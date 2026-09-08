@@ -124,7 +124,7 @@
       .nonstop-panel{width:min(1060px,100%);max-height:min(900px,92dvh);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:26px;background:rgba(18,20,32,.97);box-shadow:0 36px 100px rgba(0,0,0,.58)}
       .nonstop-head{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.1)}.nonstop-head-copy{min-width:0;flex:1}.nonstop-head h2{margin:0;font:650 21px/1.2 system-ui}.nonstop-summary{display:block;margin-top:4px;color:rgba(255,255,255,.58);font:13px/1.35 system-ui}.nonstop-close{width:40px;height:40px;flex:0 0 auto;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;font-size:23px;cursor:pointer}.nonstop-close:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:2px}
       .nonstop-search-wrap{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.08)}.nonstop-search{box-sizing:border-box;width:100%;height:44px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;padding:0 14px;font:14px system-ui;outline:none}.nonstop-search:focus{border-color:rgba(255,255,255,.35);box-shadow:0 0 0 2px rgba(214,176,111,.12)}
-      .nonstop-player{display:none;padding:16px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025)}.nonstop-player.open{display:block}.nonstop-player-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}.nonstop-player-copy{min-width:0;flex:1}.nonstop-player-copy strong{display:block;font:650 16px/1.3 system-ui}.nonstop-player-copy span{display:block;margin-top:3px;color:rgba(255,255,255,.6);font:13px/1.35 system-ui}.nonstop-player-frame{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:18px;background:#000}.nonstop-player-hide{border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;padding:8px 12px;cursor:pointer}.nonstop-player-hide:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:2px}
+      .nonstop-player{display:none;padding:16px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025)}.nonstop-player.open{display:block}.nonstop-player-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}.nonstop-player-copy{min-width:0;flex:1}.nonstop-player-copy strong{display:block;font:650 16px/1.3 system-ui}.nonstop-player-copy span{display:block;margin-top:3px;color:rgba(255,255,255,.6);font:13px/1.35 system-ui}.nonstop-player-frame{display:block;width:100%;aspect-ratio:16/9;min-width:200px;min-height:200px;border:0;border-radius:18px;background:#000}.nonstop-player-hide{border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;padding:8px 12px;cursor:pointer}.nonstop-player-hide:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:2px}
       .nonstop-chapters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px;max-height:190px;overflow:auto}.nonstop-chapter{display:flex;gap:9px;align-items:center;min-width:0;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.035);color:#fff;padding:9px 10px;text-align:left;cursor:pointer}.nonstop-chapter:hover{background:rgba(255,255,255,.09)}.nonstop-chapter:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:1px}.nonstop-chapter-time{flex:0 0 auto;color:rgba(255,255,255,.48);font:12px/1 system-ui;font-variant-numeric:tabular-nums}.nonstop-chapter-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px/1.25 system-ui}
       .nonstop-list{overflow:auto;overscroll-behavior:contain;padding:14px 20px 22px;display:grid;gap:9px}.nonstop-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 15px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.03)}.nonstop-card-main{min-width:0}.nonstop-card-title{display:block;font:650 14px/1.3 system-ui}.nonstop-card-meta{display:block;margin-top:4px;color:rgba(255,255,255,.58);font:12px/1.4 system-ui}.nonstop-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.nonstop-badge{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.065);color:rgba(255,255,255,.68);font:11px/1 system-ui}.nonstop-badge.external{background:rgba(255,190,90,.11);color:rgba(255,221,170,.9)}.nonstop-play{min-height:39px;border:0;border-radius:999px;padding:0 14px;background:var(--accent,#d6b06f);color:#10111a;font:700 12px system-ui;cursor:pointer;white-space:nowrap}.nonstop-play:focus-visible,.nonstop-retry:focus-visible{outline:2px solid #fff;outline-offset:2px}.nonstop-play[disabled]{opacity:.45;cursor:not-allowed}
       .nonstop-empty{padding:32px 10px;text-align:center;color:rgba(255,255,255,.6);font:14px/1.45 system-ui}.nonstop-empty strong{display:block;margin-bottom:5px;color:#fff;font-size:15px}.nonstop-retry{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin-top:14px;padding:0 14px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.08);color:#fff;font:650 12px system-ui;cursor:pointer}
@@ -294,11 +294,20 @@
     state.player.replaceChildren();
   }
 
+  function stopMainPlayback() {
+    try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* main player may not be initialised */ }
+    document.querySelector('#providerStage.open[aria-hidden="false"] #providerDockStop')?.click();
+    const audio = $('audio');
+    if (audio && !audio.paused) audio.pause();
+  }
+
   function playSet(set, startSeconds = 0) {
     if (!navigator.onLine) {
       announce('You are offline. Nonstop playback needs an internet connection.');
       return;
     }
+
+    stopMainPlayback();
 
     if (set.provider !== 'youtube' || !set.videoId || !set.embeddable) {
       if (!set.sourceUrl) {
@@ -401,6 +410,7 @@
   function openBrowser() {
     ensureUi();
     if (!state.overlay) return;
+    stopMainPlayback();
     state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : $('nonstopButton');
     state.overlay.classList.add('open');
     state.overlay.setAttribute('aria-hidden', 'false');
