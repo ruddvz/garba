@@ -16,7 +16,7 @@ After this pass, 19 of the 35 canonical split tracks have exact full-song YouTub
 
 ### Ten exact routes already present before #341
 
-These remain owned by the existing current-source manifest and are not duplicated in the #341 manifest:
+These remain owned by the existing current-source manifest and are not duplicated by #341:
 
 - track 2 `Mangal Divada Ni Mangal` → `Nd1TaITnDh8`
 - track 3 `Kumkum Pagle` → `vnx8pubS-v0`
@@ -31,7 +31,7 @@ These remain owned by the existing current-source manifest and are not duplicate
 
 ### Nine exact routes added by #341
 
-The dedicated #341 manifest adds:
+The already-indexed ranked fallback manifest adds:
 
 - track 1 `Sachi Re Mari - Chhand - Charni Sapakharu` → `jnfUfnDn9A8`
 - track 7 `Tun Kaali Ne Kalyaani Ma` → `I2Qn0Xy86gI`
