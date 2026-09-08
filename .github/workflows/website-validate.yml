@@ -68,6 +68,11 @@ jobs:
           grep -q 'garba-og-card.png?v=20260908-2' index.html
           grep -q 'garba-og-card.png?v=20260908-2' faq/index.html
 
+          if grep -R -n -E 'garba-og-card\.png\?v=[^" ]+\?v=' --include='*.html' .; then
+            echo 'Duplicated OG image cache-buster found in public HTML.'
+            exit 1
+          fi
+
           if grep -R -n -F 'https://live.playgarba.com/?browse=1' --include='*.html' .; then
             echo 'Retired Browse query CTA found in public HTML.'
             exit 1
