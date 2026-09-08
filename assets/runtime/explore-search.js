@@ -148,3 +148,161 @@ if (input && status && topbar && spacer) {
   window.addEventListener('popstate', () => requestAnimationFrame(syncFromHistory));
   queueMicrotask(syncFromHistory);
 }
+
+(() => {
+  const songList = document.getElementById('catalogueSongList');
+  const sectionRoot = document.getElementById('catalogueSections');
+  if (!songList || !sectionRoot) return;
+
+  const STORAGE_KEY = 'playgarba:explore:shelf-scrolls';
+  const SHELF_SELECTOR = '.collection-grid,.essential-release-rail,.release-rail';
+  const AUTO_PAGE_COOLDOWN_MS = 650;
+  let pagerObserver = null;
+  let refreshQueued = false;
+  let lastAutoPageAt = 0;
+  let saveTimer = 0;
+
+  const performanceStyle = document.createElement('style');
+  performanceStyle.dataset.playgarbaExplorePerformance = '';
+  performanceStyle.textContent = `
+    html{scroll-padding-top:92px}
+    .catalogue-section{content-visibility:auto;contain-intrinsic-size:auto 560px}
+    .collection-card{transform:none;contain:layout paint style}
+    .song-row{content-visibility:auto;contain-intrinsic-size:72px;contain:layout paint style}
+    .release-card,.release-more{content-visibility:auto;contain-intrinsic-size:236px}
+    .collection-grid,.release-rail,.essential-release-rail{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+    .song-more[data-auto-paging="true"]{position:relative;justify-self:stretch;width:100%;min-height:52px;border-style:dashed;color:rgba(255,248,236,.66);background:rgba(255,255,255,.025);pointer-events:none}
+    .song-more[data-auto-paging="true"]::after{content:"";display:inline-block;width:13px;height:13px;margin-left:9px;border:1.5px solid rgba(255,248,236,.28);border-top-color:var(--gold);border-radius:50%;vertical-align:-2px;animation:exploreAutoPageSpin .75s linear infinite}
+    @keyframes exploreAutoPageSpin{to{transform:rotate(1turn)}}
+    @media(max-width:900px){
+      .catalogue-section{margin-bottom:30px;contain-intrinsic-size:auto 330px}
+      .section-title-row{align-items:center;margin-bottom:11px}
+      .section-title-row p{display:none}
+      .collection-grid{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(235px,68vw);gap:12px;overflow-x:auto;overflow-y:hidden;margin-inline:-17px;padding:4px 17px 14px;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x pan-y}
+      .collection-grid::-webkit-scrollbar,.release-rail::-webkit-scrollbar,.essential-release-rail::-webkit-scrollbar{display:none}
+      .collection-card{width:auto;min-height:198px;aspect-ratio:1.18/1;scroll-snap-align:start;scroll-snap-stop:normal}
+      .collection-copy strong{font-size:clamp(1.28rem,4.6vw,1.68rem)}
+    }
+    @media(max-width:560px){
+      html{scroll-padding-top:78px}
+      main{padding-bottom:max(64px,calc(42px + env(safe-area-inset-bottom)))}
+      .collection-home{padding-top:2px}
+      .catalogue-section{margin-bottom:24px;contain-intrinsic-size:auto 292px}
+      .collection-grid{grid-auto-columns:minmax(242px,82vw);gap:10px;margin-inline:-11px;padding:3px 11px 12px}
+      .collection-card{min-height:176px;aspect-ratio:1.34/1;border-radius:23px}
+      .collection-copy{inset:16px}
+      .collection-copy strong{max-width:15ch;font-size:clamp(1.28rem,6.2vw,1.58rem)}
+      .collection-copy span{margin-top:8px;font-size:.68rem}
+      .essential-release-section{margin-bottom:25px;padding:12px 12px 10px}
+      .essential-release-rail{grid-auto-columns:minmax(142px,43vw);gap:9px}
+      .songs-section,.release-section{content-visibility:auto;contain-intrinsic-size:auto 620px}
+      .song-row{contain-intrinsic-size:66px}
+    }
+    @media(pointer:coarse){
+      body::before{filter:saturate(1.01) contrast(1.01);transform:scale(1.008)}
+      .collection-card,.collection-image,.collection-card::after,.essential-release-card,.release-cover{transition-duration:.12s!important}
+      .collection-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 14px 34px rgba(0,0,0,.22)}
+      .collection-card::after{mix-blend-mode:normal;opacity:.14;transform:none}
+      .collection-image{transform:scale(1.018)}
+      .detail-head,.release-section,.songs-section,.essential-release-section,.close-explore,.search-explore{backdrop-filter:blur(12px) saturate(1.03);-webkit-backdrop-filter:blur(12px) saturate(1.03)}
+    }
+    @media(prefers-reduced-motion:reduce){.song-more[data-auto-paging="true"]::after{animation:none}}
+  `;
+  document.head.append(performanceStyle);
+
+  function readShelfState() {
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function shelfKey(shelf) {
+    const section = shelf.closest('.catalogue-section,.release-section');
+    return section?.querySelector('.section-title-row h2,.section-heading h3')?.textContent?.trim() || shelf.id || null;
+  }
+
+  function saveShelfPositions() {
+    const state = readShelfState();
+    document.querySelectorAll(SHELF_SELECTOR).forEach((shelf) => {
+      const key = shelfKey(shelf);
+      if (!key) return;
+      state[key] = Math.max(0, Math.round(shelf.scrollLeft));
+    });
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Scroll memory is optional. Never let storage failure affect browsing.
+    }
+  }
+
+  function restoreShelfPositions(root = document) {
+    const saved = readShelfState();
+    root.querySelectorAll?.(SHELF_SELECTOR).forEach((shelf) => {
+      const key = shelfKey(shelf);
+      const left = key ? Number(saved[key]) : 0;
+      if (!Number.isFinite(left) || left <= 0) return;
+      requestAnimationFrame(() => {
+        shelf.scrollLeft = Math.min(left, Math.max(0, shelf.scrollWidth - shelf.clientWidth));
+      });
+    });
+  }
+
+  function bindShelves(root = document) {
+    root.querySelectorAll?.(SHELF_SELECTOR).forEach((shelf) => {
+      if (!(shelf instanceof HTMLElement) || shelf.dataset.scrollContinuityBound === 'true') return;
+      shelf.dataset.scrollContinuityBound = 'true';
+      shelf.addEventListener('scroll', () => {
+        clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(saveShelfPositions, 140);
+      }, { passive: true });
+    });
+    restoreShelfPositions(root);
+  }
+
+  function bindSongPager() {
+    pagerObserver?.disconnect();
+    pagerObserver = null;
+    const more = songList.querySelector('.song-more');
+    if (!(more instanceof HTMLButtonElement)) return;
+    more.removeAttribute('data-auto-paging');
+    if (!('IntersectionObserver' in window)) return;
+
+    pagerObserver = new IntersectionObserver((entries) => {
+      if (!entries[0]?.isIntersecting || document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (now - lastAutoPageAt < AUTO_PAGE_COOLDOWN_MS || !more.isConnected || more.disabled) return;
+      lastAutoPageAt = now;
+      more.dataset.autoPaging = 'true';
+      more.textContent = 'Loading more songs';
+      pagerObserver?.disconnect();
+      requestAnimationFrame(() => more.click());
+    }, { rootMargin: '950px 0px 1150px 0px', threshold: .01 });
+
+    pagerObserver.observe(more);
+  }
+
+  function refresh() {
+    refreshQueued = false;
+    bindShelves(document);
+    bindSongPager();
+  }
+
+  function queueRefresh() {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    queueMicrotask(refresh);
+  }
+
+  new MutationObserver(queueRefresh).observe(sectionRoot, { childList: true, subtree: true });
+  new MutationObserver(queueRefresh).observe(songList, { childList: true, subtree: true });
+  window.addEventListener('pagehide', saveShelfPositions);
+  window.addEventListener('pageshow', refresh);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveShelfPositions();
+  });
+
+  refresh();
+})();
