@@ -26,9 +26,11 @@ The `npm run catalogue` command intentionally runs both in that order.
 ## Playback quality reporting
 
 - `report-playback-route-quality.mjs` ranks the remaining release/provider fallback batches after catalogue generation and separates exact selections from reference-only routes.
-- Run `npm run playback:report` when planning the next route-upgrade batch. Work from the largest high-confidence release/provider groups rather than choosing songs randomly.
+- `report-youtube-first-coverage.mjs` measures how much of the catalogue can use one-tap direct or exact YouTube playback and separates manual/reference/provider fallbacks.
+- Run `npm run playback:report` when planning general route-upgrade work.
+- Run `npm run youtube:coverage` when planning the next verified YouTube mapping wave.
 
-The report is a prioritisation tool. It does not make a route exact and it does not replace source verification.
+These reports are prioritisation tools. They do not make a route exact and they do not replace source verification.
 
 ## Health audits
 
@@ -54,6 +56,7 @@ The default `npm run check` path runs the runtime-critical and repository-level 
 - `validate-player-continuity.mjs`
 - `validate-runtime-packaging.mjs`
 - `validate-runtime-song-routes.mjs`
+- `validate-youtube-player-runtime.mjs`, which enforces the official visible YouTube IFrame API architecture and rejects raw-stream/ad-bypass mechanisms
 - `validate-discovery.mjs`
 - `validate-repository-structure.mjs` through `npm run repo:validate`
 - `validate-documentation.mjs` through `npm run docs:validate`

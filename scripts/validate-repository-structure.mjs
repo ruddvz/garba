@@ -32,6 +32,7 @@ const requiredRootFiles = new Set([
   'sitemap.xml',
   'styles.css',
   'sw.js',
+  'youtube-player-runtime.js',
 ]);
 const allowedRootDirs = new Set(['.github', 'assets', 'data', 'docs', 'scripts', 'src', 'styles']);
 
@@ -46,7 +47,7 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 for (const file of requiredRootFiles) if (!await exists(file)) fail(`Missing required root file: ${file}`);
 
 const rootJs = (await readdir(root)).filter((file) => file.endsWith('.js')).sort();
-const expectedRootJs = ['app.js', 'nonstop-browser.js', 'player-continuity.js', 'provider-runtime.js', 'simple-runtime.js', 'sw.js'];
+const expectedRootJs = ['app.js', 'nonstop-browser.js', 'player-continuity.js', 'provider-runtime.js', 'simple-runtime.js', 'sw.js', 'youtube-player-runtime.js'];
 if (!same(rootJs, expectedRootJs)) {
   fail(`Root JavaScript must be production-only. Expected ${expectedRootJs.join(', ')}, found ${rootJs.join(', ')}`);
 } else ok('root JavaScript is production-only');
@@ -98,6 +99,7 @@ const expectedScriptEntrypoints = [
   'report-hosting-readiness.mjs',
   'report-label-acquisition.mjs',
   'report-playback-route-quality.mjs',
+  'report-youtube-first-coverage.mjs',
   'test-catalogue-matcher.mjs',
   'validate-contact-map.mjs',
   'validate-direct-audio.mjs',
@@ -112,6 +114,7 @@ const expectedScriptEntrypoints = [
   'validate-runtime-packaging.mjs',
   'validate-runtime-song-routes.mjs',
   'validate-simple-runtime.mjs',
+  'validate-youtube-player-runtime.mjs',
 ];
 const actualScriptEntrypoints = (await readdir(path.join(root, 'scripts'))).filter((file) => file.endsWith('.mjs')).sort();
 if (!same(actualScriptEntrypoints, expectedScriptEntrypoints)) {
@@ -185,12 +188,14 @@ const packageJson = await readJson('package.json');
 const packageScripts = packageJson.scripts || {};
 if (!packageScripts.catalogue?.includes('scripts/enrich-runtime-songs.mjs')) fail('npm run catalogue must retain runtime playback-route enrichment');
 if (!packageScripts['playback:report']?.includes('scripts/report-playback-route-quality.mjs')) fail('playback:report must expose the ranked route-quality backlog');
+if (!packageScripts['youtube:coverage']?.includes('scripts/report-youtube-first-coverage.mjs')) fail('youtube:coverage must expose the YouTube-first one-tap coverage baseline');
 if (!packageScripts['seo:check']?.includes('scripts/lib/generate-static-catalogue-pages.mjs --check')) fail('seo:check must validate static catalogue route generation');
 if (!packageScripts.check?.includes('node --check scripts/lib/generate-static-catalogue-pages.mjs')) fail('npm run check must syntax-check the static catalogue generator');
 if (!packageScripts.check?.includes('npm run seo:check')) fail('npm run check must validate static catalogue generation');
 if (!packageScripts.check?.includes('scripts/validate-player-continuity.mjs')) fail('npm run check must retain player-continuity validation');
 if (!packageScripts.check?.includes('scripts/validate-runtime-packaging.mjs')) fail('npm run check must retain runtime packaging validation');
 if (!packageScripts.check?.includes('scripts/validate-runtime-song-routes.mjs')) fail('npm run check must retain complete runtime song-route validation');
+if (!packageScripts.check?.includes('scripts/validate-youtube-player-runtime.mjs')) fail('npm run check must retain YouTube player architecture validation');
 if (!packageScripts.check?.includes('npm run repo:validate')) fail('npm run check must retain repository-structure validation');
 if (!packageScripts.check?.includes('npm run docs:validate')) fail('npm run check must retain documentation validation');
 if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v8`;
+const CACHE_NAME = `${CACHE_PREFIX}v9`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -9,6 +9,7 @@ const CORE_SHELL = [
   './simple-runtime.js',
   './provider-runtime.js',
   './player-continuity.js',
+  './youtube-player-runtime.js',
   './nonstop-browser.js',
   './app.js',
   './manifest.webmanifest',
@@ -31,6 +32,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/simple-runtime.js',
   '/provider-runtime.js',
   '/player-continuity.js',
+  '/youtube-player-runtime.js',
   '/nonstop-browser.js',
   '/app.js',
 ];

@@ -1,0 +1,70 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import process from 'node:process';
+
+const root = path.resolve(import.meta.dirname, '..');
+const read = (file) => readFile(path.join(root, file), 'utf8');
+const [runtime, styles, bootstrap] = await Promise.all([
+  read('youtube-player-runtime.js'),
+  read('styles/60-runtime-and-provider.css'),
+  read('simple-runtime.js'),
+]);
+
+let failed = false;
+const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
+
+const requiredRuntimeSignals = [
+  'https://www.youtube.com/iframe_api',
+  'new window.YT.Player',
+  'player.playVideo',
+  'player.pauseVideo',
+  'player.seekTo',
+  'loadVideoById',
+  'controls: 0',
+  'playsinline: 1',
+  'enablejsapi: 1',
+  'playbackSearchOnly',
+  'verified-unchaptered-youtube-release',
+  'youtubeStage',
+  'provider-dock',
+];
+
+for (const signal of requiredRuntimeSignals) {
+  if (!runtime.includes(signal)) fail(`YouTube runtime is missing required signal ${JSON.stringify(signal)}`);
+}
+
+const prohibitedPatterns = [
+  [/googlevideo/i, 'raw googlevideo delivery'],
+  [/videoplayback/i, 'raw YouTube videoplayback URLs'],
+  [/youtube-dl/i, 'youtube-dl extraction'],
+  [/yt-dlp/i, 'yt-dlp extraction'],
+  [/signatureCipher/i, 'YouTube signature-cipher parsing'],
+  [/get_video_info/i, 'undocumented get_video_info access'],
+  [/skipAd/i, 'ad-skipping controls'],
+  [/removeAds/i, 'ad-removal controls'],
+  [/blockAds/i, 'ad-blocking controls'],
+];
+
+for (const [pattern, label] of prohibitedPatterns) {
+  if (pattern.test(runtime)) fail(`YouTube runtime must not implement ${label}`);
+}
+
+if (!/\.provider-media\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200px;/s.test(styles)) {
+  fail('Visible provider media contract must keep a minimum 200×200 viewport');
+}
+if (!/\.provider-media iframe\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200px;/s.test(styles)) {
+  fail('Embedded provider iframe must keep a minimum 200×200 viewport');
+}
+
+const providerIndex = bootstrap.indexOf('provider-runtime.js');
+const continuityIndex = bootstrap.indexOf('player-continuity.js');
+const youtubeIndex = bootstrap.indexOf('youtube-player-runtime.js');
+if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > continuityIndex)) {
+  fail('YouTube runtime must load after provider-runtime and player-continuity route sanitisation');
+}
+
+if (failed) process.exit(1);
+console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
+console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
+console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
+console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');
