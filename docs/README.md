@@ -10,6 +10,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/content-sources.md`](catalogue/content-sources.md): source guidance
 - [`catalogue/song-catalog-contract.md`](catalogue/song-catalog-contract.md): player/catalogue integration contract
 - [`catalogue/issue-151-foundational-artists-audit.md`](catalogue/issue-151-foundational-artists-audit.md): Atul Purohit, Hemant Chauhan and Praful Dave catalogue-completeness and playback-routing audit
+- [`catalogue/issue-152-wave-d-audit.md`](catalogue/issue-152-wave-d-audit.md): Falguni Pathak, Kirtidan Gadhvi, Geeta Rabari and Aditya Gadhvi Wave D catalogue and playback audit
 
 ## Product
 
