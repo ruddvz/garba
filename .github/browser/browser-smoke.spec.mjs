@@ -190,6 +190,9 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
   const sets = page.locator('#nonstopBrowserList .nonstop-set');
   await expect(sets.first()).toBeVisible();
   expect(await sets.count()).toBeGreaterThan(0);
+  await expect(sets.first().locator('.nonstop-set-recording')).toContainText(/One (?:full )?recording/);
+  await expect(sets.first().locator('.nonstop-set-badge.recording')).toHaveText(/^(?:Chaptered|Full) recording$/);
+  await expect(page.locator('#nonstopBrowserSummary')).toContainText('one choice = one recording');
   await expectNoDocumentOverflow(page);
 
   await page.locator('#nonstopBrowserClose').click();
