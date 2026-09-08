@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { loadDiscoverySets } from './load-discovery-sets.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
@@ -12,13 +13,13 @@ async function merge(files = []) {
   return payloads.flat();
 }
 
-const [songs, releases, nonstop, taxonomy, genres] = await Promise.all([
+const [songs, releases, taxonomy, genres] = await Promise.all([
   merge(index.songChunks),
   merge(index.releaseChunks),
-  readJson('data/nonstop.json'),
   readJson('data/taxonomy.json'),
   readJson('data/genres.json'),
 ]);
+const { sets: nonstop } = await loadDiscoverySets(root, index);
 
 const releaseById = new Map(releases.map((release) => [release.id, release]));
 const taxonomyById = new Map(taxonomy.map((entry) => [entry.id, entry]));
@@ -117,6 +118,9 @@ for (const set of nonstop) {
   for (const style of Array.isArray(set.styles) ? set.styles : []) {
     if (!taxonomyById.has(style)) issues.push(`nonstop ${set.id}: unknown taxonomy style ${JSON.stringify(style)}`);
   }
+  for (const category of Array.isArray(set.categories) ? set.categories : []) {
+    if (!visualIds.has(category) && !taxonomyById.has(category)) issues.push(`nonstop ${set.id}: unknown discovery category ${JSON.stringify(category)}`);
+  }
 }
 
 const expandedGenreCounts = Object.fromEntries(genres.map((genre) => [genre.id, 0]));
@@ -133,7 +137,7 @@ for (const song of songs) {
   });
 }
 
-console.log(`Catalogue metadata audit: ${songs.length} songs · ${releases.length} release records · ${nonstop.length} featured nonstop sets`);
+console.log(`Catalogue metadata audit: ${songs.length} songs · ${releases.length} release records · ${nonstop.length} canonical discovery Nonstop sets`);
 console.log(`Song editorial metadata: ${songDescriptions} descriptions · ${songStories} stories · ${songDisplayTitles} display titles · ${songAliases} aliases`);
 console.log(`Release editorial metadata: ${releaseDescriptions} descriptions · ${releaseDisplayTitles} display titles · ${releaseAliases} aliases`);
 console.log(`Nonstop editorial metadata: ${nonstopDescriptions} descriptions · ${nonstopDisplayTitles} display titles · ${nonstopAliases} aliases`);
@@ -153,4 +157,4 @@ if (issues.length) {
   process.exit(1);
 }
 
-console.log('\n✓ Canonical catalogue identities, optional editorial metadata shapes and Explore taxonomy membership are internally consistent.');
+console.log('\n✓ Canonical catalogue identities, discovery Nonstop metadata, optional editorial metadata shapes and Explore taxonomy membership are internally consistent.');
