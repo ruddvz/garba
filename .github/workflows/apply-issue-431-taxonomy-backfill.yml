@@ -21,6 +21,8 @@ jobs:
           node-version: 22
       - name: Apply exact linked-release taxonomy
         run: python3 .github/scripts/apply-issue-431-taxonomy-backfill.py
+      - name: Build generated catalogue inputs
+        run: npm run catalogue
       - name: Validate Nonstop taxonomy and repository
         run: |
           npm run genre:taxonomy:validate
