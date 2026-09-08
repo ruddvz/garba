@@ -1,0 +1,312 @@
+{
+  "version": 1,
+  "issue": 342,
+  "auditDate": "2026-09-08",
+  "auditType": "exact-youtube-split-track-evidence",
+  "auditedFromMain": "7de0b41a7dfa8c347e966e3a60b0700444011de8",
+  "release": {
+    "id": "ramzat5-album-2024",
+    "title": "Ramzat 5",
+    "label": "Sur Sagar",
+    "releaseDate": "2024-06-09",
+    "canonicalSplitTrackCount": 27,
+    "catalogueArtists": [
+      "Bhoomi Trivedi",
+      "Geeta Rabari",
+      "Hariom Gadhavi"
+    ]
+  },
+  "continuousMaster": {
+    "youtubeId": "g2G7XwHerBU",
+    "url": "https://www.youtube.com/watch?v=g2G7XwHerBU",
+    "channel": "Sur Sagar Music",
+    "published": "2024-06-08",
+    "publishedProgrammeTrackCount": 27,
+    "routingPolicy": "discovery-and-nonstop-only",
+    "splitTrackSafety": "Do not promote chapter timestamps to split-track routes without independent exact recording evidence."
+  },
+  "verificationRule": {
+    "accepted": [
+      "Official Artist Channel auto-generated original-release upload whose description names Ramzat 5, 2024 Sur Sagar and the 2024-06-09 release date.",
+      "Verified Sur Sagar Music full-song upload whose description explicitly says the track is from Ramzat 5."
+    ],
+    "rejectedAsInsufficient": [
+      "Same-title performance",
+      "Older recording",
+      "Other-label recording",
+      "Continuous-set timestamp without independent split-recording proof",
+      "2024 Sur Sagar standalone single without direct Ramzat 5 linkage"
+    ]
+  },
+  "exactRoutesAlreadyMergedBeforeAudit": [
+    {
+      "trackNumber": 3,
+      "songId": "ramzat5-2024-03",
+      "title": "Avasarne Aangane Padharjo Re Lol",
+      "youtubeId": "FAznu0LijyA",
+      "url": "https://www.youtube.com/watch?v=FAznu0LijyA",
+      "evidence": "Geeta Rabari Official Artist Channel auto-generated original Ramzat 5 album track",
+      "status": "already-merged-before-audit"
+    },
+    {
+      "trackNumber": 12,
+      "songId": "ramzat5-2024-12",
+      "title": "Leela Te Rangni Chundadi",
+      "youtubeId": "eCXMFBqBJQk",
+      "url": "https://www.youtube.com/watch?v=eCXMFBqBJQk",
+      "evidence": "Verified Sur Sagar full-song Ramzat 5 upload",
+      "status": "already-merged-before-audit"
+    },
+    {
+      "trackNumber": 24,
+      "songId": "ramzat5-2024-24",
+      "title": "Dham Dhame Nagaara Re",
+      "youtubeId": "Pahi_oYc89o",
+      "url": "https://www.youtube.com/watch?v=Pahi_oYc89o",
+      "evidence": "Bhoomi Trivedi Official Artist Channel auto-generated original Ramzat 5 album track",
+      "status": "already-merged-before-audit"
+    }
+  ],
+  "newlyVerifiedExactSplitTrackCandidates": [
+    {
+      "trackNumber": 2,
+      "songId": "ramzat5-2024-02",
+      "title": "Ataku To Aavje Maadi Re",
+      "youtubeId": "9oH0WTrDgaU",
+      "url": "https://www.youtube.com/watch?v=9oH0WTrDgaU",
+      "startSeconds": 0,
+      "evidence": "Bhoomi Trivedi Official Artist Channel; description names Ramzat 5, ℗ 2024 Sur Sagar, released 2024-06-09",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 4,
+      "songId": "ramzat5-2024-04",
+      "title": "Amba Abhay Pad Dayani Re",
+      "youtubeId": "H_EDxkuDSaM",
+      "url": "https://www.youtube.com/watch?v=H_EDxkuDSaM",
+      "startSeconds": 0,
+      "evidence": "Verified Sur Sagar Music full-song upload; description explicitly says the track is from Ramzat 5",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 5,
+      "songId": "ramzat5-2024-05",
+      "title": "Chotilavadi Chandi Chamunda",
+      "youtubeId": "9skaFYGgCQ0",
+      "url": "https://www.youtube.com/watch?v=9skaFYGgCQ0",
+      "startSeconds": 0,
+      "evidence": "Verified Sur Sagar Music full-song upload; description explicitly says the track is from Ramzat 5",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 7,
+      "songId": "ramzat5-2024-07",
+      "title": "Uncha Uncha Re Maadi Tara Dungara Re Lol",
+      "youtubeId": "YFdVz3PGwfQ",
+      "url": "https://www.youtube.com/watch?v=YFdVz3PGwfQ",
+      "startSeconds": 0,
+      "evidence": "Geeta Rabari Official Artist Channel; description names Ramzat 5, ℗ 2024 Sur Sagar, released 2024-06-09",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 8,
+      "songId": "ramzat5-2024-08",
+      "title": "Maa Amba Te Ramva Nisarya, Devi Annapurna",
+      "youtubeId": "1lPETGrPCjA",
+      "url": "https://www.youtube.com/watch?v=1lPETGrPCjA",
+      "startSeconds": 0,
+      "evidence": "Verified Sur Sagar Music full-song upload; description explicitly says the track is from Ramzat 5",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 13,
+      "songId": "ramzat5-2024-13",
+      "title": "Ashapuri Darshan Devane Vehla Aavjo",
+      "youtubeId": "gkBKU9MHAtE",
+      "url": "https://www.youtube.com/watch?v=gkBKU9MHAtE",
+      "startSeconds": 0,
+      "evidence": "Verified Sur Sagar Music full-song upload; description explicitly says the track is from Ramzat 5",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 19,
+      "songId": "ramzat5-2024-19",
+      "title": "Medie Melyo Sonano Bajothiyo",
+      "youtubeId": "5tdW_otezQM",
+      "url": "https://www.youtube.com/watch?v=5tdW_otezQM",
+      "startSeconds": 0,
+      "evidence": "Geeta Rabari Official Artist Channel; description names Ramzat 5, ℗ 2024 Sur Sagar, released 2024-06-09",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 20,
+      "songId": "ramzat5-2024-20",
+      "title": "Ha Re Maa Mota Mogal Maa Mota",
+      "youtubeId": "auv96Ca6CYY",
+      "url": "https://www.youtube.com/watch?v=auv96Ca6CYY",
+      "startSeconds": 0,
+      "evidence": "Bhoomi Trivedi Official Artist Channel; description names Ramzat 5, ℗ 2024 Sur Sagar, released 2024-06-09",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 22,
+      "songId": "ramzat5-2024-22",
+      "title": "Moje-Dariya Madi Moje-Dariya (Dakla)",
+      "youtubeId": "KK2WyCoTwZY",
+      "url": "https://www.youtube.com/watch?v=KK2WyCoTwZY",
+      "startSeconds": 0,
+      "evidence": "Geeta Rabari Official Artist Channel; description names Ramzat 5, ℗ 2024 Sur Sagar, released 2024-06-09",
+      "status": "verified-candidate-for-later-integration"
+    },
+    {
+      "trackNumber": 25,
+      "songId": "ramzat5-2024-25",
+      "title": "Ude Re Gulaal Ude Re Gulaal",
+      "youtubeId": "qHIe4jUP-94",
+      "url": "https://www.youtube.com/watch?v=qHIe4jUP-94",
+      "startSeconds": 0,
+      "evidence": "Verified Sur Sagar Music full-song upload; description explicitly says the track is from Ramzat 5",
+      "status": "verified-candidate-for-later-integration"
+    }
+  ],
+  "unresolvedSplitTracks": [
+    {
+      "trackNumber": 1,
+      "songId": "ramzat5-2024-01",
+      "title": "Maher Karo Mangal Karnaari",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but no independently verified YouTube result tied directly to the Ramzat 5 album was recovered."
+    },
+    {
+      "trackNumber": 6,
+      "songId": "ramzat5-2024-06",
+      "title": "Gaddharethi Maaji Nisarya",
+      "status": "unresolved",
+      "reason": "No independent exact Ramzat 5 split-track YouTube evidence recovered in this pass."
+    },
+    {
+      "trackNumber": 9,
+      "songId": "ramzat5-2024-09",
+      "title": "Maae Garbo Koravyo Gagan Gokhma Re",
+      "status": "unresolved",
+      "reason": "No independent exact Ramzat 5 split-track YouTube evidence recovered in this pass."
+    },
+    {
+      "trackNumber": 10,
+      "songId": "ramzat5-2024-10",
+      "title": "Chapati Bhari Chokhane Gheeno Chhe Divado",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 11,
+      "songId": "ramzat5-2024-11",
+      "title": "Tara Dungare Thi Utaryo Vaagh Re",
+      "status": "unresolved",
+      "reason": "Same-title older recordings from other labels/artists were explicitly rejected."
+    },
+    {
+      "trackNumber": 14,
+      "songId": "ramzat5-2024-14",
+      "title": "Jhule Jhule Chhe Gabbarni Maay",
+      "status": "unresolved",
+      "reason": "No independent exact Ramzat 5 split-track YouTube evidence recovered in this pass."
+    },
+    {
+      "trackNumber": 15,
+      "songId": "ramzat5-2024-15",
+      "title": "Maadi Garba Gaava Aavo Maanaraj",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 16,
+      "songId": "ramzat5-2024-16",
+      "title": "Garabo Hete Bharyo Saheladi",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 17,
+      "songId": "ramzat5-2024-17",
+      "title": "Tari Ankhothi Utare Chhe Tejna Kirano Jogmaya",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 18,
+      "songId": "ramzat5-2024-18",
+      "title": "Arji Sunje Amari",
+      "status": "unresolved",
+      "reason": "No independent exact Ramzat 5 split-track YouTube evidence recovered in this pass."
+    },
+    {
+      "trackNumber": 21,
+      "songId": "ramzat5-2024-21",
+      "title": "Momai Kuldevi (Dakla)",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 23,
+      "songId": "ramzat5-2024-23",
+      "title": "Navarat Naveli, Bani Albeli",
+      "status": "unresolved",
+      "reason": "No independent exact Ramzat 5 split-track YouTube evidence recovered in this pass."
+    },
+    {
+      "trackNumber": 26,
+      "songId": "ramzat5-2024-26",
+      "title": "Me To Hathidaant Chudla Ghadavya",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    },
+    {
+      "trackNumber": 27,
+      "songId": "ramzat5-2024-27",
+      "title": "Namu Aadi Anaadi Navdurgaa (Dhun)",
+      "status": "unresolved",
+      "reason": "A 2024 Sur Sagar standalone single is discoverable, but direct Ramzat 5 YouTube identity was not recovered."
+    }
+  ],
+  "explicitRejectedExamples": [
+    {
+      "trackNumber": 11,
+      "canonicalTitle": "Tara Dungare Thi Utaryo Vaagh Re",
+      "youtubeId": "ob_WqOHuoac",
+      "reason": "Asha Thakor, Studio Sangeeta, Mahakali Maa Garba, 2023. Title match only, not the canonical Ramzat 5 recording."
+    },
+    {
+      "trackNumber": 11,
+      "canonicalTitle": "Tara Dungare Thi Utaryo Vaagh Re",
+      "youtubeId": "iv5UQtayyCM",
+      "reason": "Hemant Chauhan, Soor Mandir / Chundadi (Tahuko-2), 2023 upload of an older recording. Title match only, not the canonical Ramzat 5 recording."
+    }
+  ],
+  "integrationHandoff": {
+    "eligibleNewCandidates": 10,
+    "sharedFilesIntentionallyUntouched": [
+      "data/playback-sources-current.json",
+      "data/catalogue/index.json"
+    ],
+    "routeRequirements": {
+      "provider": "youtube",
+      "startSeconds": 0,
+      "releaseId": "ramzat5-album-2024",
+      "sourceUrl": "Use the exact direct YouTube URL from the candidate record.",
+      "sourceType": "Use official-artist-channel for OAC auto-generated album tracks or the repository's existing verified-label full-song type for Sur Sagar uploads."
+    },
+    "doNotInferFromContinuousMasterForUnresolvedTracks": true
+  },
+  "result": {
+    "canonicalSplitTracks": 27,
+    "exactSplitTrackRoutesAlreadyMergedBeforeAudit": 3,
+    "newlyVerifiedExactSplitTrackCandidates": 10,
+    "totalExactSplitTrackEvidenceAvailable": 13,
+    "deliberatelyUnresolvedSplitTracks": 14,
+    "guessedTimestamps": 0,
+    "continuousChapterRoutesPromotedToSplitRecordings": 0,
+    "sameTitleAlternatePerformancesAccepted": 0,
+    "sharedPlaybackManifestOrIndexFilesChanged": 0
+  }
+}
