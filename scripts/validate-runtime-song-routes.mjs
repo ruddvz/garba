@@ -153,11 +153,17 @@ for (const marker of [
   "safe.playbackProvider = 'youtube';",
   "safe.playbackSourceType = 'youtube-migration-pending';",
   "button.id = 'youtubeVideoButton';",
-  'Tap the YouTube button to open this track.',
+  "button.setAttribute('aria-label', 'Show YouTube video');",
   'YouTube source not mapped yet.',
   "Object.defineProperty(window, 'GARBA_YOUTUBE_PLAYER'",
   'window.GARBA_YOUTUBE_ONLY_POLICY',
 ]) if (!providerRuntime.includes(marker)) fail(`YouTube-only policy runtime missing marker: ${marker}`);
+
+for (const prohibited of [
+  'Tap the YouTube button to open this track.',
+  'let youtubeUnlocked = false;',
+  'function installYoutubeApiGate(api)',
+]) if (providerRuntime.includes(prohibited)) fail(`Main Play must not require a second YouTube-button action: ${prohibited}`);
 
 for (const marker of [
   'open.spotify.com/embed',
@@ -215,7 +221,7 @@ console.log(`✓ ${exactTrackRoutes.length} exact commercial-provider mappings r
 console.log(`✓ ${singleReleaseRoutes.length} one-song release evidence entries preserve truthful source classification`);
 console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes remain manual/reference-only until exact boundaries are verified`);
 console.log(`✓ source-evidence distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
-console.log('✓ provider-runtime enforces YouTube-only execution and exposes one safe bottom-right YouTube control');
+console.log('✓ provider-runtime enforces YouTube-only execution with one-tap main playback and one secondary video-stage control');
 console.log('✓ Spotify, Apple Music, Amazon Music and other commercial-provider source evidence cannot become executable runtime fallbacks');
 console.log('✓ duplicate exact-track URLs cannot map to different song identities');
 console.log('✓ route-truth sanitisation still runs before YouTube playback decisions');

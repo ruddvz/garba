@@ -4,12 +4,13 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [bootstrap, provider, continuity, youtube, app] = await Promise.all([
+const [bootstrap, provider, continuity, youtube, app, mobileStyles] = await Promise.all([
   read('simple-runtime.js'),
   read('provider-runtime.js'),
   read('player-continuity.js'),
   read('youtube-player-runtime.js'),
   read('app.js'),
+  read('styles/70-mobile-playback-coordination.css'),
 ]);
 
 let failed = false;
@@ -51,13 +52,13 @@ for (const marker of [
   "const requestedSongId = new URL(location.href).searchParams.get('song');",
   'const needsFullCatalogueForDeepLink = Boolean(',
   "!fastBoot.songs.some((song) => song.id === requestedSongId)",
-  "function setDeepLinkUi(status)",
+  'function setDeepLinkUi(status)',
   "songTitle.textContent = 'Loading requested song…'",
   "songTitle.textContent = 'Requested song unavailable'",
   'async function ensureDeepLinkCatalogue()',
   'const ready = await ensureDeepLinkCatalogue();',
   'if (!ready) return unavailableCatalogueResponse();',
-  "status: 503",
+  'status: 503',
   "control.setAttribute('aria-disabled', disabled ? 'true' : 'false')",
 ]) {
   if (!continuity.includes(marker)) fail(`Deep-link boot guard missing marker: ${marker}`);
@@ -93,11 +94,11 @@ for (const marker of [
 
 for (const marker of [
   'const MEDIA_ARTWORK = [',
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png",
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
   'function clearMediaMetadata()',
   'function syncMediaMetadata()',
-  "navigator.mediaSession.metadata = new MediaMetadata({",
+  'navigator.mediaSession.metadata = new MediaMetadata({',
   'title,',
   'artist,',
   'artwork: MEDIA_ARTWORK',
@@ -117,12 +118,40 @@ for (const marker of [
   'function applyYoutubeOnlyPolicy(song)',
   'function selectedYoutubeSong()',
   "button.id = 'youtubeVideoButton';",
-  "document.addEventListener('click', interceptPlay, { capture: true })",
-  "document.addEventListener('keydown', interceptSpace, { capture: true })",
-  'pendingYoutubeSong = song;',
-  'Tap the YouTube button to open this track.',
+  "document.addEventListener('click', interceptUnavailablePlay, { capture: true })",
+  "document.addEventListener('keydown', interceptUnavailableSpace, { capture: true })",
+  'if (!song || isExactYoutube(song)) return;',
+  'youtubeApi = api;',
+  '.youtube-video-button .youtube-mark{fill:currentColor}',
+  '.youtube-video-button .youtube-play{fill:#111323}',
+  'function stageIsExpanded()',
+  'function setStageExpanded(expanded)',
+  'function toggleYoutubeStagePresentation()',
+  "stage.classList.toggle('is-expanded', Boolean(expanded))",
+  "stop.textContent = 'Stop'",
 ]) {
-  if (!provider.includes(marker)) fail(`YouTube-only playback intent guard missing marker: ${marker}`);
+  if (!provider.includes(marker)) fail(`YouTube-first playback/stage contract missing marker: ${marker}`);
+}
+
+for (const prohibited of [
+  'Tap the YouTube button to open this track.',
+  'let youtubeUnlocked = false;',
+  'function installYoutubeApiGate(api)',
+]) {
+  if (provider.includes(prohibited)) fail(`Main Play must not be gated behind a second YouTube-button action: ${prohibited}`);
+}
+
+for (const marker of [
+  '#youtubeStage.youtube-dock',
+  '#youtubeStage.youtube-dock.is-expanded',
+  '#youtubeStage.is-expanded .provider-media',
+  'width: 216px;',
+  'height: 200px;',
+  'min-width: 200px;',
+  'min-height: 200px;',
+  'border-radius: 22px 22px 16px 16px;',
+]) {
+  if (!mobileStyles.includes(marker)) fail(`Integrated YouTube performance-stage style missing marker: ${marker}`);
 }
 
 for (const marker of [
@@ -159,6 +188,9 @@ for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
 if (failed) process.exit(1);
 console.log('✓ song-row playback intent follows the newly selected song without opening a non-YouTube provider');
 console.log('✓ mobile song selection returns to Now Playing before playback intent resumes');
+console.log('✓ mapped YouTube songs start from the normal Play/Space controls without a second YouTube-button gate');
+console.log('✓ the monochrome YouTube control expands/collapses a secondary performance stage instead of controlling playback');
+console.log('✓ compact and expanded YouTube stages preserve the visible 200×200 minimum playback surface');
 console.log('✓ Previous/Next preserve listening intent while the YouTube engine closes on non-controllable destinations');
 console.log('✓ YouTube-only routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
