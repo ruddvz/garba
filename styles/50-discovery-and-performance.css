@@ -59,6 +59,52 @@
   transition-duration: 180ms;
 }
 
+/*
+ * Production player artwork.
+ * The runtime still writes the lightweight SVG path inline so first paint and
+ * offline fallback remain reliable. On the deployed live origin, override that
+ * inline URL with the approved 2048px WebP from the 15-image courtyard pack.
+ * Keeping the SVG as the second background layer means a failed WebP request
+ * never leaves the player blank.
+ */
+.world-layer[style*="assets/backgrounds/traditional.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/11-master-dark-courtyard.webp"),
+    url("/assets/backgrounds/traditional.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/dandiya.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp"),
+    url("/assets/backgrounds/dandiya.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/devotional.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/03-devotional-garba-courtyard.webp"),
+    url("/assets/backgrounds/devotional.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/folk.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/14-gujarati-folk-courtyard.webp"),
+    url("/assets/backgrounds/folk.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/sanedo.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp"),
+    url("/assets/backgrounds/sanedo.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/fusion.svg"] {
+  background-image:
+    url("/assets/backgrounds/library/05-fusion-gujarati-neon.webp"),
+    url("/assets/backgrounds/fusion.svg") !important;
+}
+.world-layer[style*="assets/backgrounds/"] {
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  filter: none !important;
+  image-rendering: auto;
+}
+
 .sheet-handle[aria-expanded="true"] span {
   background: color-mix(in srgb, var(--accent) 42%, rgba(246,236,215,.34));
 }
