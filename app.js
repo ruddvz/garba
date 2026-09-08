@@ -480,7 +480,14 @@ function getSheetSongs() {
     songs = state.songs.filter((song) => song.genre === state.sheetFilter);
   }
 
-  if (query) songs = songs.filter((song) => `${song.title} ${song.artist}`.toLowerCase().includes(query));
+  if (query) songs = songs.filter((song) => [
+    song.title,
+    song.artist,
+    song.genre,
+    song.category,
+    ...(song.styles || []),
+    ...(song.taxonomyStyles || []),
+  ].filter(Boolean).join(' ').toLowerCase().includes(query));
   state.sheetMatchCount = songs.length;
   if (state.sheetMode === 'search' && songs.length > SEARCH_RESULT_LIMIT) return songs.slice(0, SEARCH_RESULT_LIMIT);
   return songs;
@@ -520,7 +527,7 @@ function renderSheet() {
       copy.textContent = 'Choose a genre or another song to continue listening.';
     } else if (state.sheetMode === 'search' && !query) {
       strong.textContent = `Search ${state.songs.length.toLocaleString()} songs`;
-      copy.textContent = 'Type a song or artist name to see matching results.';
+      copy.textContent = 'Type a song, artist, genre or style to see matching results.';
     } else {
       strong.textContent = 'No songs found';
       copy.textContent = query ? 'Try a different search.' : 'This genre is waiting for catalogue data.';
