@@ -4,7 +4,7 @@
   "private": true,
   "description": "Open, community-built Gujarati Garba catalogue and immersive music player.",
   "scripts": {
-    "catalogue": "node scripts/validate-catalogue-release-ids.mjs && node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",
+    "catalogue": "node scripts/lib/validate-catalogue-release-ids.mjs && node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",
     "playback:report": "npm run catalogue && node scripts/report-playback-route-quality.mjs",
     "youtube:coverage": "npm run catalogue && node scripts/report-youtube-first-coverage.mjs",
     "artwork:validate": "npm run catalogue && node scripts/lib/validate-release-artwork.mjs",
