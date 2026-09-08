@@ -1,0 +1,93 @@
+name: Verify Production Hosts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/lib/verify-production-hosts.mjs
+      - .github/workflows/production-smoke.yml
+  workflow_run:
+    workflows: ["Deploy GitHub Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-host-smoke
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Validate smoke verifier syntax
+        run: node --check scripts/lib/verify-production-hosts.mjs
+
+  live-player:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Verify live player and PWA production contract
+        env:
+          SMOKE_ATTEMPTS: '8'
+          SMOKE_RETRY_DELAY_MS: '6000'
+          SMOKE_TIMEOUT_MS: '12000'
+        run: node scripts/lib/verify-production-hosts.mjs live
+
+      - name: Record live verification
+        if: success()
+        run: |
+          {
+            echo '## Live player verification'
+            echo ''
+            echo '✅ `https://live.playgarba.com/` passed the player, catalogue, deep-link, manifest, service-worker, offline-shell, robots, sitemap and OG-card smoke checks.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  public-apex-diagnostic:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Probe public website cutover
+        id: public
+        continue-on-error: true
+        env:
+          SMOKE_ATTEMPTS: '3'
+          SMOKE_RETRY_DELAY_MS: '4000'
+          SMOKE_TIMEOUT_MS: '10000'
+        run: node scripts/lib/verify-production-hosts.mjs public
+
+      - name: Record public cutover state
+        if: always()
+        env:
+          PUBLIC_OUTCOME: ${{ steps.public.outcome }}
+        run: |
+          {
+            echo '## Public apex diagnostic'
+            echo ''
+            if [ "$PUBLIC_OUTCOME" = 'success' ]; then
+              echo '✅ `https://playgarba.com/` is serving the public website contract.'
+            else
+              echo '⚠️ `https://playgarba.com/` is not yet serving the complete public website contract. Finish the Porkbun apex/static-hosting cutover before treating production as complete.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
