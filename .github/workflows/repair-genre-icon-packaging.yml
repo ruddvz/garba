@@ -1,0 +1,49 @@
+name: Repair genre icon CSS packaging
+
+on:
+  push:
+    branches: [fix/genre-icon-css-packaging-20260908]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/genre-icon-css-packaging-20260908
+          fetch-depth: 0
+      - name: Patch semantic CSS contract and Pages bundle
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          validator = Path('scripts/validate-repository-structure.mjs')
+          text = validator.read_text()
+          old = "  '70-mobile-playback-coordination.css',\n];"
+          new = "  '70-mobile-playback-coordination.css',\n  '80-genre-icon-images.css',\n];"
+          if old not in text:
+              raise SystemExit('Validator style-layer insertion point not found')
+          validator.write_text(text.replace(old, new, 1))
+
+          pages = Path('.github/workflows/pages.yml')
+          text = pages.read_text()
+          old = "            styles/70-mobile-playback-coordination.css \\\n            > _site/styles.css"
+          new = "            styles/70-mobile-playback-coordination.css \\\n            styles/80-genre-icon-images.css \\\n            > _site/styles.css"
+          if old not in text:
+              raise SystemExit('Pages style-layer insertion point not found')
+          pages.write_text(text.replace(old, new, 1))
+          PY
+      - name: Validate repaired repository
+        run: npm run check
+      - name: Commit repair
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add scripts/validate-repository-structure.mjs .github/workflows/pages.yml
+          git diff --cached --check
+          git commit -m 'Package genre icon stylesheet in production'
+          git push origin HEAD:fix/genre-icon-css-packaging-20260908
