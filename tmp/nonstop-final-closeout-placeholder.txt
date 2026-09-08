@@ -1,0 +1,1 @@
+This placeholder stages the clean closeout branch while current-main Nonstop changes are reconciled.
