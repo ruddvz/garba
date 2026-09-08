@@ -190,6 +190,9 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
   const sets = page.locator('#nonstopBrowserList .nonstop-set');
   await expect(sets.first()).toBeVisible();
   expect(await sets.count()).toBeGreaterThan(0);
+  await expect(sets.first().locator('.nonstop-set-recording')).toContainText(/One (?:full )?recording/);
+  await expect(sets.first().locator('.nonstop-set-badge.recording')).toHaveText(/^(?:Chaptered|Full) recording$/);
+  await expect(page.locator('#nonstopBrowserSummary')).toContainText('one choice = one recording');
   await expectNoDocumentOverflow(page);
 
   await page.locator('#nonstopBrowserClose').click();
@@ -203,7 +206,7 @@ test('Explore is reached through the production player link and renders real cat
   const failures = collectRuntimeFailures(page);
   await page.goto('/');
   await Promise.all([
-    page.waitForURL(/\/catalogue\/$/),
+    page.waitForURL(/\/explore\/$/),
     page.locator('#browseButton').click(),
   ]);
 
@@ -218,7 +221,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/catalogue/');
+  await page.goto('/explore/');
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();

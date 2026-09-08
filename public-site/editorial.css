@@ -1,60 +1,60 @@
 :root {
-  --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
+  --live-art-base: "https://playgarba.com/assets/backgrounds/library/";
   --editorial-ease-out: cubic-bezier(.16, 1, .3, 1);
   --editorial-fast: 160ms;
 }
 
 /* The six listening worlds use the current 2K live-player artwork. Approved photography is reserved for cultural/editorial storytelling. */
 .hero-art {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
 
 .world-traditional {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp") !important;
 }
 
 .world-dandiya {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp") !important;
 }
 
 .world-devotional {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
 }
 
 .world-folk {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
 }
 
 .world-sanedo {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
 }
 
 .world-fusion {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
 }
 
 .nonstop-art {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp") !important;
 }
 
 .player-scene {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+  background-image: url("https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
 
 .page-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
+  --page-hero-image: url("https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
 }
 
 .page-hero.install-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
+  --page-hero-image: url("https://playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
 }
 
 .page-hero.live-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
+  --page-hero-image: url("https://playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
 }
 
 .page-hero.about-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp");
+  --page-hero-image: url("https://playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp");
 }
 
 .page-hero.garba-hero {

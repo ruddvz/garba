@@ -11,6 +11,22 @@ GARBA is a source-first, community-built Garba catalogue and player. Contributio
 
 Read [`docs/catalogue/rights.md`](docs/catalogue/rights.md) before adding audio or download sources.
 
+## Concurrent agent coordination
+
+This repository is edited by multiple concurrent agents. **Claim an implementation lane before coding.**
+
+1. Fetch current remote `main`.
+2. Read [`AGENTS.md`](AGENTS.md) and issue #364, **[Agent Board] Active work claims**.
+3. Check the target issue comments and open PRs for overlapping scope or files.
+4. Split broad master/programme issues into non-overlapping child issues before parallel implementation.
+5. Post the machine-readable `agent-claim` block on the implementation issue and confirm that your claim is the first unreleased claim.
+6. Use the exact claimed branch and stay inside the claimed scope.
+7. Release the claim when the lane is merged, abandoned or handed off.
+
+GitHub assignees alone do not identify an agent because several agents may operate through the same account. The claim comment plus branch is the ownership identity.
+
+See [`docs/operations/agent-coordination.md`](docs/operations/agent-coordination.md) for the full protocol, conflict handling and release format.
+
 ## Local setup
 
 ```bash
@@ -84,9 +100,11 @@ Before opening a PR:
 1. run `npm run check`;
 2. keep unrelated catalogue and product changes separate where possible;
 3. avoid overwriting another active contribution lane;
-4. explain metadata sources and provenance;
-5. call out unresolved uncertainty;
-6. do not claim browser/device validation you did not perform.
+4. include `Agent-Claim: #<issue>` and `Agent-ID: <agent-id>` for claim-governed work;
+5. make sure the PR head branch matches the active claim branch;
+6. explain metadata sources and provenance;
+7. call out unresolved uncertainty;
+8. do not claim browser/device validation you did not perform.
 
 ## Rights and licence status
 
