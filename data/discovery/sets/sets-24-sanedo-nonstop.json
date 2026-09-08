@@ -1,0 +1,35 @@
+{
+  "updated": "2026-09-08",
+  "sets": [
+    {
+      "id": "set-deshi-sanedo-nonstop-2020",
+      "title": "Deshi Sanedo - Non Stop",
+      "artists": ["Jayesh Barot"],
+      "year": 2020,
+      "series": "Sanedo",
+      "categories": ["sanedo", "folk", "dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {"provider": "youtube", "videoId": "U0MboQb-jfY", "url": "https://www.youtube.com/watch?v=U0MboQb-jfY", "embeddable": true},
+      "linkedReleaseId": null,
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Zee Music Gujarati non-stop album upload."
+    },
+    {
+      "id": "set-tophani-sanedo-2017",
+      "title": "Tophani Sanedo - Non Stop Gujarati Garba",
+      "artists": ["Mahesh Singh Chauhan"],
+      "year": 2017,
+      "series": "Sanedo",
+      "categories": ["sanedo", "folk", "dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {"provider": "youtube", "videoId": "5Rw8K6D3B4k", "url": "https://www.youtube.com/watch?v=5Rw8K6D3B4k", "embeddable": true},
+      "linkedReleaseId": null,
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Ishtar Regional non-stop Sanedo jukebox."
+    }
+  ]
+}
