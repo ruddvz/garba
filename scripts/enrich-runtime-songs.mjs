@@ -7,8 +7,15 @@ const readJson = async (file) => JSON.parse(await readFile(path.join(root, file)
 const index = await readJson('data/catalogue/index.json');
 const songsPath = index.generatedFiles?.songs || 'data/songs.json';
 const releasesPath = index.generatedFiles?.releases || 'data/releases.json';
-const [songs, releases] = await Promise.all([readJson(songsPath), readJson(releasesPath)]);
+const [songs, releases, directAudioManifest] = await Promise.all([
+  readJson(songsPath),
+  readJson(releasesPath),
+  readJson('data/direct-audio.json'),
+]);
 const releasesById = new Map(releases.map((release) => [release.id, release]));
+const directTracks = directAudioManifest?.tracks && typeof directAudioManifest.tracks === 'object'
+  ? directAudioManifest.tracks
+  : {};
 const sourcePaths = Array.isArray(index.playbackSources) ? index.playbackSources.filter(Boolean) : [];
 if (!sourcePaths.length) throw new Error('No playback source manifests are declared in data/catalogue/index.json');
 
@@ -16,12 +23,39 @@ const manifests = await Promise.all(sourcePaths.map((file) => readJson(file)));
 const routes = Object.assign({}, ...manifests.map((manifest) => manifest?.songSources || {}));
 let enriched = 0;
 let direct = 0;
+let directFromManifest = 0;
 let exactTrackFallbacks = 0;
 let singleReleaseFallbacks = 0;
 let releaseTrackReferenceFallbacks = 0;
 let duplicateExactDowngrades = 0;
 let unchapteredYoutubeReleaseFallbacks = 0;
 const missing = [];
+
+const DIRECT_AUTOMIX_FIELDS = [
+  'bpm',
+  'mixInSeconds',
+  'mixOutSeconds',
+  'transitionSeconds',
+  'introSilenceSeconds',
+];
+
+function applyDirectAudio(song) {
+  const entry = directTracks[song.id];
+  if (!entry?.audioUrl || entry?.rights?.redistributionAuthorized !== true) return null;
+
+  const next = {
+    ...song,
+    audioUrl: String(entry.audioUrl).trim(),
+    playbackProvider: 'direct',
+  };
+  if (entry.mimeType) next.audioMimeType = String(entry.mimeType);
+  if (entry.sha256) next.audioSha256 = String(entry.sha256).toLowerCase();
+  for (const field of DIRECT_AUTOMIX_FIELDS) {
+    const value = Number(entry[field]);
+    if (Number.isFinite(value)) next[field] = value;
+  }
+  return next;
+}
 
 function isExactTrackUrl(provider, sourceUrl) {
   try {
@@ -64,6 +98,13 @@ function canonicalSourceKey(provider, sourceUrl) {
 }
 
 const runtimeSongs = songs.map((song) => {
+  const authorisedDirect = applyDirectAudio(song);
+  if (authorisedDirect) {
+    direct += 1;
+    directFromManifest += 1;
+    return authorisedDirect;
+  }
+
   const next = { ...song };
   if (song.audioUrl) {
     direct += 1;
@@ -149,4 +190,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs (${directFromManifest} from data/direct-audio.json), ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
