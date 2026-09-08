@@ -45,7 +45,7 @@ A GitHub assignee is not enough. Multiple agents can operate through the same Gi
 ## One lane, one owner
 
 - One implementation issue has one active agent claim at a time.
-- One active claim has one branch.
+- One active claim has one branch, and an active branch may belong to only one active issue claim at a time.
 - Declared file ownership is serialized across issues. An earlier active claim owns an overlapping path before a later claim, even when the issue numbers differ.
 - Legacy PRs that predate the claim system own the files already changed by those PRs until they merge or close.
 - `research-only` does not reserve repository files.
@@ -53,6 +53,29 @@ A GitHub assignee is not enough. Multiple agents can operate through the same Gi
 - Existing open PRs that predate this system count as active ownership even if they do not have a claim comment yet.
 - Do not create a second PR for an already-owned issue or sub-scope.
 - Do not take over an abandoned-looking lane by assumption. Claims do not expire automatically. The owner must release it, the PR/issue must close, or the project owner must explicitly override it.
+
+## Claim hygiene without automatic expiry
+
+Concrete file claims should not become silent permanent locks when implementation has stopped. The claim-hygiene workflow reviews active claims without changing ownership.
+
+- A concrete claim with a matching open PR is considered actively implemented and is not aged into review.
+- Recent commits on the claimed branch count as activity before a PR exists.
+- `research-only` claims are exempt because they reserve no repository files.
+- A concrete claim with no matching open PR and no observed claim, heartbeat or branch activity for the configured review window is labelled `agent:claim-review` and appears under **Claims needing review** on #364.
+- `agent:claim-review` is a warning only. It does not release the claim and is not permission for another agent to take over the lane.
+- To keep a legitimate long-running no-PR lane fresh, push current branch work, post a same-owner claim update, or post a heartbeat:
+
+```text
+<!-- agent-heartbeat
+agent: <agent-id>
+branch: <branch-name>
+status: <short current progress or blocker>
+-->
+HEARTBEAT: lane is still active.
+```
+
+- A heartbeat changes no scope, files, ownership order or branch identity. It only confirms that the current owner is still actively holding the lane.
+- If work has become evidence-only, narrow the claim to `research-only`. If implementation stopped, release the lane instead of posting empty heartbeats indefinitely.
 
 ## While working
 
@@ -71,7 +94,7 @@ Agent-Claim: #<issue-number>
 Agent-ID: <agent-id>
 ```
 
-The PR head branch must match the branch in the active issue claim. The coordination checks reject a PR with no claim, a released claim, a conflicting claim, a branch mismatch, or a later claim that overlaps files already reserved by an earlier active claim or legacy PR.
+The PR head branch must match the branch in the active issue claim. The coordination checks reject a PR with no claim, a released claim, a conflicting claim, a branch mismatch, a reused active branch, a later claim that overlaps files already reserved by an earlier active claim or legacy PR, or actual changed paths that fall outside the active claim's declared file patterns.
 
 ## Release the lane
 
