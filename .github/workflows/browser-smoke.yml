@@ -1,6 +1,7 @@
 name: Browser viewport smoke
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'index.html'
