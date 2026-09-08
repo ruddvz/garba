@@ -1,7 +1,7 @@
 {
-  "version": "0.20.1",
-  "songCount": 1437,
-  "releaseCount": 226,
+  "version": "0.21.0",
+  "songCount": 1478,
+  "releaseCount": 228,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -79,7 +79,9 @@
     "data/catalogue/songs/songs-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/songs/songs-wave-d-geeta-rabari.json",
     "data/catalogue/songs/songs-wave-d-aditya-gadhvi.json",
-    "data/catalogue/songs/songs-wave-f-dhara-rankar.json"
+    "data/catalogue/songs/songs-wave-f-dhara-rankar.json",
+    "data/catalogue/songs/songs-wave-d2-geeta-zankaar3.json",
+    "data/catalogue/songs/songs-wave-d2-kirtidan-tahukar10.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -133,7 +135,9 @@
     "data/catalogue/releases/releases-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/releases/releases-wave-d-geeta-rabari.json",
     "data/catalogue/releases/releases-wave-d-aditya-gadhvi.json",
-    "data/catalogue/releases/releases-wave-f-dhara-rankar.json"
+    "data/catalogue/releases/releases-wave-f-dhara-rankar.json",
+    "data/catalogue/releases/releases-wave-d2-geeta-zankaar3.json",
+    "data/catalogue/releases/releases-wave-d2-kirtidan-tahukar10.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -208,7 +212,9 @@
     "data/playback-sources-wave-d-falguni.json",
     "data/playback-sources-wave-d-geeta.json",
     "data/playback-sources-wave-d-aditya.json",
-    "data/playback-sources-dhara-rankar-exact.json"
+    "data/playback-sources-dhara-rankar-exact.json",
+    "data/playback-sources-wave-d2-geeta-zankaar3.json",
+    "data/playback-sources-wave-d2-kirtidan-tahukar10.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -234,5 +240,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.1 preserves Wave C, Playback Wave E, Wave D and all current route-truth hardening, then begins Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. Every Rankar component song uses an independently exposed Amazon Music song href, while the official artist-channel continuous performance is retained as release evidence without inventing one-to-one YouTube chapter mappings where the programme differs from the provider album."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.21.0 preserves Wave C, Playback Wave E, Wave D, Wave F and all current route-truth hardening, then extends issue #152 with 41 additional canonical tracks: Geeta Rabari's 28-track Zankaar 3.0 and Kirtidan Gadhvi's 13-track Tahukar 10. Thirty-nine exact official YouTube chapter routes are pinned only where titles and published timestamps are unambiguous. Zankaar 3 split-provider track 11 conflicts with the official chapter title and track 12 has a malformed published timestamp, so those two songs remain on conservative provider fallback. Tahukar 10 uses all 13 chapter starts published by Kirtidan Gadhvi Official. Continuous non-stop masters remain distinct from split-track catalogue editions."
 }
