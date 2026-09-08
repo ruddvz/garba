@@ -18,12 +18,13 @@ jobs:
           fetch-depth: 0
       - name: Make live host and Explore source-native
         run: python3 .github/scripts/migrate_live_source.py
-      - name: Commit migration
+      - name: Commit application/source migration
         shell: bash
         run: |
+          git checkout -- .github/workflows/pages.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html app.js CNAME robots.txt sitemap.xml src/catalogue/index.html scripts/lib/inject-social-preview.mjs .github/workflows/pages.yml scripts/validate-runtime-packaging.mjs
+          git add index.html app.js CNAME robots.txt sitemap.xml src/catalogue/index.html scripts/lib/inject-social-preview.mjs scripts/validate-runtime-packaging.mjs
           git diff --cached --check
           git commit -m 'Make live domain and Explore source-native'
           git push origin HEAD:codex/live-domain-source-of-truth
