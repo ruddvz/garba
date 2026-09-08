@@ -8,7 +8,7 @@ const roots = [];
 const createFixture = async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'garba-raas-'));
   roots.push(root);
-  await mkdir(path.join(root, '.raas'), { recursive: true });
+  await mkdir(path.join(root, '.raas/clients'), { recursive: true });
   await mkdir(path.join(root, 'docs'), { recursive: true });
   await mkdir(path.join(root, 'scripts'), { recursive: true });
   await writeFile(path.join(root, 'docs/README.md'), '# Docs\n');
@@ -21,11 +21,16 @@ const createFixture = async () => {
     '- `.raas/EXECUTION.md`',
     '- `.raas/LANGUAGE.md`',
   ].join('\n'));
+
+  for (const target of REQUIRED_RAAS_FILES) {
+    if (target === '.raas/config.json') continue;
+    await mkdir(path.dirname(path.join(root, target)), { recursive: true });
+    await writeFile(path.join(root, target), `# ${path.basename(target)}\n`);
+  }
   await writeFile(path.join(root, '.raas/BOOTSTRAP.md'), '`AGENTS.md` `.raas/RAAS.md` `scripts/raas-task.mjs`\n');
   await writeFile(path.join(root, '.raas/RAAS.md'), '`AGENTS.md` `.raas/PROJECT-CONTEXT.md`\n');
   await writeFile(path.join(root, '.raas/PROJECT-CONTEXT.md'), '`docs/README.md`\n');
   await writeFile(path.join(root, '.raas/EXECUTION.md'), '`AGENTS.md`\n');
-  await writeFile(path.join(root, '.raas/LANGUAGE.md'), '# Language\n');
   await writeFile(path.join(root, '.raas/config.json'), JSON.stringify({
     version: 1,
     entrypoints: ['AGENTS.md', '.raas/RAAS.md', '.raas/PROJECT-CONTEXT.md', '.raas/EXECUTION.md'],
@@ -41,8 +46,8 @@ try {
   assert.deepEqual(await validateRaas({ root: valid }), [], 'valid harness fixture should pass');
 
   const missingFile = await createFixture();
-  await rm(path.join(missingFile, '.raas/config.json'));
-  assert.match((await validateRaas({ root: missingFile })).join('\n'), /Missing required RAAS file: \.raas\/config\.json/);
+  await rm(path.join(missingFile, '.raas/clients/chatgpt.md'));
+  assert.match((await validateRaas({ root: missingFile })).join('\n'), /Missing required RAAS file: \.raas\/clients\/chatgpt\.md/);
 
   const brokenAgents = await createFixture();
   await writeFile(path.join(brokenAgents, 'AGENTS.md'), '# Agent rules\n');
