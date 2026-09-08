@@ -138,7 +138,8 @@
     "data/playback-sources-rangili-ramzat-6-exact.json",
     "data/playback-sources-navdurgani-exact.json",
     "data/playback-sources-ude-re-gulal-exact.json",
-    "data/playback-sources-shyam-exact.json"
+    "data/playback-sources-shyam-exact.json",
+    "data/playback-sources-anand-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
