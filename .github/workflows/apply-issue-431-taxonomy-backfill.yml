@@ -1,0 +1,38 @@
+name: Apply issue 431 taxonomy backfill
+
+on:
+  push:
+    branches:
+      - codex/nonstop-taxonomy-backfill-431
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/nonstop-taxonomy-backfill-431
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply exact linked-release taxonomy
+        run: python3 .github/scripts/apply-issue-431-taxonomy-backfill.py
+      - name: Validate Nonstop taxonomy and repository
+        run: |
+          npm run genre:taxonomy:validate
+          npm run nonstop:source:validate
+          npm run nonstop:chapters:validate
+          node scripts/validate-discovery.mjs
+          npm run check
+      - name: Commit data patch and remove temporary migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/discovery/sets/sets-09-pooja-santvani.json data/discovery/sets/sets-13-ramzat5.json
+          git rm .github/workflows/apply-issue-431-taxonomy-backfill.yml .github/scripts/apply-issue-431-taxonomy-backfill.py
+          git commit -m "Backfill linked-release taxonomy for six Nonstop sets"
+          git push origin HEAD:codex/nonstop-taxonomy-backfill-431
