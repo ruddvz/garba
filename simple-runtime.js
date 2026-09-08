@@ -1,523 +1,80 @@
 (() => {
-  const $ = (id) => document.getElementById(id);
-  const toast = $('toast');
-  const playButton = $('playButton');
-  const miniPlay = $('miniPlay');
-  const shareButton = $('shareButton');
-  const audio = $('audio');
-  const app = $('app');
-  const genreStrip = $('genreStrip');
-  const networkStatus = $('networkStatus');
-  const songTitle = $('songTitle');
+  const nativeFetch = window.fetch.bind(window);
+  const bootGenres = [{"id":"traditional","name":"Traditional","label":"Traditional Garba","background":"assets/backgrounds/traditional.svg","accent":"#d6b06f"},{"id":"dandiya","name":"Dandiya","label":"Dandiya Raas","background":"assets/backgrounds/dandiya.svg","accent":"#a77ad6"},{"id":"devotional","name":"Devotional","label":"Devotional Garba","background":"assets/backgrounds/devotional.svg","accent":"#c78372"},{"id":"folk","name":"Folk","label":"Gujarati Folk","background":"assets/backgrounds/folk.svg","accent":"#9a9fc7"},{"id":"sanedo","name":"Sanedo","label":"Sanedo","background":"assets/backgrounds/sanedo.svg","accent":"#c99872"},{"id":"fusion","name":"Fusion","label":"Modern Fusion Garba","background":"assets/backgrounds/fusion.svg","accent":"#a78bc4"}];
+  const bootSongs = [{"id":"ochhav-2023-01-ochhav-theme","title":"Ochhav Theme","artist":"Aditya Gadhvi","genre":"traditional","durationSeconds":79,"youtubeId":"V4f5I_xJVoA","youtubeStartSeconds":0,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA","playbackSourceType":"official-artist-channel"},{"id":"atul-maro-garbo-2000-10-haiye-rakhi-hom","title":"Haiye Rakhi Hom","artist":"Atul Purohit, Himali & Smita Shah","genre":"traditional","durationSeconds":184,"youtubeId":"wJZLxRx3ymc","youtubeStartSeconds":1166,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","playbackSourceType":"verified-performance-chapter"},{"id":"atul-maro-garbo-2000-12-fagan-foramto-aayo","title":"Fagan Foramto Aayo","artist":"Atul Purohit, Himali & Smita Shah","genre":"traditional","durationSeconds":228,"youtubeId":"wJZLxRx3ymc","youtubeStartSeconds":1453,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","playbackSourceType":"verified-performance-chapter"},{"id":"khelaiya-disco-dandia-93-1993-04-dholida-dhol-re-vagad","title":"Dholida Dhol Re Vagad","artist":"Rupal Doshi","genre":"dandiya","durationSeconds":481,"youtubeId":"RKDi5F85ft4","youtubeStartSeconds":1721,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=RKDi5F85ft4","playbackSourceType":"verified-performance-chapter"},{"id":"ramzat-45-1995-01-ramzat-45-non-stop-raas-garba","title":"Ramzat 45 Non Stop Raas Garba","artist":"Anuradha Paudwal, Praful Dave, Sonu Nigam, Mina Patel, Sanjay Ojha, Aarti Munshi & Gaurang Vyas","genre":"dandiya","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/album/ramzat-45-non-stop-raas-garba/1251277246","playbackSourceType":"verified-single-release-source"},{"id":"bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014","title":"Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014","artist":"Pankaj Bhatt","genre":"dandiya","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/album/non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014/1194845614","playbackSourceType":"verified-single-release-source"},{"id":"shyam-raas-v3-1998-01-chhand","title":"Chhand","artist":"Hemant Chauhan","genre":"devotional","durationSeconds":78,"youtubeId":"ZnqLyzreCF8","youtubeStartSeconds":31,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=ZnqLyzreCF8","playbackSourceType":"verified-performance-chapter"},{"id":"re-lol-vol7-2000-01-chhand","title":"Chhand","artist":"Various Artists","genre":"devotional","durationSeconds":93,"youtubeId":"ZnqLyzreCF8","youtubeStartSeconds":31,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=ZnqLyzreCF8","playbackSourceType":"verified-performance-chapter"},{"id":"anand-vol8-2001-14-ghor-andhari-re","title":"Ghor Andhari Re","artist":"Musa Paik & Pamela Jain","genre":"devotional","durationSeconds":225,"youtubeId":"V4f5I_xJVoA","youtubeStartSeconds":2518,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA","playbackSourceType":"verified-performance-chapter"},{"id":"he-ranglo-jamyo-1962-01-he-ranglo-jamyo","title":"He Ranglo Jamyo","artist":"Asha Bhosle & Ashit Desai","genre":"folk","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/song/1424893548","playbackSourceType":"verified-track-source"},{"id":"diwaliben-koyal-digital-01-koyal-bethi-aambaliya-ni-dal","title":"Koyal Bethi Aambaliya Ni Dal","artist":"Diwaliben Bhil","genre":"folk","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/song/1566136266","playbackSourceType":"verified-track-source"},{"id":"charan-kanya-aditya-gadhvi-2022","title":"Charan Kanya - Swarotsav 2019","artist":"Aditya Gadhvi","genre":"folk","youtubeId":"Tu9cLEYEvoc","playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=Tu9cLEYEvoc","playbackSourceType":"official-artist-channel"},{"id":"sanedo-sanedo-2007-01-rang-pichkari","title":"Rang Pichkari","artist":"Achal Maheta, Sargam Vyash, Ansh Maheta, Shilpa Aiyyar, Piyush Parmar & Pratiksha Desai","genre":"sanedo","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/album/sanedo-sanedo/581651148","playbackSourceType":"verified-release-source"},{"id":"sanedo-sanedo-2007-02-poonam-ni-raat","title":"Poonam Ni Raat","artist":"Achal Maheta, Sargam Vyash, Ansh Maheta, Shilpa Aiyyar, Piyush Parmar & Pratiksha Desai","genre":"sanedo","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/album/sanedo-sanedo/581651148","playbackSourceType":"verified-release-source"},{"id":"sanedo-sanedo-2007-03-ashmani-rang-ni-chundani","title":"Ashmani Rang Ni Chundani","artist":"Achal Maheta, Sargam Vyash, Ansh Maheta, Shilpa Aiyyar, Piyush Parmar & Pratiksha Desai","genre":"sanedo","playbackProvider":"apple-music","playbackSourceUrl":"https://music.apple.com/us/album/sanedo-sanedo/581651148","playbackSourceType":"verified-release-source"},{"id":"ho-raj-fusion-2001-01-ho-raj-ho-raj","title":"Ho Raj Ho Raj","artist":"Manoj Dave & Forum Mehta","genre":"fusion","durationSeconds":66,"playbackProvider":"spotify","playbackSourceUrl":"https://open.spotify.com/track/0GDjX03Yvagc1uYY27saCB","playbackSourceType":"verified-track-source"},{"id":"ho-raj-fusion-2001-02-ghor-andhari-re","title":"Ghor Andhari Re","artist":"Forum Mehta","genre":"fusion","durationSeconds":158,"youtubeId":"V4f5I_xJVoA","youtubeStartSeconds":2518,"playbackProvider":"youtube","playbackSourceUrl":"https://www.youtube.com/watch?v=V4f5I_xJVoA","playbackSourceType":"verified-performance-chapter"},{"id":"ho-raj-fusion-2001-03-ho-raj-re-mavdi-na-garabe","title":"Ho Raj Re Mavdi Na Garabe","artist":"Manoj Dave & Forum Mehta","genre":"fusion","durationSeconds":279,"playbackProvider":"spotify","playbackSourceUrl":"https://open.spotify.com/track/0GDjX03Yvagc1uYY27saCB","playbackSourceType":"verified-track-source"}];
+  let hydratePromise = null;
+  let hydrated = false;
 
-  const PROVIDER_NAMES = {
-    youtube: 'YouTube',
-    spotify: 'Spotify',
-    'apple-music': 'Apple Music',
-    'amazon-music': 'Amazon Music',
-    soundcloud: 'SoundCloud',
-    bandcamp: 'Bandcamp',
-    qobuz: 'Qobuz',
-  };
-
-  const HQ_VISUALS = {
-    traditional: 'assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
-    dandiya: 'assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
-    devotional: 'assets/backgrounds/library/03-devotional-garba-courtyard.webp',
-    folk: 'assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
-    sanedo: 'assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
-    fusion: 'assets/backgrounds/library/05-fusion-gujarati-neon.webp',
-  };
-
-  let songsPromise = null;
-  let providerSongId = null;
-  let visualToken = 0;
-
-  function announce(message) {
-    if (!toast) return;
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(announce.timer);
-    announce.timer = setTimeout(() => toast.classList.remove('show'), 2600);
-  }
-
-  function hasDirectAudio() {
-    return Boolean(audio?.getAttribute('src'));
-  }
-
-  function clearStaleInert() {
-    document.querySelectorAll('[inert]').forEach((node) => node.removeAttribute('inert'));
-  }
-
-  function loadSongs() {
-    if (!songsPromise) {
-      songsPromise = fetch('data/songs.json', { cache: 'force-cache' })
-        .then((response) => response.ok ? response.json() : [])
-        .catch(() => []);
-    }
-    return songsPromise;
-  }
-
-  async function currentSong() {
-    const songs = await loadSongs();
-    const id = new URL(location.href).searchParams.get('song');
-    if (id) {
-      const found = songs.find((song) => song.id === id);
-      if (found) return found;
-    }
-    const title = String($('songTitle')?.textContent || '').trim();
-    const artist = String($('songArtist')?.textContent || '').trim();
-    return songs.find((song) => song.title === title && song.artist === artist) || songs[0] || null;
-  }
-
-  function providerName(provider = '') {
-    const key = String(provider).toLowerCase();
-    return PROVIDER_NAMES[key] || key.replace(/(^|-)([a-z])/g, (_, prefix, letter) => `${prefix ? ' ' : ''}${letter.toUpperCase()}`) || 'Provider';
-  }
-
-  function inferProvider(song, sourceUrl = '') {
-    const configured = String(song?.playbackProvider || '').toLowerCase();
-    if (configured && configured !== 'direct') return configured;
+  function requestPath(input) {
     try {
-      const host = new URL(sourceUrl).hostname.toLowerCase();
-      if (host.includes('youtube.com') || host === 'youtu.be') return 'youtube';
-      if (host.includes('spotify.com')) return 'spotify';
-      if (host.includes('music.apple.com')) return 'apple-music';
-      if (host.includes('music.amazon.')) return 'amazon-music';
-      if (host.includes('soundcloud.com')) return 'soundcloud';
-      if (host.includes('bandcamp.com')) return 'bandcamp';
-      if (host.includes('qobuz.com')) return 'qobuz';
-    } catch {
-      // The URL is optional. Unknown sources remain explicit external actions.
-    }
-    return song?.youtubeId ? 'youtube' : 'provider';
-  }
-
-  function youtubeVideoId(song, sourceUrl = '') {
-    if (song?.youtubeId) return String(song.youtubeId);
-    try {
-      const url = new URL(sourceUrl);
-      if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || '';
-      if (url.hostname.includes('youtube.com')) {
-        if (url.searchParams.get('v')) return url.searchParams.get('v');
-        const parts = url.pathname.split('/').filter(Boolean);
-        const embedIndex = parts.findIndex((part) => part === 'embed' || part === 'shorts');
-        if (embedIndex >= 0) return parts[embedIndex + 1] || '';
-      }
-    } catch {
-      // Fall through to an external action.
-    }
-    return '';
-  }
-
-  function spotifyEmbedUrl(sourceUrl = '') {
-    try {
-      const url = new URL(sourceUrl);
-      const parts = url.pathname.split('/').filter(Boolean).filter((part) => !part.startsWith('intl-'));
-      const index = parts.findIndex((part) => ['track', 'album', 'playlist', 'episode', 'show'].includes(part));
-      if (index < 0 || !parts[index + 1]) return '';
-      return `https://open.spotify.com/embed/${parts[index]}/${parts[index + 1]}?utm_source=generator&theme=0`;
+      const raw = typeof input === 'string' ? input : input?.url;
+      return raw ? new URL(raw, location.href).pathname : '';
     } catch {
       return '';
     }
   }
 
-  function soundCloudEmbedUrl(sourceUrl = '') {
-    try {
-      const url = new URL(sourceUrl);
-      if (url.hostname !== 'soundcloud.com' && !url.hostname.endsWith('.soundcloud.com')) return '';
-      const params = new URLSearchParams({
-        url: url.toString(),
-        auto_play: 'true',
-        hide_related: 'true',
-        show_comments: 'false',
-        show_user: 'true',
-        show_reposts: 'false',
-        visual: 'false',
-      });
-      return `https://w.soundcloud.com/player/?${params.toString()}`;
-    } catch {
-      return '';
-    }
-  }
-
-  function providerEmbed(song, sourceUrl, provider) {
-    if (provider === 'youtube') {
-      const videoId = youtubeVideoId(song, sourceUrl);
-      if (!videoId) return null;
-      const fullReleaseOnly = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
-      const params = new URLSearchParams({ autoplay: fullReleaseOnly ? '0' : '1', playsinline: '1', rel: '0', controls: '1' });
-      const startSeconds = Math.max(0, Number(song?.youtubeStartSeconds || 0));
-      if (!fullReleaseOnly && startSeconds > 0) params.set('start', String(Math.floor(startSeconds)));
-      return {
-        src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`,
-        title: fullReleaseOnly ? 'YouTube full release' : 'YouTube playback',
-        className: 'is-youtube-release',
-        allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen',
-        fullReleaseOnly,
-      };
-    }
-
-    if (provider === 'spotify') {
-      const src = spotifyEmbedUrl(sourceUrl);
-      if (!src) return null;
-      return {
-        src,
-        title: 'Spotify playback',
-        className: 'is-spotify',
-        allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
-      };
-    }
-
-    if (provider === 'apple-music') {
-      try {
-        const url = new URL(sourceUrl);
-        if (url.hostname !== 'music.apple.com' && !url.hostname.endsWith('.music.apple.com')) return null;
-        url.hostname = 'embed.music.apple.com';
-        return {
-          src: url.toString(),
-          title: 'Apple Music playback',
-          className: 'is-apple',
-          allow: 'autoplay *; encrypted-media *; fullscreen *',
-        };
-      } catch {
-        return null;
-      }
-    }
-
-    if (provider === 'soundcloud') {
-      const src = soundCloudEmbedUrl(sourceUrl);
-      if (!src) return null;
-      return {
-        src,
-        title: 'SoundCloud playback',
-        className: 'is-soundcloud',
-        allow: 'autoplay',
-      };
-    }
-
-    return null;
-  }
-
-  function ensureProviderStage() {
-    let stage = $('providerStage');
-    if (stage) return stage;
-
-    stage = document.createElement('section');
-    stage.id = 'providerStage';
-    stage.className = 'provider-dock';
-    stage.setAttribute('aria-label', 'Playback source');
-    stage.setAttribute('aria-hidden', 'true');
-    stage.innerHTML = `
-      <div class="provider-media" id="providerMedia"></div>
-      <div class="provider-dock-bar">
-        <span id="providerDockNote">Playback source</span>
-        <div class="provider-dock-actions">
-          <a id="providerDockOpen" class="provider-dock-open" target="_blank" rel="noopener noreferrer">Open source</a>
-          <button type="button" id="providerDockStop" aria-label="Close playback source">Close</button>
-        </div>
-      </div>`;
-    document.body.append(stage);
-    stage.querySelector('#providerDockStop')?.addEventListener('click', closeProvider);
-    return stage;
-  }
-
-  function syncProviderControls(active) {
-    for (const button of [playButton, miniPlay]) {
-      if (!button) continue;
-      if (active) {
-        button.setAttribute('aria-label', 'Close provider player');
-        button.title = 'Close provider player';
-      } else {
-        button.setAttribute('aria-label', 'Play');
-        button.title = 'Play';
-      }
-    }
-  }
-
-  function closeProvider() {
-    const stage = $('providerStage');
-    if (!stage || stage.getAttribute('aria-hidden') === 'true') return;
-    stage.classList.remove('open', 'is-spotify', 'is-apple', 'is-soundcloud', 'is-youtube-release', 'is-external');
-    stage.setAttribute('aria-hidden', 'true');
-    $('providerMedia')?.replaceChildren();
-    providerSongId = null;
-    syncProviderControls(false);
-  }
-
-  function externalProviderCard(song, sourceUrl, provider) {
-    const name = providerName(provider);
-    const card = document.createElement('div');
-    card.className = 'provider-external';
-    const heading = document.createElement('strong');
-    const copy = document.createElement('span');
-    const unchapteredYoutubeRelease = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
-    heading.textContent = unchapteredYoutubeRelease ? 'Open the verified full release' : `Continue on ${name}`;
-    copy.textContent = unchapteredYoutubeRelease
-      ? `GARBA has a verified multi-song YouTube source, but no verified timestamp for ${song?.title || 'this song'}. The full release will open without pretending it starts at the selected song.`
-      : song?.playbackSourceType === 'verified-release-source'
-        ? 'GARBA verified the release, but this provider does not offer a safe in-app embed for this source.'
-        : 'This verified source opens on the provider because a reliable in-app embed is not available.';
-    const action = document.createElement('a');
-    action.className = 'provider-external-action';
-    action.href = sourceUrl;
-    action.target = '_blank';
-    action.rel = 'noopener noreferrer';
-    action.textContent = unchapteredYoutubeRelease ? 'Open full release on YouTube' : `Open ${name}`;
-    card.append(heading, copy, action);
-    return card;
-  }
-
-  async function openProvider(song) {
-    if (!song || hasDirectAudio()) return;
-    if (!navigator.onLine) {
-      announce('You are offline. Provider-backed songs need an internet connection.');
-      return;
-    }
-
-    const sourceUrl = String(song.playbackSourceUrl || '').trim()
-      || (song.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(song.youtubeId)}` : '');
-    if (!sourceUrl) {
-      announce('This track does not have a playable source yet.');
-      return;
-    }
-
-    const stage = ensureProviderStage();
-    if (providerSongId === song.id && stage.classList.contains('open')) {
-      closeProvider();
-      return;
-    }
-
-    const provider = inferProvider(song, sourceUrl);
-    const name = providerName(provider);
-    const embed = providerEmbed(song, sourceUrl, provider);
-    const media = $('providerMedia');
-    const note = $('providerDockNote');
-    const openSource = $('providerDockOpen');
-
-    audio?.pause();
-    closeProvider();
-    stage.classList.add('open');
-    stage.setAttribute('aria-hidden', 'false');
-    providerSongId = song.id || null;
-    syncProviderControls(true);
-    if (openSource) {
-      openSource.href = sourceUrl;
-      openSource.textContent = `Open ${name}`;
-      openSource.setAttribute('aria-label', `Open source on ${name}`);
-    }
-
-    if (embed) {
-      stage.classList.add(embed.className);
-      const iframe = document.createElement('iframe');
-      iframe.src = embed.src;
-      iframe.title = embed.title;
-      iframe.allow = embed.allow;
-      iframe.loading = 'eager';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.setAttribute('allowfullscreen', '');
-      media?.replaceChildren(iframe);
-      if (note) {
-        if (embed.fullReleaseOnly) {
-          note.textContent = `Verified full release · choose ${song.title} manually · exact timestamp not verified`;
-        } else if (song.playbackSourceType === 'verified-release-source') {
-          note.textContent = `Verified release · ${name} · choose ${song.title}`;
-        } else if (song.playbackSourceType === 'verified-performance-chapter') {
-          note.textContent = 'Verified live version · starts at the mapped song chapter';
-        } else {
-          note.textContent = provider === 'youtube' ? 'Playing in GARBA · tap the video if autoplay is blocked' : `Playing via ${name}`;
-        }
-      }
-      return;
-    }
-
-    stage.classList.add('is-external');
-    media?.replaceChildren(externalProviderCard(song, sourceUrl, provider));
-    if (note) note.textContent = song.playbackSourceType === 'verified-unchaptered-youtube-release'
-      ? 'Verified full release · exact song timestamp not verified'
-      : `Verified source · ${name}`;
-  }
-
-  async function fallbackPlay() {
-    if (hasDirectAudio()) return;
-    const song = await currentSong();
-    if (!song || hasDirectAudio()) return;
-    await openProvider(song);
-  }
-
-  function interceptFallbackPlay(event) {
-    if (hasDirectAudio()) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    fallbackPlay();
-  }
-
-  function interceptGlobalSpace(event) {
-    if (event.code !== 'Space') return;
-    const target = event.target;
-    const interactive = target instanceof Element
-      && Boolean(target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
-    if (interactive) {
-      event.stopImmediatePropagation();
-      return;
-    }
-    if (hasDirectAudio()) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    fallbackPlay();
-  }
-
-  function copyText(text) {
-    if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
-    return new Promise((resolve, reject) => {
-      const field = document.createElement('textarea');
-      field.value = text;
-      field.setAttribute('readonly', '');
-      field.style.position = 'fixed';
-      field.style.opacity = '0';
-      document.body.append(field);
-      field.select();
-      try {
-        if (!document.execCommand('copy')) throw new Error('copy failed');
-        resolve();
-      } catch (error) {
-        reject(error);
-      } finally {
-        field.remove();
-      }
-    });
-  }
-
-  async function shareCurrent(event) {
-    event.preventDefault();
-    const song = await currentSong();
-    const title = song?.title || String($('songTitle')?.textContent || 'GARBA').trim();
-    const artist = song?.artist || String($('songArtist')?.textContent || '').trim();
-    const url = new URL(location.href);
-    url.searchParams.delete('browse');
-    url.searchParams.delete('source');
-    const text = artist ? `${title} by ${artist}` : title;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: `${title} · GARBA`, text, url: url.toString() });
-        return;
-      }
-      await copyText(url.toString());
-      announce('Track link copied.');
-    } catch (error) {
-      if (error?.name !== 'AbortError') announce('Could not share this track.');
-    }
-  }
-
-  function constrainedConnection() {
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    return Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
-  }
-
-  function requestedGenre() {
-    const fromApp = String(app?.dataset.genre || '').trim();
-    if (HQ_VISUALS[fromApp]) return fromApp;
-    const fromUrl = new URL(location.href).searchParams.get('genre');
-    return HQ_VISUALS[fromUrl] ? fromUrl : 'traditional';
-  }
-
-  function promoteCurrentVisual() {
-    if (constrainedConnection()) return;
-    const genre = requestedGenre();
-    const src = HQ_VISUALS[genre];
-    if (!src) return;
-    const token = ++visualToken;
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => {
-      if (token !== visualToken || requestedGenre() !== genre) return;
-      requestAnimationFrame(() => {
-        const layer = document.querySelector('.world-layer.is-visible');
-        if (!layer || requestedGenre() !== genre) return;
-        layer.style.backgroundImage = `url("${src}"), url("assets/backgrounds/${genre}.svg")`;
-        layer.dataset.backgroundQuality = '2k-webp';
-      });
+  function localJson(data) {
+    return {
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'Content-Type': 'application/json; charset=utf-8' }),
+      async json() { return data; },
+      async text() { return JSON.stringify(data); },
+      clone() { return localJson(data); },
     };
-    image.src = src;
   }
 
-  function scheduleVisualPromotion() {
-    const run = () => promoteCurrentVisual();
-    if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 1800 });
-    else setTimeout(run, 450);
+  window.fetch = (input, init) => {
+    const path = requestPath(input);
+    if (path.endsWith('/data/genres.json')) return Promise.resolve(localJson(bootGenres));
+    if (path.endsWith('/data/songs.json')) return Promise.resolve(localJson(bootSongs));
+    return nativeFetch(input, init);
+  };
+
+  async function hydrate() {
+    if (hydratePromise) return hydratePromise;
+    hydratePromise = (async () => {
+      try {
+        const [genresResponse, songsResponse] = await Promise.all([
+          nativeFetch('data/genres.json', { cache: 'default' }),
+          nativeFetch('data/songs.json', { cache: 'default' }),
+        ]);
+        if (!genresResponse.ok || !songsResponse.ok) throw new Error('Full catalogue request failed');
+        const [genres, songs] = await Promise.all([genresResponse.json(), songsResponse.json()]);
+        if (!Array.isArray(genres) || !Array.isArray(songs) || !songs.length) throw new Error('Full catalogue is invalid');
+
+        bootGenres.splice(0, bootGenres.length, ...genres);
+        bootSongs.splice(0, bootSongs.length, ...songs);
+        hydrated = true;
+        window.GARBA_CATALOGUE_READY = true;
+        window.dispatchEvent(new CustomEvent('garba:catalogue-ready', { detail: { songs: songs.length } }));
+        window.dispatchEvent(new Event('online'));
+        return true;
+      } catch (error) {
+        console.warn('GARBA full catalogue will retry on demand; fast catalogue remains active.', error);
+        hydratePromise = null;
+        return false;
+      }
+    })();
+    return hydratePromise;
   }
 
-  function updateNetworkState() {
-    if (!networkStatus) return;
-    const offline = !navigator.onLine;
-    networkStatus.textContent = offline ? 'Offline' : '';
-    networkStatus.setAttribute('aria-hidden', String(!offline));
-    networkStatus.title = offline ? 'Offline. Provider-backed playback is unavailable.' : '';
-    networkStatus.classList.toggle('show', offline);
+  function scheduleHydration() {
+    const run = () => hydrate();
+    if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 2600 });
+    else setTimeout(run, 1800);
   }
 
-  function setupMediaSessionFallback() {
-    if (!('mediaSession' in navigator)) return;
-    try { navigator.mediaSession.setActionHandler('play', () => playButton?.click()); } catch { /* unsupported */ }
-    try {
-      navigator.mediaSession.setActionHandler('pause', () => {
-        if (providerSongId) closeProvider();
-        else audio?.pause();
-      });
-    } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('stop', () => providerSongId ? closeProvider() : audio?.pause()); } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('previoustrack', () => $('prevButton')?.click()); } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('nexttrack', () => $('nextButton')?.click()); } catch { /* unsupported */ }
-    try {
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (!hasDirectAudio() || !Number.isFinite(details.seekTime)) return;
-        audio.currentTime = Math.max(0, Math.min(details.seekTime, Number.isFinite(audio.duration) ? audio.duration : details.seekTime));
-      });
-    } catch { /* unsupported */ }
-  }
+  window.GARBA_FAST_BOOT = {
+    genres: bootGenres,
+    songs: bootSongs,
+    hydrate,
+    get hydrated() { return hydrated; },
+  };
 
-  genreStrip?.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-static-genre="true"]');
-    if (!button) return;
-    const url = new URL(location.href);
-    url.searchParams.set('genre', button.dataset.genre);
-    url.searchParams.delete('song');
-    location.assign(url.toString());
-  });
-
-  playButton?.addEventListener('click', interceptFallbackPlay, { capture: true });
-  miniPlay?.addEventListener('click', interceptFallbackPlay, { capture: true });
-  shareButton?.addEventListener('click', shareCurrent);
-  document.addEventListener('keydown', interceptGlobalSpace);
-
-  if (songTitle) {
-    new MutationObserver(() => {
-      closeProvider();
-      scheduleVisualPromotion();
-    }).observe(songTitle, { childList: true, characterData: true, subtree: true });
-  }
-
-  if (app) {
-    new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.attributeName === 'data-genre')) scheduleVisualPromotion();
-    }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
-  }
-
-  window.addEventListener('online', updateNetworkState);
-  window.addEventListener('offline', () => {
-    const hadProvider = Boolean(providerSongId);
-    closeProvider();
-    updateNetworkState();
-    announce(hadProvider ? 'Offline. Provider playback was closed.' : 'You are offline.');
-  });
-  window.addEventListener('load', () => {
-    setupMediaSessionFallback();
-    scheduleVisualPromotion();
-    setTimeout(() => { loadSongs(); }, 600);
-  }, { once: true });
-  window.addEventListener('pageshow', clearStaleInert);
-  document.addEventListener('pointerdown', clearStaleInert, { capture: true, once: true });
-
-  updateNetworkState();
-  clearStaleInert();
+  if (document.readyState === 'complete') scheduleHydration();
+  else window.addEventListener('load', scheduleHydration, { once: true });
 })();
+
+document.write('<script src="provider-runtime.js"><\/script>');
