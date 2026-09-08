@@ -16,6 +16,7 @@ const visualByGenre = {
   fusion: '../assets/backgrounds/library/05-fusion-gujarati-neon.webp',
 };
 
+const BASE_DOCUMENT_TITLE = 'Explore Gujarati Garba · PlayGarba';
 const $ = (id) => document.getElementById(id);
 const main = document.querySelector('main');
 const els = {
@@ -25,6 +26,8 @@ const els = {
   home: $('collectionHome'),
   detail: $('collectionDetail'),
   back: $('backToCollections'),
+  share: null,
+  status: null,
   detailKicker: $('detailKicker'),
   detailTitle: $('detailTitle'),
   detailDescription: $('detailDescription'),
@@ -52,6 +55,7 @@ const state = {
   activeReleaseId: null,
   eventsWired: false,
   loadFailed: false,
+  returnFocusTarget: null,
 };
 
 const SONG_BATCH_SIZE = 160;
@@ -82,6 +86,89 @@ const allSongText = (song, release) => normalise([
   release?.artist,
   release?.label,
 ].filter(Boolean).join(' '));
+
+function ensureShareUi() {
+  if (!els.detail) return;
+  if (!els.status) {
+    const status = document.createElement('p');
+    status.id = 'catalogueStatus';
+    status.className = 'sr-only';
+    status.setAttribute('aria-live', 'polite');
+    status.setAttribute('aria-atomic', 'true');
+    els.detail.before(status);
+    els.status = status;
+  }
+  if (!els.share) {
+    const actions = document.createElement('div');
+    actions.className = 'detail-actions';
+    const share = document.createElement('button');
+    share.id = 'shareCollection';
+    share.className = 'share-explore-state';
+    share.type = 'button';
+    share.textContent = 'Share';
+    share.setAttribute('aria-label', 'Share this PlayGarba catalogue');
+    actions.append(els.back, share);
+    els.detail.prepend(actions);
+    els.share = share;
+  }
+  if (!document.querySelector('style[data-playgarba-explore-share]')) {
+    const style = document.createElement('style');
+    style.dataset.playgarbaExploreShare = '';
+    style.textContent = `
+      .detail-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+      .detail-actions .back-button{margin-bottom:0}
+      .share-explore-state{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:var(--text);background:rgba(20,19,24,.44);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease}
+      .share-explore-state:hover{transform:translateY(-1px);background:rgba(31,29,35,.58);border-color:rgba(255,255,255,.24)}
+      .share-explore-state:active{transform:scale(.98)}
+      .share-explore-state:focus-visible{outline:2px solid var(--gold,var(--accent,#d9b26f));outline-offset:3px}
+      @media(max-width:640px){.detail-actions{margin-bottom:18px}.share-explore-state{min-height:40px;padding-inline:14px}}
+      @media(prefers-reduced-motion:reduce){.share-explore-state{transition:none!important}}
+    `;
+    document.head.append(style);
+  }
+}
+
+function announce(message) {
+  if (!els.status) return;
+  els.status.textContent = '';
+  queueMicrotask(() => { els.status.textContent = message; });
+}
+
+function collectionCardFor(id) {
+  if (!id) return null;
+  return [...document.querySelectorAll('.collection-card')].find((card) => card.dataset.collectionId === id) || null;
+}
+
+function searchReturnControl() {
+  return document.querySelector('.search-explore') || els.search;
+}
+
+function focusDetailHeading() {
+  queueMicrotask(() => els.detailTitle?.focus({ preventScroll: true }));
+}
+
+function restoreExploreFocus(target) {
+  if (!(target instanceof HTMLElement) || !target.isConnected) return;
+  queueMicrotask(() => target.focus({ preventScroll: false }));
+}
+
+function syncShareLabel(label) {
+  if (!els.share) return;
+  els.share.setAttribute('aria-label', `Share ${label}`);
+  els.share.title = `Share ${label}`;
+}
+
+function syncCollectionIdentity() {
+  if (!state.active || state.active.id === 'search') return;
+  const release = state.activeReleaseId ? state.releaseById.get(state.activeReleaseId) : null;
+  if (release) {
+    document.title = `${release.title} · PlayGarba`;
+    syncShareLabel(release.title);
+    return;
+  }
+  document.title = `${state.active.title} · PlayGarba`;
+  syncShareLabel(state.active.title);
+}
 
 async function fetchJson(url, fallback = null) {
   try {
@@ -242,13 +329,14 @@ function renderCollectionCard(collection) {
   card.querySelector('strong').textContent = collection.title;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
   card.querySelector('.collection-copy span').textContent = `${collection.songs.length.toLocaleString()} songs · ${releaseCount.toLocaleString()} releases`;
-  card.addEventListener('click', () => openCollection(collection.id));
+  card.addEventListener('click', () => openCollection(collection.id,{trigger:card}));
   return card;
 }
 
-function openEssentialRelease(releaseId) {
-  if (!openCollection('essential-releases')) return;
+function openEssentialRelease(releaseId, trigger = null) {
+  if (!openCollection('essential-releases',{trigger,focusHeading:false})) return;
   filterToRelease(releaseId,{scroll:false});
+  focusDetailHeading();
 }
 
 function renderEssentialReleases() {
@@ -290,7 +378,7 @@ function renderEssentialReleases() {
     const year = releaseYear(release);
     meta.textContent = [release.artist, year || null, `${songs.length} ${songs.length===1?'song':'songs'}`].filter(Boolean).join(' · ');
     button.append(title,meta);
-    button.addEventListener('click',()=>openEssentialRelease(release.id));
+    button.addEventListener('click',()=>openEssentialRelease(release.id,button));
     rail.append(button);
   });
 
@@ -472,9 +560,11 @@ function syncBackLabel() {
   els.back.textContent = state.activeReleaseId ? '← Collection' : '← All catalogues';
 }
 
-function openCollection(id, { updateHash = true } = {}) {
+function openCollection(id, { updateHash = true, trigger = null, focusHeading = true } = {}) {
   const collection = state.collections.find((item)=>item.id===id);
   if (!collection) return false;
+  if (trigger instanceof HTMLElement) state.returnFocusTarget = trigger;
+  else if (!state.returnFocusTarget) state.returnFocusTarget = collectionCardFor(id);
   state.active = collection;
   state.activeSongs = collection.songs;
   state.activeReleaseId = null;
@@ -484,6 +574,7 @@ function openCollection(id, { updateHash = true } = {}) {
   els.detailKicker.textContent = collection.kicker;
   els.detailTitle.textContent = collection.title;
   els.detailDescription.textContent = collection.description;
+  syncCollectionIdentity();
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
   els.detailMeta.replaceChildren();
   [`${collection.songs.length.toLocaleString()} songs`,`${releaseCount.toLocaleString()} releases`].forEach((text)=>{
@@ -493,6 +584,7 @@ function openCollection(id, { updateHash = true } = {}) {
   renderSongs(collection.songs);
   if (updateHash) history.pushState({collection:id},'',collectionHash(id));
   window.scrollTo({top:0,behavior:motionBehavior()});
+  if (focusHeading) focusDetailHeading();
   return true;
 }
 
@@ -503,6 +595,7 @@ function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}
   if (!release || !songs.length) return false;
   state.activeReleaseId = releaseId;
   syncBackLabel();
+  syncCollectionIdentity();
   renderReleases(state.activeSongs);
   renderSongs(songs, release.title || 'Release songs');
   if (updateHistory) {
@@ -522,20 +615,29 @@ function showAllSongs({ updateHistory = true } = {}) {
   if (!state.active || state.active.id === 'search') return;
   state.activeReleaseId = null;
   syncBackLabel();
+  syncCollectionIdentity();
   renderReleases(state.activeSongs);
   renderSongs(state.activeSongs);
   if (updateHistory) history.pushState({collection:state.active.id},'',collectionHash(state.active.id));
 }
 
-function closeCollection({ updateHash = true } = {}) {
+function closeCollection({ updateHash = true, restoreFocus = true } = {}) {
+  const activeId = state.active?.id;
+  const focusTarget = state.returnFocusTarget
+    || (activeId && activeId !== 'search' ? collectionCardFor(activeId) : null)
+    || (activeId === 'search' ? searchReturnControl() : null);
+  const hadActiveState = Boolean(state.active);
   state.active = null;
   state.activeSongs = [];
   state.activeReleaseId = null;
+  state.returnFocusTarget = null;
   syncBackLabel();
   els.detail.hidden = true;
   els.home.hidden = false;
+  document.title = BASE_DOCUMENT_TITLE;
   if (updateHash) history.replaceState({},'',`${location.pathname}${location.search}`);
-  window.scrollTo({top:0,behavior:motionBehavior()});
+  if (restoreFocus && focusTarget) restoreExploreFocus(focusTarget);
+  else if (hadActiveState) window.scrollTo({top:0,behavior:motionBehavior()});
 }
 
 function returnToCollections() {
@@ -564,6 +666,7 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
     const text = allSongText(song,release);
     return terms.every((term)=>text.includes(term));
   });
+  if (state.active?.id !== 'search') state.returnFocusTarget = searchReturnControl();
   state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists and release metadata from the PlayGarba catalogue.', songs };
   state.activeSongs = songs;
   state.activeReleaseId = null;
@@ -573,6 +676,8 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
   els.detailKicker.textContent = 'Search results';
   els.detailTitle.textContent = query.trim();
   els.detailDescription.textContent = 'Matching songs, artists and albums from the PlayGarba catalogue.';
+  document.title = `Search “${query.trim()}” · PlayGarba`;
+  syncShareLabel(`search results for ${query.trim()}`);
   els.detailMeta.replaceChildren();
   const pill = document.createElement('span'); pill.textContent=`${songs.length.toLocaleString()} matches`; els.detailMeta.append(pill);
   renderReleases(songs);
@@ -584,15 +689,65 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
   }
 }
 
+function copyLinkFallback(text) {
+  const area = document.createElement('textarea');
+  area.value = text;
+  area.setAttribute('readonly','');
+  area.style.position = 'fixed';
+  area.style.opacity = '0';
+  document.body.append(area);
+  area.select();
+  const copied = document.execCommand('copy');
+  area.remove();
+  return copied;
+}
+
+async function shareExploreState() {
+  if (!state.active) return;
+  const query = els.search.value.trim();
+  const release = state.activeReleaseId ? state.releaseById.get(state.activeReleaseId) : null;
+  const title = state.active.id === 'search'
+    ? `Search “${query}” · PlayGarba`
+    : release
+      ? `${release.title} · PlayGarba`
+      : `${state.active.title} · PlayGarba`;
+  const text = state.active.id === 'search'
+    ? `PlayGarba search results for ${query}.`
+    : release
+      ? `${release.title} from ${state.active.title} on PlayGarba.`
+      : state.active.description;
+  const payload = { title, text, url: location.href };
+
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share(payload);
+      announce('Share completed.');
+      return;
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+    }
+  }
+
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(payload.url);
+    else if (!copyLinkFallback(payload.url)) throw new Error('Copy failed');
+    announce('Explore link copied.');
+  } catch {
+    announce('Could not copy this link. Use the browser address bar instead.');
+  }
+}
+
 function wireEvents() {
   if (state.eventsWired) return;
   state.eventsWired = true;
+  ensureShareUi();
   let timer = null;
   els.search.addEventListener('input',()=>{
     clearTimeout(timer);
     timer = setTimeout(()=>searchCatalogue(els.search.value),90);
   });
   els.back.addEventListener('click',returnToCollections);
+  els.share?.addEventListener('click',()=>{ void shareExploreState(); });
   els.showAllSongs.addEventListener('click',()=>showAllSongs());
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || els.detail.hidden) return;
@@ -607,20 +762,23 @@ function applyHashState() {
   const id = params.get('collection');
   const releaseId = params.get('release');
   const search = params.get('search');
-  if (id && openCollection(id,{updateHash:false})) {
+  if (id && openCollection(id,{updateHash:false,focusHeading:false})) {
     if (releaseId) filterToRelease(releaseId,{updateHistory:false,scroll:false});
+    focusDetailHeading();
   } else if (search) {
+    if (!state.returnFocusTarget) state.returnFocusTarget = searchReturnControl();
     els.search.value=search;
     searchCatalogue(search,{updateHistory:false});
   } else {
     els.search.value='';
-    closeCollection({updateHash:false});
+    closeCollection({updateHash:false,restoreFocus:Boolean(state.active)});
   }
 }
 
 function setLoading(loading) {
   main?.setAttribute('aria-busy', loading ? 'true' : 'false');
   els.search.disabled = loading;
+  if (els.share) els.share.disabled = loading;
 }
 
 async function init() {
