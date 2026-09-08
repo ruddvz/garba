@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "updated": "2026-09-08",
-  "note": "Disposable route-quality test for Anand (Non Stop Garba, Vol. 8). All 18 official Amazon Music album track links are independently verified; this branch is used to identify the one song that already has a stronger exact route before the final manifest is trimmed.",
+  "note": "Release-specific exact routes for the 17 Anand (Non Stop Garba, Vol. 8) songs that remain provider fallbacks, matched to independently verified official Amazon Music album track links. Ghor Andhari Re intentionally retains its stronger verified YouTube performance-chapter route from the official Aditya Gadhvi Ochhav 2023 set. No provider IDs or track positions were inferred.",
   "songSources": {
     "anand-vol8-2001-01-abil-gulal": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMVUIW","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":1,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-02-dhanya-maa-tu-jogni": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMVVOA","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":2,"evidenceType":"official-amazon-music-album-track-link"},
@@ -16,7 +16,6 @@
     "anand-vol8-2001-11-maro-garbo": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMW9TG","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":11,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-12-garbe-rame-ambe": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWB8U","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":12,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-13-maa-sundargadhthi-utrya": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWCRK","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":13,"evidenceType":"official-amazon-music-album-track-link"},
-    "anand-vol8-2001-14-ghor-andhari-re": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWE78","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":14,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-15-chotu-chotu-re": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWFJU","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":15,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-16-navrangi-odhni-chundadi-ma": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWHEI","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":16,"evidenceType":"official-amazon-music-album-track-link"},
     "anand-vol8-2001-17-chundaladi-odho-ho-rangni": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B00NJMWIQA","sourceType":"verified-track-source","releaseId":"anand-vol8-2001","trackNumber":17,"evidenceType":"official-amazon-music-album-track-link"},
