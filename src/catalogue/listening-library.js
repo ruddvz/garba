@@ -1,12 +1,15 @@
 const SESSION_KEY = 'garba:session';
 const FAVOURITES_KEY = 'garba:favourites';
 const MAX_FAVOURITES = 6;
+const EXPLORE_RETURN_STATE_KEY = 'playgarbaExploreReturn';
+const EXPLORE_RETURN_MAX_AGE = 2 * 60 * 60 * 1000;
 
 const sections = document.getElementById('catalogueSections');
 const catalogueCount = document.getElementById('catalogueCount');
 let cataloguePromise = null;
 let catalogueData = null;
 let renderQueued = false;
+let returnRestoreTimer = 0;
 
 function readStoredJson(key, fallback) {
   try {
@@ -320,8 +323,114 @@ function watchCatalogueRenders() {
   observer.observe(sections, { childList: true });
 }
 
+function plainPrimaryNavigation(event) {
+  return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+}
+
+function songIdForPlayerLink(link) {
+  try {
+    const destination = new URL(link.href, location.href);
+    if (destination.origin !== location.origin) return null;
+    return destination.searchParams.get('song');
+  } catch {
+    return null;
+  }
+}
+
+function captureExploreReturnState(link, event) {
+  const songId = songIdForPlayerLink(link);
+  if (!songId) return;
+  const currentState = history.state && typeof history.state === 'object' ? history.state : {};
+  const songRows = document.querySelectorAll('#catalogueSongList .song-row').length;
+  const context = {
+    v: 1,
+    at: Date.now(),
+    href: location.href,
+    hash: location.hash,
+    songId,
+    scrollY: Math.max(0, window.scrollY || 0),
+    linkTop: link.getBoundingClientRect().top,
+    songRows,
+    restoreFocus: event.detail === 0 || document.activeElement === link,
+  };
+  try {
+    history.replaceState({ ...currentState, [EXPLORE_RETURN_STATE_KEY]: context }, '', location.href);
+  } catch {
+    // History state can be unavailable in unusual embedded contexts; navigation still works.
+  }
+}
+
+function currentExploreReturnState() {
+  const context = history.state?.[EXPLORE_RETURN_STATE_KEY];
+  if (!context || context.v !== 1 || context.href !== location.href) return null;
+  if (!Number.isFinite(Number(context.at)) || Date.now() - Number(context.at) > EXPLORE_RETURN_MAX_AGE) return null;
+  return context;
+}
+
+function findReturnLink(songId) {
+  if (!songId) return null;
+  const links = document.querySelectorAll('a.play-link[href], a.personal-listening-card[href]');
+  for (const link of links) {
+    if (songIdForPlayerLink(link) === songId) return link;
+  }
+  return null;
+}
+
+function expandSongRowsForReturn(context) {
+  let link = findReturnLink(context.songId);
+  let guard = 0;
+  while (!link && guard < 8) {
+    const rows = document.querySelectorAll('#catalogueSongList .song-row').length;
+    const more = document.querySelector('#catalogueSongList .song-more');
+    if (!more || (context.songRows > 0 && rows >= context.songRows)) break;
+    more.click();
+    guard += 1;
+    link = findReturnLink(context.songId);
+  }
+  return link;
+}
+
+function alignReturnTarget(context, link, { focus = false } = {}) {
+  if (!link?.isConnected) return;
+  if (Number.isFinite(Number(context.linkTop))) {
+    const delta = link.getBoundingClientRect().top - Number(context.linkTop);
+    if (Math.abs(delta) > 1) window.scrollBy({ top: delta, left: 0, behavior: 'auto' });
+  }
+  if (focus && context.restoreFocus) link.focus({ preventScroll: true });
+}
+
+function restoreExploreReturnState(attempt = 0) {
+  clearTimeout(returnRestoreTimer);
+  const context = currentExploreReturnState();
+  if (!context) return;
+  if (!catalogueReady()) {
+    if (attempt < 100) returnRestoreTimer = window.setTimeout(() => restoreExploreReturnState(attempt + 1), 50);
+    return;
+  }
+
+  const link = expandSongRowsForReturn(context) || findReturnLink(context.songId);
+  if (!link && attempt < 100) {
+    returnRestoreTimer = window.setTimeout(() => restoreExploreReturnState(attempt + 1), 50);
+    return;
+  }
+
+  window.scrollTo({ top: Math.max(0, Number(context.scrollY) || 0), left: 0, behavior: 'auto' });
+  requestAnimationFrame(() => requestAnimationFrame(() => alignReturnTarget(context, findReturnLink(context.songId) || link, { focus: true })));
+  window.setTimeout(() => alignReturnTarget(context, findReturnLink(context.songId) || link), 420);
+}
+
+document.addEventListener('click', (event) => {
+  if (!plainPrimaryNavigation(event)) return;
+  const link = event.target instanceof Element
+    ? event.target.closest('a.play-link[href], a.personal-listening-card[href]')
+    : null;
+  if (!link || link.target || link.hasAttribute('download')) return;
+  captureExploreReturnState(link, event);
+}, true);
+
 window.addEventListener('pageshow', (event) => {
   if (event.persisted) queueListeningRender();
+  else restoreExploreReturnState();
 });
 window.addEventListener('storage', (event) => {
   if (event.key === SESSION_KEY || event.key === FAVOURITES_KEY) queueListeningRender();
