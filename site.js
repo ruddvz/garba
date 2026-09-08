@@ -56,8 +56,8 @@
   };
 
   const ensureFaqNavigation = () => {
-    if (nav && !nav.querySelector('a[href="/faq/"]')) {
-      const about = nav.querySelector('a[href="/about/"]');
+    if (nav && !nav.querySelector('a[href="/faq/"], a[href="faq/"]')) {
+      const about = nav.querySelector('a[href="/about/"], a[href="about/"]');
       const faq = document.createElement('a');
       faq.href = '/faq/';
       faq.textContent = 'FAQ';
@@ -67,7 +67,7 @@
     }
 
     document.querySelectorAll('.footer-links').forEach((footer) => {
-      if (footer.querySelector('a[href="/faq/"]') || footer.querySelector('a[href="faq/"]')) return;
+      if (footer.querySelector('a[href="/faq/"], a[href="faq/"]')) return;
       const about = footer.querySelector('a[href="/about/"], a[href="about/"]');
       const faq = document.createElement('a');
       faq.href = '/faq/';
