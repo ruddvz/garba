@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v14`;
+const CACHE_NAME = `${CACHE_PREFIX}v15`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -17,6 +17,7 @@ const CORE_SHELL = [
   './catalogue/catalogue.css',
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
+  './catalogue/search-surface.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -55,6 +56,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/catalogue.css',
   '/catalogue/catalogue.js',
   '/catalogue/listening-library.js',
+  '/catalogue/search-surface.js',
 ];
 
 self.addEventListener('install', (event) => {
