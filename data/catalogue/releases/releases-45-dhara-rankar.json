@@ -1,0 +1,44 @@
+[
+  {
+    "id": "dhara-rankar-2025",
+    "title": "Rankar",
+    "artist": "Dhara Shah",
+    "releaseDate": "2025-08-25",
+    "originalReleaseYear": 2025,
+    "label": "Dhara Shah",
+    "categories": [
+      "traditional-garba",
+      "mataji-devotional",
+      "krishna-garba",
+      "folk-lokgeet"
+    ],
+    "visualGenre": "traditional",
+    "entryType": "album",
+    "songCount": 23,
+    "durationSeconds": 2248,
+    "series": "Rankar",
+    "volume": null,
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
+    "sources": [
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.com/albums/B0GN95N4LQ",
+        "kind": "official-23-track-album"
+      },
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=F0pzEoxowzM",
+        "kind": "official-artist-continuous-performance"
+      }
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified-multi-source",
+    "audioAvailability": "external-source-only",
+    "notes": "Amazon Music exposes the canonical 23-track August 25, 2025 album and supplies the track order and per-track durations used here. Dhara Shah's official artist-channel Rankar video independently verifies the release branding and many matching performances, but its 23 published chapter labels do not map one-for-one to the provider album: the video includes Chhogala Tara and Chhand where the Amazon album lists Rangalo and Duho. This batch therefore does not infer exact YouTube chapters for the streaming tracks; generated playback should remain on the verified release-level provider source until an exact track mapping is independently established."
+  }
+]
