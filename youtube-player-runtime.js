@@ -404,13 +404,17 @@
     setPlaying(false);
   }
 
+  function logicalDuration(song) {
+    return Math.max(0, Number(song?.youtubeDurationSeconds || song?.durationSeconds || 0));
+  }
+
   function restoreElapsed(song) {
     try {
       const session = JSON.parse(localStorage.getItem('garba:session') || '{}');
       if (session.songId !== song?.id) return 0;
       const saved = Number(session.elapsed || 0);
       if (!Number.isFinite(saved) || saved < 0) return 0;
-      const max = Number(song.durationSeconds || 0);
+      const max = logicalDuration(song);
       return max > 0 ? Math.min(saved, Math.max(0, max - 1)) : saved;
     } catch {
       return 0;
@@ -426,7 +430,7 @@
     stopPolling();
     activeSong = song;
     baseStart = Math.max(0, Number(song.youtubeStartSeconds || 0));
-    trackDuration = Math.max(0, Number(song.durationSeconds || 0));
+    trackDuration = logicalDuration(song);
     playerState = -1;
     lastPersistedSecond = -1;
     advanceLock = false;
