@@ -1,0 +1,43 @@
+name: Temporary Porkbun account probe
+
+on:
+  push:
+    branches: [codex/porkbun-spec-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+      PORKBUN_SECRET_API_KEY: ${{ secrets.PORKBUN_SECRET_API_KEY }}
+    steps:
+      - name: Check configured Porkbun credentials and read current state
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${PORKBUN_API_KEY:-}" ] || [ -z "${PORKBUN_SECRET_API_KEY:-}" ]; then
+            echo 'PORKBUN_SECRETS_CONFIGURED=false'
+            exit 0
+          fi
+          echo 'PORKBUN_SECRETS_CONFIGURED=true'
+
+          auth_headers=(
+            -H "X-API-Key: ${PORKBUN_API_KEY}"
+            -H "X-Secret-API-Key: ${PORKBUN_SECRET_API_KEY}"
+          )
+
+          echo '=== ping ==='
+          curl -fsS "${auth_headers[@]}" https://api.porkbun.com/api/json/v3/ping | jq '{status, yourIp}'
+
+          echo '=== hosting ==='
+          curl -fsS "${auth_headers[@]}" https://api.porkbun.com/api/json/v3/hosting/get/playgarba.com | jq '{status, hosting}'
+
+          echo '=== dns ==='
+          curl -fsS "${auth_headers[@]}" https://api.porkbun.com/api/json/v3/dns/retrieve/playgarba.com | jq '{status, records: [.records[] | {id,name,type,content,ttl,prio}]}'
+
+          echo '=== url forwards ==='
+          curl -fsS "${auth_headers[@]}" https://api.porkbun.com/api/json/v3/domain/getUrlForwarding/playgarba.com | jq '{status, forwards}'
