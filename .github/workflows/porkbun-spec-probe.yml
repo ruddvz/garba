@@ -1,0 +1,22 @@
+name: Temporary Porkbun API schema probe
+
+on:
+  push:
+    branches: [codex/porkbun-spec-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print relevant Porkbun v3.19 schemas
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://porkbun.com/api/json/v3/spec -o /tmp/spec.json
+          for path in '/hosting/get/{domain}' '/hosting/deploy/{domain}' '/domain/getUrlForwarding/{domain}' '/domain/addUrlForward/{domain}' '/domain/deleteUrlForward/{domain}/{id}' '/dns/retrieve/{domain}'; do
+            echo "=== $path ==="
+            jq --arg p "$path" '.paths[$p]' /tmp/spec.json
+          done
