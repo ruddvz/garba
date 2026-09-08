@@ -1,7 +1,7 @@
 {
-  "version": "0.18.1",
+  "version": "0.18.2",
   "updated": "2026-09-08",
-  "note": "Wave F routes for Rangtaali 2. Tracks 1-34 use starts published verbatim by verified Sur Sagar Music on the official full-set YouTube description. Track 35 has no published chapter and remains on the verified Amazon album fallback. Track 36 uses the separate official artist-channel full-track upload. No starts, ends or provider IDs are inferred.",
+  "note": "YouTube-only routes for all 36 Rangtaali 2 canonical entries. Tracks 1-34 use starts published verbatim by verified Sur Sagar Music on the official full-set YouTube description. Track 35 uses Aishwarya Majmudar's exact Official Artist Channel auto-generated track for the 2019 Sur Sagar release. Track 36 uses the separate official artist-channel full-track upload. No starts, ends or provider IDs are inferred.",
   "songSources": {
     "rangtaali-2-2019-01-maa-ne-vandan":{"provider":"youtube","videoId":"O11shxGqC78","startSeconds":2,"sourceUrl":"https://www.youtube.com/watch?v=O11shxGqC78&t=2s","sourceType":"verified-label-channel","releaseId":"rangtaali-2-2019","trackNumber":1,"evidenceType":"provider-published-official-chapter"},
     "rangtaali-2-2019-02-lagu-gunpati-ne-paay":{"provider":"youtube","videoId":"O11shxGqC78","startSeconds":98,"sourceUrl":"https://www.youtube.com/watch?v=O11shxGqC78&t=98s","sourceType":"verified-label-channel","releaseId":"rangtaali-2-2019","trackNumber":2,"evidenceType":"provider-published-official-chapter"},
@@ -37,7 +37,7 @@
     "rangtaali-2-2019-32-kanudo-shun-jaane-mari-preet":{"provider":"youtube","videoId":"O11shxGqC78","startSeconds":3746,"sourceUrl":"https://www.youtube.com/watch?v=O11shxGqC78&t=3746s","sourceType":"verified-label-channel","releaseId":"rangtaali-2-2019","trackNumber":32,"evidenceType":"provider-published-official-chapter"},
     "rangtaali-2-2019-33-dhuni-re-dhakhavi-beli":{"provider":"youtube","videoId":"O11shxGqC78","startSeconds":3845,"sourceUrl":"https://www.youtube.com/watch?v=O11shxGqC78&t=3845s","sourceType":"verified-label-channel","releaseId":"rangtaali-2-2019","trackNumber":33,"evidenceType":"provider-published-official-chapter"},
     "rangtaali-2-2019-34-chhand":{"provider":"youtube","videoId":"O11shxGqC78","startSeconds":3944,"sourceUrl":"https://www.youtube.com/watch?v=O11shxGqC78&t=3944s","sourceType":"verified-label-channel","releaseId":"rangtaali-2-2019","trackNumber":34,"evidenceType":"provider-published-official-chapter"},
-    "rangtaali-2-2019-35-nav-nav-naganiyo-no-rafdo":{"provider":"amazon-music","sourceUrl":"https://music.amazon.in/albums/B07XYGDZ3P","sourceType":"verified-release-source","releaseId":"rangtaali-2-2019","releaseSourceScope":"release","trackNumber":35,"evidenceType":"official-amazon-music-36-track-album"},
+    "rangtaali-2-2019-35-nav-nav-naganiyo-no-rafdo":{"provider":"youtube","videoId":"TMz1xMbXQjA","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=TMz1xMbXQjA","sourceType":"official-artist-channel","releaseId":"rangtaali-2-2019","trackNumber":35,"evidenceType":"official-youtube-auto-generated-track"},
     "rangtaali-2-2019-36-rangtaali-2-non-stop-garba":{"provider":"youtube","videoId":"ay6FfbwMjKQ","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=ay6FfbwMjKQ","sourceType":"official-artist-channel","releaseId":"rangtaali-2-2019","trackNumber":36,"evidenceType":"official-distributor-full-track-upload"}
   }
 }
