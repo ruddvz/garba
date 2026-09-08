@@ -1,5 +1,5 @@
 {
-  "version": "0.17.6",
+  "version": "0.17.7",
   "songCount": 1160,
   "releaseCount": 208,
   "categoryCount": 19,
@@ -156,7 +156,8 @@
     "data/playback-sources-madhuvan-youtube.json",
     "data/playback-sources-jagran-youtube.json",
     "data/playback-sources-saybo-exact.json",
-    "data/playback-sources-anand-exact.json"
+    "data/playback-sources-anand-exact.json",
+    "data/playback-sources-rutvi-ramzat-3-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -182,5 +183,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.6 preserves the current Shyam, Ude Re Gulal, Madhuvan, Jagran, Saybo and Anand route improvements while retaining superseded catalogue rows as explicit tombstoned provenance. The duplicate 2016 Spotify K Hove Hove edition and its nine duplicate song rows are excluded from generated canonical runtime data in favour of the richer dedicated digital-edition record."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.7 preserves the K Hove Hove tombstoned provenance and all current route/runtime improvements, then adds eight independently verified exact Rutvi Ni Ramzat 3.0 song routes. Tracks 3, 8, 16 and 18 intentionally remain on their stronger generated verified YouTube performance chapters; ambiguous same-title provider results remain conservative."
 }
