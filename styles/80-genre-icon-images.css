@@ -1,0 +1,78 @@
+/* Custom PlayGarba genre artwork.
+   The icon assets are decorative; the existing text labels remain the accessible names. */
+
+.genre-button[data-genre="traditional"] { --genre-icon-image: url("../assets/genre-icons/traditional.webp"); }
+.genre-button[data-genre="dandiya"] { --genre-icon-image: url("../assets/genre-icons/dandiya.webp"); }
+.genre-button[data-genre="devotional"] { --genre-icon-image: url("../assets/genre-icons/devotional.webp"); }
+.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk.webp"); }
+.genre-button[data-genre="sanedo"] { --genre-icon-image: url("../assets/genre-icons/sanedo.webp"); }
+.genre-button[data-genre="fusion"] { --genre-icon-image: url("../assets/genre-icons/fusion.webp"); }
+#nonstopButton { --genre-icon-image: url("../assets/genre-icons/nonstop.webp"); }
+
+.genre-button[data-genre],
+#nonstopButton {
+  min-height: 46px;
+  padding-left: 43px;
+  background-image: var(--genre-icon-image);
+  background-repeat: no-repeat;
+  background-size: 34px 34px;
+  background-position: 3px calc(50% - 4px);
+  transition: color 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+/* The primary strip gets the richer, slightly larger artwork shown in the visual concept. */
+#genreStrip .genre-button[data-genre],
+#genreStrip #nonstopButton {
+  padding-right: 3px;
+}
+
+#genreStrip .genre-button[data-genre].active,
+#genreStrip #nonstopButton.active {
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--accent) 20%, transparent));
+}
+
+@media (hover: hover) {
+  .genre-button[data-genre]:hover,
+  #nonstopButton:hover {
+    filter: brightness(1.08) saturate(1.05);
+  }
+}
+
+/* The browse sheet uses the same artwork at a quieter scale. */
+.sheet-genres .genre-button[data-genre] {
+  min-height: 44px;
+  padding-left: 37px;
+  background-size: 29px 29px;
+  background-position: 2px calc(50% - 4px);
+}
+
+@media (max-width: 700px) {
+  .genre-button[data-genre],
+  #nonstopButton {
+    min-height: 44px;
+    padding-left: 39px;
+    background-size: 31px 31px;
+    background-position: 2px calc(50% - 4px);
+  }
+
+  .sheet-genres .genre-button[data-genre] {
+    padding-left: 35px;
+    background-size: 27px 27px;
+  }
+}
+
+@media (max-width: 390px) {
+  .genre-button[data-genre],
+  #nonstopButton {
+    padding-left: 36px;
+    background-size: 28px 28px;
+    background-position-x: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genre-button[data-genre],
+  #nonstopButton {
+    transition: none;
+  }
+}
