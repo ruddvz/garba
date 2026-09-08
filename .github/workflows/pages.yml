@@ -93,8 +93,8 @@ jobs:
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
           file _site/assets/icons/mstile-150x150.png | grep -q 'PNG image data, 150 x 150' || { echo 'Windows 150 tile is invalid'; exit 1; }
           file _site/assets/icons/mstile-310x310.png | grep -q 'PNG image data, 310 x 310' || { echo 'Windows 310 tile is invalid'; exit 1; }
-          file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 is invalid'; exit 1; }
-          file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 is invalid'; exit 1; }
+          file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 icon is invalid'; exit 1; }
+          file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 icon is invalid'; exit 1; }
 
           # Explore is a real navigation surface. Convert the legacy source button into
           # a plain catalogue link in the production artifact and prevent app.js from
