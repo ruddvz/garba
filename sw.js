@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v15`;
+const CACHE_NAME = `${CACHE_PREFIX}v14`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -115,6 +115,18 @@ async function networkFirst(request, fallback = null) {
   }
 }
 
+async function catalogueNavigation(request, fallback) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request) || await cache.match(fallback);
+  const refresh = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+  return cached || await refresh || Response.error();
+}
+
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
 const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html');
 const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');
@@ -127,11 +139,12 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
+    const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
     if (isCatalogueNavigation(url.pathname)) {
-      event.respondWith(staleWhileRevalidate(request));
+      event.respondWith(catalogueNavigation(request, fallback));
       return;
     }
-    event.respondWith(networkFirst(request, './index.html'));
+    event.respondWith(networkFirst(request, fallback));
     return;
   }
 
