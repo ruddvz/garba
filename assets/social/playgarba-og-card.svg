@@ -3,34 +3,34 @@
   <desc id="desc">PlayGarba.com. All Garba there is in the world.</desc>
   <defs>
     <linearGradient id="title-fill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff9e8"/>
-      <stop offset="0.55" stop-color="#ffedbe"/>
-      <stop offset="1" stop-color="#e4b55e"/>
+      <stop offset="0" stop-color="#fffaf2"/>
+      <stop offset="0.58" stop-color="#fff1d2"/>
+      <stop offset="1" stop-color="#e9c676"/>
     </linearGradient>
     <radialGradient id="text-backdrop" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#000000" stop-opacity="0.34"/>
-      <stop offset="0.42" stop-color="#000000" stop-opacity="0.26"/>
-      <stop offset="0.72" stop-color="#000000" stop-opacity="0.12"/>
+      <stop offset="0" stop-color="#000000" stop-opacity="0.30"/>
+      <stop offset="0.44" stop-color="#000000" stop-opacity="0.22"/>
+      <stop offset="0.74" stop-color="#000000" stop-opacity="0.09"/>
       <stop offset="1" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
     <filter id="title-shadow" x="-20%" y="-35%" width="140%" height="180%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000000" flood-opacity="0.30"/>
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.26"/>
     </filter>
     <filter id="tagline-shadow" x="-20%" y="-35%" width="140%" height="180%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.28"/>
+      <feDropShadow dx="0" dy="2.5" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.24"/>
     </filter>
   </defs>
 
   <image href="og-background.png" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice"/>
 
-  <ellipse cx="600" cy="318" rx="520" ry="192" fill="url(#text-backdrop)"/>
+  <ellipse cx="600" cy="316" rx="500" ry="172" fill="url(#text-backdrop)"/>
 
-  <g transform="translate(600 320)" text-anchor="middle">
-    <text x="0" y="-10" fill="url(#title-fill)" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="120" font-weight="400" letter-spacing="0.4" filter="url(#title-shadow)">PlayGarba.com</text>
+  <g transform="translate(600 317)" text-anchor="middle">
+    <text x="0" y="-8" fill="url(#title-fill)" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="116" font-weight="400" letter-spacing="0.2" filter="url(#title-shadow)">PlayGarba.com</text>
 
-    <g transform="translate(0 34)" fill="none" stroke="#e8b957" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" opacity="0.96">
-      <path d="M-184 0H-48"/>
-      <path d="M48 0H184"/>
+    <g transform="translate(0 33)" fill="none" stroke="#efc76a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.94">
+      <path d="M-178 0H-46"/>
+      <path d="M46 0H178"/>
       <path d="M-18 0C-12-7-6-7 0 0C6-7 12-7 18 0C12 7 6 7 0 0C-6 7-12 7-18 0Z"/>
       <path d="M0-15C7-9 7-3 0 3C-7-3-7-9 0-15Z"/>
       <path d="M0 3C7 9 7 15 0 19C-7 15-7 9 0 3Z"/>
@@ -38,6 +38,6 @@
       <path d="M28 0L20-4L12 0L20 4Z"/>
     </g>
 
-    <text x="0" y="88" fill="#fff0cf" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="34" font-weight="400" letter-spacing="4.2" filter="url(#tagline-shadow)">All Garba there is in the world.</text>
+    <text x="0" y="88" fill="#fff3db" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="37" font-weight="400" letter-spacing="2.3" filter="url(#tagline-shadow)">All Garba there is in the world.</text>
   </g>
 </svg>
