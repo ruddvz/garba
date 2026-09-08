@@ -21,8 +21,61 @@
   -webkit-backdrop-filter: blur(9px);
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
-.retry-catalogue:hover { background: rgba(8,10,18,.42); border-color: rgba(246,236,215,.48); }
 .retry-catalogue:active { transform: scale(.97); }
+
+/* Press/focus feedback belongs to the control itself and must not depend on hover.
+   Keep transforms on the control box so geometry and neighbouring anchors never move. */
+.browse-button,
+.sheet-close,
+.song-copy,
+.install-actions button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.browse-button {
+  transition: color 150ms ease, opacity 150ms ease;
+}
+
+.sheet-close,
+.install-actions button {
+  transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease, transform 140ms ease;
+}
+
+.song-copy {
+  transition: color 150ms ease, opacity 140ms ease;
+}
+
+.browse-button:active,
+.song-copy:active {
+  opacity: .72;
+}
+
+.sheet-close:active,
+.install-actions button:active {
+  transform: scale(.96);
+}
+
+.retry-catalogue:focus-visible,
+.browse-button:focus-visible,
+.sheet-close:focus-visible,
+.song-copy:focus-visible,
+.install-actions button:focus-visible {
+  outline: 2px solid var(--focus-ring, color-mix(in srgb, var(--accent) 82%, white));
+  outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .retry-catalogue:hover {
+    background: rgba(8,10,18,.42);
+    border-color: rgba(246,236,215,.48);
+  }
+
+  .sheet-close:hover,
+  .install-actions button:hover {
+    background-color: rgba(246,236,215,.07);
+    color: var(--ivory);
+  }
+}
 
 .search-empty-prompt {
   min-height: 180px;
@@ -65,7 +118,37 @@
   .search-empty-prompt { min-height: 150px; }
 }
 
+@media (pointer: coarse) {
+  .retry-catalogue,
+  .browse-button,
+  .sheet-close,
+  .install-actions button {
+    min-height: 44px;
+  }
+
+  .sheet-close,
+  .install-actions button {
+    min-width: 44px;
+  }
+}
+
 @media (prefers-contrast: more) {
   .retry-catalogue { border-color: rgba(246,236,215,.58); }
   .search-empty-prompt { color: rgba(246,236,215,.78); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .retry-catalogue,
+  .browse-button,
+  .sheet-close,
+  .song-copy,
+  .install-actions button {
+    transition: none !important;
+  }
+
+  .retry-catalogue:active,
+  .sheet-close:active,
+  .install-actions button:active {
+    transform: none;
+  }
 }
