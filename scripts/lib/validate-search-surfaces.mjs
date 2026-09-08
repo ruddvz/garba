@@ -238,6 +238,9 @@ export function validateSearchSurfaces(rootDir = DEFAULT_ROOT, { quiet = false }
       if (!meta.ogTitle) errors.push(`${label}: sitemap route is missing og:title`);
     }
 
+    if (indexable && selfCanonical && !sitemapSet.has(routeUrl)) {
+      warnings.push(`${label}: self-canonical indexable route is deployed but not listed in sitemap`);
+    }
     if (!selfCanonical && sitemapSet.has(routeUrl)) errors.push(`${label}: canonical alias must not appear in sitemap`);
     if (!selfCanonical && canonical && !deployedUrlSet.has(canonical)) {
       errors.push(`${label}: canonical target is not a deployed public route: ${canonical}`);
