@@ -17,6 +17,7 @@ const CORE_SHELL = [
   './catalogue/catalogue.css',
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
+  './assets/runtime/explore-search.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -55,6 +56,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/catalogue.css',
   '/catalogue/catalogue.js',
   '/catalogue/listening-library.js',
+  '/assets/runtime/explore-search.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -113,6 +115,18 @@ async function networkFirst(request, fallback = null) {
   }
 }
 
+async function catalogueNavigation(request, fallback) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request) || await cache.match(fallback);
+  const refresh = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+  return cached || await refresh || Response.error();
+}
+
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
 const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html');
 const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');
@@ -126,6 +140,10 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
+    if (isCatalogueNavigation(url.pathname)) {
+      event.respondWith(catalogueNavigation(request, fallback));
+      return;
+    }
     event.respondWith(networkFirst(request, fallback));
     return;
   }
