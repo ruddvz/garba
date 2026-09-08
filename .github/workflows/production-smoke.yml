@@ -56,7 +56,7 @@ jobs:
             echo '✅ `https://live.playgarba.com/` passed the player, catalogue, deep-link, manifest, service-worker, offline-shell, robots, sitemap and OG-card smoke checks.'
           } >> "$GITHUB_STEP_SUMMARY"
 
-  public-apex-diagnostic:
+  public-cutover-diagnostic-nonblocking:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
@@ -70,24 +70,52 @@ jobs:
 
       - name: Probe public website cutover
         id: public
-        continue-on-error: true
         env:
           SMOKE_ATTEMPTS: '3'
           SMOKE_RETRY_DELAY_MS: '4000'
           SMOKE_TIMEOUT_MS: '10000'
-        run: node scripts/lib/verify-production-hosts.mjs public
+        run: |
+          if node scripts/lib/verify-production-hosts.mjs public; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo '::warning title=Public apex not ready::playgarba.com is not yet serving the complete public website contract.'
+          fi
+
+      - name: Probe www permanent redirect
+        id: www
+        env:
+          SMOKE_ATTEMPTS: '3'
+          SMOKE_RETRY_DELAY_MS: '4000'
+          SMOKE_TIMEOUT_MS: '10000'
+        run: |
+          if node scripts/lib/verify-production-hosts.mjs www; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo '::warning title=www redirect not ready::www.playgarba.com is not yet permanently redirecting to https://playgarba.com/.'
+          fi
 
       - name: Record public cutover state
         if: always()
         env:
-          PUBLIC_OUTCOME: ${{ steps.public.outcome }}
+          PUBLIC_READY: ${{ steps.public.outputs.ready }}
+          WWW_READY: ${{ steps.www.outputs.ready }}
         run: |
           {
-            echo '## Public apex diagnostic'
+            echo '## Public cutover diagnostic (non-blocking)'
             echo ''
-            if [ "$PUBLIC_OUTCOME" = 'success' ]; then
-              echo '✅ `https://playgarba.com/` is serving the public website contract.'
+            if [ "$PUBLIC_READY" = 'true' ]; then
+              echo '✅ Apex: `https://playgarba.com/` is serving the public website contract.'
             else
-              echo '⚠️ `https://playgarba.com/` is not yet serving the complete public website contract. Finish the Porkbun apex/static-hosting cutover before treating production as complete.'
+              echo '⚠️ Apex: `https://playgarba.com/` is not ready. Finish the Porkbun static-hosting cutover.'
             fi
+            echo ''
+            if [ "$WWW_READY" = 'true' ]; then
+              echo '✅ WWW: `https://www.playgarba.com/` permanently redirects to the apex.'
+            else
+              echo '⚠️ WWW: the permanent redirect to `https://playgarba.com/` is not ready.'
+            fi
+            echo ''
+            echo '> This job is intentionally non-blocking until the Porkbun public-site cutover is complete. A green job means the diagnostics executed, not that every public host is ready.'
           } >> "$GITHUB_STEP_SUMMARY"
