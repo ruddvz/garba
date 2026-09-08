@@ -16,6 +16,7 @@ const visualByGenre = {
 };
 
 const $ = (id) => document.getElementById(id);
+const main = document.querySelector('main');
 const els = {
   search: $('catalogueSearch'),
   count: $('catalogueCount'),
@@ -288,13 +289,17 @@ function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
   els.releaseRail.replaceChildren();
   const items = releasesForSongs(songs);
   els.releaseSection.hidden = items.length === 0;
-  const visible = items.slice(0, limit);
+  const activeIndex = state.activeReleaseId ? items.findIndex(({ release }) => release.id === state.activeReleaseId) : -1;
+  const resolvedLimit = activeIndex >= 0 ? Math.max(limit, activeIndex + 1) : limit;
+  const visible = items.slice(0, resolvedLimit);
   visible.forEach(({release,count})=>{
+    const active = state.activeReleaseId===release.id;
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `release-card${state.activeReleaseId===release.id?' active':''}`;
+    button.className = `release-card${active?' active':''}`;
     button.dataset.releaseId = release.id;
     button.setAttribute('role','listitem');
+    button.setAttribute('aria-label', active ? `${release.title}, current release filter` : `Filter songs to ${release.title}`);
     button.append(makeCover(release));
     const title = document.createElement('strong');
     title.className = 'release-title';
@@ -314,7 +319,13 @@ function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
     more.className = 'release-more';
     const remaining = items.length - visible.length;
     more.innerHTML = `<strong>More releases</strong><span>Showing ${visible.length.toLocaleString()} of ${items.length.toLocaleString()} · load ${Math.min(RELEASE_BATCH_SIZE, remaining).toLocaleString()} more</span>`;
-    more.addEventListener('click', () => renderReleases(songs, { limit: limit + RELEASE_BATCH_SIZE }));
+    more.addEventListener('click', () => {
+      if (resolvedLimit === limit) {
+        renderReleases(songs, { limit: limit + RELEASE_BATCH_SIZE });
+      } else {
+        renderReleases(songs, { limit: resolvedLimit + RELEASE_BATCH_SIZE });
+      }
+    });
     els.releaseRail.append(more);
   }
 }
@@ -362,9 +373,9 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
     releaseEl.textContent = release?.title || '';
     const play = document.createElement('a');
     play.className = 'play-link';
-    play.textContent = 'Play';
+    play.textContent = 'Listen';
     play.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
-    play.setAttribute('aria-label',`Play ${song.title} by ${song.artist}`);
+    play.setAttribute('aria-label',`Open ${song.title} by ${song.artist} in the PlayGarba player`);
     row.append(copy,releaseEl,play);
     fragment.append(row);
   });
@@ -383,12 +394,24 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   els.songList.append(fragment);
 }
 
+function collectionHash(collectionId, releaseId = '') {
+  const params = new URLSearchParams();
+  params.set('collection', collectionId);
+  if (releaseId) params.set('release', releaseId);
+  return `#${params.toString()}`;
+}
+
+function syncBackLabel() {
+  els.back.textContent = state.activeReleaseId ? '← Collection' : '← All catalogues';
+}
+
 function openCollection(id, { updateHash = true } = {}) {
   const collection = state.collections.find((item)=>item.id===id);
-  if (!collection) return;
+  if (!collection) return false;
   state.active = collection;
   state.activeSongs = collection.songs;
   state.activeReleaseId = null;
+  syncBackLabel();
   els.home.hidden = true;
   els.detail.hidden = false;
   els.detailKicker.textContent = collection.kicker;
@@ -401,24 +424,47 @@ function openCollection(id, { updateHash = true } = {}) {
   });
   renderReleases(collection.songs);
   renderSongs(collection.songs);
-  if (updateHash) history.pushState({collection:id},'',`#collection=${encodeURIComponent(id)}`);
+  if (updateHash) history.pushState({collection:id},'',collectionHash(id));
   window.scrollTo({top:0,behavior:motionBehavior()});
+  return true;
 }
 
-function filterToRelease(releaseId) {
-  if (!state.active) return;
-  state.activeReleaseId = releaseId;
+function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}) {
+  if (!state.active || state.active.id === 'search') return false;
   const release = state.releaseById.get(releaseId);
   const songs = state.activeSongs.filter((song)=>song.releaseId===releaseId);
+  if (!release || !songs.length) return false;
+  state.activeReleaseId = releaseId;
+  syncBackLabel();
   renderReleases(state.activeSongs);
-  renderSongs(songs, release?.title || 'Release songs');
-  document.querySelector('.songs-section')?.scrollIntoView({behavior:motionBehavior(),block:'start'});
+  renderSongs(songs, release.title || 'Release songs');
+  if (updateHistory) {
+    const nextState = { collection:state.active.id, release:releaseId };
+    const nextHash = collectionHash(state.active.id, releaseId);
+    if (history.state?.collection === state.active.id && history.state?.release === releaseId) {
+      history.replaceState(nextState,'',nextHash);
+    } else {
+      history.pushState(nextState,'',nextHash);
+    }
+  }
+  if (scroll) document.querySelector('.songs-section')?.scrollIntoView({behavior:motionBehavior(),block:'start'});
+  return true;
+}
+
+function showAllSongs({ updateHistory = true } = {}) {
+  if (!state.active || state.active.id === 'search') return;
+  state.activeReleaseId = null;
+  syncBackLabel();
+  renderReleases(state.activeSongs);
+  renderSongs(state.activeSongs);
+  if (updateHistory) history.pushState({collection:state.active.id},'',collectionHash(state.active.id));
 }
 
 function closeCollection({ updateHash = true } = {}) {
   state.active = null;
   state.activeSongs = [];
   state.activeReleaseId = null;
+  syncBackLabel();
   els.detail.hidden = true;
   els.home.hidden = false;
   if (updateHash) history.replaceState({},'',`${location.pathname}${location.search}`);
@@ -427,6 +473,10 @@ function closeCollection({ updateHash = true } = {}) {
 
 function returnToCollections() {
   els.search.value = '';
+  if (history.state?.release) {
+    history.back();
+    return;
+  }
   if (history.state?.collection || history.state?.search) {
     history.back();
     return;
@@ -450,6 +500,7 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
   state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists and release metadata from the PlayGarba catalogue.', songs };
   state.activeSongs = songs;
   state.activeReleaseId = null;
+  syncBackLabel();
   els.home.hidden = true;
   els.detail.hidden = false;
   els.detailKicker.textContent = 'Search results';
@@ -475,12 +526,7 @@ function wireEvents() {
     timer = setTimeout(()=>searchCatalogue(els.search.value),90);
   });
   els.back.addEventListener('click',returnToCollections);
-  els.showAllSongs.addEventListener('click',()=>{
-    if (!state.active) return;
-    state.activeReleaseId = null;
-    renderReleases(state.activeSongs);
-    renderSongs(state.activeSongs);
-  });
+  els.showAllSongs.addEventListener('click',()=>showAllSongs());
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || els.detail.hidden) return;
     event.preventDefault();
@@ -492,10 +538,22 @@ function wireEvents() {
 function applyHashState() {
   const params = new URLSearchParams(location.hash.replace(/^#/,''));
   const id = params.get('collection');
+  const releaseId = params.get('release');
   const search = params.get('search');
-  if (id) openCollection(id,{updateHash:false});
-  else if (search) { els.search.value=search; searchCatalogue(search,{updateHistory:false}); }
-  else { els.search.value=''; closeCollection({updateHash:false}); }
+  if (id && openCollection(id,{updateHash:false})) {
+    if (releaseId) filterToRelease(releaseId,{updateHistory:false,scroll:false});
+  } else if (search) {
+    els.search.value=search;
+    searchCatalogue(search,{updateHistory:false});
+  } else {
+    els.search.value='';
+    closeCollection({updateHash:false});
+  }
+}
+
+function setLoading(loading) {
+  main?.setAttribute('aria-busy', loading ? 'true' : 'false');
+  els.search.disabled = loading;
 }
 
 async function init() {
@@ -511,7 +569,7 @@ async function init() {
   state.songs = songs;
   state.releases = releases;
   state.genres = genres;
-  state.artwork = artwork || { releases:{} };
+  state.artwork = artwork || {releases:{}};
   state.releaseById = buildReleaseIndex(releases);
   state.artists = await loadArtists(index);
   state.collections = buildCollections();
@@ -551,10 +609,13 @@ function renderLoadFailure(error) {
 }
 
 async function start() {
+  setLoading(true);
   try {
     await init();
   } catch (error) {
     renderLoadFailure(error);
+  } finally {
+    setLoading(false);
   }
 }
 
