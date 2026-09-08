@@ -36,6 +36,14 @@ function hasArtistCredit(segment = {}) {
   return Boolean(String(value || '').trim());
 }
 
+function artistCreditCount(value) {
+  if (Array.isArray(value)) return value.filter((artist) => String(artist || '').trim()).length;
+  return String(value || '')
+    .split(/\s*(?:,|&|\band\b|\+|\bx\b)\s*/i)
+    .map((artist) => artist.trim())
+    .filter(Boolean).length;
+}
+
 const sourceSongs = await flatten(index.songChunks);
 const sourceReleases = await flatten(index.releaseChunks);
 const retiredSongList = Array.isArray(index.retiredSongIds) ? index.retiredSongIds : [];
@@ -142,6 +150,7 @@ if (discovery.setsIndex) {
       if (set.linkedReleaseId && !releaseIds.has(set.linkedReleaseId)) fail(`${set.id} links unknown or retired release ${set.linkedReleaseId}`);
       if (set.segmentRouting != null && set.segmentRouting !== 'metadata-only') fail(`${set.id} has unsupported segmentRouting value`);
       const setMetadataOnly = set.segmentRouting === 'metadata-only';
+      const setArtistCount = artistCreditCount(set.artists ?? set.artist);
       if (setMetadataOnly) metadataOnlySetCount += 1;
       let previousStart = -1;
       for (const segment of set.segments || []) {
@@ -154,6 +163,9 @@ if (discovery.setsIndex) {
         if (segment.routingEligible === true && !hasArtistCredit(segment)) fail(`${set.id}:${segment.title} opts into routing without chapter performer credit`);
         const effectivelyMetadataOnly = segment.routingEligible === false || (setMetadataOnly && segment.routingEligible !== true);
         if (effectivelyMetadataOnly) metadataOnlyChapterCount += 1;
+        if (setArtistCount > 1 && !hasArtistCredit(segment) && !effectivelyMetadataOnly) {
+          fail(`${set.id}:${segment.title} is an ambiguous multi-artist chapter; add chapter performer credit or mark it metadata-only`);
+        }
         previousStart = segment.startSeconds;
       }
     }
