@@ -1,153 +1,251 @@
 # Responsive and PWA behaviour
 
-This document is the implementation contract for the player shell. Catalogue collection remains separate so song/release work can continue without colliding with UI changes.
+This document is the implementation contract for the live player shell and installable PWA. Catalogue collection remains separate so song/release work can continue without colliding with visual changes.
+
+The product is fluid first. Breakpoints change behaviour only when the interaction model needs to change.
+
+## Core invariants
+
+These must remain true at every supported viewport:
+
+- current song identity remains readable;
+- Play/Pause remains the clearest action;
+- Previous/Next, truthful progress, genre navigation and Explore remain reachable;
+- long verified titles do not move the transport or surrounding layout anchors;
+- the current high-resolution courtyard remains visually dominant when network conditions allow it;
+- the YouTube video surface remains collapsed until explicitly opened;
+- safe-area insets are respected;
+- sheets and modals never trap the user behind browser or PWA chrome;
+- touch targets remain large enough even when visual icons are small.
 
 ## Breakpoint strategy
 
-The interface is fluid first. Breakpoints only change behaviour when the interaction model needs to change.
+### Desktop: above 1100px
 
-### Desktop: above 1100 px
+- Show the full courtyard composition.
+- Keep the player centred in the intended architectural opening.
+- Search, share, My Garba/favourite, queue and other utilities remain compact. They do not become a second navigation bar.
+- Explore/catalogue can use a centred translucent layer or dedicated catalogue route, but readable row width is capped on very wide monitors.
+- Genre labels stay text-led.
+- Hover refinements apply only inside a hover-capable media query.
+- Keyboard focus is fully visible and is not hidden behind artwork effects.
 
-- Full courtyard composition.
-- Player stays centred in the dark architectural opening.
-- Search, share, favourites, queue and Nonstop remain compact utilities rather than a second navigation bar.
-- Song browser is a centred translucent panel, capped so rows remain readable on wide monitors.
-- Genre labels are text-led, never card-led.
+### Tablet / compact desktop: 701-1100px
 
-### Tablet / compact desktop: 701–1100 px
+- Keep the same product, not a stretched phone layout.
+- Typography and transport use fluid `clamp()` sizing.
+- Explore/catalogue uses more of the available width while retaining readable row measures.
+- Portrait tablets may use a higher artwork crop and narrower player measure.
+- iPad portrait and landscape are first-class release layouts.
+- Touch remains fully supported even when a tablet also reports pointer/hover capability.
 
-- Player remains the same product, not a stretched mobile layout.
-- Typography and control sizes reduce via `clamp()`.
-- Song browser expands to use more of the available width.
-- Portrait tablets use a higher background crop and narrower player measure.
-- iPad portrait and landscape are first-class layouts.
-
-### Phone: 700 px and below
+### Phone: 700px and below
 
 - Brand and essential utilities remain reachable at the top edge.
-- Favourite stays with the current-track identity.
-- Track typography is art-directed for the dark central architecture and constrained for long verified titles.
-- Genre navigation scrolls horizontally instead of squeezing six labels into one phone width.
-- Browse Songs becomes a draggable bottom sheet.
-- Provider playback opens as a bottom-aligned modal surface with safe-area spacing.
+- Current song identity receives a fixed, bounded measure so title length cannot push transport vertically.
+- Genre navigation scrolls horizontally instead of squeezing labels.
+- Explore opens as a mobile bottom sheet where that is the current runtime behaviour.
+- The explicit YouTube video surface opens only after the listener chooses the YouTube control.
+- Bottom controls and sheets include home-indicator safe-area spacing.
+- Avoid relying on browser `100vh` alone. Dynamic viewport sizing should prevent address-bar jumps.
 
 ### Short landscape screens
 
-A height-based query handles phones rotated to landscape and short browser windows:
+A height-based query handles rotated phones and short browser windows:
 
-- Track title and controls become compact.
-- Genre strip remains reachable.
-- Browse/Nonstop actions move away from the centre player.
-- The sheet uses taller snap heights to preserve useful list space.
+- reduce title scale and vertical gaps before removing useful controls;
+- keep transport and genre navigation reachable;
+- move Explore/secondary actions away from the architectural player centre when necessary;
+- use sheet heights that preserve a useful song-list area without covering the whole interaction path;
+- account for left/right landscape safe-area cut-outs.
+
+## Stable player geometry
+
+Track changes are expected to happen frequently, so track-dependent content must animate inside stable layout anchors.
+
+- Reserve a bounded title area for the longest realistic verified title.
+- Artist/meta text must not alter transport position.
+- Time labels may appear/disappear only without changing the progress rail geometry.
+- Genre selection may change colour/marker state but must not change item width, height or neighbouring positions.
+- Explore keeps its placement across tracks and modes.
+- Opening the YouTube surface must not permanently resize the base player after it closes.
 
 ## Mobile sheet states
 
-The mobile browser has four runtime states:
+The mobile browser can use four runtime states:
 
-- `closed`: completely off-screen.
-- `collapsed`: compact mini-player only.
-- `medium`: default browsing state.
+- `closed`: completely off-screen and non-interactive;
+- `collapsed`: compact mini-player state where supported;
+- `medium`: default browsing state;
 - `full`: expanded search/browse state.
 
-The drag handle supports upward/downward movement between those states. The song list itself is not the drag target, preventing scroll/drag conflicts.
+The drag handle, not the song list, owns sheet dragging so list scrolling and sheet dragging do not fight each other.
 
-When the sheet acts as a mobile modal:
+When the sheet acts as a modal surface:
 
 - background player controls become inert;
 - keyboard focus stays inside the sheet;
 - closing restores focus to the control that opened it;
-- Escape clears an active search first, then closes the sheet.
+- Escape clears active search first only where that behaviour is deliberate, then closes the sheet;
+- the sheet itself provides enough visual separation from the artwork without excessive blur.
+
+## Input behaviour
+
+### Touch
+
+- Important controls target roughly 44px or more even when the visible icon is smaller.
+- Do not hide essential actions behind hover.
+- `:active` feedback uses a small transform/opacity response without layout shift.
+- `touch-action` should prevent delayed/tangled gestures while preserving intended horizontal/vertical scrolling.
+
+### Mouse and trackpad
+
+- Hover is enhancement, not required discovery.
+- Only run hover-specific transforms inside hover-capable media queries.
+- Keep hover movement small so the pointer does not appear to chase a moving target.
+
+### Keyboard
+
+- Space/Enter activate the same underlying Play control logic as pointer/touch.
+- Tab order follows visual/task order.
+- Focus is restored after a modal/sheet closes.
+- Escape behaviour is deterministic.
+- No clickable non-semantic container should replace a button/link when native semantics work.
 
 ## Safe areas
 
-Major edge controls use `env(safe-area-inset-*)`. This matters for:
+Major edge controls use `env(safe-area-inset-*)` as appropriate for:
 
-- iPhones with Dynamic Island/notches;
+- iPhones with notch or Dynamic Island;
 - home-indicator spacing;
 - standalone PWA mode;
-- landscape cut-outs.
+- landscape cut-outs;
+- bottom sheets and the explicit YouTube video surface.
+
+Safe-area padding is part of layout geometry, not a late visual patch.
 
 ## Motion
 
-- World changes use restrained crossfades rather than moving the whole interface.
-- Track text exits before incoming text appears, preventing overlapping titles.
-- Playback controls stay geometrically stable during song/genre changes.
-- `prefers-reduced-motion` removes non-essential animation.
-- Decorative work pauses when the page is hidden.
+Motion follows the design-system contract:
 
-## 2K courtyard loading
+- frequent control feedback generally completes in about 120-220ms;
+- sheets/popovers generally complete in about 180-300ms;
+- world/artwork crossfades can remain slower because they are environmental;
+- track text exits before incoming text appears when transition is needed;
+- controls do not crossfade or move just because metadata changes;
+- movement-heavy effects prefer transform/opacity;
+- rapid interactions are interruptible;
+- `prefers-reduced-motion` removes non-essential movement while preserving useful state feedback;
+- decorative work pauses while the page is hidden.
 
-The deployed Pages artifact contains the approved 15-image 2K WebP visual pack, while lightweight SVG worlds remain bundled as safe fallbacks.
+Never introduce `transition: all` on product controls.
 
-`visual-library.js` deliberately does **not** preload every 2K world at startup:
+## High-resolution courtyard loading
 
-- only the currently visible genre is promoted to its 2K WebP during initial catalogue bootstrap;
-- other genre records keep lightweight SVG backgrounds until the listener enters that world;
-- on genre change, the appropriate approved 2K image is decoded on demand and then replaces the visible fallback;
-- deterministic song URLs may select an approved alternate from the same genre bucket;
-- Save-Data and 2G-class connections keep the lightweight fallback instead of forcing multi-megabyte artwork downloads.
+The production build contains the approved high-resolution courtyard visual library and lightweight fallbacks.
 
-This preserves the visual quality of the supplied courtyard library without turning first load into a six-background download.
+The visual loader should not preload the entire high-resolution pack at startup:
+
+- promote only the currently visible/needed artwork during initial bootstrap;
+- decode other high-resolution images on demand when the listener enters that context;
+- deterministic song URLs may choose an approved alternate from the correct genre bucket;
+- Save-Data and slow-connection signals keep lightweight fallbacks instead of forcing multi-megabyte downloads;
+- failed high-resolution loads fall back without leaving a blank world;
+- artwork promotion must not change player geometry.
+
+If an adaptive 4K tier is added, it must remain optional, bandwidth-aware and on-demand. A high-DPI screen alone is not permission to preload every 4K image.
 
 ## PWA
 
-`manifest.webmanifest` provides:
+`manifest.webmanifest` provides the installable app contract, including standalone display, launcher artwork, shortcuts and dark startup/background colours.
 
-- standalone display;
-- native PNG, scalable SVG and maskable launcher artwork;
-- home-screen shortcuts for Traditional, Dandiya and Browse Songs;
-- dark startup/background colours;
-- focus-existing launch behaviour where supported.
+The service worker should separate content by update sensitivity:
 
-The service worker separates content by update sensitivity:
+- catalogue/discovery JSON: prefer fresh data so collection work becomes visible promptly;
+- JavaScript, CSS and manifest: prefer fresh code so fixes are not trapped behind a stale installed shell;
+- immutable artwork/icons: cache after first use;
+- lightweight visual fallbacks: safe to retain with the shell where appropriate;
+- high-resolution artwork: cache only when requested, not during install.
 
-- catalogue/discovery JSON: network-first so new collection work is visible quickly;
-- JavaScript, CSS and the manifest: network-first so fixes reach installed PWAs without waiting for a cache cycle;
-- immutable artwork/icons: cache-first after first use;
-- lightweight SVG visual fallbacks: precached with the shell;
-- 2K WebPs: cached only when actually requested, not during PWA installation.
-
-Navigation falls back to the cached app shell/offline page when the network is unavailable. External provider audio/video is never silently downloaded for offline use.
+Navigation can fall back to the cached app shell/offline page when the network is unavailable. YouTube media itself is not silently downloaded for offline use.
 
 ## Installation UX
 
-- Chromium-family browsers use `beforeinstallprompt` when available.
+- Chromium-family browsers may use `beforeinstallprompt` where available.
 - iOS Safari receives concise Add to Home Screen guidance.
-- Installation nudges are suppressed after dismissal.
-- Install prompts do not compete with an open song browser.
+- Installation nudges are suppressed after dismissal for a sensible interval.
+- Install prompts never compete with an open Explore sheet, modal or YouTube surface.
+- Standalone mode must be tested separately from Safari/Chrome browser mode because viewport and safe-area behaviour differ.
 
 ## Playback and OS media controls
 
-Pointer, touch, keyboard Space and supported Media Session Play actions all route through the same Play control. This is important because the playback bridge may resolve a catalogue record to local audio, an approved YouTube source, Spotify, another cited provider, a verified performance inside a nonstop set, or a provider-search fallback.
+One-tap in-app playback follows the current YouTube runtime contract. Other providers may remain as research/source evidence, but they are not presented as alternative executable runtime players.
 
-Media Session support includes the actions browsers expose from:
+Pointer, touch, keyboard and supported Media Session Play actions route through the same underlying player control state.
+
+Media Session support should use browser-exposed actions where truthful and supported:
 
 - play / pause;
 - previous / next;
-- seek backward / forward / to position;
-- lock-screen/control-centre metadata and GARBA artwork.
+- seek backward / forward / to position only when the active source supports truthful seeking;
+- lock-screen/control-centre metadata and approved PlayGarba artwork.
 
-Unknown catalogue durations stay unknown in the UI rather than being presented as `0:00`.
+Unknown catalogue durations remain unknown instead of being shown as `0:00`.
 
-## Catalogue and discovery resilience
+## Explore and discovery resilience
 
-The catalogue remains source-driven. Search begins with exact title/artist matching and can fall back to taxonomy-aware discovery across Garba categories, styles and aliases when ordinary matching returns nothing.
+The catalogue remains source-driven.
 
-The app refreshes catalogue data after reconnecting and when a previously open tab becomes visible after its catalogue has gone stale. A loading failure becomes an explicit retry state instead of an indefinite spinner.
+- Search begins with title/artist matching and may use taxonomy-aware discovery where implemented.
+- Loading failure becomes an explicit retry state, not an indefinite spinner.
+- Reconnection/stale-tab refresh must not wipe current playback or unexpectedly reset the listener's Explore context.
+- Returning from song/release detail should preserve search/filter/scroll position.
+- Nonstop sets keep their own transport/chooser behaviour rather than pretending to be ordinary single tracks.
+
+## Performance checks
+
+Before adding a visual effect, verify that it does not create interaction debt:
+
+- no expensive full-screen blur on every state change;
+- no high-frequency style changes that force unnecessary layout/repaint;
+- no new high-resolution preload waterfall;
+- no long animation blocking a second tap;
+- no mobile first-paint jump after late runtime initialisation;
+- no stale service-worker asset trapping after a release.
+
+Visual richness is acceptable only when controls remain immediate.
 
 ## QA matrix before calling the product complete
 
-Static CI covers document/runtime integrity, imported modules, service-worker coverage, catalogue generation, discovery data and Pages artifact construction. Real-device visual/interaction QA is still a separate release gate and should include:
+Static CI covers deterministic document/runtime/data contracts. Real-device and real-browser visual/interaction QA remains a separate release gate.
 
-- small and large iPhones in Safari;
-- installed iOS PWA behavior;
-- Android Chrome and installed PWA behavior;
-- iPad portrait and landscape;
-- desktop Safari/Chrome/Firefox-class browsers;
-- keyboard-only navigation and provider modals;
-- reduced-motion and increased-contrast preferences;
+Test at minimum:
+
+- small iPhone in Safari;
+- large iPhone in Safari;
+- installed iOS PWA;
+- Android Chrome and installed PWA;
+- iPad portrait;
+- iPad landscape;
+- short phone landscape;
+- desktop Safari;
+- desktop Chrome;
+- Firefox-class desktop browser;
+- keyboard-only navigation;
+- reduced-motion preference;
+- increased-contrast preference where supported;
 - offline, reconnect and stale-cache scenarios;
-- Save-Data/slow-network behavior;
-- YouTube, Spotify, external-source and Nonstop playback paths.
+- Save-Data/slow-network behaviour;
+- long verified title/artist combinations;
+- ordinary song playback;
+- Nonstop playback/chooser;
+- opening and closing the explicit YouTube video surface.
 
-Do not mark those browser/device scenarios as verified until they have actually been exercised on the relevant environments.
+Use bounded visual QA:
+
+1. capture desktop and mobile states in one pass;
+2. batch hierarchy, spacing, contrast, overflow, touch, focus, motion and stability defects;
+3. fix the batch;
+4. run one confirmation pass.
+
+Do not mark a browser/device scenario as verified until it has actually been exercised in that environment.
