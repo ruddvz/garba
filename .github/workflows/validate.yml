@@ -16,6 +16,17 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - name: Validate catalogue social previews
+        run: |
+          rm -rf /tmp/playgarba-social-pages
+          node scripts/lib/generate-static-catalogue-pages.mjs /tmp/playgarba-social-pages
+          node scripts/lib/enrich-static-social-preview.mjs /tmp/playgarba-social-pages
+          test "$(find /tmp/playgarba-social-pages/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')" -ge 1000
+          test "$(find /tmp/playgarba-social-pages/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')" -ge 100
+          ! grep -R -q 'assets/backgrounds/library/15-traditional-canopy-courtyard.webp' /tmp/playgarba-social-pages/catalogue /tmp/playgarba-social-pages/songs /tmp/playgarba-social-pages/releases
+          grep -q 'https://playgarba.com/assets/social/garba-og-card.png' /tmp/playgarba-social-pages/catalogue/index.html
+          grep -q 'og:image:width" content="1200' /tmp/playgarba-social-pages/catalogue/index.html
+          grep -q 'twitter:image:alt' /tmp/playgarba-social-pages/catalogue/index.html
       - name: Install SVG renderer
         run: |
           sudo apt-get update
