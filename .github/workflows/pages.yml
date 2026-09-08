@@ -51,14 +51,42 @@ jobs:
             _site/
           cp -R assets data _site/
 
+          # The catalogue is intentionally one crawlable supporting page. Collections,
+          # albums and songs are in-page states—not thousands of standalone URLs.
+          mkdir -p _site/catalogue
+          cp src/catalogue/index.html _site/catalogue/index.html
+          cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
+          cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
+
           # Generate the share card from a reviewable source and inject canonical
-          # Open Graph/Twitter metadata only into the deployed root document.
+          # Open Graph/Twitter metadata into the deployed root document.
           mkdir -p _site/assets/social
           rsvg-convert -w 1200 -h 630 assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
           file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
           node scripts/lib/inject-social-preview.mjs _site/index.html
           grep -q 'property="og:image" content="https://playgarba.com/assets/social/garba-og-card.png"' _site/index.html || { echo 'Open Graph image metadata was not injected'; exit 1; }
           grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
+
+          # Homepage remains the primary player. Explore opens the single catalogue;
+          # Search, Favourites and Queue keep the lightweight in-player song sheet.
+          python3 - <<'PY'
+          from pathlib import Path
+          page = Path('_site/index.html')
+          html = page.read_text()
+          old = '''          <button class="browse-button" id="browseButton" type="button" aria-expanded="false" aria-controls="songSheet">
+            <span>Browse songs</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"></path></svg>
+          </button>'''
+          new = '''          <a class="browse-button" id="browseButton" href="./catalogue/" aria-label="Explore PlayGarba catalogues" style="text-decoration:none">
+            <span>Explore</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg>
+          </a>'''
+          if old not in html:
+              raise SystemExit('Homepage Browse songs control changed; update the Explore transform intentionally.')
+          page.write_text(html.replace(old, new, 1))
+          PY
+          grep -q 'href="./catalogue/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
+          grep -q '<span>Explore</span>' _site/index.html || { echo 'Homepage Explore label missing'; exit 1; }
 
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
@@ -73,9 +101,6 @@ jobs:
             > _site/styles.css
 
           # Assert direct and transitive production runtime files are all present.
-          # provider-runtime.js, player-continuity.js and youtube-player-runtime.js are
-          # loaded synchronously by simple-runtime.js, so checking index.html alone
-          # is not sufficient.
           for runtime in \
             simple-runtime.js \
             provider-runtime.js \
@@ -91,10 +116,10 @@ jobs:
           test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must remain playgarba.com'; exit 1; }
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing canonical sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical root'; exit 1; }
+          grep -q '<loc>https://playgarba.com/catalogue/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing catalogue'; exit 1; }
 
           # Assert every local runtime script referenced directly by index.html exists
-          # in the deploy artifact as an additional guard. Versioned runtime URLs use
-          # query strings, so validate the underlying deployed path.
+          # in the deploy artifact. Versioned runtime URLs use query strings.
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
             case "$src" in
@@ -103,9 +128,8 @@ jobs:
             test -f "_site/$src" || { echo "Missing deployed script: $src"; exit 1; }
           done
 
-          # Canonical visual pack: prefer the approved 2048px Q90 export. Keep the
-          # existing 2K/Q82 pack only as a temporary fallback until the Q90 archive
-          # is uploaded. Pages serves extracted WebPs only, never the source ZIP.
+          # Prefer the approved checksum-pinned 2048px Q90 visual pack. Existing
+          # 2K/Q82 archives remain fallbacks only. Pages serves extracted WebPs.
           PACK=''
           if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
             PACK='assets/backgrounds/garba15-2048-q90.zip'
@@ -124,26 +148,18 @@ jobs:
 
           WEBP_COUNT="$(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')"
           test "$WEBP_COUNT" -eq 15 || { echo "Expected 15 WebPs, found $WEBP_COUNT"; exit 1; }
-
           while IFS= read -r image; do
             file "$image" | grep -q 'Web/P image' || { echo "Not a valid WebP: $image"; exit 1; }
           done < <(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | sort)
-
-          # Do not ship source archives to visitors. They duplicate every background
-          # and are not needed at runtime.
           rm -f _site/assets/backgrounds/garba15-*.zip
 
-          # Build crawlable catalogue pages from the same generated song/release data
-          # the player uses. The generator also replaces the seed sitemap with the
-          # complete canonical catalogue sitemap.
-          node scripts/lib/generate-static-catalogue-pages.mjs _site
-          SONG_PAGE_COUNT="$(find _site/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          RELEASE_PAGE_COUNT="$(find _site/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          SITEMAP_URL_COUNT="$(grep -o '<loc>' _site/sitemap.xml | wc -l | tr -d ' ')"
-          test "$SONG_PAGE_COUNT" -ge 1000 || { echo "Expected 1000+ song pages, found $SONG_PAGE_COUNT"; exit 1; }
-          test "$RELEASE_PAGE_COUNT" -ge 100 || { echo "Expected 100+ release pages, found $RELEASE_PAGE_COUNT"; exit 1; }
-          test "$SITEMAP_URL_COUNT" -ge 1100 || { echo "Expected 1100+ sitemap URLs, found $SITEMAP_URL_COUNT"; exit 1; }
-          test -f _site/catalogue/index.html || { echo 'Catalogue index page is missing'; exit 1; }
+          # Product contract: catalogue content is one page with in-page collection,
+          # album and song states. Do not deploy standalone song/release page trees.
+          test -f _site/catalogue/index.html || { echo 'Catalogue page is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.js || { echo 'Catalogue runtime is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.css || { echo 'Catalogue styles are missing'; exit 1; }
+          test ! -d _site/songs || { echo 'Standalone song pages must not be deployed'; exit 1; }
+          test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
