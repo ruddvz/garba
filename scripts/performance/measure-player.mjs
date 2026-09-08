@@ -37,7 +37,7 @@ const PROFILES = {
 };
 
 function usage() {
-  console.log(`Usage: node scripts/performance/measure-player.mjs [options]\n\nOptions:\n  --origin=<url>       Target origin (default: ${DEFAULT_ORIGIN})\n  --runs=<n>           Cold/warm pairs per profile (default: ${DEFAULT_RUNS})\n  --profile=<name>     desktop, mobile-low-end, or all (default: all)\n  --output=<path>      Also write the JSON report to this path\n  --help               Show this help\n\nThe harness blocks third-party requests so provider latency is not mixed into local UI measurements.`);
+  console.log(`Usage: node scripts/performance/measure-player.mjs [options]\n\nOptions:\n  --origin=<url>       Target origin (default: ${DEFAULT_ORIGIN})\n  --runs=<n>           Cold/warm pairs per profile (default: ${DEFAULT_RUNS})\n  --profile=<name>     desktop, mobile-low-end, or all (default: all)\n  --output=<path>      Also write the JSON report to this path\n  --help               Show this help\n\nThe harness never initiates provider playback; provider startup latency is outside these local UI measurements.`);
 }
 
 function parseArgs(argv) {
@@ -95,11 +95,12 @@ function round(value, digits = 1) {
 
 function summariseMetric(samples, key) {
   const values = samples.map((sample) => sample[key]).filter(Number.isFinite);
+  const digits = key === 'layoutShiftScore' ? 4 : 1;
   return {
     samples: values.length,
-    median: round(percentile(values, 0.5)),
-    p75: round(percentile(values, 0.75)),
-    max: values.length ? round(Math.max(...values)) : null,
+    median: round(percentile(values, 0.5), digits),
+    p75: round(percentile(values, 0.75), digits),
+    max: values.length ? round(Math.max(...values), digits) : null,
   };
 }
 
@@ -169,9 +170,10 @@ function installPageObservers() {
   }
 }
 
-async function configureProfile(page, profile, { clearCache = false } = {}) {
+async function configureProfile(page, profile, { clearCache = false, cacheDisabled = false } = {}) {
   const session = await page.context().newCDPSession(page);
   await session.send('Network.enable');
+  await session.send('Network.setCacheDisabled', { cacheDisabled });
   if (clearCache) await session.send('Network.clearBrowserCache');
   await session.send('Emulation.setCPUThrottlingRate', { rate: profile.cpuThrottleRate });
   if (profile.network) {
@@ -390,6 +392,7 @@ async function measurePhase(page, options, phase) {
 
     return {
       phase,
+      cacheMode: phase === 'cold' ? 'cleared-before-navigation' : 'reused-from-cold-navigation',
       shellReadyMs,
       catalogueReadyMs,
       ...catalogueHydration,
@@ -419,18 +422,10 @@ async function runProfile(browser, profileName, profile, options) {
       ...profile.context,
       serviceWorkers: 'block',
     });
-    await context.route('**/*', async (route) => {
-      try {
-        if (new URL(route.request().url()).origin === options.originValue) await route.continue();
-        else await route.abort('blockedbyclient');
-      } catch {
-        await route.abort('blockedbyclient');
-      }
-    });
     await context.addInitScript(installPageObservers);
 
     const page = await context.newPage();
-    const session = await configureProfile(page, profile, { clearCache: true });
+    const session = await configureProfile(page, profile, { clearCache: true, cacheDisabled: false });
     try {
       cold.push(await measurePhase(page, options, 'cold'));
       await page.goto('about:blank');
@@ -447,7 +442,8 @@ async function runProfile(browser, profileName, profile, options) {
       ...profile.context,
       cpuThrottleRate: profile.cpuThrottleRate,
       network: profile.network,
-      thirdPartyRequests: 'blocked',
+      httpCache: 'cold cleared; warm reuses the same context cache',
+      providerPlaybackInitiated: false,
       serviceWorkers: 'blocked',
     },
     cold,
@@ -486,7 +482,7 @@ async function main() {
   }
 
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     generatedAt: new Date().toISOString(),
     testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
     fixture: process.env.PLAYGARBA_PERF_FIXTURE || null,
@@ -499,7 +495,9 @@ async function main() {
     },
     measurementBoundary: {
       providerLatencyIncluded: false,
-      thirdPartyRequestsBlocked: true,
+      providerPlaybackInitiated: false,
+      thirdPartyRequestsBlocked: false,
+      sameOriginResourceMetricsOnly: true,
       serviceWorkersBlocked: true,
       searchQuery: SEARCH_QUERY,
       searchRequiresFullCatalogue: true,
