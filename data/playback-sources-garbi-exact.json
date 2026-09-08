@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "updated": "2026-09-08",
+  "note": "Conservative exact-song mappings for Hardik Dave and Rahul Munjariya's 2024 Garbi release. Only independently verified Apple Music song pages are included. Tracks 2, 3, 6 and 13 remain on their existing release/provider fallbacks because no exact provider track was independently verified; no provider IDs were inferred from neighbouring Apple IDs.",
+  "songSources": {
+    "hardik-garbi-2024-01": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045625","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":1,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-04": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045633","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":4,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-05": {"provider":"apple-music","sourceUrl":"https://music.apple.com/in/song/1770045634","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":5,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-07": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045637","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":7,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-08": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045638","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":8,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-09": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045639","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":9,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-10": {"provider":"apple-music","sourceUrl":"https://music.apple.com/in/song/1770045640","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":10,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-11": {"provider":"apple-music","sourceUrl":"https://music.apple.com/ca/song/1770045641","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":11,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-12": {"provider":"apple-music","sourceUrl":"https://music.apple.com/ca/song/1770045643","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":12,"evidenceType":"official-apple-music-song-page"},
+    "hardik-garbi-2024-14": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1770045646","sourceType":"verified-track-source","releaseId":"hardik-garbi-2024","trackNumber":14,"evidenceType":"official-apple-music-song-page"}
+  }
+}
