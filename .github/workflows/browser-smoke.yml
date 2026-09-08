@@ -1,0 +1,207 @@
+name: Browser and PWA smoke
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'simple-runtime.js'
+      - 'provider-runtime.js'
+      - 'player-continuity.js'
+      - 'youtube-player-runtime.js'
+      - 'nonstop-browser.js'
+      - 'offline.html'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'styles.css'
+      - 'styles/**'
+      - 'src/catalogue/**'
+      - 'assets/runtime/**'
+      - 'assets/backgrounds/**'
+      - 'assets/genre-icons/**'
+      - 'assets/icons/**'
+      - 'data/**'
+      - 'scripts/build-catalogue.mjs'
+      - 'scripts/enrich-runtime-songs.mjs'
+      - '.github/browser/**'
+      - '.github/workflows/browser-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'app.js'
+      - 'simple-runtime.js'
+      - 'provider-runtime.js'
+      - 'player-continuity.js'
+      - 'youtube-player-runtime.js'
+      - 'nonstop-browser.js'
+      - 'offline.html'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'styles.css'
+      - 'styles/**'
+      - 'src/catalogue/**'
+      - 'assets/runtime/**'
+      - 'assets/backgrounds/**'
+      - 'assets/genre-icons/**'
+      - 'assets/icons/**'
+      - 'data/**'
+      - 'scripts/build-catalogue.mjs'
+      - 'scripts/enrich-runtime-songs.mjs'
+      - '.github/browser/**'
+      - '.github/workflows/browser-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: '0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install fixture renderers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin icoutils
+
+      - name: Build catalogue data
+        run: npm run catalogue
+
+      - name: Prepare production-equivalent local fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _smoke
+          mkdir -p _smoke/catalogue
+
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            provider-runtime.js \
+            player-continuity.js \
+            youtube-player-runtime.js \
+            nonstop-browser.js \
+            sw.js \
+            manifest.webmanifest \
+            offline.html \
+            _smoke/
+          cp -R assets data _smoke/
+          cp \
+            src/catalogue/index.html \
+            src/catalogue/catalogue.css \
+            src/catalogue/catalogue.js \
+            src/catalogue/listening-library.js \
+            _smoke/catalogue/
+
+          # Match the deploy artifact's single network-first app payload.
+          cat \
+            app.js \
+            assets/runtime/seek-state.js \
+            assets/runtime/continuous-set-state.js \
+            > _smoke/app.js
+          grep -q 'GARBA_SEEK_STATE_RUNTIME' _smoke/app.js || { echo 'Seek-state runtime missing'; exit 1; }
+          grep -q 'GARBA_CONTINUOUS_SET_RUNTIME' _smoke/app.js || { echo 'Continuous-set runtime missing'; exit 1; }
+
+          # Match the service worker's generated icon contract so offline install
+          # exercises a realistic shell rather than an impossible source tree.
+          mkdir -p _smoke/assets/icons
+          rsvg-convert -w 16 -h 16 assets/icons/icon.svg -o _smoke/assets/icons/favicon-16.png
+          rsvg-convert -w 32 -h 32 assets/icons/icon.svg -o _smoke/assets/icons/favicon-32.png
+          rsvg-convert -w 48 -h 48 assets/icons/icon.svg -o _smoke/assets/icons/favicon-48.png
+          rsvg-convert -w 152 -h 152 assets/icons/icon.svg -o _smoke/assets/icons/apple-touch-icon-152.png
+          rsvg-convert -w 167 -h 167 assets/icons/icon.svg -o _smoke/assets/icons/apple-touch-icon-167.png
+          rsvg-convert -w 180 -h 180 assets/icons/icon.svg -o _smoke/assets/icons/apple-touch-icon.png
+          rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o _smoke/assets/icons/icon-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _smoke/assets/icons/icon-512.png
+          rsvg-convert -w 150 -h 150 assets/icons/icon.svg -o _smoke/assets/icons/mstile-150x150.png
+          rsvg-convert -w 310 -h 310 assets/icons/icon.svg -o _smoke/assets/icons/mstile-310x310.png
+          rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o _smoke/assets/icons/maskable-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o _smoke/assets/icons/maskable-512.png
+          icotool -c -o _smoke/favicon.ico \
+            _smoke/assets/icons/favicon-16.png \
+            _smoke/assets/icons/favicon-32.png \
+            _smoke/assets/icons/favicon-48.png
+
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _smoke/styles.css
+          ! grep -q '@import' _smoke/styles.css || { echo 'Fixture styles must be flattened'; exit 1; }
+
+          PACK=''
+          for candidate in \
+            assets/backgrounds/garba15-2048-q90.zip \
+            assets/backgrounds/garba15-2k.zip \
+            assets/backgrounds/garba15-2k-q82.zip; do
+            if [ -f "$candidate" ]; then PACK="$candidate"; break; fi
+          done
+          test -n "$PACK" || { echo 'Required 15-image WebP pack is missing'; exit 1; }
+          rm -rf _smoke/assets/backgrounds/library
+          mkdir -p _smoke/assets/backgrounds/library
+          unzip -oq "$PACK" -d _smoke/assets/backgrounds/library
+          test "$(find _smoke/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15 || { echo 'Fixture must contain 15 background WebPs'; exit 1; }
+          rm -f _smoke/assets/backgrounds/garba15-*.zip
+
+          for required in \
+            _smoke/catalogue/index.html \
+            _smoke/catalogue/catalogue.js \
+            _smoke/catalogue/listening-library.js \
+            _smoke/assets/icons/icon-192.png \
+            _smoke/assets/icons/icon-512.png \
+            _smoke/favicon.ico; do
+            test -s "$required" || { echo "Missing smoke artifact: $required"; exit 1; }
+          done
+
+      - name: Install pinned Playwright runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+
+      - name: Install pinned browser engines
+        run: ./node_modules/.bin/playwright install --with-deps chromium webkit
+
+      - name: Start local fixture
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _smoke >/tmp/playgarba-browser-smoke.log 2>&1 &
+          echo $! > /tmp/playgarba-browser-smoke.pid
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/playgarba-browser-smoke.log
+          exit 1
+
+      - name: Run browser and PWA smoke
+        run: ./node_modules/.bin/playwright test --config=.github/browser/playwright.config.mjs
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-diagnostics
+          path: |
+            test-results
+            /tmp/playgarba-browser-smoke.log
+          if-no-files-found: ignore
+          retention-days: 7
