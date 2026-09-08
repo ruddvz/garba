@@ -36,6 +36,7 @@ const state = {
   catalogueLoadedAt: 0,
   pendingSongId: null,
   sheetTrigger: null,
+  presentationRedirects: new Map(),
 };
 
 const $ = (id) => document.getElementById(id);
@@ -104,6 +105,22 @@ const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === g
 
 function persistFavourites() {
   storage.set('garba:favourites', [...state.favourites]);
+}
+
+function reconcilePresentationFavourites() {
+  const visibleIds = new Set(state.songs.map((song) => song.id));
+  const next = new Set();
+  let changed = false;
+  for (const id of state.favourites) {
+    const redirect = state.presentationRedirects.get(id);
+    const mapped = redirect?.canonicalSongId || id;
+    if (visibleIds.has(mapped)) next.add(mapped);
+    if (mapped !== id || !visibleIds.has(id)) changed = true;
+  }
+  if (changed || next.size !== state.favourites.size) {
+    state.favourites = next;
+    persistFavourites();
+  }
 }
 
 function persistSession() {
@@ -939,10 +956,15 @@ async function fetchCatalogue() {
     fetch('data/songs.json', { cache: 'no-store' }),
   ]);
   if (!genresResponse.ok || !songsResponse.ok) throw new Error('Failed to load catalogue');
-  return {
-    genres: await genresResponse.json(),
-    songs: await songsResponse.json(),
-  };
+  const [genres, allSongs] = await Promise.all([genresResponse.json(), songsResponse.json()]);
+  const songs = [];
+  const presentationRedirects = new Map();
+  for (const song of allSongs) {
+    const role = String(song?.presentationRole || 'catalogue');
+    if (role === 'catalogue') songs.push(song);
+    else if (song?.id) presentationRedirects.set(song.id, song);
+  }
+  return { genres, songs, presentationRedirects };
 }
 
 function makeCatalogueSignature(genres, songs) {
@@ -959,6 +981,8 @@ async function refreshCatalogue({ quiet = false } = {}) {
     const changed = state.catalogueSignature && signature !== state.catalogueSignature;
     state.genres = next.genres;
     state.songs = next.songs;
+    state.presentationRedirects = next.presentationRedirects;
+    reconcilePresentationFavourites();
     state.catalogueSignature = signature;
     state.catalogueLoadedAt = Date.now();
 
@@ -1007,8 +1031,20 @@ async function refreshCatalogue({ quiet = false } = {}) {
 function resolveInitialState() {
   const params = new URLSearchParams(location.search);
   const session = storage.get('garba:session', {});
-  const requestedSong = params.get('song');
+  let requestedSong = params.get('song');
   const requestedGenre = params.get('genre');
+  const redirect = requestedSong ? state.presentationRedirects.get(requestedSong) : null;
+  let pendingNonstopSetId = null;
+  if (redirect?.presentationRole === 'nonstop-only' && redirect.nonstopSetId) {
+    pendingNonstopSetId = redirect.nonstopSetId;
+    const url = new URL(location.href);
+    url.searchParams.delete('song');
+    url.searchParams.set('nonstop', pendingNonstopSetId);
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    requestedSong = redirect.canonicalSongId || null;
+  } else if (redirect?.canonicalSongId) {
+    requestedSong = redirect.canonicalSongId;
+  }
   const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;
 
   let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
@@ -1026,6 +1062,7 @@ function resolveInitialState() {
     pendingSongId,
     elapsed: Number(session.elapsed || 0),
     browse: params.get('browse') === '1',
+    pendingNonstopSetId,
   };
 }
 
@@ -1034,6 +1071,8 @@ async function init() {
     const catalogue = await fetchCatalogue();
     state.genres = catalogue.genres;
     state.songs = catalogue.songs;
+    state.presentationRedirects = catalogue.presentationRedirects;
+    reconcilePresentationFavourites();
     state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
     state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
@@ -1055,6 +1094,9 @@ async function init() {
     }
 
     state.pendingSongId = initial.pendingSongId;
+    if (initial.pendingNonstopSetId) {
+      setTimeout(() => window.GARBA_NONSTOP?.play?.(initial.pendingNonstopSetId, { quiet: true }), 0);
+    }
     if (initial.browse) openSheet('all', { snap: 'full', history: false });
     updateUrl();
   } catch (error) {
