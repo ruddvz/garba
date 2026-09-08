@@ -36,12 +36,7 @@ jobs:
 
           validator = Path('.github/workflows/website-validate.yml')
           text = validator.read_text()
-          guard = """
-          if grep -R -n -E 'garba-og-card\\.png\\?v=[^\" ]+\\?v=' --include='*.html' .; then
-            echo 'Duplicated OG image cache-buster found in public HTML.'
-            exit 1
-          fi
-"""
+          guard = "\n          if grep -R -n -E 'garba-og-card\\.png\\?v=[^\\\" ]+\\?v=' --include='*.html' .; then\n            echo 'Duplicated OG image cache-buster found in public HTML.'\n            exit 1\n          fi\n"
           marker = "          grep -q 'garba-og-card.png?v=20260908-2' faq/index.html\n"
           if 'Duplicated OG image cache-buster found' not in text:
               if marker not in text:
