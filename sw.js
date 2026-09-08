@@ -1,12 +1,11 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v12`;
+const CACHE_NAME = `${CACHE_PREFIX}v11`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles/70-mobile-playback-coordination.css',
   './simple-runtime.js',
   './provider-runtime.js',
   './player-continuity.js',
@@ -33,7 +32,6 @@ const CORE_SHELL = [
 const FRESH_RUNTIME_SUFFIXES = [
   '/index.html',
   '/styles.css',
-  '/styles/70-mobile-playback-coordination.css',
   '/simple-runtime.js',
   '/provider-runtime.js',
   '/player-continuity.js',
