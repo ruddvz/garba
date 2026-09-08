@@ -1,5 +1,57 @@
 {
   "version": 1,
   "policy": "Only add artwork after matching it to the exact PlayGarba release and a trustworthy provider or rights-holder source. Do not invent covers or reuse unrelated artwork.",
-  "releases": {}
+  "releases": {
+    "taali-vol13-2006": {
+      "imageUrl": "https://m.media-amazon.com/images/I/51Cqon8FIKL._UXNaN_FMjpg_QL85_.jpg",
+      "verified": true,
+      "sourceProvider": "Amazon Music",
+      "sourceUrl": "https://music.amazon.co.jp/albums/B00MGCWH7O",
+      "verificationSources": [
+        {
+          "platform": "Apple Music",
+          "url": "https://music.apple.com/us/album/taali-non-stop-garba-vol-13/906201334"
+        },
+        {
+          "platform": "Amazon Music",
+          "url": "https://music.amazon.co.jp/albums/B00MGCWH7O"
+        }
+      ],
+      "verifiedAt": "2026-09-07"
+    },
+    "chandaliyo-vol16-2009": {
+      "imageUrl": "https://m.media-amazon.com/images/I/5106XL%2B1FfL._UXNaN_FMjpg_QL85_.jpg",
+      "verified": true,
+      "sourceProvider": "Amazon Music",
+      "sourceUrl": "https://music.amazon.com/albums/B00MGB8A6C",
+      "verificationSources": [
+        {
+          "platform": "Apple Music",
+          "url": "https://music.apple.com/us/album/chandaliyo-non-stop-garba-vol-16/906188288"
+        },
+        {
+          "platform": "Amazon Music",
+          "url": "https://music.amazon.com/albums/B00MGB8A6C"
+        }
+      ],
+      "verifiedAt": "2026-09-07"
+    },
+    "thanganat-vol16-2012": {
+      "imageUrl": "https://m.media-amazon.com/images/I/51fBcmtUjvL._UXNaN_FMjpg_QL85_.jpg",
+      "verified": true,
+      "sourceProvider": "Amazon Music",
+      "sourceUrl": "https://music.amazon.com/albums/B00MGB9LRY",
+      "verificationSources": [
+        {
+          "platform": "Apple Music",
+          "url": "https://music.apple.com/us/album/thanganat-non-stop-garba-vol-16/906200924"
+        },
+        {
+          "platform": "Amazon Music",
+          "url": "https://music.amazon.com/albums/B00MGB9LRY"
+        }
+      ],
+      "verifiedAt": "2026-09-07"
+    }
+  }
 }
