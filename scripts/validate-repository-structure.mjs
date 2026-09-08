@@ -16,6 +16,7 @@ const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
   '.gitignore',
+  'CNAME',
   'CONTRIBUTING.md',
   'README.md',
   'app.js',
@@ -31,7 +32,6 @@ const requiredRootFiles = new Set([
   'sitemap.xml',
   'styles.css',
   'sw.js',
-  'vercel.json',
   'youtube-player-runtime.js',
 ]);
 const allowedRootDirs = new Set(['.github', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
@@ -211,12 +211,13 @@ if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fai
 const artwork = await readJson('data/release-artwork.json');
 if (artwork.version !== 1 || typeof artwork.releases !== 'object' || !artwork.releases) fail('release-artwork.json must use the versioned verified-artwork manifest contract');
 
+const cname = (await read('CNAME')).trim();
 const robots = await read('robots.txt');
 const sitemap = await read('sitemap.xml');
 const index = await read('index.html');
 const catalogueHtml = await read('src/catalogue/index.html');
 const catalogueJs = await read('src/catalogue/catalogue.js');
-if (await exists('CNAME')) fail('CNAME must not be present after moving the live player to Vercel');
+if (cname !== 'playgarba.com') fail(`CNAME must be playgarba.com, found ${cname || '(empty)'}`);
 if (!robots.includes('Sitemap: https://playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
 if (!sitemap.includes('<loc>https://playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
 if (!sitemap.includes('<loc>https://playgarba.com/explore/</loc>')) fail('sitemap.xml must include the single catalogue page');
@@ -266,16 +267,7 @@ for (const marker of [
   'https://playgarba.com/',
 ]) if (!publicIndex.includes(marker)) fail(`Public homepage missing production marker: ${marker}`);
 
-const vercel = await readJson('vercel.json');
-const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'host')?.value || null;
-const redirects = Array.isArray(vercel.redirects) ? vercel.redirects : [];
-const rewrites = Array.isArray(vercel.rewrites) ? vercel.rewrites : [];
-const hasRedirect = (source, destination, host = null) => redirects.some((rule) => rule.source === source && rule.destination === destination && rule.permanent === true && hostValue(rule) === host);
-const hasRewrite = (source, destination) => rewrites.some((rule) => rule.source === source && rule.destination === destination);
-if (!hasRedirect('/:path*', 'https://playgarba.com/:path*', 'www.playgarba.com')) fail('vercel.json must permanently redirect www.playgarba.com to the apex');
-if (!hasRedirect('/:path*', 'https://playgarba.com/:path*', 'live.playgarba.com')) fail('vercel.json must permanently redirect legacy live paths to the apex');
-if (!hasRedirect('/catalogue/:path*', 'https://playgarba.com/explore/:path*')) fail('vercel.json must permanently redirect legacy catalogue paths to /explore/');
-if (!hasRewrite('/explore/', '/catalogue/')) fail('vercel.json must serve the Explore implementation at /explore/');
+if (await exists('vercel.json')) fail('vercel.json must not remain in a Pages-only production source');
 
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
@@ -283,7 +275,7 @@ for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workfl
 for (const file of ['robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Live Vercel build missing production-domain file: ${file}`);
 for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`Pages workflow missing style layer: ${layer}`);
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
-if (pages.includes('actions/configure-pages') || pages.includes('actions/deploy-pages')) fail('Live player workflow must not publish through GitHub Pages');
+for (const action of ['actions/configure-pages@v5', 'actions/upload-pages-artifact@v4', 'actions/deploy-pages@v4']) if (!pages.includes(action)) fail(`Pages workflow must use ${action}`);
 for (const marker of [
   'mkdir -p _site/catalogue',
   'cp src/catalogue/index.html _site/catalogue/index.html',

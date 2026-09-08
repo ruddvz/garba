@@ -1,4 +1,4 @@
-name: Deploy live player to Vercel
+name: Deploy PlayGarba to GitHub Pages
 
 on:
   push:
@@ -35,6 +35,7 @@ jobs:
           mkdir -p _site
 
           cp \
+            CNAME \
             robots.txt \
             sitemap.xml \
             index.html \
@@ -68,6 +69,29 @@ jobs:
           cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
           cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
           cp src/catalogue/listening-library.js _site/catalogue/listening-library.js
+
+          # Keep one production artifact: the player at the apex, Explore at
+          # /explore/, and the supporting editorial pages alongside it.
+          mkdir -p _site/explore
+          cp src/catalogue/index.html _site/explore/index.html
+          cp src/catalogue/catalogue.css _site/explore/catalogue.css
+          cp src/catalogue/catalogue.js _site/explore/catalogue.js
+          cp src/catalogue/listening-library.js _site/explore/listening-library.js
+          cp -R \
+            public-site/about \
+            public-site/faq \
+            public-site/how-to-use \
+            public-site/install \
+            public-site/live \
+            public-site/what-is-garba \
+            _site/
+          cp \
+            public-site/editorial.css \
+            public-site/pages.css \
+            public-site/polish.css \
+            public-site/site.js \
+            public-site/pages.js \
+            _site/
 
           # Explore is source-native navigation; deployment must preserve it verbatim.
           grep -q 'href="./catalogue/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
@@ -130,7 +154,8 @@ jobs:
             test -f "_site/$runtime" || { echo "Missing deployed runtime: $runtime"; exit 1; }
           done
 
-          # Vercel owns the listening origin through the dedicated playgarba-live project.
+          # GitHub Pages owns the canonical production origin.
+          test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must be playgarba.com'; exit 1; }
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing apex sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing apex root'; exit 1; }
           grep -q '<loc>https://playgarba.com/explore/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical Explore route'; exit 1; }
@@ -211,11 +236,21 @@ jobs:
 
           touch _site/.nojekyll
 
-      - name: Deploy production live player to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          npm install --global vercel@latest
-          vercel deploy _site --prod --yes --project "$VERCEL_PROJECT_ID" --scope "$VERCEL_ORG_ID" --token "$VERCEL_TOKEN"
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
