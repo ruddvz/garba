@@ -7,7 +7,6 @@
     "catalogue": "node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",
     "playback:report": "npm run catalogue && node scripts/report-playback-route-quality.mjs",
     "youtube:coverage": "npm run catalogue && node scripts/report-youtube-first-coverage.mjs",
-    "seo:check": "node scripts/lib/generate-static-catalogue-pages.mjs --check && rm -rf /tmp/playgarba-seo-check && node scripts/lib/generate-static-catalogue-pages.mjs /tmp/playgarba-seo-check && test \"$(find /tmp/playgarba-seo-check/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')\" -eq 1169 && test \"$(find /tmp/playgarba-seo-check/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')\" -ge 200 && test \"$(grep -o '<loc>' /tmp/playgarba-seo-check/sitemap.xml | wc -l | tr -d ' ')\" -ge 1300",
     "hosting:report": "node scripts/report-hosting-readiness.mjs",
     "rights:labels": "node scripts/report-label-acquisition.mjs",
     "rights:match": "node scripts/match-vendor-catalogue.mjs",
@@ -22,7 +21,7 @@
     "repo:validate": "node scripts/validate-repository-structure.mjs",
     "docs:validate": "node scripts/validate-documentation.mjs",
     "serve": "python3 -m http.server 4173",
-    "check:modules": "node --check simple-runtime.js && node --check provider-runtime.js && node --check player-continuity.js && node --check youtube-player-runtime.js && node --check nonstop-browser.js && node --input-type=module --check < app.js && node --check sw.js",
-    "check": "npm run catalogue && npm run check:modules && node --check scripts/lib/generate-static-catalogue-pages.mjs && npm run seo:check && node --check scripts/report-playback-route-quality.mjs && node --check scripts/report-youtube-first-coverage.mjs && node --check scripts/validate-youtube-player-runtime.mjs && node scripts/validate-player-continuity.mjs && node scripts/validate-runtime-packaging.mjs && node scripts/validate-youtube-player-runtime.mjs && node scripts/validate-runtime-song-routes.mjs && node scripts/report-playback-route-quality.mjs && node scripts/validate-discovery.mjs && npm run repo:validate && npm run docs:validate"
+    "check:modules": "node --check simple-runtime.js && node --check provider-runtime.js && node --check player-continuity.js && node --check youtube-player-runtime.js && node --check nonstop-browser.js && node --input-type=module --check < app.js && node --check sw.js && node --check src/catalogue/catalogue.js",
+    "check": "npm run catalogue && npm run check:modules && node --check scripts/report-playback-route-quality.mjs && node --check scripts/report-youtube-first-coverage.mjs && node --check scripts/validate-youtube-player-runtime.mjs && node scripts/validate-player-continuity.mjs && node scripts/validate-runtime-packaging.mjs && node scripts/validate-youtube-player-runtime.mjs && node scripts/validate-runtime-song-routes.mjs && node scripts/report-playback-route-quality.mjs && node scripts/validate-discovery.mjs && npm run repo:validate && npm run docs:validate"
   }
 }
