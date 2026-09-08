@@ -16,6 +16,8 @@
   let safeSongsPromise = null;
   let player = null;
   let playerReadyPromise = null;
+  let playerReadyReject = null;
+  let playerGeneration = 0;
   let activeSong = null;
   let baseStart = 0;
   let trackDuration = 0;
@@ -315,8 +317,8 @@
   }
 
   async function ensurePlayer(initialVideoId) {
-    if (player) return player;
     if (playerReadyPromise) return playerReadyPromise;
+    if (player) return player;
 
     const media = $('youtubeProviderMedia');
     let mount = $(PLAYER_MOUNT_ID);
@@ -326,9 +328,12 @@
       media?.replaceChildren(mount);
     }
 
+    const generation = ++playerGeneration;
+    let instance = null;
     playerReadyPromise = new Promise((resolve, reject) => {
       let ready = false;
-      player = new window.YT.Player(mount.id, {
+      playerReadyReject = reject;
+      instance = new window.YT.Player(mount.id, {
         width: '100%',
         height: '100%',
         videoId: initialVideoId,
@@ -342,26 +347,31 @@
         },
         events: {
           onReady: (event) => {
-            if (event.target !== player) return;
+            if (generation !== playerGeneration || event.target !== instance || player !== instance) return;
             ready = true;
-            resolve(player);
+            playerReadyReject = null;
+            resolve(instance);
           },
           onStateChange: onPlayerStateChange,
           onAutoplayBlocked: onPlayerAutoplayBlocked,
           onError: onPlayerError,
         },
       });
+      player = instance;
 
       setTimeout(() => {
-        if (!ready && player) reject(new Error('YouTube player readiness timed out'));
+        if (!ready && generation === playerGeneration) reject(new Error('YouTube player readiness timed out'));
       }, 12000);
     }).catch((error) => {
-      stopPolling();
-      try { player?.destroy?.(); } catch { /* failed player may already be detached */ }
-      player = null;
-      playerState = -1;
-      playerReadyPromise = null;
-      $('youtubeProviderMedia')?.replaceChildren();
+      if (generation === playerGeneration) {
+        stopPolling();
+        try { instance?.destroy?.(); } catch { /* failed player may already be detached */ }
+        if (player === instance) player = null;
+        playerState = -1;
+        playerReadyPromise = null;
+        playerReadyReject = null;
+        media?.replaceChildren();
+      }
       throw error;
     });
 
@@ -369,11 +379,15 @@
   }
 
   function destroyPlayer() {
+    const rejectReady = playerReadyReject;
+    playerGeneration += 1;
+    playerReadyReject = null;
+    playerReadyPromise = null;
+    rejectReady?.(new Error('YouTube player closed before becoming ready'));
     stopPolling();
     try { player?.stopVideo?.(); } catch { /* already stopped */ }
     try { player?.destroy?.(); } catch { /* already detached */ }
     player = null;
-    playerReadyPromise = null;
     playerState = -1;
   }
 
@@ -450,6 +464,7 @@
       syncProgress();
       return true;
     } catch (error) {
+      if (token !== openToken) return false;
       console.warn('GARBA YouTube engine failed to initialise', error);
       stage.classList.remove('is-loading');
       setNote('YouTube player could not initialise. Use Open YouTube.', { needsTap: true });
