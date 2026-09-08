@@ -212,8 +212,20 @@ function makePerformanceResolver(sets) {
   };
 }
 
-const songs = await merge(index.songChunks);
-const releases = await merge(index.releaseChunks);
+const sourceSongs = await merge(index.songChunks);
+const sourceReleases = await merge(index.releaseChunks);
+const retiredSongIds = new Set(Array.isArray(index.retiredSongIds) ? index.retiredSongIds : []);
+const retiredReleaseIds = new Set(Array.isArray(index.retiredReleaseIds) ? index.retiredReleaseIds : []);
+
+const sourceSongIds = new Set(sourceSongs.map((song) => song?.id).filter(Boolean));
+const sourceReleaseIds = new Set(sourceReleases.map((release) => release?.id).filter(Boolean));
+const missingRetiredSongIds = [...retiredSongIds].filter((id) => !sourceSongIds.has(id));
+const missingRetiredReleaseIds = [...retiredReleaseIds].filter((id) => !sourceReleaseIds.has(id));
+if (missingRetiredSongIds.length) throw new Error(`Retired song IDs are missing from source shards: ${missingRetiredSongIds.join(", ")}`);
+if (missingRetiredReleaseIds.length) throw new Error(`Retired release IDs are missing from source shards: ${missingRetiredReleaseIds.join(", ")}`);
+
+const songs = sourceSongs.filter((song) => !retiredSongIds.has(song.id));
+const releases = sourceReleases.filter((release) => !retiredReleaseIds.has(release.id));
 const freeSources = await merge(index.freeSourceChunks);
 const discoverySets = await loadDiscoverySets();
 const findPerformance = makePerformanceResolver(discoverySets);
@@ -294,4 +306,5 @@ await Promise.all([
 ]);
 
 console.log(`Built ${songs.length} songs, ${releases.length} releases, ${freeSources.length} free/access sources.`);
+console.log(`Retired canonical duplicates: ${retiredSongIds.size} songs, ${retiredReleaseIds.size} releases.`);
 console.log(`Playback coverage: ${localAudioCount} local, ${explicitPlaybackCount} explicit provider, ${performanceChapterCount} verified performance chapter, ${releaseFallbackCount} verified release fallback, ${releaseTrackReferenceCount} release track reference, ${unresolvedCount} unresolved release source.`);
