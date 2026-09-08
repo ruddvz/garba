@@ -22,10 +22,10 @@ jobs:
         uses: actions/checkout@v6
       - name: Validate app
         run: npm run check
-      - name: Install SVG renderer
+      - name: Install icon renderers
         run: |
           sudo apt-get update
-          sudo apt-get install -y librsvg2-bin
+          sudo apt-get install -y librsvg2-bin icoutils
       - name: Prepare static site
         run: |
           rm -rf _site
@@ -44,6 +44,7 @@ jobs:
             nonstop-browser.js \
             sw.js \
             manifest.webmanifest \
+            browserconfig.xml \
             offline.html \
             _site/
           cp -R assets data _site/
@@ -55,14 +56,38 @@ jobs:
           cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
           cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
 
-          # Render the install-icon matrix from the canonical Garba mark.
+          # Render every platform icon from the canonical Garba mark. Android gets
+          # separate maskable artwork, while Apple, browser and Windows surfaces use
+          # the canonical mark at their native dimensions.
           mkdir -p _site/assets/icons
+          rsvg-convert -w 16 -h 16 assets/icons/icon.svg -o _site/assets/icons/favicon-16.png
+          rsvg-convert -w 32 -h 32 assets/icons/icon.svg -o _site/assets/icons/favicon-32.png
+          rsvg-convert -w 48 -h 48 assets/icons/icon.svg -o _site/assets/icons/favicon-48.png
+          rsvg-convert -w 152 -h 152 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon-152.png
+          rsvg-convert -w 167 -h 167 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon-167.png
+          rsvg-convert -w 180 -h 180 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon.png
           rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o _site/assets/icons/icon-192.png
           rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _site/assets/icons/icon-512.png
+          rsvg-convert -w 150 -h 150 assets/icons/icon.svg -o _site/assets/icons/mstile-150x150.png
+          rsvg-convert -w 310 -h 310 assets/icons/icon.svg -o _site/assets/icons/mstile-310x310.png
           rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o _site/assets/icons/maskable-192.png
           rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o _site/assets/icons/maskable-512.png
+          icotool -c -o _site/favicon.ico \
+            _site/assets/icons/favicon-16.png \
+            _site/assets/icons/favicon-32.png \
+            _site/assets/icons/favicon-48.png
+
+          file _site/assets/icons/favicon-16.png | grep -q 'PNG image data, 16 x 16' || { echo 'Favicon 16 is invalid'; exit 1; }
+          file _site/assets/icons/favicon-32.png | grep -q 'PNG image data, 32 x 32' || { echo 'Favicon 32 is invalid'; exit 1; }
+          file _site/assets/icons/favicon-48.png | grep -q 'PNG image data, 48 x 48' || { echo 'Favicon 48 is invalid'; exit 1; }
+          file _site/favicon.ico | grep -q 'MS Windows icon resource' || { echo 'favicon.ico is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'PWA 192 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
+          file _site/assets/icons/mstile-150x150.png | grep -q 'PNG image data, 150 x 150' || { echo 'Windows 150 tile is invalid'; exit 1; }
+          file _site/assets/icons/mstile-310x310.png | grep -q 'PNG image data, 310 x 310' || { echo 'Windows 310 tile is invalid'; exit 1; }
           file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 icon is invalid'; exit 1; }
           file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 icon is invalid'; exit 1; }
 
@@ -154,9 +179,10 @@ jobs:
           done < <(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | sort)
           rm -f _site/assets/backgrounds/garba15-*.zip
 
-          # Apply the universal social preview to every real HTML surface while
+          # Apply universal social and icon metadata to every real HTML surface while
           # preserving each page's canonical metadata.
           node scripts/lib/inject-social-preview.mjs _site
+          node scripts/lib/inject-brand-metadata.mjs _site
 
           # Product contract: do not deploy standalone song/release pages.
           test -f _site/catalogue/index.html || { echo 'Catalogue page is missing'; exit 1; }
@@ -167,9 +193,16 @@ jobs:
 
           SOCIAL_HTML_COUNT="$(find _site -type f -name '*.html' | wc -l | tr -d ' ')"
           SOCIAL_META_COUNT="$(grep -RIl 'https://playgarba.com/assets/social/garba-og-card.png' _site --include='*.html' | wc -l | tr -d ' ')"
+          BRAND_META_COUNT="$(grep -RIl 'apple-touch-icon-167.png' _site --include='*.html' | wc -l | tr -d ' ')"
           test "$SOCIAL_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal social preview missing from some pages: $SOCIAL_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
+          test "$BRAND_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal icon metadata missing from some pages: $BRAND_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
           grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
           grep -q 'name="twitter:card" content="summary_large_image"' _site/catalogue/index.html || { echo 'Catalogue large Twitter card metadata was not injected'; exit 1; }
+          grep -q 'href="/favicon.ico"' _site/index.html || { echo 'favicon.ico metadata was not injected'; exit 1; }
+          grep -q 'sizes="152x152"' _site/index.html || { echo 'iPad 152 icon metadata was not injected'; exit 1; }
+          grep -q 'sizes="167x167"' _site/index.html || { echo 'iPad Pro 167 icon metadata was not injected'; exit 1; }
+          grep -q 'sizes="180x180"' _site/index.html || { echo 'iPhone 180 icon metadata was not injected'; exit 1; }
+          grep -q 'name="msapplication-config" content="/browserconfig.xml"' _site/index.html || { echo 'Windows tile metadata was not injected'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
