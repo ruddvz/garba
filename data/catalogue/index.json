@@ -1,7 +1,7 @@
 {
-  "version": "0.23.0",
-  "songCount": 1535,
-  "releaseCount": 231,
+  "version": "0.24.0",
+  "songCount": 1597,
+  "releaseCount": 233,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -84,7 +84,9 @@
     "data/catalogue/songs/songs-wave-d2-kirtidan-tahukar10.json",
     "data/catalogue/songs/songs-wave-d3-kirtidan-tahukar11.json",
     "data/catalogue/songs/songs-wave-f-kinjal-garbe-ramvane.json",
-    "data/catalogue/songs/songs-wave-d4-kirtidan-rangili-ramzat8.json"
+    "data/catalogue/songs/songs-wave-d4-kirtidan-rangili-ramzat8.json",
+    "data/catalogue/songs/songs-wave-f-rangtaali4.json",
+    "data/catalogue/songs/songs-wave-f-rangtaali2.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -143,7 +145,9 @@
     "data/catalogue/releases/releases-wave-d2-kirtidan-tahukar10.json",
     "data/catalogue/releases/releases-wave-d3-kirtidan-tahukar11.json",
     "data/catalogue/releases/releases-wave-f-kinjal-garbe-ramvane.json",
-    "data/catalogue/releases/releases-wave-d4-kirtidan-rangili-ramzat8.json"
+    "data/catalogue/releases/releases-wave-d4-kirtidan-rangili-ramzat8.json",
+    "data/catalogue/releases/releases-wave-f-rangtaali4.json",
+    "data/catalogue/releases/releases-wave-f-rangtaali2.json"
   ],
   "retiredReleaseIds": ["atul-live-uwb-2015"],
   "retiredSongIds": [
@@ -221,7 +225,9 @@
     "data/playback-sources-wave-d2-kirtidan-tahukar10.json",
     "data/playback-sources-wave-d3-kirtidan-tahukar11.json",
     "data/playback-sources-kinjal-garbe-ramvane-youtube.json",
-    "data/playback-sources-wave-d4-kirtidan-rangili-ramzat8.json"
+    "data/playback-sources-wave-d4-kirtidan-rangili-ramzat8.json",
+    "data/playback-sources-rangtaali4-youtube.json",
+    "data/playback-sources-rangtaali2-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -247,5 +253,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.23.0 preserves Wave C, Playback Wave E, Wave D, current route-truth hardening and Catalogue Wave F, including Kinjal Dave's 27-track Garbe Ramvane. Issue #152 adds the 17-track Rangili Ramzat 8 (2025) split album credited to Umesh Barot, Osman Mir, Kirtidan Gadhvi and Rashmita Rabari. All 17 Rangili Ramzat 8 tracks use provider-published Amazon Music song hrefs as exact routes; no track identifier is inferred. Qobuz independently confirms the multi-artist credits and minor display-rounding variance. The separate continuous 2 Taali YouTube edition remains a distinct Nonstop listening master and is not converted into inferred chapter routes."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.24.0 preserves Wave C, Playback Wave E, Wave D and route-truth hardening, and completes Catalogue Wave F with 112 accepted songs across Rankar, Garbe Ramvane, Rangtaali 4 and the split-track Rangtaali 2 programme. Rangtaali 4 adds 27 provider-published Sur Sagar YouTube chapters; Rangtaali 2 adds 35 provider-published Amazon track routes while its existing continuous master remains a separate Nonstop set. No chapter start, provider identifier or duplicate recording identity is inferred."
 }
