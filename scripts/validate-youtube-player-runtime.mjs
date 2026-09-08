@@ -4,11 +4,14 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [runtime, nonstop, styles, bootstrap] = await Promise.all([
+const [runtime, nonstop, styles, mobileStyles, bootstrap, styleIndex, pages] = await Promise.all([
   read('youtube-player-runtime.js'),
   read('nonstop-browser.js'),
   read('styles/60-runtime-and-provider.css'),
+  read('styles/70-mobile-playback-coordination.css'),
   read('simple-runtime.js'),
+  read('styles.css'),
+  read('.github/workflows/pages.yml'),
 ]);
 
 let failed = false;
@@ -58,6 +61,27 @@ if (!/\.provider-media iframe\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200
 }
 
 for (const marker of [
+  'body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage',
+  'width: 216px;',
+  'height: 200px;',
+  'min-width: 200px;',
+  'min-height: 200px;',
+  '#songSheet[data-snap="medium"]',
+  '#songSheet[data-snap="full"]',
+  'height: clamp(220px, 48dvh, calc(100dvh - 320px));',
+]) {
+  if (!mobileStyles.includes(marker)) fail(`Mobile YouTube/sheet layout contract missing marker: ${marker}`);
+}
+if (!styleIndex.includes('@import url("styles/70-mobile-playback-coordination.css");')) {
+  fail('Mobile playback coordination stylesheet must load after the base runtime styles locally');
+}
+const mobileLayerIndex = pages.indexOf('styles/70-mobile-playback-coordination.css');
+const outputIndex = pages.indexOf('> _site/styles.css');
+if (!(mobileLayerIndex >= 0 && outputIndex > mobileLayerIndex)) {
+  fail('Pages must flatten the mobile playback coordination layer into production styles.css');
+}
+
+for (const marker of [
   'function stopMainPlayback()',
   'window.GARBA_YOUTUBE_PLAYER?.close?.()',
   "document.querySelector('#providerStage.open[aria-hidden=\"false\"] #providerDockStop')?.click()",
@@ -82,5 +106,7 @@ if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
+console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
+console.log('✓ Pages flattens the mobile playback coordination layer into the PWA-cached production stylesheet');
 console.log('✓ Nonstop playback stops the main player before opening its visible YouTube embed');
 console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');
