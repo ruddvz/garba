@@ -13,6 +13,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 ## Product
 
 - [`product/design-system.md`](product/design-system.md): visual system and interaction direction
+- [`product/immersive-atmosphere.md`](product/immersive-atmosphere.md): optional stereo/HRTF crowd, clap and dandiya atmosphere layer
 - [`product/playback-runtime-coverage.md`](product/playback-runtime-coverage.md): generated song-route and playback coverage contract
 - [`product/youtube-first-playback.md`](product/youtube-first-playback.md): one-tap YouTube IFrame playback architecture, route safety and provider fallback hierarchy
 - [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour
