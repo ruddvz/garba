@@ -1,5 +1,5 @@
 {
-  "version": "0.17.0",
+  "version": "0.17.1",
   "songCount": 1169,
   "releaseCount": 211,
   "categoryCount": 19,
@@ -136,7 +136,8 @@
     "data/playback-sources-chandaliyo-exact.json",
     "data/playback-sources-de-taali-exact.json",
     "data/playback-sources-rangili-ramzat-6-exact.json",
-    "data/playback-sources-navdurgani-exact.json"
+    "data/playback-sources-navdurgani-exact.json",
+    "data/playback-sources-madhuvan-youtube.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -162,5 +163,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.0 adds release-specific exact routes for the highest-impact fallback backlog; ambiguous or unpublished timestamps remain fallbacks."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.1 keeps the release-specific exact-provider backlog work and adds verified Soor Mandir YouTube chapters for all 18 Madhuvan (Bansari-2) songs; Poonam/Saiyar are matched by title because provider order differs. Ambiguous or unpublished timestamps remain fallbacks."
 }
