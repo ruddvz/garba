@@ -9,11 +9,13 @@
   const miniProgress = $('miniProgress');
   const songTitle = $('songTitle');
   const songArtist = $('songArtist');
+  const PLAYER_MOUNT_ID = 'garba-youtube-player';
 
   let apiPromise = null;
   let safeSongs = [];
   let safeSongsPromise = null;
   let player = null;
+  let playerReadyPromise = null;
   let activeSong = null;
   let baseStart = 0;
   let trackDuration = 0;
@@ -260,10 +262,118 @@
     document.querySelector('#providerStage.open[aria-hidden="false"] #providerDockStop')?.click();
   }
 
+  function eventBelongsToActiveSong() {
+    if (!player || !activeSong) return false;
+    try {
+      const currentId = String(player.getVideoData?.().video_id || '').trim();
+      const expectedId = videoId(activeSong);
+      return !currentId || !expectedId || currentId === expectedId;
+    } catch {
+      return true;
+    }
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.target !== player || !eventBelongsToActiveSong()) return;
+    playerState = Number(event.data);
+    const s = states();
+    if (playerState === s.PLAYING) {
+      setPlaying(true);
+      setNote('YouTube · playing in GARBA');
+      startPolling();
+    } else if (playerState === s.BUFFERING) {
+      setNote('YouTube · buffering', { loading: true });
+      startPolling();
+    } else if (playerState === s.PAUSED || playerState === s.CUED) {
+      setPlaying(false);
+      setNote('YouTube · paused');
+      syncProgress();
+    } else if (playerState === s.ENDED) {
+      setPlaying(false);
+      syncProgress();
+      advance();
+    }
+  }
+
+  function onPlayerAutoplayBlocked(event) {
+    if (event?.target && event.target !== player) return;
+    setPlaying(false);
+    setNote('Tap Play to start YouTube playback', { needsTap: true });
+  }
+
+  function onPlayerError(event) {
+    if (event.target !== player || !eventBelongsToActiveSong()) return;
+    setPlaying(false);
+    stopPolling();
+    const code = Number(event.data || 0);
+    const message = code === 101 || code === 150
+      ? 'This YouTube upload does not allow embedded playback.'
+      : code === 100
+        ? 'This YouTube upload is unavailable.'
+        : 'YouTube playback could not start.';
+    setNote(message, { needsTap: true });
+  }
+
+  async function ensurePlayer(initialVideoId) {
+    if (player) return player;
+    if (playerReadyPromise) return playerReadyPromise;
+
+    const media = $('youtubeProviderMedia');
+    let mount = $(PLAYER_MOUNT_ID);
+    if (!mount) {
+      mount = document.createElement('div');
+      mount.id = PLAYER_MOUNT_ID;
+      media?.replaceChildren(mount);
+    }
+
+    playerReadyPromise = new Promise((resolve, reject) => {
+      let ready = false;
+      player = new window.YT.Player(mount.id, {
+        width: '100%',
+        height: '100%',
+        videoId: initialVideoId,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          playsinline: 1,
+          rel: 0,
+          enablejsapi: 1,
+          origin: location.origin,
+        },
+        events: {
+          onReady: (event) => {
+            if (event.target !== player) return;
+            ready = true;
+            resolve(player);
+          },
+          onStateChange: onPlayerStateChange,
+          onAutoplayBlocked: onPlayerAutoplayBlocked,
+          onError: onPlayerError,
+        },
+      });
+
+      setTimeout(() => {
+        if (!ready && player) reject(new Error('YouTube player readiness timed out'));
+      }, 12000);
+    }).catch((error) => {
+      stopPolling();
+      try { player?.destroy?.(); } catch { /* failed player may already be detached */ }
+      player = null;
+      playerState = -1;
+      playerReadyPromise = null;
+      $('youtubeProviderMedia')?.replaceChildren();
+      throw error;
+    });
+
+    return playerReadyPromise;
+  }
+
   function destroyPlayer() {
     stopPolling();
+    try { player?.stopVideo?.(); } catch { /* already stopped */ }
     try { player?.destroy?.(); } catch { /* already detached */ }
     player = null;
+    playerReadyPromise = null;
     playerState = -1;
   }
 
@@ -302,7 +412,10 @@
     const token = ++openToken;
 
     closeGenericProvider();
-    destroyPlayer();
+    stopPolling();
+    try { player?.pauseVideo?.(); } catch { /* a newly requested video will replace it */ }
+    playerState = -1;
+    setPlaying(false);
     activeSong = song;
     baseStart = Math.max(0, Number(song.youtubeStartSeconds || 0));
     trackDuration = Math.max(0, Number(song.durationSeconds || 0));
@@ -310,7 +423,6 @@
     advanceLock = false;
 
     const stage = ensureStage();
-    const media = $('youtubeProviderMedia');
     const openLink = $('youtubeDockOpen');
     stage.classList.add('open', 'is-loading');
     stage.setAttribute('aria-hidden', 'false');
@@ -320,88 +432,19 @@
     }
     setNote('YouTube · loading', { loading: true });
 
-    const mount = document.createElement('div');
-    mount.id = `garba-youtube-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    media?.replaceChildren(mount);
-
     try {
       await loadApi();
       if (token !== openToken || activeSong?.id !== song.id) return false;
+      await ensurePlayer(id);
+      if (token !== openToken || activeSong?.id !== song.id || !player) return false;
 
       const logicalStart = resume ? restoreElapsed(song) : 0;
       const startSeconds = baseStart + logicalStart;
       const endSeconds = trackDuration > 0 ? baseStart + trackDuration : undefined;
-
-      await new Promise((resolve, reject) => {
-        let ready = false;
-        player = new window.YT.Player(mount.id, {
-          width: '100%',
-          height: '100%',
-          videoId: id,
-          playerVars: {
-            autoplay: 0,
-            controls: 0,
-            playsinline: 1,
-            rel: 0,
-            enablejsapi: 1,
-            origin: location.origin,
-          },
-          events: {
-            onReady: () => {
-              if (token !== openToken) return;
-              try {
-                const request = { videoId: id, startSeconds };
-                if (Number.isFinite(endSeconds) && endSeconds > startSeconds) request.endSeconds = endSeconds;
-                if (autoplay) player.loadVideoById(request);
-                else player.cueVideoById(request);
-                ready = true;
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            },
-            onStateChange: (event) => {
-              playerState = Number(event.data);
-              const s = states();
-              if (playerState === s.PLAYING) {
-                setPlaying(true);
-                setNote('YouTube · playing in GARBA');
-                startPolling();
-              } else if (playerState === s.BUFFERING) {
-                setNote('YouTube · buffering', { loading: true });
-                startPolling();
-              } else if (playerState === s.PAUSED || playerState === s.CUED) {
-                setPlaying(false);
-                setNote('YouTube · paused');
-                syncProgress();
-              } else if (playerState === s.ENDED) {
-                setPlaying(false);
-                syncProgress();
-                advance();
-              }
-            },
-            onAutoplayBlocked: () => {
-              setPlaying(false);
-              setNote('Tap Play to start YouTube playback', { needsTap: true });
-            },
-            onError: (event) => {
-              setPlaying(false);
-              stopPolling();
-              const code = Number(event.data || 0);
-              const message = code === 101 || code === 150
-                ? 'This YouTube upload does not allow embedded playback.'
-                : code === 100
-                  ? 'This YouTube upload is unavailable.'
-                  : 'YouTube playback could not start.';
-              setNote(message, { needsTap: true });
-            },
-          },
-        });
-
-        setTimeout(() => {
-          if (!ready && token === openToken) reject(new Error('YouTube player readiness timed out'));
-        }, 12000);
-      });
+      const request = { videoId: id, startSeconds };
+      if (Number.isFinite(endSeconds) && endSeconds > startSeconds) request.endSeconds = endSeconds;
+      if (autoplay) player.loadVideoById(request);
+      else player.cueVideoById(request);
 
       stage.classList.remove('is-loading');
       syncProgress();
