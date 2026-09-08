@@ -2,8 +2,17 @@
   // Preserve every previously shared player deep link after playgarba.com becomes
   // the public site. Marketing/analytics query strings stay on the homepage, while
   // player state moves to the dedicated listening origin unchanged.
-  const playerParams = new Set(['song', 'genre', 'browse', 'nonstop', 'queue', 'source']);
+  const playerParams = new Set(['song', 'genre', 'nonstop', 'queue', 'source']);
   const incoming = new URLSearchParams(window.location.search);
+if (incoming.has('browse')) {
+  const target = new URL('https://live.playgarba.com/catalogue/');
+  for (const [key, value] of incoming.entries()) {
+    if (key !== 'browse') target.searchParams.append(key, value);
+  }
+  target.hash = window.location.hash;
+  window.location.replace(target.toString());
+  return;
+}
   if ([...playerParams].some((key) => incoming.has(key))) {
     window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
     return;
