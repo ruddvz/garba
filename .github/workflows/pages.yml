@@ -39,6 +39,7 @@ jobs:
             simple-runtime.js \
             provider-runtime.js \
             player-continuity.js \
+            youtube-player-runtime.js \
             nonstop-browser.js \
             sw.js \
             manifest.webmanifest \
@@ -59,12 +60,14 @@ jobs:
             > _site/styles.css
 
           # Assert direct and transitive production runtime files are all present.
-          # provider-runtime.js and player-continuity.js are loaded synchronously by
-          # simple-runtime.js, so checking index.html alone is not sufficient.
+          # provider-runtime.js, player-continuity.js and youtube-player-runtime.js are
+          # loaded synchronously by simple-runtime.js, so checking index.html alone
+          # is not sufficient.
           for runtime in \
             simple-runtime.js \
             provider-runtime.js \
             player-continuity.js \
+            youtube-player-runtime.js \
             nonstop-browser.js \
             app.js \
             sw.js; do
