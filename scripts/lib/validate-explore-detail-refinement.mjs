@@ -46,14 +46,34 @@ for (const marker of [
   'function renderCollectionDetailIdentity(collection = state.active)',
   'function renderReleaseDetailIdentity(release, songs)',
   "els.detailKicker.textContent = `${state.active.title} · Release`;",
-  'els.detailTitle.textContent = release.title;',
-  "els.detailDescription.textContent = credits.join(' · ') || `Selected from ${state.active.title}.`;",
+  'els.detailTitle.textContent = displayTitle(release);',
+  'els.detailDescription.textContent = releaseDescription(release, songs);',
   "'Selected release'",
   'renderReleaseDetailIdentity(release, songs);',
   'renderCollectionDetailIdentity(state.active);',
   "rail.setAttribute('role','group');",
 ]) {
   if (!catalogue.includes(marker)) fail(`Explore release-detail identity is missing: ${marker}`);
+}
+
+for (const marker of [
+  "taxonomy: '../data/taxonomy.json'",
+  'const displayTitle = (entity)',
+  'const taxonomyIdsForSong = (song)',
+  'const belongsToVisualGenre = (song, genreId)',
+  'function songDescription(song, release)',
+  'function releaseDescription(release, songs = [])',
+  'function makeSongContext(song, release)',
+  "details.className = 'song-context';",
+  "summary.textContent = 'About';",
+  'song.description',
+  'song.story',
+  'song.displayTitle',
+  '...aliasesFor(song)',
+  "test:(song)=>belongsToVisualGenre(song,genre.id)",
+  'songHasTaxonomy(song,taxonomyIds)',
+]) {
+  if (!catalogue.includes(marker)) fail(`Explore catalogue metadata refinement is missing: ${marker}`);
 }
 
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
@@ -80,4 +100,4 @@ if (catalogue.includes("button.setAttribute('role','listitem');")) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, release identity, album semantics, keyboard navigation, overflow cues and horizontal-only focus are protected');
+console.log('✓ Explore detail hierarchy, release identity, metadata descriptions, taxonomy-driven browsing, album semantics and keyboard navigation are protected');
