@@ -47,7 +47,14 @@ const state = {
   active: null,
   activeSongs: [],
   activeReleaseId: null,
+  eventsWired: false,
+  loadFailed: false,
 };
+
+const SONG_BATCH_SIZE = 160;
+const RELEASE_BATCH_SIZE = 40;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motionBehavior = () => reducedMotion.matches ? 'auto' : 'smooth';
 
 const normalise = (value = '') => String(value)
   .normalize('NFKD')
@@ -56,7 +63,6 @@ const normalise = (value = '') => String(value)
   .replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ')
   .trim();
 
-const escapeText = (value = '') => String(value);
 const formatDuration = (seconds) => {
   const total = Number(seconds);
   if (!Number.isFinite(total) || total <= 0) return '';
@@ -278,11 +284,12 @@ function releasesForSongs(songs) {
     .sort((a,b)=>releaseYear(b.release)-releaseYear(a.release)||b.count-a.count||String(a.release.title).localeCompare(String(b.release.title)));
 }
 
-function renderReleases(songs) {
+function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
   els.releaseRail.replaceChildren();
   const items = releasesForSongs(songs);
   els.releaseSection.hidden = items.length === 0;
-  items.slice(0, 40).forEach(({release,count})=>{
+  const visible = items.slice(0, limit);
+  visible.forEach(({release,count})=>{
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `release-card${state.activeReleaseId===release.id?' active':''}`;
@@ -300,6 +307,16 @@ function renderReleases(songs) {
     button.addEventListener('click',()=>filterToRelease(release.id));
     els.releaseRail.append(button);
   });
+
+  if (visible.length < items.length) {
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'release-more';
+    const remaining = items.length - visible.length;
+    more.innerHTML = `<strong>More releases</strong><span>Showing ${visible.length.toLocaleString()} of ${items.length.toLocaleString()} · load ${Math.min(RELEASE_BATCH_SIZE, remaining).toLocaleString()} more</span>`;
+    more.addEventListener('click', () => renderReleases(songs, { limit: limit + RELEASE_BATCH_SIZE }));
+    els.releaseRail.append(more);
+  }
 }
 
 function songArtwork(song) {
@@ -312,10 +329,13 @@ function songArtwork(song) {
   return cover;
 }
 
-function renderSongs(songs, title='All songs') {
+function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
-  els.songCount.textContent = `${songs.length.toLocaleString()} ${songs.length===1?'song':'songs'}`;
+  const visible = songs.slice(0, limit);
+  els.songCount.textContent = visible.length < songs.length
+    ? `Showing ${visible.length.toLocaleString()} of ${songs.length.toLocaleString()} songs`
+    : `${songs.length.toLocaleString()} ${songs.length===1?'song':'songs'}`;
   if (!songs.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
@@ -324,7 +344,7 @@ function renderSongs(songs, title='All songs') {
     return;
   }
   const fragment = document.createDocumentFragment();
-  songs.slice(0, 300).forEach((song)=>{
+  visible.forEach((song)=>{
     const release = state.releaseById.get(song.releaseId);
     const row = document.createElement('div');
     row.className = 'song-row';
@@ -348,6 +368,18 @@ function renderSongs(songs, title='All songs') {
     row.append(copy,releaseEl,play);
     fragment.append(row);
   });
+
+  if (visible.length < songs.length) {
+    const remaining = songs.length - visible.length;
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'song-more';
+    more.textContent = `Show ${Math.min(SONG_BATCH_SIZE, remaining).toLocaleString()} more songs`;
+    more.setAttribute('aria-label', `Show more songs. ${remaining.toLocaleString()} remaining.`);
+    more.addEventListener('click', () => renderSongs(songs, title, { limit: limit + SONG_BATCH_SIZE }));
+    fragment.append(more);
+  }
+
   els.songList.append(fragment);
 }
 
@@ -370,7 +402,7 @@ function openCollection(id, { updateHash = true } = {}) {
   renderReleases(collection.songs);
   renderSongs(collection.songs);
   if (updateHash) history.pushState({collection:id},'',`#collection=${encodeURIComponent(id)}`);
-  window.scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:motionBehavior()});
 }
 
 function filterToRelease(releaseId) {
@@ -380,7 +412,7 @@ function filterToRelease(releaseId) {
   const songs = state.activeSongs.filter((song)=>song.releaseId===releaseId);
   renderReleases(state.activeSongs);
   renderSongs(songs, release?.title || 'Release songs');
-  document.querySelector('.songs-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelector('.songs-section')?.scrollIntoView({behavior:motionBehavior(),block:'start'});
 }
 
 function closeCollection({ updateHash = true } = {}) {
@@ -389,14 +421,24 @@ function closeCollection({ updateHash = true } = {}) {
   state.activeReleaseId = null;
   els.detail.hidden = true;
   els.home.hidden = false;
-  if (updateHash) history.pushState({},'',location.pathname);
-  window.scrollTo({top:0,behavior:'smooth'});
+  if (updateHash) history.replaceState({},'',`${location.pathname}${location.search}`);
+  window.scrollTo({top:0,behavior:motionBehavior()});
 }
 
-function searchCatalogue(query) {
+function returnToCollections() {
+  els.search.value = '';
+  if (history.state?.collection || history.state?.search) {
+    history.back();
+    return;
+  }
+  closeCollection();
+}
+
+function searchCatalogue(query, { updateHistory = true } = {}) {
   const q = normalise(query);
   if (!q) {
-    closeCollection();
+    if (updateHistory && history.state?.search) history.back();
+    else closeCollection({ updateHash: updateHistory });
     return;
   }
   const terms = q.split(/\s+/).filter(Boolean);
@@ -417,35 +459,47 @@ function searchCatalogue(query) {
   const pill = document.createElement('span'); pill.textContent=`${songs.length.toLocaleString()} matches`; els.detailMeta.append(pill);
   renderReleases(songs);
   renderSongs(songs,'Matching songs');
-  history.replaceState({search:q},'',`#search=${encodeURIComponent(query.trim())}`);
+  if (updateHistory) {
+    const nextUrl = `#search=${encodeURIComponent(query.trim())}`;
+    if (history.state?.search) history.replaceState({search:q},'',nextUrl);
+    else history.pushState({search:q},'',nextUrl);
+  }
 }
 
 function wireEvents() {
+  if (state.eventsWired) return;
+  state.eventsWired = true;
   let timer = null;
   els.search.addEventListener('input',()=>{
     clearTimeout(timer);
     timer = setTimeout(()=>searchCatalogue(els.search.value),90);
   });
-  els.back.addEventListener('click',()=>{ els.search.value=''; closeCollection(); });
+  els.back.addEventListener('click',returnToCollections);
   els.showAllSongs.addEventListener('click',()=>{
     if (!state.active) return;
     state.activeReleaseId = null;
     renderReleases(state.activeSongs);
     renderSongs(state.activeSongs);
   });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || els.detail.hidden) return;
+    event.preventDefault();
+    returnToCollections();
+  });
   window.addEventListener('popstate',applyHashState);
 }
 
 function applyHashState() {
-  const params = new URLSearchParams(location.hash.replace(/^#/,'').replaceAll('&','&'));
+  const params = new URLSearchParams(location.hash.replace(/^#/,''));
   const id = params.get('collection');
   const search = params.get('search');
   if (id) openCollection(id,{updateHash:false});
-  else if (search) { els.search.value=search; searchCatalogue(search); }
+  else if (search) { els.search.value=search; searchCatalogue(search,{updateHistory:false}); }
   else { els.search.value=''; closeCollection({updateHash:false}); }
 }
 
 async function init() {
+  els.count.textContent = 'Loading catalogue…';
   const [songs,releases,genres,index,artwork] = await Promise.all([
     fetchJson(paths.songs,[]),
     fetchJson(paths.releases,[]),
@@ -461,14 +515,51 @@ async function init() {
   state.releaseById = buildReleaseIndex(releases);
   state.artists = await loadArtists(index);
   state.collections = buildCollections();
+  state.loadFailed = false;
   els.count.textContent = `${songs.length.toLocaleString()} songs · ${state.releaseById.size.toLocaleString()} releases · ${state.collections.length.toLocaleString()} catalogues`;
   renderCollectionHome();
   wireEvents();
   applyHashState();
 }
 
-init().catch((error)=>{
+function renderLoadFailure(error) {
   console.error(error);
-  els.count.textContent = 'Catalogue temporarily unavailable.';
-  els.sections.innerHTML = '<div class="empty">The PlayGarba catalogue could not be loaded. Return to the player and try again when you are online.</div>';
+  state.loadFailed = true;
+  els.count.textContent = navigator.onLine ? 'Catalogue temporarily unavailable.' : 'Offline · catalogue not cached on this device yet.';
+  els.home.hidden = false;
+  els.detail.hidden = true;
+  const errorState = document.createElement('div');
+  errorState.className = 'catalogue-error';
+  errorState.setAttribute('role','alert');
+  const title = document.createElement('strong');
+  title.textContent = navigator.onLine ? 'Explore could not load' : 'Explore needs one online visit first';
+  const copy = document.createElement('p');
+  copy.textContent = navigator.onLine
+    ? 'The catalogue data did not arrive. Retry without leaving this page.'
+    : 'Reconnect and retry. After a successful visit, PlayGarba can reuse the catalogue data offline.';
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'retry-button';
+  retry.textContent = 'Retry catalogue';
+  retry.addEventListener('click', () => {
+    retry.disabled = true;
+    retry.textContent = 'Retrying…';
+    void start();
+  });
+  errorState.append(title,copy,retry);
+  els.sections.replaceChildren(errorState);
+}
+
+async function start() {
+  try {
+    await init();
+  } catch (error) {
+    renderLoadFailure(error);
+  }
+}
+
+window.addEventListener('online', () => {
+  if (state.loadFailed) void start();
 });
+
+void start();
