@@ -1,0 +1,15 @@
+{
+  "version": "0.18.1",
+  "updated": "2026-09-08",
+  "note": "Wave F exact route for Parth Oza's 2025 Garbe Ghoome Tu single. The Amazon track page matches the provider album identity, artist and 3:22 duration; the canonical release date follows the album page because the exact track page exposes a stale display date.",
+  "songSources": {
+    "parth-garbe-ghoome-tu-2025-01-garbe-ghoome-tu": {
+      "provider": "amazon-music",
+      "sourceUrl": "https://music.amazon.com/tracks/B0FQ5WLJ4B",
+      "sourceType": "verified-track-source",
+      "releaseId": "parth-garbe-ghoome-tu-2025",
+      "trackNumber": 1,
+      "evidenceType": "official-amazon-music-track-page"
+    }
+  }
+}
