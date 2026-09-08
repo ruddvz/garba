@@ -4,12 +4,13 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [bootstrap, provider, continuity, youtube, app] = await Promise.all([
+const [bootstrap, provider, continuity, youtube, app, mobileStyles] = await Promise.all([
   read('simple-runtime.js'),
   read('provider-runtime.js'),
   read('player-continuity.js'),
   read('youtube-player-runtime.js'),
   read('app.js'),
+  read('styles/70-mobile-playback-coordination.css'),
 ]);
 
 let failed = false;
@@ -123,8 +124,13 @@ for (const marker of [
   'youtubeApi = api;',
   '.youtube-video-button .youtube-mark{fill:currentColor}',
   '.youtube-video-button .youtube-play{fill:#111323}',
+  'function stageIsExpanded()',
+  'function setStageExpanded(expanded)',
+  'function toggleYoutubeStagePresentation()',
+  "stage.classList.toggle('is-expanded', Boolean(expanded))",
+  "stop.textContent = 'Stop'",
 ]) {
-  if (!provider.includes(marker)) fail(`YouTube-first playback contract missing marker: ${marker}`);
+  if (!provider.includes(marker)) fail(`YouTube-first playback/stage contract missing marker: ${marker}`);
 }
 
 for (const prohibited of [
@@ -133,6 +139,19 @@ for (const prohibited of [
   'function installYoutubeApiGate(api)',
 ]) {
   if (provider.includes(prohibited)) fail(`Main Play must not be gated behind a second YouTube-button action: ${prohibited}`);
+}
+
+for (const marker of [
+  '#youtubeStage.youtube-dock',
+  '#youtubeStage.youtube-dock.is-expanded',
+  '#youtubeStage.is-expanded .provider-media',
+  'width: 216px;',
+  'height: 200px;',
+  'min-width: 200px;',
+  'min-height: 200px;',
+  'border-radius: 22px 22px 16px 16px;',
+]) {
+  if (!mobileStyles.includes(marker)) fail(`Integrated YouTube performance-stage style missing marker: ${marker}`);
 }
 
 for (const marker of [
@@ -170,7 +189,8 @@ if (failed) process.exit(1);
 console.log('✓ song-row playback intent follows the newly selected song without opening a non-YouTube provider');
 console.log('✓ mobile song selection returns to Now Playing before playback intent resumes');
 console.log('✓ mapped YouTube songs start from the normal Play/Space controls without a second YouTube-button gate');
-console.log('✓ the optional YouTube video control is monochrome and remains a secondary control');
+console.log('✓ the monochrome YouTube control expands/collapses a secondary performance stage instead of controlling playback');
+console.log('✓ compact and expanded YouTube stages preserve the visible 200×200 minimum playback surface');
 console.log('✓ Previous/Next preserve listening intent while the YouTube engine closes on non-controllable destinations');
 console.log('✓ YouTube-only routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
