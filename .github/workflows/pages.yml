@@ -95,7 +95,7 @@ jobs:
             _site/
 
           # Explore is source-native navigation; deployment must preserve it verbatim.
-          grep -q 'href="./catalogue/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
+          grep -q 'href="./explore/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
           grep -q '<span>Explore</span>' _site/index.html || { echo 'Homepage Explore label missing'; exit 1; }
           ! grep -q 'id="browseButton"[^>]*aria-controls' _site/index.html || { echo 'Explore must not retain song-sheet semantics'; exit 1; }
 
