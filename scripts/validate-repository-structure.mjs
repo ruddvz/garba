@@ -269,7 +269,7 @@ for (const marker of [
 ]) if (!publicIndex.includes(marker)) fail(`Public homepage missing production marker: ${marker}`);
 
 const vercel = await readJson('vercel.json');
-const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'header' && entry.key.toLowerCase() === 'host')?.value;
+const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'host')?.value;
 const apexRootRewrite = vercel.rewrites?.find((rule) => rule.source === '/' && rule.destination === '/public-site/' && hostValue(rule) === '^playgarba\\.com$');
 const apexPathRewrite = vercel.rewrites?.find((rule) => rule.source === '/:path*' && rule.destination === '/public-site/:path*' && hostValue(rule) === '^playgarba\\.com$');
 const wwwRedirect = vercel.redirects?.find((rule) => rule.source === '/:path*' && rule.destination === 'https://playgarba.com/:path*' && rule.permanent === true && hostValue(rule) === '^www\\.playgarba\\.com$');
