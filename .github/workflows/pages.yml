@@ -47,6 +47,20 @@ jobs:
             _site/
           cp -R assets data _site/
 
+          # Generate the launch share card from a reviewable SVG source instead of
+          # committing opaque binary artwork. ImageMagick is available on the hosted
+          # Ubuntu runner and produces a crawler-friendly 1200x630 PNG.
+          mkdir -p _site/assets/social
+          convert \
+            -background none \
+            assets/social/playgarba-og-card.svg \
+            _site/assets/social/garba-og-card.png
+          identify -format '%wx%h' _site/assets/social/garba-og-card.png | grep -qx '1200x630' || { echo 'Social preview must be 1200x630'; exit 1; }
+          file _site/assets/social/garba-og-card.png | grep -q 'PNG image data' || { echo 'Social preview is not a valid PNG'; exit 1; }
+          node scripts/lib/inject-social-preview.mjs _site/index.html
+          grep -q 'property="og:image" content="https://playgarba.com/assets/social/garba-og-card.png"' _site/index.html || { echo 'Open Graph image metadata was not injected'; exit 1; }
+          grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
+
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
           cat \
