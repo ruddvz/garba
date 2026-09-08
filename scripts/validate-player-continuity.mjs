@@ -4,10 +4,11 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [bootstrap, provider, continuity, app] = await Promise.all([
+const [bootstrap, provider, continuity, youtube, app] = await Promise.all([
   read('simple-runtime.js'),
   read('provider-runtime.js'),
   read('player-continuity.js'),
+  read('youtube-player-runtime.js'),
   read('app.js'),
 ]);
 
@@ -112,26 +113,43 @@ if ((continuity.match(/clearMediaMetadata\(\);/g) || []).length < 3) {
   fail('Loading, failed and generic transient metadata paths must be able to clear stale Media Session metadata');
 }
 
-if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) {
-  fail('Provider runtime must close the old provider surface when the selected title changes');
-}
-if (!provider.includes("playButton?.addEventListener('click', interceptFallbackPlay, { capture: true })")) {
-  fail('Provider-aware primary Play interception is missing');
-}
 for (const marker of [
-  'function loadSongs({ refresh = false } = {})',
-  "window.addEventListener('garba:catalogue-ready'",
-  'loadSongs({ refresh: true })',
-  'window.GARBA_FAST_BOOT.hydrate()',
-  'This selected track could not be resolved.',
+  'function applyYoutubeOnlyPolicy(song)',
+  'function selectedYoutubeSong()',
+  "button.id = 'youtubeVideoButton';",
+  "document.addEventListener('click', interceptPlay, { capture: true })",
+  "document.addEventListener('keydown', interceptSpace, { capture: true })",
+  'pendingYoutubeSong = song;',
+  'Tap the YouTube button to open this track.',
 ]) {
-  if (!provider.includes(marker)) fail(`Provider catalogue hydration guard missing marker: ${marker}`);
+  if (!provider.includes(marker)) fail(`YouTube-only playback intent guard missing marker: ${marker}`);
 }
-if (provider.includes('|| songs[0] || null')) {
-  fail('Provider currentSong must never silently fall back to the first catalogue song');
+
+for (const marker of [
+  'async function refreshSafeSongs()',
+  "window.fetch('data/songs.json', { cache: 'no-store' })",
+  "window.addEventListener('garba:catalogue-ready'",
+  'queueMicrotask(refreshSafeSongs)',
+  'safeSongs = sanitiseSongs(songs);',
+]) {
+  if (!provider.includes(marker)) fail(`YouTube-only catalogue hydration guard missing marker: ${marker}`);
+}
+
+for (const marker of [
+  'function reopenAfterNavigation()',
+  'if (canControl(song)) {',
+  'close();',
+  'genericPlay();',
+  'if (activeSong) close();',
+]) {
+  if (!youtube.includes(marker)) fail(`YouTube navigation close/fallback guard missing marker: ${marker}`);
+}
+
+if (provider.includes('|| safeSongs[0] || null') || provider.includes('|| songs[0] || null')) {
+  fail('YouTube-only currentSong must never silently fall back to the first catalogue song');
 }
 if (provider.includes('setTimeout(() => { loadSongs(); }, 600);')) {
-  fail('Provider runtime must not permanently cache the fast-boot catalogue before hydration');
+  fail('YouTube-only runtime must not permanently cache the fast-boot catalogue before hydration');
 }
 if (!app.includes("copy.className = 'song-copy'")) fail('Song rows must retain the song-copy action target');
 for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
@@ -139,12 +157,12 @@ for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ song-row Play intent follows the newly selected provider song');
-console.log('✓ mobile song selection returns to Now Playing before provider playback resumes');
-console.log('✓ provider Previous/Next preserve listening intent across song changes');
-console.log('✓ provider routing refreshes after full catalogue hydration and never substitutes song 1');
+console.log('✓ song-row playback intent follows the newly selected song without opening a non-YouTube provider');
+console.log('✓ mobile song selection returns to Now Playing before playback intent resumes');
+console.log('✓ Previous/Next preserve listening intent while the YouTube engine closes on non-controllable destinations');
+console.log('✓ YouTube-only routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
 console.log('✓ deep-link hydration retries on reconnect without showing a fake Back online toast');
 console.log('✓ global playback shortcuts do not steal keyboard input from interactive controls');
 console.log('✓ Media Session publishes the current song/artist with PlayGarba artwork and clears transient loading metadata');
-console.log('✓ continuity layer loads after provider runtime and before app interaction completes');
+console.log('✓ continuity layer loads after the YouTube-only policy runtime and before app interaction completes');
