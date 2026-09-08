@@ -16,3 +16,12 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - name: Install SVG renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+      - name: Render social preview
+        run: |
+          mkdir -p /tmp/playgarba-social
+          rsvg-convert -w 1200 -h 630 assets/social/playgarba-og-card.svg -o /tmp/playgarba-social/garba-og-card.png
+          file /tmp/playgarba-social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630'
