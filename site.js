@@ -96,6 +96,33 @@
     document.body.appendChild(dock);
   };
 
+  const addFaqSupport = () => {
+    if (!window.location.pathname.startsWith('/faq/') || document.getElementById('support')) return;
+    const cta = document.querySelector('.page-cta');
+    if (!cta) return;
+
+    const section = document.createElement('section');
+    section.className = 'page-section';
+    section.id = 'support';
+    section.setAttribute('aria-labelledby', 'support-title');
+    section.innerHTML = `
+      <div class="page-section-inner">
+        <div class="page-section-head">
+          <div>
+            <p class="page-kicker">REPORT A PROBLEM</p>
+            <h2 id="support-title">Found a bug or a missing song?</h2>
+          </div>
+          <p>Use the project’s existing GitHub issue forms. That keeps reports attached to the public repository instead of creating a separate support channel.</p>
+        </div>
+        <div class="support-actions">
+          <a class="button button-primary" href="https://github.com/ruddvz/garba/issues/new?template=bug-report.yml">Report a bug <span aria-hidden="true">↗</span></a>
+          <a class="button button-ghost" href="https://github.com/ruddvz/garba/issues/new?template=missing-song.yml">Report a missing song <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    `;
+    cta.before(section);
+  };
+
   // The marketing site ships reviewable SVG fallbacks so first paint never depends
   // on another hostname. Once the player host is available, progressively promote
   // the exact same 2K WebP visual library used by GARBA itself.
@@ -134,6 +161,7 @@
   ensureFaqNavigation();
   markCurrentRoute();
   addMobileActionDock();
+  addFaqSupport();
 
   if ('requestIdleCallback' in window) requestIdleCallback(promoteAllArtwork, { timeout: 1800 });
   else window.setTimeout(promoteAllArtwork, 350);
