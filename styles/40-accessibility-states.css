@@ -56,6 +56,11 @@
     background: rgba(3,5,11,.20);
     pointer-events: none;
   }
+  .sheet-close {
+    display: grid;
+    min-width: 44px;
+    min-height: 44px;
+  }
   .retry-catalogue { min-height: 44px; }
   .search-empty-prompt { min-height: 150px; }
 }
