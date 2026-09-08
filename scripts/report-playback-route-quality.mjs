@@ -8,6 +8,12 @@ const [songs, releases] = await Promise.all([
   readJson('data/releases.json'),
 ]);
 const releasesById = new Map(releases.map((release) => [release.id, release]));
+const releaseTitleCounts = new Map();
+for (const release of releases) {
+  const title = String(release?.title || '').trim();
+  if (!title) continue;
+  releaseTitleCounts.set(title, (releaseTitleCounts.get(title) || 0) + 1);
+}
 
 function exactSelection(song) {
   if (song.audioUrl) return true;
@@ -19,6 +25,11 @@ function exactSelection(song) {
     && Number(song.youtubeStartSeconds) >= 0
     && song.playbackSourceType !== 'verified-release-track-reference'
     && song.playbackSourceType !== 'verified-unchaptered-youtube-release';
+}
+
+function releaseDisplayTitle(release, releaseId) {
+  const title = release?.title || releaseId;
+  return releaseTitleCounts.get(title) > 1 ? `${title} [${releaseId}]` : title;
 }
 
 const exact = songs.filter(exactSelection);
@@ -44,7 +55,7 @@ const ranked = [...groups.values()]
     const release = releasesById.get(group.releaseId);
     return {
       ...group,
-      releaseTitle: release?.title || group.releaseId,
+      releaseTitle: releaseDisplayTitle(release, group.releaseId),
       releaseArtist: release?.artist || '',
       label: release?.label || null,
       count: group.songs.length,
