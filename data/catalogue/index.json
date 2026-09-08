@@ -1,7 +1,7 @@
 {
-  "version": "0.17.8",
-  "songCount": 1160,
-  "releaseCount": 208,
+  "version": "0.17.9",
+  "songCount": 1183,
+  "releaseCount": 209,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -60,7 +60,8 @@
     "data/catalogue/songs/songs-53-purva-current-discovery.json",
     "data/catalogue/songs/songs-54-trupti-kaushal-rajesh.json",
     "data/catalogue/songs/songs-55-alpa-current-staples.json",
-    "data/catalogue/songs/songs-56-raag-mehta.json"
+    "data/catalogue/songs/songs-56-raag-mehta.json",
+    "data/catalogue/songs/songs-57-dhara-rankar.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -106,7 +107,8 @@
     "data/catalogue/releases/releases-41-purva-current-discovery.json",
     "data/catalogue/releases/releases-42-trupti-kaushal-rajesh.json",
     "data/catalogue/releases/releases-43-alpa-current-staples.json",
-    "data/catalogue/releases/releases-44-raag-mehta.json"
+    "data/catalogue/releases/releases-44-raag-mehta.json",
+    "data/catalogue/releases/releases-45-dhara-rankar.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -184,5 +186,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.8 preserves the K Hove Hove tombstoned provenance and all current route/runtime improvements, keeps the eight independently verified exact Rutvi Ni Ramzat 3.0 song routes, and adds three independently verified Apple Music exact-song routes for Ho Raj (Non Stop Fusion Garba). Ghor Andhari Re intentionally keeps its stronger existing exact route; remaining Ho Raj songs stay conservative until an exact provider track is independently verified."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 preserves all v0.17.8 route/runtime work and begins issue #156 Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. Rankar uses its official Amazon album as the conservative generated release-level route; the official artist-channel continuous video is retained as release evidence but is not promoted to per-track exact playback because two published chapter labels do not map one-for-one to the provider album."
 }
