@@ -639,7 +639,7 @@ if (input && status && topbar && spacer) {
     attributeFilter: ['class'],
   });
   new MutationObserver(queueSyncDetailState).observe(songsSection, { childList: true, subtree: true });
-  window.addEventListener('popstate', () => queueMicrotask(syncDetailState));
+  window.addEventListener('popstate', () => queueMicrotask(queueSyncDetailState));
   window.addEventListener('pageshow', queueSyncDetailState);
   queueSyncDetailState();
 })();
