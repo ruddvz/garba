@@ -91,6 +91,7 @@ const expectedScriptEntrypoints = [
   'plan-direct-ingest.mjs',
   'report-hosting-readiness.mjs',
   'report-label-acquisition.mjs',
+  'report-playback-friction.mjs',
   'test-catalogue-matcher.mjs',
   'validate-contact-map.mjs',
   'validate-direct-audio.mjs',
@@ -176,6 +177,8 @@ const packageJson = await readJson('package.json');
 const packageScripts = packageJson.scripts || {};
 if (!packageScripts.catalogue?.includes('scripts/enrich-runtime-songs.mjs')) fail('npm run catalogue must retain runtime playback-route enrichment');
 if (!packageScripts.check?.includes('scripts/validate-runtime-song-routes.mjs')) fail('npm run check must retain complete runtime song-route validation');
+if (!packageScripts.check?.includes('scripts/report-playback-friction.mjs')) fail('npm run check must retain playback friction reporting');
+if (!packageScripts['playback:friction']?.includes('scripts/report-playback-friction.mjs')) fail('npm run playback:friction must expose the playback friction report');
 if (!packageScripts.check?.includes('scripts/report-hosting-readiness.mjs')) fail('npm run check must use report-hosting-readiness.mjs');
 if (!packageScripts.check?.includes('scripts/report-label-acquisition.mjs')) fail('npm run check must use report-label-acquisition.mjs');
 if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');
