@@ -1,0 +1,90 @@
+name: Audit issue 278 Falguni duplicate
+
+on:
+  push:
+    branches: [codex/release-integrity-278-falguni]
+    paths:
+      - '.github/workflows/audit-issue-278-falguni.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/release-integrity-278-falguni
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build catalogue
+        run: npm run catalogue
+      - name: Print current metadata audit
+        shell: bash
+        run: |
+          set +e
+          npm run catalogue:metadata:audit 2>&1 | tee /tmp/metadata-audit.log
+          status=${PIPESTATUS[0]}
+          echo "metadata_audit_exit=$status"
+          echo '--- Falguni / identical-segmentation audit excerpts ---'
+          grep -iE 'falguni|identical|duplicate|segmentation' /tmp/metadata-audit.log || true
+          exit 0
+      - name: Inspect Falguni release identities and track fingerprints
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const cp = require('child_process');
+          const releases = JSON.parse(fs.readFileSync('data/releases.json','utf8'));
+          const songs = JSON.parse(fs.readFileSync('data/songs.json','utf8'));
+          const norm = (v='') => String(v).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+          const candidates = releases.filter((r) => norm(r.title).includes('non stop garba') && (norm(r.title).includes('falguni') || norm(r.artist).includes('falguni')));
+          console.log(`candidate_count=${candidates.length}`);
+          for (const release of candidates) {
+            const attached = songs.filter((s) => s.releaseId === release.id)
+              .sort((a,b) => Number(a.trackNumber||9999)-Number(b.trackNumber||9999) || String(a.id).localeCompare(String(b.id)));
+            const fingerprint = attached.map((s) => `${s.trackNumber ?? '?'}:${norm(s.title)}`).join('|');
+            console.log('\n=== RELEASE ===');
+            console.log(JSON.stringify({
+              id: release.id,
+              title: release.title,
+              artist: release.artist,
+              releaseDate: release.releaseDate,
+              originalReleaseYear: release.originalReleaseYear,
+              label: release.label,
+              entryType: release.entryType,
+              songCount: release.songCount,
+              trackImportComplete: release.trackImportComplete,
+              sourceUrls: (release.sources||[]).map((s)=>s.url),
+              attachedSongCount: attached.length,
+              trackFingerprint: fingerprint,
+              songs: attached.map((s)=>({id:s.id,title:s.title,trackNumber:s.trackNumber,presentationRole:s.presentationRole||'catalogue'})),
+            }, null, 2));
+            try {
+              const grep = cp.execFileSync('git',['grep','-n','--fixed-strings',release.id,'--','data/catalogue','data/discovery','data/playback-sources-*.json'],{encoding:'utf8'});
+              console.log('source_references:\n'+grep.trim());
+            } catch (error) {
+              console.log('source_references: none');
+            }
+          }
+
+          const fingerprints = new Map();
+          for (const release of releases) {
+            const attached = songs.filter((s)=>s.releaseId===release.id)
+              .sort((a,b)=>Number(a.trackNumber||9999)-Number(b.trackNumber||9999) || String(a.id).localeCompare(String(b.id)));
+            if (!attached.length) continue;
+            const fingerprint = attached.map((s)=>`${s.trackNumber ?? '?'}:${norm(s.title)}`).join('|');
+            if (!fingerprints.has(fingerprint)) fingerprints.set(fingerprint, []);
+            fingerprints.get(fingerprint).push({id:release.id,title:release.title,artist:release.artist,count:attached.length});
+          }
+          console.log('\n=== IDENTICAL TRACK FINGERPRINT GROUPS INVOLVING FALGUNI ===');
+          for (const group of fingerprints.values()) {
+            if (group.length < 2) continue;
+            if (!group.some((r)=>norm(`${r.title} ${r.artist}`).includes('falguni'))) continue;
+            console.log(JSON.stringify(group,null,2));
+          }
+          NODE
