@@ -8,6 +8,23 @@ const [songs, releases] = await Promise.all([
   readJson('data/releases.json'),
 ]);
 const releasesById = new Map(releases.map((release) => [release.id, release]));
+const releasesByTitle = new Map();
+for (const release of releases) {
+  const title = String(release?.title || '').trim();
+  if (!title) continue;
+  const rows = releasesByTitle.get(title) || [];
+  rows.push(release);
+  releasesByTitle.set(title, rows);
+}
+
+const releaseTitleCounts = new Map([...releasesByTitle].map(([title, rows]) => [title, rows.length]));
+const songsByRelease = new Map();
+for (const song of songs) {
+  const releaseId = song.releaseId || '(no release)';
+  const rows = songsByRelease.get(releaseId) || [];
+  rows.push(song);
+  songsByRelease.set(releaseId, rows);
+}
 
 function exactSelection(song) {
   if (song.audioUrl) return true;
@@ -19,6 +36,19 @@ function exactSelection(song) {
     && Number(song.youtubeStartSeconds) >= 0
     && song.playbackSourceType !== 'verified-release-track-reference'
     && song.playbackSourceType !== 'verified-unchaptered-youtube-release';
+}
+
+function releaseDisplayTitle(release, releaseId) {
+  const title = release?.title || releaseId;
+  return releaseTitleCounts.get(title) > 1 ? `${title} [${releaseId}]` : title;
+}
+
+function trackSignature(releaseId) {
+  return (songsByRelease.get(releaseId) || [])
+    .slice()
+    .sort((a, b) => Number(a.trackNumber || 0) - Number(b.trackNumber || 0) || String(a.id).localeCompare(String(b.id)))
+    .map((song) => `${Number(song.trackNumber || 0)}|${String(song.title || '').trim().toLowerCase()}|${Number(song.durationSeconds || 0)}`)
+    .join('\n');
 }
 
 const exact = songs.filter(exactSelection);
@@ -44,13 +74,22 @@ const ranked = [...groups.values()]
     const release = releasesById.get(group.releaseId);
     return {
       ...group,
-      releaseTitle: release?.title || group.releaseId,
+      releaseTitle: releaseDisplayTitle(release, group.releaseId),
       releaseArtist: release?.artist || '',
       label: release?.label || null,
       count: group.songs.length,
     };
   })
   .sort((a, b) => b.count - a.count || a.releaseTitle.localeCompare(b.releaseTitle));
+
+const titleCollisions = [...releasesByTitle.entries()]
+  .filter(([, rows]) => rows.length > 1)
+  .map(([title, rows]) => {
+    const signatures = rows.map((release) => trackSignature(release.id));
+    const identicalTrackSegmentation = signatures.length > 1 && signatures.every((signature) => signature === signatures[0]);
+    return { title, rows, identicalTrackSegmentation };
+  })
+  .sort((a, b) => a.title.localeCompare(b.title));
 
 console.log(`GARBA playback route quality · ${songs.length} songs`);
 console.log(`Exact selection: ${exact.length}`);
@@ -67,4 +106,16 @@ console.log('');
 console.log('Reference-track batches needing exact song mapping or a proper release source:');
 for (const group of ranked.filter((entry) => entry.sourceType === 'verified-release-track-reference')) {
   console.log(`${String(group.count).padStart(3)} · ${group.releaseTitle} · ${group.provider} · ${group.releaseArtist}`);
+}
+
+if (titleCollisions.length) {
+  console.log('');
+  console.log('Same-title release diagnostics:');
+  for (const collision of titleCollisions) {
+    const status = collision.identicalTrackSegmentation ? 'IDENTICAL track segmentation' : 'different track segmentation';
+    const ids = collision.rows
+      .map((release) => `${release.id} (${(songsByRelease.get(release.id) || []).length} songs)`)
+      .join(' ↔ ');
+    console.log(`  · ${collision.title} · ${status} · ${ids}`);
+  }
 }
