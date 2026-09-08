@@ -2,48 +2,47 @@
 
 Date: 2026-09-08
 
-Issue: #152, follow-up catalogue completeness for Geeta Rabari.
+Issue: #152 / migration child #229.
 
-## Outcome
+## Final outcome
 
-Wave D5 adds Geeta Rabari's `Taal - Non Stop Garba` (2022) as one complete provider-backed release:
+Geeta Rabari's `Taal - Non Stop Garba` (2022) remains a complete 21-track canonical release. The old Amazon track selections are now provenance only and are no longer executable.
 
-- 21 canonical album tracks
-- 1 canonical release
-- 21 exact Amazon Music track routes
-- 3 official YouTube Nonstop listening entries for the album's long `Taal (1)`, `Taal (2)` and `Taal (3)` masters
+The three long master tracks have independently verified official YouTube identities and remain executable:
 
-No audio is downloaded or redistributed. No provider track ID, timestamp or chapter boundary is inferred.
+- `taal-non-stop-geeta-2022-01-taal-1` → `msCZCOHy74U`
+- `taal-non-stop-geeta-2022-02-taal-2` → `RgeoEpZdMnE`
+- `taal-non-stop-geeta-2022-03-taal-3` → `R2INBS_L_UQ`
 
-## Release structure
+No chapter map is manufactured for the shorter component tracks.
 
-Amazon Music and Qobuz publish a 21-track September 12, 2022 album. Tracks 1-3 are long master tracks named `Taal (1)`, `Taal (2)` and `Taal (3)`. They are part of the same album and are not separate `Taal 2` or `Taal 3` releases.
+## Explicit unresolved split tracks
 
-Tracks 4-21 are shorter Garba components. The canonical catalogue preserves the complete provider order instead of turning the three master-track names into invented release volumes.
+The following 18 canonical rows remain non-playable until the exact 2022 release recording is independently verified on YouTube:
 
-Amazon's rounded track durations sum to 2:26:21. Qobuz reports a 2:26:09 album total. The 12-second aggregate variance is retained as provider display rounding rather than silently normalised.
+- `taal-non-stop-geeta-2022-04-radhaji-nu-zanzariyu`
+- `taal-non-stop-geeta-2022-05-gabbar-ma-vage-gugghra`
+- `taal-non-stop-geeta-2022-06-dhol-vage-re`
+- `taal-non-stop-geeta-2022-07-maro-sona-no-ghadulo`
+- `taal-non-stop-geeta-2022-08-ek-taro-vage`
+- `taal-non-stop-geeta-2022-09-bol-valam-na`
+- `taal-non-stop-geeta-2022-10-tu-kadi-ne-kalyani`
+- `taal-non-stop-geeta-2022-11-mahendi-te-vavi`
+- `taal-non-stop-geeta-2022-12-devi-ambika-rame`
+- `taal-non-stop-geeta-2022-13-ae-hali-hali`
+- `taal-non-stop-geeta-2022-14-sona-no-garbo`
+- `taal-non-stop-geeta-2022-15-maa-tu-pavama-pragtani`
+- `taal-non-stop-geeta-2022-16-khamma-mari-pavavadi-maa`
+- `taal-non-stop-geeta-2022-17-sava-man-sonu`
+- `taal-non-stop-geeta-2022-18-ho-kaji-ha-kanji`
+- `taal-non-stop-geeta-2022-19-aai-aasha-pura`
+- `taal-non-stop-geeta-2022-20-vanravan-maa`
+- `taal-non-stop-geeta-2022-21-avje-mari-mata-tari-jarur-padi-che`
 
-## Playback integrity
+Official same-title standalone videos are not automatically treated as the same album master. These 18 rows are handed to #157 for recording-level YouTube verification.
 
-Amazon's official album page exposes a distinct track href for every one of the 21 tracks. Wave D5 therefore uses 21 exact `amazon-music` routes with `official-amazon-album-track-link` evidence.
+## Corrected backlog interpretation
 
-The three long masters are also independently present through Geeta Rabari's official YouTube distribution and are added to the Nonstop browser as full listening entries. Those YouTube videos are not used to manufacture chapter routes for tracks 4-21.
+`Taal (2)` and `Taal (3)` are tracks inside the 2022 `Taal - Non Stop Garba` release, not separate `Taal 2` or `Taal 3` album volumes. `Khamma 2`, `Zankaar 2.0`, `Zankaar 3.0` and the current Taal catalogue are already canonical, so no duplicate release expansion is needed in #152.
 
-## Backlog corrections
-
-This audit also closes two false or already-complete leads from earlier Wave D notes:
-
-- `Taal 2` / `Taal 3` are not separate album volumes in the 2022 provider edition; they are long tracks inside `Taal - Non Stop Garba`.
-- `Khamma 2` is already canonical with 21 exact Amazon Music routes.
-- `Rangili Ramzat 6` is already canonical with 19 exact Amazon Music routes.
-
-## Remaining issue #152 backlog
-
-Issue #152 should remain open. The next pass should prioritise:
-
-- Kirtidan Gadhvi: `Nortani Raat` and `Nortani Raat 2`, after duplicate and provider-route reconciliation
-- Falguni Pathak: older non-stop/dandiya releases with recording-level duplicate reconciliation
-- Aditya Gadhvi: `Amber Gaje` and final taxonomy-fit review of major modern/popular releases
-- Geeta Rabari: remaining authoritative Garba releases not already represented by `Taal`, `Zankaar 3.0` or `Khamma 2`
-
-The next wave should continue to prefer complete authoritative releases and provider-published exact routes over guessed chapters, transliteration duplicates or compilation reuse.
+This migration closes #229 because every canonical Taal 2022 row is now either exact official YouTube or explicitly unresolved/non-playable under the production policy.

@@ -13,12 +13,13 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-152-wave-d-audit.md`](catalogue/issue-152-wave-d-audit.md): Falguni Pathak, Kirtidan Gadhvi, Geeta Rabari and Aditya Gadhvi Wave D catalogue and playback audit
 - [`catalogue/issue-152-wave-d2-audit.md`](catalogue/issue-152-wave-d2-audit.md): Geeta Rabari Zankaar 3.0 and Kirtidan Gadhvi Tahukar 10 follow-up audit
 - [`catalogue/issue-152-wave-d3-audit.md`](catalogue/issue-152-wave-d3-audit.md): Kirtidan Gadhvi Tahukar 11 complete split-track and exact chapter-routing audit
-- [`catalogue/issue-152-wave-d4-audit.md`](catalogue/issue-152-wave-d4-audit.md): Rangili Ramzat 8 complete multi-artist split-track and exact Amazon routing audit
-- [`catalogue/issue-152-wave-d5-audit.md`](catalogue/issue-152-wave-d5-audit.md): Geeta Rabari Taal 2022 complete album, exact Amazon routing and Nonstop master audit
+- [`catalogue/issue-152-wave-d4-audit.md`](catalogue/issue-152-wave-d4-audit.md): Rangili Ramzat 8 YouTube-only split-track migration audit and explicit unresolved handoff
+- [`catalogue/issue-152-wave-d5-audit.md`](catalogue/issue-152-wave-d5-audit.md): Geeta Rabari Taal 2022 YouTube-only migration audit with three exact masters and explicit unresolved handoff
 - [`catalogue/issue-152-wave-d6-audit.md`](catalogue/issue-152-wave-d6-audit.md): Kirtidan Gadhvi and Anita Pandit Nortani Raat split-album, exact Amazon routing and continuous-master audit
 - [`catalogue/issue-152-wave-d7-audit.md`](catalogue/issue-152-wave-d7-audit.md): Kirtidan Gadhvi and Anita Pandit Nortani Raat 2 complete album with YouTube-only executable-route audit
 - [`catalogue/issue-152-wave-d8-audit.md`](catalogue/issue-152-wave-d8-audit.md): Aditya Gadhvi and Shruti Ahir Amber Gaje expanded-edition, recording-history and YouTube-only route audit
 - [`catalogue/issue-152-wave-d9-audit.md`](catalogue/issue-152-wave-d9-audit.md): Falguni Pathak and Sudesh Bhosle Maadi Tara Mandiriye historical-edition, performer-ownership and exact Sony chapter audit
+- [`catalogue/issue-152-closeout.md`](catalogue/issue-152-closeout.md): final four-artist Wave D completeness, rejection and #157 handoff audit
 - [`catalogue/issue-231-khamma-2-youtube-migration.md`](catalogue/issue-231-khamma-2-youtube-migration.md): Khamma 2 YouTube-only migration with 20 exact routes and one fail-closed unresolved interlude
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
 - [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
