@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "GARBA",
-  "short_name": "GARBA",
+  "name": "PlayGarba",
+  "short_name": "PlayGarba",
   "description": "An open, community-built Gujarati Garba music catalogue for songs, artists, releases, live sets and nonstop Garba.",
   "start_url": "./?source=pwa",
   "scope": "./",
