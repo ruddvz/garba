@@ -203,8 +203,8 @@ jobs:
       - name: Install Playwright test runner
         run: npm install --no-save --no-package-lock @playwright/test@1.55.0
 
-      - name: Install browser engines
-        run: npx playwright install chromium webkit
+      - name: Install browser engines and host dependencies
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Start browser fixture
         run: |
