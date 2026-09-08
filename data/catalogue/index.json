@@ -134,7 +134,8 @@
     "data/playback-sources-khamma-2-exact.json",
     "data/playback-sources-re-lol-exact.json",
     "data/playback-sources-chandaliyo-exact.json",
-    "data/playback-sources-de-taali-exact.json"
+    "data/playback-sources-de-taali-exact.json",
+    "data/playback-sources-rangili-ramzat-6-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
