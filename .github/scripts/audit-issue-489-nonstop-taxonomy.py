@@ -23,6 +23,14 @@ def write_compact_json(path: Path, value):
     )
 
 
+def discovery_rows(payload, label):
+    if isinstance(payload, list):
+        return payload, "array"
+    if isinstance(payload, dict) and isinstance(payload.get("sets"), list):
+        return payload["sets"], "wrapped"
+    raise SystemExit(f"Discovery chunk has unsupported shape: {label}")
+
+
 def has_categories(record):
     categories = record.get("categories")
     return isinstance(categories, list) and len(categories) > 0
@@ -64,10 +72,9 @@ chunk_rows = []
 all_sets = []
 for chunk_name in sets_index.get("chunks", []):
     chunk_path = SETS_DIR / chunk_name
-    rows = load_json(chunk_path)
-    if not isinstance(rows, list):
-        raise SystemExit(f"Discovery chunk is not an array: {chunk_name}")
-    chunk_rows.append((chunk_name, chunk_path, rows))
+    payload = load_json(chunk_path)
+    rows, shape = discovery_rows(payload, chunk_name)
+    chunk_rows.append((chunk_name, chunk_path, payload, rows, shape))
     for row_index, record in enumerate(rows):
         all_sets.append((chunk_name, row_index, record))
 
@@ -133,7 +140,7 @@ selected = candidates[:MAX_UPDATES]
 selected_keys = {(item["chunk"], item["row_index"]): item for item in selected}
 changed_paths = []
 
-for chunk_name, chunk_path, rows in chunk_rows:
+for chunk_name, chunk_path, payload, rows, shape in chunk_rows:
     changed = False
     updated_rows = list(rows)
     for row_index, record in enumerate(rows):
@@ -147,13 +154,19 @@ for chunk_name, chunk_path, rows in chunk_rows:
         updated_rows[row_index] = insert_categories_after_link(record, selected_item["categories"])
         changed = True
     if changed:
-        write_compact_json(chunk_path, updated_rows)
+        if shape == "array":
+            updated_payload = updated_rows
+        else:
+            updated_payload = dict(payload)
+            updated_payload["sets"] = updated_rows
+        write_compact_json(chunk_path, updated_payload)
         changed_paths.append(chunk_name)
 
 # Re-load and prove the exact copied taxonomy after writing.
 after_sets = []
 for chunk_name in sets_index.get("chunks", []):
-    rows = load_json(SETS_DIR / chunk_name)
+    payload = load_json(SETS_DIR / chunk_name)
+    rows, _ = discovery_rows(payload, chunk_name)
     for row_index, record in enumerate(rows):
         after_sets.append((chunk_name, row_index, record))
 
