@@ -1,0 +1,50 @@
+name: Diagnose release context 403
+
+on:
+  push:
+    branches: [codex/release-context-403]
+    paths:
+      - '.github/workflows/diagnose-release-context-403.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/release-context-403
+      - name: Count patch anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('app.js').read_text()
+          anchors = {
+            'state': "  playContextGenreId: 'traditional',\n  playContextSongId: null,\n  playing: false,\n",
+            'helpers': "const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId);\n\nfunction persistFavourites() {\n",
+            'url': "function updateUrl() {\n  const url = new URL(location.href);\n  url.searchParams.set('genre', state.genreId);\n",
+            'automatic': "function automaticUpNextSongs(limit = 12) {\n  const genreId = state.playContextGenreId || state.genreId;\n",
+            'select-start': "  if (!options.initial) state.pendingSongId = null;\n\n  const previousSongId = state.songId;\n",
+            'select-context': "    if (!options.preserveContext) {\n      state.playContextGenreId = song.genre;\n      state.playContextSongId = song.id;\n    }\n    configureAudio(song, restoreElapsed);\n",
+            'genre-same': "  if (genreId === state.genreId) {\n    state.sheetFilter = genreId;\n    syncGenreStrips();\n    return;\n  }\n",
+            'sheet-click': "    copy.append(title, artist);\n    copy.addEventListener('click', () => selectSong(song.id, {\n      keepSheet: true,\n      preserveContext: queued,\n      consumeQueued: queued,\n    }));\n",
+            'change-song': "function changeSong(direction) {\n  if (direction < 0 && state.listeningHistory.length) {\n",
+            'refresh': "    state.songs = next.songs;\n    state.presentationRedirects = next.presentationRedirects;\n    reconcilePresentationFavourites();\n",
+            'signature': "    songs: songs.map((song) => [song.id, song.title, song.artist, song.genre, song.durationSeconds, song.audioUrl, song.youtubeId]),\n",
+            'requested': "  let requestedSong = params.get('song');\n  const requestedGenre = params.get('genre');\n  const redirect = requestedSong ? state.presentationRedirects.get(requestedSong) : null;\n",
+            'return': "  if (!song || song.genre !== genre.id) song = state.songs.find((entry) => entry.genre === genre.id) || state.songs[0];\n  return {\n    genre,\n    song,\n    pendingSongId,\n    elapsed: Number(session.elapsed || 0),\n",
+            'init': "    if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });\n    else {\n      renderPlayer();\n      syncGenreStrips({ smooth: false });\n      renderSheet();\n    }\n\n    state.pendingSongId = initial.pendingSongId;\n",
+          }
+          failed = False
+          for name, anchor in anchors.items():
+              count = text.count(anchor)
+              print(f'{name}: {count}')
+              failed |= count != 1
+          lib = Path('src/catalogue/listening-library.js').read_text()
+          print('library:', lib.count('\nstartWhenReady();\nwatchCatalogueRenders();\n'))
+          if failed:
+              raise SystemExit(1)
+          PY
