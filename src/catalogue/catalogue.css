@@ -430,14 +430,17 @@ main {
   scrollbar-width: thin;
 }
 .release-card {
+  position: relative;
   min-width: 0;
   scroll-snap-align: start;
   padding: 0;
   border: 0;
+  border-radius: 22px;
   color: var(--text);
   background: transparent;
   text-align: left;
   cursor: pointer;
+  transition: transform .22s ease, color .22s ease;
 }
 .release-cover {
   position: relative;
@@ -450,7 +453,32 @@ main {
   transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
 }
 .release-card:hover .release-cover { transform: translateY(-3px); border-color: rgba(255, 255, 255, .24); box-shadow: 0 20px 50px rgba(0,0,0,.32); }
-.release-card.active .release-cover { outline: 2px solid var(--gold); outline-offset: 2px; }
+.release-card.active .release-cover {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-color: rgba(231, 201, 143, .62);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, .36), 0 0 0 6px rgba(231, 201, 143, .055);
+  transform: translateY(-2px);
+}
+.release-card.active::after {
+  content: "Selected";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 999px;
+  color: #18151a;
+  background: rgba(255, 248, 236, .92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+  pointer-events: none;
+}
+.release-card.active .release-title { color: var(--gold); }
+.release-card.active .release-meta { color: rgba(255, 248, 236, .76); }
 .release-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .release-cover.fallback { display: grid; place-items: center; }
 .release-cover.fallback span {
@@ -569,7 +597,45 @@ main {
   outline-offset: 3px;
 }
 
-.essential-release-section { display: none; }
+.essential-release-section {
+  display: block;
+  margin-bottom: 52px;
+  padding: 18px 18px 14px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255, 227, 178, .075), transparent 30%),
+    rgba(14, 13, 19, .46);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    0 28px 84px rgba(0, 0, 0, .24);
+  backdrop-filter: blur(24px) saturate(1.08);
+  -webkit-backdrop-filter: blur(24px) saturate(1.08);
+}
+.essential-release-section .section-title-row { margin: 0 3px 16px; }
+.essential-release-section .section-title-row h2 { color: rgba(255, 248, 236, .96); }
+.essential-release-rail {
+  grid-auto-columns: minmax(190px, 228px);
+  gap: 14px;
+  padding: 4px 3px 10px;
+}
+.essential-release-card {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, .025);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: transform .24s cubic-bezier(.2,.7,.2,1), border-color .24s ease, background .24s ease, box-shadow .24s ease;
+}
+.essential-release-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 42px rgba(0, 0, 0, .22);
+}
+.essential-release-card .release-cover { border-radius: 20px; }
+.essential-release-card .release-title { margin-top: 11px; font-size: .92rem; }
+.essential-release-card .release-meta { padding-bottom: 2px; }
 
 @media (max-width: 1080px) {
   .collection-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -582,6 +648,7 @@ main {
   .collection-card { aspect-ratio: 1.06 / 1; min-height: 210px; border-radius: 26px; }
   .section-title-row p { display: none; }
   .detail-head { border-radius: 28px; }
+  .essential-release-rail { grid-auto-columns: minmax(170px, 202px); }
 }
 
 @media (max-width: 560px) {
@@ -616,6 +683,22 @@ main {
   .song-more { justify-self: stretch; width: 100%; }
   .release-more { min-height: 168px; }
   .catalogue-error { margin: 44px auto; padding: 25px 20px; }
+  .essential-release-section {
+    margin-inline: -1px;
+    margin-bottom: 36px;
+    padding: 14px 14px 12px;
+    border-radius: 24px;
+  }
+  .essential-release-section .section-title-row { margin-bottom: 12px; }
+  .essential-release-rail {
+    grid-auto-columns: minmax(150px, 172px);
+    gap: 10px;
+    margin-right: -14px;
+    padding-right: 14px;
+  }
+  .essential-release-card { padding: 8px; border-radius: 20px; }
+  .essential-release-card .release-cover { border-radius: 16px; }
+  .release-card.active::after { top: 8px; right: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
