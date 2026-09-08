@@ -1,0 +1,36 @@
+name: Apply Nonstop Index Cutover
+
+on:
+  push:
+    branches:
+      - codex/garba-nonstop-source-v1
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/garba-nonstop-source-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Remove legacy Nonstop manifest pointer
+        run: node scripts/lib/apply-nonstop-index-cutover.mjs
+      - name: Commit corrected catalogue index
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/catalogue/index.json; then
+            echo 'No catalogue-index cutover required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/catalogue/index.json
+          git commit -m 'Point Nonstop catalogue at canonical discovery sets'
+          git push origin HEAD:codex/garba-nonstop-source-v1
