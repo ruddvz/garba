@@ -103,9 +103,6 @@
   .song-title { font-size: clamp(48px, 6.8vw, 66px); }
   .artist { font-size: clamp(17px, 2.2vw, 21px); }
   .genre-eyebrow { font-size: clamp(14px, 1.7vw, 17px); }
-  .controls { margin-top: clamp(22px, 2.5vh, 32px); }
-  .play-button { width: 66px; height: 66px; }
-  .progress-wrap { margin-top: clamp(20px, 2.6vh, 32px); }
   .genre-strip { max-width: 84vw; gap: clamp(25px, 3.5vw, 38px); }
   .genre-button { font-size: clamp(16px, 2vw, 19px); }
   .sheet { width: min(880px, 88vw); height: min(68dvh, 700px); }
@@ -136,7 +133,6 @@
 
   .topbar { padding: var(--safe-top) max(22px, var(--safe-right)) 0 max(22px, var(--safe-left)); align-items: flex-start; }
   .brand { font-size: clamp(27px, 7.6vw, 32px); }
-  .utilities { gap: 2px; }
   .icon-button { min-width: 42px; min-height: 42px; padding: 8px; }
   .icon-button svg { width: 23px; height: 23px; }
   .desktop-only { display: none; }
@@ -156,14 +152,8 @@
   .mobile-heart { display: grid; width: 38px; height: 38px; margin-top: 2px; }
   .mobile-heart svg { width: 21px; height: 21px; }
 
-  .controls { margin-top: 8px; gap: clamp(18px, 5.8vw, 26px); }
-  .transport { width: 44px; height: 44px; }
-  .transport svg { width: 27px; height: 27px; }
-  .play-button { width: 54px; height: 54px; border: 0; background: transparent; box-shadow: none; }
-  .play-button svg { width: 32px; height: 32px; }
   .ambient-ring { display: none; }
 
-  .progress-wrap { width: min(430px, 78vw); grid-template-columns: 1fr 1fr; gap: 2px 10px; margin-top: 4px; }
   .progress-wrap .progress { grid-column: 1 / -1; grid-row: 1; }
   .progress-wrap .time { grid-row: 2; font-size: 10px; }
   .progress-wrap .time:last-child { text-align: right; }
