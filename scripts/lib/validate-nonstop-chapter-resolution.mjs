@@ -29,6 +29,8 @@ let explicitlyContinuous = 0;
 let tracklistOnly = 0;
 let migrationRequired = 0;
 
+// Chapter completion is only meaningful once a trustworthy YouTube master exists.
+// Provider-only discovery evidence must stay visibly separate as migration backlog.
 for (const chunkName of setsIndex.chunks || []) {
   const chunkPath = path.posix.join(setsDir, chunkName);
   const payload = await readJson(chunkPath);
