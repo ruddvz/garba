@@ -198,3 +198,120 @@ input[type="range"]::-moz-range-thumb { border: 0; width: 8px; height: 8px; bord
 .genre-button::after { content: ""; position: absolute; height: 1px; left: 16%; right: 16%; bottom: 0; background: transparent; }
 .genre-button::before { content: ""; position: absolute; width: 7px; height: 7px; border-radius: 50%; left: 50%; bottom: -4px; transform: translateX(-50%); background: transparent; }
 .genre-button.active { color: var(--ivory); }
+
+/* Courtyard integration: make the player feel lit by the scene instead of sitting on it. */
+.player-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.player-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: clamp(58px, 8vh, 102px);
+  width: min(940px, 96vw);
+  height: clamp(250px, 34vh, 390px);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--accent) 10%, transparent) 0 9%, rgba(8,10,18,.14) 34%, rgba(8,10,18,.08) 53%, transparent 72%),
+    linear-gradient(to bottom, transparent 4%, rgba(6,8,15,.05) 42%, rgba(6,8,15,.16) 100%);
+  filter: blur(2px);
+  opacity: .88;
+  pointer-events: none;
+}
+
+.player-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: clamp(54px, 7.2vh, 92px);
+  width: min(900px, 92vw);
+  height: clamp(150px, 20vh, 220px);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 24%, rgba(246,236,215,.13));
+  box-shadow: 0 -7px 32px color-mix(in srgb, var(--accent) 7%, transparent);
+  opacity: .48;
+  pointer-events: none;
+}
+
+.world-ambient {
+  left: 50%;
+  right: auto;
+  bottom: 7.5%;
+  width: min(760px, 78vw);
+  height: clamp(92px, 13vh, 150px);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    color-mix(in srgb, var(--accent) 13%, transparent) 0 8%,
+    color-mix(in srgb, var(--accent) 7%, transparent) 26%,
+    transparent 67%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 16%, transparent),
+    0 0 54px color-mix(in srgb, var(--accent) 9%, transparent);
+  opacity: .22;
+  transform: translateX(-50%) scale(.94);
+  transition: opacity 550ms ease, transform 900ms var(--ease), box-shadow 700ms var(--ease);
+}
+
+.app.is-playing .world-ambient {
+  opacity: .38;
+  transform: translateX(-50%) scale(1);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 24%, transparent),
+    0 0 72px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+@media (max-width: 700px) {
+  .player-shell::before {
+    bottom: max(38px, calc(var(--safe-bottom) + 20px));
+    width: 118vw;
+    height: min(330px, 41vh);
+    opacity: .78;
+  }
+
+  .player-shell::after {
+    bottom: max(42px, calc(var(--safe-bottom) + 24px));
+    width: 118vw;
+    height: 150px;
+    opacity: .36;
+  }
+
+  .world-ambient {
+    bottom: max(4.5%, calc(var(--safe-bottom) + 12px));
+    width: 94vw;
+    height: 96px;
+  }
+}
+
+@media (max-height: 660px) and (max-width: 700px) {
+  .player-shell::before { height: 230px; opacity: .66; }
+  .player-shell::after { bottom: 28px; height: 116px; opacity: .28; }
+  .world-ambient { bottom: 2.5%; height: 72px; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .player-shell::before {
+    left: 48%;
+    bottom: -24px;
+    width: 62vw;
+    height: 170px;
+  }
+
+  .player-shell::after { display: none; }
+
+  .world-ambient {
+    left: 49%;
+    bottom: -8px;
+    width: 48vw;
+    height: 62px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-ambient { transition: none; }
+}
