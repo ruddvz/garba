@@ -4,13 +4,15 @@ import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const REQUIRED_RAAS_FILES = Object.freeze([
+  '.raas/BOOTSTRAP.md',
   '.raas/RAAS.md',
   '.raas/PROJECT-CONTEXT.md',
   '.raas/EXECUTION.md',
   '.raas/LANGUAGE.md',
+  '.raas/config.json',
 ]);
 
-const REFERENCE_DOCS = Object.freeze([...REQUIRED_RAAS_FILES]);
+const REFERENCE_DOCS = Object.freeze(REQUIRED_RAAS_FILES.filter((file) => file.endsWith('.md')));
 const ROOT_REFERENCES = new Set(['AGENTS.md', 'README.md', 'package.json']);
 
 const exists = async (root, target) => {
@@ -25,7 +27,7 @@ const exists = async (root, target) => {
 const repoReference = (value) => {
   const target = value.trim().replace(/[.,;:]$/, '');
   if (ROOT_REFERENCES.has(target)) return target;
-  if (/^(?:\.raas|docs|data)\//.test(target)) return target;
+  if (/^(?:\.raas|docs|data|scripts)\//.test(target) && !target.includes('<')) return target;
   return null;
 };
 
@@ -38,7 +40,7 @@ export function extractRepositoryReferences(markdown) {
   return [...refs].sort();
 }
 
-export async function validateRaas({ root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..') } = {}) {
+export async function validateRaas({ root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..') } = {}) {
   const errors = [];
   const read = (target) => readFile(path.join(root, target), 'utf8');
 
@@ -52,7 +54,7 @@ export async function validateRaas({ root = path.resolve(path.dirname(fileURLToP
   if (!agents.includes('## Load the RAAS harness first')) {
     errors.push('AGENTS.md is missing the RAAS preflight heading');
   }
-  for (const target of REQUIRED_RAAS_FILES) {
+  for (const target of ['.raas/RAAS.md', '.raas/PROJECT-CONTEXT.md', '.raas/EXECUTION.md', '.raas/LANGUAGE.md']) {
     if (!agents.includes(`\`${target}\``)) {
       errors.push(`AGENTS.md no longer routes agents through ${target}`);
     }
@@ -67,6 +69,17 @@ export async function validateRaas({ root = path.resolve(path.dirname(fileURLToP
     }
   }
 
+  let config;
+  try {
+    config = JSON.parse(await read('.raas/config.json'));
+  } catch (error) {
+    errors.push(`.raas/config.json is not valid JSON: ${error.message}`);
+    return errors;
+  }
+  for (const target of [...(config.entrypoints || []), config.languageContext].filter(Boolean)) {
+    if (!await exists(root, target)) errors.push(`.raas/config.json references missing repository path: ${target}`);
+  }
+
   return errors;
 }
 
@@ -77,7 +90,7 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  console.log(`✓ RAAS harness verified: ${REQUIRED_RAAS_FILES.length} required files, AGENTS preflight and repository-local references are intact`);
+  console.log(`✓ RAAS harness verified: ${REQUIRED_RAAS_FILES.length} required files, AGENTS preflight, config and repository-local references are intact`);
 }
 
 const entry = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : '';

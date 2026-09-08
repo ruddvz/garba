@@ -16,6 +16,20 @@ Use lowercase kebab-case and prefer `verb-object.mjs`:
 
 Shared implementation code belongs in `scripts/lib/`, not alongside entry-point scripts.
 
+## RAAS task compilation
+
+`raas-task.mjs` is the client-neutral task compiler for the `.raas/` harness. It turns raw request or issue text into a deterministic implementation brief with routed domains, split guidance, source authority, likely files, risks, validation and completion gates. It does not claim GitHub issues or replace the ownership checks in `AGENTS.md`.
+
+Run it directly while `package.json` is owned by another active implementation lane:
+
+```bash
+node scripts/raas-task.mjs --text "<request or issue text>"
+node scripts/raas-task.mjs --json --text "<request or issue text>"
+node scripts/raas-task.test.mjs
+```
+
+The compiler reads `.raas/config.json`, and its client/bootstrap contract is `.raas/BOOTSTRAP.md`. Keep client-specific rules as thin pointers to those canonical files rather than copying the product context into Codex, ChatGPT, Cursor or another agent surface.
+
 ## Catalogue and runtime generation
 
 - `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards. Multi-song releases prefer release-shaped provider sources over representative track links. Generated YouTube performance chapters must pass credited-artist identity compatibility before they can outrank a conservative release/provider fallback.
