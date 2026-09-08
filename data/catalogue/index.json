@@ -162,7 +162,8 @@
     "data/playback-sources-rutvi-ramzat-3-safety.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
     "data/playback-sources-rutvi-ramzat-4-exact.json",
-    "data/playback-sources-ho-raj-exact.json"
+    "data/playback-sources-ho-raj-exact.json",
+    "data/playback-sources-youtube-wave-e.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
