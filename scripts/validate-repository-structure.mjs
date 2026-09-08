@@ -24,6 +24,8 @@ const requiredRootFiles = new Set([
   'nonstop-browser.js',
   'offline.html',
   'package.json',
+  'player-continuity.js',
+  'provider-runtime.js',
   'simple-runtime.js',
   'styles.css',
   'sw.js',
@@ -41,7 +43,7 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 for (const file of requiredRootFiles) if (!await exists(file)) fail(`Missing required root file: ${file}`);
 
 const rootJs = (await readdir(root)).filter((file) => file.endsWith('.js')).sort();
-const expectedRootJs = ['app.js', 'nonstop-browser.js', 'simple-runtime.js', 'sw.js'];
+const expectedRootJs = ['app.js', 'nonstop-browser.js', 'player-continuity.js', 'provider-runtime.js', 'simple-runtime.js', 'sw.js'];
 if (!same(rootJs, expectedRootJs)) {
   fail(`Root JavaScript must be production-only. Expected ${expectedRootJs.join(', ')}, found ${rootJs.join(', ')}`);
 } else ok('root JavaScript is production-only');
@@ -91,6 +93,7 @@ const expectedScriptEntrypoints = [
   'plan-direct-ingest.mjs',
   'report-hosting-readiness.mjs',
   'report-label-acquisition.mjs',
+  'report-playback-route-quality.mjs',
   'test-catalogue-matcher.mjs',
   'validate-contact-map.mjs',
   'validate-direct-audio.mjs',
@@ -99,8 +102,10 @@ const expectedScriptEntrypoints = [
   'validate-hosting-rights.mjs',
   'validate-master-intake.mjs',
   'validate-outreach-queue.mjs',
+  'validate-player-continuity.mjs',
   'validate-publish-transaction.mjs',
   'validate-repository-structure.mjs',
+  'validate-runtime-packaging.mjs',
   'validate-runtime-song-routes.mjs',
   'validate-simple-runtime.mjs',
 ];
@@ -175,9 +180,12 @@ for (const file of [
 const packageJson = await readJson('package.json');
 const packageScripts = packageJson.scripts || {};
 if (!packageScripts.catalogue?.includes('scripts/enrich-runtime-songs.mjs')) fail('npm run catalogue must retain runtime playback-route enrichment');
+if (!packageScripts['playback:report']?.includes('scripts/report-playback-route-quality.mjs')) fail('playback:report must expose the ranked route-quality backlog');
+if (!packageScripts.check?.includes('scripts/validate-player-continuity.mjs')) fail('npm run check must retain player-continuity validation');
+if (!packageScripts.check?.includes('scripts/validate-runtime-packaging.mjs')) fail('npm run check must retain runtime packaging validation');
 if (!packageScripts.check?.includes('scripts/validate-runtime-song-routes.mjs')) fail('npm run check must retain complete runtime song-route validation');
-if (!packageScripts.check?.includes('scripts/report-hosting-readiness.mjs')) fail('npm run check must use report-hosting-readiness.mjs');
-if (!packageScripts.check?.includes('scripts/report-label-acquisition.mjs')) fail('npm run check must use report-label-acquisition.mjs');
+if (!packageScripts.check?.includes('npm run repo:validate')) fail('npm run check must retain repository-structure validation');
+if (!packageScripts.check?.includes('npm run docs:validate')) fail('npm run check must retain documentation validation');
 if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');
 
 const pages = await read('.github/workflows/pages.yml');
