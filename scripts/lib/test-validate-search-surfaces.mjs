@@ -28,7 +28,7 @@ function baseFixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playgarba-seo-validator-'));
   write(root, '.github/workflows/pages.yml', `name: Pages\njobs:\n  build:\n    steps:\n      - run: |\n          cp -R \\\n            public-site/about \\\n            public-site/faq \\\n            public-site/how-to-use \\\n            public-site/install \\\n            public-site/live \\\n            public-site/what-is-garba \\\n            _site/\n`);
   write(root, 'robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
-  write(root, 'sitemap.xml', `<?xml version="1.0"?><urlset>\n<url><loc>${ORIGIN}/</loc></url>\n<url><loc>${ORIGIN}/explore/</loc></url>\n<url><loc>${ORIGIN}/about/</loc></url>\n</urlset>`);
+  write(root, 'sitemap.xml', `<?xml version="1.0"?><urlset>\n<url><loc>${ORIGIN}/</loc></url>\n<url><loc>${ORIGIN}/explore/</loc></url>\n<url><loc>${ORIGIN}/what-is-garba/</loc></url>\n<url><loc>${ORIGIN}/how-to-use/</loc></url>\n<url><loc>${ORIGIN}/about/</loc></url>\n<url><loc>${ORIGIN}/install/</loc></url>\n<url><loc>${ORIGIN}/faq/</loc></url>\n</urlset>`);
   write(root, 'index.html', page({ title: 'PlayGarba', canonical: `${ORIGIN}/`, h1: 'PlayGarba' }));
   write(root, 'src/catalogue/index.html', page({ title: 'Explore', canonical: `${ORIGIN}/explore/`, h1: 'Explore' }));
   write(root, 'public-site/about/index.html', page({ title: 'About', canonical: `${ORIGIN}/about/`, h1: 'About' }));
