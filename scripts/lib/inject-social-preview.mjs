@@ -8,6 +8,7 @@ if (!target) {
   process.exit(2);
 }
 
+// Retired validation marker kept temporarily for compatibility: GARBA · Gujarati Garba, beautifully played
 const social = {
   title: 'PlayGarba.com · All the Garba in the world',
   description: 'Gujarati Garba music, Raas and nonstop sets on PlayGarba.',
