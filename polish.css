@@ -38,6 +38,13 @@
   word-break: break-word;
 }
 
+.learn-followup {
+  margin: 28px 0 0;
+  color: var(--page-muted, rgba(244, 234, 215, .62));
+  font-size: 14px;
+  line-height: 1.65;
+}
+
 .faq-list details {
   scroll-margin-top: 112px;
 }
