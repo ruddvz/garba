@@ -1,3 +1,6 @@
+import './assets/runtime/route-readiness.js';
+const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
+
 const storage = {
   get(key, fallback) {
     try {
@@ -167,7 +170,9 @@ function releaseContinuationSongs(limit = Infinity) {
   if (!match) return [];
   const index = match.ordered.findIndex((song) => song.id === state.releaseContextSongId);
   const remaining = index >= 0
-    ? match.ordered.slice(index + 1).filter((song) => !state.releaseContextConsumedIds.has(song.id))
+    ? match.ordered.slice(index + 1).filter((song) => (
+      !state.releaseContextConsumedIds.has(song.id) && canExecuteSong(song)
+    ))
     : [];
   return Number.isFinite(limit) ? remaining.slice(0, Math.max(0, limit)) : remaining;
 }
@@ -187,7 +192,7 @@ function automaticGenreContinuation(limit = 12, {
   const seen = new Set();
   const result = [];
   for (const song of ordered) {
-    if (!song?.id || song.id === state.songId || excluded.has(song.id) || seen.has(song.id)) continue;
+    if (!song?.id || song.id === state.songId || excluded.has(song.id) || seen.has(song.id) || !canExecuteSong(song)) continue;
     seen.add(song.id);
     result.push(song);
     if (result.length >= limit) break;
@@ -225,7 +230,7 @@ function sanitiseManualQueue() {
   const seen = new Set();
   for (const id of state.manualQueue) {
     const song = byId.get(id);
-    if (!song?.youtubeId || id === state.songId || seen.has(id)) continue;
+    if (!song || !canExecuteSong(song) || id === state.songId || seen.has(id)) continue;
     seen.add(id);
     next.push(id);
     if (next.length >= 30) break;
@@ -449,8 +454,8 @@ function queueSong(songId) {
   }
   const queuedSong = state.songs.find((song) => song.id === songId);
   if (!queuedSong) return;
-  if (!queuedSong.youtubeId) {
-    showToast('This song is not YouTube-ready yet.');
+  if (!canExecuteSong(queuedSong)) {
+    showToast('This recording is not available to play yet.');
     return;
   }
   if (state.manualQueue.includes(songId)) {
@@ -536,6 +541,15 @@ function renderPlayer() {
   els.miniArtist.textContent = song.artist;
   els.durationTime.textContent = formatDuration(state.duration || song.durationSeconds);
   els.elapsedTime.textContent = formatTime(state.elapsed);
+
+  const readiness = routeReadiness(song);
+  els.app.dataset.playbackReady = String(readiness.executable);
+  for (const button of [els.playButton, els.miniPlay]) {
+    button.disabled = !readiness.executable;
+    button.setAttribute('aria-disabled', String(!readiness.executable));
+    if (!readiness.executable) button.title = 'This recording is not available to play yet';
+    else if (!state.playing) button.title = 'Play';
+  }
 
   const ratio = state.duration ? Math.min(1, Math.max(0, state.elapsed / state.duration)) : 0;
   els.progress.value = Math.round(ratio * 1000);
@@ -1013,7 +1027,7 @@ function changeSong(direction) {
   }
 
   const genreId = state.playContextGenreId || state.genreId;
-  const list = songsForGenre(genreId);
+  const list = songsForGenre(genreId).filter(canExecuteSong);
   if (!list.length) return;
   const anchorId = state.playContextSongId || state.songId;
   let index = list.findIndex((song) => song.id === anchorId);
@@ -1383,13 +1397,20 @@ function resolveInitialState() {
 
   let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
   if (!song && !pendingSongId && session.songId) song = state.songs.find((entry) => entry.id === session.songId);
+  const preserveRequestedIdentity = Boolean(song && requestedSong && song.id === requestedSong);
+  const preserveRestoredIdentity = Boolean(song && !requestedSong && session.songId && song.id === session.songId);
 
   let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
   if (!genre && song) genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre && session.genreId) genre = state.genres.find((entry) => entry.id === session.genreId);
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
-  if (!song || song.genre !== genre.id) song = state.songs.find((entry) => entry.genre === genre.id) || state.songs[0];
+  if (!song || (!(preserveRequestedIdentity || preserveRestoredIdentity) && song.genre !== genre.id)) {
+    song = state.songs.find((entry) => entry.genre === genre.id && canExecuteSong(entry))
+      || state.songs.find((entry) => entry.genre === genre.id)
+      || state.songs.find(canExecuteSong)
+      || state.songs[0];
+  }
   const releaseContext = requestedRelease
     && requestedSong
     && song?.id === requestedSong

@@ -335,6 +335,10 @@
     queueMicrotask(() => {
       if (shouldStartSelectedSong) closeMobileSongBrowserAfterSelection();
       if (!playButton?.isConnected) return;
+      const selected = currentSafeSong();
+      const executable = window.GARBA_ROUTE_READINESS?.canExecuteSong?.(selected)
+        ?? Boolean(selected?.youtubeId && !selected?.playbackSearchOnly);
+      if (!executable || playButton.disabled) return;
       playButton.click();
     });
   }
