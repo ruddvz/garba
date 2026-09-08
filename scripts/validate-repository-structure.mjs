@@ -15,6 +15,7 @@ const readJson = async (file) => JSON.parse(await read(file));
 const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
+  'AGENTS.md',
   '.gitignore',
   'CNAME',
   'CONTRIBUTING.md',
