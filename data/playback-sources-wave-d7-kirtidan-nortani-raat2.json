@@ -1,0 +1,17 @@
+{
+  "version":"0.27.0",
+  "updated":"2026-09-08",
+  "note":"Issue #152 Catalogue Wave D7. Ten exact Amazon Music routes are independently verified for Nortani Raat 2. Track 6 is intentionally absent because the provider album confirms the song and position but its individual track href could not be independently recovered. It therefore remains on conservative release fallback. No track ID is inferred.",
+  "songSources":{
+    "nortani-raat-2-kirtidan-anita-2025-01-divo-maa-no-divo":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2X12YX","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":1,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-02-birdali-bahucharvali":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2Q8F6V","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":2,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-03-garbe-ramva-aavo-madi-maa-mogal":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2T34P2","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":3,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-04-meethi-meethi-te-sakhi":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2W56V3","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":4,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-05-sharad-poonam-ni-rat-ma":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2W8HJ8","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":5,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-07-avi-norta-ni-raat":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2T1VNW","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":7,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-08-sona-no-garbo":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2RB61Q","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":8,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-09-dhire-dhire-chundadiye-rang-lagyo":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2T54MG","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":9,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-10-gori-gori-gokul-gaam-ni-chori":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2WC1JD","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":10,"evidenceType":"official-amazon-track-page"},
+    "nortani-raat-2-kirtidan-anita-2025-11-nav-nav-naganiyo-no-rafdo":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0FP2TDGQN","sourceType":"verified-track-source","releaseId":"nortani-raat-2-kirtidan-anita-2025","trackNumber":11,"evidenceType":"official-amazon-track-page"}
+  }
+}
