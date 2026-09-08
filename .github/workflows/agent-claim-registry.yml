@@ -1,0 +1,384 @@
+name: Agent claim registry
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [closed, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: agent-claim-registry
+  cancel-in-progress: false
+
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reconcile agent claims
+        uses: actions/github-script@v7
+        env:
+          BOARD_ISSUE: "364"
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const boardIssue = Number(process.env.BOARD_ISSUE);
+
+            const claimRe = /<!--\s*agent-claim\s*\n([\s\S]*?)-->/i;
+            const releaseRe = /<!--\s*agent-release\s*\n([\s\S]*?)-->/i;
+            const overrideRe = /<!--\s*agent-claim-override\s*\n([\s\S]*?)-->/i;
+
+            function field(block, name) {
+              const match = block.match(new RegExp(`^${name}:\\s*(.+?)\\s*$`, 'mi'));
+              return match ? match[1].trim() : '';
+            }
+
+            function parseEvent(comment) {
+              const body = comment.body || '';
+              const override = body.match(overrideRe);
+              if (override) {
+                return {
+                  type: 'override',
+                  reason: field(override[1], 'reason'),
+                  commentId: comment.id,
+                  createdAt: comment.created_at,
+                  author: comment.user?.login || 'unknown',
+                };
+              }
+
+              const release = body.match(releaseRe);
+              if (release) {
+                return {
+                  type: 'release',
+                  agent: field(release[1], 'agent'),
+                  branch: field(release[1], 'branch'),
+                  commentId: comment.id,
+                  createdAt: comment.created_at,
+                  author: comment.user?.login || 'unknown',
+                };
+              }
+
+              const claim = body.match(claimRe);
+              if (claim) {
+                return {
+                  type: 'claim',
+                  agent: field(claim[1], 'agent'),
+                  branch: field(claim[1], 'branch'),
+                  scope: field(claim[1], 'scope'),
+                  files: field(claim[1], 'files'),
+                  commentId: comment.id,
+                  createdAt: comment.created_at,
+                  author: comment.user?.login || 'unknown',
+                };
+              }
+
+              return null;
+            }
+
+            function validClaim(event) {
+              return event?.type === 'claim' && event.agent && event.branch && event.scope && event.files;
+            }
+
+            function sameOwner(a, b) {
+              return Boolean(a && b && a.agent === b.agent && a.branch === b.branch);
+            }
+
+            function deriveState(comments) {
+              let active = null;
+              let conflicts = [];
+
+              for (const comment of [...comments].sort((a, b) => a.id - b.id)) {
+                const event = parseEvent(comment);
+                if (!event) continue;
+
+                if (event.type === 'override') {
+                  active = null;
+                  conflicts = [];
+                  continue;
+                }
+
+                if (event.type === 'release') {
+                  if (active && sameOwner(active, event)) {
+                    active = null;
+                    conflicts = [];
+                  }
+                  continue;
+                }
+
+                if (!validClaim(event)) continue;
+
+                if (!active) {
+                  active = event;
+                  conflicts = [];
+                } else if (sameOwner(active, event)) {
+                  active = event;
+                } else {
+                  conflicts.push(event);
+                }
+              }
+
+              return { active, conflicts };
+            }
+
+            async function listComments(issueNumber) {
+              return github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issueNumber,
+                per_page: 100,
+              });
+            }
+
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                await github.rest.issues.createLabel({ owner, repo, name, color, description });
+              }
+            }
+
+            async function addLabel(issueNumber, name) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: issueNumber, labels: [name] });
+            }
+
+            async function removeLabel(issueNumber, name) {
+              try {
+                await github.rest.issues.removeLabel({ owner, repo, issue_number: issueNumber, name });
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+            }
+
+            function statusBody(issueNumber, state) {
+              if (!state.active) {
+                return [
+                  '<!-- agent-coordination-status -->',
+                  '### Agent coordination',
+                  '',
+                  '**Status:** Available',
+                  '',
+                  `No active claim currently owns #${issueNumber}.`,
+                ].join('\n');
+              }
+
+              const conflictLine = state.conflicts.length
+                ? `**Conflicts:** ${state.conflicts.length} later claim(s) rejected until the active owner releases.`
+                : '**Conflicts:** None';
+
+              return [
+                '<!-- agent-coordination-status -->',
+                '### Agent coordination',
+                '',
+                '**Status:** Claimed',
+                `**Agent:** \`${state.active.agent}\``,
+                `**Branch:** \`${state.active.branch}\``,
+                `**Scope:** ${state.active.scope}`,
+                `**Files:** ${state.active.files}`,
+                conflictLine,
+                '',
+                `Claim event: comment ${state.active.commentId}.`,
+              ].join('\n');
+            }
+
+            async function upsertStatus(issueNumber, comments, state) {
+              const wanted = statusBody(issueNumber, state);
+              const existing = comments.find(comment =>
+                comment.body?.includes('<!-- agent-coordination-status -->') &&
+                comment.user?.type === 'Bot'
+              );
+
+              if (!existing) {
+                await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body: wanted });
+                return;
+              }
+
+              if ((existing.body || '').trim() !== wanted.trim()) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: wanted });
+              }
+            }
+
+            async function reconcileIssue(issue) {
+              if (issue.number === boardIssue || issue.pull_request) return null;
+
+              const comments = await listComments(issue.number);
+              const state = deriveState(comments);
+
+              if (state.active) {
+                await addLabel(issue.number, 'agent:claimed');
+                if (state.conflicts.length) await addLabel(issue.number, 'agent:conflict');
+                else await removeLabel(issue.number, 'agent:conflict');
+                await upsertStatus(issue.number, comments, state);
+              } else {
+                await removeLabel(issue.number, 'agent:claimed');
+                await removeLabel(issue.number, 'agent:conflict');
+                const existingStatus = comments.some(comment =>
+                  comment.body?.includes('<!-- agent-coordination-status -->') && comment.user?.type === 'Bot'
+                );
+                if (existingStatus) await upsertStatus(issue.number, comments, state);
+              }
+
+              return { issue, state };
+            }
+
+            function esc(value) {
+              return String(value || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+            }
+
+            async function rebuildBoard() {
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner,
+                repo,
+                state: 'open',
+                per_page: 100,
+              });
+
+              const rows = [];
+              for (const issue of issues) {
+                if (issue.pull_request || issue.number === boardIssue) continue;
+                const comments = await listComments(issue.number);
+                const state = deriveState(comments);
+                if (!state.active) continue;
+                rows.push({ issue, state });
+              }
+
+              rows.sort((a, b) => a.issue.number - b.issue.number);
+              const managed = rows.length
+                ? [
+                    '| Issue | Agent | Branch | Scope | Files | Conflict |',
+                    '| --- | --- | --- | --- | --- | --- |',
+                    ...rows.map(({ issue, state }) =>
+                      `| #${issue.number} | \`${esc(state.active.agent)}\` | \`${esc(state.active.branch)}\` | ${esc(state.active.scope)} | ${esc(state.active.files)} | ${state.conflicts.length ? `Yes (${state.conflicts.length})` : 'No'} |`
+                    ),
+                  ].join('\n')
+                : '_No active machine-managed claims._';
+
+              const board = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
+              const current = board.data.body || '';
+              const start = '<!-- agent-work-board:managed-start -->';
+              const end = '<!-- agent-work-board:managed-end -->';
+              const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
+              const replacement = `${start}\n${managed}\n${end}`;
+
+              if (!pattern.test(current)) {
+                core.setFailed(`Board issue #${boardIssue} is missing managed markers.`);
+                return;
+              }
+
+              const next = current.replace(pattern, replacement);
+              if (next !== current) {
+                await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body: next });
+              }
+            }
+
+            await ensureLabel('agent:claimed', '1F883D', 'An implementation lane is actively owned by an agent claim.');
+            await ensureLabel('agent:conflict', 'D1242F', 'A later agent claim conflicts with the active owner.');
+
+            if (context.eventName === 'issue_comment') {
+              const issue = context.payload.issue;
+              if (issue.pull_request || issue.number === boardIssue) return;
+
+              const currentComment = context.payload.comment;
+              const currentEvent = parseEvent(currentComment);
+              if (!currentEvent) return;
+
+              const comments = await listComments(issue.number);
+              const before = comments.filter(comment => comment.id < currentComment.id);
+              const beforeState = deriveState(before);
+
+              if (currentEvent.type === 'claim') {
+                if (!validClaim(currentEvent)) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: '❌ **Claim rejected:** include non-empty `agent`, `branch`, `scope` and `files` fields in the `agent-claim` block.',
+                  });
+                } else if (beforeState.active && !sameOwner(beforeState.active, currentEvent)) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: `❌ **Claim conflict:** this lane is already owned by \`${beforeState.active.agent}\` on \`${beforeState.active.branch}\`. Do not begin overlapping implementation. Split the scope or choose another unclaimed issue.`,
+                  });
+                } else {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: `✅ **Claim accepted:** \`${currentEvent.agent}\` owns this lane on \`${currentEvent.branch}\`.`,
+                  });
+                }
+              } else if (currentEvent.type === 'release') {
+                if (beforeState.active && sameOwner(beforeState.active, currentEvent)) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: `✅ **Release accepted:** \`${currentEvent.agent}\` / \`${currentEvent.branch}\` no longer owns this lane.`,
+                  });
+                } else {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: '⚠️ **Release ignored:** it does not match the currently active agent and branch.',
+                  });
+                }
+              } else if (currentEvent.type === 'override') {
+                if (currentEvent.author !== owner) {
+                  await github.rest.issues.createComment({
+                    owner, repo, issue_number: issue.number,
+                    body: '❌ **Override rejected:** only the repository owner may override an active agent claim.',
+                  });
+                  return;
+                }
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: issue.number,
+                  body: '✅ **Owner override accepted:** the previous claim is cleared. A new agent may claim the lane.',
+                });
+              }
+
+              const refreshed = await github.rest.issues.get({ owner, repo, issue_number: issue.number });
+              await reconcileIssue(refreshed.data);
+              await rebuildBoard();
+              return;
+            }
+
+            if (context.eventName === 'issues' && context.payload.action === 'closed') {
+              const issue = context.payload.issue;
+              if (issue.number !== boardIssue && !issue.pull_request) {
+                const comments = await listComments(issue.number);
+                const state = deriveState(comments);
+                if (state.active) {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    body: [
+                      '<!-- agent-release',
+                      `agent: ${state.active.agent}`,
+                      `branch: ${state.active.branch}`,
+                      '-->',
+                      `RELEASE: issue closed; \`${state.active.agent}\` / \`${state.active.branch}\` is released automatically.`,
+                    ].join('\n'),
+                  });
+                }
+                await removeLabel(issue.number, 'agent:claimed');
+                await removeLabel(issue.number, 'agent:conflict');
+              }
+              await rebuildBoard();
+              return;
+            }
+
+            if (context.eventName === 'issues' && context.payload.action === 'reopened') {
+              await reconcileIssue(context.payload.issue);
+              await rebuildBoard();
+              return;
+            }
+
+            if (context.eventName === 'workflow_dispatch') {
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner,
+                repo,
+                state: 'open',
+                per_page: 100,
+              });
+              for (const issue of issues) await reconcileIssue(issue);
+              await rebuildBoard();
+            }
