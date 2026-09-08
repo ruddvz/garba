@@ -17,7 +17,7 @@ Use this priority order:
 
 The Git repository should remain the source of truth for metadata, rights evidence references, checksums and player code.
 
-For a substantial audio library, use dedicated object storage/CDN rather than storing hundreds of commercial-size audio files in Git history. A suitable setup is an object store such as Cloudflare R2 or S3-compatible storage behind a stable HTTPS audio domain. The storage layer should support byte-range requests, immutable caching and correct audio MIME types.
+For a substantial audio library, use dedicated object storage/CDN rather than storing hundreds of commercial-size audio files in Git history. A suitable setup is an object store such as Cloudflare R2 or S3-compatible storage behind a stable HTTPS audio domain. The storage layer should support byte-range requests, immutable caching, correct audio MIME types and anonymous CORS requests from PlayGarba so the Web Audio AutoMix path can process direct masters safely.
 
 Small, project-owned files may use `assets/audio/...` in the repository, but this should not become the default storage strategy for the full catalogue.
 
@@ -68,5 +68,7 @@ The validator reduces accidental misuse. It does not replace legal review of the
 ## Reliability
 
 For licensed direct masters, prefer at least two encoded versions from the same cleared master where practical, for example Opus and AAC/MP3. Keep the original archival master outside the web-serving bucket. Store checksums and use versioned object names so a replaced file never silently changes underneath a catalogue record.
+
+The direct-audio CDN should return `Access-Control-Allow-Origin` for PlayGarba requests because the mobile AutoMix compatibility path routes audio through Web Audio `MediaElementAudioSourceNode`s. A missing CORS header can make a direct file unusable by that processing graph even when the URL itself is reachable.
 
 Provider-backed tracks should remain clearly marked as provider-backed. GARBA cannot guarantee ad-free, login-free or permanent availability for audio it does not host or control.
