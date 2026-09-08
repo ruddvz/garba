@@ -33,7 +33,6 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`rights/catalogue-partnership-strategy.md`](rights/catalogue-partnership-strategy.md)
 - [`rights/licensing-negotiation-queue.md`](rights/licensing-negotiation-queue.md)
 - [`rights/licensing-outreach-operations.md`](rights/licensing-outreach-operations.md)
-- [`rights/licensing-outreach-operations.md`](rights/licensing-outreach-operations.md)
 - [`rights/rights-acquisition-wave-01.md`](rights/rights-acquisition-wave-01.md)
 - [`rights/rights-request-template.md`](rights/rights-request-template.md)
 
