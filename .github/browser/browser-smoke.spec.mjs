@@ -88,7 +88,7 @@ test('production player shell is stable, complete and uses the custom genre artw
 
   await expectAppCoversViewport(page);
   await expectNoDocumentOverflow(page);
-  for (const selector of ['#searchButton', '#queueButton', '#playButton', '#browseButton', '#nonstopButton']) {
+  for (const selector of ['#searchButton', '#queueButton', '#playButton', '#browseButton']) {
     await expectInsideViewport(page, selector);
   }
 
@@ -100,7 +100,11 @@ test('production player shell is stable, complete and uses the custom genre artw
   await expect(genreButtons).toHaveCount(6);
   const backgrounds = await genreButtons.evaluateAll((buttons) => buttons.map((button) => getComputedStyle(button).backgroundImage));
   for (const background of backgrounds) expect(background).toContain('.webp');
-  const nonstopBackground = await page.locator('#nonstopButton').evaluate((button) => getComputedStyle(button).backgroundImage);
+
+  const nonstopButton = page.locator('#nonstopButton');
+  await nonstopButton.scrollIntoViewIfNeeded();
+  await expectInsideViewport(page, '#nonstopButton');
+  const nonstopBackground = await nonstopButton.evaluate((button) => getComputedStyle(button).backgroundImage);
   expect(nonstopBackground).toContain('nonstop.webp');
 
   await expectNoRuntimeFailures(page, failures, 'player');
@@ -123,6 +127,32 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await expect(searchButton).toBeFocused();
   await expectNoDocumentOverflow(page);
   await expectNoRuntimeFailures(page, failures, 'Search sheet');
+});
+
+test('Nonstop browser is reachable, populated and restores focus when closed', async ({ page }) => {
+  const failures = collectRuntimeFailures(page);
+  await page.goto('/');
+
+  const nonstopButton = page.locator('#nonstopButton');
+  await nonstopButton.scrollIntoViewIfNeeded();
+  await expectInsideViewport(page, '#nonstopButton');
+  await nonstopButton.click();
+
+  const panel = page.locator('#nonstopBrowser');
+  await expect(panel).toHaveAttribute('aria-hidden', 'false');
+  await expect(page.locator('#nonstopBrowserSearch')).toBeVisible();
+  await expect(page.locator('#nonstopBrowserSearch')).toBeFocused();
+  await expectInsideViewport(page, '#nonstopBrowserClose');
+  const sets = page.locator('#nonstopBrowserList .nonstop-set');
+  await expect(sets.first()).toBeVisible();
+  expect(await sets.count()).toBeGreaterThan(0);
+  await expectNoDocumentOverflow(page);
+
+  await page.locator('#nonstopBrowserClose').click();
+  await expect(panel).toHaveAttribute('aria-hidden', 'true');
+  await expect(nonstopButton).toBeFocused();
+  await expectNoDocumentOverflow(page);
+  await expectNoRuntimeFailures(page, failures, 'Nonstop browser');
 });
 
 test('Explore is reached through the production player link and renders real catalogue content', async ({ page }) => {
