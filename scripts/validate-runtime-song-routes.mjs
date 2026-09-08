@@ -8,11 +8,12 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [songs, releases, coverage, simple, app] = await Promise.all([
+const [songs, releases, coverage, fastRuntime, providerRuntime, app] = await Promise.all([
   readJson('data/songs.json'),
   readJson('data/releases.json'),
   readJson('data/playback-coverage.json'),
   read('simple-runtime.js'),
+  read('provider-runtime.js'),
   read('app.js'),
 ]);
 const releasesById = new Map(releases.map((release) => [release.id, release]));
@@ -104,7 +105,17 @@ for (const marker of [
   "song?.playbackSourceType === 'verified-unchaptered-youtube-release'",
   'Open the verified full release',
   'exact song timestamp not verified',
-]) if (!simple.includes(marker)) fail(`Simple runtime missing enriched-route marker: ${marker}`);
+]) if (!providerRuntime.includes(marker)) fail(`Provider runtime missing enriched-route marker: ${marker}`);
+
+for (const marker of [
+  'const bootGenres = [',
+  'const bootSongs = [',
+  'window.fetch = (input, init) =>',
+  "nativeFetch('data/songs.json'",
+  'bootSongs.splice(0, bootSongs.length, ...songs)',
+  "requestIdleCallback(run, { timeout: 2600 })",
+  "document.write('<script src=\"provider-runtime.js\"><\\/script>')",
+]) if (!fastRuntime.includes(marker)) fail(`Fast startup runtime missing marker: ${marker}`);
 
 for (const marker of [
   'const SEARCH_RESULT_LIMIT = 160;',
@@ -128,5 +139,6 @@ console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnec
 console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes open as full releases instead of pretending to start at a selected song`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
 console.log('✓ route coverage is not reported as equivalent to exact-song or first-party playback');
+console.log('✓ first interaction uses the embedded fast catalogue while the full catalogue hydrates after load');
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');
