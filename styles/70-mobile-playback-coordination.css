@@ -40,12 +40,87 @@
   body:has(#youtubeStage.open[aria-hidden="false"]) #songSheet[data-snap="full"] .song-list {
     overscroll-behavior: contain;
   }
+
+  /* Mobile geometry guardrails. These intentionally use important because the
+     genre-art layer loads later and must never be allowed to paint outside the
+     usable iPhone viewport. */
+  html body .app .player-shell {
+    padding-left: max(22px, var(--safe-left)) !important;
+    padding-right: max(22px, var(--safe-right)) !important;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(338px, calc(100vw - 44px)) !important;
+    max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 20px) !important;
+  }
+
+  html body .app #genreStrip {
+    contain: layout !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    max-width: calc(100vw - 8px) !important;
+    padding-left: max(20px, var(--safe-left)) !important;
+    padding-right: max(20px, var(--safe-right)) !important;
+  }
+}
+
+/* Current large iPhones sit around 393-430 CSS px in portrait. The old 390px
+   breakpoint missed them, leaving four 42px utility controls squeezed beside the
+   wordmark and visibly clipping the capsule edge. */
+@media (max-width: 430px) {
+  html body .app .topbar {
+    padding-left: max(18px, var(--safe-left)) !important;
+    padding-right: max(18px, var(--safe-right)) !important;
+    gap: 10px;
+  }
+
+  html body .app .brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: clamp(25px, 7.2vw, 29px) !important;
+    white-space: nowrap;
+  }
+
+  html body .app .utilities {
+    flex: 0 0 auto;
+    min-height: 40px !important;
+    gap: 0 !important;
+    padding: 2px !important;
+    max-width: calc(100vw - 154px);
+  }
+
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart {
+    flex: 0 0 39px !important;
+    width: 39px !important;
+    min-width: 39px !important;
+    height: 39px !important;
+    min-height: 39px !important;
+    padding: 7px !important;
+  }
+
+  html body .app .utilities .icon-button svg,
+  html body .app .utilities .mobile-heart svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(332px, calc(100vw - 44px)) !important;
+  }
 }
 
 @media (max-width: 390px) {
   body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage {
     right: max(8px, var(--safe-right));
     width: 208px;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(320px, calc(100vw - 40px)) !important;
   }
 }
 
