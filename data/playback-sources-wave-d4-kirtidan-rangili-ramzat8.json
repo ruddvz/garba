@@ -1,6 +1,6 @@
 {
   "version":"0.30.0",
   "updated":"2026-09-08",
-  "note":"Issue #230 final YouTube-only reconciliation for Rangili Ramzat 8 (2025). The 17 split-track Amazon selections are provenance only and are no longer executable. The verified continuous official YouTube edition remains in data/nonstop.json as a listening master, but no source-published 17-song chapter map or independently verified exact split-song YouTube identities were found. All 17 canonical split tracks therefore remain deliberately non-playable and are handed to issue #157 for final evidence burn-down. No chapter start is calculated from durations and no same-title recording is substituted.",
+  "note":"Issue #230 final YouTube-only reconciliation for Rangili Ramzat 8 (2025). The 17 split-track Amazon selections are provenance only and are no longer executable. The verified continuous official YouTube edition is preserved as set-rangili-ramzat-8-2-taali-2025 in the canonical discovery registry (data/discovery/sets/sets-36-legacy-full-set-migration.json). It remains one full-set listening object because no source-published 17-song chapter map or independently verified exact split-song YouTube identities were found. All 17 canonical split tracks therefore remain deliberately non-playable and are handed to issue #157 for final evidence burn-down. No chapter start is calculated from durations and no same-title recording is substituted.",
   "songSources":{}
 }
