@@ -14,8 +14,10 @@ permissions:
   issues: write
   pull-requests: read
 
+# Share the registry lock so board writes from the two coordination workflows
+# cannot race and overwrite each other.
 concurrency:
-  group: agent-file-claim-conflicts
+  group: agent-claim-registry
   cancel-in-progress: false
 
 jobs:
@@ -93,43 +95,35 @@ jobs:
               return Boolean(a && b && a.agent === b.agent && a.branch === b.branch);
             }
 
+            // The first unreleased claim establishes priority. Same-owner claim updates
+            // may narrow/change scope without moving that ownership priority later.
             function deriveState(comments) {
               let active = null;
-              let claimConflicts = 0;
 
               for (const comment of [...comments].sort((a, b) => a.id - b.id)) {
                 const event = parseEvent(comment);
                 if (!event) continue;
 
                 if (event.type === 'override') {
-                  if (event.author === owner) {
-                    active = null;
-                    claimConflicts = 0;
-                  }
+                  if (event.author === owner) active = null;
                   continue;
                 }
 
                 if (event.type === 'release') {
-                  if (active && sameOwner(active, event)) {
-                    active = null;
-                    claimConflicts = 0;
-                  }
+                  if (active && sameOwner(active, event)) active = null;
                   continue;
                 }
 
                 if (!validClaim(event)) continue;
 
                 if (!active) {
-                  active = event;
-                  claimConflicts = 0;
+                  active = { ...event, ownershipCommentId: event.commentId };
                 } else if (sameOwner(active, event)) {
-                  active = event;
-                } else {
-                  claimConflicts += 1;
+                  active = { ...event, ownershipCommentId: active.ownershipCommentId };
                 }
               }
 
-              return { active, claimConflicts };
+              return { active };
             }
 
             async function listComments(issueNumber) {
@@ -220,6 +214,21 @@ jobs:
               return pairs;
             }
 
+            function syntheticComment(id, body, login = 'agent') {
+              return { id, body, user: { login } };
+            }
+
+            function claimBody(agent, branch, files) {
+              return [
+                '<!-- agent-claim',
+                `agent: ${agent}`,
+                `branch: ${branch}`,
+                'scope: test scope',
+                `files: ${files}`,
+                '-->',
+              ].join('\n');
+            }
+
             function assert(condition, message) {
               if (!condition) throw new Error(`Agent file ownership self-test failed: ${message}`);
             }
@@ -231,10 +240,23 @@ jobs:
               assert(overlapPairs('data/catalogue/releases/*falguni*', 'data/catalogue/releases/releases-01-falguni.json').length === 1, 'filename glob matches exact path');
               assert(overlapPairs('provider-runtime.js', 'src/catalogue/catalogue.js').length === 0, 'independent files do not overlap');
 
-              const first = { issue: { number: 10 }, state: { active: { commentId: 100, files: 'a.js' } } };
-              const later = { issue: { number: 11 }, state: { active: { commentId: 200, files: 'a.js' } } };
-              const ordered = [later, first].sort((a, b) => a.state.active.commentId - b.state.active.commentId || a.issue.number - b.issue.number);
-              assert(ordered[0].issue.number === 10, 'earlier claim wins ordering');
+              const first = syntheticComment(10, claimBody('agent/a', 'fix/a', 'a.js'));
+              const update = syntheticComment(20, claimBody('agent/a', 'fix/a', 'a.js; b.js'));
+              const state = deriveState([first, update]);
+              assert(state.active?.ownershipCommentId === 10, 'same-owner updates preserve first ownership priority');
+              assert(state.active?.files === 'a.js; b.js', 'same-owner updates still replace visible scope');
+
+              const rows = [
+                { issue: { number: 12 }, state: { active: { ownershipCommentId: 200 } } },
+                { issue: { number: 11 }, state: { active: { ownershipCommentId: 100 } } },
+              ].sort((a, b) => a.state.active.ownershipCommentId - b.state.active.ownershipCommentId || a.issue.number - b.issue.number);
+              assert(rows[0].issue.number === 11, 'earlier unreleased ownership wins ordering');
+            }
+
+            function labelNames(issue) {
+              return new Set((issue.labels || [])
+                .map(label => typeof label === 'string' ? label : label?.name)
+                .filter(Boolean));
             }
 
             async function ensureConflictLabel() {
@@ -256,18 +278,12 @@ jobs:
               }
             }
 
-            function labelNames(issue) {
-              return new Set((issue.labels || [])
-                .map(label => typeof label === 'string' ? label : label?.name)
-                .filter(Boolean));
-            }
-
-            async function addConflictLabel(row) {
-              if (labelNames(row.issue).has(conflictLabel)) return;
+            async function addConflictLabel(issue) {
+              if (labelNames(issue).has(conflictLabel)) return;
               await github.rest.issues.addLabels({
                 owner,
                 repo,
-                issue_number: row.issue.number,
+                issue_number: issue.number,
                 labels: [conflictLabel],
               });
             }
@@ -318,7 +334,9 @@ jobs:
                 if (state.active) rows.push({ issue, comments, state, fileConflicts: [] });
               }
 
-              rows.sort((a, b) => a.state.active.commentId - b.state.active.commentId || a.issue.number - b.issue.number);
+              rows.sort((a, b) =>
+                a.state.active.ownershipCommentId - b.state.active.ownershipCommentId || a.issue.number - b.issue.number
+              );
               return rows;
             }
 
@@ -338,10 +356,7 @@ jobs:
                   pull_number: pr.number,
                   per_page: 100,
                 });
-                legacy.push({
-                  pr,
-                  files: changed.map(file => file.filename).join('; '),
-                });
+                legacy.push({ pr, files: changed.map(file => file.filename).join('; ') });
               }
               return legacy;
             }
@@ -353,11 +368,7 @@ jobs:
                 for (const legacy of legacyRows) {
                   const paths = overlapPairs(row.state.active.files, legacy.files);
                   if (paths.length) {
-                    row.fileConflicts.push({
-                      blocker: `legacy PR #${legacy.pr.number}`,
-                      blockerUrl: legacy.pr.html_url,
-                      paths,
-                    });
+                    row.fileConflicts.push({ blocker: `legacy PR #${legacy.pr.number}`, paths });
                   }
                 }
               }
@@ -368,11 +379,7 @@ jobs:
                   const earlier = rows[earlierIndex];
                   const paths = overlapPairs(later.state.active.files, earlier.state.active.files);
                   if (!paths.length) continue;
-                  later.fileConflicts.push({
-                    blocker: `issue #${earlier.issue.number}`,
-                    blockerUrl: earlier.issue.html_url,
-                    paths,
-                  });
+                  later.fileConflicts.push({ blocker: `issue #${earlier.issue.number}`, paths });
                 }
               }
 
@@ -387,9 +394,9 @@ jobs:
                 row.fileConflicts.length
                   ? '**Status:** Blocked by earlier file ownership'
                   : '**Status:** No active cross-issue file conflict',
-                ...row.fileConflicts.flatMap(conflict => [
-                  `- ${conflict.blocker}: ${conflict.paths.map(path => `\`${path}\``).join(', ')}`,
-                ]),
+                ...row.fileConflicts.map(conflict =>
+                  `- ${conflict.blocker}: ${conflict.paths.map(path => `\`${path}\``).join(', ')}`
+                ),
                 '',
                 row.fileConflicts.length
                   ? 'Narrow this claim or wait for the earlier owner to release before editing the overlapping files.'
@@ -406,19 +413,9 @@ jobs:
               const wanted = conflictStatus(row);
 
               if (!existing) {
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: row.issue.number,
-                  body: wanted,
-                });
+                await github.rest.issues.createComment({ owner, repo, issue_number: row.issue.number, body: wanted });
               } else if ((existing.body || '').trim() !== wanted.trim()) {
-                await github.rest.issues.updateComment({
-                  owner,
-                  repo,
-                  comment_id: existing.id,
-                  body: wanted,
-                });
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: wanted });
               }
             }
 
@@ -442,22 +439,24 @@ jobs:
               let body = board.data.body || '';
               const start = '<!-- agent-file-conflicts:start -->';
               const end = '<!-- agent-file-conflicts:end -->';
-              const block = [
-                '## Cross-issue file ownership',
-                '',
-                'Earlier active claims and legacy PRs own their declared files first. A later claim listed below must narrow its scope or wait for release before implementation or merge.',
-                '',
-                start,
-                table,
-                end,
-              ].join('\n');
 
               if (body.includes(start) && body.includes(end)) {
                 body = body.replace(new RegExp(`${start}[\\s\\S]*?${end}`), `${start}\n${table}\n${end}`);
               } else {
                 const anchor = '<!-- agent-work-board:managed-end -->';
                 if (!body.includes(anchor)) throw new Error(`Board issue #${boardIssue} is missing ${anchor}.`);
-                body = body.replace(anchor, `${anchor}\n\n${block}`);
+                const block = [
+                  anchor,
+                  '',
+                  '## Cross-issue file ownership',
+                  '',
+                  'Earlier active claims and legacy PRs own their declared files first. A later claim listed below must narrow its scope or wait for release before implementation or merge.',
+                  '',
+                  start,
+                  table,
+                  end,
+                ].join('\n');
+                body = body.replace(anchor, block);
               }
 
               if (body !== (board.data.body || '')) {
@@ -504,7 +503,7 @@ jobs:
             );
 
             for (const row of rows) {
-              if (row.fileConflicts.length) await addConflictLabel(row);
+              if (row.fileConflicts.length) await addConflictLabel(row.issue);
               else await removeConflictLabel(row.issue);
               await upsertConflictStatus(row);
             }
