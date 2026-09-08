@@ -2,6 +2,8 @@
 
 RAAS is the PlayGarba implementation harness. It gives every agent the smallest useful set of context needed to make correct product decisions, execute one issue safely, and carry that issue all the way to a verified result.
 
+RAAS is client-agnostic. ChatGPT Chat, Cloud Codex, local Codex, Cursor and other repository-capable agents should all use the same repository doctrine and GitHub ownership state. Client-specific instruction files may point into RAAS, but they must not fork its product truth or issue state.
+
 RAAS does not replace repository documentation, issue ownership, CI, review, or product evidence. It routes agents to the right source and makes the execution lifecycle explicit.
 
 ## Load order
@@ -9,23 +11,25 @@ RAAS does not replace repository documentation, issue ownership, CI, review, or 
 Before implementation, read in this order:
 
 1. `AGENTS.md`
-2. `.raas/RAAS.md`
-3. `.raas/PROJECT-CONTEXT.md`
-4. `.raas/LANGUAGE.md` when user-facing words, metadata presentation, onboarding, docs, SEO, social preview text or UI labels may change
-5. `.raas/EXECUTION.md`
-6. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
+2. `.raas/BOOTSTRAP.md`
+3. `.raas/RAAS.md`
+4. `.raas/PROJECT-CONTEXT.md`
+5. `.raas/LANGUAGE.md` when user-facing words, metadata presentation, onboarding, docs, SEO, social preview text or UI labels may change
+6. `.raas/EXECUTION.md`
+7. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
 
 Do not preload the whole repository. Load deeper docs only for the lane being implemented.
 
 ## What RAAS protects
 
-RAAS exists to prevent five common failures:
+RAAS exists to prevent six common failures:
 
 - **context drift:** an agent solves the literal prompt but damages what PlayGarba is trying to become;
 - **fact drift:** plausible-looking artist, release, rights, playback or catalogue claims are invented instead of sourced;
 - **voice drift:** product copy becomes generic, promotional, culturally sloppy or inconsistent;
 - **coordination drift:** multiple agents solve the same issue or edit the same lane in parallel;
-- **completion drift:** an agent stops at code written or PR opened instead of reaching merge and production verification where applicable.
+- **completion drift:** an agent stops at code written or PR opened instead of reaching merge and production verification where applicable;
+- **client drift:** switching from Codex to ChatGPT, Cursor or another agent silently changes the rules or loses repository truth.
 
 ## Source authority
 
@@ -42,7 +46,7 @@ When sources conflict, do not average them. Identify the conflict and prefer the
 
 ## Request to execution contract
 
-A raw request is often broader than one safe implementation lane. Before coding, internally rewrite it into this contract:
+A raw request is often broader than one safe implementation lane. Before coding, rewrite it into this contract:
 
 - **Outcome:** what should be measurably better for the user?
 - **Scope:** the smallest reviewable lane that can deliver that outcome.
@@ -52,6 +56,14 @@ A raw request is often broader than one safe implementation lane. Before coding,
 - **Risks:** playback, catalogue identity, rights, PWA, navigation, accessibility, mobile layout, SEO, deployment or coordination risks.
 - **Validation:** exact commands and manual checks that prove the change.
 - **Completion:** PR merged, deployment/live behaviour verified when applicable, issue state reconciled, claim released.
+
+When available, compile the request deterministically before implementation:
+
+```bash
+node scripts/raas-task.mjs --text "<request or issue text>"
+```
+
+Use `--json` for machine-readable output. The compiler only routes context and identifies likely scope/risk. It never claims an issue, invents product facts, or replaces inspection of current GitHub state.
 
 If the request spans multiple independent lanes, create or select child issues. Never use one broad master issue as permission for parallel overlapping implementation.
 
@@ -66,6 +78,7 @@ If the request spans multiple independent lanes, create or select child issues. 
 - Preserve the user's current product direction even when older code or docs reflect a previous direction. Resolve material conflicts explicitly instead of silently restoring old behaviour.
 - Do not create duplicate work. Issue comments and the active claim board control ownership.
 - Do not report a test, build, merge, deploy or production result that did not actually run or get verified.
+- Do not depend on hidden chat memory for current repository truth.
 
 ## Done means done
 
