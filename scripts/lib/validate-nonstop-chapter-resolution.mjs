@@ -18,7 +18,7 @@ const supportedChapterStatuses = new Set([
   'source-no-published-chapters',
   'source-tracklist-no-timestamps',
 ]);
-const supportedSourceStatuses = new Set(['youtube-migration-required']);
+const terminalSourceStatus = 'youtube-source-not-found';
 
 const unresolved = [];
 const invalidMigrationStates = [];
@@ -27,10 +27,11 @@ let youtubeSetCount = 0;
 let timestamped = 0;
 let explicitlyContinuous = 0;
 let tracklistOnly = 0;
-let migrationRequired = 0;
+let auditedWithoutYoutube = 0;
 
 // Chapter completion is only meaningful once a trustworthy YouTube master exists.
-// Provider-only discovery evidence must stay visibly separate as migration backlog.
+// Provider-only evidence can be considered audit-complete only after an explicit,
+// terminal YouTube source search documents that no trustworthy master was found.
 for (const chunkName of setsIndex.chunks || []) {
   const chunkPath = path.posix.join(setsDir, chunkName);
   const payload = await readJson(chunkPath);
@@ -47,11 +48,18 @@ for (const chunkName of setsIndex.chunks || []) {
         invalidMigrationStates.push({ id: set.id, title: set.title, provider, chunk: chunkName });
         continue;
       }
-      if (!supportedSourceStatuses.has(sourceStatus)) {
-        unresolved.push({ id: set.id, title: set.title, provider: provider || '(none)', videoId: '(no YouTube master)', chunk: chunkName });
+      if (sourceStatus !== terminalSourceStatus) {
+        unresolved.push({
+          id: set.id,
+          title: set.title,
+          provider: provider || '(none)',
+          videoId: '(no YouTube master)',
+          chunk: chunkName,
+          sourceStatus: sourceStatus || '(missing)',
+        });
         continue;
       }
-      migrationRequired += 1;
+      auditedWithoutYoutube += 1;
       continue;
     }
 
@@ -67,7 +75,14 @@ for (const chunkName of setsIndex.chunks || []) {
     }
 
     if (!supportedChapterStatuses.has(chapterStatus)) {
-      unresolved.push({ id: set.id, title: set.title, provider, videoId: set.source?.videoId || '(no video id)', chunk: chunkName });
+      unresolved.push({
+        id: set.id,
+        title: set.title,
+        provider,
+        videoId: set.source?.videoId || '(no video id)',
+        chunk: chunkName,
+        sourceStatus: '(not applicable)',
+      });
       continue;
     }
 
@@ -77,22 +92,23 @@ for (const chunkName of setsIndex.chunks || []) {
 }
 
 if (invalidMigrationStates.length) {
-  console.error(`✗ ${invalidMigrationStates.length} Nonstop sets conflate provider migration with YouTube chapter completion:`);
+  console.error(`✗ ${invalidMigrationStates.length} Nonstop sets conflate provider source state with YouTube chapter completion:`);
   for (const set of invalidMigrationStates) console.error(`  - ${set.id} | ${set.title} | ${set.provider} | ${set.chunk}`);
 }
 
 if (unresolved.length) {
-  console.error(`✗ ${unresolved.length} Nonstop sets still need either YouTube chapter evidence or an explicit YouTube migration state:`);
+  console.error(`✗ ${unresolved.length} Nonstop sets still have actionable YouTube source/chapter backlog:`);
   for (const set of unresolved) {
-    console.error(`  - ${set.id} | ${set.title} | ${set.provider} | ${set.videoId} | ${set.chunk}`);
+    console.error(`  - ${set.id} | ${set.title} | ${set.provider} | ${set.videoId} | sourceStatus=${set.sourceStatus} | ${set.chunk}`);
   }
 }
 
 if (invalidMigrationStates.length || unresolved.length) process.exit(1);
 
-console.log(`✓ global Nonstop evidence resolution: ${setCount}/${setCount} sets classified`);
-console.log(`✓ ${youtubeSetCount} sets have YouTube masters`);
+console.log(`✓ global Nonstop evidence resolution: ${setCount}/${setCount} sets audit-complete`);
+console.log(`✓ ${youtubeSetCount} sets have trustworthy YouTube masters`);
 console.log(`✓ ${timestamped} YouTube sets have timestamped chapters`);
 console.log(`✓ ${explicitlyContinuous} YouTube sets explicitly document sources with no published chapter starts`);
 console.log(`✓ ${tracklistOnly} YouTube sets preserve source tracklists without fabricated timestamps`);
-console.log(`△ ${migrationRequired} discovery sets remain explicitly classified as YouTube migration required`);
+console.log(`✓ ${auditedWithoutYoutube} provider-only sets have a completed source audit with no trustworthy YouTube master found`);
+console.log('✓ 0 Nonstop sets remain in youtube-migration-required backlog');
