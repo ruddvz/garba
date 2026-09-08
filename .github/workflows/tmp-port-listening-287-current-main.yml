@@ -1,0 +1,147 @@
+name: Temporary port listening flow current main
+
+on:
+  push:
+    branches:
+      - codex/listening-flow-287-current-main
+
+permissions:
+  contents: write
+
+jobs:
+  port:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/listening-flow-287-current-main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Port reviewed listening flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/listening-flow-287
+
+          # These files are byte-identical on current main to the base used by the
+          # reviewed #287 implementation, so transplant the reviewed versions.
+          git checkout origin/codex/listening-flow-287 -- \
+            app.js \
+            simple-runtime.js \
+            styles/10-browser-and-shell.css \
+            scripts/lib/validate-listening-flow.mjs
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, before, after, label):
+              p = Path(path)
+              text = p.read_text()
+              if after in text:
+                  return
+              if before not in text:
+                  raise SystemExit(f"Missing patch anchor for {label} in {path}")
+              p.write_text(text.replace(before, after, 1))
+
+          replace_once(
+              'index.html',
+              'id="favouritesButton" type="button" aria-label="Show favourites" title="Favourites"',
+              'id="favouritesButton" type="button" aria-label="Open My Garba" title="My Garba"',
+              'My Garba desktop control',
+          )
+
+          replace_once(
+              'src/catalogue/listening-library.js',
+              "link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to favourite'} ${song.title} by ${song.artist}`);",
+              "link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to saved song'} ${song.title} by ${song.artist}`);",
+              'saved-song card aria label',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              "kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';",
+              "kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Saved';",
+              'saved-song kicker',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              '    .personal-listening-section .section-title-row{margin-bottom:14px}\n',
+              '    .personal-listening-section .section-title-row{margin-bottom:14px;align-items:center;justify-content:flex-start}\n'
+              '    .personal-listening-section .section-title-row p{margin-left:auto}\n'
+              '    .personal-listening-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:34px;margin-left:14px;padding:0 11px;border:1px solid rgba(255,255,255,.11);border-radius:999px;color:rgba(255,248,236,.72);background:rgba(255,255,255,.035);font-size:.7rem;font-weight:760;text-decoration:none;transition:border-color .18s ease,background .18s ease,color .18s ease}\n'
+              '    .personal-listening-open:hover,.personal-listening-open:focus-visible{color:var(--gold);border-color:rgba(231,201,143,.28);background:rgba(231,201,143,.055)}\n',
+              'My Garba header styles',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              '@media(max-width:640px){.personal-listening-section{margin-bottom:36px}.personal-listening-rail{',
+              '@media(max-width:640px){.personal-listening-section{margin-bottom:36px}.personal-listening-open{margin-left:auto}.personal-listening-rail{',
+              'My Garba mobile open action',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              "heading.textContent = 'Your listening';",
+              "heading.textContent = 'My Garba';",
+              'My Garba heading',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              "description.textContent = continueSong\n    ? 'Pick up where you left off, then revisit songs you saved.'\n    : 'Songs you saved in the PlayGarba player.';\n  head.append(heading, description);",
+              "description.textContent = continueSong\n    ? 'Continue where you left off, then return to songs you saved.'\n    : 'Songs you saved with the heart in PlayGarba.';\n  const openMyGarba = document.createElement('a');\n  openMyGarba.className = 'personal-listening-open';\n  openMyGarba.href = '../?library=my-garba';\n  openMyGarba.textContent = 'Open';\n  openMyGarba.setAttribute('aria-label', 'Open all songs in My Garba');\n  head.append(heading, description, openMyGarba);",
+              'My Garba open link',
+          )
+          replace_once(
+              'src/catalogue/listening-library.js',
+              "rail.setAttribute('aria-label', 'Your PlayGarba listening');",
+              "rail.setAttribute('aria-label', 'My Garba saved songs and continue listening');",
+              'My Garba rail label',
+          )
+
+          replace_once(
+              'scripts/validate-runtime-packaging.mjs',
+              "  \"heading.textContent = 'Your listening';\",",
+              "  \"heading.textContent = 'My Garba';\",",
+              'runtime packaging My Garba heading',
+          )
+          replace_once(
+              'scripts/validate-runtime-packaging.mjs',
+              "  \"kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';\",",
+              "  \"kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Saved';\",",
+              'runtime packaging saved label',
+          )
+          PY
+
+          node <<'NODE'
+          const fs = require('node:fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.scripts['listening:flow:validate'] = 'node scripts/lib/validate-listening-flow.mjs';
+          if (!pkg.scripts['check:modules'].includes('scripts/lib/validate-listening-flow.mjs')) {
+            pkg.scripts['check:modules'] += ' && node --check scripts/lib/validate-listening-flow.mjs';
+          }
+          if (!pkg.scripts.check.includes('npm run listening:flow:validate')) {
+            pkg.scripts.check = pkg.scripts.check.replace(
+              'npm run nonstop:transport:validate &&',
+              'npm run nonstop:transport:validate && npm run listening:flow:validate &&'
+            );
+          }
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+          npm run check:modules
+          npm run listening:flow:validate
+
+          git add \
+            app.js \
+            index.html \
+            package.json \
+            scripts/lib/validate-listening-flow.mjs \
+            scripts/validate-runtime-packaging.mjs \
+            simple-runtime.js \
+            src/catalogue/listening-library.js \
+            styles/10-browser-and-shell.css
+          git commit -m "Implement contextual Up next and My Garba on current main"
+          git push origin HEAD:codex/listening-flow-287-current-main
