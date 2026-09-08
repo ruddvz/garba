@@ -52,6 +52,13 @@ jobs:
           grep -q '<link rel="canonical" href="https://playgarba.com/faq/"' faq/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/about/"' about/index.html
 
+          grep -q 'href="polish.css"' index.html
+          grep -q 'href="/polish.css"' how-to-use/index.html
+          grep -q 'href="/polish.css"' install/index.html
+          grep -q 'href="/polish.css"' live/index.html
+          grep -q 'href="/polish.css"' faq/index.html
+          grep -q 'href="/polish.css"' about/index.html
+
           grep -q 'https://live.playgarba.com/' index.html
           grep -q 'https://live.playgarba.com/' how-to-use/index.html
           grep -q 'https://live.playgarba.com/' install/index.html
@@ -59,7 +66,6 @@ jobs:
           grep -q 'https://live.playgarba.com/' faq/index.html
           grep -q 'https://live.playgarba.com/' about/index.html
 
-          # Public discovery must hand off to the source-native Explore catalogue.
           grep -q 'https://live.playgarba.com/catalogue/' index.html
           grep -q 'https://live.playgarba.com/catalogue/' how-to-use/index.html
           grep -q 'https://live.playgarba.com/catalogue/' live/index.html
@@ -78,18 +84,24 @@ jobs:
             exit 1
           fi
 
-          if grep -R -n -E 'bottom sheet.*Browse|Browse.*bottom sheet' --include='*.html' .; then
-            echo 'Retired Browse-sheet UX guidance found in public HTML.'
+          if grep -R -n -E 'Spotify|Apple Music|Amazon Music|different approved playback routes|external providers' --include='*.html' .; then
+            echo 'Retired multi-provider playback language found in public HTML.'
             exit 1
           fi
 
           grep -q 'Open as Web App' install/index.html
-          grep -q 'Explore catalogue' install/index.html
           grep -q 'FAQPage' faq/index.html
-          grep -q 'mobile-action-dock' polish.css
-          grep -q 'ensureFaqNavigation' site.js
+          grep -q 'verified YouTube routes' how-to-use/index.html
+          grep -q 'verified YouTube routes' faq/index.html
+          grep -q 'YouTube is the playback source' about/index.html
           grep -q 'playerParams' site.js
           grep -q 'window.location.replace' site.js
+
+          if grep -qE 'ensureFaqNavigation|addMobileActionDock|addFaqSupport' site.js; then
+            echo 'Removed injected public-site UI returned to site.js.'
+            exit 1
+          fi
+
           grep -q "path.startsWith('/songs/')" 404.html
           grep -q "path.startsWith('/releases/')" 404.html
           grep -q "path.startsWith('/catalogue/')" 404.html
