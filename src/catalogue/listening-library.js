@@ -6,6 +6,7 @@ const sections = document.getElementById('catalogueSections');
 const catalogueCount = document.getElementById('catalogueCount');
 let cataloguePromise = null;
 let catalogueData = null;
+let renderQueued = false;
 
 function readStoredJson(key, fallback) {
   try {
@@ -281,30 +282,53 @@ function catalogueReady() {
     && !String(catalogueCount?.textContent || '').startsWith('Loading');
 }
 
+function queueListeningRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  queueMicrotask(() => {
+    renderQueued = false;
+    void renderListeningLibrary();
+  });
+}
+
 function startWhenReady() {
   const stored = listeningState();
   if (!hasListeningState(stored)) return;
   if (catalogueReady()) {
-    void renderListeningLibrary();
+    queueListeningRender();
     return;
   }
   const observer = new MutationObserver(() => {
     if (!catalogueReady()) return;
     observer.disconnect();
-    void renderListeningLibrary();
+    queueListeningRender();
   });
   if (sections) observer.observe(sections, { childList: true, subtree: false });
   if (catalogueCount) observer.observe(catalogueCount, { childList: true, characterData: true, subtree: true });
 }
 
+function watchCatalogueRenders() {
+  if (!sections) return;
+  const observer = new MutationObserver(() => {
+    const stored = listeningState();
+    if (!hasListeningState(stored)) {
+      removeSection();
+      return;
+    }
+    if (catalogueReady() && !document.getElementById('personalListeningSection')) queueListeningRender();
+  });
+  observer.observe(sections, { childList: true });
+}
+
 window.addEventListener('pageshow', (event) => {
-  if (event.persisted && catalogueData) void renderListeningLibrary();
+  if (event.persisted) queueListeningRender();
 });
 window.addEventListener('storage', (event) => {
-  if ((event.key === SESSION_KEY || event.key === FAVOURITES_KEY) && catalogueData) void renderListeningLibrary();
+  if (event.key === SESSION_KEY || event.key === FAVOURITES_KEY) queueListeningRender();
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && catalogueData) void renderListeningLibrary();
+  if (document.visibilityState === 'visible' && hasListeningState(listeningState())) queueListeningRender();
 });
 
 startWhenReady();
+watchCatalogueRenders();
