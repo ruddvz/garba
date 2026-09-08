@@ -94,6 +94,22 @@ for (const marker of [
   if (!listening.includes(marker)) fail(`Verified release hero is missing: ${marker}`);
 }
 
+for (const marker of [
+  'playgarbaSelectedTracklist',
+  'data-selected-tracklist="true"',
+  '.collection-detail[data-selected-tracklist="true"] .song-release{display:none!important}',
+  '.collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:52px minmax(0,1fr) auto!important}',
+  '.collection-detail[data-selected-tracklist="true"] .selected-release-context{display:none!important}',
+  "detail.dataset.selectedTracklist = 'true';",
+  'delete detail.dataset.selectedTracklist;',
+  "songList.setAttribute('aria-label', `${releaseTitle} songs`);",
+  "songList.setAttribute('aria-label', 'Catalogue songs');",
+  "songSectionTitle.textContent = 'Songs';",
+  'grid-template-columns:42px minmax(0,1fr) 44px!important',
+]) {
+  if (!listening.includes(marker)) fail(`Selected release tracklist cleanup is missing: ${marker}`);
+}
+
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
 inlineModules.forEach((source, index) => {
@@ -107,7 +123,7 @@ inlineModules.forEach((source, index) => {
 try {
   new Function(listening);
 } catch (error) {
-  fail(`Explore listening/release-hero runtime has invalid JavaScript: ${error.message}`);
+  fail(`Explore listening/release-detail runtime has invalid JavaScript: ${error.message}`);
 }
 
 if (runtime.includes("active.scrollIntoView(")) {
@@ -130,4 +146,4 @@ if (listening.includes('release-hero-art fallback')) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, verified release hero, release identity, metadata descriptions, taxonomy-driven browsing, album semantics and keyboard navigation are protected');
+console.log('✓ Explore detail hierarchy, verified release hero, clean selected tracklists, release identity, metadata descriptions, taxonomy-driven browsing, album semantics and keyboard navigation are protected');

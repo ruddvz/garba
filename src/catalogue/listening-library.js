@@ -551,3 +551,67 @@ watchCatalogueRenders();
   window.addEventListener('pageshow', queueHeroSync);
   queueHeroSync();
 })();
+
+(() => {
+  const detail = document.getElementById('collectionDetail');
+  const releaseRail = document.getElementById('releaseRail');
+  const songList = document.getElementById('catalogueSongList');
+  const songSectionTitle = document.getElementById('songSectionTitle');
+  if (!detail || !releaseRail || !songList || !songSectionTitle) return;
+
+  const style = document.createElement('style');
+  style.dataset.playgarbaSelectedTracklist = '';
+  style.textContent = `
+    .collection-detail[data-selected-tracklist="true"] .song-release{display:none!important}
+    .collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:52px minmax(0,1fr) auto!important}
+    .collection-detail[data-selected-tracklist="true"] .selected-release-context{display:none!important}
+    .collection-detail[data-selected-tracklist="true"] .song-copy{padding-right:8px}
+    .collection-detail[data-selected-tracklist="true"] .play-link{justify-self:end}
+    @media(max-width:1080px){.collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:50px minmax(0,1fr) auto!important}}
+    @media(max-width:640px){.collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:45px minmax(0,1fr) auto!important}.collection-detail[data-selected-tracklist="true"] .song-copy{padding-right:3px}}
+    @media(max-width:420px){.collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:43px minmax(0,1fr) auto!important}}
+    @media(max-width:380px){.collection-detail[data-selected-tracklist="true"] .song-row{grid-template-columns:42px minmax(0,1fr) 44px!important}}
+  `;
+  document.head.append(style);
+
+  let queued = false;
+
+  function syncSelectedTracklist() {
+    queued = false;
+    const active = releaseRail.querySelector('.release-card.active[data-release-id]');
+    const selected = active instanceof HTMLElement && !detail.hidden;
+    if (!selected) {
+      delete detail.dataset.selectedTracklist;
+      songList.setAttribute('aria-label', 'Catalogue songs');
+      return;
+    }
+
+    detail.dataset.selectedTracklist = 'true';
+    const releaseTitle = active.querySelector('.release-title')?.textContent?.trim() || 'Selected release';
+    songList.setAttribute('aria-label', `${releaseTitle} songs`);
+    requestAnimationFrame(() => {
+      const stillActive = releaseRail.querySelector('.release-card.active[data-release-id]');
+      if (stillActive === active && !detail.hidden) songSectionTitle.textContent = 'Songs';
+    });
+  }
+
+  function queueSelectedTracklistSync() {
+    if (queued) return;
+    queued = true;
+    queueMicrotask(syncSelectedTracklist);
+  }
+
+  new MutationObserver(queueSelectedTracklistSync).observe(releaseRail, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+  new MutationObserver(queueSelectedTracklistSync).observe(detail, {
+    attributes: true,
+    attributeFilter: ['hidden'],
+  });
+  window.addEventListener('popstate', queueSelectedTracklistSync);
+  window.addEventListener('pageshow', queueSelectedTracklistSync);
+  queueSelectedTracklistSync();
+})();
