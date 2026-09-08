@@ -393,11 +393,10 @@
 }
 
 /*
-  Genre composition and timeline details
-  --------------------------------------
-  This layer owns genre artwork and a few geometry primitives. Open player-control
-  chrome is owned earlier by the responsive/accessibility layer, so do not restyle
-  transport surfaces here just to have them cancelled again later.
+  Genre composition and final player geometry
+  -------------------------------------------
+  This late layer owns genre artwork plus the ambient-ring and timeline geometry that
+  must win in the final cascade. Earlier player-control layers should not override it.
 */
 .controls {
   position: relative;
@@ -405,9 +404,9 @@
 }
 
 .ambient-ring {
-  inset: -18px;
+  inset: -15px;
   border: 0;
-  opacity: .26;
+  opacity: .18;
   background: repeating-conic-gradient(
     from -6deg,
     color-mix(in srgb, var(--accent) 48%, rgba(246, 236, 215, .35)) 0 2deg,
@@ -421,7 +420,7 @@
 .ambient-ring::after { display: none; }
 
 .app.is-playing .ambient-ring {
-  opacity: .46;
+  opacity: .30;
   animation: garba-console-ring 16s linear infinite;
 }
 
@@ -435,7 +434,7 @@
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 3px;
+  height: 2px;
   border-radius: 999px;
   background: linear-gradient(
     to right,
@@ -445,13 +444,13 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 
 input[type="range"]::-moz-range-track {
-  height: 3px;
+  height: 2px;
   border-radius: 999px;
   background: rgba(246, 236, 215, .20);
 }
 
 input[type="range"]::-moz-range-progress {
-  height: 3px;
+  height: 2px;
   border-radius: 999px;
   background: var(--accent);
 }
