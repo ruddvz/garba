@@ -242,6 +242,30 @@
     return 'YouTube';
   }
 
+  function recordingPresentation(set) {
+    const chapterCount = Array.isArray(set?.segments) ? set.segments.length : 0;
+    const tracklistCount = Array.isArray(set?.tracklist) ? set.tracklist.length : 0;
+    if (chapterCount > 0) {
+      return {
+        label: 'Chaptered recording',
+        detail: `One recording · ${chapterCount} chapter${chapterCount === 1 ? '' : 's'}`,
+        mediaAlbum: 'Nonstop Garba · Chaptered recording',
+      };
+    }
+    if (tracklistCount > 0) {
+      return {
+        label: 'Full recording',
+        detail: `One full recording · ${tracklistCount} songs listed · no timestamps`,
+        mediaAlbum: 'Nonstop Garba · Full recording',
+      };
+    }
+    return {
+      label: 'Full recording',
+      detail: 'One full recording · no chapter map',
+      mediaAlbum: 'Nonstop Garba · Full recording',
+    };
+  }
+
   function injectStyles() {
     if ($('nonstopPlaybackStyles')) return;
     const style = document.createElement('style');
@@ -281,9 +305,11 @@
       .nonstop-set.active{border-color:color-mix(in srgb,var(--accent) 65%,rgba(246,236,215,.16));background:color-mix(in srgb,var(--accent) 9%,rgba(255,255,255,.025))}
       .nonstop-set-title{display:block;font-size:15px;font-weight:600;line-height:1.3}
       .nonstop-set-meta{display:block;margin-top:4px;font-size:12px;line-height:1.4;color:rgba(246,236,215,.57)}
-      .nonstop-set-badges{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;max-width:260px}
+      .nonstop-set-recording{display:block;margin-top:4px;font-size:11px;line-height:1.4;color:rgba(246,236,215,.78)}
+      .nonstop-set-badges{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;max-width:300px}
       .nonstop-set-badge{display:inline-flex;align-items:center;min-height:26px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.055);font-size:10px;letter-spacing:.04em;color:rgba(246,236,215,.68);white-space:nowrap}
       .nonstop-set-badge.youtube{color:rgba(246,236,215,.92)}
+      .nonstop-set-badge.recording{background:color-mix(in srgb,var(--accent) 13%,rgba(255,255,255,.055));color:rgba(246,236,215,.92)}
       .nonstop-browser-empty{padding:38px 12px 52px;color:rgba(246,236,215,.58);font-size:14px;line-height:1.5;text-align:center}
       body.nonstop-browser-open{overflow:hidden}
       .nonstop-browser :focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
@@ -328,7 +354,7 @@
       if (active) {
         queueButton.dataset.nonstopContext = 'true';
         queueButton.title = 'Browse Nonstop Garba';
-        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba sets');
+        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings');
       } else if (queueButton.dataset.nonstopContext === 'true') {
         delete queueButton.dataset.nonstopContext;
         queueButton.title = 'Up next';
@@ -343,8 +369,8 @@
       const previous = id === 'prevButton' || id === 'miniPrev';
       if (active) {
         control.dataset.nonstopContext = 'true';
-        control.title = 'Choose another Nonstop set';
-        control.setAttribute('aria-label', 'Choose another Nonstop set');
+        control.title = 'Choose another Nonstop recording';
+        control.setAttribute('aria-label', 'Choose another Nonstop recording');
       } else if (control.dataset.nonstopContext === 'true') {
         delete control.dataset.nonstopContext;
         control.removeAttribute('title');
@@ -398,6 +424,7 @@
 
   function setMetadata(set) {
     if (!state.activeSet || state.activeSet.id !== set.id) return;
+    const recording = recordingPresentation(set);
     const app = $('app');
     const eyebrow = $('genreEyebrow');
     const title = $('songTitle');
@@ -406,7 +433,8 @@
     const miniTitle = $('miniTitle');
     const miniArtist = $('miniArtist');
     app?.setAttribute('data-play-mode', 'nonstop');
-    if (eyebrow && eyebrow.textContent !== 'Nonstop Garba') eyebrow.textContent = 'Nonstop Garba';
+    const eyebrowText = `Nonstop · ${recording.label}`;
+    if (eyebrow && eyebrow.textContent !== eyebrowText) eyebrow.textContent = eyebrowText;
     if (title && title.textContent !== set.title) title.textContent = set.title;
     if (artist && artist.textContent !== set.artistsText) artist.textContent = set.artistsText;
     if (miniTitle && miniTitle.textContent !== set.title) miniTitle.textContent = set.title;
@@ -417,7 +445,7 @@
         navigator.mediaSession.metadata = new MediaMetadata({
           title: set.title,
           artist: set.artistsText,
-          album: 'Nonstop Garba',
+          album: recording.mediaAlbum,
           artwork: MEDIA_ARTWORK,
         });
       }
@@ -605,7 +633,7 @@
       setUrlForNonstop(set, { push: shouldPush });
       if (state.previousSession && shouldPush) state.previousSession.historyPushed = true;
       setMetadata(set);
-      if (!quiet) announce(`Playing ${set.title}`);
+      if (!quiet) announce(`Playing ${set.title} as one recording`);
       return true;
     } catch (error) {
       console.warn('PlayGarba nonstop playback failed', error);
@@ -667,14 +695,14 @@
     panel.innerHTML = `
       <header class="nonstop-browser-header">
         <div>
-          <p class="nonstop-browser-kicker">YouTube-first catalogue</p>
+          <p class="nonstop-browser-kicker">Continuous YouTube listening</p>
           <h2 class="nonstop-browser-title" id="nonstopBrowserTitle">Nonstop Garba</h2>
-          <span class="nonstop-browser-summary" id="nonstopBrowserSummary" aria-live="polite">Loading verified sets…</span>
+          <span class="nonstop-browser-summary" id="nonstopBrowserSummary" aria-live="polite">Loading verified recordings…</span>
         </div>
         <button class="nonstop-browser-close" id="nonstopBrowserClose" type="button" aria-label="Close Nonstop Garba">×</button>
       </header>
       <div class="nonstop-browser-search-wrap">
-        <input class="nonstop-browser-search" id="nonstopBrowserSearch" type="search" inputmode="search" autocomplete="off" enterkeyhint="search" aria-label="Search nonstop sets and artists" placeholder="Search sets, artists or songs" />
+        <input class="nonstop-browser-search" id="nonstopBrowserSearch" type="search" inputmode="search" autocomplete="off" enterkeyhint="search" aria-label="Search nonstop sets and artists" placeholder="Search recordings, artists or songs" />
       </div>
       <nav class="nonstop-browser-categories" id="nonstopBrowserCategories" aria-label="Nonstop Garba categories"></nav>
       <div class="nonstop-browser-list" id="nonstopBrowserList" aria-live="polite"></div>`;
@@ -728,7 +756,7 @@
     const list = $('nonstopBrowserList');
     if (list && !state.allSets) {
       list.setAttribute('aria-busy', 'true');
-      list.innerHTML = '<div class="nonstop-browser-empty">Loading verified YouTube sets…</div>';
+      list.innerHTML = '<div class="nonstop-browser-empty">Loading verified YouTube recordings…</div>';
     }
     requestAnimationFrame(() => $('nonstopBrowserSearch')?.focus({ preventScroll: true }));
     try {
@@ -738,7 +766,7 @@
       console.warn('PlayGarba nonstop catalogue failed to load', error);
       if (list) {
         list.removeAttribute('aria-busy');
-        list.innerHTML = '<div class="nonstop-browser-empty">The YouTube non-stop catalogue could not load. Check your connection and try again.</div>';
+        list.innerHTML = '<div class="nonstop-browser-empty">The YouTube Nonstop recordings could not load. Check your connection and try again.</div>';
       }
     }
   }
@@ -751,8 +779,8 @@
     const summary = $('nonstopBrowserSummary');
     if (summary) {
       const partial = state.failedChunks.size ? ` · ${state.failedChunks.size} section${state.failedChunks.size === 1 ? '' : 's'} unavailable` : '';
-      const shown = filtered.length === sets.length ? `${sets.length} playable YouTube sets` : `${filtered.length} of ${sets.length} playable YouTube sets`;
-      summary.textContent = `${shown} · official and verified sources ranked first${partial}`;
+      const shown = filtered.length === sets.length ? `${sets.length} playable YouTube recordings` : `${filtered.length} of ${sets.length} playable YouTube recordings`;
+      summary.textContent = `${shown} · one choice = one recording · chapters stay inside the recording${partial}`;
     }
 
     const categoryNav = $('nonstopBrowserCategories');
@@ -778,7 +806,7 @@
     list.removeAttribute('aria-busy');
     if (!filtered.length) {
       const action = state.browserQuery ? 'Try a different search or category.' : 'Choose another category.';
-      list.innerHTML = `<div class="nonstop-browser-empty">No playable YouTube sets match this view.<br>${action}</div>`;
+      list.innerHTML = `<div class="nonstop-browser-empty">No playable YouTube recordings match this view.<br>${action}</div>`;
       return;
     }
 
@@ -786,9 +814,10 @@
       const button = document.createElement('button');
       const active = state.activeSet?.id === set.id;
       const starting = state.startingSetId === set.id;
+      const recording = recordingPresentation(set);
       button.type = 'button';
       button.className = `nonstop-set${active ? ' active' : ''}`;
-      button.setAttribute('aria-label', `${active ? 'Currently playing' : 'Play'} ${set.title} by ${set.artistsText}`);
+      button.setAttribute('aria-label', `${active ? 'Currently playing' : 'Play'} ${set.title} by ${set.artistsText}. ${recording.detail}`);
       button.setAttribute('aria-pressed', String(active));
       if (starting) {
         button.disabled = true;
@@ -799,14 +828,18 @@
         <span>
           <span class="nonstop-set-title"></span>
           <span class="nonstop-set-meta"></span>
+          <span class="nonstop-set-recording"></span>
         </span>
         <span class="nonstop-set-badges">
+          <span class="nonstop-set-badge recording"></span>
           <span class="nonstop-set-badge youtube">YouTube</span>
           <span class="nonstop-set-badge source"></span>
           ${duration ? '<span class="nonstop-set-badge duration"></span>' : ''}
         </span>`;
       button.querySelector('.nonstop-set-title').textContent = set.title;
       button.querySelector('.nonstop-set-meta').textContent = [set.artistsText, set.year || null].filter(Boolean).join(' · ');
+      button.querySelector('.nonstop-set-recording').textContent = recording.detail;
+      button.querySelector('.nonstop-set-badge.recording').textContent = recording.label;
       button.querySelector('.nonstop-set-badge.source').textContent = sourceLabel(set);
       if (duration) button.querySelector('.nonstop-set-badge.duration').textContent = duration;
       button.addEventListener('click', async () => {
