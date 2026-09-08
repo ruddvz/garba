@@ -1,0 +1,41 @@
+name: Migrate Garba Genre Taxonomy
+
+on:
+  push:
+    branches:
+      - codex/garba-genre-audit-259
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout audit branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/garba-genre-audit-259
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Migrate mismatched taxonomy
+        run: node scripts/lib/migrate-genre-taxonomy-styles.mjs
+
+      - name: Commit canonical shard migration
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- data/catalogue/songs; then
+            echo 'No taxonomy migration changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/catalogue/songs
+          git commit -m 'Migrate mismatched song taxonomy into secondary styles'
+          git push origin HEAD:codex/garba-genre-audit-259
