@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v12`;
+const CACHE_NAME = `${CACHE_PREFIX}v13`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -18,10 +18,19 @@ const CORE_SHELL = [
   './catalogue/catalogue.js',
   './manifest.webmanifest',
   './offline.html',
+  './favicon.ico',
+  './assets/icons/browserconfig.xml',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/icons/favicon-16.png',
+  './assets/icons/favicon-32.png',
+  './assets/icons/favicon-48.png',
   './assets/icons/apple-touch-icon.png',
+  './assets/icons/apple-touch-icon-152.png',
+  './assets/icons/apple-touch-icon-167.png',
+  './assets/icons/mstile-150x150.png',
+  './assets/icons/mstile-310x310.png',
   './assets/icons/maskable.svg',
   './assets/icons/maskable-192.png',
   './assets/icons/maskable-512.png',
