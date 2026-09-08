@@ -34,6 +34,7 @@ const state = {
   lastPersistedElapsed: -1,
   catalogueSignature: '',
   catalogueLoadedAt: 0,
+  pendingSongId: null,
   sheetTrigger: null,
 };
 
@@ -195,7 +196,8 @@ function syncSheetGenresOnly() {
 function updateUrl() {
   const url = new URL(location.href);
   url.searchParams.set('genre', state.genreId);
-  if (state.songId) url.searchParams.set('song', state.songId);
+  const songId = state.pendingSongId || state.songId;
+  if (songId) url.searchParams.set('song', songId);
   url.searchParams.delete('browse');
   url.searchParams.delete('source');
   history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
@@ -332,6 +334,8 @@ function configureAudio(song, restoreElapsed = 0) {
 async function selectSong(songId, options = {}) {
   const song = state.songs.find((entry) => entry.id === songId);
   if (!song) return;
+
+  if (!options.initial) state.pendingSongId = null;
 
   const genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre) return;
@@ -885,6 +889,17 @@ async function refreshCatalogue({ quiet = false } = {}) {
     state.catalogueSignature = signature;
     state.catalogueLoadedAt = Date.now();
 
+    if (state.pendingSongId) {
+      const pendingSong = state.songs.find((entry) => entry.id === state.pendingSongId);
+      state.pendingSongId = null;
+      if (pendingSong) {
+        await selectSong(pendingSong.id, { initial: true, animate: false, keepSheet: true });
+        updateUrl();
+        if (changed && !quiet) showToast('Song catalogue updated.');
+        return;
+      }
+    }
+
     let song = currentSong();
     let genre = currentGenre();
     if (!genre) {
@@ -921,9 +936,10 @@ function resolveInitialState() {
   const session = storage.get('garba:session', {});
   const requestedSong = params.get('song');
   const requestedGenre = params.get('genre');
+  const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;
 
   let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
-  if (!song && session.songId) song = state.songs.find((entry) => entry.id === session.songId);
+  if (!song && !pendingSongId && session.songId) song = state.songs.find((entry) => entry.id === session.songId);
 
   let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
   if (!genre && song) genre = state.genres.find((entry) => entry.id === song.genre);
@@ -931,7 +947,13 @@ function resolveInitialState() {
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
   if (!song || song.genre !== genre.id) song = state.songs.find((entry) => entry.genre === genre.id) || state.songs[0];
-  return { genre, song, elapsed: Number(session.elapsed || 0), browse: params.get('browse') === '1' };
+  return {
+    genre,
+    song,
+    pendingSongId,
+    elapsed: Number(session.elapsed || 0),
+    browse: params.get('browse') === '1',
+  };
 }
 
 async function init() {
@@ -959,6 +981,7 @@ async function init() {
       renderSheet();
     }
 
+    state.pendingSongId = initial.pendingSongId;
     if (initial.browse) openSheet('all', { snap: 'full', history: false });
     updateUrl();
   } catch (error) {
