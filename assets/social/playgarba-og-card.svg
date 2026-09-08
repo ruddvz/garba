@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">PlayGarba social preview</title>
+  <desc id="desc">PlayGarba, the open Gujarati Garba music archive for songs, artists, releases, live sets and nonstop Garba.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111323"/>
+      <stop offset="0.58" stop-color="#121221"/>
+      <stop offset="1" stop-color="#2a1a1c"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd278"/>
+      <stop offset="1" stop-color="#d7672d"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1050" cy="130" r="190" fill="#d7672d" opacity="0.09" filter="url(#soft)"/>
+  <circle cx="930" cy="535" r="230" fill="#ffd278" opacity="0.045" filter="url(#soft)"/>
+  <rect x="28" y="28" width="1144" height="574" rx="38" fill="none" stroke="#f6ecd7" stroke-opacity="0.65" stroke-width="1.4"/>
+
+  <g font-family="DejaVu Sans, Arial, sans-serif">
+    <text x="86" y="196" fill="#fff8ea" font-size="102" font-weight="700" letter-spacing="-4">PlayGarba</text>
+    <text x="88" y="272" fill="#f5b95c" font-size="34" font-weight="700" letter-spacing="0.2">The open Gujarati Garba music archive</text>
+    <text x="88" y="347" fill="#f7f1e7" opacity="0.96" font-size="30" font-weight="400">Songs · Artists · Releases · Live sets · Nonstop Garba</text>
+
+    <g transform="translate(88 404)">
+      <rect width="510" height="50" rx="25" fill="#fff5df"/>
+      <text x="255" y="33" text-anchor="middle" fill="#151523" font-size="18" font-weight="700" letter-spacing="0.6">OPEN · COMMUNITY-BUILT · FREE TO EXPLORE</text>
+    </g>
+
+    <text x="88" y="550" fill="#fff8ea" font-size="28" font-weight="700" letter-spacing="0.4">playgarba.com</text>
+  </g>
+
+  <g transform="translate(940 258)">
+    <g opacity="0.95">
+      <circle cx="-116" cy="-99" r="6" fill="#f6b24d"/>
+      <circle cx="-83" cy="-118" r="7" fill="#f6b24d"/>
+      <circle cx="-46" cy="-130" r="8" fill="#f7bd59"/>
+      <circle cx="-7" cy="-134" r="9" fill="#ffd278"/>
+      <circle cx="32" cy="-130" r="8" fill="#f7bd59"/>
+      <circle cx="69" cy="-118" r="7" fill="#f6b24d"/>
+      <circle cx="102" cy="-99" r="6" fill="#f6b24d"/>
+    </g>
+    <g transform="rotate(-42)">
+      <rect x="-18" y="-108" width="36" height="216" rx="18" fill="url(#gold)"/>
+      <rect x="-5" y="-91" width="7" height="92" rx="3.5" fill="#fff2c9" opacity="0.7"/>
+    </g>
+    <g transform="rotate(42)">
+      <rect x="-18" y="-108" width="36" height="216" rx="18" fill="url(#gold)"/>
+      <rect x="-5" y="-91" width="7" height="92" rx="3.5" fill="#fff2c9" opacity="0.7"/>
+    </g>
+  </g>
+</svg>
