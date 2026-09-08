@@ -76,6 +76,7 @@ let nonstopAliases = 0;
 
 const songIdentity = new Map();
 const songsByRelease = new Map();
+const trackNumbersByRelease = new Map();
 for (const song of songs) {
   titleQa(song, 'song');
   if (!song.id) issues.push('song: missing stable id');
@@ -92,7 +93,20 @@ for (const song of songs) {
   if (previous && previous !== song.id) warnings.push(`possible duplicate song identity: ${previous} / ${song.id}`);
   else songIdentity.set(key, song.id);
 
-  if (song.releaseId) songsByRelease.set(song.releaseId, (songsByRelease.get(song.releaseId) || 0) + 1);
+  if (song.releaseId) {
+    songsByRelease.set(song.releaseId, (songsByRelease.get(song.releaseId) || 0) + 1);
+    const trackNumber = Number(song.trackNumber);
+    if (Number.isInteger(trackNumber) && trackNumber > 0) {
+      let releaseTracks = trackNumbersByRelease.get(song.releaseId);
+      if (!releaseTracks) {
+        releaseTracks = new Map();
+        trackNumbersByRelease.set(song.releaseId, releaseTracks);
+      }
+      const ids = releaseTracks.get(trackNumber) || [];
+      ids.push(song.id);
+      releaseTracks.set(trackNumber, ids);
+    }
+  }
 }
 
 for (const release of releases) {
@@ -102,8 +116,18 @@ for (const release of releases) {
   releaseAliases += validateAliases(release, 'release');
   const imported = songsByRelease.get(release.id) || 0;
   const declared = Number(release.songCount);
-  if (release.trackImportComplete === true && Number.isFinite(declared) && declared !== imported) {
-    warnings.push(`release ${release.id}: songCount=${declared}, but ${imported} imported songs currently resolve to this release`);
+  if (release.trackImportComplete === true) {
+    if (!Number.isInteger(declared) || declared < 0) {
+      issues.push(`release ${release.id}: trackImportComplete requires a non-negative integer songCount`);
+    } else if (declared !== imported) {
+      issues.push(`release ${release.id}: trackImportComplete songCount=${declared}, but ${imported} imported songs resolve to this release`);
+    }
+    const releaseTracks = trackNumbersByRelease.get(release.id) || new Map();
+    for (const [trackNumber, ids] of releaseTracks) {
+      if (ids.length > 1) {
+        issues.push(`release ${release.id}: duplicate trackNumber ${trackNumber} across ${ids.join(', ')}`);
+      }
+    }
   }
 }
 
@@ -157,4 +181,4 @@ if (issues.length) {
   process.exit(1);
 }
 
-console.log('\n✓ Canonical catalogue identities, discovery Nonstop metadata, optional editorial metadata shapes and Explore taxonomy membership are internally consistent.');
+console.log('\n✓ Canonical catalogue identities, complete-release track counts/numbers, discovery Nonstop metadata, optional editorial metadata shapes and Explore taxonomy membership are internally consistent.');
