@@ -12,11 +12,12 @@ const counters = {
   youtubeUntimestamped: 0,
   youtubeUnchapteredManual: 0,
   youtubeReferenceOnly: 0,
-  providerFallback: 0,
+  providerMigration: 0,
   noPlaybackRoute: 0,
 };
 const byGenre = new Map();
 const youtubeSourceTypes = new Map();
+const migrationProviders = new Map();
 
 function looksYoutube(song) {
   const provider = String(song.playbackProvider || '').toLowerCase();
@@ -29,19 +30,20 @@ function hasMappedYoutubeStart(song) {
 }
 
 function bucket(song) {
-  if (song.audioUrl) return 'directAudio';
   if (looksYoutube(song)) {
     if (song.playbackSearchOnly || song.playbackSourceType === 'verified-release-track-reference') return 'youtubeReferenceOnly';
     if (song.playbackSourceType === 'verified-unchaptered-youtube-release') return 'youtubeUnchapteredManual';
     if (song.youtubeId || String(song.playbackSourceUrl || '').trim()) return 'youtubeExact';
   }
-  if (song.playbackSourceUrl || song.playbackProvider) return 'providerFallback';
+  if (song.audioUrl) return 'directAudio';
+  if (song.playbackSourceUrl || song.playbackProvider) return 'providerMigration';
   return 'noPlaybackRoute';
 }
 
 for (const song of songs) {
   const key = bucket(song);
   counters[key] += 1;
+
   if (looksYoutube(song)) {
     const sourceType = song.playbackSourceType || 'unspecified';
     youtubeSourceTypes.set(sourceType, (youtubeSourceTypes.get(sourceType) || 0) + 1);
@@ -50,39 +52,50 @@ for (const song of songs) {
     if (hasMappedYoutubeStart(song)) counters.youtubeChaptered += 1;
     else counters.youtubeUntimestamped += 1;
   }
+  if (key === 'providerMigration') {
+    const provider = String(song.playbackProvider || 'unknown').toLowerCase();
+    migrationProviders.set(provider, (migrationProviders.get(provider) || 0) + 1);
+  }
+  if (key === 'directAudio') {
+    migrationProviders.set('direct-audio', (migrationProviders.get('direct-audio') || 0) + 1);
+  }
 
   const genre = song.genre || 'unknown';
-  if (!byGenre.has(genre)) byGenre.set(genre, { total: 0, direct: 0, youtube: 0, fallback: 0, unavailable: 0 });
+  if (!byGenre.has(genre)) byGenre.set(genre, { total: 0, youtubePlayable: 0, migration: 0 });
   const row = byGenre.get(genre);
   row.total += 1;
-  if (key === 'directAudio') row.direct += 1;
-  else if (key === 'youtubeExact') row.youtube += 1;
-  else if (key === 'noPlaybackRoute') row.unavailable += 1;
-  else row.fallback += 1;
+  if (key === 'youtubeExact') row.youtubePlayable += 1;
+  else row.migration += 1;
 }
 
-const oneTap = counters.directAudio + counters.youtubeExact;
-const percent = counters.catalogue ? oneTap / counters.catalogue * 100 : 0;
+const youtubePlayable = counters.youtubeExact;
+const migrationBacklog = Math.max(0, counters.catalogue - youtubePlayable);
+const percent = counters.catalogue ? youtubePlayable / counters.catalogue * 100 : 0;
 const report = {
   generatedAt: new Date().toISOString(),
   ...counters,
-  oneTapPlayable: oneTap,
-  oneTapCoveragePercent: Number(percent.toFixed(1)),
+  youtubePlayable,
+  youtubePlayableCoveragePercent: Number(percent.toFixed(1)),
+  migrationBacklog,
   youtubeSourceTypes: Object.fromEntries([...youtubeSourceTypes.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
+  migrationProviders: Object.fromEntries([...migrationProviders.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
   genres: Object.fromEntries([...byGenre.entries()].sort(([a], [b]) => a.localeCompare(b))),
   policy: {
-    directAudio: 'Rights-cleared GARBA-hosted audio.',
-    youtubeExact: 'YouTube route currently controllable by the official IFrame Player API after generated route-truth classification.',
+    youtubeExact: 'The only executable PlayGarba playback route: an exact controllable YouTube recording through the visible official IFrame player.',
     youtubeChaptered: 'Controllable YouTube route with an explicit mapped start second, including zero.',
     youtubeUntimestamped: 'Controllable YouTube route without a mapped start; inspect source type before calling it exact-song evidence.',
-    youtubeUnchapteredManual: 'Verified multi-song YouTube release without an exact song timestamp; never auto-claimed as the selected track.',
-    youtubeReferenceOnly: 'YouTube evidence/reference that is not safe for exact autoplay.',
-    providerFallback: 'Apple Music, Spotify or another verified provider route requiring its own player/action.',
+    youtubeUnchapteredManual: 'Verified multi-song YouTube release without an exact selected-song timestamp; migration/reference only.',
+    youtubeReferenceOnly: 'YouTube evidence/reference that is not safe for exact playback.',
+    providerMigration: 'Apple Music, Spotify, Amazon Music or another provider route retained only as evidence while converting to YouTube.',
+    directAudio: 'Rights/provenance evidence only under the YouTube-only product policy; not an executable fallback.',
+    noPlaybackRoute: 'No route evidence yet; requires YouTube research.',
   },
 };
 
 console.log(JSON.stringify(report, null, 2));
-console.error(`YouTube-first one-tap coverage: ${oneTap}/${counters.catalogue} (${percent.toFixed(1)}%)`);
+console.error(`YouTube-only playable coverage: ${youtubePlayable}/${counters.catalogue} (${percent.toFixed(1)}%)`);
 console.error(`Controllable YouTube routes: ${counters.youtubeExact} (${counters.youtubeChaptered} with mapped starts, ${counters.youtubeUntimestamped} without)`);
-console.error(`Other provider/manual fallbacks: ${counters.providerFallback + counters.youtubeUnchapteredManual + counters.youtubeReferenceOnly}`);
-console.error(`No playback route: ${counters.noPlaybackRoute}`);
+console.error(`YouTube migration backlog: ${migrationBacklog}`);
+console.error(`Commercial/direct migration sources: ${counters.providerMigration + counters.directAudio}`);
+console.error(`YouTube manual/reference backlog: ${counters.youtubeUnchapteredManual + counters.youtubeReferenceOnly}`);
+console.error(`No route: ${counters.noPlaybackRoute}`);
