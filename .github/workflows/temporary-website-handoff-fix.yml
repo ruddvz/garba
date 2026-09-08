@@ -50,15 +50,12 @@ jobs:
 
           site = Path('site.js')
           text = site.read_text()
-          old = """  const playerParams = new Set(['song', 'genre', 'browse', 'nonstop', 'queue', 'source']);
-          const incoming = new URLSearchParams(window.location.search);
-          if ([...playerParams].some((key) => incoming.has(key))) {
-            window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
-            return;
-          }
-          """
-          new = """  const playerParams = new Set(['song', 'genre', 'nonstop', 'queue', 'source']);
-          const incoming = new URLSearchParams(window.location.search);
+          old_params = "  const playerParams = new Set(['song', 'genre', 'browse', 'nonstop', 'queue', 'source']);"
+          new_params = "  const playerParams = new Set(['song', 'genre', 'nonstop', 'queue', 'source']);"
+          marker = "  const incoming = new URLSearchParams(window.location.search);\n"
+          if old_params not in text or marker not in text:
+              raise SystemExit('Expected legacy player routing markers not found')
+          browse_redirect = """  const incoming = new URLSearchParams(window.location.search);
           if (incoming.has('browse')) {
             const target = new URL('https://live.playgarba.com/catalogue/');
             for (const [key, value] of incoming.entries()) {
@@ -68,14 +65,10 @@ jobs:
             window.location.replace(target.toString());
             return;
           }
-          if ([...playerParams].some((key) => incoming.has(key))) {
-            window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
-            return;
-          }
           """
-          if old not in text:
-              raise SystemExit('Expected legacy playerParams block not found')
-          site.write_text(text.replace(old, new))
+          text = text.replace(old_params, new_params, 1)
+          text = text.replace(marker, browse_redirect, 1)
+          site.write_text(text)
           print('updated site.js legacy Browse redirect')
           PY
 
