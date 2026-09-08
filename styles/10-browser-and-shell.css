@@ -232,3 +232,19 @@
 
   .toast { max-width: calc(100vw - 40px); text-align: center; white-space: normal; }
 }
+
+
+/* Listening flow #287 */
+.song-row{grid-template-columns:34px minmax(0,1fr) 56px 36px 40px}
+.song-queue-action{display:grid;place-items:center;width:34px;height:34px;justify-self:center;border:1px solid rgba(246,236,215,.10);border-radius:999px;background:rgba(246,236,215,.035);color:rgba(246,236,215,.58);cursor:pointer;transition:opacity .16s ease,color .16s ease,border-color .16s ease,background .16s ease}
+.song-queue-action svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.song-queue-action:hover,.song-queue-action:focus-visible{color:var(--ivory);border-color:color-mix(in srgb,var(--accent) 36%,rgba(246,236,215,.12));background:color-mix(in srgb,var(--accent) 9%,rgba(246,236,215,.045))}
+.song-row.manually-queued .song-index{color:var(--accent)}
+.queue-toolbar,.queue-section-label{position:sticky;z-index:2;display:flex;align-items:center;justify-content:space-between;min-height:38px;background:linear-gradient(to bottom,var(--panel) 72%,color-mix(in srgb,var(--panel) 88%,transparent));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:rgba(246,236,215,.58);font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.queue-toolbar{top:0;border-bottom:1px solid rgba(246,236,215,.08)}
+.queue-section-label{top:0;justify-content:flex-start;border-top:1px solid rgba(246,236,215,.08)}
+.queue-clear{min-height:32px;padding:0 11px;border:1px solid rgba(246,236,215,.10);border-radius:999px;background:transparent;color:rgba(246,236,215,.68);font:inherit;font-size:11px;letter-spacing:0;text-transform:none;cursor:pointer}
+.queue-clear:hover,.queue-clear:focus-visible{color:var(--ivory);border-color:rgba(246,236,215,.24)}
+@media(hover:hover) and (pointer:fine){.song-row:not(:hover):not(:focus-within) .song-queue-action{opacity:.28}}
+@media(max-width:700px){.song-row{grid-template-columns:28px minmax(0,1fr) 36px 38px;gap:8px}.song-duration{display:none}.song-queue-action{width:34px;height:34px}.queue-toolbar,.queue-section-label{min-height:36px}}
+@media(prefers-reduced-motion:reduce){.song-queue-action{transition:none!important}}

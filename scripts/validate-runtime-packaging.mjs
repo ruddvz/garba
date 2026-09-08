@@ -229,8 +229,8 @@ for (const marker of [
 for (const marker of [
   "const SESSION_KEY = 'garba:session';",
   "const FAVOURITES_KEY = 'garba:favourites';",
-  "heading.textContent = 'Your listening';",
-  "kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';",
+  "heading.textContent = 'My Garba';",
+  "kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Saved';",
   'if (!hasListeningState(stored)) return;',
   'primeFavouriteSession(song)',
   'elapsed: 0',
