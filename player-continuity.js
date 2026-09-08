@@ -5,6 +5,7 @@
   const catalogueFetch = window.fetch.bind(window);
   const requestedSongId = new URL(location.href).searchParams.get('song');
   const fastBoot = window.GARBA_FAST_BOOT;
+  const mobileQuery = window.matchMedia('(max-width: 700px)');
   const needsFullCatalogueForDeepLink = Boolean(
     requestedSongId
     && Array.isArray(fastBoot?.songs)
@@ -265,6 +266,13 @@
     return Boolean(document.querySelector('#providerStage.open[aria-hidden="false"]'));
   }
 
+  function closeMobileSongBrowserAfterSelection() {
+    if (!mobileQuery.matches) return;
+    const sheet = $('songSheet');
+    if (!sheet || sheet.dataset.snap === 'closed') return;
+    $('sheetClose')?.click();
+  }
+
   function rememberPlaybackIntent(event) {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
@@ -290,6 +298,7 @@
     if (!shouldStartSelectedSong && !shouldContinueProvider) return;
 
     queueMicrotask(() => {
+      if (shouldStartSelectedSong) closeMobileSongBrowserAfterSelection();
       if (!playButton?.isConnected) return;
       playButton.click();
     });
