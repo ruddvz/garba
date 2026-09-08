@@ -27,9 +27,13 @@ jobs:
           rm -rf _site
           mkdir -p _site
 
-          # Copy only the production runtime. Optional/prototype browser modules live
-          # under src/optional and are intentionally excluded from the Pages artifact.
+          # Copy only the production runtime and launch metadata. Optional/prototype
+          # browser modules live under src/optional and are intentionally excluded
+          # from the Pages artifact.
           cp \
+            CNAME \
+            robots.txt \
+            sitemap.xml \
             index.html \
             app.js \
             simple-runtime.js \
@@ -67,8 +71,14 @@ jobs:
             test -f "_site/$runtime" || { echo "Missing deployed runtime: $runtime"; exit 1; }
           done
 
+          # Assert the production-domain contract ships with every deploy.
+          test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must remain playgarba.com'; exit 1; }
+          grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing canonical sitemap'; exit 1; }
+          grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical root'; exit 1; }
+
           # Assert every local runtime script referenced directly by index.html exists
-          # in the deploy artifact as an additional guard.
+          # in the deploy artifact as an additional guard. Versioned runtime URLs use
+          # query strings, so validate the underlying deployed path.
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
             case "$src" in
