@@ -1,539 +1,331 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const toast = $('toast');
-  const playButton = $('playButton');
-  const miniPlay = $('miniPlay');
-  const shareButton = $('shareButton');
-  const audio = $('audio');
-  const app = $('app');
-  const genreStrip = $('genreStrip');
-  const networkStatus = $('networkStatus');
-  const songTitle = $('songTitle');
+  const upstreamFetch = window.fetch.bind(window);
+  const fastBoot = window.GARBA_FAST_BOOT;
+  let safeSongs = [];
+  let refreshPromise = null;
+  let youtubeUnlocked = false;
+  let youtubeApi = null;
+  let stageObserver = null;
+  let toastTimer = null;
 
-  const PROVIDER_NAMES = {
-    youtube: 'YouTube',
-    spotify: 'Spotify',
-    'apple-music': 'Apple Music',
-    'amazon-music': 'Amazon Music',
-    soundcloud: 'SoundCloud',
-    bandcamp: 'Bandcamp',
-    qobuz: 'Qobuz',
-  };
-
-  const HQ_VISUALS = {
-    traditional: 'assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
-    dandiya: 'assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
-    devotional: 'assets/backgrounds/library/03-devotional-garba-courtyard.webp',
-    folk: 'assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
-    sanedo: 'assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
-    fusion: 'assets/backgrounds/library/05-fusion-gujarati-neon.webp',
-  };
-
-  let songsPromise = null;
-  let providerSongId = null;
-  let visualToken = 0;
-
-  function announce(message) {
-    if (!toast) return;
-    toast.textContent = message;
-    toast.classList.add('show');
-    clearTimeout(announce.timer);
-    announce.timer = setTimeout(() => toast.classList.remove('show'), 2600);
-  }
-
-  function hasDirectAudio() {
-    return Boolean(audio?.getAttribute('src'));
-  }
-
-  function clearStaleInert() {
-    document.querySelectorAll('[inert]').forEach((node) => node.removeAttribute('inert'));
-  }
-
-  function loadSongs({ refresh = false } = {}) {
-    if (refresh) songsPromise = null;
-    if (!songsPromise) {
-      songsPromise = fetch('data/songs.json', { cache: refresh ? 'no-store' : 'force-cache' })
-        .then((response) => response.ok ? response.json() : [])
-        .then((songs) => Array.isArray(songs) ? songs : [])
-        .catch(() => []);
-    }
-    return songsPromise;
-  }
-
-  async function currentSong() {
-    const songs = await loadSongs();
-    const id = new URL(location.href).searchParams.get('song');
-    if (id) {
-      const found = songs.find((song) => song.id === id);
-      if (found) return found;
-    }
-    const title = String($('songTitle')?.textContent || '').trim();
-    const artist = String($('songArtist')?.textContent || '').trim();
-    return songs.find((song) => song.title === title && song.artist === artist) || null;
-  }
-
-  function providerName(provider = '') {
-    const key = String(provider).toLowerCase();
-    return PROVIDER_NAMES[key] || key.replace(/(^|-)([a-z])/g, (_, prefix, letter) => `${prefix ? ' ' : ''}${letter.toUpperCase()}`) || 'Provider';
-  }
-
-  function inferProvider(song, sourceUrl = '') {
-    const configured = String(song?.playbackProvider || '').toLowerCase();
-    if (configured && configured !== 'direct') return configured;
+  function requestPath(input) {
     try {
-      const host = new URL(sourceUrl).hostname.toLowerCase();
-      if (host.includes('youtube.com') || host === 'youtu.be') return 'youtube';
-      if (host.includes('spotify.com')) return 'spotify';
-      if (host.includes('music.apple.com')) return 'apple-music';
-      if (host.includes('music.amazon.')) return 'amazon-music';
-      if (host.includes('soundcloud.com')) return 'soundcloud';
-      if (host.includes('bandcamp.com')) return 'bandcamp';
-      if (host.includes('qobuz.com')) return 'qobuz';
+      const raw = typeof input === 'string' ? input : input?.url;
+      return raw ? new URL(raw, location.href).pathname : '';
     } catch {
-      // The URL is optional. Unknown sources remain explicit external actions.
+      return '';
     }
-    return song?.youtubeId ? 'youtube' : 'provider';
   }
 
-  function youtubeVideoId(song, sourceUrl = '') {
-    if (song?.youtubeId) return String(song.youtubeId);
+  function youtubeVideoId(song) {
+    if (song?.youtubeId) return String(song.youtubeId).trim();
     try {
-      const url = new URL(sourceUrl);
+      const url = new URL(String(song?.playbackSourceUrl || ''));
       if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || '';
       if (url.hostname.includes('youtube.com')) {
         if (url.searchParams.get('v')) return url.searchParams.get('v');
         const parts = url.pathname.split('/').filter(Boolean);
-        const embedIndex = parts.findIndex((part) => part === 'embed' || part === 'shorts');
-        if (embedIndex >= 0) return parts[embedIndex + 1] || '';
+        const marker = parts.findIndex((part) => part === 'embed' || part === 'shorts');
+        return marker >= 0 ? parts[marker + 1] || '' : '';
       }
     } catch {
-      // Fall through to an external action.
+      // Invalid/non-YouTube URLs are migration references only.
     }
     return '';
   }
 
-  function spotifyEmbedUrl(sourceUrl = '') {
-    try {
-      const url = new URL(sourceUrl);
-      const parts = url.pathname.split('/').filter(Boolean).filter((part) => !part.startsWith('intl-'));
-      const index = parts.findIndex((part) => ['track', 'album', 'playlist', 'episode', 'show'].includes(part));
-      if (index < 0 || !parts[index + 1]) return '';
-      return `https://open.spotify.com/embed/${parts[index]}/${parts[index + 1]}?utm_source=generator&theme=0`;
-    } catch {
-      return '';
-    }
+  function isExactYoutube(song) {
+    if (!song) return false;
+    if (song.playbackSearchOnly) return false;
+    if (song.playbackSourceType === 'verified-release-track-reference') return false;
+    if (song.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
+    return Boolean(youtubeVideoId(song));
   }
 
-  function soundCloudEmbedUrl(sourceUrl = '') {
-    try {
-      const url = new URL(sourceUrl);
-      if (url.hostname !== 'soundcloud.com' && !url.hostname.endsWith('.soundcloud.com')) return '';
-      const params = new URLSearchParams({
-        url: url.toString(),
-        auto_play: 'true',
-        hide_related: 'true',
-        show_comments: 'false',
-        show_user: 'true',
-        show_reposts: 'false',
-        visual: 'false',
-      });
-      return `https://w.soundcloud.com/player/?${params.toString()}`;
-    } catch {
-      return '';
-    }
-  }
+  function applyYoutubeOnlyPolicy(song) {
+    const safe = { ...song };
+    const originalProvider = String(song?.playbackProvider || '').trim();
+    const originalUrl = String(song?.playbackSourceUrl || '').trim();
+    const originalAudio = String(song?.audioUrl || '').trim();
 
-  function providerEmbed(song, sourceUrl, provider) {
-    if (provider === 'youtube') {
-      const videoId = youtubeVideoId(song, sourceUrl);
-      if (!videoId) return null;
-      const fullReleaseOnly = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
-      const params = new URLSearchParams({ autoplay: fullReleaseOnly ? '0' : '1', playsinline: '1', rel: '0', controls: '1' });
-      const startSeconds = Math.max(0, Number(song?.youtubeStartSeconds || 0));
-      if (!fullReleaseOnly && startSeconds > 0) params.set('start', String(Math.floor(startSeconds)));
-      return {
-        src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`,
-        title: fullReleaseOnly ? 'YouTube full release' : 'YouTube playback',
-        className: 'is-youtube-release',
-        allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen',
-        fullReleaseOnly,
-      };
-    }
+    // PlayGarba playback is YouTube-only. Direct audio and commercial-provider
+    // URLs may remain as catalogue evidence, but they are never executable routes.
+    delete safe.audioUrl;
 
-    if (provider === 'spotify') {
-      const src = spotifyEmbedUrl(sourceUrl);
-      if (!src) return null;
-      return {
-        src,
-        title: 'Spotify playback',
-        className: 'is-spotify',
-        allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
-      };
-    }
-
-    if (provider === 'apple-music') {
-      try {
-        const url = new URL(sourceUrl);
-        if (url.hostname !== 'music.apple.com' && !url.hostname.endsWith('.music.apple.com')) return null;
-        url.hostname = 'embed.music.apple.com';
-        return {
-          src: url.toString(),
-          title: 'Apple Music playback',
-          className: 'is-apple',
-          allow: 'autoplay *; encrypted-media *; fullscreen *',
-        };
-      } catch {
-        return null;
+    if (isExactYoutube(song)) {
+      safe.playbackProvider = 'youtube';
+      if (!safe.playbackSourceUrl || !/youtu(?:\.be|be\.com)/i.test(safe.playbackSourceUrl)) {
+        safe.playbackSourceUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(youtubeVideoId(song))}`;
       }
+      return safe;
     }
 
-    if (provider === 'soundcloud') {
-      const src = soundCloudEmbedUrl(sourceUrl);
-      if (!src) return null;
-      return {
-        src,
-        title: 'SoundCloud playback',
-        className: 'is-soundcloud',
-        allow: 'autoplay',
-      };
+    const referenceUrl = String(song?.playbackReferenceUrl || originalUrl || originalAudio || '').trim();
+    if (referenceUrl) safe.playbackReferenceUrl = referenceUrl;
+    if (originalProvider && originalProvider !== 'youtube') safe.migrationSourceProvider = originalProvider;
+    safe.playbackProvider = 'youtube';
+    safe.playbackSourceUrl = '';
+    safe.playbackSearchOnly = true;
+    if (song?.playbackSourceType !== 'verified-unchaptered-youtube-release') {
+      safe.playbackSourceType = 'youtube-migration-pending';
     }
-
-    return null;
+    return safe;
   }
 
-  function ensureProviderStage() {
-    let stage = $('providerStage');
-    if (stage) return stage;
-
-    stage = document.createElement('section');
-    stage.id = 'providerStage';
-    stage.className = 'provider-dock';
-    stage.setAttribute('aria-label', 'Playback source');
-    stage.setAttribute('aria-hidden', 'true');
-    stage.innerHTML = `
-      <div class="provider-media" id="providerMedia"></div>
-      <div class="provider-dock-bar">
-        <span id="providerDockNote">Playback source</span>
-        <div class="provider-dock-actions">
-          <a id="providerDockOpen" class="provider-dock-open" target="_blank" rel="noopener noreferrer">Open source</a>
-          <button type="button" id="providerDockStop" aria-label="Close playback source">Close</button>
-        </div>
-      </div>`;
-    document.body.append(stage);
-    stage.querySelector('#providerDockStop')?.addEventListener('click', closeProvider);
-    return stage;
+  function sanitiseSongs(songs) {
+    return Array.isArray(songs) ? songs.map(applyYoutubeOnlyPolicy) : [];
   }
 
-  function syncProviderControls(active) {
-    for (const button of [playButton, miniPlay]) {
-      if (!button) continue;
-      if (active) {
-        button.setAttribute('aria-label', 'Close provider player');
-        button.title = 'Close provider player';
-      } else {
-        button.setAttribute('aria-label', 'Play');
-        button.title = 'Play';
-      }
-    }
-  }
-
-  function closeProvider() {
-    const stage = $('providerStage');
-    if (!stage || stage.getAttribute('aria-hidden') === 'true') return;
-    stage.classList.remove('open', 'is-spotify', 'is-apple', 'is-soundcloud', 'is-youtube-release', 'is-external');
-    stage.setAttribute('aria-hidden', 'true');
-    $('providerMedia')?.replaceChildren();
-    providerSongId = null;
-    syncProviderControls(false);
-  }
-
-  function externalProviderCard(song, sourceUrl, provider) {
-    const name = providerName(provider);
-    const card = document.createElement('div');
-    card.className = 'provider-external';
-    const heading = document.createElement('strong');
-    const copy = document.createElement('span');
-    const unchapteredYoutubeRelease = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
-    heading.textContent = unchapteredYoutubeRelease ? 'Open the verified full release' : `Continue on ${name}`;
-    copy.textContent = unchapteredYoutubeRelease
-      ? `GARBA has a verified multi-song YouTube source, but no verified timestamp for ${song?.title || 'this song'}. The full release will open without pretending it starts at the selected song.`
-      : song?.playbackSourceType === 'verified-release-source'
-        ? 'GARBA verified the release, but this provider does not offer a safe in-app embed for this source.'
-        : 'This verified source opens on the provider because a reliable in-app embed is not available.';
-    const action = document.createElement('a');
-    action.className = 'provider-external-action';
-    action.href = sourceUrl;
-    action.target = '_blank';
-    action.rel = 'noopener noreferrer';
-    action.textContent = unchapteredYoutubeRelease ? 'Open full release on YouTube' : `Open ${name}`;
-    card.append(heading, copy, action);
-    return card;
-  }
-
-  async function openProvider(song) {
-    if (!song || hasDirectAudio()) return;
-    if (!navigator.onLine) {
-      announce('You are offline. Provider-backed songs need an internet connection.');
-      return;
-    }
-
-    const sourceUrl = String(song.playbackSourceUrl || '').trim()
-      || (song.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(song.youtubeId)}` : '');
-    if (!sourceUrl) {
-      announce('This track does not have a playable source yet.');
-      return;
-    }
-
-    const stage = ensureProviderStage();
-    if (providerSongId === song.id && stage.classList.contains('open')) {
-      closeProvider();
-      return;
-    }
-
-    const provider = inferProvider(song, sourceUrl);
-    const name = providerName(provider);
-    const embed = providerEmbed(song, sourceUrl, provider);
-    const media = $('providerMedia');
-    const note = $('providerDockNote');
-    const openSource = $('providerDockOpen');
-
-    audio?.pause();
-    closeProvider();
-    stage.classList.add('open');
-    stage.setAttribute('aria-hidden', 'false');
-    providerSongId = song.id || null;
-    syncProviderControls(true);
-    if (openSource) {
-      openSource.href = sourceUrl;
-      openSource.textContent = `Open ${name}`;
-      openSource.setAttribute('aria-label', `Open source on ${name}`);
-    }
-
-    if (embed) {
-      stage.classList.add(embed.className);
-      const iframe = document.createElement('iframe');
-      iframe.src = embed.src;
-      iframe.title = embed.title;
-      iframe.allow = embed.allow;
-      iframe.loading = 'eager';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-      iframe.setAttribute('allowfullscreen', '');
-      media?.replaceChildren(iframe);
-      if (note) {
-        if (embed.fullReleaseOnly) {
-          note.textContent = `Verified full release · choose ${song.title} manually · exact timestamp not verified`;
-        } else if (song.playbackSourceType === 'verified-release-source') {
-          note.textContent = `Verified release · ${name} · choose ${song.title}`;
-        } else if (song.playbackSourceType === 'verified-performance-chapter') {
-          note.textContent = 'Verified live version · starts at the mapped song chapter';
-        } else {
-          note.textContent = provider === 'youtube' ? 'Playing in GARBA · tap the video if autoplay is blocked' : `Playing via ${name}`;
-        }
-      }
-      return;
-    }
-
-    stage.classList.add('is-external');
-    media?.replaceChildren(externalProviderCard(song, sourceUrl, provider));
-    if (note) note.textContent = song.playbackSourceType === 'verified-unchaptered-youtube-release'
-      ? 'Verified full release · exact song timestamp not verified'
-      : `Verified source · ${name}`;
-  }
-
-  async function fallbackPlay() {
-    if (hasDirectAudio()) return;
-    let song = await currentSong();
-
-    if (!song && !window.GARBA_CATALOGUE_READY && typeof window.GARBA_FAST_BOOT?.hydrate === 'function') {
-      await window.GARBA_FAST_BOOT.hydrate();
-      song = await currentSong();
-    }
-
-    if (!song || hasDirectAudio()) {
-      if (!song) announce(window.GARBA_CATALOGUE_READY
-        ? 'This selected track could not be resolved. Choose it again from Browse.'
-        : 'Loading the full catalogue. Try Play again in a moment.');
-      return;
-    }
-    await openProvider(song);
-  }
-
-  function interceptFallbackPlay(event) {
-    if (hasDirectAudio()) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    fallbackPlay();
-  }
-
-  function interceptGlobalSpace(event) {
-    if (event.code !== 'Space') return;
-    const target = event.target;
-    const interactive = target instanceof Element
-      && Boolean(target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
-    if (interactive) {
-      event.stopImmediatePropagation();
-      return;
-    }
-    if (hasDirectAudio()) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    fallbackPlay();
-  }
-
-  function copyText(text) {
-    if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
-    return new Promise((resolve, reject) => {
-      const field = document.createElement('textarea');
-      field.value = text;
-      field.setAttribute('readonly', '');
-      field.style.position = 'fixed';
-      field.style.opacity = '0';
-      document.body.append(field);
-      field.select();
-      try {
-        if (!document.execCommand('copy')) throw new Error('copy failed');
-        resolve();
-      } catch (error) {
-        reject(error);
-      } finally {
-        field.remove();
-      }
+  function jsonResponse(data, original) {
+    const headers = new Headers(original?.headers || undefined);
+    headers.set('Content-Type', 'application/json; charset=utf-8');
+    return new Response(JSON.stringify(data), {
+      status: Number(original?.status) || 200,
+      statusText: original?.statusText || 'OK',
+      headers,
     });
   }
 
-  async function shareCurrent(event) {
-    event.preventDefault();
-    const song = await currentSong();
-    const title = song?.title || String($('songTitle')?.textContent || 'GARBA').trim();
-    const artist = song?.artist || String($('songArtist')?.textContent || '').trim();
-    const url = new URL(location.href);
-    url.searchParams.delete('browse');
-    url.searchParams.delete('source');
-    const text = artist ? `${title} by ${artist}` : title;
+  window.fetch = async (input, init) => {
+    const response = await upstreamFetch(input, init);
+    if (!requestPath(input).endsWith('/data/songs.json') || !response?.ok) return response;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: `${title} · GARBA`, text, url: url.toString() });
-        return;
-      }
-      await copyText(url.toString());
-      announce('Track link copied.');
-    } catch (error) {
-      if (error?.name !== 'AbortError') announce('Could not share this track.');
+      const songs = await response.clone().json();
+      safeSongs = sanitiseSongs(songs);
+      return jsonResponse(safeSongs, response);
+    } catch {
+      return response;
+    }
+  };
+
+  function seedFastBoot() {
+    if (!Array.isArray(fastBoot?.songs)) return;
+    const sanitised = sanitiseSongs(fastBoot.songs);
+    fastBoot.songs.splice(0, fastBoot.songs.length, ...sanitised);
+    safeSongs = sanitised;
+  }
+
+  async function refreshSafeSongs() {
+    if (refreshPromise) return refreshPromise;
+    refreshPromise = window.fetch('data/songs.json', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : safeSongs)
+      .then((songs) => {
+        safeSongs = Array.isArray(songs) ? songs : safeSongs;
+        syncYoutubeButton();
+        return safeSongs;
+      })
+      .catch(() => safeSongs)
+      .finally(() => { refreshPromise = null; });
+    return refreshPromise;
+  }
+
+  function currentSong() {
+    const id = new URL(location.href).searchParams.get('song');
+    if (id) {
+      const byId = safeSongs.find((song) => song.id === id);
+      if (byId) return byId;
+    }
+    const title = String($('songTitle')?.textContent || '').trim();
+    const artist = String($('songArtist')?.textContent || '').trim();
+    return safeSongs.find((song) => song.title === title && song.artist === artist) || null;
+  }
+
+  function announce(message) {
+    const toast = $('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  function injectYoutubeControl() {
+    if ($('youtubeVideoButton')) return;
+    const button = document.createElement('button');
+    button.id = 'youtubeVideoButton';
+    button.className = 'youtube-video-button';
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Open YouTube player');
+    button.setAttribute('aria-pressed', 'false');
+    button.title = 'Open YouTube player';
+    button.innerHTML = `
+      <svg viewBox="0 0 28 20" aria-hidden="true" focusable="false">
+        <path class="youtube-mark" d="M27.4 3.1A3.5 3.5 0 0 0 25 0.6C22.9 0 18.7 0 14 0S5.1 0 3 0.6A3.5 3.5 0 0 0 .6 3.1C0 5.2 0 7.6 0 10s0 4.8.6 6.9A3.5 3.5 0 0 0 3 19.4c2.1.6 6.3.6 11 .6s8.9 0 11-.6a3.5 3.5 0 0 0 2.4-2.5c.6-2.1.6-4.5.6-6.9s0-4.8-.6-6.9Z"/>
+        <path class="youtube-play" d="m11.2 14.3 7.2-4.3-7.2-4.3v8.6Z"/>
+      </svg>`;
+    document.body.append(button);
+
+    const style = document.createElement('style');
+    style.id = 'youtubeOnlyPlaybackStyles';
+    style.textContent = `
+      #providerStage{display:none!important}
+      .youtube-video-button{position:fixed;z-index:38;right:max(16px,calc(env(safe-area-inset-right) + 12px));bottom:max(16px,calc(env(safe-area-inset-bottom) + 12px));width:48px;height:48px;padding:0;display:grid;place-items:center;border:1px solid rgba(246,236,215,.16);border-radius:50%;background:rgba(8,10,18,.76);box-shadow:0 12px 34px rgba(0,0,0,.28);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;transition:transform .18s ease,background .18s ease,opacity .18s ease,border-color .18s ease}
+      .youtube-video-button svg{width:26px;height:auto;display:block}
+      .youtube-video-button .youtube-mark{fill:#ff0033}
+      .youtube-video-button .youtube-play{fill:#fff}
+      .youtube-video-button:hover{transform:translateY(-1px) scale(1.03);background:rgba(12,14,24,.9)}
+      .youtube-video-button:active{transform:scale(.97)}
+      .youtube-video-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+      .youtube-video-button.is-unavailable{opacity:.46}
+      .youtube-video-button[aria-pressed="true"]{border-color:rgba(255,255,255,.34);background:rgba(16,18,28,.96)}
+      @media(max-width:700px){.youtube-video-button{right:max(12px,calc(env(safe-area-inset-right) + 10px));bottom:max(12px,calc(env(safe-area-inset-bottom) + 10px));width:46px;height:46px}.youtube-video-button svg{width:25px}}
+      @media(max-height:560px) and (orientation:landscape){.youtube-video-button{right:max(10px,calc(env(safe-area-inset-right) + 8px));bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));width:42px;height:42px}}
+      @media(prefers-reduced-motion:reduce){.youtube-video-button{transition:none}}
+    `;
+    document.head.append(style);
+    button.addEventListener('click', toggleYoutubeDock);
+  }
+
+  function dockIsVisible() {
+    return Boolean(document.querySelector('#youtubeStage.open[aria-hidden="false"]'));
+  }
+
+  function syncYoutubeButton() {
+    injectYoutubeControl();
+    const button = $('youtubeVideoButton');
+    if (!button) return;
+    const song = currentSong();
+    const available = isExactYoutube(song);
+    const open = dockIsVisible();
+    button.classList.toggle('is-unavailable', !available);
+    button.setAttribute('aria-pressed', String(open));
+    button.setAttribute('aria-label', open ? 'Close YouTube player' : available ? 'Open YouTube player' : 'YouTube source not mapped for this song');
+    button.title = open ? 'Close YouTube player' : available ? 'Open YouTube player' : 'YouTube source not mapped yet';
+  }
+
+  async function toggleYoutubeDock() {
+    const song = currentSong();
+    if (!isExactYoutube(song)) {
+      announce('YouTube source not mapped yet. This track needs a YouTube conversion.');
+      return;
+    }
+
+    if (!youtubeApi?.open) {
+      announce('YouTube player is still loading. Try again.');
+      return;
+    }
+
+    if (dockIsVisible()) {
+      youtubeUnlocked = false;
+      youtubeApi.close?.();
+      syncYoutubeButton();
+      return;
+    }
+
+    youtubeUnlocked = true;
+    const opened = await youtubeApi.open(song, { autoplay: true, resume: true });
+    if (!opened) {
+      youtubeUnlocked = false;
+      announce('YouTube playback could not start.');
+    }
+    syncYoutubeButton();
+  }
+
+  function installYoutubeApiGate(api) {
+    if (!api || api.__youtubeOnlyPolicy) return api;
+    const originalOpen = api.open?.bind(api);
+    if (originalOpen) {
+      api.open = (song, options = {}) => {
+        if (!youtubeUnlocked) {
+          announce('Tap the YouTube button to open this track.');
+          return Promise.resolve(false);
+        }
+        if (!isExactYoutube(song)) {
+          announce('YouTube source not mapped yet.');
+          return Promise.resolve(false);
+        }
+        return originalOpen(song, options);
+      };
+    }
+    Object.defineProperty(api, '__youtubeOnlyPolicy', { value: true });
+    return api;
+  }
+
+  try {
+    Object.defineProperty(window, 'GARBA_YOUTUBE_PLAYER', {
+      configurable: true,
+      get() { return youtubeApi; },
+      set(api) {
+        youtubeApi = installYoutubeApiGate(api);
+        syncYoutubeButton();
+      },
+    });
+  } catch {
+    // Extremely old WebViews can reject redefining globals. The click gate below
+    // still prevents non-YouTube provider playback in those environments.
+  }
+
+  function interceptPlay(event) {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target?.closest('#playButton, #miniPlay')) return;
+    const song = currentSong();
+    if (!song) return;
+
+    if (!isExactYoutube(song)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      announce('YouTube source not mapped yet. This track needs a YouTube conversion.');
+      return;
+    }
+
+    if (!dockIsVisible()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      announce('Tap the YouTube button to open this track.');
     }
   }
 
-  function constrainedConnection() {
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    return Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
+  function interceptSpace(event) {
+    if (event.code !== 'Space') return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('button, a[href], input, textarea, select, iframe, [contenteditable]:not([contenteditable="false"])')) return;
+    const song = currentSong();
+    if (!song) return;
+    if (isExactYoutube(song) && dockIsVisible()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    announce(isExactYoutube(song) ? 'Tap the YouTube button to open this track.' : 'YouTube source not mapped yet.');
   }
 
-  function requestedGenre() {
-    const fromApp = String(app?.dataset.genre || '').trim();
-    if (HQ_VISUALS[fromApp]) return fromApp;
-    const fromUrl = new URL(location.href).searchParams.get('genre');
-    return HQ_VISUALS[fromUrl] ? fromUrl : 'traditional';
+  function observeYoutubeStage() {
+    const stage = $('youtubeStage');
+    if (!stage || stage.dataset.youtubeOnlyObserved === 'true') return;
+    stage.dataset.youtubeOnlyObserved = 'true';
+    stageObserver?.disconnect();
+    stageObserver = new MutationObserver(() => {
+      if (!dockIsVisible()) youtubeUnlocked = false;
+      syncYoutubeButton();
+    });
+    stageObserver.observe(stage, { attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+    syncYoutubeButton();
   }
 
-  function promoteCurrentVisual() {
-    if (constrainedConnection()) return;
-    const genre = requestedGenre();
-    const src = HQ_VISUALS[genre];
-    if (!src) return;
-    const token = ++visualToken;
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => {
-      if (token !== visualToken || requestedGenre() !== genre) return;
-      requestAnimationFrame(() => {
-        const layer = document.querySelector('.world-layer.is-visible');
-        if (!layer || requestedGenre() !== genre) return;
-        layer.style.backgroundImage = `url("${src}"), url("assets/backgrounds/${genre}.svg")`;
-        layer.dataset.backgroundQuality = '2k-webp';
-      });
-    };
-    image.src = src;
+  seedFastBoot();
+  injectYoutubeControl();
+  syncYoutubeButton();
+
+  document.addEventListener('click', interceptPlay, { capture: true });
+  document.addEventListener('keydown', interceptSpace, { capture: true });
+  new MutationObserver(() => observeYoutubeStage()).observe(document.body, { childList: true });
+
+  if ($('songTitle')) {
+    new MutationObserver(syncYoutubeButton)
+      .observe($('songTitle'), { childList: true, characterData: true, subtree: true });
+  }
+  if ($('songArtist')) {
+    new MutationObserver(syncYoutubeButton)
+      .observe($('songArtist'), { childList: true, characterData: true, subtree: true });
   }
 
-  function scheduleVisualPromotion() {
-    const run = () => promoteCurrentVisual();
-    if ('requestIdleCallback' in window) requestIdleCallback(run, { timeout: 1800 });
-    else setTimeout(run, 450);
-  }
+  window.addEventListener('garba:catalogue-ready', () => queueMicrotask(refreshSafeSongs));
+  window.addEventListener('offline', () => { youtubeUnlocked = false; syncYoutubeButton(); });
+  window.addEventListener('pageshow', syncYoutubeButton);
 
-  function updateNetworkState() {
-    if (!networkStatus) return;
-    const offline = !navigator.onLine;
-    networkStatus.textContent = offline ? 'Offline' : '';
-    networkStatus.setAttribute('aria-hidden', String(!offline));
-    networkStatus.title = offline ? 'Offline. Provider-backed playback is unavailable.' : '';
-    networkStatus.classList.toggle('show', offline);
-  }
-
-  function setupMediaSessionFallback() {
-    if (!('mediaSession' in navigator)) return;
-    try { navigator.mediaSession.setActionHandler('play', () => playButton?.click()); } catch { /* unsupported */ }
-    try {
-      navigator.mediaSession.setActionHandler('pause', () => {
-        if (providerSongId) closeProvider();
-        else audio?.pause();
-      });
-    } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('stop', () => providerSongId ? closeProvider() : audio?.pause()); } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('previoustrack', () => $('prevButton')?.click()); } catch { /* unsupported */ }
-    try { navigator.mediaSession.setActionHandler('nexttrack', () => $('nextButton')?.click()); } catch { /* unsupported */ }
-    try {
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (!hasDirectAudio() || !Number.isFinite(details.seekTime)) return;
-        audio.currentTime = Math.max(0, Math.min(details.seekTime, Number.isFinite(audio.duration) ? audio.duration : details.seekTime));
-      });
-    } catch { /* unsupported */ }
-  }
-
-  genreStrip?.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-static-genre="true"]');
-    if (!button) return;
-    const url = new URL(location.href);
-    url.searchParams.set('genre', button.dataset.genre);
-    url.searchParams.delete('song');
-    location.assign(url.toString());
-  });
-
-  playButton?.addEventListener('click', interceptFallbackPlay, { capture: true });
-  miniPlay?.addEventListener('click', interceptFallbackPlay, { capture: true });
-  shareButton?.addEventListener('click', shareCurrent);
-  document.addEventListener('keydown', interceptGlobalSpace);
-
-  if (songTitle) {
-    new MutationObserver(() => {
-      closeProvider();
-      scheduleVisualPromotion();
-    }).observe(songTitle, { childList: true, characterData: true, subtree: true });
-  }
-
-  if (app) {
-    new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.attributeName === 'data-genre')) scheduleVisualPromotion();
-    }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
-  }
-
-  window.addEventListener('garba:catalogue-ready', () => {
-    loadSongs({ refresh: true });
-  });
-  window.addEventListener('online', updateNetworkState);
-  window.addEventListener('offline', () => {
-    const hadProvider = Boolean(providerSongId);
-    closeProvider();
-    updateNetworkState();
-    announce(hadProvider ? 'Offline. Provider playback was closed.' : 'You are offline.');
-  });
-  window.addEventListener('load', () => {
-    setupMediaSessionFallback();
-    scheduleVisualPromotion();
-    if (window.GARBA_CATALOGUE_READY) loadSongs({ refresh: true });
-  }, { once: true });
-  window.addEventListener('pageshow', clearStaleInert);
-  document.addEventListener('pointerdown', clearStaleInert, { capture: true, once: true });
-
-  updateNetworkState();
-  clearStaleInert();
+  window.GARBA_YOUTUBE_ONLY_POLICY = {
+    isExactYoutube,
+    sanitiseSongs,
+    refresh: refreshSafeSongs,
+    get currentSong() { return currentSong(); },
+  };
 })();
