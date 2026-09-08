@@ -7,6 +7,7 @@ const thisFile = fileURLToPath(import.meta.url);
 const root = path.resolve(path.dirname(thisFile), '../..');
 const readText = (file) => readFile(path.resolve(root, file), 'utf8');
 const readJson = async (file) => JSON.parse(await readText(file));
+const hasText = (document, needle) => String(document).toLowerCase().includes(String(needle).toLowerCase());
 
 function fail(message) {
   console.error(`Build identity validation failed: ${message}`);
@@ -85,16 +86,16 @@ async function main() {
     assert(doc.includes('/build-info.json'), `${name} must point auditors to /build-info.json`);
   }
 
-  assert(readme.includes('Executable music playback is YouTube-only'), 'README must state the YouTube-only executable playback policy');
-  assert(!readme.includes('Spotify and Apple Music embeds where supported'), 'README still advertises non-YouTube executable playback');
-  assert(!statusDoc.includes('585 verified song records'), 'catalogue status still contains the obsolete 585-song claim');
-  assert(!statusDoc.includes("Spotify's embedded player"), 'catalogue status still describes Spotify as executable playback');
-  assert(!roadmapDoc.includes('Decide and implement authorised playback provider(s)'), 'roadmap still treats the playback provider decision as open');
-  assert(!playbackDoc.includes('the user clicks the YouTube button;'), 'playback policy still prescribes the retired second-step YouTube-button gate');
-  assert(runtimeCoverageDoc.includes('source evidence'), 'runtime coverage doc must distinguish source evidence from executable playback');
-  assert(runtimeCoverageDoc.includes('YouTube-only'), 'runtime coverage doc must state the executable YouTube-only policy');
-  assert(uxPolishDoc.includes('Status: historical implementation note'), 'UX polish pass must remain explicitly historical');
-  assert(!uxPolishDoc.includes('Spotify provider playback;'), 'historical UX note still asks release QA to exercise Spotify playback');
+  assert(hasText(readme, 'Executable music playback is YouTube-only'), 'README must state the YouTube-only executable playback policy');
+  assert(!hasText(readme, 'Spotify and Apple Music embeds where supported'), 'README still advertises non-YouTube executable playback');
+  assert(!hasText(statusDoc, '585 verified song records'), 'catalogue status still contains the obsolete 585-song claim');
+  assert(!hasText(statusDoc, "Spotify's embedded player"), 'catalogue status still describes Spotify as executable playback');
+  assert(!hasText(roadmapDoc, 'Decide and implement authorised playback provider(s)'), 'roadmap still treats the playback provider decision as open');
+  assert(!hasText(playbackDoc, 'the user clicks the YouTube button;'), 'playback policy still prescribes the retired second-step YouTube-button gate');
+  assert(hasText(runtimeCoverageDoc, 'source evidence'), 'runtime coverage doc must distinguish source evidence from executable playback');
+  assert(hasText(runtimeCoverageDoc, 'YouTube-only'), 'runtime coverage doc must state the executable YouTube-only policy');
+  assert(hasText(uxPolishDoc, 'Status: historical implementation note'), 'UX polish pass must remain explicitly historical');
+  assert(!hasText(uxPolishDoc, 'Spotify provider playback;'), 'historical UX note still asks release QA to exercise Spotify playback');
 
   if (process.exitCode) return;
   console.log(`✓ deployed build identity is regression-guarded at /build-info.json`);
