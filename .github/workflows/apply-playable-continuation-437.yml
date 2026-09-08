@@ -1,0 +1,35 @@
+name: Apply playable continuation 437
+
+on:
+  push:
+    branches: [codex/playable-continuation-437]
+    paths:
+      - '.github/workflows/apply-playable-continuation-437.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/playable-continuation-437
+          fetch-depth: 0
+      - name: Apply truthful playable continuation
+        run: python3 scripts/tmp-437.py
+      - name: Run focused validation
+        run: npm run playable:continuation:validate
+      - name: Run full repository validation
+        run: npm run check
+      - name: Remove temporary machinery
+        run: git rm -f .github/workflows/apply-playable-continuation-437.yml scripts/tmp-437.py
+      - name: Commit implementation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js simple-runtime.js player-continuity.js assets/runtime/route-readiness.js scripts/lib/validate-playable-continuation.mjs package.json
+          git commit -m 'Use truthful playable routes for continuation (#437)'
+          git push origin HEAD:codex/playable-continuation-437
