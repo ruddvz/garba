@@ -7,6 +7,3 @@
 @import url("styles/60-runtime-and-provider.css");
 @import url("styles/70-mobile-playback-coordination.css");
 @import url("styles/80-genre-icon-images.css");
-
-/* Version the refreshed Folk artwork without rotating the validated PWA cache generation. */
-.genre-button[data-genre="folk"] { --genre-icon-image: url("assets/genre-icons/folk.webp?v=2"); }
