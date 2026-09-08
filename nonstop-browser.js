@@ -492,3 +492,43 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 })();
+
+(() => {
+  function nonstopActive() {
+    return Boolean(window.GARBA_NONSTOP?.activeSetId);
+  }
+
+  function announceContinuous() {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = 'Nonstop Garba plays continuously. Choose another style to leave Nonstop.';
+    toast.classList.add('show');
+    clearTimeout(announceContinuous.timer);
+    announceContinuous.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (!nonstopActive()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+    const key = String(event.key || '').toLowerCase();
+    if (event.code === 'ArrowLeft' || event.code === 'ArrowRight' || key === 'f') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      announceContinuous();
+    }
+  }, { capture: true });
+
+  document.addEventListener('click', (event) => {
+    if (!nonstopActive()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target?.closest('#youtubeDockStop')) return;
+    queueMicrotask(() => window.GARBA_NONSTOP?.stop?.());
+  }, { capture: true });
+
+  document.addEventListener('keyup', (event) => {
+    if (event.key !== 'Escape' || !nonstopActive()) return;
+    if (window.GARBA_YOUTUBE_PLAYER?.activeSongId) return;
+    window.GARBA_NONSTOP?.stop?.();
+  }, { capture: true });
+})();
