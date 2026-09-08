@@ -122,11 +122,24 @@ function playerUrl(song) {
   return `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
 }
 
+function primeFavouriteSession(song) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      genreId: song.genre || 'traditional',
+      songId: song.id,
+      elapsed: 0,
+    }));
+  } catch {
+    // Storage can be denied in private browsing; navigation still works.
+  }
+}
+
 function makeCard({ song, release, artwork, kind, elapsed = 0 }) {
   const link = document.createElement('a');
   link.className = `personal-listening-card ${kind === 'continue' ? 'is-continue' : 'is-favourite'}`;
   link.href = playerUrl(song);
   link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to favourite'} ${song.title} by ${song.artist}`);
+  if (kind === 'favourite') link.addEventListener('click', () => primeFavouriteSession(song));
   link.append(coverFor(song, release, artwork));
 
   const copy = document.createElement('span');
