@@ -615,3 +615,224 @@ watchCatalogueRenders();
   window.addEventListener('pageshow', queueSelectedTracklistSync);
   queueSelectedTracklistSync();
 })();
+
+(() => {
+  const detail = document.getElementById('collectionDetail');
+  const detailHead = detail?.querySelector('.detail-head');
+  const releaseRail = document.getElementById('releaseRail');
+  const detailTitle = document.getElementById('detailTitle');
+  const detailKicker = document.getElementById('detailKicker');
+  const detailDescription = document.getElementById('detailDescription');
+  const detailMeta = document.getElementById('detailMeta');
+  if (!sections || !detail || !detailHead || !releaseRail || !detailTitle || !detailKicker || !detailDescription || !detailMeta) return;
+
+  const style = document.createElement('style');
+  style.dataset.playgarbaArtistIdentity = '';
+  style.textContent = `
+    .collection-card.artist-collection-card .collection-image{filter:saturate(.72) contrast(1.05) brightness(.64);transform:scale(1.04)}
+    .collection-card.artist-collection-card .collection-shade{background:radial-gradient(circle at 50% 35%,rgba(5,5,8,.02) 0,rgba(5,5,8,.17) 38%,rgba(5,5,8,.62) 100%),linear-gradient(to top,rgba(5,5,8,.72),rgba(5,5,8,.02) 60%)}
+    .artist-card-portrait{position:absolute;z-index:4;top:clamp(24px,3.2vw,38px);left:50%;display:grid;place-items:center;width:clamp(86px,8.5vw,112px);aspect-ratio:1;overflow:hidden;border:1px solid rgba(255,255,255,.24);border-radius:50%;background:linear-gradient(145deg,rgba(68,58,68,.94),rgba(20,18,26,.96));color:rgba(255,238,209,.88);font-size:1.1rem;font-weight:800;letter-spacing:-.04em;box-shadow:0 18px 46px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.16);transform:translateX(-50%)}
+    .artist-card-portrait img{display:block;width:100%;height:100%;object-fit:cover}
+    .artist-card-portrait.is-fallback{border-color:rgba(231,201,143,.22);background:radial-gradient(circle at 35% 28%,rgba(231,201,143,.18),transparent 34%),linear-gradient(145deg,rgba(55,45,60,.96),rgba(16,15,21,.98))}
+    .artist-collection-card .collection-copy{inset:auto 18px 20px;display:block;place-content:initial;justify-items:initial;text-align:center}
+    .artist-collection-card .collection-copy small{margin-bottom:5px}
+    .artist-collection-card .collection-copy strong{max-width:none;font-size:clamp(1.08rem,1.8vw,1.52rem);line-height:1.05}
+    .artist-collection-card .collection-copy span{margin-top:7px}
+    .artist-photo-credit-hint{position:absolute;z-index:5;top:12px;right:13px;display:inline-flex;align-items:center;min-height:23px;padding:0 7px;border:1px solid rgba(255,255,255,.11);border-radius:999px;background:rgba(9,8,13,.45);color:rgba(255,248,236,.58);font-size:.58rem;letter-spacing:.02em;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    .collection-detail .detail-head[data-artist-artwork="true"]{display:grid!important;grid-template-columns:clamp(132px,17vw,172px) minmax(0,1fr)!important;grid-template-areas:"artist-art artist-kicker" "artist-art artist-title" "artist-art artist-desc" "artist-art artist-meta" "artist-art artist-credit";column-gap:clamp(20px,4vw,34px);align-items:center;text-align:left!important}
+    .artist-detail-portrait{grid-area:artist-art;align-self:center;display:block;width:100%;max-width:172px;aspect-ratio:1;overflow:hidden;border:1px solid rgba(255,255,255,.18);border-radius:50%;background:rgba(255,255,255,.045);box-shadow:0 20px 52px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.10)}
+    .artist-detail-portrait img{display:block;width:100%;height:100%;object-fit:cover}
+    .collection-detail .detail-head[data-artist-artwork="true"] #detailKicker{grid-area:artist-kicker;align-self:end;margin:0 0 8px;text-align:left}
+    .collection-detail .detail-head[data-artist-artwork="true"] #detailTitle{grid-area:artist-title;max-width:16ch!important;margin-inline:0!important;text-align:left}
+    .collection-detail .detail-head[data-artist-artwork="true"] #detailDescription{grid-area:artist-desc;max-width:650px!important;margin:11px 0 0!important;text-align:left}
+    .collection-detail .detail-head[data-artist-artwork="true"] #detailMeta{grid-area:artist-meta;justify-content:flex-start!important;margin-top:14px!important}
+    .artist-photo-credit{grid-area:artist-credit;justify-self:start;margin-top:11px;color:rgba(255,248,236,.48);font-size:.64rem;line-height:1.35;text-decoration:none}
+    .artist-photo-credit:hover{color:rgba(255,248,236,.76);text-decoration:underline}
+    .artist-known-for{grid-column:1/-1;margin:13px auto 0;max-width:760px;color:rgba(255,248,236,.56);font-size:.74rem;line-height:1.5;text-align:center}
+    @media(max-width:640px){
+      .artist-card-portrait{top:21px;width:82px}.artist-collection-card .collection-copy{inset:auto 15px 17px}.artist-photo-credit-hint{top:9px;right:9px;font-size:.54rem}
+      .collection-detail .detail-head[data-artist-artwork="true"]{grid-template-columns:84px minmax(0,1fr)!important;grid-template-areas:"artist-art artist-kicker" "artist-art artist-title" "artist-desc artist-desc" "artist-meta artist-meta" "artist-credit artist-credit";column-gap:13px}
+      .artist-detail-portrait{width:84px;max-width:84px}.collection-detail .detail-head[data-artist-artwork="true"] #detailKicker{margin-bottom:5px;font-size:.62rem}.collection-detail .detail-head[data-artist-artwork="true"] #detailTitle{max-width:14ch!important;font-size:clamp(1.65rem,8vw,2.45rem);line-height:1}.collection-detail .detail-head[data-artist-artwork="true"] #detailDescription{margin-top:13px!important}.collection-detail .detail-head[data-artist-artwork="true"] #detailMeta{margin-top:12px!important}.artist-photo-credit{margin-top:9px;font-size:.6rem}.artist-known-for{text-align:left}
+    }
+    @media(max-width:380px){.artist-card-portrait{width:74px}.collection-detail .detail-head[data-artist-artwork="true"]{grid-template-columns:72px minmax(0,1fr)!important;column-gap:11px}.artist-detail-portrait{width:72px;max-width:72px}.collection-detail .detail-head[data-artist-artwork="true"] #detailTitle{font-size:clamp(1.5rem,7.7vw,2.1rem)}}
+  `;
+  document.head.append(style);
+
+  let artistDataPromise = null;
+  let queued = false;
+  let detailToken = 0;
+  let knownFor = null;
+
+  async function loadArtistIdentityData() {
+    if (artistDataPromise) return artistDataPromise;
+    artistDataPromise = Promise.all([
+      fetchJson('../data/catalogue/index.json', {}),
+      fetchJson('../data/artist-artwork.json', { artists: {} }),
+    ]).then(async ([index, artwork]) => {
+      const files = index?.discovery?.artists || [];
+      const payloads = await Promise.all(files.map((file) => fetchJson(`../${file}`, null)));
+      const artistById = new Map();
+      payloads.flatMap((payload) => payload?.artists || []).forEach((artist) => {
+        if (artist?.id && !artistById.has(artist.id)) artistById.set(artist.id, artist);
+      });
+      return { artistById, artwork: artwork?.artists || {} };
+    });
+    return artistDataPromise;
+  }
+
+  function artistIdFromCollection(value = '') {
+    const id = String(value || '');
+    return id.startsWith('artist-') ? id.slice(7) : '';
+  }
+
+  function activeArtistId() {
+    const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+    return artistIdFromCollection(params.get('collection'));
+  }
+
+  function humanize(value = '') {
+    return String(value).replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  function makePortrait(name, entry, className) {
+    const portrait = document.createElement('span');
+    portrait.className = className;
+    portrait.setAttribute('aria-hidden', 'true');
+    if (entry?.verified === true && entry.imageUrl) {
+      const img = document.createElement('img');
+      img.alt = '';
+      img.loading = className === 'artist-detail-portrait' ? 'eager' : 'lazy';
+      img.decoding = 'async';
+      if (className === 'artist-detail-portrait') img.fetchPriority = 'high';
+      img.src = entry.imageUrl;
+      img.style.objectPosition = entry.objectPosition || '50% 35%';
+      img.addEventListener('error', () => {
+        img.remove();
+        portrait.classList.add('is-fallback');
+        portrait.textContent = initials(name);
+      }, { once: true });
+      portrait.append(img);
+      portrait.title = `Photo: ${entry.attribution} · ${entry.license}`;
+    } else {
+      portrait.classList.add('is-fallback');
+      portrait.textContent = initials(name);
+    }
+    return portrait;
+  }
+
+  async function decorateArtistCards() {
+    const { artistById, artwork } = await loadArtistIdentityData();
+    const cards = sections.querySelectorAll('.collection-card[data-collection-id^="artist-"]');
+    cards.forEach((card) => {
+      if (!(card instanceof HTMLElement)) return;
+      const artistId = artistIdFromCollection(card.dataset.collectionId);
+      if (!artistId) return;
+      const artist = artistById.get(artistId);
+      const name = artist?.name || card.querySelector('.collection-copy strong')?.textContent?.replace(/\s+Essentials$/i, '') || humanize(artistId);
+      card.classList.add('artist-collection-card');
+      card.dataset.artistId = artistId;
+      card.querySelector('.artist-card-portrait')?.remove();
+      card.querySelector('.artist-photo-credit-hint')?.remove();
+      const entry = artwork?.[artistId];
+      card.append(makePortrait(name, entry, 'artist-card-portrait'));
+      const copy = card.querySelector('.collection-copy');
+      if (copy) {
+        const kicker = copy.querySelector('small');
+        const title = copy.querySelector('strong');
+        if (kicker) kicker.textContent = 'Artist essentials';
+        if (title) title.textContent = name;
+      }
+      if (entry?.verified === true && entry.imageUrl) {
+        const hint = document.createElement('span');
+        hint.className = 'artist-photo-credit-hint';
+        hint.textContent = 'Licensed photo';
+        hint.title = `Photo: ${entry.attribution} · ${entry.license}`;
+        hint.setAttribute('aria-hidden', 'true');
+        card.append(hint);
+      }
+    });
+  }
+
+  function clearArtistDetail() {
+    detailToken += 1;
+    delete detailHead.dataset.artistArtwork;
+    detailHead.querySelector('.artist-detail-portrait')?.remove();
+    detailHead.querySelector('.artist-photo-credit')?.remove();
+    knownFor?.remove();
+    knownFor = null;
+  }
+
+  async function syncArtistDetail() {
+    const artistId = activeArtistId();
+    const hasRelease = Boolean(releaseRail.querySelector('.release-card.active[data-release-id]'));
+    if (!artistId || detail.hidden || hasRelease) {
+      clearArtistDetail();
+      return;
+    }
+    const token = ++detailToken;
+    const { artistById, artwork } = await loadArtistIdentityData();
+    if (token !== detailToken) return;
+    const artist = artistById.get(artistId);
+    if (!artist) {
+      clearArtistDetail();
+      return;
+    }
+
+    detailTitle.textContent = artist.name;
+    detailKicker.textContent = 'Artist essentials';
+    const footprint = (artist.garbaFootprint || []).slice(0, 4).map(humanize);
+    detailDescription.textContent = footprint.length
+      ? `Songs in PlayGarba credited to ${artist.name}, spanning ${footprint.join(', ')}.`
+      : `Songs in PlayGarba credited to ${artist.name}, including verified catalogue aliases where available.`;
+
+    knownFor?.remove();
+    knownFor = null;
+    const notable = (artist.notable || []).filter(Boolean).slice(0, 3);
+    if (notable.length) {
+      knownFor = document.createElement('p');
+      knownFor.className = 'artist-known-for';
+      knownFor.textContent = `Known for ${notable.join(' · ')}`;
+      detailHead.after(knownFor);
+    }
+
+    const entry = artwork?.[artistId];
+    detailHead.querySelector('.artist-detail-portrait')?.remove();
+    detailHead.querySelector('.artist-photo-credit')?.remove();
+    if (entry?.verified !== true || !entry.imageUrl) {
+      delete detailHead.dataset.artistArtwork;
+      return;
+    }
+
+    const portrait = makePortrait(artist.name, entry, 'artist-detail-portrait');
+    detailHead.prepend(portrait);
+    const credit = document.createElement('a');
+    credit.className = 'artist-photo-credit';
+    credit.href = entry.sourcePage;
+    credit.target = '_blank';
+    credit.rel = 'noopener noreferrer';
+    credit.textContent = `Photo: ${entry.attribution} · ${entry.license}`;
+    credit.setAttribute('aria-label', `Artist photo credit: ${entry.attribution}, ${entry.license}`);
+    detailHead.append(credit);
+    detailHead.dataset.artistArtwork = 'true';
+  }
+
+  async function refreshArtistIdentity() {
+    queued = false;
+    await decorateArtistCards();
+    await syncArtistDetail();
+  }
+
+  function queueArtistIdentity() {
+    if (queued) return;
+    queued = true;
+    queueMicrotask(() => { void refreshArtistIdentity(); });
+  }
+
+  new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: true });
+  new MutationObserver(queueArtistIdentity).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(queueArtistIdentity).observe(releaseRail, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('popstate', queueArtistIdentity);
+  window.addEventListener('hashchange', queueArtistIdentity);
+  window.addEventListener('pageshow', queueArtistIdentity);
+  queueArtistIdentity();
+})();

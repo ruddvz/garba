@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-08",
+  "policy": "Only identity-verified artist photography with explicit reusable licensing is eligible for PlayGarba artist portrait surfaces. Missing entries must fall back to the existing visual system rather than guessing or hotlinking an unverified image.",
+  "artists": {
+    "aditya-gadhvi": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Aditya%20Gadhvi%20At%20An%20Event%20In%20Ahmedabad%202020.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Aditya_Gadhvi_At_An_Event_In_Ahmedabad_2020.jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "Imfarhad7",
+      "verified": true,
+      "objectPosition": "50% 42%"
+    },
+    "geeta-rabari": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Geeta-Rabari-pic.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Geeta-Rabari-pic.jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "Kingrajput12",
+      "verified": true,
+      "objectPosition": "50% 38%"
+    },
+    "ishani-dave": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ishani-dave.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ishani-dave.jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "Ishani Dave",
+      "verified": true,
+      "objectPosition": "50% 30%"
+    },
+    "kirtidan-gadhvi": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Kirtidan%20Gadhavi.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Kirtidan_Gadhavi.jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "Soni Anil Maheshbhai",
+      "verified": true,
+      "objectPosition": "50% 38%"
+    },
+    "falguni-pathak": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Falguni%20Pathak%20at%20her%20dandiya%20show%20in%20Goregaon%20Sports.jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Falguni_Pathak_at_her_dandiya_show_in_Goregaon_Sports.jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Bollywood Hungama",
+      "verified": true,
+      "objectPosition": "50% 28%"
+    }
+  }
+}
