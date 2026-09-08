@@ -30,11 +30,11 @@ Some browsers do not provide reliable programmable `HTMLMediaElement.volume`. On
 
 If the Web Audio graph cannot be unlocked or wired safely, the in-flight AutoMix transition is cancelled. The existing one-song playback path remains available. Garba should never respond to a missing mixing capability by playing two uncontrolled full-volume tracks together.
 
-Direct-audio hosts used with the Web Audio path must allow anonymous CORS requests. Garba sets the native audio elements to anonymous CORS mode before direct playback. A future production audio CDN should therefore return an appropriate `Access-Control-Allow-Origin` response for PlayGarba and support byte-range requests.
+Direct-audio hosts used with the Web Audio path must allow anonymous CORS requests. Garba sets the native audio elements to anonymous CORS mode before direct playback. A production audio CDN should therefore return an appropriate `Access-Control-Allow-Origin` response for PlayGarba and support byte-range requests.
 
-## Catalogue metadata hooks
+## Catalogue metadata
 
-AutoMix works without extra metadata, but direct tracks can later add:
+Direct tracks can carry these operational AutoMix fields in `data/direct-audio.json`:
 
 ```json
 {
@@ -46,13 +46,47 @@ AutoMix works without extra metadata, but direct tracks can later add:
 }
 ```
 
-- `bpm`: tempo used for phrase length and small compatible tempo adjustments.
+- `bpm`: tempo used for transition length and small compatible tempo adjustments.
 - `mixInSeconds`: preferred point at which the incoming recording should enter.
-- `mixOutSeconds`: preferred musical exit point in the outgoing recording.
-- `transitionSeconds`: optional per-track transition duration override.
-- `introSilenceSeconds`: optional silence-trim hint when no explicit mix-in point is present.
+- `mixOutSeconds`: preferred musical exit point in the outgoing recording. The transition begins before this point and completes at it.
+- `transitionSeconds`: per-track transition duration, bounded to 4 to 10 seconds.
+- `introSilenceSeconds`: silence-trim hint when no explicit mix-in point is available.
 
-A later audio-analysis pipeline can generate these values offline. Runtime code should not guess BPM or phrase boundaries from incomplete information.
+The catalogue enrichment step now promotes authorised direct-audio entries into generated `data/songs.json` before provider fallbacks are applied. Rights evidence stays in `data/direct-audio.json`; only playback-safe fields enter the public runtime catalogue.
+
+## Offline analysis
+
+`scripts/lib/analyze-automix.mjs` provides a conservative offline analysis pass for authorised direct masters.
+
+Run a dry analysis first:
+
+```bash
+npm run automix:analyze
+```
+
+Analyse selected direct tracks:
+
+```bash
+npm run automix:analyze -- song-id-1 song-id-2
+```
+
+After reviewing the recommendations, write accepted machine analysis back to `data/direct-audio.json`:
+
+```bash
+npm run automix:analyze -- --write song-id-1
+```
+
+The analyser requires `ffprobe` and `ffmpeg` in `PATH`. It downloads HTTPS direct masters to a temporary file when necessary, verifies the exact encoded bytes against the manifest SHA-256, decodes a mono analysis signal, derives an onset envelope, estimates tempo through autocorrelation, measures confidence and suggests bar-grid-aligned mix points.
+
+The analyser does not claim to understand a song's artistic phrase structure. Its generated points are beat-grid candidates. A future higher-order structural analyser or a human music editor can replace them with curated phrase boundaries.
+
+### Confidence gate
+
+Machine-generated operational mix points are published only when the tempo confidence reaches the current threshold and there is enough active audio around the proposed transition. Otherwise the entry is recorded as `low-confidence` and the runtime keeps using the safe crossfade fallback.
+
+Each generated analysis record stores the analyser version, confidence measurements, analysis timestamp and the SHA-256 of the exact source bytes. `scripts/validate-direct-audio.mjs` rejects generated operational fields when the analysis is low-confidence or when the analysis checksum no longer matches the published direct master.
+
+Existing human-curated AutoMix fields are preserved by default. `--force` is available for deliberate re-analysis, but should be used only after reviewing the existing metadata.
 
 ## Safety and fallback behaviour
 
@@ -64,6 +98,6 @@ The feature is enabled by default and can be switched off from the Up next sheet
 
 ## Current catalogue limitation
 
-`data/direct-audio.json` currently contains no authorised direct tracks. The engine is therefore installed and ready, but real transition listening tests require at least two consecutive authorised direct-audio songs in the same genre.
+`data/direct-audio.json` currently contains no authorised direct tracks. The transition engine and analysis pipeline are ready, but real transition listening tests require at least two consecutive authorised direct-audio songs in the same genre.
 
 Do not add provider streams, purchased downloads, or merely free-to-listen files to `audioUrl`. Direct hosting requires explicit redistribution rights.
