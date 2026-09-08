@@ -21,6 +21,6 @@
     "docs:validate": "node scripts/validate-documentation.mjs",
     "serve": "python3 -m http.server 4173",
     "check:modules": "node --check simple-runtime.js && node --check provider-runtime.js && node --check player-continuity.js && node --check nonstop-browser.js && node --input-type=module --check < app.js && node --check sw.js",
-    "check": "npm run catalogue && npm run check:modules && node --check scripts/report-playback-route-quality.mjs && node scripts/validate-player-continuity.mjs && node scripts/validate-runtime-packaging.mjs && node scripts/validate-runtime-song-routes.mjs && node scripts/validate-discovery.mjs && npm run repo:validate && npm run docs:validate"
+    "check": "npm run catalogue && npm run check:modules && node --check scripts/report-playback-route-quality.mjs && node scripts/validate-player-continuity.mjs && node scripts/validate-runtime-packaging.mjs && node scripts/validate-runtime-song-routes.mjs && node scripts/report-playback-route-quality.mjs && node scripts/validate-discovery.mjs && npm run repo:validate && npm run docs:validate"
   }
 }
