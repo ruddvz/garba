@@ -1,5 +1,5 @@
 {
-  "version": "0.17.8",
+  "version": "0.17.9",
   "songCount": 1160,
   "releaseCount": 208,
   "categoryCount": 19,
@@ -158,7 +158,11 @@
     "data/playback-sources-saybo-exact.json",
     "data/playback-sources-anand-exact.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
-    "data/playback-sources-ho-raj-exact.json"
+    "data/playback-sources-ho-raj-exact.json",
+    "data/playback-sources-garbi-exact.json",
+    "data/playback-sources-killol-2-exact.json",
+    "data/playback-sources-maro-garbo-exact.json",
+    "data/playback-sources-zankaar-2022-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -184,5 +188,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.8 preserves the K Hove Hove tombstoned provenance and all current route/runtime improvements, keeps the eight independently verified exact Rutvi Ni Ramzat 3.0 song routes, and adds three independently verified Apple Music exact-song routes for Ho Raj (Non Stop Fusion Garba). Ghor Andhari Re intentionally keeps its stronger existing exact route; remaining Ho Raj songs stay conservative until an exact provider track is independently verified."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 preserves all current route/runtime improvements and the conservative Ho Raj exact-route work, then adds release-specific independently verified exact routes for Garbi, Killol 2.0, Maro Garbo Non Stop Garba Tran Taali and Zankaar [Clean]. Stronger existing YouTube routes remain authoritative, and unverified or edition-ambiguous songs stay conservative rather than inferring provider IDs."
 }
