@@ -1,0 +1,140 @@
+:root {
+  --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
+}
+
+/*
+ * Public-site artwork policy
+ *
+ * The six retired SVG worlds remain repository fallbacks for the player runtime only.
+ * The public website must never present them as its visible artwork. Public pages use
+ * the same current 2K WebP library as live.playgarba.com.
+ */
+.hero-art {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+}
+
+.world-traditional {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp") !important;
+}
+
+.world-dandiya {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp") !important;
+}
+
+.world-devotional {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
+}
+
+.world-folk {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
+}
+
+.world-sanedo {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
+}
+
+.world-fusion {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
+}
+
+.nonstop-art {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp") !important;
+}
+
+.player-scene {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+}
+
+.page-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
+}
+
+.page-hero.install-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
+}
+
+.page-hero.live-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
+}
+
+.page-hero.about-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp");
+}
+
+.page-hero.garba-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp");
+}
+
+.culture-feature {
+  position: relative;
+  min-height: clamp(560px, 72vw, 860px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  isolation: isolate;
+  padding: clamp(80px, 10vw, 140px) var(--pad);
+  border-top: 1px solid rgba(244, 234, 215, .08);
+}
+
+.culture-feature::before {
+  content: "";
+  position: absolute;
+  z-index: -3;
+  inset: 0;
+  background: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
+  transform: scale(1.012);
+}
+
+.culture-feature::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(7, 8, 13, .08) 12%, rgba(7, 8, 13, .3) 46%, rgba(7, 8, 13, .94) 100%),
+    linear-gradient(90deg, rgba(7, 8, 13, .76), rgba(7, 8, 13, .08) 72%);
+}
+
+.culture-feature-inner {
+  width: min(940px, 92vw);
+}
+
+.culture-feature h2 {
+  max-width: 850px;
+  margin: 0;
+  font: 400 clamp(54px, 8vw, 118px)/.88 var(--serif);
+  letter-spacing: -.052em;
+}
+
+.culture-feature p:not(.eyebrow) {
+  max-width: 650px;
+  margin: 28px 0 34px;
+  color: rgba(244, 234, 215, .72);
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.7;
+}
+
+.editorial-source {
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(244, 234, 215, .12);
+  color: rgba(244, 234, 215, .52);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.editorial-source a {
+  color: rgba(244, 234, 215, .78);
+  border-bottom: 1px solid rgba(244, 234, 215, .24);
+}
+
+@media (max-width: 700px) {
+  .culture-feature {
+    min-height: 680px;
+    padding-bottom: 74px;
+  }
+
+  .culture-feature::before {
+    background-position: 62% center;
+  }
+}
