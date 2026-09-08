@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - scripts/verify-production-hosts.mjs
+      - scripts/lib/verify-production-hosts.mjs
       - .github/workflows/production-smoke.yml
   workflow_run:
     workflows: ["Deploy GitHub Pages"]
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Validate smoke verifier syntax
-        run: node --check scripts/verify-production-hosts.mjs
+        run: node --check scripts/lib/verify-production-hosts.mjs
 
   live-player:
     if: >-
@@ -45,7 +45,7 @@ jobs:
           SMOKE_ATTEMPTS: '8'
           SMOKE_RETRY_DELAY_MS: '6000'
           SMOKE_TIMEOUT_MS: '12000'
-        run: node scripts/verify-production-hosts.mjs live
+        run: node scripts/lib/verify-production-hosts.mjs live
 
       - name: Record live verification
         if: success()
@@ -75,7 +75,7 @@ jobs:
           SMOKE_ATTEMPTS: '3'
           SMOKE_RETRY_DELAY_MS: '4000'
           SMOKE_TIMEOUT_MS: '10000'
-        run: node scripts/verify-production-hosts.mjs public
+        run: node scripts/lib/verify-production-hosts.mjs public
 
       - name: Record public cutover state
         if: always()
