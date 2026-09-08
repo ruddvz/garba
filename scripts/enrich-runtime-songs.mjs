@@ -29,7 +29,7 @@ function isExactTrackUrl(provider, sourceUrl) {
     const pathname = url.pathname.toLowerCase();
     if (provider === 'spotify') return /\/(?:intl-[^/]+\/)?track\/[^/]+/.test(pathname);
     if (provider === 'apple-music') return pathname.includes('/song/') || url.searchParams.has('i');
-    if (provider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname);
+    if (provider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname) || (pathname.includes('/albums/') && Boolean(url.searchParams.get('trackAsin')));
   } catch {
     return false;
   }

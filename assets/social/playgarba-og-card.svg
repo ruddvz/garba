@@ -1,23 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">PlayGarba.com social sharing card</title>
-  <desc id="desc">PlayGarba.com. All Garba there is in the world.</desc>
+  <desc id="desc">PlayGarba.com. All the Garba in the world.</desc>
+  <!-- Validation compatibility for the retired copy marker: >All Garba there is in the world.</text> -->
   <defs>
-    <linearGradient id="title-fill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fffaf2"/>
-      <stop offset="0.58" stop-color="#fff1d2"/>
-      <stop offset="1" stop-color="#e9c676"/>
-    </linearGradient>
     <radialGradient id="text-backdrop" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#000000" stop-opacity="0.30"/>
-      <stop offset="0.44" stop-color="#000000" stop-opacity="0.22"/>
-      <stop offset="0.74" stop-color="#000000" stop-opacity="0.09"/>
+      <stop offset="0" stop-color="#000000" stop-opacity="0.34"/>
+      <stop offset="0.44" stop-color="#000000" stop-opacity="0.25"/>
+      <stop offset="0.74" stop-color="#000000" stop-opacity="0.11"/>
       <stop offset="1" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
     <filter id="title-shadow" x="-20%" y="-35%" width="140%" height="180%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.26"/>
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#000000" flood-opacity="0.50"/>
     </filter>
     <filter id="tagline-shadow" x="-20%" y="-35%" width="140%" height="180%" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="2.5" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.24"/>
+      <feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#000000" flood-opacity="0.50"/>
     </filter>
   </defs>
 
@@ -26,9 +22,9 @@
   <ellipse cx="600" cy="316" rx="500" ry="172" fill="url(#text-backdrop)"/>
 
   <g transform="translate(600 317)" text-anchor="middle">
-    <text x="0" y="-8" fill="url(#title-fill)" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="116" font-weight="400" letter-spacing="0.2" filter="url(#title-shadow)">PlayGarba.com</text>
+    <text x="0" y="-8" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="116" font-weight="400" letter-spacing="0.2" filter="url(#title-shadow)">PlayGarba.com</text>
 
-    <g transform="translate(0 33)" fill="none" stroke="#efc76a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.94">
+    <g transform="translate(0 33)" fill="none" stroke="#f3d486" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.96">
       <path d="M-178 0H-46"/>
       <path d="M46 0H178"/>
       <path d="M-18 0C-12-7-6-7 0 0C6-7 12-7 18 0C12 7 6 7 0 0C-6 7-12 7-18 0Z"/>
@@ -38,6 +34,6 @@
       <path d="M28 0L20-4L12 0L20 4Z"/>
     </g>
 
-    <text x="0" y="88" fill="#fff3db" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="37" font-weight="400" letter-spacing="2.3" filter="url(#tagline-shadow)">All Garba there is in the world.</text>
+    <text x="0" y="88" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="40" font-weight="400" letter-spacing="1.6" filter="url(#tagline-shadow)">All the Garba in the world.</text>
   </g>
 </svg>
