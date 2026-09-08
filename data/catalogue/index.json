@@ -1,5 +1,5 @@
 {
-  "version": "0.17.9",
+  "version": "0.17.10",
   "songCount": 1160,
   "releaseCount": 208,
   "categoryCount": 19,
@@ -157,7 +157,9 @@
     "data/playback-sources-jagran-youtube.json",
     "data/playback-sources-saybo-exact.json",
     "data/playback-sources-anand-exact.json",
+    "data/playback-sources-rutvi-ramzat-2-exact.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
+    "data/playback-sources-rutvi-ramzat-4-exact.json",
     "data/playback-sources-ho-raj-exact.json",
     "data/playback-sources-garbi-exact.json",
     "data/playback-sources-killol-2-exact.json",
@@ -188,5 +190,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 preserves all current route/runtime improvements and the conservative Ho Raj exact-route work, then adds release-specific independently verified exact routes for Garbi, Killol 2.0, Maro Garbo Non Stop Garba Tran Taali and Zankaar [Clean]. Stronger existing YouTube routes remain authoritative, and unverified or edition-ambiguous songs stay conservative rather than inferring provider IDs."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.10 preserves the completed Rutvi Pandya routing from #150 and all existing Ho Raj/runtime work, then adds release-specific independently verified exact routes for Garbi, Killol 2.0, Maro Garbo Non Stop Garba Tran Taali and Zankaar [Clean]. Stronger existing YouTube routes remain authoritative, and unverified or edition-ambiguous songs stay conservative rather than inferring provider IDs."
 }
