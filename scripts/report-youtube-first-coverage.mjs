@@ -9,17 +9,23 @@ const counters = {
   directAudio: 0,
   youtubeExact: 0,
   youtubeChaptered: 0,
+  youtubeUntimestamped: 0,
   youtubeUnchapteredManual: 0,
   youtubeReferenceOnly: 0,
   providerFallback: 0,
   noPlaybackRoute: 0,
 };
 const byGenre = new Map();
+const youtubeSourceTypes = new Map();
 
 function looksYoutube(song) {
   const provider = String(song.playbackProvider || '').toLowerCase();
   const url = String(song.playbackSourceUrl || '').toLowerCase();
   return Boolean(song.youtubeId || provider === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be'));
+}
+
+function hasMappedYoutubeStart(song) {
+  return Number.isFinite(Number(song.youtubeStartSeconds)) && Number(song.youtubeStartSeconds) >= 0;
 }
 
 function bucket(song) {
@@ -36,7 +42,14 @@ function bucket(song) {
 for (const song of songs) {
   const key = bucket(song);
   counters[key] += 1;
-  if (key === 'youtubeExact' && Number(song.youtubeStartSeconds || 0) > 0) counters.youtubeChaptered += 1;
+  if (looksYoutube(song)) {
+    const sourceType = song.playbackSourceType || 'unspecified';
+    youtubeSourceTypes.set(sourceType, (youtubeSourceTypes.get(sourceType) || 0) + 1);
+  }
+  if (key === 'youtubeExact') {
+    if (hasMappedYoutubeStart(song)) counters.youtubeChaptered += 1;
+    else counters.youtubeUntimestamped += 1;
+  }
 
   const genre = song.genre || 'unknown';
   if (!byGenre.has(genre)) byGenre.set(genre, { total: 0, direct: 0, youtube: 0, fallback: 0, unavailable: 0 });
@@ -55,10 +68,13 @@ const report = {
   ...counters,
   oneTapPlayable: oneTap,
   oneTapCoveragePercent: Number(percent.toFixed(1)),
+  youtubeSourceTypes: Object.fromEntries([...youtubeSourceTypes.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
   genres: Object.fromEntries([...byGenre.entries()].sort(([a], [b]) => a.localeCompare(b))),
   policy: {
     directAudio: 'Rights-cleared GARBA-hosted audio.',
-    youtubeExact: 'Exact YouTube video or verified chapter controllable through the official IFrame Player API.',
+    youtubeExact: 'YouTube route currently controllable by the official IFrame Player API after generated route-truth classification.',
+    youtubeChaptered: 'Controllable YouTube route with an explicit mapped start second, including zero.',
+    youtubeUntimestamped: 'Controllable YouTube route without a mapped start; inspect source type before calling it exact-song evidence.',
     youtubeUnchapteredManual: 'Verified multi-song YouTube release without an exact song timestamp; never auto-claimed as the selected track.',
     youtubeReferenceOnly: 'YouTube evidence/reference that is not safe for exact autoplay.',
     providerFallback: 'Apple Music, Spotify or another verified provider route requiring its own player/action.',
@@ -67,6 +83,6 @@ const report = {
 
 console.log(JSON.stringify(report, null, 2));
 console.error(`YouTube-first one-tap coverage: ${oneTap}/${counters.catalogue} (${percent.toFixed(1)}%)`);
-console.error(`Exact YouTube routes: ${counters.youtubeExact} (${counters.youtubeChaptered} chaptered)`);
+console.error(`Controllable YouTube routes: ${counters.youtubeExact} (${counters.youtubeChaptered} with mapped starts, ${counters.youtubeUntimestamped} without)`);
 console.error(`Other provider/manual fallbacks: ${counters.providerFallback + counters.youtubeUnchapteredManual + counters.youtubeReferenceOnly}`);
 console.error(`No playback route: ${counters.noPlaybackRoute}`);
