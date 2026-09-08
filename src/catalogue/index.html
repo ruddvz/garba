@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#10121e" />
+  <meta name="color-scheme" content="dark" />
+  <title>Explore Gujarati Garba · PlayGarba</title>
+  <meta name="description" content="Explore PlayGarba by tradition, style, artist, era, live performance and nonstop Garba—all from one curated catalogue." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://playgarba.com/catalogue/" />
+  <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PlayGarba" />
+  <meta property="og:title" content="Explore Gujarati Garba · PlayGarba" />
+  <meta property="og:description" content="Curated Gujarati Garba catalogues for traditions, artists, eras, live performances and nonstop sets." />
+  <meta property="og:url" content="https://playgarba.com/catalogue/" />
+  <meta property="og:image" content="https://playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="catalogue.css" />
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"CollectionPage","name":"Explore Gujarati Garba · PlayGarba","url":"https://playgarba.com/catalogue/","isPartOf":{"@type":"WebSite","name":"PlayGarba","url":"https://playgarba.com/"}}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../" aria-label="Back to PlayGarba player">PlayGarba</a>
+    <a class="player-link" href="../">Back to player</a>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="catalogueTitle">
+      <p class="eyebrow">Explore</p>
+      <h1 id="catalogueTitle">Find your Garba.</h1>
+      <p class="hero-copy">Browse the same PlayGarba library by tradition, artist, era, performance style and mood. Open a catalogue to see its albums and songs—without leaving this page.</p>
+      <label class="search-shell">
+        <span class="sr-only">Search the catalogue</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+        <input id="catalogueSearch" type="search" placeholder="Search songs, artists or albums" autocomplete="off" enterkeyhint="search" />
+      </label>
+      <p class="catalogue-count" id="catalogueCount" aria-live="polite">Loading catalogue…</p>
+    </section>
+
+    <section id="collectionHome" class="collection-home" aria-label="Garba catalogues">
+      <div id="catalogueSections"></div>
+    </section>
+
+    <section id="collectionDetail" class="collection-detail" hidden aria-live="polite">
+      <button class="back-button" id="backToCollections" type="button">← All catalogues</button>
+      <header class="detail-head">
+        <p class="eyebrow" id="detailKicker">Collection</p>
+        <h2 id="detailTitle"></h2>
+        <p id="detailDescription"></p>
+        <div class="detail-meta" id="detailMeta"></div>
+      </header>
+
+      <section class="release-section" id="releaseSection">
+        <div class="section-heading"><div><p class="eyebrow">Albums & releases</p><h3>From this catalogue</h3></div><button id="showAllSongs" type="button" class="quiet-button">Show all songs</button></div>
+        <div class="release-rail" id="releaseRail" role="list"></div>
+      </section>
+
+      <section class="songs-section">
+        <div class="section-heading"><div><p class="eyebrow">Songs</p><h3 id="songSectionTitle">All songs</h3></div><span id="songCount"></span></div>
+        <div class="song-list" id="catalogueSongList" role="list"></div>
+      </section>
+    </section>
+
+    <section class="artwork-note">
+      <strong>About album artwork</strong>
+      <p>PlayGarba only shows release artwork when it has been matched to a verified release source. Unsourced releases use a neutral PlayGarba cover instead of fabricated album art.</p>
+    </section>
+  </main>
+
+  <template id="collectionCardTemplate">
+    <button class="collection-card" type="button">
+      <span class="collection-image" aria-hidden="true"></span>
+      <span class="collection-shade" aria-hidden="true"></span>
+      <span class="collection-copy"><small></small><strong></strong><span></span></span>
+    </button>
+  </template>
+
+  <script type="module" src="catalogue.js"></script>
+</body>
+</html>
