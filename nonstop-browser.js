@@ -1,16 +1,18 @@
 (() => {
+  const DEFAULT_SET_ID = 'set-aditya-ochhav-2023';
+  const $ = (id) => document.getElementById(id);
+
   const state = {
-    sets: [],
-    ready: false,
+    index: null,
+    chunks: new Map(),
+    songs: null,
     loading: null,
-    loadFailed: false,
-    overlay: null,
-    panel: null,
-    player: null,
-    list: null,
-    search: null,
-    summary: null,
-    returnFocus: null,
+    activeSet: null,
+    activeTrack: null,
+    previousSession: null,
+    buttonObserver: null,
+    metadataObserver: null,
+    toastTimer: null,
   };
 
   const rank = {
@@ -23,22 +25,13 @@
     'community-upload': 1,
   };
 
-  const $ = (id) => document.getElementById(id);
-  const normalise = (value = '') => String(value)
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ')
-    .trim();
-  const formatTime = (seconds = 0) => `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds)) % 60).padStart(2, '0')}`;
-
   function announce(message) {
     const toast = $('toast');
     if (!toast) return;
     toast.textContent = message;
     toast.classList.add('show');
-    clearTimeout(announce.timer);
-    announce.timer = setTimeout(() => toast.classList.remove('show'), 2600);
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
   }
 
   async function fetchJson(url) {
@@ -51,415 +44,491 @@
   }
 
   function durationFor(set) {
-    if (Number.isFinite(Number(set.durationSeconds)) && Number(set.durationSeconds) > 0) return Number(set.durationSeconds);
-    const ends = (set.segments || []).map((segment) => Number(segment.endSeconds)).filter(Number.isFinite);
-    const starts = (set.segments || []).map((segment) => Number(segment.startSeconds)).filter(Number.isFinite);
-    return Math.max(0, ...ends, ...starts);
+    const direct = Number(set?.durationSeconds || 0);
+    if (Number.isFinite(direct) && direct > 0) return direct;
+    const segments = Array.isArray(set?.segments) ? set.segments : [];
+    const boundaries = segments.flatMap((segment) => [Number(segment.startSeconds), Number(segment.endSeconds)]).filter(Number.isFinite);
+    return boundaries.length ? Math.max(...boundaries) : 0;
   }
 
-  function normalizeSet(set) {
-    const source = set.source || {};
+  function normaliseSet(set) {
+    const source = set?.source || {};
     return {
       ...set,
-      artistsText: Array.isArray(set.artists) ? set.artists.join(' · ') : String(set.artist || ''),
-      provider: source.provider,
-      videoId: source.videoId,
-      sourceUrl: source.url,
-      embeddable: source.embeddable !== false && set.playbackPolicy !== 'youtube-external-visible',
-      sourceType: set.officiality || set.setType || source.provider || 'source',
+      artistsText: Array.isArray(set?.artists) ? set.artists.join(' · ') : String(set?.artist || ''),
+      provider: String(source.provider || '').toLowerCase(),
+      videoId: String(source.videoId || '').trim(),
+      sourceUrl: String(source.url || '').trim(),
+      embeddable: source.embeddable !== false && set?.playbackPolicy !== 'youtube-external-visible',
+      sourceType: set?.officiality || set?.setType || source.provider || 'source',
       durationSeconds: durationFor(set),
-      segments: Array.isArray(set.segments) ? set.segments : [],
     };
   }
 
-  async function loadSets() {
+  function isPlayableSet(set) {
+    return Boolean(set?.id && set.provider === 'youtube' && set.videoId && set.embeddable);
+  }
+
+  function sortSets(sets) {
+    return [...sets].sort((a, b) => (rank[b.sourceType] || 0) - (rank[a.sourceType] || 0)
+      || Number(b.year || 0) - Number(a.year || 0)
+      || String(a.title || '').localeCompare(String(b.title || '')));
+  }
+
+  async function loadIndex() {
+    if (state.index) return state.index;
     const index = await fetchJson('data/discovery/sets/index.json');
-    if (!index?.chunks?.length) throw new Error('Nonstop index unavailable');
-    const chunks = await Promise.all(index.chunks.map((chunk) => fetchJson(`data/discovery/sets/${chunk}`)));
-    const seen = new Set();
-    const sets = chunks.flatMap((chunk) => chunk?.sets || [])
-      .map(normalizeSet)
-      .filter((set) => set.id && !seen.has(set.id) && seen.add(set.id))
-      .sort((a, b) => (rank[b.sourceType] || 0) - (rank[a.sourceType] || 0)
-        || Number(b.year || 0) - Number(a.year || 0)
-        || a.title.localeCompare(b.title));
-    if (!sets.length) throw new Error('No nonstop sets available');
+    if (!Array.isArray(index?.chunks) || !index.chunks.length) throw new Error('Nonstop index unavailable');
+    state.index = index;
+    return index;
+  }
+
+  async function loadChunk(name) {
+    if (state.chunks.has(name)) return state.chunks.get(name);
+    const payload = await fetchJson(`data/discovery/sets/${name}`);
+    const sets = sortSets((payload?.sets || []).map(normaliseSet).filter(isPlayableSet));
+    state.chunks.set(name, sets);
     return sets;
   }
 
-  function loadSetsOnce({ retry = false } = {}) {
-    if (retry) {
-      state.loading = null;
-      state.ready = false;
-      state.loadFailed = false;
-    }
-    if (state.ready) return Promise.resolve(state.sets);
-    if (state.loading) return state.loading;
+  async function loadSongs() {
+    if (state.songs) return state.songs;
+    const songs = await fetchJson('data/songs.json');
+    if (!Array.isArray(songs) || !songs.length) throw new Error('Song catalogue unavailable');
+    state.songs = songs;
+    return songs;
+  }
 
-    state.loadFailed = false;
-    state.loading = loadSets()
-      .then((sets) => {
-        state.sets = sets;
-        state.ready = true;
-        state.loadFailed = false;
-        return sets;
-      })
-      .catch((error) => {
-        state.loadFailed = true;
-        throw error;
-      })
-      .finally(() => {
-        state.loading = null;
-      });
-    return state.loading;
+  async function findSet(requestedId = null) {
+    const index = await loadIndex();
+    let fallback = null;
+
+    for (const chunk of index.chunks) {
+      const sets = await loadChunk(chunk);
+      if (!fallback && sets.length) fallback = sets[0];
+      if (requestedId) {
+        const exact = sets.find((set) => set.id === requestedId);
+        if (exact) return exact;
+      } else {
+        const preferred = sets.find((set) => set.id === DEFAULT_SET_ID);
+        if (preferred) return preferred;
+      }
+    }
+
+    return requestedId ? null : fallback;
+  }
+
+  function findAnchorSong(set, songs) {
+    if (!set?.videoId) return null;
+    return songs.find((song) => String(song.youtubeId || '') === set.videoId && Number(song.youtubeStartSeconds || 0) === 0)
+      || songs.find((song) => String(song.youtubeId || '') === set.videoId)
+      || null;
+  }
+
+  function formatTime(seconds = 0) {
+    const safe = Math.max(0, Math.round(Number(seconds) || 0));
+    return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
   }
 
   function injectStyles() {
-    if ($('nonstopBrowserStyles')) return;
+    if ($('nonstopPlaybackStyles')) return;
     const style = document.createElement('style');
-    style.id = 'nonstopBrowserStyles';
+    style.id = 'nonstopPlaybackStyles';
     style.textContent = `
-      .nonstop-browser-button{gap:.55rem}.nonstop-browser-button .infinity{font-size:1.2em;line-height:1}
-      .nonstop-overlay{position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(7,8,15,.78);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#fff}.nonstop-overlay.open{display:flex}
-      .nonstop-panel{width:min(1060px,100%);max-height:min(900px,92dvh);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:26px;background:rgba(18,20,32,.97);box-shadow:0 36px 100px rgba(0,0,0,.58)}
-      .nonstop-head{display:flex;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.1)}.nonstop-head-copy{min-width:0;flex:1}.nonstop-head h2{margin:0;font:650 21px/1.2 system-ui}.nonstop-summary{display:block;margin-top:4px;color:rgba(255,255,255,.58);font:13px/1.35 system-ui}.nonstop-close{width:40px;height:40px;flex:0 0 auto;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;font-size:23px;cursor:pointer}.nonstop-close:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:2px}
-      .nonstop-search-wrap{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.08)}.nonstop-search{box-sizing:border-box;width:100%;height:44px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.055);color:#fff;padding:0 14px;font:14px system-ui;outline:none}.nonstop-search:focus{border-color:rgba(255,255,255,.35);box-shadow:0 0 0 2px rgba(214,176,111,.12)}
-      .nonstop-player{display:none;padding:16px 20px 18px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025)}.nonstop-player.open{display:block}.nonstop-player-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}.nonstop-player-copy{min-width:0;flex:1}.nonstop-player-copy strong{display:block;font:650 16px/1.3 system-ui}.nonstop-player-copy span{display:block;margin-top:3px;color:rgba(255,255,255,.6);font:13px/1.35 system-ui}.nonstop-player-frame{display:block;width:100%;aspect-ratio:16/9;min-width:200px;min-height:200px;border:0;border-radius:18px;background:#000}.nonstop-player-hide{border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;padding:8px 12px;cursor:pointer}.nonstop-player-hide:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:2px}
-      .nonstop-chapters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:12px;max-height:190px;overflow:auto}.nonstop-chapter{display:flex;gap:9px;align-items:center;min-width:0;border:1px solid rgba(255,255,255,.09);border-radius:11px;background:rgba(255,255,255,.035);color:#fff;padding:9px 10px;text-align:left;cursor:pointer}.nonstop-chapter:hover{background:rgba(255,255,255,.09)}.nonstop-chapter:focus-visible{outline:2px solid var(--accent,#d6b06f);outline-offset:1px}.nonstop-chapter-time{flex:0 0 auto;color:rgba(255,255,255,.48);font:12px/1 system-ui;font-variant-numeric:tabular-nums}.nonstop-chapter-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:12px/1.25 system-ui}
-      .nonstop-list{overflow:auto;overscroll-behavior:contain;padding:14px 20px 22px;display:grid;gap:9px}.nonstop-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 15px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.03)}.nonstop-card-main{min-width:0}.nonstop-card-title{display:block;font:650 14px/1.3 system-ui}.nonstop-card-meta{display:block;margin-top:4px;color:rgba(255,255,255,.58);font:12px/1.4 system-ui}.nonstop-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.nonstop-badge{padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.065);color:rgba(255,255,255,.68);font:11px/1 system-ui}.nonstop-badge.external{background:rgba(255,190,90,.11);color:rgba(255,221,170,.9)}.nonstop-play{min-height:39px;border:0;border-radius:999px;padding:0 14px;background:var(--accent,#d6b06f);color:#10111a;font:700 12px system-ui;cursor:pointer;white-space:nowrap}.nonstop-play:focus-visible,.nonstop-retry:focus-visible{outline:2px solid #fff;outline-offset:2px}.nonstop-play[disabled]{opacity:.45;cursor:not-allowed}
-      .nonstop-empty{padding:32px 10px;text-align:center;color:rgba(255,255,255,.6);font:14px/1.45 system-ui}.nonstop-empty strong{display:block;margin-bottom:5px;color:#fff;font-size:15px}.nonstop-retry{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin-top:14px;padding:0 14px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.08);color:#fff;font:650 12px system-ui;cursor:pointer}
-      @media(max-width:720px){.browse-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.nonstop-overlay{padding:0;align-items:flex-end}.nonstop-panel{max-height:92dvh;border-radius:25px 25px 0 0;padding-bottom:env(safe-area-inset-bottom)}.nonstop-head{padding:16px}.nonstop-search-wrap,.nonstop-player,.nonstop-list{padding-left:16px;padding-right:16px}.nonstop-card{grid-template-columns:1fr}.nonstop-play{width:100%}.nonstop-chapters{grid-template-columns:1fr}}
-      @media(prefers-reduced-motion:reduce){.nonstop-overlay *{scroll-behavior:auto!important}}
+      #nonstopButton{display:inline-flex;align-items:center;gap:6px}
+      .app[data-play-mode="nonstop"] #nonstopButton{color:var(--ivory)}
+      .app[data-play-mode="nonstop"] #nonstopButton::after{background:color-mix(in srgb,var(--accent) 70%,var(--ivory))}
+      .app[data-play-mode="nonstop"] #nonstopButton::before{background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 48%,transparent)}
+      .app[data-play-mode="nonstop"] .mobile-heart{visibility:hidden;pointer-events:none}
+
+      .player-shell{grid-template-rows:minmax(0,1fr) auto auto auto minmax(22px,5vh) auto auto minmax(8px,.42fr)!important}
+      #genreStrip{grid-row:6!important;align-self:end;margin-top:0!important;padding-top:8px!important}
+      #browseActions{grid-row:7!important;align-self:start!important;margin-top:clamp(2px,.7vh,9px)!important}
+      #browseActions .browse-button{margin-top:0!important}
+
+      @media(max-width:700px){
+        .player-shell{grid-template-rows:minmax(92px,.92fr) auto auto auto minmax(10px,2.4vh) auto auto minmax(2px,.13fr)!important}
+        #genreStrip{grid-row:6!important;padding-top:6px!important;padding-bottom:3px!important;align-self:end!important}
+        .app #browseActions{grid-row:7!important;width:auto!important;display:flex!important;align-self:start!important;justify-content:center!important;gap:0!important;margin-top:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+        .app #browseActions .browse-button{flex:0 0 auto!important;min-height:40px!important;padding:0 13px!important;border:1px solid rgba(246,236,215,.11)!important;border-radius:999px!important;background:rgba(8,10,18,.20)!important;box-shadow:0 8px 26px rgba(0,0,0,.10)!important;font-size:14px!important}
+        .app #browseActions .browse-button span{padding:0!important;border:0!important}
+        .app #browseActions .browse-button svg{width:15px!important;height:15px!important}
+      }
+
+      @media(max-width:390px){
+        .player-shell{grid-template-rows:minmax(86px,.86fr) auto auto auto 8px auto auto 2px!important}
+        #genreStrip{gap:24px!important;padding-top:4px!important}
+        .app #browseActions .browse-button{min-height:38px!important;padding-inline:11px!important;font-size:13px!important}
+      }
+
+      @media(max-height:620px) and (orientation:landscape){
+        .player-shell{grid-template-rows:minmax(0,.55fr) auto auto auto 4px auto auto 0!important}
+        #genreStrip{padding-top:2px!important}
+        #browseActions{position:static!important;margin-top:0!important}
+      }
     `;
     document.head.append(style);
   }
 
-  function ensureUi() {
-    injectStyles();
-    if (!$('nonstopButton')) {
-      const actions = $('browseActions');
-      if (actions) {
-        const button = document.createElement('button');
-        button.id = 'nonstopButton';
-        button.type = 'button';
-        button.className = 'browse-button nonstop-browser-button';
-        button.innerHTML = '<span class="infinity" aria-hidden="true">∞</span><span>Nonstop Garba</span>';
-        button.setAttribute('aria-haspopup', 'dialog');
-        button.setAttribute('aria-controls', 'nonstopOverlay');
-        button.setAttribute('aria-expanded', 'false');
-        button.addEventListener('click', openBrowser);
-        actions.append(button);
-      }
-    }
-
-    if (state.overlay) return state.overlay;
-    const overlay = document.createElement('div');
-    overlay.id = 'nonstopOverlay';
-    overlay.className = 'nonstop-overlay';
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.innerHTML = `
-      <section class="nonstop-panel" role="dialog" aria-modal="true" aria-labelledby="nonstopTitle" aria-describedby="nonstopSummary">
-        <header class="nonstop-head"><div class="nonstop-head-copy"><h2 id="nonstopTitle">Nonstop Garba</h2><span class="nonstop-summary" id="nonstopSummary">Open to load verified live and nonstop sets.</span></div><button class="nonstop-close" type="button" aria-label="Close nonstop Garba">×</button></header>
-        <div class="nonstop-search-wrap"><input class="nonstop-search" id="nonstopSearch" type="search" placeholder="Search artist, year or nonstop set" aria-label="Search nonstop Garba" autocomplete="off" enterkeyhint="search" /></div>
-        <section class="nonstop-player" id="nonstopPlayer" aria-live="polite"></section>
-        <div class="nonstop-list" id="nonstopList" role="list" aria-label="Nonstop Garba sets"></div>
-      </section>`;
-    document.body.append(overlay);
-
-    state.overlay = overlay;
-    state.panel = overlay.querySelector('.nonstop-panel');
-    state.player = $('nonstopPlayer');
-    state.list = $('nonstopList');
-    state.search = $('nonstopSearch');
-    state.summary = $('nonstopSummary');
-
-    overlay.querySelector('.nonstop-close')?.addEventListener('click', closeBrowser);
-    overlay.addEventListener('click', (event) => { if (event.target === overlay) closeBrowser(); });
-    state.search?.addEventListener('input', renderList);
-    return overlay;
+  function syncButton() {
+    const button = $('nonstopButton');
+    if (!button) return;
+    const active = Boolean(state.activeSet);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-current', active ? 'true' : 'false');
+    button.setAttribute('aria-pressed', String(active));
+    button.title = active ? `Nonstop Garba · ${state.activeSet.title}` : 'Play Nonstop Garba';
   }
 
-  function setSummary(count) {
-    if (!state.summary) return;
-    const chaptered = state.sets.filter((set) => set.segments.length).length;
-    state.summary.textContent = `${count} of ${state.sets.length} verified sets · ${chaptered} chaptered`;
-  }
-
-  function renderMessage(title, body, { retry = false } = {}) {
-    if (!state.list) return;
-    state.list.replaceChildren();
-    const empty = document.createElement('div');
-    empty.className = 'nonstop-empty';
-    const strong = document.createElement('strong');
-    strong.textContent = title;
-    const copy = document.createElement('span');
-    copy.textContent = body;
-    empty.append(strong, copy);
-    if (retry) {
-      const button = document.createElement('button');
+  function ensureButton() {
+    const strip = $('genreStrip');
+    if (!strip) return null;
+    let button = $('nonstopButton');
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'nonstopButton';
       button.type = 'button';
-      button.className = 'nonstop-retry';
-      button.textContent = 'Retry';
-      button.addEventListener('click', () => hydrateBrowser(true));
-      empty.append(button);
+      button.className = 'genre-button nonstop-mode-button';
+      button.textContent = 'Nonstop';
+      button.dataset.nonstop = 'true';
+      button.setAttribute('aria-label', 'Play Nonstop Garba');
+      button.setAttribute('aria-pressed', 'false');
+      button.addEventListener('click', () => startNonstop());
+      strip.insertBefore(button, strip.firstElementChild);
+    } else if (button.parentElement !== strip || strip.firstElementChild !== button) {
+      strip.insertBefore(button, strip.firstElementChild);
     }
-    state.list.append(empty);
+    syncButton();
+    return button;
   }
 
-  function renderList() {
-    ensureUi();
-    if (!state.list) return;
-    if (!state.ready) {
-      renderMessage(
-        state.loadFailed ? 'Could not load Nonstop Garba' : 'Loading Nonstop Garba…',
-        state.loadFailed
-          ? (navigator.onLine ? 'The set catalogue is temporarily unavailable.' : 'You are offline and this set catalogue has not been cached yet.')
-          : 'Fetching verified live sets and timestamped chapters.',
-        { retry: state.loadFailed },
-      );
-      if (state.summary) state.summary.textContent = state.loadFailed ? 'Set catalogue unavailable' : 'Loading verified sets…';
-      return;
-    }
-
-    const q = normalise(state.search?.value || '');
-    const terms = q.split(/\s+/).filter(Boolean);
-    const visible = state.sets.filter((set) => {
-      if (!terms.length) return true;
-      const chapterText = set.segments.map((segment) => segment.title).join(' ');
-      const haystack = normalise([set.title, set.artistsText, set.year, set.setType, set.sourceType, chapterText].join(' '));
-      return terms.every((term) => haystack.includes(term));
-    });
-
-    setSummary(visible.length);
-    state.list.replaceChildren();
-    if (!visible.length) {
-      renderMessage('No matching set', 'Try an artist, year, set title, or a song contained in a timestamped chapter.');
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    for (const set of visible) {
-      const card = document.createElement('article');
-      card.className = 'nonstop-card';
-      card.setAttribute('role', 'listitem');
-      const main = document.createElement('div');
-      main.className = 'nonstop-card-main';
-      const title = document.createElement('strong');
-      title.className = 'nonstop-card-title';
-      title.textContent = set.title;
-      const meta = document.createElement('span');
-      meta.className = 'nonstop-card-meta';
-      const minutes = set.durationSeconds ? `${Math.round(set.durationSeconds / 60)} min` : null;
-      meta.textContent = [set.artistsText, set.year, minutes].filter(Boolean).join(' · ');
-      const badges = document.createElement('div');
-      badges.className = 'nonstop-badges';
-      const sourceBadge = document.createElement('span');
-      sourceBadge.className = 'nonstop-badge';
-      sourceBadge.textContent = String(set.sourceType || 'verified source').replaceAll('-', ' ');
-      badges.append(sourceBadge);
-      if (set.segments.length) {
-        const chapterBadge = document.createElement('span');
-        chapterBadge.className = 'nonstop-badge';
-        chapterBadge.textContent = `${set.segments.length} chapters`;
-        badges.append(chapterBadge);
-      }
-      if (!set.embeddable && set.provider === 'youtube') {
-        const external = document.createElement('span');
-        external.className = 'nonstop-badge external';
-        external.textContent = 'YouTube watch page';
-        badges.append(external);
-      }
-      main.append(title, meta, badges);
-
-      const play = document.createElement('button');
-      play.type = 'button';
-      play.className = 'nonstop-play';
-      play.textContent = set.provider === 'youtube' && set.embeddable ? 'Play nonstop' : 'Open source';
-      play.disabled = !set.sourceUrl && !(set.provider === 'youtube' && set.videoId);
-      play.setAttribute('aria-label', `${play.textContent}: ${set.title}`);
-      play.addEventListener('click', () => playSet(set));
-      card.append(main, play);
-      fragment.append(card);
-    }
-    state.list.append(fragment);
+  function watchGenreStrip() {
+    const strip = $('genreStrip');
+    if (!strip || state.buttonObserver) return;
+    state.buttonObserver = new MutationObserver(() => queueMicrotask(ensureButton));
+    state.buttonObserver.observe(strip, { childList: true });
   }
 
-  function embedUrl(set, startSeconds = 0) {
-    return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(set.videoId)}?autoplay=1&playsinline=1&rel=0&start=${Math.max(0, Number(startSeconds) || 0)}`;
-  }
+  function setMetadata(set) {
+    if (!state.activeSet || state.activeSet.id !== set.id) return;
+    const app = $('app');
+    const eyebrow = $('genreEyebrow');
+    const title = $('songTitle');
+    const artist = $('songArtist');
+    const duration = $('durationTime');
+    const miniTitle = $('miniTitle');
+    const miniArtist = $('miniArtist');
 
-  function destroyPlayer() {
-    if (!state.player) return;
-    state.player.classList.remove('open');
-    state.player.replaceChildren();
-  }
+    app?.setAttribute('data-play-mode', 'nonstop');
+    if (eyebrow && eyebrow.textContent !== 'Nonstop Garba') eyebrow.textContent = 'Nonstop Garba';
+    if (title && title.textContent !== set.title) title.textContent = set.title;
+    if (artist && artist.textContent !== set.artistsText) artist.textContent = set.artistsText;
+    if (miniTitle && miniTitle.textContent !== set.title) miniTitle.textContent = set.title;
+    if (miniArtist && miniArtist.textContent !== set.artistsText) miniArtist.textContent = set.artistsText;
+    if (duration && set.durationSeconds > 0 && (duration.textContent === '--:--' || duration.textContent === '0:00')) duration.textContent = formatTime(set.durationSeconds);
 
-  function stopMainPlayback() {
-    try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* main player may not be initialised */ }
-    document.querySelector('#providerStage.open[aria-hidden="false"] #providerDockStop')?.click();
-    const audio = $('audio');
-    if (audio && !audio.paused) audio.pause();
-  }
-
-  function playSet(set, startSeconds = 0) {
-    if (!navigator.onLine) {
-      announce('You are offline. Nonstop playback needs an internet connection.');
-      return;
-    }
-
-    stopMainPlayback();
-
-    if (set.provider !== 'youtube' || !set.videoId || !set.embeddable) {
-      if (!set.sourceUrl) {
-        announce('This set does not have an actionable source yet.');
-        return;
-      }
-      const opened = window.open(set.sourceUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) location.href = set.sourceUrl;
-      return;
-    }
-
-    const player = state.player;
-    if (!player) return;
-    player.classList.add('open');
-    player.replaceChildren();
-    const top = document.createElement('div');
-    top.className = 'nonstop-player-top';
-    const copy = document.createElement('div');
-    copy.className = 'nonstop-player-copy';
-    const strong = document.createElement('strong');
-    strong.textContent = set.title;
-    const detail = document.createElement('span');
-    detail.textContent = [set.artistsText, set.year, set.segments.length ? `${set.segments.length} chapters` : null].filter(Boolean).join(' · ');
-    copy.append(strong, detail);
-    const hide = document.createElement('button');
-    hide.type = 'button';
-    hide.className = 'nonstop-player-hide';
-    hide.textContent = 'Hide player';
-    hide.addEventListener('click', () => {
-      destroyPlayer();
-      state.search?.focus({ preventScroll: true });
-    });
-    top.append(copy, hide);
-
-    const iframe = document.createElement('iframe');
-    iframe.className = 'nonstop-player-frame';
-    iframe.title = `${set.title} playback`;
-    iframe.src = embedUrl(set, startSeconds);
-    iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    iframe.allowFullscreen = true;
-    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    player.append(top, iframe);
-
-    if (set.segments.length) {
-      const chapters = document.createElement('div');
-      chapters.className = 'nonstop-chapters';
-      chapters.setAttribute('aria-label', 'Jump to chapter');
-      for (const segment of set.segments) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'nonstop-chapter';
-        const time = document.createElement('span');
-        time.className = 'nonstop-chapter-time';
-        time.textContent = formatTime(Number(segment.startSeconds) || 0);
-        const label = document.createElement('span');
-        label.className = 'nonstop-chapter-title';
-        label.textContent = segment.title;
-        button.setAttribute('aria-label', `${formatTime(Number(segment.startSeconds) || 0)} · ${segment.title}`);
-        button.append(time, label);
-        button.addEventListener('click', () => playSet(set, Number(segment.startSeconds) || 0));
-        chapters.append(button);
-      }
-      player.append(chapters);
-    }
-
-    player.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  }
-
-  function focusableElements() {
-    if (!state.overlay) return [];
-    return [...state.overlay.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-      .filter((element) => element.getClientRects().length > 0);
-  }
-
-  function trapFocus(event) {
-    if (event.key !== 'Tab' || !state.overlay?.classList.contains('open')) return;
-    const focusable = focusableElements();
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  async function hydrateBrowser(retry = false) {
-    renderList();
     try {
-      await loadSetsOnce({ retry });
+      if ('mediaSession' in navigator && 'MediaMetadata' in window) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: set.title,
+          artist: set.artistsText,
+          album: 'Nonstop Garba',
+          artwork: [{ src: 'assets/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        });
+      }
     } catch {
-      // renderList below exposes retry and offline-aware messaging.
+      // Media Session metadata is optional.
     }
-    renderList();
+    syncButton();
   }
 
-  function openBrowser() {
-    ensureUi();
-    if (!state.overlay) return;
-    stopMainPlayback();
-    state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : $('nonstopButton');
-    state.overlay.classList.add('open');
-    state.overlay.setAttribute('aria-hidden', 'false');
-    $('nonstopButton')?.setAttribute('aria-expanded', 'true');
-    if ($('app')) $('app').inert = true;
-    document.body.style.overflow = 'hidden';
-    hydrateBrowser(false);
-    setTimeout(() => state.search?.focus({ preventScroll: true }), 60);
+  function watchMetadata() {
+    const title = $('songTitle');
+    if (!title || state.metadataObserver) return;
+    state.metadataObserver = new MutationObserver(() => {
+      if (state.activeSet) queueMicrotask(() => setMetadata(state.activeSet));
+    });
+    state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });
   }
 
-  function closeBrowser() {
-    if (!state.overlay?.classList.contains('open')) return;
-    destroyPlayer();
-    state.overlay.classList.remove('open');
-    state.overlay.setAttribute('aria-hidden', 'true');
-    $('nonstopButton')?.setAttribute('aria-expanded', 'false');
-    if ($('app')) $('app').inert = false;
-    document.body.style.overflow = '';
-    const target = state.returnFocus;
-    state.returnFocus = null;
-    queueMicrotask(() => target?.focus?.({ preventScroll: true }));
+  function urlWithoutNonstop() {
+    const url = new URL(location.href);
+    url.searchParams.delete('nonstop');
+    return `${url.pathname}${url.search ? url.search : ''}${url.hash}`;
   }
 
-  function handleKeydown(event) {
-    if (!state.overlay?.classList.contains('open')) return;
-    if (event.key === 'Escape') {
+  function capturePreviousSession(songs) {
+    const params = new URLSearchParams(location.search);
+    const songId = params.get('song');
+    const song = songs.find((entry) => entry.id === songId)
+      || songs.find((entry) => entry.title === $('songTitle')?.textContent && entry.artist === $('songArtist')?.textContent)
+      || null;
+    const audio = $('audio');
+    return {
+      url: urlWithoutNonstop(),
+      song,
+      audioTime: Number(audio?.currentTime || 0),
+      hadAudioSource: Boolean(audio?.getAttribute('src')),
+      appGenre: $('app')?.dataset.genre || song?.genre || 'traditional',
+      eyebrow: $('genreEyebrow')?.textContent || '',
+      title: song?.title || $('songTitle')?.textContent || '',
+      artist: song?.artist || $('songArtist')?.textContent || '',
+      duration: $('durationTime')?.textContent || '--:--',
+      miniTitle: song?.title || $('miniTitle')?.textContent || '',
+      miniArtist: song?.artist || $('miniArtist')?.textContent || '',
+    };
+  }
+
+  function restorePreviousSession(previous) {
+    if (!previous) return;
+    history.replaceState(history.state, '', previous.url);
+    const app = $('app');
+    if (app) app.dataset.genre = previous.appGenre;
+    if ($('genreEyebrow')) $('genreEyebrow').textContent = previous.eyebrow;
+    if ($('songTitle')) $('songTitle').textContent = previous.title;
+    if ($('songArtist')) $('songArtist').textContent = previous.artist;
+    if ($('durationTime')) $('durationTime').textContent = previous.duration;
+    if ($('miniTitle')) $('miniTitle').textContent = previous.miniTitle;
+    if ($('miniArtist')) $('miniArtist').textContent = previous.miniArtist;
+
+    const audio = $('audio');
+    if (audio) {
+      audio.removeAttribute('src');
+      try { audio.load(); } catch { /* no-op */ }
+      if (previous.hadAudioSource && previous.song?.audioUrl) {
+        audio.src = previous.song.audioUrl;
+        try { audio.load(); } catch { /* no-op */ }
+        if (previous.audioTime > 0) {
+          const restoreTime = () => {
+            try { audio.currentTime = previous.audioTime; } catch { /* no-op */ }
+            audio.removeEventListener('loadedmetadata', restoreTime);
+          };
+          audio.addEventListener('loadedmetadata', restoreTime);
+        }
+      }
+    }
+
+    try {
+      if (previous.song && 'mediaSession' in navigator && 'MediaMetadata' in window) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: previous.song.title,
+          artist: previous.song.artist,
+          album: previous.eyebrow || 'GARBA',
+          artwork: [{ src: 'assets/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        });
+      }
+    } catch {
+      // Media Session metadata is optional.
+    }
+  }
+
+  function setUrlForNonstop(set, anchor) {
+    const url = new URL(location.href);
+    url.searchParams.set('genre', anchor.genre || 'traditional');
+    url.searchParams.set('song', anchor.id);
+    url.searchParams.set('nonstop', set.id);
+    url.searchParams.delete('browse');
+    url.searchParams.delete('source');
+    history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+  }
+
+  function stopNativeAudio() {
+    const audio = $('audio');
+    if (!audio) return;
+    try { audio.pause(); } catch { /* no-op */ }
+    audio.removeAttribute('src');
+    try { audio.load(); } catch { /* no-op */ }
+  }
+
+  function markDock() {
+    const dock = $('youtubeStage');
+    dock?.classList.toggle('is-nonstop', Boolean(state.activeSet));
+  }
+
+  async function startNonstop(requestedSetId = null, { quiet = false } = {}) {
+    if (!navigator.onLine) {
+      announce('Nonstop Garba needs an internet connection for playback.');
+      return false;
+    }
+
+    const button = ensureButton();
+    button?.setAttribute('aria-busy', 'true');
+    if (!quiet) announce('Starting Nonstop Garba…');
+
+    try {
+      if (!state.loading) {
+        state.loading = Promise.all([findSet(requestedSetId), loadSongs()]).finally(() => { state.loading = null; });
+      }
+      const [set, songs] = await state.loading;
+      if (!set) throw new Error('Requested nonstop set unavailable');
+      const anchor = findAnchorSong(set, songs);
+      if (!anchor) throw new Error('No controllable PlayGarba anchor for this nonstop set');
+      if (!window.GARBA_YOUTUBE_PLAYER?.open) throw new Error('PlayGarba YouTube engine unavailable');
+
+      if (state.activeSet?.id === set.id && state.activeTrack?.id === anchor.id) {
+        setMetadata(set);
+        markDock();
+        if (!window.GARBA_YOUTUBE_PLAYER.playing) window.GARBA_YOUTUBE_PLAYER.toggle(state.activeTrack);
+        return true;
+      }
+
+      if (!state.activeSet) state.previousSession = capturePreviousSession(songs);
+      stopNativeAudio();
+      state.activeSet = set;
+      state.activeTrack = {
+        ...anchor,
+        id: anchor.id,
+        title: set.title,
+        artist: set.artistsText,
+        youtubeId: set.videoId,
+        youtubeStartSeconds: 0,
+        durationSeconds: 0,
+        playbackProvider: 'youtube',
+        playbackSourceUrl: set.sourceUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(set.videoId)}`,
+        playbackSourceType: set.sourceType,
+      };
+
+      setUrlForNonstop(set, anchor);
+      setMetadata(set);
+      syncButton();
+
+      const opened = await window.GARBA_YOUTUBE_PLAYER.open(state.activeTrack, { autoplay: true, resume: false });
+      markDock();
+      if (!opened) throw new Error('Nonstop player could not open');
+      setMetadata(set);
+      if (!quiet) announce(`Playing ${set.title}`);
+      return true;
+    } catch (error) {
+      console.warn('PlayGarba nonstop playback failed', error);
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
+      announce('Nonstop Garba could not start in the player. Try again when online.');
+      return false;
+    } finally {
+      button?.removeAttribute('aria-busy');
+    }
+  }
+
+  function deactivateNonstop({ closePlayer = true, restoreSession = true } = {}) {
+    if (!state.activeSet && !new URL(location.href).searchParams.has('nonstop')) return;
+    const previous = state.previousSession;
+    state.activeSet = null;
+    state.activeTrack = null;
+    state.previousSession = null;
+    $('app')?.removeAttribute('data-play-mode');
+    if (closePlayer) {
+      try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* player may already be closed */ }
+    }
+    markDock();
+    if (restoreSession && previous) restorePreviousSession(previous);
+    else if (restoreSession) history.replaceState(history.state, '', urlWithoutNonstop());
+    syncButton();
+  }
+
+  function captureMainNavigation(event) {
+    if (!state.activeSet) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    if (target.closest('#nonstopButton')) return;
+
+    if (target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')) {
       event.preventDefault();
-      event.stopPropagation();
-      closeBrowser();
+      event.stopImmediatePropagation();
+      announce('Nonstop Garba plays continuously. Choose another style to leave Nonstop.');
       return;
     }
-    trapFocus(event);
+
+    if (target.closest('#genreStrip .genre-button, .song-copy')) {
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
+    }
+  }
+
+  function captureSeek(event) {
+    if (!state.activeSet) return;
+    event.stopImmediatePropagation();
+  }
+
+  function restoreFromUrl() {
+    const id = new URL(location.href).searchParams.get('nonstop');
+    if (id) startNonstop(id, { quiet: true });
+  }
+
+  function warmNonstop() {
+    const warm = () => Promise.all([findSet(), loadSongs()]).catch(() => null);
+    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
+    else setTimeout(warm, 1800);
   }
 
   function init() {
-    ensureUi();
-    document.addEventListener('keydown', handleKeydown, true);
+    injectStyles();
+    ensureButton();
+    watchGenreStrip();
+    watchMetadata();
+
+    document.addEventListener('click', captureMainNavigation, { capture: true });
+    $('progress')?.addEventListener('input', captureSeek, { capture: true });
+
     window.addEventListener('offline', () => {
-      if (state.overlay?.classList.contains('open')) {
-        destroyPlayer();
-        announce('Offline. Nonstop provider playback is unavailable.');
-        if (!state.ready) renderList();
-      }
+      if (!state.activeSet) return;
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
+      announce('Offline. Nonstop Garba playback stopped.');
     });
-    window.addEventListener('online', () => {
-      if (state.overlay?.classList.contains('open') && state.loadFailed) hydrateBrowser(true);
+    window.addEventListener('popstate', () => {
+      const id = new URL(location.href).searchParams.get('nonstop');
+      if (id && !state.activeSet) startNonstop(id, { quiet: true });
+      else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: false });
     });
+
+    warmNonstop();
+    restoreFromUrl();
   }
+
+  window.GARBA_NONSTOP = {
+    play: startNonstop,
+    stop: () => deactivateNonstop({ closePlayer: true, restoreSession: true }),
+    get activeSetId() { return state.activeSet?.id || null; },
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
+})();
+
+(() => {
+  function nonstopActive() {
+    return Boolean(window.GARBA_NONSTOP?.activeSetId);
+  }
+
+  function announceContinuous() {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = 'Nonstop Garba plays continuously. Choose another style to leave Nonstop.';
+    toast.classList.add('show');
+    clearTimeout(announceContinuous.timer);
+    announceContinuous.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (!nonstopActive()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+    const key = String(event.key || '').toLowerCase();
+    if (event.code === 'ArrowLeft' || event.code === 'ArrowRight' || key === 'f') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      announceContinuous();
+    }
+  }, { capture: true });
+
+  document.addEventListener('click', (event) => {
+    if (!nonstopActive()) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target?.closest('#youtubeDockStop')) return;
+    queueMicrotask(() => window.GARBA_NONSTOP?.stop?.());
+  }, { capture: true });
+
+  document.addEventListener('keyup', (event) => {
+    if (event.key !== 'Escape' || !nonstopActive()) return;
+    if (window.GARBA_YOUTUBE_PLAYER?.activeSongId) return;
+    window.GARBA_NONSTOP?.stop?.();
+  }, { capture: true });
 })();
