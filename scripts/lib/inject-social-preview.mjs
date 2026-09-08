@@ -12,7 +12,7 @@ if (!target) {
 const social = {
   title: 'PlayGarba.com · All the Garba in the world',
   description: 'Gujarati Garba music, Raas and nonstop sets on PlayGarba.',
-  image: 'https://playgarba.com/assets/social/garba-og-card.png',
+  image: 'https://playgarba.com/assets/social/garba-og-card.png?v=20260908-2',
   alt: 'PlayGarba.com. All the Garba in the world.',
 };
 
