@@ -10,12 +10,31 @@ const baseUrl = 'https://playgarba.com';
 const socialImage = `${baseUrl}/assets/backgrounds/library/15-traditional-canopy-courtyard.webp`;
 
 const readJson = async (file) => JSON.parse(await readFile(path.join(root, file), 'utf8'));
-const [songs, releases] = await Promise.all([
+const [songs, releaseRows] = await Promise.all([
   readJson('data/songs.json'),
   readJson('data/releases.json'),
 ]);
 
+const identity = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('en');
+const releaseRowsById = new Map();
+const conflictingReleaseIds = [];
+for (const release of releaseRows) {
+  const existing = releaseRowsById.get(release.id);
+  if (!existing) {
+    releaseRowsById.set(release.id, release);
+    continue;
+  }
+  if (identity(existing.title) !== identity(release.title) || identity(existing.artist) !== identity(release.artist)) {
+    conflictingReleaseIds.push({ id: release.id, first: `${existing.title} — ${existing.artist}`, duplicate: `${release.title} — ${release.artist}` });
+  }
+}
+if (conflictingReleaseIds.length) {
+  throw new Error(`Conflicting duplicate release IDs: ${conflictingReleaseIds.map((item) => `${item.id} (${item.first} <> ${item.duplicate})`).join('; ')}`);
+}
+const releases = [...releaseRowsById.values()];
+const duplicateReleaseRowCount = releaseRows.length - releases.length;
 const releaseById = new Map(releases.map((release) => [release.id, release]));
+
 const songsByRelease = new Map();
 for (const song of songs) {
   const list = songsByRelease.get(song.releaseId) || [];
@@ -50,6 +69,8 @@ function buildSlugMap(items) {
     let slug = baseSlug(item.id);
     const prior = claimed.get(slug);
     if (prior && prior !== item.id) slug = `${slug}-${hash(item.id)}`;
+    const secondaryPrior = claimed.get(slug);
+    if (secondaryPrior && secondaryPrior !== item.id) throw new Error(`SEO slug collision: ${item.id} and ${secondaryPrior} both resolve to ${slug}`);
     claimed.set(slug, item.id);
     result.set(item.id, slug);
   }
@@ -64,7 +85,7 @@ if (unknownReleaseSongs.length) {
 }
 if (new Set(songSlug.values()).size !== songs.length) throw new Error('Song SEO route collision detected');
 if (new Set(releaseSlug.values()).size !== releases.length) throw new Error('Release SEO route collision detected');
-if (songs.length < 1000 || releases.length < 100) throw new Error(`Catalogue unexpectedly small: ${songs.length} songs, ${releases.length} releases`);
+if (songs.length < 1000 || releases.length < 100) throw new Error(`Catalogue unexpectedly small: ${songs.length} songs, ${releases.length} canonical releases`);
 
 const durationLabel = (seconds) => {
   const total = Number(seconds);
@@ -225,7 +246,8 @@ const urls = [
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((url) => `  <url><loc>${escapeXml(url)}</loc></url>`).join('\n')}\n</urlset>\n`;
 
 if (checkOnly) {
-  console.log(`✓ static catalogue generator validated ${songs.length} songs, ${releases.length} releases and ${urls.length} canonical URLs`);
+  const duplicateNote = duplicateReleaseRowCount ? `; ${duplicateReleaseRowCount} duplicate release row${duplicateReleaseRowCount === 1 ? '' : 's'} canonicalized by ID` : '';
+  console.log(`✓ static catalogue generator validated ${songs.length} songs, ${releases.length} canonical releases and ${urls.length} canonical URLs${duplicateNote}`);
   process.exit(0);
 }
 
@@ -243,4 +265,4 @@ await writeBatches(releases.map((release) => ({ directory: path.join(outputDir, 
 await mkdir(path.join(outputDir, 'catalogue'), { recursive: true });
 await writeFile(path.join(outputDir, 'catalogue', 'index.html'), cataloguePage());
 await writeFile(path.join(outputDir, 'sitemap.xml'), sitemap);
-console.log(`Generated ${songs.length} song pages, ${releases.length} release pages, catalogue index and ${urls.length}-URL sitemap in ${path.relative(root, outputDir) || '.'}.`);
+console.log(`Generated ${songs.length} song pages, ${releases.length} release pages, catalogue index and ${urls.length}-URL sitemap in ${path.relative(root, outputDir) || '.'}${duplicateReleaseRowCount ? `; canonicalized ${duplicateReleaseRowCount} duplicate release row${duplicateReleaseRowCount === 1 ? '' : 's'}` : ''}.`);
