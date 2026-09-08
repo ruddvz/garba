@@ -1,42 +1,38 @@
-:root {
-  --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
-}
-
-/* The six listening worlds use the current 2K live-player artwork. Approved photography is reserved for cultural/editorial storytelling. */
+/* Listening artwork stays consistent with the live player. Approved photography is reserved for cultural storytelling. */
 .hero-art {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
 }
 
 .world-traditional {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp");
 }
 
 .world-dandiya {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
 }
 
 .world-devotional {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp");
 }
 
 .world-folk {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp");
 }
 
 .world-sanedo {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp");
 }
 
 .world-fusion {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
 }
 
 .nonstop-art {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp");
 }
 
 .player-scene {
-  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
 }
 
 .page-hero {
