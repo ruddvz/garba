@@ -1,21 +1,22 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { loadDiscoverySets } from './load-discovery-sets.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
 const readJson = async (file) => JSON.parse(await read(file));
 
-const [genres, taxonomy, nonstop, index, playerRuntime, catalogueRuntime] = await Promise.all([
+const [genres, taxonomy, index, playerRuntime, catalogueRuntime] = await Promise.all([
   readJson('data/genres.json'),
   readJson('data/taxonomy.json'),
-  readJson('data/nonstop.json'),
   readJson('data/catalogue/index.json'),
   read('app.js'),
   read('src/catalogue/catalogue.js'),
 ]);
 const songParts = await Promise.all((index.songChunks || []).map(readJson));
 const songs = songParts.flat();
+const { sets: nonstop } = await loadDiscoverySets(root, index);
 
 let failed = false;
 const fail = (message) => {
@@ -67,14 +68,25 @@ for (const song of songs) {
   }
 }
 
+let discoveryGenreTags = 0;
+let discoveryStyleTags = 0;
+let discoveryCategoryTags = 0;
 for (const set of nonstop) {
   const setGenres = Array.isArray(set.genres) ? set.genres : [];
   for (const genre of setGenres) {
+    discoveryGenreTags += 1;
     if (!visualIds.has(genre)) fail(`Nonstop set ${set.id} mixes non-visual token ${JSON.stringify(genre)} into genres[]`);
   }
   const styles = Array.isArray(set.styles) ? set.styles : [];
   for (const style of styles) {
+    discoveryStyleTags += 1;
     if (!taxonomyById.has(style)) fail(`Nonstop set ${set.id} has unknown taxonomy style ${JSON.stringify(style)}`);
+  }
+  for (const category of Array.isArray(set.categories) ? set.categories : []) {
+    discoveryCategoryTags += 1;
+    if (!visualIds.has(category) && !taxonomyById.has(category)) {
+      fail(`Nonstop set ${set.id} has unknown discovery category ${JSON.stringify(category)}`);
+    }
   }
 }
 
@@ -89,5 +101,5 @@ if (failed) process.exit(1);
 console.log(`✓ ${visualIds.size} visual worlds and ${taxonomyById.size} music taxonomy categories have clean IDs and mappings`);
 console.log(`✓ ${songs.length} canonical songs have primary taxonomy categories aligned with their visual worlds`);
 console.log(`✓ ${secondaryTaxonomySongs} songs preserve ${secondaryTaxonomyTags} secondary taxonomy classifications without overloading the primary category`);
-console.log(`✓ ${nonstop.length} Nonstop entries keep genres[] visual-only; finer classifications live in styles[]`);
+console.log(`✓ ${nonstop.length} canonical discovery Nonstop sets keep ${discoveryGenreTags} genre tags, ${discoveryStyleTags} style tags, and ${discoveryCategoryTags} browse categories inside known visual/taxonomy IDs`);
 console.log('✓ main player and Explore search index secondary taxonomy styles');
