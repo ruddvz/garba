@@ -183,30 +183,87 @@
     ].filter(Boolean).join(' ').toLowerCase();
   }
 
-  function explicitCategories(set) {
-    return new Set((Array.isArray(set?.categories) ? set.categories : [])
-      .map((value) => String(value).toLowerCase().trim()));
+  const visualBrowseCategories = new Set(['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', 'fusion']);
+  const taxonomyVisualCategory = new Map([
+    ['roots-archive', 'folk'],
+    ['traditional-garba', 'traditional'],
+    ['tran-taali', 'traditional'],
+    ['be-taali', 'traditional'],
+    ['raas-dandiya', 'dandiya'],
+    ['dodhiyu', 'dandiya'],
+    ['hinch', 'dandiya'],
+    ['dakla', 'fusion'],
+    ['sanedo', 'sanedo'],
+    ['mataji-devotional', 'devotional'],
+    ['krishna-garba', 'devotional'],
+    ['folk-lokgeet', 'folk'],
+    ['live-garba', 'traditional'],
+    ['modern-gujarati-garba', 'traditional'],
+    ['hip-hop-garba', 'fusion'],
+    ['electronic-fusion', 'fusion'],
+    ['dj-remix', 'fusion'],
+    ['bollywood-filmi', 'dandiya'],
+    ['instrumental-cinematic', 'fusion'],
+  ]);
+
+  function structuredBrowseTokens(set) {
+    return new Set([
+      ...(Array.isArray(set?.genres) ? set.genres : []),
+      ...(Array.isArray(set?.categories) ? set.categories : []),
+      ...(Array.isArray(set?.styles) ? set.styles : []),
+    ].map((value) => String(value).toLowerCase().trim()).filter(Boolean));
+  }
+
+  function categoryFallbackText(set) {
+    return [
+      set.title,
+      set.series,
+      set.volume,
+      set.setType,
+      ...(Array.isArray(set.tags) ? set.tags : []),
+    ].filter(Boolean).join(' ').toLowerCase();
+  }
+
+  function addStructuredBrowseCategories(categories, structured) {
+    for (const token of structured) {
+      if (visualBrowseCategories.has(token)) categories.add(token);
+      const mappedVisual = taxonomyVisualCategory.get(token);
+      if (mappedVisual) categories.add(mappedVisual);
+      if (token === 'live' || token === 'live-garba') categories.add('live');
+    }
+  }
+
+  function addLegacyFallbackCategories(categories, text, setType) {
+    if (/\btraditional\b|tran[ -]?taali|trantaali|be[ -]?taali|2[ -]?taali|3[ -]?taali/.test(text)) categories.add('traditional');
+    if (/dandiya|dandia|\braas\b|ras utsav|dodhiyu|dodhiya|dodiyo|\bhinch\b|bollywood|filmi/.test(text)) categories.add('dandiya');
+    if (/devotional|mataji|ambaji|\bamba\b|khodal|khodiyar|mogal|meldi|bahuchar|chamunda|ashapura|krishna|kanudo|kanji|shyam|radha|gokul|dwarka|bhajan|aarti/.test(text)) categories.add('devotional');
+    if (/\bfolk\b|lok geet|lokgeet|kathiyawadi|santvani|heritage|archive|vintage/.test(text)) categories.add('folk');
+    if (/\bsanedo\b/.test(text)) categories.add('sanedo');
+    if (/dakla|\bdaak\b|hip[ -]?hop|hiphop|fusion|electronic|\btrap\b|\bdrill\b|\bdj\b|remix|instrumental|orchestral|cinematic/.test(text)) categories.add('fusion');
+    if (/live/.test(setType) || /\blive\b/.test(text)) categories.add('live');
   }
 
   function categoriesFor(set) {
-    const text = setSearchText(set);
-    const explicit = explicitCategories(set);
+    const structured = structuredBrowseTokens(set);
     const categories = new Set();
-    const series = String(set.series || '').toLowerCase();
+    const series = String(set.series || '').toLowerCase().trim();
+    const fallbackText = categoryFallbackText(set);
 
-    if (series === 'ramzat' || /\bramzat\b/.test(text)) categories.add('ramzat');
-    if (series === 'rangtaali' || /\brangtaali\b|\brang tali\b/.test(text)) categories.add('rangtaali');
-    if (series === 'taal' || /\btaal(?:\s|\d|\.|$)/.test(text)) categories.add('taal');
-    if (series === 'tahukar' || /\btahukar\b/.test(text)) categories.add('tahukar');
-    if (series === 'shakti' || /\bshakti\b/.test(text)) categories.add('shakti');
+    if (seriesCategories.has(series)) {
+      categories.add(series);
+    } else if (!series) {
+      if (/\bramzat\b/.test(fallbackText)) categories.add('ramzat');
+      if (/\brangtaali\b|\brang tali\b/.test(fallbackText)) categories.add('rangtaali');
+      if (/\btaal(?:\s|\d|\.|$)/.test(fallbackText)) categories.add('taal');
+      if (/\btahukar\b/.test(fallbackText)) categories.add('tahukar');
+      if (/\bshakti\b/.test(fallbackText)) categories.add('shakti');
+    }
 
-    if ([...explicit].some((value) => value === 'traditional' || value === 'traditional-garba') || /\btraditional\b/.test(text)) categories.add('traditional');
-    if ([...explicit].some((value) => /dandiya|raas|tran-taali|trantaali|2-taali|3-taali/.test(value)) || /dandiya|raas|ras utsav|tran[ -]?taali|trantaali|2[ -]?taali|3[ -]?taali/.test(text)) categories.add('dandiya');
-    if ([...explicit].some((value) => /devotional|mataji|dakla|aarti|bhajan/.test(value)) || /devotional|mataji|amba|maa |navdurga|dakla|bhajan|aarti/.test(text)) categories.add('devotional');
-    if ([...explicit].some((value) => /folk|lok|santvani/.test(value)) || /folk|lok geet|lokgeet|desi geet|santvani/.test(text)) categories.add('folk');
-    if ([...explicit].some((value) => /sanedo/.test(value)) || /\bsanedo\b/.test(text)) categories.add('sanedo');
-    if ([...explicit].some((value) => /fusion|modern|remix/.test(value)) || /fusion|edm|remix|riddim|modern/.test(text)) categories.add('fusion');
-    if (/live/.test(String(set.setType || '').toLowerCase()) || /\blive\b/.test(text)) categories.add('live');
+    if (structured.size > 0) {
+      addStructuredBrowseCategories(categories, structured);
+    } else {
+      addLegacyFallbackCategories(categories, fallbackText, String(set.setType || '').toLowerCase());
+    }
 
     if (!categories.size) categories.add('other');
     return categories;
