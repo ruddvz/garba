@@ -1,0 +1,35 @@
+name: Temporary Porkbun capability probe
+
+on:
+  push:
+    branches: [codex/prod-smoke-bebe]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      PB_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+      PB_SECRET_API_KEY: ${{ secrets.PORKBUN_SECRET_API_KEY }}
+      PB_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
+      PB_APIKEY: ${{ secrets.PORKBUN_APIKEY }}
+      PB_SECRETAPIKEY: ${{ secrets.PORKBUN_SECRETAPIKEY }}
+      PB_API_SECRET: ${{ secrets.PORKBUN_API_SECRET }}
+    steps:
+      - name: Check non-secret capability state
+        shell: bash
+        run: |
+          set -euo pipefail
+          present() { if [ -n "$1" ]; then printf 'present'; else printf 'missing'; fi; }
+          echo "PORKBUN_API_KEY=$(present "$PB_API_KEY")"
+          echo "PORKBUN_SECRET_API_KEY=$(present "$PB_SECRET_API_KEY")"
+          echo "PORKBUN_SECRET_KEY=$(present "$PB_SECRET_KEY")"
+          echo "PORKBUN_APIKEY=$(present "$PB_APIKEY")"
+          echo "PORKBUN_SECRETAPIKEY=$(present "$PB_SECRETAPIKEY")"
+          echo "PORKBUN_API_SECRET=$(present "$PB_API_SECRET")"
+
+          echo '=== Porkbun v3 relevant API paths ==='
+          curl -fsSL https://porkbun.com/api/json/v3/spec -o /tmp/porkbun-spec.json
+          jq -r '.paths | keys[] | select(test("dns|hosting|forward|ping"; "i"))' /tmp/porkbun-spec.json | head -120
