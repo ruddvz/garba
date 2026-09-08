@@ -27,6 +27,50 @@ function providerFromPlatform(platform = "") {
   return "external";
 }
 
+function providerFromSource(source = {}) {
+  const rawUrl = String(source.url || "").trim();
+  if (rawUrl) {
+    try {
+      const host = new URL(rawUrl).hostname.toLowerCase();
+      if (host === "open.spotify.com" || host.endsWith(".spotify.com")) return "spotify";
+      if (host === "youtu.be" || host === "youtube.com" || host.endsWith(".youtube.com")) return "youtube";
+      if (host === "music.apple.com" || host.endsWith(".music.apple.com")) return "apple-music";
+      if (host.startsWith("music.amazon.") || host.includes(".music.amazon.")) return "amazon-music";
+      if (host === "qobuz.com" || host.endsWith(".qobuz.com")) return "qobuz";
+      if (host === "bandcamp.com" || host.endsWith(".bandcamp.com")) return "bandcamp";
+      if (host === "soundcloud.com" || host.endsWith(".soundcloud.com")) return "soundcloud";
+      return "external";
+    } catch {
+      // Fall back to the platform label only when the URL itself cannot be parsed.
+    }
+  }
+  return providerFromPlatform(source.platform);
+}
+
+function sourceScope(provider, rawUrl = "") {
+  try {
+    const url = new URL(rawUrl);
+    const pathname = url.pathname.toLowerCase();
+    if (provider === "spotify") {
+      if (pathname.includes("/album/")) return "release";
+      if (pathname.includes("/track/")) return "track";
+    }
+    if (provider === "apple-music") {
+      if (pathname.includes("/song/") || url.searchParams.has("i")) return "track";
+      if (pathname.includes("/album/")) return "release";
+    }
+    if (provider === "amazon-music") {
+      if (pathname.includes("/tracks/")) return "track";
+      if (pathname.includes("/albums/")) return "release";
+    }
+    if (provider === "youtube") return "media";
+    if (/\/albums?\//.test(pathname)) return "release";
+  } catch {
+    return "unknown";
+  }
+  return "unknown";
+}
+
 function youtubeIdFromUrl(url = "") {
   try {
     const parsed = new URL(url);
@@ -38,11 +82,16 @@ function youtubeIdFromUrl(url = "") {
 
 function chooseReleaseSource(release) {
   const sources = Array.isArray(release?.sources) ? release.sources : [];
+  const songCount = Number(release?.songCount);
+  const isMultiSong = Number.isFinite(songCount) && songCount > 1;
+  const isSingleSong = songCount === 1;
   const scored = sources.map((source) => {
     const url = source.url || "";
-    let provider = providerFromPlatform(source.platform);
+    let provider = providerFromSource(source);
     const youtubeId = provider === "youtube" ? youtubeIdFromUrl(url) : null;
     if (provider === "youtube" && !youtubeId) provider = "external";
+    const scope = sourceScope(provider, url);
+    const kind = String(source.kind || "").toLowerCase();
     let score = 0;
     if (provider === "spotify") score += 60;
     if (provider === "youtube") score += 55;
@@ -50,8 +99,22 @@ function chooseReleaseSource(release) {
     if (provider === "amazon-music") score += 45;
     if (provider === "qobuz" || provider === "bandcamp") score += 40;
     if (String(source.kind || "").includes("official")) score += 8;
-    if (/\/track\//i.test(url) || /\/song\//i.test(url)) score += 12;
-    return { source, provider, score };
+
+    if (isMultiSong) {
+      // A release page is useful for every song on an album. One track URL is not.
+      // Prefer release-shaped sources and strongly demote track-shaped references.
+      if (scope === "release") score += 45;
+      if (scope === "track") score -= 45;
+      if (scope === "release" && (kind.includes("album") || kind.includes("catalogue"))) score += 8;
+      if (scope === "track" && kind.includes("track")) score -= 15;
+    } else if (isSingleSong) {
+      if (scope === "track") score += 20;
+      if (scope === "release") score += 10;
+    } else if (scope === "release") {
+      score += 15;
+    }
+
+    return { source, provider, scope, score };
   }).filter((entry) => entry.source?.url);
   scored.sort((a, b) => b.score - a.score);
   return scored[0] || null;
@@ -159,6 +222,7 @@ const explicitSongSources = Object.assign({}, ...explicitManifests.map((manifest
 const releasesById = new Map(releases.map((release) => [release.id, release]));
 const generatedPlayback = {};
 let releaseFallbackCount = 0;
+let releaseTrackReferenceCount = 0;
 let performanceChapterCount = 0;
 let explicitPlaybackCount = 0;
 let localAudioCount = 0;
@@ -179,21 +243,25 @@ for (const song of songs) {
   const chosen = chooseReleaseSource(release);
   if (!chosen) { unresolvedCount += 1; continue; }
   const videoId = chosen.provider === "youtube" ? youtubeIdFromUrl(chosen.source.url) : null;
+  const isMultiSong = Number(release?.songCount) > 1;
+  const isTrackReference = isMultiSong && chosen.scope === "track";
   generatedPlayback[song.id] = {
     provider: chosen.provider,
     sourceUrl: chosen.source.url,
-    sourceType: "verified-release-source",
+    sourceType: isTrackReference ? "verified-release-track-reference" : "verified-release-source",
     releaseId: release.id,
     releaseTitle: release.title,
+    releaseSourceScope: chosen.scope,
     ...(videoId ? { videoId } : {}),
   };
-  releaseFallbackCount += 1;
+  if (isTrackReference) releaseTrackReferenceCount += 1;
+  else releaseFallbackCount += 1;
 }
 
 const releasePlaybackManifest = {
   version: index.version,
   generated: true,
-  note: "Generated routes. Verified chaptered YouTube performances are preferred before release-level provider fallbacks. Curated exact-track manifests override this file.",
+  note: "Generated routes. Verified chaptered YouTube performances are preferred before release-level provider fallbacks. A track-shaped URL inherited from a multi-song release is retained only as a labelled release reference and is never exact-song playback. Curated song mappings override this file.",
   songSources: generatedPlayback,
 };
 const playbackCoverage = {
@@ -203,6 +271,7 @@ const playbackCoverage = {
   explicitProvider: explicitPlaybackCount,
   verifiedPerformanceChapter: performanceChapterCount,
   verifiedReleaseFallback: releaseFallbackCount,
+  verifiedReleaseTrackReference: releaseTrackReferenceCount,
   unresolvedWithoutVerifiedReleaseSource: unresolvedCount,
   interactionFallback: "provider-search",
 };
@@ -216,4 +285,4 @@ await Promise.all([
 ]);
 
 console.log(`Built ${songs.length} songs, ${releases.length} releases, ${freeSources.length} free/access sources.`);
-console.log(`Playback coverage: ${localAudioCount} local, ${explicitPlaybackCount} explicit provider, ${performanceChapterCount} verified performance chapter, ${releaseFallbackCount} verified release fallback, ${unresolvedCount} unresolved release source.`);
+console.log(`Playback coverage: ${localAudioCount} local, ${explicitPlaybackCount} explicit provider, ${performanceChapterCount} verified performance chapter, ${releaseFallbackCount} verified release fallback, ${releaseTrackReferenceCount} release track reference, ${unresolvedCount} unresolved release source.`);
