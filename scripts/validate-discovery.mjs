@@ -118,6 +118,7 @@ for (const file of recommendationFiles) {
 
 let setCount = 0;
 let chapterCount = 0;
+let metadataOnlyChapterCount = 0;
 if (discovery.setsIndex) {
   const setIndex = await readJson(discovery.setsIndex);
   const setIds = new Set();
@@ -139,6 +140,8 @@ if (discovery.setsIndex) {
         if (!Number.isFinite(segment.startSeconds) || segment.startSeconds < 0) fail(`${set.id}:${segment.title} has invalid startSeconds`);
         if (segment.startSeconds < previousStart) fail(`${set.id} segment order is not chronological at ${segment.title}`);
         if (segment.endSeconds != null && (!Number.isFinite(segment.endSeconds) || segment.endSeconds <= segment.startSeconds)) fail(`${set.id}:${segment.title} has invalid endSeconds`);
+        if (segment.routingEligible != null && typeof segment.routingEligible !== 'boolean') fail(`${set.id}:${segment.title} has non-boolean routingEligible`);
+        if (segment.routingEligible === false) metadataOnlyChapterCount += 1;
         previousStart = segment.startSeconds;
       }
     }
@@ -150,5 +153,5 @@ console.log(`✓ canonical discovery catalogue: ${songs.length} songs, ${release
 console.log(`✓ discovery artists: ${artistIds.size}`);
 console.log(`✓ recommendation signals: ${recommendationIds.size}`);
 console.log(`✓ live/nonstop sets: ${setCount}`);
-console.log(`✓ timestamped set chapters: ${chapterCount}`);
+console.log(`✓ timestamped set chapters: ${chapterCount} (${metadataOnlyChapterCount} metadata-only for browsing/search)`);
 console.log(`✓ playback source maps: ${playbackFiles.length}`);
