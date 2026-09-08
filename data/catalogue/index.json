@@ -1,5 +1,5 @@
 {
-  "version": "0.17.9",
+  "version": "0.18.1",
   "songCount": 1220,
   "releaseCount": 214,
   "categoryCount": 19,
@@ -164,7 +164,9 @@
     "data/playback-sources-jagran-youtube.json",
     "data/playback-sources-saybo-exact.json",
     "data/playback-sources-anand-exact.json",
+    "data/playback-sources-rutvi-ramzat-1-youtube.json",
     "data/playback-sources-rutvi-ramzat-2-exact.json",
+    "data/playback-sources-rutvi-ramzat-3-safety.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
     "data/playback-sources-rutvi-ramzat-4-exact.json",
     "data/playback-sources-ho-raj-exact.json",
@@ -199,5 +201,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 completes the safely verifiable Rutvi Pandya routing wave: all fifteen 2023 selections and all eight 2026 selections now use exact provider-owned song selections, Rutvi Ni Ramzat 3.0 gains three additional exact Amazon Music selections, and its four stronger generated YouTube chapters remain untouched. Seven 2024 component songs remain conservative release/provider fallbacks because an exact Rutvi Pandya track could not be independently verified without inferring provider IDs. Existing Ho Raj and other route/runtime improvements are preserved."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.18.1 preserves the v0.18.0 Rutvi route-truth hardening from current main and adds the evidence-backed Atul Purohit issue #151 completeness wave: six missing releases, sixty canonical songs/selections and sixty independently verified exact Amazon Music track routes. Maro Garbo and Ho Raj playback remain owned by issue #149 and are not modified by this wave."
 }
