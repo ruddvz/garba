@@ -30,6 +30,12 @@ function countById(rows = []) {
   return counts;
 }
 
+function hasArtistCredit(segment = {}) {
+  const value = segment.artists ?? segment.artist;
+  if (Array.isArray(value)) return value.some((artist) => String(artist || '').trim());
+  return Boolean(String(value || '').trim());
+}
+
 const sourceSongs = await flatten(index.songChunks);
 const sourceReleases = await flatten(index.releaseChunks);
 const retiredSongList = Array.isArray(index.retiredSongIds) ? index.retiredSongIds : [];
@@ -119,6 +125,7 @@ for (const file of recommendationFiles) {
 let setCount = 0;
 let chapterCount = 0;
 let metadataOnlyChapterCount = 0;
+let metadataOnlySetCount = 0;
 if (discovery.setsIndex) {
   const setIndex = await readJson(discovery.setsIndex);
   const setIds = new Set();
@@ -133,6 +140,9 @@ if (discovery.setsIndex) {
       if (!set.source?.provider || !isHttps(set.source?.url)) fail(`${set.id} missing valid provider/source URL`);
       if (set.source.provider === 'youtube' && !set.source.videoId) fail(`${set.id} missing YouTube videoId`);
       if (set.linkedReleaseId && !releaseIds.has(set.linkedReleaseId)) fail(`${set.id} links unknown or retired release ${set.linkedReleaseId}`);
+      if (set.segmentRouting != null && set.segmentRouting !== 'metadata-only') fail(`${set.id} has unsupported segmentRouting value`);
+      const setMetadataOnly = set.segmentRouting === 'metadata-only';
+      if (setMetadataOnly) metadataOnlySetCount += 1;
       let previousStart = -1;
       for (const segment of set.segments || []) {
         chapterCount += 1;
@@ -141,7 +151,9 @@ if (discovery.setsIndex) {
         if (segment.startSeconds < previousStart) fail(`${set.id} segment order is not chronological at ${segment.title}`);
         if (segment.endSeconds != null && (!Number.isFinite(segment.endSeconds) || segment.endSeconds <= segment.startSeconds)) fail(`${set.id}:${segment.title} has invalid endSeconds`);
         if (segment.routingEligible != null && typeof segment.routingEligible !== 'boolean') fail(`${set.id}:${segment.title} has non-boolean routingEligible`);
-        if (segment.routingEligible === false) metadataOnlyChapterCount += 1;
+        if (segment.routingEligible === true && !hasArtistCredit(segment)) fail(`${set.id}:${segment.title} opts into routing without chapter performer credit`);
+        const effectivelyMetadataOnly = segment.routingEligible === false || (setMetadataOnly && segment.routingEligible !== true);
+        if (effectivelyMetadataOnly) metadataOnlyChapterCount += 1;
         previousStart = segment.startSeconds;
       }
     }
@@ -153,5 +165,5 @@ console.log(`✓ canonical discovery catalogue: ${songs.length} songs, ${release
 console.log(`✓ discovery artists: ${artistIds.size}`);
 console.log(`✓ recommendation signals: ${recommendationIds.size}`);
 console.log(`✓ live/nonstop sets: ${setCount}`);
-console.log(`✓ timestamped set chapters: ${chapterCount} (${metadataOnlyChapterCount} metadata-only for browsing/search)`);
+console.log(`✓ timestamped set chapters: ${chapterCount} (${metadataOnlyChapterCount} effectively metadata-only across ${metadataOnlySetCount} set defaults)`);
 console.log(`✓ playback source maps: ${playbackFiles.length}`);
