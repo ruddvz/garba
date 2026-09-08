@@ -9,9 +9,21 @@ const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 const isHttps = (value) => typeof value === 'string' && /^https:\/\//.test(value);
 const flatten = async (files = []) => (await Promise.all(files.map(readJson))).flatMap((value) => Array.isArray(value) ? value : []);
 
+function youtubeIdFromUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0] || null;
+    if (url.hostname === 'youtube.com' || url.hostname.endsWith('.youtube.com')) return url.searchParams.get('v');
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 const songs = await flatten(index.songChunks);
 const releases = await flatten(index.releaseChunks);
 const songIds = new Set(songs.map((song) => song.id));
+const songsById = new Map(songs.map((song) => [song.id, song]));
 const releaseIds = new Set(releases.map((release) => release.id));
 
 if (songs.length !== index.songCount) fail(`Catalogue index expects ${index.songCount} songs, found ${songs.length}`);
@@ -24,7 +36,19 @@ for (const file of playbackFiles) {
     if (!songIds.has(songId)) fail(`${file} references unknown song ${songId}`);
     if (!source.provider) fail(`${file}:${songId} missing provider`);
     if (source.sourceUrl && !isHttps(source.sourceUrl)) fail(`${file}:${songId} has non-HTTPS sourceUrl`);
-    if (source.provider === 'youtube' && !source.videoId) fail(`${file}:${songId} YouTube source missing videoId`);
+    if (source.provider === 'youtube') {
+      if (!source.videoId) fail(`${file}:${songId} YouTube source missing videoId`);
+      const urlVideoId = source.sourceUrl ? youtubeIdFromUrl(source.sourceUrl) : null;
+      if (source.sourceUrl && !urlVideoId) fail(`${file}:${songId} YouTube sourceUrl is not a watch URL`);
+      if (urlVideoId && source.videoId && urlVideoId !== source.videoId) fail(`${file}:${songId} YouTube videoId does not match sourceUrl`);
+    }
+    if (source.startSeconds != null && (!Number.isInteger(source.startSeconds) || source.startSeconds < 0)) {
+      fail(`${file}:${songId} has invalid startSeconds`);
+    }
+    if (source.releaseId && !releaseIds.has(source.releaseId)) fail(`${file}:${songId} references unknown release ${source.releaseId}`);
+    if (source.releaseId && songsById.get(songId)?.releaseId !== source.releaseId) {
+      fail(`${file}:${songId} route release ${source.releaseId} does not match the song release`);
+    }
   }
 }
 

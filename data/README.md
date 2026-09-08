@@ -9,7 +9,7 @@
 - `rights-acquisition/` — rights outreach and acquisition operations
 - `genres.json` — six visual player worlds
 - `taxonomy.json` — detailed Garba music taxonomy
-- `playback-sources*.json` — curated provider mappings consumed by the catalogue build
+- `playback-sources*.json` — curated provider mappings consumed by the catalogue build; release-specific chapter routes must preserve the verified video ID, timestamp and canonical release ID
 - `direct-audio.json` — direct-audio entries that satisfy the rights contract
 - `hosting-rights.json` and `master-intake.json` — hosting/publishing rights inputs
 
