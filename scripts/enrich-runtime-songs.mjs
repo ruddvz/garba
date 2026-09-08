@@ -21,6 +21,7 @@ let singleReleaseFallbacks = 0;
 let releaseTrackReferenceFallbacks = 0;
 let duplicateExactDowngrades = 0;
 let unchapteredYoutubeReleaseFallbacks = 0;
+let continuousYoutubeChapters = 0;
 const missing = [];
 
 function isExactTrackUrl(provider, sourceUrl) {
@@ -63,6 +64,15 @@ function canonicalSourceKey(provider, sourceUrl) {
   }
 }
 
+function isContinuousYoutubeChapter(route) {
+  if (String(route?.provider || '').toLowerCase() !== 'youtube' || !route?.videoId) return false;
+  if (!Number.isFinite(Number(route.startSeconds))) return false;
+  const evidence = String(route.evidenceType || '').toLowerCase();
+  return route.sourceType === 'verified-performance-chapter'
+    || Boolean(route.performanceSetId)
+    || evidence.includes('chapter');
+}
+
 const runtimeSongs = songs.map((song) => {
   const next = { ...song };
   if (song.audioUrl) {
@@ -87,9 +97,6 @@ const runtimeSongs = songs.map((song) => {
         next.playbackSourceType = 'verified-track-source';
         exactTrackFallbacks += 1;
       } else {
-        // A release-level record can contain one track link as evidence. That link
-        // cannot become every song on a multi-song release just because its URL is
-        // track-shaped.
         next.playbackSourceType = 'verified-release-track-reference';
         releaseTrackReferenceFallbacks += 1;
       }
@@ -115,14 +122,20 @@ const runtimeSongs = songs.map((song) => {
   } else {
     delete next.youtubeStartSeconds;
   }
+
+  if (isContinuousYoutubeChapter(route)) {
+    next.playbackContainerType = 'youtube-continuous-set';
+    next.playbackContainerId = String(route.performanceSetId || route.releaseId || route.videoId);
+    next.playbackContainerTitle = String(route.performanceTitle || release?.title || '').trim() || null;
+    next.chapterDurationSeconds = Number.isFinite(Number(song.durationSeconds)) ? Number(song.durationSeconds) : null;
+    next.durationSeconds = 0;
+    continuousYoutubeChapters += 1;
+  }
+
   enriched += 1;
   return next;
 });
 
-// Curated manifests can still accidentally assign the same exact provider track to
-// multiple different songs. Treat that as release/reference evidence until a unique
-// song mapping is supplied. Same-title/same-artist reissues may legitimately share a
-// recording and therefore are not downgraded by this rule.
 const exactGroups = new Map();
 for (const song of runtimeSongs) {
   if (song.playbackSourceType !== 'verified-track-source' || !song.playbackSourceUrl) continue;
@@ -149,4 +162,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${continuousYoutubeChapters} continuous YouTube chapters, ${missing.length} unresolved.`);
