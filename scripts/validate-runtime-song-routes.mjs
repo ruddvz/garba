@@ -114,8 +114,15 @@ for (const marker of [
   "nativeFetch('data/songs.json'",
   'bootSongs.splice(0, bootSongs.length, ...songs)',
   "requestIdleCallback(run, { timeout: 2600 })",
-  "document.write('<script src=\"provider-runtime.js\"><\\/script>')",
+  'provider-runtime.js',
+  'player-continuity.js',
 ]) if (!fastRuntime.includes(marker)) fail(`Fast startup runtime missing marker: ${marker}`);
+
+const providerBootIndex = fastRuntime.indexOf('provider-runtime.js');
+const continuityBootIndex = fastRuntime.indexOf('player-continuity.js');
+if (providerBootIndex < 0 || continuityBootIndex < 0 || continuityBootIndex < providerBootIndex) {
+  fail('Fast startup runtime must load provider-runtime.js before player-continuity.js');
+}
 
 for (const marker of [
   'const SEARCH_RESULT_LIMIT = 160;',
@@ -140,5 +147,6 @@ console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTu
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
 console.log('✓ route coverage is not reported as equivalent to exact-song or first-party playback');
 console.log('✓ first interaction uses the embedded fast catalogue while the full catalogue hydrates after load');
+console.log('✓ split playback runtime loads provider handling before continuity handling');
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');
