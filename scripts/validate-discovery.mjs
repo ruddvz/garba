@@ -8,7 +8,7 @@ let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 const isHttps = (value) => typeof value === 'string' && /^https:\/\//.test(value);
 const flatten = async (files = []) => (await Promise.all(files.map(readJson))).flatMap((value) => Array.isArray(value) ? value : []);
-const CHAPTER_STATUSES = new Set(['published-complete', 'source-no-published-chapters', 'source-tracklist-no-timestamps']);
+const CHAPTER_STATUSES = new Set(['published-complete', 'source-no-published-chapters', 'source-tracklist-no-timestamps', 'full-set-only-no-chapter-evidence']);
 
 function youtubeIdFromUrl(value) {
   try {
@@ -161,7 +161,7 @@ if (discovery.setsIndex) {
       }
       const segments = Array.isArray(set.segments) ? set.segments : [];
       if (set.chapterStatus === 'published-complete' && segments.length === 0) fail(`${set.id} claims published-complete without chapters`);
-      if ((set.chapterStatus === 'source-no-published-chapters' || set.chapterStatus === 'source-tracklist-no-timestamps') && segments.length !== 0) {
+      if (['source-no-published-chapters', 'source-tracklist-no-timestamps', 'full-set-only-no-chapter-evidence'].includes(set.chapterStatus) && segments.length !== 0) {
         fail(`${set.id} has a no-timestamp chapterStatus but also contains timestamped segments`);
       }
       if (set.chapterStatus === 'source-tracklist-no-timestamps' && (!Array.isArray(set.tracklist) || set.tracklist.length === 0)) {
