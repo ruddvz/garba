@@ -319,7 +319,13 @@ function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
     more.className = 'release-more';
     const remaining = items.length - visible.length;
     more.innerHTML = `<strong>More releases</strong><span>Showing ${visible.length.toLocaleString()} of ${items.length.toLocaleString()} · load ${Math.min(RELEASE_BATCH_SIZE, remaining).toLocaleString()} more</span>`;
-    more.addEventListener('click', () => renderReleases(songs, { limit: resolvedLimit + RELEASE_BATCH_SIZE }));
+    more.addEventListener('click', () => {
+      if (resolvedLimit === limit) {
+        renderReleases(songs, { limit: limit + RELEASE_BATCH_SIZE });
+      } else {
+        renderReleases(songs, { limit: resolvedLimit + RELEASE_BATCH_SIZE });
+      }
+    });
     els.releaseRail.append(more);
   }
 }
@@ -467,7 +473,11 @@ function closeCollection({ updateHash = true } = {}) {
 
 function returnToCollections() {
   els.search.value = '';
-  if (history.state?.collection || history.state?.search || history.state?.release) {
+  if (history.state?.release) {
+    history.back();
+    return;
+  }
+  if (history.state?.collection || history.state?.search) {
     history.back();
     return;
   }
