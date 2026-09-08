@@ -326,8 +326,43 @@ const playbackCoverage = {
   interactionFallback: "provider-search",
 };
 
+const songsByReleaseId = new Map();
+for (const song of songs) {
+  const list = songsByReleaseId.get(song.releaseId) || [];
+  list.push(song);
+  songsByReleaseId.set(song.releaseId, list);
+}
+
+function canonicalPresentationSong(song, canonicalReleaseId) {
+  const candidates = songsByReleaseId.get(canonicalReleaseId) || [];
+  if (!candidates.length) return null;
+  const trackNumber = Number(song.trackNumber);
+  if (Number.isFinite(trackNumber) && trackNumber > 0) {
+    const byTrack = candidates.find((candidate) => Number(candidate.trackNumber) === trackNumber);
+    if (byTrack) return byTrack;
+  }
+  const title = normalise(song.title);
+  const byTitle = candidates.find((candidate) => normalise(candidate.title) === title);
+  return byTitle || candidates[0] || null;
+}
+
+const presentationSongs = songs.map((song) => {
+  const release = releasesById.get(song.releaseId);
+  const role = String(release?.presentationRole || 'catalogue');
+  if (role === 'catalogue') return song;
+  const canonicalReleaseId = String(release?.canonicalReleaseId || '').trim();
+  const canonicalSong = canonicalReleaseId ? canonicalPresentationSong(song, canonicalReleaseId) : null;
+  return {
+    ...song,
+    presentationRole: role,
+    ...(canonicalReleaseId ? { canonicalReleaseId } : {}),
+    ...(canonicalSong?.id ? { canonicalSongId: canonicalSong.id } : {}),
+    ...(release?.nonstopSetId ? { nonstopSetId: release.nonstopSetId } : {}),
+  };
+});
+
 await Promise.all([
-  writeFile(resolve(root, index.generatedFiles.songs), `${JSON.stringify(songs, null, 2)}\n`),
+  writeFile(resolve(root, index.generatedFiles.songs), JSON.stringify(presentationSongs, null, 2) + '\n'),
   writeFile(resolve(root, index.generatedFiles.releases), `${JSON.stringify(releases, null, 2)}\n`),
   writeFile(resolve(root, index.generatedFiles.freeSources), `${JSON.stringify(freeSources, null, 2)}\n`),
   writeFile(resolve(root, index.generatedFiles.releasePlayback), `${JSON.stringify(releasePlaybackManifest, null, 2)}\n`),

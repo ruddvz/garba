@@ -52,6 +52,7 @@ const state = {
   artwork: {},
   curation: {},
   releaseById: new Map(),
+  releaseRedirects: new Map(),
   collections: [],
   active: null,
   activeSongs: [],
@@ -727,19 +728,21 @@ function openCollection(id, { updateHash = true, trigger = null, focusHeading = 
 
 function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}) {
   if (!state.active || state.active.id === 'search') return false;
-  const release = state.releaseById.get(releaseId);
-  const songs = state.activeSongs.filter((song)=>song.releaseId===releaseId);
+  const requestedRelease = state.releaseById.get(releaseId);
+  const resolvedReleaseId = requestedRelease?.canonicalReleaseId || releaseId;
+  const release = state.releaseById.get(resolvedReleaseId);
+  const songs = state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId);
   if (!release || !songs.length) return false;
-  state.activeReleaseId = releaseId;
+  state.activeReleaseId = resolvedReleaseId;
   syncBackLabel();
   syncCollectionIdentity();
   renderReleaseDetailIdentity(release, songs);
   renderReleases(state.activeSongs);
   renderSongs(songs, displayTitle(release) || 'Release songs');
   if (updateHistory) {
-    const nextState = { collection:state.active.id, release:releaseId };
-    const nextHash = collectionHash(state.active.id, releaseId);
-    if (history.state?.collection === state.active.id && history.state?.release === releaseId) {
+    const nextState = { collection:state.active.id, release:resolvedReleaseId };
+    const nextHash = collectionHash(state.active.id, resolvedReleaseId);
+    if (history.state?.collection === state.active.id && history.state?.release === resolvedReleaseId) {
       history.replaceState(nextState,'',nextHash);
     } else {
       history.pushState(nextState,'',nextHash);
@@ -932,8 +935,9 @@ async function init() {
     fetchJson(paths.curation,{featuredReleaseIds:[]}),
   ]);
   if (!songs.length) throw new Error('Song catalogue unavailable');
-  state.songs = songs;
+  state.songs = songs.filter((song) => String(song?.presentationRole || 'catalogue') === 'catalogue');
   state.releases = releases;
+  state.releaseRedirects = new Map(releases.filter((release) => release?.canonicalReleaseId).map((release) => [release.id, release.canonicalReleaseId]));
   state.genres = genres;
   state.taxonomy = taxonomy;
   state.taxonomyById = new Map(taxonomy.map((entry)=>[entry.id,entry]));
@@ -943,7 +947,8 @@ async function init() {
   state.artists = await loadArtists(index);
   state.collections = buildCollections();
   state.loadFailed = false;
-  els.count.textContent = `${songs.length.toLocaleString()} songs · ${state.releaseById.size.toLocaleString()} releases · ${state.collections.length.toLocaleString()} catalogues`;
+  const visibleReleaseCount = new Set(state.songs.map((song) => song.releaseId).filter(Boolean)).size;
+  els.count.textContent = state.songs.length.toLocaleString() + ' songs · ' + visibleReleaseCount.toLocaleString() + ' releases · ' + state.collections.length.toLocaleString() + ' catalogues';
   renderCollectionHome();
   wireEvents();
   applyHashState();

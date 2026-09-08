@@ -64,6 +64,8 @@ Important fields:
 - `sourceStatus`
 - `audioAvailability`
 
+Generated runtime songs may additionally carry `presentationRole`, `canonicalReleaseId`, `canonicalSongId` and `nonstopSetId` when their source release is retained for provenance but must not appear as a separate ordinary listening object. These fields are generated from release presentation metadata rather than authored independently on song rows.
+
 A verified catalogue entry can exist without playable audio. Commercial recordings normally use:
 
 ```json
@@ -99,9 +101,35 @@ Important fields:
 - `audioBundled`
 - `metadataStatus`
 - `audioAvailability`
+- `presentationRole`: optional listening-presentation role; absence means normal `catalogue`
+- `canonicalReleaseId`: required for every non-catalogue presentation role
+- `nonstopSetId`: required for `nonstop-only` when the continuous edition has a verified embeddable YouTube Nonstop set
 - `notes`
 
 Source conflicts are preserved rather than silently normalised. Internal conflict notes are not automatically exposed as user-facing editorial descriptions.
+
+### Release presentation roles
+
+Release records sometimes represent the same music in more than one provider or packaging form. Preserve those records as source evidence, but do not make users choose between duplicate listening objects.
+
+The allowed roles are:
+
+- `catalogue`: the default normal release shown in Search, Explore, genre browsing and ordinary queues. The field can be omitted.
+- `catalogue-alias`: a proven duplicate segmented release with the same track-title order as a richer canonical release. It remains in source data but ordinary UI resolves it to `canonicalReleaseId`.
+- `nonstop-only`: a one-track continuous edition that has a segmented canonical release and a verified YouTube Nonstop listening set. It is hidden from ordinary song/release lists and legacy song links hand off to `nonstopSetId`.
+- `source-only`: a distinct provider/source edition worth preserving for provenance, but not a separate ordinary listening object. Legacy links resolve to `canonicalReleaseId`; do not invent a Nonstop relationship when the available YouTube performance is a different arrangement.
+
+Do not use a presentation role to erase a genuinely different release, performance, mix, year, artist credit or track sequence. `catalogue-alias` requires identical normalized track-title order. `nonstop-only` requires a verified embeddable YouTube set. A studio continuous master and a different live/performance arrangement remain separate source truths even when their titles are similar.
+
+The catalogue builder propagates release presentation metadata into generated runtime song rows so the main player can filter non-canonical rows while retaining redirects for old favourites and deep links. Explore keeps the complete release index for redirect resolution but builds collections and search results only from normal catalogue songs.
+
+Run:
+
+```sh
+npm run presentation:validate
+```
+
+This verifies role values, canonical targets, alias track-order identity, Nonstop set safety, generated song redirects and the main-player/Explore filtering contracts.
 
 ## Free/access resource record
 
