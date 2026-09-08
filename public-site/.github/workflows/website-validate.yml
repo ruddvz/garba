@@ -26,11 +26,13 @@ jobs:
             styles.css
             pages.css
             polish.css
+            editorial.css
             site.js
             pages.js
             robots.txt
             sitemap.xml
             404.html
+            what-is-garba/index.html
             how-to-use/index.html
             install/index.html
             live/index.html
@@ -46,56 +48,81 @@ jobs:
           node --check pages.js
 
           grep -q '<link rel="canonical" href="https://playgarba.com/"' index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/what-is-garba/"' what-is-garba/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/how-to-use/"' how-to-use/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/install/"' install/index.html
-          grep -q '<link rel="canonical" href="https://playgarba.com/live/"' live/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/faq/"' faq/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/about/"' about/index.html
+          grep -q '<link rel="canonical" href="https://live.playgarba.com/"' live/index.html
+          grep -q '<meta name="robots" content="noindex, follow"' live/index.html
+          grep -q 'window.location.replace' live/index.html
 
-          grep -q 'https://live.playgarba.com/' index.html
-          grep -q 'https://live.playgarba.com/' how-to-use/index.html
-          grep -q 'https://live.playgarba.com/' install/index.html
-          grep -q 'https://live.playgarba.com/' live/index.html
-          grep -q 'https://live.playgarba.com/' faq/index.html
-          grep -q 'https://live.playgarba.com/' about/index.html
+          grep -q 'href="editorial.css"' index.html
+          grep -q 'href="../editorial.css"' what-is-garba/index.html
+          grep -q 'href="/editorial.css"' how-to-use/index.html
+          grep -q 'href="/editorial.css"' install/index.html
+          grep -q 'href="/editorial.css"' faq/index.html
+          grep -q 'href="/editorial.css"' about/index.html
+          grep -q '/assets/editorial/001-what-is-garba.webp' editorial.css
+          grep -q '11-master-dark-courtyard.webp' editorial.css
 
-          # Public discovery must hand off to the source-native Explore catalogue.
+          for page in index.html what-is-garba/index.html how-to-use/index.html install/index.html faq/index.html about/index.html; do
+            grep -q 'Garba</a>' "$page" || { echo "Primary Garba nav missing: $page"; exit 1; }
+            grep -q 'Explore</a>' "$page" || { echo "Primary Explore nav missing: $page"; exit 1; }
+            grep -q 'Guide</a>' "$page" || { echo "Primary Guide nav missing: $page"; exit 1; }
+            grep -q 'About</a>' "$page" || { echo "Primary About nav missing: $page"; exit 1; }
+          done
+
           grep -q 'https://live.playgarba.com/catalogue/' index.html
           grep -q 'https://live.playgarba.com/catalogue/' how-to-use/index.html
-          grep -q 'https://live.playgarba.com/catalogue/' live/index.html
           grep -q "incoming.has('browse')" site.js
           grep -q "new URL('https://live.playgarba.com/catalogue/')" site.js
           grep -q 'garba-og-card.png?v=20260908-2' index.html
           grep -q 'garba-og-card.png?v=20260908-2' faq/index.html
+
+          if grep -R -n -E 'garba-og-card\.png\?v=[^" ]+\?v=' --include='*.html' .; then
+            echo 'Duplicated OG image cache-buster found in public HTML.'
+            exit 1
+          fi
 
           if grep -R -n -F 'https://live.playgarba.com/?browse=1' --include='*.html' .; then
             echo 'Retired Browse query CTA found in public HTML.'
             exit 1
           fi
 
-          if grep -R -n -E 'bottom sheet.*Browse|Browse.*bottom sheet' --include='*.html' .; then
-            echo 'Retired Browse-sheet UX guidance found in public HTML.'
+          if grep -R -n -E 'Spotify|Apple Music|Amazon Music|different approved playback routes|external providers' --include='*.html' .; then
+            echo 'Retired multi-provider playback language found in public HTML.'
             exit 1
           fi
 
           grep -q 'Open as Web App' install/index.html
-          grep -q 'Explore catalogue' install/index.html
           grep -q 'FAQPage' faq/index.html
-          grep -q 'mobile-action-dock' polish.css
-          grep -q 'ensureFaqNavigation' site.js
+          grep -q 'verified YouTube routes' how-to-use/index.html
+          grep -q 'verified YouTube routes' faq/index.html
+          grep -q 'verified YouTube routes' about/index.html
           grep -q 'playerParams' site.js
-          grep -q 'window.location.replace' site.js
+
+          if grep -qE 'ensureFaqNavigation|addMobileActionDock|addFaqSupport' site.js; then
+            echo 'Removed injected public-site UI returned to site.js.'
+            exit 1
+          fi
+
           grep -q "path.startsWith('/songs/')" 404.html
           grep -q "path.startsWith('/releases/')" 404.html
           grep -q "path.startsWith('/catalogue/')" 404.html
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' robots.txt
 
-          for route in / /how-to-use/ /install/ /live/ /faq/ /about/; do
+          for route in / /what-is-garba/ /how-to-use/ /install/ /faq/ /about/; do
             grep -q "<loc>https://playgarba.com${route}</loc>" sitemap.xml || {
               echo "Missing sitemap route: ${route}"
               exit 1
             }
           done
+
+          if grep -q '<loc>https://playgarba.com/live/</loc>' sitemap.xml; then
+            echo 'Redirect-only /live/ route must not be in the public sitemap.'
+            exit 1
+          fi
 
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -116,6 +143,7 @@ jobs:
           root = Path('.').resolve()
           documents = [
               Path('index.html'),
+              Path('what-is-garba/index.html'),
               Path('how-to-use/index.html'),
               Path('install/index.html'),
               Path('live/index.html'),

@@ -47,6 +47,10 @@
   --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
 }
 
+.page-hero.faq-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp");
+}
+
 .page-hero.live-hero {
   --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
 }
@@ -188,6 +192,44 @@
   gap: 20px;
 }
 
+.editorial-device-grid {
+  gap: 0;
+  border-top: 1px solid rgba(242, 236, 226, .12);
+  border-bottom: 1px solid rgba(242, 236, 226, .12);
+}
+
+.editorial-device-grid .device-card {
+  padding: clamp(26px, 3vw, 34px);
+  border: 0;
+  border-right: 1px solid rgba(242, 236, 226, .1);
+  border-bottom: 1px solid rgba(242, 236, 226, .1);
+  border-radius: 0;
+  background: transparent;
+}
+
+.editorial-device-grid .device-card:nth-child(2n) {
+  border-right: 0;
+}
+
+.editorial-device-grid .device-card:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.editorial-device-grid .device-label {
+  margin-bottom: 26px;
+}
+
+.editorial-device-grid .device-card h3 {
+  margin-bottom: 20px;
+}
+
+.editorial-support {
+  margin: -18px 0 0;
+  color: rgba(242, 236, 226, .56);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .editorial-source {
   margin-top: 48px;
   padding-top: 22px;
@@ -278,6 +320,21 @@
 
   .editorial-section h2 {
     font-size: clamp(32px, 9vw, 44px);
+  }
+
+  .editorial-device-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .editorial-device-grid .device-card,
+  .editorial-device-grid .device-card:nth-child(2n),
+  .editorial-device-grid .device-card:nth-last-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 1px solid rgba(242, 236, 226, .1);
+  }
+
+  .editorial-device-grid .device-card:last-child {
+    border-bottom: 0;
   }
 }
 
