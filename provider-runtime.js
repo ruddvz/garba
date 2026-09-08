@@ -6,6 +6,7 @@
   let refreshPromise = null;
   let youtubeUnlocked = false;
   let youtubeApi = null;
+  let pendingYoutubeSong = null;
   let stageObserver = null;
   let toastTimer = null;
 
@@ -131,6 +132,11 @@
     return safeSongs.find((song) => song.title === title && song.artist === artist) || null;
   }
 
+  function selectedYoutubeSong() {
+    const nonstopActive = $('app')?.dataset.playMode === 'nonstop';
+    return nonstopActive && pendingYoutubeSong ? pendingYoutubeSong : currentSong();
+  }
+
   function announce(message) {
     const toast = $('toast');
     if (!toast) return;
@@ -185,7 +191,7 @@
     injectYoutubeControl();
     const button = $('youtubeVideoButton');
     if (!button) return;
-    const song = currentSong();
+    const song = selectedYoutubeSong();
     const available = isExactYoutube(song);
     const open = dockIsVisible();
     button.classList.toggle('is-unavailable', !available);
@@ -195,7 +201,7 @@
   }
 
   async function toggleYoutubeDock() {
-    const song = currentSong();
+    const song = selectedYoutubeSong();
     if (!isExactYoutube(song)) {
       announce('YouTube source not mapped yet. This track needs a YouTube conversion.');
       return;
@@ -214,8 +220,9 @@
     }
 
     youtubeUnlocked = true;
-    const opened = await youtubeApi.open(song, { autoplay: true, resume: true });
-    if (!opened) {
+    const opened = await youtubeApi.open(song, { autoplay: true, resume: $('app')?.dataset.playMode !== 'nonstop' });
+    if (opened) pendingYoutubeSong = null;
+    else {
       youtubeUnlocked = false;
       announce('YouTube playback could not start.');
     }
@@ -227,13 +234,15 @@
     const originalOpen = api.open?.bind(api);
     if (originalOpen) {
       api.open = (song, options = {}) => {
-        if (!youtubeUnlocked) {
-          announce('Tap the YouTube button to open this track.');
-          return Promise.resolve(false);
-        }
         if (!isExactYoutube(song)) {
           announce('YouTube source not mapped yet.');
           return Promise.resolve(false);
+        }
+        if (!youtubeUnlocked) {
+          pendingYoutubeSong = song;
+          syncYoutubeButton();
+          announce('Tap the YouTube button to open this track.');
+          return Promise.resolve(true);
         }
         return originalOpen(song, options);
       };
@@ -259,7 +268,7 @@
   function interceptPlay(event) {
     const target = event.target instanceof Element ? event.target : null;
     if (!target?.closest('#playButton, #miniPlay')) return;
-    const song = currentSong();
+    const song = selectedYoutubeSong();
     if (!song) return;
 
     if (!isExactYoutube(song)) {
@@ -280,7 +289,7 @@
     if (event.code !== 'Space') return;
     const target = event.target instanceof Element ? event.target : null;
     if (target?.closest('button, a[href], input, textarea, select, iframe, [contenteditable]:not([contenteditable="false"])')) return;
-    const song = currentSong();
+    const song = selectedYoutubeSong();
     if (!song) return;
     if (isExactYoutube(song) && dockIsVisible()) return;
     event.preventDefault();
@@ -319,13 +328,13 @@
   }
 
   window.addEventListener('garba:catalogue-ready', () => queueMicrotask(refreshSafeSongs));
-  window.addEventListener('offline', () => { youtubeUnlocked = false; syncYoutubeButton(); });
+  window.addEventListener('offline', () => { youtubeUnlocked = false; pendingYoutubeSong = null; syncYoutubeButton(); });
   window.addEventListener('pageshow', syncYoutubeButton);
 
   window.GARBA_YOUTUBE_ONLY_POLICY = {
     isExactYoutube,
     sanitiseSongs,
     refresh: refreshSafeSongs,
-    get currentSong() { return currentSong(); },
+    get currentSong() { return selectedYoutubeSong(); },
   };
 })();
