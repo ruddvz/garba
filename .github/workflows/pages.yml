@@ -47,6 +47,13 @@ jobs:
             _site/
           cp -R assets data _site/
 
+          # The catalogue is intentionally one crawlable supporting page. Collections,
+          # albums and songs are in-page states—not thousands of standalone URLs.
+          mkdir -p _site/catalogue
+          cp src/catalogue/index.html _site/catalogue/index.html
+          cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
+          cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
+
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
           cat \
@@ -78,6 +85,7 @@ jobs:
           test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must remain playgarba.com'; exit 1; }
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing canonical sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical root'; exit 1; }
+          grep -q '<loc>https://playgarba.com/catalogue/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing catalogue'; exit 1; }
 
           # Assert every local runtime script referenced directly by index.html exists
           # in the deploy artifact as an additional guard. Versioned runtime URLs use
@@ -108,17 +116,12 @@ jobs:
           # and is not needed at runtime.
           rm -f _site/assets/backgrounds/garba15-2k.zip
 
-          # Build crawlable catalogue pages from the same generated song/release data
-          # the player uses. The generator also replaces the seed sitemap with the
-          # complete canonical catalogue sitemap.
-          node scripts/lib/generate-static-catalogue-pages.mjs _site
-          SONG_PAGE_COUNT="$(find _site/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          RELEASE_PAGE_COUNT="$(find _site/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          SITEMAP_URL_COUNT="$(grep -o '<loc>' _site/sitemap.xml | wc -l | tr -d ' ')"
-          test "$SONG_PAGE_COUNT" -ge 1000 || { echo "Expected 1000+ song pages, found $SONG_PAGE_COUNT"; exit 1; }
-          test "$RELEASE_PAGE_COUNT" -ge 100 || { echo "Expected 100+ release pages, found $RELEASE_PAGE_COUNT"; exit 1; }
-          test "$SITEMAP_URL_COUNT" -ge 1100 || { echo "Expected 1100+ sitemap URLs, found $SITEMAP_URL_COUNT"; exit 1; }
-          test -f _site/catalogue/index.html || { echo 'Catalogue index page is missing'; exit 1; }
+          # Product contract: no generated song/release SEO page trees.
+          test -f _site/catalogue/index.html || { echo 'Catalogue page is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.js || { echo 'Catalogue runtime is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.css || { echo 'Catalogue styles are missing'; exit 1; }
+          test ! -d _site/songs || { echo 'Standalone song pages must not be deployed'; exit 1; }
+          test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
