@@ -1,6 +1,6 @@
 const YOUTUBE_HOST_RE = /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i;
 
-export function youtubeVideoId(song) {
+function youtubeVideoId(song) {
   const explicit = String(song?.youtubeId || '').trim();
   if (explicit) return explicit;
   try {
@@ -17,7 +17,7 @@ export function youtubeVideoId(song) {
   }
 }
 
-export function routeReadiness(song, { temporarilyFailed = false } = {}) {
+function routeReadiness(song, { temporarilyFailed = false } = {}) {
   if (!song) return { status: 'missing', executable: false, videoId: '' };
   if (temporarilyFailed) return { status: 'temporary-failure', executable: false, videoId: youtubeVideoId(song) };
   if (song.audioUrl) return { status: 'blocked-policy', executable: false, videoId: '' };
@@ -42,7 +42,7 @@ export function routeReadiness(song, { temporarilyFailed = false } = {}) {
   return { status: 'missing', executable: false, videoId: '' };
 }
 
-export const canExecuteSong = (song, options) => routeReadiness(song, options).executable;
+const canExecuteSong = (song, options) => routeReadiness(song, options).executable;
 
 if (typeof window !== 'undefined') {
   window.GARBA_ROUTE_READINESS = Object.freeze({ routeReadiness, canExecuteSong, youtubeVideoId });
