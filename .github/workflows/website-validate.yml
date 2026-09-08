@@ -59,7 +59,27 @@ jobs:
           grep -q 'https://live.playgarba.com/' faq/index.html
           grep -q 'https://live.playgarba.com/' about/index.html
 
+          # Public discovery must hand off to the source-native Explore catalogue.
+          grep -q 'https://live.playgarba.com/catalogue/' index.html
+          grep -q 'https://live.playgarba.com/catalogue/' how-to-use/index.html
+          grep -q 'https://live.playgarba.com/catalogue/' live/index.html
+          grep -q "incoming.has('browse')" site.js
+          grep -q "new URL('https://live.playgarba.com/catalogue/')" site.js
+          grep -q 'garba-og-card.png?v=20260908-2' index.html
+          grep -q 'garba-og-card.png?v=20260908-2' faq/index.html
+
+          if grep -R -n -F 'https://live.playgarba.com/?browse=1' --include='*.html' .; then
+            echo 'Retired Browse query CTA found in public HTML.'
+            exit 1
+          fi
+
+          if grep -R -n -E 'bottom sheet.*Browse|Browse.*bottom sheet' --include='*.html' .; then
+            echo 'Retired Browse-sheet UX guidance found in public HTML.'
+            exit 1
+          fi
+
           grep -q 'Open as Web App' install/index.html
+          grep -q 'Explore catalogue' install/index.html
           grep -q 'FAQPage' faq/index.html
           grep -q 'mobile-action-dock' polish.css
           grep -q 'ensureFaqNavigation' site.js
