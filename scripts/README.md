@@ -43,10 +43,32 @@ These checks are part of `npm run check`. Do not restore title-only generated ch
 
 These reports are prioritisation tools. They do not make a route exact and they do not replace source verification.
 
+## Design quality reporting
+
+`lib/report-design-quality.mjs` provides a non-blocking design-debt snapshot for the player, Explore/catalogue and public-site HTML/CSS/JS surfaces.
+
+Run:
+
+```bash
+npm run design:report
+```
+
+For machine-readable output:
+
+```bash
+node scripts/lib/report-design-quality.mjs --json
+```
+
+The report highlights patterns that deserve review, including inline style islands, `!important`, `transition: all`, plain `ease-in`, `scale(0)`, very large blur and `100vh`. It also reports coverage signals for reduced motion, hover-capability queries, pressed states and `:focus-visible`.
+
+The report deliberately exits successfully when it finds existing design debt. It is a direction-setting tool while the UI is being consolidated, not a reason for unrelated catalogue work to fail. A future issue can promote selected zero-tolerance patterns into validation once current debt has been removed.
+
+For the design rules behind the report, read `docs/product/design-system.md` and `docs/product/responsive-pwa.md`.
+
 ## Health audits
 
 - `audit-youtube-health.mjs` checks YouTube source health.
-- `audit-direct-host-health.mjs` checks authorised direct-host audio health.
+- `audit-direct-host-health.mjs` checks authorised direct-host audio health retained for rights/source operations.
 
 Health audits can depend on the network. They are kept separate from deterministic repository validation.
 
@@ -72,6 +94,7 @@ The default `npm run check` path runs the runtime-critical and repository-level 
 - `validate-repository-structure.mjs` through `npm run repo:validate`
 - `validate-documentation.mjs` through `npm run docs:validate`
 - the internal performance-identity unit and generated-route audit described above
+- module syntax checking for the non-blocking design report
 
 Additional deterministic rights/ingestion validators remain available for their dedicated workflows:
 
@@ -91,6 +114,7 @@ Run:
 
 ```bash
 npm run check
+npm run design:report
 ```
 
 If a new script is intended to become a maintained contract, add an npm script or wire it into `npm run check` as appropriate. A script that is not called anywhere should have a documented operational purpose here; otherwise remove it rather than accumulating dead tooling.
