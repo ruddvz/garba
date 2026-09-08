@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v15`;
+const CACHE_NAME = `${CACHE_PREFIX}v16`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -19,6 +19,7 @@ const CORE_SHELL = [
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
   './assets/runtime/explore-search.js',
+  './assets/runtime/immersive-atmosphere.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -58,6 +59,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/catalogue.js',
   '/catalogue/listening-library.js',
   '/assets/runtime/explore-search.js',
+  '/assets/runtime/immersive-atmosphere.js',
 ];
 
 self.addEventListener('install', (event) => {
