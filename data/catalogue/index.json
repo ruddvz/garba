@@ -99,7 +99,7 @@
     "data/catalogue/releases/releases-34-geeta-kirtidan-current.json",
     "data/catalogue/releases/releases-35-community-recommendations.json",
     "data/catalogue/releases/releases-36-classic-community-staples.json",
-    "data/catalogue/releases/releases-37-rushabh-shakti2.json",
+    "data/catalogue/releases/releases-37-rushabh-ahir.json",
     "data/catalogue/releases/releases-38-balraj-kum-kum.json",
     "data/catalogue/releases/releases-39-meghdhanush-folk-rang.json",
     "data/catalogue/releases/releases-40-khelaiya-dj-remix-vol2.json",
@@ -137,7 +137,8 @@
     "data/playback-sources-de-taali-exact.json",
     "data/playback-sources-rangili-ramzat-6-exact.json",
     "data/playback-sources-navdurgani-exact.json",
-    "data/playback-sources-ude-re-gulal-exact.json"
+    "data/playback-sources-ude-re-gulal-exact.json",
+    "data/playback-sources-shyam-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
