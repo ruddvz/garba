@@ -2,13 +2,7 @@
   --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
 }
 
-/*
- * Public-site artwork policy
- *
- * The six retired SVG worlds remain repository fallbacks for the player runtime only.
- * The public website must never present them as its visible artwork. Public pages use
- * the same current 2K WebP library as live.playgarba.com.
- */
+/* Public pages use the current 2K artwork library shared with the live player. */
 .hero-art {
   background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
@@ -66,75 +60,72 @@
 }
 
 .culture-feature {
-  position: relative;
-  min-height: clamp(560px, 72vw, 860px);
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  isolation: isolate;
-  padding: clamp(80px, 10vw, 140px) var(--pad);
-  border-top: 1px solid rgba(244, 234, 215, .08);
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(0, 1fr);
+  gap: clamp(36px, 6vw, 80px);
+  align-items: center;
+  padding: clamp(72px, 8vw, 108px) var(--pad);
+  border-top: 1px solid rgba(242, 236, 226, .08);
+  border-bottom: 1px solid rgba(242, 236, 226, .08);
+  background: #0b0c11;
 }
 
-.culture-feature::before {
-  content: "";
-  position: absolute;
-  z-index: -3;
-  inset: 0;
-  background: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
-  transform: scale(1.012);
-}
-
-.culture-feature::after {
-  content: "";
-  position: absolute;
-  z-index: -2;
-  inset: 0;
+.culture-feature-art {
+  min-height: clamp(280px, 34vw, 460px);
+  border-radius: 14px;
   background:
-    linear-gradient(180deg, rgba(7, 8, 13, .08) 12%, rgba(7, 8, 13, .3) 46%, rgba(7, 8, 13, .94) 100%),
-    linear-gradient(90deg, rgba(7, 8, 13, .76), rgba(7, 8, 13, .08) 72%);
+    linear-gradient(180deg, rgba(7, 8, 13, .02), rgba(7, 8, 13, .24)),
+    url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
 }
 
 .culture-feature-inner {
-  width: min(940px, 92vw);
+  max-width: 620px;
 }
 
 .culture-feature h2 {
-  max-width: 850px;
   margin: 0;
-  font: 400 clamp(54px, 8vw, 118px)/.88 var(--serif);
-  letter-spacing: -.052em;
+  font: 400 clamp(44px, 5.8vw, 76px)/.94 var(--serif);
+  letter-spacing: -.045em;
 }
 
 .culture-feature p:not(.eyebrow) {
-  max-width: 650px;
-  margin: 28px 0 34px;
-  color: rgba(244, 234, 215, .72);
-  font-size: clamp(16px, 1.4vw, 19px);
-  line-height: 1.7;
+  max-width: 560px;
+  margin: 22px 0 28px;
+  color: rgba(242, 236, 226, .66);
+  font-size: clamp(15px, 1.25vw, 17px);
+  line-height: 1.68;
 }
 
 .editorial-source {
   margin-top: 34px;
   padding-top: 22px;
-  border-top: 1px solid rgba(244, 234, 215, .12);
-  color: rgba(244, 234, 215, .52);
+  border-top: 1px solid rgba(242, 236, 226, .12);
+  color: rgba(242, 236, 226, .52);
   font-size: 12px;
   line-height: 1.65;
 }
 
 .editorial-source a {
-  color: rgba(244, 234, 215, .78);
-  border-bottom: 1px solid rgba(244, 234, 215, .24);
+  color: rgba(242, 236, 226, .78);
+  border-bottom: 1px solid rgba(242, 236, 226, .24);
 }
 
-@media (max-width: 700px) {
+@media (max-width: 760px) {
   .culture-feature {
-    min-height: 680px;
-    padding-bottom: 74px;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-top: 58px;
+    padding-bottom: 58px;
   }
 
-  .culture-feature::before {
-    background-position: 62% center;
+  .culture-feature-art {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+    border-radius: 12px;
+    background-position: 58% center;
+  }
+
+  .culture-feature h2 {
+    font-size: clamp(38px, 11vw, 54px);
   }
 }
