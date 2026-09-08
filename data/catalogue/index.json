@@ -1,7 +1,7 @@
 {
-  "version": "0.22.1",
-  "songCount": 1555,
-  "releaseCount": 232,
+  "version": "0.24.0",
+  "songCount": 1599,
+  "releaseCount": 234,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -83,6 +83,8 @@
     "data/catalogue/songs/songs-wave-d2-geeta-zankaar3.json",
     "data/catalogue/songs/songs-wave-d2-kirtidan-tahukar10.json",
     "data/catalogue/songs/songs-wave-d3-kirtidan-tahukar11.json",
+    "data/catalogue/songs/songs-wave-f-kinjal-garbe-ramvane.json",
+    "data/catalogue/songs/songs-wave-d4-kirtidan-rangili-ramzat8.json",
     "data/catalogue/songs/songs-wave-f-rangtaali2-parth.json",
     "data/catalogue/songs/songs-wave-f-rangtaali4.json"
   ],
@@ -142,11 +144,11 @@
     "data/catalogue/releases/releases-wave-d2-geeta-zankaar3.json",
     "data/catalogue/releases/releases-wave-d2-kirtidan-tahukar10.json",
     "data/catalogue/releases/releases-wave-d3-kirtidan-tahukar11.json",
+    "data/catalogue/releases/releases-wave-f-kinjal-garbe-ramvane.json",
+    "data/catalogue/releases/releases-wave-d4-kirtidan-rangili-ramzat8.json",
     "data/catalogue/releases/releases-wave-f-rangtaali-parth.json"
   ],
-  "retiredReleaseIds": [
-    "atul-live-uwb-2015"
-  ],
+  "retiredReleaseIds": ["atul-live-uwb-2015"],
   "retiredSongIds": [
     "atul-live-uwb-2015-01-garba-3-tali-pt-1-live",
     "atul-live-uwb-2015-02-garba-3-tali-pt-2-live",
@@ -221,6 +223,8 @@
     "data/playback-sources-wave-d2-geeta-zankaar3.json",
     "data/playback-sources-wave-d2-kirtidan-tahukar10.json",
     "data/playback-sources-wave-d3-kirtidan-tahukar11.json",
+    "data/playback-sources-kinjal-garbe-ramvane-youtube.json",
+    "data/playback-sources-wave-d4-kirtidan-rangili-ramzat8.json",
     "data/playback-sources-wave-f-rangtaali2.json",
     "data/playback-sources-wave-f-parth-oza.json",
     "data/playback-sources-wave-f-rangtaali4.json"
@@ -249,5 +253,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.22.1 preserves Wave C, Playback Wave E, Wave D, Wave F Rankar, Wave D2, Wave D3 Tahukar 11 and all current route-truth hardening, then completes Catalogue Wave F with 36 verified Rangtaali 2 entries, Parth Oza's Garbe Ghoome Tu single, and 27 verified Rangtaali 4 entries. Rangtaali 2 uses 34 provider-published Sur Sagar chapters, one conservative Amazon album fallback where no chapter is published, and one separate official full-track YouTube route. Garbe Ghoome Tu uses an exact Amazon track. Rangtaali 4 uses all 27 provider-published Sur Sagar chapter starts cross-checked against Amazon track metadata. No timestamps, provider IDs, or exactness are inferred."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.24.0 preserves all v0.23.0 catalogue, Wave D, Kinjal Dave, Rangili Ramzat 8, Nonstop and route-truth work, then completes the issue #156 Wave F closeout with Rangtaali 2 (36 entries), Parth Oza's Garbe Ghoome Tu single, and Rangtaali 4 (27 entries). Cumulative Wave F now contains 114 accepted songs across 5 releases with 113 exact official/provider routes and one documented conservative Amazon release fallback. Published YouTube chapter starts and provider track URLs are used only where explicitly exposed; no timestamps, track identifiers or consumer-stream audio are inferred or extracted."
 }

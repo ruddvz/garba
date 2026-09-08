@@ -1,0 +1,29 @@
+[
+  {
+    "id": "rangili-ramzat-8-kirtidan-2025",
+    "title": "Rangili Ramzat 8",
+    "artist": "Umesh Barot, Osman Mir, Kirtidan Gadhvi & Rashmita Rabari",
+    "releaseDate": "2025-09-24",
+    "originalReleaseYear": 2025,
+    "label": "Kirtidan Gadhvi",
+    "categories": ["modern-gujarati-garba", "traditional-garba", "mataji-devotional", "krishna-garba", "folk-lokgeet", "be-taali"],
+    "visualGenre": "traditional",
+    "entryType": "album",
+    "songCount": 17,
+    "durationSeconds": 3074,
+    "series": "Rangili Ramzat",
+    "volume": "8",
+    "live": {"isLive": false, "venue": null},
+    "sources": [
+      {"platform": "Amazon Music", "url": "https://music.amazon.com/albums/B0FSL5FZVB", "kind": "official-17-track-album"},
+      {"platform": "Qobuz", "url": "https://www.qobuz.com/gb-en/album/rangili-ramzat-8-umesh-barot-osman-mir-kirtidan-gadhvi-rashmita-rabari/e5n9i5stm05jc", "kind": "provider-17-track-album"}
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified-with-provider-rounding",
+    "audioAvailability": "external-source-only",
+    "durationPrecision": "track-sum",
+    "notes": "Amazon Music exposes the canonical 17-track September 24, 2025 album with all four credited main artists, provider-published track order, displayed durations and individual song links. Qobuz independently confirms the same release credits and shows one-second display-rounding differences on some tracks. Canonical durations follow Amazon's displayed values. Exact playback uses the explicit Amazon song hrefs; the continuous YouTube-distributed Rangili Ramzat 8 recording is retained separately as a Nonstop listening master and is not treated as 17 inferred YouTube chapters."
+  }
+]
