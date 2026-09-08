@@ -32,9 +32,10 @@ const requiredRootFiles = new Set([
   'sitemap.xml',
   'styles.css',
   'sw.js',
+  'vercel.json',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', 'assets', 'data', 'docs', 'scripts', 'src', 'styles']);
+const allowedRootDirs = new Set(['.github', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (entry.name === '.git') continue;
@@ -245,6 +246,37 @@ for (const marker of [
   'release-artwork.json',
 ]) if (!catalogueJs.includes(marker)) fail(`Catalogue runtime missing collection/artwork marker: ${marker}`);
 
+const publicSiteFiles = [
+  'public-site/index.html',
+  'public-site/how-to-use/index.html',
+  'public-site/install/index.html',
+  'public-site/live/index.html',
+  'public-site/faq/index.html',
+  'public-site/about/index.html',
+  'public-site/styles.css',
+  'public-site/pages.css',
+  'public-site/polish.css',
+  'public-site/site.js',
+  'public-site/pages.js',
+  'public-site/robots.txt',
+  'public-site/sitemap.xml',
+];
+for (const file of publicSiteFiles) if (!await exists(file)) fail(`Unified public-site bundle is missing: ${file}`);
+const publicIndex = await read('public-site/index.html');
+for (const marker of [
+  '<link rel="canonical" href="https://playgarba.com/"',
+  'https://live.playgarba.com/',
+]) if (!publicIndex.includes(marker)) fail(`Public homepage missing production marker: ${marker}`);
+
+const vercel = await readJson('vercel.json');
+const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'header' && entry.key.toLowerCase() === 'host')?.value;
+const apexRootRewrite = vercel.rewrites?.find((rule) => rule.source === '/' && rule.destination === '/public-site/' && hostValue(rule) === '^playgarba\\.com$');
+const apexPathRewrite = vercel.rewrites?.find((rule) => rule.source === '/:path*' && rule.destination === '/public-site/:path*' && hostValue(rule) === '^playgarba\\.com$');
+const wwwRedirect = vercel.redirects?.find((rule) => rule.source === '/:path*' && rule.destination === 'https://playgarba.com/:path*' && rule.permanent === true && hostValue(rule) === '^www\\.playgarba\\.com$');
+if (!apexRootRewrite) fail('vercel.json must route the apex root to public-site/');
+if (!apexPathRewrite) fail('vercel.json must route apex paths into public-site/');
+if (!wwwRedirect) fail('vercel.json must permanently redirect www.playgarba.com to the apex');
+
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
@@ -272,3 +304,4 @@ ok('catalogue is one crawlable page with in-page collection, release and song st
 ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
 ok('standalone song/release SEO page generation is retired and guarded against');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
+ok('single-project Vercel host routing keeps the public site and live player isolated by hostname');
