@@ -1,0 +1,72 @@
+# GARBA agent rules
+
+These rules apply to every automated or human implementation agent working in this repository.
+
+## Before touching code
+
+Do not start implementation until the work is claimed.
+
+1. Fetch current remote `main`. Never reset or overwrite newer work.
+2. Read issue #364, **[Agent Board] Active work claims**.
+3. Read the target issue and all recent comments.
+4. Check open pull requests for the same issue, feature, release, artist, files or runtime area.
+5. If the target is a broad `MASTER`, programme or multi-phase issue, do not use it as a shared implementation lane. Create or select a non-overlapping child issue first.
+6. Post a machine-readable claim on that child/implementation issue before coding:
+
+```text
+<!-- agent-claim
+agent: <agent-id>
+branch: <branch-name>
+scope: <short exact scope>
+files: <paths/globs or "research-only">
+-->
+CLAIM: <agent-id> owns this lane on <branch-name>.
+```
+
+7. Re-read the issue comments after posting. The first valid claim that has not been released owns the lane. If another active claim is earlier than yours, stop and choose another issue or ask for the scope to be split.
+8. Work only on the scope and files in your accepted claim. Expand scope only after updating coordination and confirming there is no overlap.
+
+A GitHub assignee is not enough. Multiple agents can operate through the same GitHub account, so the issue comment claim and branch are the ownership identity.
+
+## One lane, one owner
+
+- One implementation issue has one active agent claim at a time.
+- One active claim has one branch.
+- Parent/master issues coordinate children. They are not permission for several agents to edit the same area.
+- Existing open PRs that predate this system count as active ownership even if they do not have a claim comment yet.
+- Do not create a second PR for an already-owned issue or sub-scope.
+- Do not take over an abandoned-looking lane by assumption. Claims do not expire automatically. The owner must release it, the PR/issue must close, or the project owner must explicitly override it.
+
+## While working
+
+- Rebase/reconcile from current `main` before opening or updating a reviewable PR.
+- If newer `main` contains work that overlaps your claim, preserve the newer work and reduce your scope rather than restoring your old diff.
+- If another PR starts touching your claimed files for a different issue, document the collision on both issues before continuing.
+- Keep catalogue/data research separate from UI, deployment and product lanes unless the issue explicitly requires both.
+
+## Pull requests
+
+Every new PR governed by this system must include:
+
+```text
+Agent-Claim: #<issue-number>
+Agent-ID: <agent-id>
+```
+
+The PR head branch must match the branch in the active issue claim. The coordination check will reject a PR with no claim, a released claim, a conflicting claim or a branch mismatch.
+
+## Release the lane
+
+When the work is merged, abandoned or handed off, post:
+
+```text
+<!-- agent-release
+agent: <agent-id>
+branch: <branch-name>
+-->
+RELEASE: lane is available.
+```
+
+Do not leave a claim active after you stop working.
+
+Full protocol and conflict examples: [`docs/operations/agent-coordination.md`](docs/operations/agent-coordination.md).
