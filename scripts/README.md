@@ -18,10 +18,17 @@ Shared implementation code belongs in `scripts/lib/`, not alongside entry-point 
 
 ## Catalogue and runtime generation
 
-- `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards.
-- `enrich-runtime-songs.mjs` adds verified playback-provider routes to the generated song catalogue after the base build.
+- `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards. Multi-song releases prefer release-shaped provider sources over representative track links.
+- `enrich-runtime-songs.mjs` adds verified playback-provider routes to the generated song catalogue after the base build. It prevents release-level track references and duplicated provider track URLs from masquerading as exact songs.
 
 The `npm run catalogue` command intentionally runs both in that order.
+
+## Playback quality reporting
+
+- `report-playback-route-quality.mjs` ranks the remaining release/provider fallback batches after catalogue generation and separates exact selections from reference-only routes.
+- Run `npm run playback:report` when planning the next route-upgrade batch. Work from the largest high-confidence release/provider groups rather than choosing songs randomly.
+
+The report is a prioritisation tool. It does not make a route exact and it does not replace source verification.
 
 ## Health audits
 
@@ -40,21 +47,28 @@ Health audits can depend on the network. They are kept separate from determinist
 
 Reusable matching logic lives in `lib/catalogue-matcher.mjs`; its executable coverage is `test-catalogue-matcher.mjs`.
 
-## Active validators
+## Maintained validators
+
+The default `npm run check` path runs the runtime-critical and repository-level guards:
+
+- `validate-player-continuity.mjs`
+- `validate-runtime-packaging.mjs`
+- `validate-runtime-song-routes.mjs`
+- `validate-discovery.mjs`
+- `validate-repository-structure.mjs` through `npm run repo:validate`
+- `validate-documentation.mjs` through `npm run docs:validate`
+
+Additional deterministic rights/ingestion validators remain available for their dedicated workflows:
 
 - `validate-contact-map.mjs`
 - `validate-direct-audio.mjs`
-- `validate-discovery.mjs`
-- `validate-documentation.mjs`
 - `validate-hosting-rights.mjs`
 - `validate-master-intake.mjs`
 - `validate-outreach-queue.mjs`
 - `validate-publish-transaction.mjs`
-- `validate-repository-structure.mjs`
-- `validate-runtime-song-routes.mjs`
-- `validate-simple-runtime.mjs`
+- `validate-simple-runtime.mjs` is retained as a broader launch-hardening audit while the split runtime has more focused packaging/route guards.
 
-These form the maintained validation surface used by `npm run check`. Do not keep superseded validators around as historical snapshots. Git already preserves their history, while stale executable files create false maintenance obligations and can encode obsolete paths or product assumptions.
+Do not keep superseded validators around as historical snapshots. Git already preserves their history, while stale executable files create false maintenance obligations and can encode obsolete paths or product assumptions.
 
 ## Before merging tooling changes
 
