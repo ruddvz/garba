@@ -389,7 +389,7 @@ jobs:
 
               const active = activeRows.length
                 ? [
-                    '| Issue | Agent | Branch | Scope | Files | Conflict |',
+                    '| Issue | Agent | Branch | Scope | Files | Same-issue conflict |',
                     '| --- | --- | --- | --- | --- | --- |',
                     ...activeRows.map(({ issue, state }) =>
                       `| #${issue.number} | \`${esc(state.active.agent)}\` | \`${esc(state.active.branch)}\` | ${esc(state.active.scope)} | ${esc(state.active.files)} | ${state.conflicts.length ? `Yes (${state.conflicts.length})` : 'No'} |`
