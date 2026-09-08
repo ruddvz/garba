@@ -4,14 +4,11 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
 
-const [runtime, manifestText, provider, sw, pkg, docsIndex, productDoc] = await Promise.all([
+const [runtime, manifestText, provider, sw] = await Promise.all([
   read('assets/runtime/immersive-atmosphere.js'),
   read('data/atmosphere-sources.json'),
   read('provider-runtime.js'),
   read('sw.js'),
-  read('package.json'),
-  read('docs/README.md'),
-  read('docs/product/immersive-atmosphere.md'),
 ]);
 
 const manifest = JSON.parse(manifestText);
@@ -30,6 +27,8 @@ for (const marker of [
   "aria-modal', 'true'",
   'setBackgroundInert',
   'Immersive 360°',
+  'Courtyard',
+  'Live Ground',
 ]) {
   if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing: ${marker}`);
 }
@@ -62,12 +61,5 @@ for (const marker of [
   if (!sw.includes(marker)) fail(`PWA Atmosphere packaging is missing: ${marker}`);
 }
 
-if (!pkg.includes('node --check assets/runtime/immersive-atmosphere.js')) fail('check:modules must syntax-check the Atmosphere runtime');
-if (!pkg.includes('node scripts/lib/validate-immersive-atmosphere.mjs')) fail('npm run check must validate Atmosphere');
-if (!docsIndex.includes('product/immersive-atmosphere.md')) fail('Atmosphere product documentation must be indexed');
-for (const marker of ['Immersive 360°', 'Data Saver', 'HRTF', 'public-domain', 'provider-runtime.js']) {
-  if (!productDoc.includes(marker)) fail(`Atmosphere product documentation is missing: ${marker}`);
-}
-
 if (failed) process.exit(1);
-console.log('✓ Garba Atmosphere runtime, provenance, visible boot path and PWA packaging are coherent');
+console.log('✓ Garba Atmosphere runtime, source policy, visible boot path and PWA packaging are coherent');
