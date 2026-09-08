@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { performanceArtistIdentity } from "./lib/artist-identity.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const index = JSON.parse(await readFile(resolve(root, "data/catalogue/index.json"), "utf8"));
@@ -157,6 +158,13 @@ async function loadDiscoverySets() {
 
 function makePerformanceResolver(sets) {
   const candidates = [];
+  const stats = {
+    titleQualifiedCandidates: 0,
+    artistCompatibleCandidates: 0,
+    rejectedArtistConflict: 0,
+    rejectedArtistUnknown: 0,
+  };
+
   for (const set of sets) {
     const source = set?.source || {};
     if (source.provider !== "youtube" || !source.videoId || !Array.isArray(set.segments)) continue;
@@ -171,7 +179,7 @@ function makePerformanceResolver(sets) {
     }
   }
 
-  return (song) => {
+  function resolvePerformance(song) {
     if (!song?.title) return null;
     const songTitle = normalise(song.title);
     const songTokens = songTitle.split(/\s+/).filter(Boolean);
@@ -181,13 +189,23 @@ function makePerformanceResolver(sets) {
       const similarity = exact ? 1 : titleSimilarity(song.title, candidate.segment.title);
       const threshold = songTokens.length <= 1 ? 1 : 0.9;
       if (similarity < threshold) continue;
-      // When the verified chapter belongs to the selected song's own release,
-      // prefer it over a higher-ranked but different performance with the same
-      // traditional title. This keeps album-jukebox timestamps faithful to the
-      // catalogue recording while retaining the normal quality order elsewhere.
-      const releaseMatch = candidate.set.linkedReleaseId && candidate.set.linkedReleaseId === song.releaseId;
+
+      stats.titleQualifiedCandidates += 1;
+      const identity = performanceArtistIdentity(song, candidate.set, candidate.segment);
+      if (!identity.compatible) {
+        if (identity.status === "conflict") stats.rejectedArtistConflict += 1;
+        else stats.rejectedArtistUnknown += 1;
+        continue;
+      }
+      stats.artistCompatibleCandidates += 1;
+
+      // A chapter can only become generated exact-selection playback after artist
+      // identity is compatible. A linked release then receives the strongest bonus,
+      // followed by title similarity and source officiality.
+      const releaseMatch = identity.releaseMatch;
       matches.push({
         candidate,
+        identity,
         similarity,
         score: (releaseMatch ? 1000 : 0) + similarity * 100 + candidate.rank * 10 + (exact ? 10 : 0),
       });
@@ -195,7 +213,7 @@ function makePerformanceResolver(sets) {
     matches.sort((a, b) => b.score - a.score);
     const best = matches[0];
     if (!best) return null;
-    const { candidate, similarity } = best;
+    const { candidate, identity, similarity } = best;
     return {
       provider: "youtube",
       videoId: candidate.source.videoId,
@@ -205,11 +223,15 @@ function makePerformanceResolver(sets) {
       performanceSetId: candidate.set.id,
       performanceTitle: candidate.set.title,
       performanceOfficiality: candidate.sourceType,
+      performanceArtistMatch: identity.status,
+      performanceMatchedArtists: identity.shared,
       segmentTitle: candidate.segment.title,
       matchScore: Number(similarity.toFixed(3)),
-      note: "Verified live/nonstop performance version. This may differ from the catalogue studio recording.",
+      note: "Verified live/nonstop performance by a compatible credited artist. This may differ from the catalogue studio recording.",
     };
-  };
+  }
+
+  return { resolve: resolvePerformance, stats };
 }
 
 const sourceSongs = await merge(index.songChunks);
@@ -228,7 +250,8 @@ const songs = sourceSongs.filter((song) => !retiredSongIds.has(song.id));
 const releases = sourceReleases.filter((release) => !retiredReleaseIds.has(release.id));
 const freeSources = await merge(index.freeSourceChunks);
 const discoverySets = await loadDiscoverySets();
-const findPerformance = makePerformanceResolver(discoverySets);
+const performanceResolver = makePerformanceResolver(discoverySets);
+const findPerformance = performanceResolver.resolve;
 
 if (songs.length !== index.songCount) throw new Error(`Expected ${index.songCount} songs, got ${songs.length}`);
 if (releases.length !== index.releaseCount) throw new Error(`Expected ${index.releaseCount} releases, got ${releases.length}`);
@@ -245,6 +268,8 @@ const generatedPlayback = {};
 let releaseFallbackCount = 0;
 let releaseTrackReferenceCount = 0;
 let performanceChapterCount = 0;
+let performanceSameArtistCount = 0;
+let performanceCollaborationCount = 0;
 let explicitPlaybackCount = 0;
 let localAudioCount = 0;
 let unresolvedCount = 0;
@@ -257,6 +282,8 @@ for (const song of songs) {
   if (performance) {
     generatedPlayback[song.id] = performance;
     performanceChapterCount += 1;
+    if (performance.performanceArtistMatch === "same-artist") performanceSameArtistCount += 1;
+    else if (performance.performanceArtistMatch === "collaboration-compatible") performanceCollaborationCount += 1;
     continue;
   }
 
@@ -282,7 +309,7 @@ for (const song of songs) {
 const releasePlaybackManifest = {
   version: index.version,
   generated: true,
-  note: "Generated routes. Verified chaptered YouTube performances are preferred before release-level provider fallbacks. A track-shaped URL inherited from a multi-song release is retained only as a labelled release reference and is never exact-song playback. Curated song mappings override this file.",
+  note: "Generated routes. Artist-compatible verified chaptered YouTube performances are preferred before release-level provider fallbacks. Same-title chapters from conflicting or unknown performers are rejected. A track-shaped URL inherited from a multi-song release is retained only as a labelled release reference and is never exact-song playback. Curated song mappings override this file.",
   songSources: generatedPlayback,
 };
 const playbackCoverage = {
@@ -291,6 +318,8 @@ const playbackCoverage = {
   localAudio: localAudioCount,
   explicitProvider: explicitPlaybackCount,
   verifiedPerformanceChapter: performanceChapterCount,
+  verifiedPerformanceSameArtist: performanceSameArtistCount,
+  verifiedPerformanceCollaboration: performanceCollaborationCount,
   verifiedReleaseFallback: releaseFallbackCount,
   verifiedReleaseTrackReference: releaseTrackReferenceCount,
   unresolvedWithoutVerifiedReleaseSource: unresolvedCount,
@@ -308,3 +337,4 @@ await Promise.all([
 console.log(`Built ${songs.length} songs, ${releases.length} releases, ${freeSources.length} free/access sources.`);
 console.log(`Retired canonical duplicates: ${retiredSongIds.size} songs, ${retiredReleaseIds.size} releases.`);
 console.log(`Playback coverage: ${localAudioCount} local, ${explicitPlaybackCount} explicit provider, ${performanceChapterCount} verified performance chapter, ${releaseFallbackCount} verified release fallback, ${releaseTrackReferenceCount} release track reference, ${unresolvedCount} unresolved release source.`);
+console.log(`Performance identity: ${performanceSameArtistCount} same-artist routes, ${performanceCollaborationCount} collaboration-compatible routes; rejected ${performanceResolver.stats.rejectedArtistConflict} conflicting and ${performanceResolver.stats.rejectedArtistUnknown} unknown title-matched chapter candidates.`);
