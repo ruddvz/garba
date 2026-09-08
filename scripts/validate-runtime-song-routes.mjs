@@ -75,6 +75,18 @@ const timestampedYoutubeRoutes = songs.filter((song) => (
   && song.playbackSourceType !== 'verified-unchaptered-youtube-release'
   && song.playbackSourceType !== 'verified-release-track-reference'
 ));
+const providerDurationRoutes = songs.filter((song) => Object.prototype.hasOwnProperty.call(song, 'youtubeDurationSeconds'));
+const malformedProviderDurations = providerDurationRoutes.filter((song) => (
+  song.playbackProvider !== 'youtube'
+  || !song.youtubeId
+  || !Number.isFinite(Number(song.youtubeStartSeconds))
+  || Number(song.youtubeStartSeconds) < 0
+  || !Number.isFinite(Number(song.youtubeDurationSeconds))
+  || Number(song.youtubeDurationSeconds) <= 0
+  || !Number.isInteger(Number(song.youtubeDurationSeconds))
+  || song.playbackSourceType === 'verified-unchaptered-youtube-release'
+  || song.playbackSourceType === 'verified-release-track-reference'
+));
 const exactSelectionIds = new Set([
   ...directRoutes.map((song) => song.id),
   ...timestampedYoutubeRoutes.map((song) => song.id),
@@ -96,10 +108,12 @@ const misclassifiedUnchapteredYoutube = songs.filter((song) => {
 const brokenReleaseTrackReferences = releaseTrackReferenceRoutes.filter((song) => (
   !isExactTrackUrl(song)
   || Number.isFinite(Number(song.youtubeStartSeconds))
+  || Object.prototype.hasOwnProperty.call(song, 'youtubeDurationSeconds')
 ));
 const brokenUnchapteredYoutube = unchapteredYoutubeRoutes.filter((song) => {
   if (song.playbackProvider !== 'youtube' || !isReleaseSpecificUrl(song)) return true;
   if (Number.isFinite(Number(song.youtubeStartSeconds))) return true;
+  if (Object.prototype.hasOwnProperty.call(song, 'youtubeDurationSeconds')) return true;
   return Number(releasesById.get(song.releaseId)?.songCount) <= 1;
 });
 const brokenChapters = chapterRoutes.filter((song) => song.playbackProvider !== 'youtube' || !song.youtubeId || !Number.isFinite(Number(song.youtubeStartSeconds)) || Number(song.youtubeStartSeconds) < 0);
@@ -129,10 +143,11 @@ for (const song of songs) {
 
 if (missing.length) fail(`${missing.length} generated songs are missing runtime provider fields (first: ${missing.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (brokenChapters.length) fail(`${brokenChapters.length} performance-chapter routes lost their YouTube ID or start time`);
+if (malformedProviderDurations.length) fail(`${malformedProviderDurations.length} provider-specific YouTube chapter durations are malformed or attached to non-exact routes (first: ${malformedProviderDurations.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (misclassifiedExactTracks.length) fail(`${misclassifiedExactTracks.length} exact-shaped provider track URLs are still labelled as release-level fallbacks instead of track references`);
 if (misclassifiedSingleReleases.length) fail(`${misclassifiedSingleReleases.length} one-song release URLs are still labelled as multi-track release fallbacks`);
 if (misclassifiedUnchapteredYoutube.length) fail(`${misclassifiedUnchapteredYoutube.length} unchaptered multi-song YouTube routes are still allowed to look like exact song playback`);
-if (brokenReleaseTrackReferences.length) fail(`${brokenReleaseTrackReferences.length} release track references do not preserve a track-shaped evidence URL or incorrectly retain a timestamp`);
+if (brokenReleaseTrackReferences.length) fail(`${brokenReleaseTrackReferences.length} release track references do not preserve a track-shaped evidence URL or incorrectly retain YouTube timing metadata`);
 if (malformedExactTrackRoutes.length) fail(`${malformedExactTrackRoutes.length} exact provider routes do not point to provider-specific track selections (first: ${malformedExactTrackRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (rutviGeneratedPerformanceRoutes.length) fail(`${rutviGeneratedPerformanceRoutes.length} Rutvi Pandya songs still depend on the generic title-only performance matcher (first: ${rutviGeneratedPerformanceRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (duplicatedExactGroups.length) {
@@ -202,6 +217,7 @@ console.log(`✓ ${exactSelectionIds.size} songs have an honest exact-selection 
 console.log(`✓ ${releaseTrackReferenceRoutes.length} songs are explicitly blocked from false exact playback because their route is only a release track reference`);
 console.log(`✓ ${directRoutes.length} authorised direct-audio routes are available to the native audio player`);
 console.log(`✓ ${timestampedYoutubeRoutes.length} YouTube routes select a verified video/timestamp`);
+console.log(`✓ ${providerDurationRoutes.length} YouTube routes carry a positive provider-specific chapter duration; canonical song durations remain independent`);
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
 console.log(`✓ ${exactTrackRoutes.length} unique-song exact provider track mappings remain after duplicate-route downgrades`);
 console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
