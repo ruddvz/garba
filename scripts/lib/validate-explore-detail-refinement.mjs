@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 const runtime = await readFile(new URL('../../assets/runtime/explore-search.js', import.meta.url), 'utf8');
 const explore = await readFile(new URL('../../src/catalogue/index.html', import.meta.url), 'utf8');
+const catalogue = await readFile(new URL('../../src/catalogue/catalogue.js', import.meta.url), 'utf8');
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
@@ -40,6 +41,21 @@ for (const marker of [
   if (!explore.includes(marker)) fail(`Explore album-rail interaction is missing: ${marker}`);
 }
 
+for (const marker of [
+  'function replaceDetailMeta(values = [])',
+  'function renderCollectionDetailIdentity(collection = state.active)',
+  'function renderReleaseDetailIdentity(release, songs)',
+  "els.detailKicker.textContent = `${state.active.title} · Release`;",
+  'els.detailTitle.textContent = release.title;',
+  "els.detailDescription.textContent = credits.join(' · ') || `Selected from ${state.active.title}.`;",
+  "'Selected release'",
+  'renderReleaseDetailIdentity(release, songs);',
+  'renderCollectionDetailIdentity(state.active);',
+  "rail.setAttribute('role','group');",
+]) {
+  if (!catalogue.includes(marker)) fail(`Explore release-detail identity is missing: ${marker}`);
+}
+
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
 inlineModules.forEach((source, index) => {
@@ -59,6 +75,9 @@ if (explore.includes('releaseRail.scrollIntoView(') || explore.includes('next.sc
 if (explore.includes('id="releaseRail" role="list"')) {
   fail('Interactive album rail must preserve native button semantics instead of exposing list-only semantics');
 }
+if (catalogue.includes("button.setAttribute('role','listitem');")) {
+  fail('Release buttons must keep native button semantics in the source runtime');
+}
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, album semantics, keyboard navigation, overflow cues and horizontal-only focus are protected');
+console.log('✓ Explore detail hierarchy, release identity, album semantics, keyboard navigation, overflow cues and horizontal-only focus are protected');
