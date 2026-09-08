@@ -15,6 +15,7 @@
         "embeddable": true
       },
       "linkedReleaseId": "rangtaali-2017",
+      "categories": ["modern-gujarati-garba","traditional-garba"],
       "durationSeconds": 4182,
       "segments": [
         {"title": "Duha (Intro)", "startSeconds": 0, "endSeconds": 157},
