@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "description": "Verified Soor Mandir low-friction playback batch. Rangoli maps only chapters explicitly published by the rights-holder upload; unmapped tracks remain on their existing verified fallback.",
+  "songSources": {
+    "rangoli-vol16-2008-01-tu-kaline-kaliyani-re": {"provider":"youtube","videoId":"K5SdqV_EuMA","sourceUrl":"https://www.youtube.com/watch?v=K5SdqV_EuMA","sourceType":"verified-performance-chapter","startSeconds":0,"alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rangoli-non-stop-garba-vol-16/906202134","sourceType":"verified-release-source"}},
+    "rangoli-vol16-2008-02-taro-hariyo-dungar": {"provider":"youtube","videoId":"K5SdqV_EuMA","sourceUrl":"https://www.youtube.com/watch?v=K5SdqV_EuMA","sourceType":"verified-performance-chapter","startSeconds":268,"alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rangoli-non-stop-garba-vol-16/906202134","sourceType":"verified-release-source"}},
+    "rangoli-vol16-2008-03-he-madi-mari-ramva": {"provider":"youtube","videoId":"K5SdqV_EuMA","sourceUrl":"https://www.youtube.com/watch?v=K5SdqV_EuMA","sourceType":"verified-performance-chapter","startSeconds":450,"alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rangoli-non-stop-garba-vol-16/906202134","sourceType":"verified-release-source"}},
+    "rangoli-vol16-2008-04-dholida-tu-aevo-te-dhhol": {"provider":"youtube","videoId":"K5SdqV_EuMA","sourceUrl":"https://www.youtube.com/watch?v=K5SdqV_EuMA","sourceType":"verified-performance-chapter","startSeconds":586,"alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rangoli-non-stop-garba-vol-16/906202134","sourceType":"verified-release-source"}},
+    "rangoli-vol16-2008-05-aabhlani-odhi-maa": {"provider":"youtube","videoId":"K5SdqV_EuMA","sourceUrl":"https://www.youtube.com/watch?v=K5SdqV_EuMA","sourceType":"verified-performance-chapter","startSeconds":754,"alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rangoli-non-stop-garba-vol-16/906202134","sourceType":"verified-release-source"}}
+  }
+}
