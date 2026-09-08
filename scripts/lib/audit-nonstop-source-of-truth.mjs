@@ -6,8 +6,11 @@ const readJson = async (file) => JSON.parse(await readFile(path.join(root, file)
 
 const legacy = await readJson('data/nonstop.json');
 const index = await readJson('data/discovery/sets/index.json');
-const setPayloads = await Promise.all((index.chunks || []).map((chunk) => readJson(path.posix.join('data/discovery/sets', chunk))));
-const discovery = setPayloads.flatMap((payload) => Array.isArray(payload?.sets) ? payload.sets : []);
+const discovery = [];
+for (const chunk of index.chunks || []) {
+  const payload = await readJson(path.posix.join('data/discovery/sets', chunk));
+  for (const set of Array.isArray(payload?.sets) ? payload.sets : []) discovery.push({ ...set, __chunk: chunk });
+}
 
 const discoveryByVideo = new Map();
 for (const set of discovery) {
@@ -42,5 +45,8 @@ if (legacyNonYoutube.length) {
 }
 if (duplicateDiscoveryVideos.length) {
   console.log('\nDiscovery duplicate video identities:');
-  for (const [videoId, sets] of duplicateDiscoveryVideos) console.log(`  ${videoId} | ${sets.map((set) => set.id).join(', ')}`);
+  for (const [videoId, sets] of duplicateDiscoveryVideos) {
+    console.log(`  ${videoId}`);
+    for (const set of sets) console.log(`    ${set.id} | ${set.__chunk} | ${set.title}`);
+  }
 }
