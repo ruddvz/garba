@@ -51,10 +51,11 @@ if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v9`")) {
 }
 
 for (const marker of [
+  'librsvg2-bin',
   'assets/social/playgarba-og-card.svg',
   '_site/assets/social/garba-og-card.png',
-  'convert \\',
-  "identify -format '%wx%h'",
+  'rsvg-convert -w 1200 -h 630',
+  'PNG image data, 1200 x 630',
   'node scripts/lib/inject-social-preview.mjs _site/index.html',
   'summary_large_image',
 ]) {
@@ -89,4 +90,4 @@ console.log('✓ Pages ships every direct and transitive playback runtime file')
 console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
 console.log('✓ provider route safety loads before the YouTube controllable engine');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
-console.log('✓ PlayGarba social previews are generated from a reviewable 1200x630 source and injected at deploy time');
+console.log('✓ PlayGarba social previews are generated with librsvg from a reviewable 1200x630 source and injected at deploy time');
