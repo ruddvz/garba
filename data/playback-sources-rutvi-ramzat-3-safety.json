@@ -1,16 +1,6 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "updated": "2026-09-08",
-  "note": "Conservative Rutvi Ni Ramzat 3.0 overrides for songs without an independently verified exact Rutvi Pandya track URL. These album-level Apple Music routes intentionally override the generic title-only performance matcher so another artist's same-title traditional recording can never be presented as the selected Rutvi song. A later exact manifest entry may safely override these fallbacks.",
-  "songSources": {
-    "rutvi-aavi-aashapura-maadi-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":1,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-aavjo-mavadiyu-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":3,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-chotile-dakla-vagya-chamunda-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":6,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-ek-patan-sher-ni-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":8,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-jhanjharwali-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":13,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-kaniya-morli-wala-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":14,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-mar-toh-mele-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":17,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-sona-vatkdi-re-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":21,"evidenceType":"official-apple-music-album-page"},
-    "rutvi-van-ma-chandaliyo-ugyo-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/rutvi-ni-ramzat-3-0/1773146911","sourceType":"verified-release-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":22,"evidenceType":"official-apple-music-album-page"}
-  }
+  "note": "The prior Apple Music safety fallbacks are no longer needed. All 22 canonical Rutvi Ni Ramzat 3.0 songs now have exact Rutvi Pandya Official Artist Channel chapter routes in playback-sources-rutvi-ramzat-3-exact.json using the artist-published timestamps. This manifest remains indexed as an explicit historical safety layer but contains no executable or provider fallback rows.",
+  "songSources": {}
 }
