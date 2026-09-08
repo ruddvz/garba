@@ -1,10 +1,10 @@
-# Issue #353: Khelaiya DJ Remix, Vol. 2 YouTube migration audit
+# Issue #553: Khelaiya DJ Remix, Vol. 2 YouTube migration audit
 
 ## Scope
 
 This audit covers only the canonical release `khelaiya-dj-remix-vol2-2016`, titled `Khelaiya DJ Remix, Vol. 2 (47 Non Stop DJ Dandiya)` by Rupal Doshi, Kishore Manraja and Kirti-Girish.
 
-The broader #353 Ishtar/Venus cluster includes other releases. Those releases are deliberately excluded from this lane so other agents can claim them without overlapping `data/playback-sources-khelaiya.json`.
+Parent cluster #353 includes other Ishtar/Venus releases. Those releases are deliberately excluded from this lane so other agents can claim them without overlapping `data/playback-sources-khelaiya.json`.
 
 ## Canonical release identity
 
@@ -76,6 +76,6 @@ Before merge, repository checks should confirm:
 5. there are no duplicate exact-route downgrades or unresolved routes created by this manifest change;
 6. the full repository check remains green.
 
-## Remaining #353 work
+## Remaining parent-cluster work
 
-This PR addresses only `Khelaiya DJ Remix, Vol. 2`. `Mataji Na Tran Taali` and the remaining Ishtar/Venus provider-backed batches remain separate, non-overlapping follow-up work under #353.
+This lane addresses only `Khelaiya DJ Remix, Vol. 2`. `Mataji Na Tran Taali` and the remaining Ishtar/Venus provider-backed batches remain separate, non-overlapping follow-up work under #353.

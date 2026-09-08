@@ -38,6 +38,9 @@ requireMarker(styles, '/* Listening flow #287 */', 'Listening-flow styles missin
 requireMarker(styles, '.song-queue-action', 'Play-next row action missing');
 requireMarker(library, "heading.textContent = 'My Garba';", 'Explore My Garba section missing');
 requireMarker(library, "openMyGarba.href = '../?library=my-garba';", 'Explore must expose a low-clutter My Garba entry point');
+requireMarker(library, "if (card.dataset.artistIdentityDecorated === artistId) return;", 'Explore artist identity decoration must be idempotent');
+requireMarker(library, "observe(sections, { childList: true, subtree: false });", 'Explore artist observer must watch top-level catalogue rerenders only');
+if (library.includes("new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: true });")) { console.error('✗ Explore artist observer must not observe mutations created by its own decorator'); failed = true; }
 requireMarker(library, "openMyGarba.href = '../?library=my-garba';", 'Explore must expose a low-clutter My Garba entry point');
 requireMarker(nonstop, "target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')", 'Nonstop queue/transport isolation must remain intact');
 
