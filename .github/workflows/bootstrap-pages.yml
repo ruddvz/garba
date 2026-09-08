@@ -1,0 +1,24 @@
+name: Bootstrap GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-bootstrap
+  cancel-in-progress: true
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable GitHub Pages for Actions deployments
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
