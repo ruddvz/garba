@@ -3,6 +3,14 @@ import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const readJson = async (file) => JSON.parse(await readFile(path.join(root, file), 'utf8'));
+const normalise = (value = '') => String(value)
+  .normalize('NFKD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/\bnon[ -]?stop\b/g, 'nonstop')
+  .replace(/[^a-z0-9\u0a80-\u0aff]+/g, ' ')
+  .trim();
+const artistText = (set) => Array.isArray(set?.artists) ? set.artists.join(' ') : String(set?.artist || '');
 
 const legacy = await readJson('data/nonstop.json');
 const index = await readJson('data/discovery/sets/index.json');
@@ -37,7 +45,14 @@ console.log(`Discovery videoIds represented by multiple set IDs: ${duplicateDisc
 
 if (missing.length) {
   console.log('\nMissing legacy YouTube masters:');
-  for (const set of missing) console.log(`  ${set.id} | ${set.videoId} | ${set.title}`);
+  for (const set of missing) {
+    console.log(`  ${set.id} | ${set.videoId} | ${set.title}`);
+    const titleKey = normalise(set.title);
+    const candidates = discovery.filter((candidate) => normalise(candidate.title) === titleKey);
+    for (const candidate of candidates) {
+      console.log(`    same-title discovery: ${candidate.id} | ${candidate.source?.videoId || candidate.source?.provider || 'no-source'} | ${candidate.__chunk} | ${artistText(candidate)}`);
+    }
+  }
 }
 if (legacyNonYoutube.length) {
   console.log('\nLegacy non-YouTube rows (must remain provenance only, not listening masters):');
