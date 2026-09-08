@@ -1,5 +1,5 @@
 {
-  "version": "0.17.0",
+  "version": "0.17.1",
   "songCount": 1169,
   "releaseCount": 211,
   "categoryCount": 19,
@@ -127,7 +127,8 @@
     "data/playback-sources-raag-mehta.json",
     "data/playback-sources-low-friction.json",
     "data/playback-sources-low-friction-soor-mandir-02.json",
-    "data/playback-sources-low-friction-soor-mandir-03.json"
+    "data/playback-sources-low-friction-soor-mandir-03.json",
+    "data/playback-sources-low-friction-soor-mandir-04.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -153,5 +154,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.0 adds chunked verified low-friction playback overrides for rights-holder/provider sources that avoid subscription-dependent release pages when exact playback can be proven."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.1 adds the verified Madhuvan/Bansari-2 rights-holder chapter batch to the low-friction override layer."
 }
