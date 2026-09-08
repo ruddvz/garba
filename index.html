@@ -1,299 +1,167 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#111323" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="description" content="PlayGarba is an open, community-built Gujarati Garba music catalogue for songs, artists, releases, live sets and nonstop Garba." />
-    <meta name="application-name" content="PlayGarba" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="PlayGarba" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="PlayGarba · Gujarati Garba music, Raas and nonstop sets" />
-    <meta property="og:description" content="Discover Garba songs, artists, releases, live performances and nonstop sets in one open community-built catalogue." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://playgarba.com/" />
-    <meta property="og:site_name" content="PlayGarba" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="PlayGarba · Gujarati Garba music, Raas and nonstop sets" />
-    <meta name="twitter:description" content="Discover Garba songs, artists, releases, live performances and nonstop sets in one open community-built catalogue." />
-    <title>PlayGarba · Gujarati Garba music, Raas and nonstop sets</title>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111323" />
+  <meta name="color-scheme" content="dark" />
+  <title>PlayGarba · Gujarati Garba music</title>
+  <meta name="description" content="PlayGarba brings Gujarati Garba songs, artists, releases, live sets and nonstop Garba into one focused listening experience." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://playgarba.com/" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="preload" as="image" href="assets/traditional.svg" fetchpriority="high" />
+  <link rel="stylesheet" href="styles.css" />
 
-    <link rel="canonical" href="https://playgarba.com/" />
-    <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
-    <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192" />
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
-    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" fetchpriority="high" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PlayGarba" />
+  <meta property="og:title" content="PlayGarba · Gujarati Garba music" />
+  <meta property="og:description" content="Gujarati Garba songs, artists, releases, live sets and nonstop Garba in one focused listening experience." />
+  <meta property="og:url" content="https://playgarba.com/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PlayGarba · Gujarati Garba music" />
+  <meta name="twitter:description" content="Gujarati Garba songs, artists, releases, live sets and nonstop Garba in one focused listening experience." />
 
-    <style>
-      html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #111323; }
-      .app { position: fixed; inset: 0; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: #111323; }
-      .world, .world-layer { position: absolute; inset: 0; margin: 0; padding: 0; }
-      .world { overflow: hidden; }
-      .world-layer { background-size: cover; background-position: center; background-repeat: no-repeat; }
-    </style>
-    <link rel="stylesheet" href="styles.css" />
-    <style id="mobilePwaPolish">
-      .sheet-backdrop { position: fixed; z-index: 19; inset: 0; background: rgba(4,5,10,.34); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
-      .sheet-backdrop[hidden] { display: none !important; }
-      #providerDockStop { width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0 !important; font-size: 0 !important; display: grid; place-items: center; }
-      #providerDockStop::before { content: "×"; color: var(--ivory); font: 300 24px/1 var(--sans); }
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PlayGarba",
+    "url": "https://playgarba.com/",
+    "description": "Gujarati Garba songs, artists, releases, live sets and nonstop Garba."
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-      @media (max-width: 700px) {
-        html, body { height: 100% !important; min-height: 100% !important; }
-        .app { position: fixed !important; inset: 0 !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important; }
-        .world, .world-layer { position: fixed !important; inset: -6px !important; }
-        .topbar { padding-top: max(18px, var(--safe-top)); padding-left: max(18px, var(--safe-left)); padding-right: max(18px, var(--safe-right)); }
-        .brand { line-height: 42px; }
-        .utilities { gap: 1px; min-height: 44px; }
-        .utilities .icon-button, .utilities .mobile-heart { width: 42px; min-width: 42px; height: 42px; min-height: 42px; margin: 0; padding: 8px; border: 1px solid transparent; border-radius: 999px; background: rgba(8,10,18,.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .utilities .mobile-heart { display: grid !important; flex: 0 0 42px; }
-        .utilities .mobile-heart svg { width: 23px; height: 23px; }
-        .utilities .mobile-heart.active { background: color-mix(in srgb, var(--accent) 12%, rgba(8,10,18,.24)); }
-        .artist-row { display: block; }
-        .artist { margin-top: 10px; }
-        .player-shell { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); padding-bottom: max(16px, calc(var(--safe-bottom) + 2px)); }
-        .track-block { max-width: min(91vw, 560px); }
-        .controls { margin-top: 8px; gap: clamp(20px, 6.2vw, 28px); }
-        .progress-wrap { width: min(440px, 84vw); margin-top: 4px; }
-        .genre-strip { padding-top: 14px; padding-bottom: 8px; }
+  <header class="site-header" id="top">
+    <a class="wordmark" href="#top" aria-label="PlayGarba home">GARBA</a>
+    <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="siteNav">
+      <span></span><span></span>
+      <span class="sr-only">Open menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Primary navigation">
+      <a href="#worlds">Six worlds</a>
+      <a href="#nonstop">Nonstop</a>
+      <a href="#listen">Listen anywhere</a>
+      <a class="nav-cta" href="https://live.playgarba.com/">Listen now <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
 
-        .app .browse-actions { width: min(calc(100% - 28px), 460px); display: flex; grid-template-columns: none; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 0; margin-top: 5px; padding: 3px; border: 1px solid rgba(246,236,215,.11); border-radius: 16px; background: rgba(8,10,18,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 34px rgba(0,0,0,.12); }
-        .app .browse-actions .browse-button { flex: 1 1 50%; min-width: 0; min-height: 46px; margin: 0; padding: 0 10px; justify-content: center; border-radius: 12px; font-size: 15px; line-height: 1; }
-        .app .browse-actions #browseButton { border-radius: 12px 0 0 12px; }
-        .app .browse-actions #nonstopButton { border-left: 1px solid rgba(246,236,215,.10); border-radius: 0 12px 12px 0; }
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-art" aria-hidden="true"></div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="eyebrow">Gujarati music · One home</p>
+        <h1 id="hero-title">Garba,<br /><em>kept in motion.</em></h1>
+        <p class="hero-intro">Songs, artists, releases, live sets and nonstop Garba, gathered into one focused listening experience.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="https://live.playgarba.com/">Listen now <span aria-hidden="true">▶</span></a>
+          <a class="text-link" href="#worlds">Explore the six worlds <span aria-hidden="true">↓</span></a>
+        </div>
+      </div>
+      <div class="hero-note" aria-hidden="true">
+        <span>01</span>
+        <span>Traditional</span>
+      </div>
+      <a class="scroll-cue" href="#intro" aria-label="Continue to the next section"><span></span></a>
+    </section>
 
-        .sheet { border-radius: 24px 24px 0 0; box-shadow: 0 -24px 72px rgba(0,0,0,.48); }
-        .sheet-header { grid-template-columns: minmax(0,1fr) auto auto; gap: 4px; }
-        .sheet-close { display: grid !important; width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0; place-items: center; border: 1px solid rgba(246,236,215,.10); background: rgba(246,236,215,.055); }
-        .sheet-close svg { display: none; }
-        .sheet-close::before { content: "×"; font: 300 27px/1 var(--sans); transform: translateY(-1px); }
-        .sheet[data-snap="medium"] { height: 60vh; height: 60dvh; }
-        .sheet[data-snap="full"] { height: 88vh; height: 88dvh; }
-        .sheet-inner { padding-bottom: max(14px, var(--safe-bottom)); }
-        .sheet-handle { height: 27px; }
-        .sheet-handle span { width: 42px; height: 4px; margin-top: 10px; }
+    <section class="intro section" id="intro" aria-labelledby="intro-title">
+      <div class="section-kicker">PLAYGARBA</div>
+      <div class="intro-grid">
+        <h2 id="intro-title">A listening home<br />built around Garba.</h2>
+        <div class="intro-copy">
+          <p>PlayGarba is an open, community-built Gujarati Garba catalogue and player. Browse by sound, move between individual tracks and nonstop sets, or simply press play and stay with the music.</p>
+          <a class="inline-link" href="https://live.playgarba.com/?browse=1">Open the catalogue <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
 
-        .song-row, .genre-button, .browse-button, .transport, .play-button, .icon-button, .heart-button, .sheet-close { touch-action: manipulation; }
-        .provider-dock { bottom: max(76px, calc(var(--safe-bottom) + 66px)); box-shadow: 0 22px 72px rgba(0,0,0,.52); }
-      }
-
-      @media (max-width: 390px) {
-        .topbar { padding-left: max(14px, var(--safe-left)); padding-right: max(14px, var(--safe-right)); }
-        .utilities .icon-button, .utilities .mobile-heart { width: 39px; min-width: 39px; height: 39px; min-height: 39px; }
-        .app .browse-actions { width: calc(100% - 20px); }
-        .app .browse-actions .browse-button { padding-inline: 7px; font-size: 14px; }
-      }
-
-      @media (display-mode: standalone) and (max-width: 700px) {
-        .app { inset: 0 !important; width: auto !important; height: auto !important; }
-      }
-    </style>
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "PlayGarba",
-        "url": "https://playgarba.com/",
-        "applicationCategory": "MultimediaApplication",
-        "operatingSystem": "Any",
-        "description": "An open, community-built Gujarati Garba music catalogue and listening interface.",
-        "isAccessibleForFree": true,
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
-      }
-    </script>
-  </head>
-  <body>
-    <a class="skip-link" href="#mainPlayer">Skip to player</a>
-
-    <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed" data-loading="false" aria-busy="false">
-      <div class="world" aria-hidden="true">
-        <div class="world-layer is-visible" id="worldA" style="background-image:url('assets/backgrounds/traditional.svg')"></div>
-        <div class="world-layer" id="worldB"></div>
-        <div class="world-vignette"></div>
-        <div class="world-ambient" id="worldAmbient"></div>
+    <section class="worlds section" id="worlds" aria-labelledby="worlds-title">
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">THE SIX WORLDS</p>
+          <h2 id="worlds-title">One courtyard.<br />Six ways into Garba.</h2>
+        </div>
+        <p class="section-summary">Each world keeps the same architectural language, then shifts the light, colour and atmosphere around the music.</p>
       </div>
 
-      <header class="topbar">
-        <a href="./" class="brand" aria-label="PlayGarba home">PlayGarba</a>
-        <nav class="utilities" aria-label="Player tools">
-          <span class="network-status" id="networkStatus" aria-hidden="true"></span>
-          <button class="icon-button" id="searchButton" type="button" aria-label="Search songs" title="Search songs (/)" aria-keyshortcuts="/">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
-          </button>
-          <button class="icon-button" id="shareButton" type="button" aria-label="Share current song" title="Share current song">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.25"></circle><circle cx="6" cy="12" r="2.25"></circle><circle cx="18" cy="19" r="2.25"></circle><path d="m8 11 7.8-4.6M8 13l7.8 4.6"></path></svg>
-          </button>
-          <button class="icon-button desktop-only" id="favouritesButton" type="button" aria-label="Show favourites" title="Favourites">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
-          </button>
-          <button class="icon-button has-badge" id="queueButton" type="button" aria-label="Show queue" title="Up next">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7"></path><path d="M18 13v7M18 13l3 2"></path></svg>
-            <span class="utility-badge" id="queueBadge" aria-hidden="true"></span>
-          </button>
-        </nav>
-      </header>
-
-      <main class="player-shell" id="mainPlayer" tabindex="-1">
-        <section class="track-block" id="trackBlock" aria-label="Now playing" aria-live="polite" aria-atomic="true">
-          <p class="genre-eyebrow" id="genreEyebrow">Traditional Garba</p>
-          <h1 class="song-title" id="songTitle">Ochhav Theme</h1>
-          <div class="artist-row">
-            <p class="artist" id="songArtist">Aditya Gadhvi</p>
-            <button class="heart-button mobile-heart" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
-            </button>
-          </div>
-        </section>
-
-        <section class="controls" aria-label="Playback controls">
-          <button class="transport" id="prevButton" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
-          <button class="play-button" id="playButton" type="button" aria-label="Play">
-            <span class="ambient-ring" aria-hidden="true"></span>
-            <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg>
-            <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
-          </button>
-          <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
-        </section>
-
-        <section class="progress-wrap" aria-label="Playback progress">
-          <span class="time" id="elapsedTime">0:00</span>
-          <input class="progress" id="progress" type="range" min="0" max="1000" value="0" aria-label="Seek" />
-          <span class="time" id="durationTime">1:19</span>
-        </section>
-
-        <nav class="genre-strip" id="genreStrip" aria-label="Genres">
-          <button class="genre-button active" type="button" data-genre="traditional" data-static-genre="true" aria-current="true">Traditional</button>
-          <button class="genre-button" type="button" data-genre="dandiya" data-static-genre="true">Dandiya</button>
-          <button class="genre-button" type="button" data-genre="devotional" data-static-genre="true">Devotional</button>
-          <button class="genre-button" type="button" data-genre="folk" data-static-genre="true">Folk</button>
-          <button class="genre-button" type="button" data-genre="sanedo" data-static-genre="true">Sanedo</button>
-          <button class="genre-button" type="button" data-genre="fusion" data-static-genre="true">Fusion</button>
-        </nav>
-
-        <div class="browse-actions" id="browseActions">
-          <button class="browse-button" id="browseButton" type="button" aria-expanded="false" aria-controls="songSheet">
-            <span>Browse songs</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"></path></svg>
-          </button>
-        </div>
-      </main>
-
-      <aside class="sheet" id="songSheet" role="dialog" aria-modal="false" aria-hidden="true" aria-labelledby="sheetTitle">
-        <button class="sheet-handle" id="sheetHandle" type="button" aria-label="Resize song browser"><span></span></button>
-        <div class="sheet-inner">
-          <header class="sheet-header">
-            <div class="sheet-header-title"><h2 id="sheetTitle">Songs</h2><span class="sheet-summary" id="sheetSummary" aria-live="polite"></span></div>
-            <label class="search-field" aria-label="Search songs and artists">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
-              <input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" inputmode="search" enterkeyhint="search" />
-            </label>
-            <button class="icon-button sheet-close" id="sheetClose" type="button" aria-label="Close songs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg></button>
-          </header>
-
-          <nav class="sheet-genres genre-strip" id="sheetGenreStrip" aria-label="Filter songs by genre"></nav>
-          <div class="song-list" id="songList" role="list" aria-label="Song results"></div>
-
-          <div class="mini-player" aria-label="Compact player">
-            <div class="mini-progress"><span id="miniProgress"></span></div>
-            <div class="mini-track"><strong id="miniTitle">Ochhav Theme</strong><span id="miniArtist">Aditya Gadhvi</span></div>
-            <div class="mini-controls">
-              <button class="transport" id="miniPrev" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
-              <button class="transport mini-play" id="miniPlay" type="button" aria-label="Play"><svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg><svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg></button>
-              <button class="transport" id="miniNext" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <div class="install-banner" id="installBanner" hidden>
-        <div><strong id="installTitle">Install PlayGarba</strong><span id="installText">Keep the full-screen player one tap away.</span></div>
-        <div class="install-actions"><button id="installDismiss" type="button">Not now</button><button class="install-primary" id="installButton" type="button">Install</button></div>
+      <div class="world-grid">
+        <a class="world-card world-traditional" href="https://live.playgarba.com/?genre=traditional">
+          <span class="world-number">01</span><span class="world-name">Traditional</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="world-card world-dandiya" href="https://live.playgarba.com/?genre=dandiya">
+          <span class="world-number">02</span><span class="world-name">Dandiya</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="world-card world-devotional" href="https://live.playgarba.com/?genre=devotional">
+          <span class="world-number">03</span><span class="world-name">Devotional</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="world-card world-folk" href="https://live.playgarba.com/?genre=folk">
+          <span class="world-number">04</span><span class="world-name">Folk</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="world-card world-sanedo" href="https://live.playgarba.com/?genre=sanedo">
+          <span class="world-number">05</span><span class="world-name">Sanedo</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="world-card world-fusion" href="https://live.playgarba.com/?genre=fusion">
+          <span class="world-number">06</span><span class="world-name">Fusion</span><span class="world-arrow" aria-hidden="true">↗</span>
+        </a>
       </div>
+    </section>
 
-      <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      <audio id="audio" preload="metadata"></audio>
+    <section class="nonstop" id="nonstop" aria-labelledby="nonstop-title">
+      <div class="nonstop-art" aria-hidden="true"></div>
+      <div class="nonstop-overlay" aria-hidden="true"></div>
+      <div class="nonstop-copy">
+        <p class="eyebrow">NONSTOP GARBA</p>
+        <h2 id="nonstop-title">When one track<br />isn’t the point.</h2>
+        <p>Move into longer Garba sets built for continuous listening, without leaving the player experience.</p>
+        <a class="button button-ghost" href="https://live.playgarba.com/?nonstop=1">Open nonstop Garba <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <section class="listen section" id="listen" aria-labelledby="listen-title">
+      <div class="listen-copy">
+        <p class="section-kicker">THE PLAYER</p>
+        <h2 id="listen-title">The website introduces it.<br />The player gets out of the way.</h2>
+        <p>Search, browse, queue favourites and move between the six worlds from the dedicated player at <strong>live.playgarba.com</strong>. On supported devices, add it to your home screen for a standalone app-like view.</p>
+        <a class="button button-primary" href="https://live.playgarba.com/">Open the player <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="player-frame" aria-label="Stylised preview of the PlayGarba player">
+        <div class="player-scene" aria-hidden="true"></div>
+        <div class="player-top"><span>GARBA</span><span>•••</span></div>
+        <div class="player-meta">
+          <span>Traditional Garba</span>
+          <strong>Press play. Stay with it.</strong>
+          <small>PlayGarba</small>
+        </div>
+        <div class="player-controls" aria-hidden="true"><span>‹</span><span class="play-disc">▶</span><span>›</span></div>
+        <div class="player-line" aria-hidden="true"><i></i></div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title">
+      <div class="closing-inner">
+        <p class="eyebrow">READY WHEN YOU ARE</p>
+        <h2 id="closing-title">The courtyard is open.</h2>
+        <a class="closing-link" href="https://live.playgarba.com/">Listen to Garba <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-mark" href="#top">GARBA</a>
+    <p>Gujarati Garba, gathered with care.</p>
+    <div class="footer-links">
+      <a href="https://live.playgarba.com/">Player</a>
+      <a href="https://github.com/ruddvz/garba">GitHub</a>
+      <span>© <span id="year">2026</span> PlayGarba</span>
     </div>
+  </footer>
 
-    <noscript><p>This music player needs JavaScript enabled.</p></noscript>
-    <script src="simple-runtime.js"></script>
-    <script src="nonstop-browser.js" defer></script>
-    <script type="module" src="app.js?v=20260908.1"></script>
-    <script>
-      (() => {
-        const $ = (id) => document.getElementById(id);
-        const app = $('app');
-        const sheet = $('songSheet');
-        const mobileFavourite = $('mobileFavourite');
-        const artistRow = document.querySelector('.artist-row');
-        const utilities = document.querySelector('.utilities');
-        const queueButton = $('queueButton');
-        const sheetClose = $('sheetClose');
-        const mobileQuery = window.matchMedia('(max-width: 700px)');
-        if (!app || !sheet) return;
-
-        const backdrop = document.createElement('div');
-        backdrop.className = 'sheet-backdrop';
-        backdrop.hidden = true;
-        backdrop.setAttribute('aria-hidden', 'true');
-        backdrop.addEventListener('click', () => sheetClose?.click());
-        app.insertBefore(backdrop, sheet);
-
-        function placeFavourite() {
-          if (!mobileFavourite) return;
-          if (mobileQuery.matches && utilities) {
-            if (mobileFavourite.parentElement !== utilities) utilities.insertBefore(mobileFavourite, queueButton || null);
-          } else if (artistRow && mobileFavourite.parentElement !== artistRow) {
-            artistRow.append(mobileFavourite);
-          }
-        }
-
-        function syncSheetChrome() {
-          const snap = sheet.dataset.snap || 'closed';
-          const modal = mobileQuery.matches && (snap === 'medium' || snap === 'full');
-          backdrop.hidden = !modal;
-          backdrop.setAttribute('aria-hidden', String(!modal));
-          sheet.setAttribute('aria-modal', String(modal));
-          if (sheetClose) {
-            sheetClose.title = 'Close song browser';
-            sheetClose.setAttribute('aria-label', 'Close song browser');
-          }
-        }
-
-        function closeProviderOutside(event) {
-          const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
-          if (!stage || !(event.target instanceof Element)) return;
-          if (stage.contains(event.target) || $('playButton')?.contains(event.target) || $('miniPlay')?.contains(event.target)) return;
-          stage.querySelector('#providerDockStop')?.click();
-        }
-
-        function closeTopLayer(event) {
-          if (event.key !== 'Escape') return;
-          const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
-          if (stage) {
-            event.preventDefault();
-            stage.querySelector('#providerDockStop')?.click();
-            return;
-          }
-          if (mobileQuery.matches && ['medium', 'full'].includes(sheet.dataset.snap || '')) {
-            event.preventDefault();
-            sheetClose?.click();
-          }
-        }
-
-        placeFavourite();
-        syncSheetChrome();
-        new MutationObserver(syncSheetChrome).observe(sheet, { attributes: true, attributeFilter: ['data-snap', 'aria-hidden'] });
-        mobileQuery.addEventListener?.('change', () => { placeFavourite(); syncSheetChrome(); });
-        document.addEventListener('click', closeProviderOutside);
-        document.addEventListener('keydown', closeTopLayer, true);
-        window.addEventListener('pageshow', () => { placeFavourite(); syncSheetChrome(); });
-      })();
-    </script>
-  </body>
+  <script src="site.js" defer></script>
+</body>
 </html>
