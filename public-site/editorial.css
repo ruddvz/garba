@@ -2,7 +2,10 @@
   --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
 }
 
-/* Public pages use the current 2K artwork library shared with the live player. */
+/*
+ * Public artwork policy: the six listening worlds use the current 2K live-player
+ * backgrounds. Approved photography is reserved for cultural/editorial storytelling.
+ */
 .hero-art {
   background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
@@ -56,7 +59,7 @@
 }
 
 .page-hero.garba-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp");
+  --page-hero-image: url("/assets/editorial/001-what-is-garba.webp");
 }
 
 .culture-feature {
@@ -75,7 +78,7 @@
   border-radius: 14px;
   background:
     linear-gradient(180deg, rgba(7, 8, 13, .02), rgba(7, 8, 13, .24)),
-    url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
+    url("/assets/editorial/001-what-is-garba.webp") center 48% / cover no-repeat;
 }
 
 .culture-feature-inner {
