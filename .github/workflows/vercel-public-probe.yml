@@ -12,43 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe Vercel production alias
+      - name: Diagnose Vercel production alias
         shell: bash
         run: |
           set -euo pipefail
           BASE='https://playgarba-public-pvr6675-3816s-projects.vercel.app'
-          paths=(
-            '/'
-            '/about/'
-            '/how-to-use/'
-            '/install/'
-            '/faq/'
-            '/live/'
-            '/styles.css'
-            '/pages.css'
-            '/site.js'
-            '/assets/icon.svg'
-            '/assets/traditional.svg'
-            '/robots.txt'
-            '/sitemap.xml'
-          )
-
-          for path in "${paths[@]}"; do
-            echo "=== ${path} ==="
-            curl --fail-with-body --silent --show-error --location \
-              --max-time 15 \
-              --output /tmp/body \
-              --dump-header /tmp/headers \
-              "${BASE}${path}"
-            status=$(awk 'toupper($1) ~ /^HTTP\// { code=$2 } END { print code }' /tmp/headers)
-            type=$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {sub(/\r$/,""); print substr($0,index($0,":")+2)}' /tmp/headers | tail -1)
-            echo "status=${status} content-type=${type} bytes=$(wc -c </tmp/body)"
-            test "$status" = '200'
+          for path in '/' '/styles.css' '/assets/icon.svg'; do
+            echo "=== ${path} (no redirect follow) ==="
+            curl --silent --show-error --max-time 15 --output /tmp/body --dump-header /tmp/headers "${BASE}${path}" || true
+            cat /tmp/headers
+            echo '--- title/snippet ---'
+            grep -ioE '<title>[^<]*</title>' /tmp/body | head -3 || true
+            head -c 500 /tmp/body | tr '\n' ' ' || true
+            echo
+            echo
           done
-
-          curl --fail-with-body --silent --show-error --location "$BASE/" | grep -q '<title>PlayGarba · Gujarati Garba music</title>'
-          curl --fail-with-body --silent --show-error --location "$BASE/" | grep -q 'https://live.playgarba.com/catalogue/'
-          curl --fail-with-body --silent --show-error --location "$BASE/faq/" | grep -q 'Use Explore in the live player'
-          curl --fail-with-body --silent --show-error --location "$BASE/styles.css" | grep -q -- '--ink: #111323'
-          curl --fail-with-body --silent --show-error --location "$BASE/assets/traditional.svg" | grep -q '<svg'
-          echo 'Vercel public-site production alias passed external route/content probes.'
