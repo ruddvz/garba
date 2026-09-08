@@ -4,7 +4,7 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInjector, browserconfig, cataloguePage, catalogueRuntime, catalogueCss] = await Promise.all([
+const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInjector, browserconfig, cataloguePage, catalogueRuntime, catalogueCss, listeningRuntime] = await Promise.all([
   read('.github/workflows/pages.yml'),
   read('sw.js'),
   read('simple-runtime.js'),
@@ -16,6 +16,7 @@ const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInject
   read('src/catalogue/index.html'),
   read('src/catalogue/catalogue.js'),
   read('src/catalogue/catalogue.css'),
+  read('src/catalogue/listening-library.js'),
 ]);
 
 let failed = false;
@@ -146,6 +147,8 @@ for (const marker of [
   'src/catalogue/index.html _site/catalogue/index.html',
   'src/catalogue/catalogue.css _site/catalogue/catalogue.css',
   'src/catalogue/catalogue.js _site/catalogue/catalogue.js',
+  'src/catalogue/listening-library.js _site/catalogue/listening-library.js',
+  'Return-user listening companion is missing',
 ]) {
   if (!pages.includes(marker)) fail(`Pages Explore contract is missing: ${marker}`);
 }
@@ -154,8 +157,10 @@ for (const marker of [
   "'./catalogue/index.html'",
   "'./catalogue/catalogue.css'",
   "'./catalogue/catalogue.js'",
+  "'./catalogue/listening-library.js'",
   "'/catalogue/catalogue.css'",
   "'/catalogue/catalogue.js'",
+  "'/catalogue/listening-library.js'",
   'const isCatalogueNavigation = (pathname) =>',
   "pathname.endsWith('/catalogue/')",
   "const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';",
@@ -173,6 +178,7 @@ for (const marker of [
   'id="backToCollections"',
   'id="releaseRail"',
   'id="catalogueSongList"',
+  'src="listening-library.js"',
 ]) {
   if (!cataloguePage.includes(marker)) fail(`Explore page is missing required control: ${marker}`);
 }
@@ -217,6 +223,19 @@ for (const marker of [
   '.release-more:focus-visible',
 ]) {
   if (!catalogueCss.includes(marker)) fail(`Explore resilient-state styling is missing: ${marker}`);
+}
+
+for (const marker of [
+  "const SESSION_KEY = 'garba:session';",
+  "const FAVOURITES_KEY = 'garba:favourites';",
+  "heading.textContent = 'Your listening';",
+  "kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';",
+  'if (!hasListeningState(stored)) return;',
+  'primeFavouriteSession(song)',
+  'elapsed: 0',
+  'sections.prepend(section)',
+]) {
+  if (!listeningRuntime.includes(marker)) fail(`Return-user Explore contract is missing: ${marker}`);
 }
 
 const renderedIcons = [
@@ -289,8 +308,8 @@ for (const file of [
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v13`")) {
-  fail('PWA cache generation must be v13 after combining Explore offline safety with complete cross-platform icon coverage');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v14`")) {
+  fail('PWA cache generation must be v14 after adding the offline return-user Explore companion');
 }
 
 if (failed) process.exit(1);
@@ -303,7 +322,8 @@ console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps leg
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
 console.log('✓ Universal PlayGarba social preview uses the approved courtyard artwork and renders at 1200x630');
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
-console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
+console.log('✓ Explore shell and return-user listening companion are precached with an offline navigation fallback');
 console.log('✓ Browser favicons, Apple touch sizes and Windows tiles are generated from the canonical Garba emblem and injected across the deployed site');
 console.log('✓ Explore long lists render progressively with explicit load-more controls instead of silent truncation');
 console.log('✓ Explore history, Escape navigation, reduced motion and in-place catalogue recovery are regression-guarded');
+console.log('✓ Return-user Explore only appears from real saved session/favourite state and favourite handoffs reset to 0:00');
