@@ -18,6 +18,10 @@ const state = {
   genreId: 'traditional',
   songId: null,
   favourites: new Set(storage.get('garba:favourites', [])),
+  manualQueue: [...new Set(storage.get('garba:queue', []).filter((id) => typeof id === 'string'))].slice(0, 30),
+  listeningHistory: [],
+  playContextGenreId: 'traditional',
+  playContextSongId: null,
   playing: false,
   elapsed: 0,
   duration: 0,
@@ -121,6 +125,26 @@ function reconcilePresentationFavourites() {
     state.favourites = next;
     persistFavourites();
   }
+}
+
+function persistManualQueue() {
+  storage.set('garba:queue', state.manualQueue);
+}
+
+function sanitiseManualQueue() {
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  const next = [];
+  const seen = new Set();
+  for (const id of state.manualQueue) {
+    const song = byId.get(id);
+    if (!song?.youtubeId || id === state.songId || seen.has(id)) continue;
+    seen.add(id);
+    next.push(id);
+    if (next.length >= 30) break;
+  }
+  const changed = next.length !== state.manualQueue.length || next.some((id, index) => id !== state.manualQueue[index]);
+  state.manualQueue = next;
+  if (changed) persistManualQueue();
 }
 
 function persistSession() {
@@ -281,6 +305,7 @@ function updateUrl() {
   if (songId) url.searchParams.set('song', songId);
   url.searchParams.delete('browse');
   url.searchParams.delete('source');
+  url.searchParams.delete('library');
   history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
 }
 
@@ -291,18 +316,78 @@ function updateFavouriteUI() {
   els.mobileFavourite.setAttribute('aria-pressed', String(active));
 }
 
-function getUpNextSongs() {
-  const list = songsForGenre(state.genreId);
+function automaticUpNextSongs(limit = 12) {
+  const genreId = state.playContextGenreId || state.genreId;
+  const list = songsForGenre(genreId);
   if (!list.length) return [];
-  const currentIndex = list.findIndex((song) => song.id === state.songId);
-  if (currentIndex < 0) return list.slice(0, 12);
-  return [...list.slice(currentIndex + 1), ...list.slice(0, currentIndex)].slice(0, 12);
+  const anchorId = state.playContextSongId || state.songId;
+  const currentIndex = list.findIndex((song) => song.id === anchorId);
+  if (currentIndex < 0) return list.slice(0, limit);
+  return [...list.slice(currentIndex + 1), ...list.slice(0, currentIndex)].slice(0, limit);
+}
+
+function manualQueueSongs() {
+  sanitiseManualQueue();
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  return state.manualQueue.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function getUpNextSongs() {
+  const queued = manualQueueSongs();
+  const queuedIds = new Set(queued.map((song) => song.id));
+  const automatic = automaticUpNextSongs(12).filter((song) => song.id !== state.songId && !queuedIds.has(song.id));
+  return [...queued, ...automatic].slice(0, Math.max(12, queued.length + Math.min(8, automatic.length)));
+}
+
+function queueSong(songId) {
+  if (!songId || songId === state.songId) {
+    showToast('That song is already playing.');
+    return;
+  }
+  const queuedSong = state.songs.find((song) => song.id === songId);
+  if (!queuedSong) return;
+  if (!queuedSong.youtubeId) {
+    showToast('This song is not YouTube-ready yet.');
+    return;
+  }
+  if (state.manualQueue.includes(songId)) {
+    showToast('Already in Up next.');
+    return;
+  }
+  state.manualQueue.push(songId);
+  state.manualQueue = state.manualQueue.slice(0, 30);
+  persistManualQueue();
+  updateQueueBadge();
+  if (state.sheetMode === 'queue') renderSheet();
+  showToast('Added to Up next.');
+}
+
+function removeQueuedSong(songId, { announce = true } = {}) {
+  const before = state.manualQueue.length;
+  state.manualQueue = state.manualQueue.filter((id) => id !== songId);
+  if (state.manualQueue.length === before) return false;
+  persistManualQueue();
+  updateQueueBadge();
+  if (state.sheetMode === 'queue') renderSheet();
+  if (announce) showToast('Removed from Up next.');
+  return true;
+}
+
+function clearManualQueue() {
+  if (!state.manualQueue.length) return;
+  state.manualQueue = [];
+  persistManualQueue();
+  updateQueueBadge();
+  if (state.sheetMode === 'queue') renderSheet();
+  showToast('Up next cleared.');
 }
 
 function updateQueueBadge() {
+  const manualCount = manualQueueSongs().length;
   const count = getUpNextSongs().length;
-  els.queueBadge.textContent = count > 9 ? '9+' : String(count);
+  els.queueBadge.textContent = manualCount ? (manualCount > 9 ? '9+' : String(manualCount)) : (count > 9 ? '9+' : String(count));
   els.queueBadge.classList.toggle('show', count > 0 && !mobileQuery.matches);
+  els.queueButton.dataset.manualCount = String(manualCount);
 }
 
 function updateMediaSession() {
@@ -418,6 +503,13 @@ async function selectSong(songId, options = {}) {
 
   if (!options.initial) state.pendingSongId = null;
 
+  const previousSongId = state.songId;
+  if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
+    state.listeningHistory.push(previousSongId);
+    state.listeningHistory = state.listeningHistory.slice(-40);
+  }
+  if (options.consumeQueued) removeQueuedSong(song.id, { announce: false });
+
   const genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre) return;
 
@@ -437,6 +529,10 @@ async function selectSong(songId, options = {}) {
     state.songId = song.id;
     state.genreId = song.genre;
     state.sheetFilter = song.genre;
+    if (!options.preserveContext) {
+      state.playContextGenreId = song.genre;
+      state.playContextSongId = song.id;
+    }
     configureAudio(song, restoreElapsed);
     renderPlayer();
     updateMediaSession();
@@ -514,7 +610,7 @@ function renderSheet() {
   els.songSheet.classList.toggle('mode-favourites', state.sheetMode === 'favourites');
   els.songSheet.classList.toggle('mode-queue', state.sheetMode === 'queue');
   els.songSheet.classList.toggle('mode-search', state.sheetMode === 'search');
-  els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'Favourites' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
+  els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'My Garba' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
   const query = els.searchInput.value.trim();
@@ -526,6 +622,10 @@ function renderSheet() {
       if (!query) els.sheetSummary.textContent = `${state.songs.length.toLocaleString()} songs`;
       else if (state.sheetMatchCount > songs.length) els.sheetSummary.textContent = `Showing ${songs.length} of ${state.sheetMatchCount.toLocaleString()}`;
       else els.sheetSummary.textContent = `${state.sheetMatchCount.toLocaleString()} ${state.sheetMatchCount === 1 ? 'match' : 'matches'}`;
+    } else if (state.sheetMode === 'queue') {
+      const queued = manualQueueSongs().length;
+      const continuing = Math.max(0, songs.length - queued);
+      els.sheetSummary.textContent = queued ? `${queued} queued · ${continuing} continue` : `${continuing} continue`;
     } else {
       els.sheetSummary.textContent = `${state.sheetMatchCount.toLocaleString()} ${state.sheetMatchCount === 1 ? 'song' : 'songs'}`;
     }
@@ -537,8 +637,8 @@ function renderSheet() {
     const strong = document.createElement('strong');
     const copy = document.createElement('span');
     if (state.sheetMode === 'favourites') {
-      strong.textContent = 'No favourites yet';
-      copy.textContent = 'Tap the heart beside a song to keep it here.';
+      strong.textContent = 'My Garba is empty';
+      copy.textContent = 'Tap the heart beside a song to save it here.';
     } else if (state.sheetMode === 'queue') {
       strong.textContent = 'Nothing up next';
       copy.textContent = 'Choose a genre or another song to continue listening.';
@@ -555,7 +655,30 @@ function renderSheet() {
   }
 
   const fragment = document.createDocumentFragment();
+  const queuedIds = new Set(state.manualQueue);
+  let continuationLabelAdded = false;
+  if (state.sheetMode === 'queue' && state.manualQueue.length) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'queue-toolbar';
+    const label = document.createElement('span');
+    label.textContent = 'Queued';
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'queue-clear';
+    clear.textContent = 'Clear';
+    clear.addEventListener('click', clearManualQueue);
+    toolbar.append(label, clear);
+    fragment.append(toolbar);
+  }
   songs.forEach((song, index) => {
+    const queued = state.sheetMode === 'queue' && queuedIds.has(song.id);
+    if (state.sheetMode === 'queue' && state.manualQueue.length && !queued && !continuationLabelAdded) {
+      continuationLabelAdded = true;
+      const label = document.createElement('div');
+      label.className = 'queue-section-label';
+      label.textContent = 'Continue playing';
+      fragment.append(label);
+    }
     const row = document.createElement('div');
     row.className = `song-row${song.id === state.songId ? ' current' : ''}`;
     row.role = 'listitem';
@@ -573,21 +696,39 @@ function renderSheet() {
     const artist = document.createElement('small');
     artist.textContent = song.artist;
     copy.append(title, artist);
-    copy.addEventListener('click', () => selectSong(song.id, { keepSheet: true }));
+    copy.addEventListener('click', () => selectSong(song.id, {
+      keepSheet: true,
+      preserveContext: queued,
+      consumeQueued: queued,
+    }));
 
     const duration = document.createElement('span');
     duration.className = 'song-duration';
     duration.textContent = formatDuration(song.durationSeconds);
 
+    const queuePlayable = Boolean(song.youtubeId);
+    const queueAction = document.createElement('button');
+    queueAction.type = 'button';
+    queueAction.className = 'song-queue-action';
+    queueAction.hidden = !queuePlayable || song.id === state.songId;
+    queueAction.disabled = !queuePlayable || song.id === state.songId;
+    queueAction.setAttribute('aria-label', queued ? `Remove ${song.title} from Up next` : `Play ${song.title} next`);
+    queueAction.title = queued ? 'Remove from Up next' : 'Play next';
+    queueAction.innerHTML = queued
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"></path></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h8M5 12h8M5 17h5"></path><path d="M17 8v9M13.5 13.5 17 17l3.5-3.5"></path></svg>';
+    queueAction.addEventListener('click', () => queued ? removeQueuedSong(song.id) : queueSong(song.id));
+
     const favourite = document.createElement('button');
     favourite.type = 'button';
     favourite.className = `heart-button song-favourite${state.favourites.has(song.id) ? ' active' : ''}`;
-    favourite.setAttribute('aria-label', state.favourites.has(song.id) ? `Remove ${song.title} from favourites` : `Add ${song.title} to favourites`);
+    favourite.setAttribute('aria-label', state.favourites.has(song.id) ? `Remove ${song.title} from My Garba` : `Save ${song.title} to My Garba`);
     favourite.setAttribute('aria-pressed', String(state.favourites.has(song.id)));
     favourite.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>';
     favourite.addEventListener('click', () => toggleFavourite(song.id));
 
-    row.append(idx, copy, duration, favourite);
+    row.classList.toggle('manually-queued', queued);
+    row.append(idx, copy, duration, queueAction, favourite);
     fragment.append(row);
   });
 
@@ -610,7 +751,7 @@ function toggleFavourite(songId = state.songId) {
   persistFavourites();
   updateFavouriteUI();
   renderSheet();
-  showToast(willAdd ? 'Added to favourites.' : 'Removed from favourites.');
+  showToast(willAdd ? 'Saved to My Garba.' : 'Removed from My Garba.');
 }
 
 function setSheetSnap(snap) {
@@ -685,9 +826,29 @@ async function togglePlay() {
 }
 
 function changeSong(direction) {
-  const list = songsForGenre(state.genreId);
+  if (direction < 0 && state.listeningHistory.length) {
+    const previousId = state.listeningHistory.pop();
+    if (previousId) {
+      selectSong(previousId, { keepSheet: true, preservePlayback: true, preserveContext: true, fromHistory: true });
+      return;
+    }
+  }
+
+  if (direction > 0) {
+    sanitiseManualQueue();
+    const queuedId = state.manualQueue.shift();
+    if (queuedId) {
+      persistManualQueue();
+      selectSong(queuedId, { keepSheet: true, preservePlayback: true, preserveContext: true });
+      return;
+    }
+  }
+
+  const genreId = state.playContextGenreId || state.genreId;
+  const list = songsForGenre(genreId);
   if (!list.length) return;
-  let index = list.findIndex((song) => song.id === state.songId);
+  const anchorId = state.playContextSongId || state.songId;
+  let index = list.findIndex((song) => song.id === anchorId);
   index = index < 0 ? 0 : (index + direction + list.length) % list.length;
   selectSong(list[index].id, { keepSheet: true, preservePlayback: true });
 }
@@ -983,6 +1144,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
     state.songs = next.songs;
     state.presentationRedirects = next.presentationRedirects;
     reconcilePresentationFavourites();
+    sanitiseManualQueue();
     state.catalogueSignature = signature;
     state.catalogueLoadedAt = Date.now();
 
@@ -1062,6 +1224,7 @@ function resolveInitialState() {
     pendingSongId,
     elapsed: Number(session.elapsed || 0),
     browse: params.get('browse') === '1',
+    myGarba: params.get('library') === 'my-garba',
     pendingNonstopSetId,
   };
 }
@@ -1073,6 +1236,7 @@ async function init() {
     state.songs = catalogue.songs;
     state.presentationRedirects = catalogue.presentationRedirects;
     reconcilePresentationFavourites();
+    sanitiseManualQueue();
     state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
     state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
@@ -1097,7 +1261,8 @@ async function init() {
     if (initial.pendingNonstopSetId) {
       setTimeout(() => window.GARBA_NONSTOP?.play?.(initial.pendingNonstopSetId, { quiet: true }), 0);
     }
-    if (initial.browse) openSheet('all', { snap: 'full', history: false });
+    if (initial.myGarba) openSheet('favourites', { snap: 'full', history: false });
+    else if (initial.browse) openSheet('all', { snap: 'full', history: false });
     updateUrl();
   } catch (error) {
     console.error(error);

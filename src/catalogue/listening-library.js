@@ -142,14 +142,14 @@ function makeCard({ song, release, artwork, kind, elapsed = 0 }) {
   const link = document.createElement('a');
   link.className = `personal-listening-card ${kind === 'continue' ? 'is-continue' : 'is-favourite'}`;
   link.href = playerUrl(song);
-  link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to favourite'} ${song.title} by ${song.artist}`);
+  link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to saved song'} ${song.title} by ${song.artist}`);
   if (kind === 'favourite') link.addEventListener('click', () => primeFavouriteSession(song));
   link.append(coverFor(song, release, artwork));
 
   const copy = document.createElement('span');
   copy.className = 'personal-listening-copy';
   const kicker = document.createElement('small');
-  kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';
+  kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Saved';
   const title = document.createElement('strong');
   title.textContent = song.title;
   const meta = document.createElement('span');
@@ -184,7 +184,10 @@ function installStyles() {
   style.dataset.playgarbaListeningLibrary = '';
   style.textContent = `
     .personal-listening-section{margin-bottom:42px}
-    .personal-listening-section .section-title-row{margin-bottom:14px}
+    .personal-listening-section .section-title-row{margin-bottom:14px;align-items:center;justify-content:flex-start}
+    .personal-listening-section .section-title-row p{margin-left:auto}
+    .personal-listening-open{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:34px;margin-left:14px;padding:0 11px;border:1px solid rgba(255,255,255,.11);border-radius:999px;color:rgba(255,248,236,.72);background:rgba(255,255,255,.035);font-size:.7rem;font-weight:760;text-decoration:none;transition:border-color .18s ease,background .18s ease,color .18s ease}
+    .personal-listening-open:hover,.personal-listening-open:focus-visible{color:var(--gold);border-color:rgba(231,201,143,.28);background:rgba(231,201,143,.055)}
     .personal-listening-rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(278px,370px);gap:14px;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 3px 12px;scroll-snap-type:x proximity;scrollbar-width:thin}
     .personal-listening-card{position:relative;display:grid;grid-template-columns:88px minmax(0,1fr);gap:14px;align-items:center;min-height:114px;padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:rgba(17,16,23,.40);color:var(--text);text-decoration:none;scroll-snap-align:start;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 54px rgba(0,0,0,.24);backdrop-filter:blur(22px) saturate(1.12);-webkit-backdrop-filter:blur(22px) saturate(1.12);transition:transform .2s ease,border-color .2s ease,background .2s ease}
     .personal-listening-card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(126deg,rgba(255,255,255,.05),transparent 38%,rgba(231,201,143,.04));}
@@ -199,7 +202,7 @@ function installStyles() {
     .personal-listening-progress{display:grid;grid-template-columns:minmax(62px,1fr) auto;gap:8px;align-items:center;margin-top:10px;color:var(--muted);font-size:.68rem}
     .personal-listening-progress>span:first-child{height:3px;overflow:hidden;border-radius:999px;background:rgba(255,248,236,.13)}
     .personal-listening-progress>span:first-child>span{display:block;height:100%;border-radius:inherit;background:var(--gold)}
-    @media(max-width:640px){.personal-listening-section{margin-bottom:36px}.personal-listening-rail{grid-auto-columns:minmax(250px,82vw);margin-right:-17px;padding-right:17px}.personal-listening-card{grid-template-columns:76px minmax(0,1fr);min-height:102px;padding:10px;border-radius:21px}.personal-listening-cover{width:76px;border-radius:15px}.personal-listening-section .section-title-row p{display:none}}
+    @media(max-width:640px){.personal-listening-section{margin-bottom:36px}.personal-listening-open{margin-left:auto}.personal-listening-rail{grid-auto-columns:minmax(250px,82vw);margin-right:-17px;padding-right:17px}.personal-listening-card{grid-template-columns:76px minmax(0,1fr);min-height:102px;padding:10px;border-radius:21px}.personal-listening-cover{width:76px;border-radius:15px}.personal-listening-section .section-title-row p{display:none}}
     @media(prefers-reduced-motion:reduce){.personal-listening-card{transition:none!important}}
   `;
   document.head.append(style);
@@ -245,16 +248,21 @@ async function renderListeningLibrary() {
   head.className = 'section-title-row';
   const heading = document.createElement('h2');
   heading.id = 'personalListeningTitle';
-  heading.textContent = 'Your listening';
+  heading.textContent = 'My Garba';
   const description = document.createElement('p');
   description.textContent = continueSong
-    ? 'Pick up where you left off, then revisit songs you saved.'
-    : 'Songs you saved in the PlayGarba player.';
-  head.append(heading, description);
+    ? 'Continue where you left off, then return to songs you saved.'
+    : 'Songs you saved with the heart in PlayGarba.';
+  const openMyGarba = document.createElement('a');
+  openMyGarba.className = 'personal-listening-open';
+  openMyGarba.href = '../?library=my-garba';
+  openMyGarba.textContent = 'Open';
+  openMyGarba.setAttribute('aria-label', 'Open all songs in My Garba');
+  head.append(heading, description, openMyGarba);
 
   const rail = document.createElement('div');
   rail.className = 'personal-listening-rail';
-  rail.setAttribute('aria-label', 'Your PlayGarba listening');
+  rail.setAttribute('aria-label', 'My Garba saved songs and continue listening');
 
   if (continueSong) {
     rail.append(makeCard({

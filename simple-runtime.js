@@ -181,11 +181,11 @@
       shareButton.title = artist ? `Share ${title} by ${artist}` : `Share ${title}`;
     }
     if (favouriteButton) {
-      favouriteButton.setAttribute('aria-label', `${saved ? 'Remove' : 'Add'} ${title} ${saved ? 'from' : 'to'} favourites`);
+      favouriteButton.setAttribute('aria-label', `${saved ? 'Remove' : 'Save'} ${title} ${saved ? 'from' : 'to'} My Garba`);
     }
     if (queueButton) {
       const badge = cleanText(queueBadge?.textContent);
-      queueButton.setAttribute('aria-label', badge ? `Show queue, ${badge} songs up next` : 'Show queue');
+      queueButton.setAttribute('aria-label', badge ? `Open Up next, ${badge} songs shown` : 'Open Up next');
     }
     if (progress) {
       const elapsed = cleanText(elapsedTime?.textContent) || '0:00';
