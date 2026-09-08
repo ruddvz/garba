@@ -106,6 +106,7 @@ function summariseMetric(samples, key) {
 function summarisePhase(samples) {
   const keys = [
     'shellReadyMs',
+    'catalogueReadyMs',
     'domContentLoadedMs',
     'loadEventMs',
     'firstContentfulPaintMs',
@@ -118,6 +119,9 @@ function summarisePhase(samples) {
     'sameOriginTransferBytes',
     'catalogueTransferBytes',
     'artworkTransferBytes',
+    'backgroundLibraryTransferBytes',
+    'backgroundLibraryRequestCount',
+    'uniqueBackgroundLibraryAssetCount',
   ];
   return Object.fromEntries(keys.map((key) => [key, summariseMetric(samples, key)]));
 }
@@ -171,6 +175,11 @@ async function configureProfile(page, profile, { clearCache = false } = {}) {
   return session;
 }
 
+async function waitForFullCatalogue(page) {
+  await page.waitForFunction(() => window.GARBA_CATALOGUE_READY === true, null, { timeout: 30_000 });
+  return page.evaluate(() => performance.now());
+}
+
 async function measureSearch(page) {
   await page.locator('#searchButton').click();
   await page.locator('#searchInput').waitFor({ state: 'visible' });
@@ -215,36 +224,37 @@ async function measureNonstop(page) {
 
   return page.evaluate(async () => {
     const button = document.getElementById('nonstopButton');
-    const panel = document.getElementById('nonstopBrowser');
-    if (!button || !panel) return { duration: null, setCount: null };
+    if (!button) return { duration: null, setCount: null };
 
     const start = performance.now();
-    const duration = await new Promise((resolve) => {
+    return new Promise((resolve) => {
       let finished = false;
-      const ready = () => panel.getAttribute('aria-hidden') === 'false' && panel.querySelector('.nonstop-set');
-      const finish = () => {
-        if (finished || !ready()) return;
+      let timeoutId = 0;
+      const finish = (force = false) => {
+        if (finished) return;
+        const panel = document.getElementById('nonstopBrowser');
+        const ready = panel?.getAttribute('aria-hidden') === 'false' && panel.querySelector('.nonstop-set');
+        if (!ready && !force) return;
         finished = true;
+        clearTimeout(timeoutId);
         observer.disconnect();
-        requestAnimationFrame(() => resolve(performance.now() - start));
+        requestAnimationFrame(() => resolve({
+          duration: ready ? performance.now() - start : null,
+          setCount: panel?.querySelectorAll('.nonstop-set').length ?? null,
+        }));
       };
-      const observer = new MutationObserver(finish);
-      observer.observe(panel, { attributes: true, childList: true, subtree: true });
+
+      const observer = new MutationObserver(() => finish());
+      observer.observe(document.body, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+        attributeFilter: ['aria-hidden'],
+      });
       button.click();
       finish();
-      setTimeout(() => {
-        if (!finished) {
-          finished = true;
-          observer.disconnect();
-          resolve(null);
-        }
-      }, 2_000);
+      timeoutId = window.setTimeout(() => finish(true), 20_000);
     });
-
-    return {
-      duration,
-      setCount: panel.querySelectorAll('.nonstop-set').length,
-    };
   });
 }
 
@@ -270,6 +280,8 @@ async function collectBrowserMetrics(page, targetOrigin) {
     const sum = (entries, key) => entries.reduce((total, entry) => total + (entry[key] || 0), 0);
     const catalogue = resources.filter((entry) => entry.name.startsWith('/data/'));
     const artwork = resources.filter((entry) => entry.name.startsWith('/assets/backgrounds/') || entry.name.startsWith('/assets/genre-icons/'));
+    const backgroundLibrary = resources.filter((entry) => entry.name.startsWith('/assets/backgrounds/library/'));
+    const uniqueBackgroundLibraryAssets = new Set(backgroundLibrary.map((entry) => entry.name));
     const topTransfers = [...resources]
       .sort((a, b) => b.transferSize - a.transferSize)
       .slice(0, 10);
@@ -289,6 +301,9 @@ async function collectBrowserMetrics(page, targetOrigin) {
       sameOriginDecodedBytes: sum(resources, 'decodedBodySize'),
       catalogueTransferBytes: sum(catalogue, 'transferSize'),
       artworkTransferBytes: sum(artwork, 'transferSize'),
+      backgroundLibraryTransferBytes: sum(backgroundLibrary, 'transferSize'),
+      backgroundLibraryRequestCount: backgroundLibrary.length,
+      uniqueBackgroundLibraryAssetCount: uniqueBackgroundLibraryAssets.size,
       resourceCount: resources.length,
       topTransfers,
     };
@@ -297,9 +312,19 @@ async function collectBrowserMetrics(page, targetOrigin) {
 
 async function measurePhase(page, options, phase) {
   const failures = [];
+  const consoleErrors = [];
   const onPageError = (error) => failures.push(`pageerror: ${error.message}`);
   const onConsole = (message) => {
-    if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+    if (message.type() === 'error') consoleErrors.push(message.text());
+  };
+  const onRequestFailed = (request) => {
+    try {
+      if (new URL(request.url()).origin === options.originValue) {
+        failures.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText || ''}`);
+      }
+    } catch {
+      // Ignore malformed/non-URL request values.
+    }
   };
   const onResponse = (response) => {
     try {
@@ -313,6 +338,7 @@ async function measurePhase(page, options, phase) {
 
   page.on('pageerror', onPageError);
   page.on('console', onConsole);
+  page.on('requestfailed', onRequestFailed);
   page.on('response', onResponse);
 
   try {
@@ -323,9 +349,18 @@ async function measurePhase(page, options, phase) {
       return Boolean(title?.textContent?.trim() && play?.getBoundingClientRect().width);
     }, null, { timeout: 15_000 });
     const shellReadyMs = await page.evaluate(() => performance.now());
+    const catalogueReadyMs = await waitForFullCatalogue(page);
 
     const search = await measureSearch(page);
+    if (!search.matchedQuery || !search.resultCount) {
+      failures.push(`loaded-index Search did not render the expected ${SEARCH_QUERY} result`);
+    }
+
     const nonstop = await measureNonstop(page);
+    if (!Number.isFinite(nonstop.duration) || !nonstop.setCount) {
+      failures.push('Nonstop chooser did not render at least one set during the measurement window');
+    }
+
     await page.waitForLoadState('load', { timeout: 10_000 }).catch(() => {});
     await page.waitForTimeout(250);
     const browser = await collectBrowserMetrics(page, options.originValue);
@@ -333,6 +368,7 @@ async function measurePhase(page, options, phase) {
     return {
       phase,
       shellReadyMs,
+      catalogueReadyMs,
       searchPresentationMs: search.duration,
       searchResultCount: search.resultCount,
       searchMatchedQuery: search.matchedQuery,
@@ -340,10 +376,12 @@ async function measurePhase(page, options, phase) {
       nonstopSetCount: nonstop.setCount,
       ...browser,
       failures,
+      consoleErrors,
     };
   } finally {
     page.off('pageerror', onPageError);
     page.off('console', onConsole);
+    page.off('requestfailed', onRequestFailed);
     page.off('response', onResponse);
   }
 }
@@ -369,13 +407,14 @@ async function runProfile(browser, profileName, profile, options) {
 
     const page = await context.newPage();
     const session = await configureProfile(page, profile, { clearCache: true });
-    cold.push(await measurePhase(page, options, 'cold'));
-
-    await page.goto('about:blank');
-    warm.push(await measurePhase(page, options, 'warm'));
-
-    await session.detach().catch(() => {});
-    await context.close();
+    try {
+      cold.push(await measurePhase(page, options, 'cold'));
+      await page.goto('about:blank');
+      warm.push(await measurePhase(page, options, 'warm'));
+    } finally {
+      await session.detach().catch(() => {});
+      await context.close();
+    }
   }
 
   return {
@@ -423,8 +462,10 @@ async function main() {
   }
 
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
+    testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
+    fixture: process.env.PLAYGARBA_PERF_FIXTURE || null,
     target: options.origin,
     runsPerProfile: options.runs,
     browser: {
@@ -437,6 +478,8 @@ async function main() {
       thirdPartyRequestsBlocked: true,
       serviceWorkersBlocked: true,
       searchQuery: SEARCH_QUERY,
+      searchRequiresFullCatalogue: true,
+      consoleErrorsReportedSeparately: true,
     },
     provisionalBudgets: {
       localPrimaryControlResponseMs: 100,
