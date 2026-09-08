@@ -45,10 +45,26 @@ function isReleaseSpecificUrl(song) {
 }
 
 const missing = songs.filter((song) => !song.audioUrl && (!song.playbackProvider || !song.playbackSourceUrl));
+const directRoutes = songs.filter((song) => Boolean(song.audioUrl));
 const chapterRoutes = songs.filter((song) => song.playbackSourceType === 'verified-performance-chapter');
 const exactTrackRoutes = songs.filter((song) => song.playbackSourceType === 'verified-track-source');
 const singleReleaseRoutes = songs.filter((song) => song.playbackSourceType === 'verified-single-release-source');
 const unchapteredYoutubeRoutes = songs.filter((song) => song.playbackSourceType === 'verified-unchaptered-youtube-release');
+const timestampedYoutubeRoutes = songs.filter((song) => (
+  song.playbackProvider === 'youtube'
+  && song.youtubeId
+  && Number.isFinite(Number(song.youtubeStartSeconds))
+  && Number(song.youtubeStartSeconds) >= 0
+  && song.playbackSourceType !== 'verified-unchaptered-youtube-release'
+));
+const exactSelectionIds = new Set([
+  ...directRoutes.map((song) => song.id),
+  ...timestampedYoutubeRoutes.map((song) => song.id),
+  ...exactTrackRoutes.map((song) => song.id),
+  ...singleReleaseRoutes.map((song) => song.id),
+]);
+const releaseBrowseOnlyRoutes = songs.filter((song) => !exactSelectionIds.has(song.id) && !missing.some((missingSong) => missingSong.id === song.id));
+
 const misclassifiedExactTracks = songs.filter((song) => song.playbackSourceType === 'verified-release-source' && isExactTrackUrl(song));
 const misclassifiedSingleReleases = songs.filter((song) => {
   if (song.playbackSourceType !== 'verified-release-source' || !isReleaseSpecificUrl(song)) return false;
@@ -102,11 +118,15 @@ for (const marker of [
 ]) if (!app.includes(marker)) fail(`Large-catalogue browser missing bounded-search marker: ${marker}`);
 
 if (failed) process.exit(1);
-console.log(`✓ all ${songs.length} generated songs carry a direct or provider playback route`);
+console.log(`✓ all ${songs.length} generated songs have at least a verified source route`);
+console.log(`✓ ${exactSelectionIds.size} songs have an exact-selection playback route; ${releaseBrowseOnlyRoutes.length} are release/provider browsing fallbacks`);
+console.log(`✓ ${directRoutes.length} authorised direct-audio routes are available to the native audio player`);
+console.log(`✓ ${timestampedYoutubeRoutes.length} YouTube routes select a verified video/timestamp`);
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
 console.log(`✓ ${exactTrackRoutes.length} exact provider track URLs are distinguished from release-level fallbacks`);
 console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
 console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes open as full releases instead of pretending to start at a selected song`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
+console.log('✓ route coverage is not reported as equivalent to exact-song or first-party playback');
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');

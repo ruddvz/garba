@@ -117,10 +117,10 @@ body {
 .app[data-genre="sanedo"] .world-layer { background-position: center 49%; }
 .app[data-genre="fusion"] .world-layer { background-position: center 50%; }
 
-/* In-app provider playback. The YouTube viewport remains visible and unobscured. */
+/* In-app provider playback stays above interactive browser surfaces and below toast UI. */
 .provider-dock {
   position: fixed;
-  z-index: 18;
+  z-index: 30;
   top: max(92px, calc(var(--safe-top) + 68px));
   right: max(20px, var(--safe-right));
   width: min(356px, calc(100vw - 40px));
@@ -160,6 +160,8 @@ body {
 .provider-dock.is-spotify .provider-media iframe { min-height: 152px; }
 .provider-dock.is-apple .provider-media { height: 260px; min-height: 260px; }
 .provider-dock.is-apple .provider-media iframe { min-height: 260px; }
+.provider-dock.is-soundcloud .provider-media { height: 166px; min-height: 166px; }
+.provider-dock.is-soundcloud .provider-media iframe { min-height: 166px; }
 .provider-dock.is-external .provider-media { height: auto; min-height: 0; }
 .provider-external {
   min-height: 166px;
@@ -190,17 +192,20 @@ body {
 }
 .provider-external-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .provider-dock-bar {
-  min-height: 34px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 10px 0 12px;
+  gap: 8px;
+  padding: 2px 8px 2px 12px;
   border-top: 1px solid rgba(246,236,215,.09);
   color: rgba(246,236,215,.54);
   font-size: 11px;
   letter-spacing: .01em;
 }
+.provider-dock-bar > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.provider-dock-actions { display: flex; align-items: center; flex: 0 0 auto; gap: 1px; }
+.provider-dock-open,
 .provider-dock-bar button {
   min-height: 30px;
   border: 0;
@@ -208,9 +213,18 @@ body {
   padding: 0 7px;
   background: transparent;
   color: rgba(246,236,215,.76);
-  cursor: pointer;
+  font: inherit;
 }
+.provider-dock-open {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.provider-dock-bar button { cursor: pointer; }
+.provider-dock-open:hover,
 .provider-dock-bar button:hover { background: rgba(246,236,215,.07); color: var(--ivory); }
+.provider-dock-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .provider-dock.is-loading .provider-dock-bar span::after { content: "…"; }
 .provider-dock.needs-tap .provider-dock-bar span { color: var(--ivory); }
 
@@ -272,7 +286,7 @@ body {
   }
 
   .provider-dock {
-    z-index: 19;
+    z-index: 30;
     top: auto;
     right: max(12px, var(--safe-right));
     bottom: max(82px, calc(var(--safe-bottom) + 70px));
@@ -282,13 +296,15 @@ body {
   .provider-media { height: 200px; }
   .provider-dock.is-spotify .provider-media { height: 152px; }
   .provider-dock.is-apple .provider-media { height: 235px; min-height: 235px; }
+  .provider-dock.is-soundcloud .provider-media { height: 166px; min-height: 166px; }
   .playback-status { max-width: 88vw; margin-top: 6px; font-size: 9px; }
 }
 
 @media (max-width: 390px) {
   .provider-dock { right: max(8px, var(--safe-right)); width: calc(100vw - 16px); }
-  .provider-dock-bar { padding-inline: 10px 8px; }
-  .provider-dock-bar span { max-width: 75%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .provider-dock-bar { padding-inline: 8px; }
+  .provider-dock-bar > span { max-width: 54%; }
+  .provider-dock-open, .provider-dock-bar button { padding-inline: 6px; }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {

@@ -122,19 +122,39 @@
     }
   }
 
+  function soundCloudEmbedUrl(sourceUrl = '') {
+    try {
+      const url = new URL(sourceUrl);
+      if (url.hostname !== 'soundcloud.com' && !url.hostname.endsWith('.soundcloud.com')) return '';
+      const params = new URLSearchParams({
+        url: url.toString(),
+        auto_play: 'true',
+        hide_related: 'true',
+        show_comments: 'false',
+        show_user: 'true',
+        show_reposts: 'false',
+        visual: 'false',
+      });
+      return `https://w.soundcloud.com/player/?${params.toString()}`;
+    } catch {
+      return '';
+    }
+  }
+
   function providerEmbed(song, sourceUrl, provider) {
     if (provider === 'youtube') {
-      if (song?.playbackSourceType === 'verified-unchaptered-youtube-release') return null;
       const videoId = youtubeVideoId(song, sourceUrl);
       if (!videoId) return null;
-      const params = new URLSearchParams({ autoplay: '1', playsinline: '1', rel: '0', controls: '1' });
+      const fullReleaseOnly = song?.playbackSourceType === 'verified-unchaptered-youtube-release';
+      const params = new URLSearchParams({ autoplay: fullReleaseOnly ? '0' : '1', playsinline: '1', rel: '0', controls: '1' });
       const startSeconds = Math.max(0, Number(song?.youtubeStartSeconds || 0));
-      if (startSeconds > 0) params.set('start', String(Math.floor(startSeconds)));
+      if (!fullReleaseOnly && startSeconds > 0) params.set('start', String(Math.floor(startSeconds)));
       return {
         src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`,
-        title: 'YouTube playback',
+        title: fullReleaseOnly ? 'YouTube full release' : 'YouTube playback',
         className: 'is-youtube-release',
         allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen',
+        fullReleaseOnly,
       };
     }
 
@@ -165,6 +185,17 @@
       }
     }
 
+    if (provider === 'soundcloud') {
+      const src = soundCloudEmbedUrl(sourceUrl);
+      if (!src) return null;
+      return {
+        src,
+        title: 'SoundCloud playback',
+        className: 'is-soundcloud',
+        allow: 'autoplay',
+      };
+    }
+
     return null;
   }
 
@@ -181,7 +212,10 @@
       <div class="provider-media" id="providerMedia"></div>
       <div class="provider-dock-bar">
         <span id="providerDockNote">Playback source</span>
-        <button type="button" id="providerDockStop" aria-label="Close playback source">Close</button>
+        <div class="provider-dock-actions">
+          <a id="providerDockOpen" class="provider-dock-open" target="_blank" rel="noopener noreferrer">Open source</a>
+          <button type="button" id="providerDockStop" aria-label="Close playback source">Close</button>
+        </div>
       </div>`;
     document.body.append(stage);
     stage.querySelector('#providerDockStop')?.addEventListener('click', closeProvider);
@@ -204,7 +238,7 @@
   function closeProvider() {
     const stage = $('providerStage');
     if (!stage || stage.getAttribute('aria-hidden') === 'true') return;
-    stage.classList.remove('open', 'is-spotify', 'is-apple', 'is-youtube-release', 'is-external');
+    stage.classList.remove('open', 'is-spotify', 'is-apple', 'is-soundcloud', 'is-youtube-release', 'is-external');
     stage.setAttribute('aria-hidden', 'true');
     $('providerMedia')?.replaceChildren();
     providerSongId = null;
@@ -259,6 +293,7 @@
     const embed = providerEmbed(song, sourceUrl, provider);
     const media = $('providerMedia');
     const note = $('providerDockNote');
+    const openSource = $('providerDockOpen');
 
     audio?.pause();
     closeProvider();
@@ -266,6 +301,11 @@
     stage.setAttribute('aria-hidden', 'false');
     providerSongId = song.id || null;
     syncProviderControls(true);
+    if (openSource) {
+      openSource.href = sourceUrl;
+      openSource.textContent = `Open ${name}`;
+      openSource.setAttribute('aria-label', `Open source on ${name}`);
+    }
 
     if (embed) {
       stage.classList.add(embed.className);
@@ -278,7 +318,9 @@
       iframe.setAttribute('allowfullscreen', '');
       media?.replaceChildren(iframe);
       if (note) {
-        if (song.playbackSourceType === 'verified-release-source') {
+        if (embed.fullReleaseOnly) {
+          note.textContent = `Verified full release · choose ${song.title} manually · exact timestamp not verified`;
+        } else if (song.playbackSourceType === 'verified-release-source') {
           note.textContent = `Verified release · ${name} · choose ${song.title}`;
         } else if (song.playbackSourceType === 'verified-performance-chapter') {
           note.textContent = 'Verified live version · starts at the mapped song chapter';
@@ -471,6 +513,7 @@
   window.addEventListener('load', () => {
     setupMediaSessionFallback();
     scheduleVisualPromotion();
+    setTimeout(() => { loadSongs(); }, 600);
   }, { once: true });
   window.addEventListener('pageshow', clearStaleInert);
   document.addEventListener('pointerdown', clearStaleInert, { capture: true, once: true });
