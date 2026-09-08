@@ -25,6 +25,9 @@ for (const marker of [
   "if (!queuedSong.youtubeId)",
   'preserveContext: true, fromHistory: true',
   "params.get('library') === 'my-garba'",
+  "if (!queuedSong.youtubeId)",
+  'preserveContext: true, fromHistory: true',
+  "params.get('library') === 'my-garba'",
   "showToast('Added to Up next.')",
   "state.sheetMode === 'favourites' ? 'My Garba'",
   "storage.set('garba:favourites'",
@@ -34,6 +37,7 @@ requireMarker(index, 'aria-label="Open My Garba"', 'My Garba topbar label missin
 requireMarker(styles, '/* Listening flow #287 */', 'Listening-flow styles missing');
 requireMarker(styles, '.song-queue-action', 'Play-next row action missing');
 requireMarker(library, "heading.textContent = 'My Garba';", 'Explore My Garba section missing');
+requireMarker(library, "openMyGarba.href = '../?library=my-garba';", 'Explore must expose a low-clutter My Garba entry point');
 requireMarker(library, "openMyGarba.href = '../?library=my-garba';", 'Explore must expose a low-clutter My Garba entry point');
 requireMarker(nonstop, "target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')", 'Nonstop queue/transport isolation must remain intact');
 
