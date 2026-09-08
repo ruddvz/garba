@@ -110,15 +110,15 @@
   remains available in Browse even when the hero title needs visual truncation.
 */
 .app .track-block {
-  height: 156px;
-  min-height: 156px;
-  max-height: 156px;
+  height: 146px;
+  min-height: 146px;
+  max-height: 146px;
   display: grid;
-  grid-template-rows: 20px minmax(0, 1fr) 42px;
+  grid-template-rows: 18px minmax(0, 1fr) 34px;
   align-items: center;
   justify-items: center;
   align-content: stretch;
-  padding-inline: 12px;
+  padding-inline: 16px;
 }
 
 .app .track-block .genre-eyebrow {
@@ -247,11 +247,11 @@
   }
 
   .app .track-block {
-    height: 146px;
-    min-height: 146px;
-    max-height: 146px;
-    grid-template-rows: 18px minmax(0, 1fr) 26px;
-    padding-inline: 12px;
+    height: 126px;
+    min-height: 126px;
+    max-height: 126px;
+    grid-template-rows: 16px minmax(0, 1fr) 26px;
+    padding-inline: 8px;
   }
 
   .app .track-block.is-long-title .song-title {
@@ -328,9 +328,9 @@
   }
 
   .app .track-block {
-    height: 140px;
-    min-height: 140px;
-    max-height: 140px;
+    height: 120px;
+    min-height: 120px;
+    max-height: 120px;
   }
 }
 
@@ -343,6 +343,23 @@
     background-size: 23px 23px;
   }
   .brand { font-size: 25px !important; }
+}
+
+@media (max-height: 760px) and (max-width: 700px) {
+  .app .track-block {
+    height: 112px;
+    min-height: 112px;
+    max-height: 112px;
+  }
+}
+
+@media (max-height: 660px) and (max-width: 700px) {
+  .app .track-block {
+    height: 102px;
+    min-height: 102px;
+    max-height: 102px;
+    grid-template-rows: 14px minmax(0, 1fr) 22px;
+  }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
@@ -366,10 +383,9 @@
   }
 
   .app .track-block {
-    height: 106px;
-    min-height: 106px;
-    max-height: 106px;
-    grid-template-rows: 14px minmax(0, 1fr) 20px;
+    height: 94px;
+    min-height: 94px;
+    max-height: 94px;
   }
 
   .app .track-block .song-title,
