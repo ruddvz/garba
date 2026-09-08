@@ -1,0 +1,22 @@
+name: RAAS completion self-test 484
+
+on:
+  push:
+    branches:
+      - harness/raas-completion-484
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run focused RAAS completion tests
+        run: node scripts/lib/test-raas-completion.mjs
+      - name: Syntax-check evaluator
+        run: node --check scripts/lib/raas-completion.mjs
