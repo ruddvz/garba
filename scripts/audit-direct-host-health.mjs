@@ -8,7 +8,7 @@ const tracks = manifest?.tracks || {};
 
 const failures = [];
 const results = [];
-const expectedOrigin = process.env.GARBA_PLAYER_ORIGIN || "https://ruddvz.github.io";
+const expectedOrigin = process.env.GARBA_PLAYER_ORIGIN || "https://playgarba.com";
 
 function fail(songId, message) {
   failures.push(`${songId}: ${message}`);

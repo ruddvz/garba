@@ -1,6 +1,6 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
-const LIVE_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_LIVE_ORIGIN || 'https://live.playgarba.com');
+const LIVE_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_LIVE_ORIGIN || 'https://playgarba.com');
 const PUBLIC_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_PUBLIC_ORIGIN || 'https://playgarba.com');
 const WWW_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_WWW_ORIGIN || 'https://www.playgarba.com');
 const ATTEMPTS = positiveInt(process.env.SMOKE_ATTEMPTS, 6);
@@ -91,7 +91,7 @@ async function verifyPlayerHtml(path, expectedCanonical = LIVE_ORIGIN.href) {
   assert(/PlayGarba/i.test(html), `${path} is missing the PlayGarba product marker`);
   const canonical = canonicalFrom(html);
   assert(canonical === expectedCanonical, `${path} canonical was ${canonical || 'missing'}, expected ${expectedCanonical}`);
-  assert(!html.includes('https://playgarba.com/assets/social/'), `${path} still exposes the public apex as the player social origin`);
+  assert(html.includes('https://playgarba.com/'), `${path} does not expose the canonical apex origin`);
   return html;
 }
 
@@ -104,7 +104,7 @@ async function verifyLive() {
   await verifyPlayerHtml('/?genre=traditional');
   await verifyPlayerHtml('/?nonstop=1');
   await verifyPlayerHtml('/?browse=1');
-  await verifyPlayerHtml('/catalogue/', new URL('/catalogue/', LIVE_ORIGIN).href);
+  await verifyPlayerHtml('/explore/', new URL('/explore/', LIVE_ORIGIN).href);
 
   const manifestUrl = new URL('/manifest.webmanifest', LIVE_ORIGIN);
   const { body: manifestText, response: manifestResponse } = await fetchLive('/manifest.webmanifest');
@@ -131,8 +131,7 @@ async function verifyLive() {
 
   const { body: sitemap } = await fetchLive('/sitemap.xml');
   assert(sitemap.includes(`<loc>${LIVE_ORIGIN.href}</loc>`), 'Sitemap is missing the live root');
-  assert(sitemap.includes(`<loc>${new URL('/catalogue/', LIVE_ORIGIN).href}</loc>`), 'Sitemap is missing the live catalogue');
-  assert(!sitemap.includes('<loc>https://playgarba.com/'), 'Live sitemap still contains public-apex player URLs');
+  assert(sitemap.includes(`<loc>${new URL('/explore/', LIVE_ORIGIN).href}</loc>`), 'Sitemap is missing the canonical Explore route');
 
   const { body: socialCard, response: socialResponse } = await fetchLive('/assets/social/garba-og-card.png', { as: 'buffer' });
   assert((socialResponse.headers.get('content-type') || '').includes('image/png'), 'OG card did not return image/png');
@@ -160,7 +159,7 @@ async function verifyPublic() {
     assert(/<html\b/i.test(html), `${path} did not return HTML`);
     assert(/PlayGarba|GARBA/i.test(html), `${path} is missing the PlayGarba product marker`);
     assert(canonicalFrom(html) === expectedCanonical, `${path} has the wrong canonical URL`);
-    assert(html.includes('https://live.playgarba.com/'), `${path} does not expose the live player handoff`);
+    assert(html.includes('https://playgarba.com/'), `${path} does not expose the live player handoff`);
   }
 
   const { body: robots } = await requestWithRetry(new URL('/robots.txt', PUBLIC_ORIGIN));

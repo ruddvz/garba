@@ -25,5 +25,5 @@ jobs:
           node-version: 22
       - name: Audit direct-host audio delivery
         env:
-          GARBA_PLAYER_ORIGIN: https://ruddvz.github.io
+          GARBA_PLAYER_ORIGIN: https://live.playgarba.com
         run: node scripts/audit-direct-host-health.mjs

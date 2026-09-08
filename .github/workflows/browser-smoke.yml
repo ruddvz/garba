@@ -153,7 +153,7 @@ jobs:
 
           # Explore is source-native. The browser fixture must preserve that source
           # contract exactly rather than reimplementing a deploy-time rewrite.
-          grep -q 'href="./catalogue/"' _smoke/index.html || { echo 'Source-native Explore link missing from browser fixture'; exit 1; }
+          grep -q 'href="./explore/"' _smoke/index.html || { echo 'Canonical /explore/ link missing from browser fixture'; exit 1; }
           grep -q '<span>Explore</span>' _smoke/index.html || { echo 'Source-native Explore label missing from browser fixture'; exit 1; }
           ! grep -q 'id="browseButton"[^>]*aria-controls' _smoke/index.html || { echo 'Explore retained legacy song-sheet semantics'; exit 1; }
 

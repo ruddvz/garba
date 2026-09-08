@@ -17,7 +17,7 @@ The project has two connected goals:
 - **No silent piracy.** Commercial audio is not copied into GitHub simply because it is available elsewhere. Playback follows legitimate provider, archive or authorised direct-audio sources.
 - **Canonical data stays separate from discovery leads.** A Reddit recommendation, playlist or community upload can be useful evidence without automatically becoming canonical release metadata.
 - **Long-form Garba matters.** Live performances, nonstop albums and timestamped chapters are first-class discovery objects.
-- **Stable runtime contracts matter.** The production player, generated catalogue and service worker have explicit validation so organisational cleanup does not break GitHub Pages.
+- **Stable runtime contracts matter.** The production player, generated catalogue and service worker have explicit validation so the Vercel migration cannot break playback or PWA behaviour.
 
 ## Music coverage
 
