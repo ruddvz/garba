@@ -8,6 +8,7 @@ let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 const isHttps = (value) => typeof value === 'string' && /^https:\/\//.test(value);
 const flatten = async (files = []) => (await Promise.all(files.map(readJson))).flatMap((value) => Array.isArray(value) ? value : []);
+const CHAPTER_STATUSES = new Set(['published-complete', 'source-no-published-chapters', 'source-tracklist-no-timestamps']);
 
 function youtubeIdFromUrl(value) {
   try {
@@ -134,9 +135,11 @@ let setCount = 0;
 let chapterCount = 0;
 let metadataOnlyChapterCount = 0;
 let metadataOnlySetCount = 0;
+let chapterAuditResolvedCount = 0;
 if (discovery.setsIndex) {
   const setIndex = await readJson(discovery.setsIndex);
   const setIds = new Set();
+  const setsById = new Map();
   for (const chunkName of setIndex.chunks || []) {
     const file = path.posix.join(path.posix.dirname(discovery.setsIndex), chunkName);
     const data = await readJson(file);
@@ -145,15 +148,30 @@ if (discovery.setsIndex) {
       if (!set.id || !set.title) fail(`${file} has set without id/title`);
       if (setIds.has(set.id)) fail(`Duplicate live/nonstop set id: ${set.id}`);
       setIds.add(set.id);
+      setsById.set(set.id, set);
       if (!set.source?.provider || !isHttps(set.source?.url)) fail(`${set.id} missing valid provider/source URL`);
       if (set.source.provider === 'youtube' && !set.source.videoId) fail(`${set.id} missing YouTube videoId`);
       if (set.linkedReleaseId && !releaseIds.has(set.linkedReleaseId)) fail(`${set.id} links unknown or retired release ${set.linkedReleaseId}`);
       if (set.segmentRouting != null && set.segmentRouting !== 'metadata-only') fail(`${set.id} has unsupported segmentRouting value`);
+      if (set.chapterStatus != null && !CHAPTER_STATUSES.has(set.chapterStatus)) fail(`${set.id} has unsupported chapterStatus ${set.chapterStatus}`);
+      if (set.tracklist != null) {
+        if (!Array.isArray(set.tracklist) || set.tracklist.length === 0 || set.tracklist.some((title) => !String(title || '').trim())) {
+          fail(`${set.id} has invalid tracklist metadata`);
+        }
+      }
+      const segments = Array.isArray(set.segments) ? set.segments : [];
+      if (set.chapterStatus === 'published-complete' && segments.length === 0) fail(`${set.id} claims published-complete without chapters`);
+      if ((set.chapterStatus === 'source-no-published-chapters' || set.chapterStatus === 'source-tracklist-no-timestamps') && segments.length !== 0) {
+        fail(`${set.id} has a no-timestamp chapterStatus but also contains timestamped segments`);
+      }
+      if (set.chapterStatus === 'source-tracklist-no-timestamps' && (!Array.isArray(set.tracklist) || set.tracklist.length === 0)) {
+        fail(`${set.id} claims source-tracklist-no-timestamps without a source tracklist`);
+      }
       const setMetadataOnly = set.segmentRouting === 'metadata-only';
       const setArtistCount = artistCreditCount(set.artists ?? set.artist);
       if (setMetadataOnly) metadataOnlySetCount += 1;
       let previousStart = -1;
-      for (const segment of set.segments || []) {
+      for (const segment of segments) {
         chapterCount += 1;
         if (!segment.title) fail(`${set.id} has untitled segment`);
         if (!Number.isFinite(segment.startSeconds) || segment.startSeconds < 0) fail(`${set.id}:${segment.title} has invalid startSeconds`);
@@ -170,6 +188,20 @@ if (discovery.setsIndex) {
       }
     }
   }
+
+  const auditIds = Array.isArray(setIndex.chapterAudit?.resolvedSetIds) ? setIndex.chapterAudit.resolvedSetIds : [];
+  if (new Set(auditIds).size !== auditIds.length) fail('Discovery chapterAudit contains duplicate resolvedSetIds');
+  for (const id of auditIds) {
+    const set = setsById.get(id);
+    if (!set) {
+      fail(`Discovery chapterAudit references missing set ${id}`);
+      continue;
+    }
+    const segments = Array.isArray(set.segments) ? set.segments : [];
+    const explicitlyResolved = segments.length > 0 || CHAPTER_STATUSES.has(set.chapterStatus);
+    if (!explicitlyResolved) fail(`Discovery chapterAudit set ${id} is still unresolved`);
+    else chapterAuditResolvedCount += 1;
+  }
 }
 
 if (failed) process.exit(1);
@@ -178,4 +210,5 @@ console.log(`✓ discovery artists: ${artistIds.size}`);
 console.log(`✓ recommendation signals: ${recommendationIds.size}`);
 console.log(`✓ live/nonstop sets: ${setCount}`);
 console.log(`✓ timestamped set chapters: ${chapterCount} (${metadataOnlyChapterCount} effectively metadata-only across ${metadataOnlySetCount} set defaults)`);
+console.log(`✓ completed chapter-audit sets: ${chapterAuditResolvedCount}`);
 console.log(`✓ playback source maps: ${playbackFiles.length}`);
