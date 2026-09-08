@@ -1,0 +1,67 @@
+name: Temporary DNS and Pages diagnostics
+
+on:
+  push:
+    branches: [codex/dns-http-diagnostics]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: DNS and HTTP diagnostics
+        shell: bash
+        run: |
+          set +e
+          echo '=== TIMESTAMP ==='
+          date -u
+
+          echo '=== DNS: live CNAME ==='
+          dig +noall +answer CNAME live.playgarba.com
+          echo '=== DNS: live A ==='
+          dig +noall +answer A live.playgarba.com
+          echo '=== DNS: live AAAA ==='
+          dig +noall +answer AAAA live.playgarba.com
+          echo '=== DNS: apex A ==='
+          dig +noall +answer A playgarba.com
+          echo '=== DNS: apex AAAA ==='
+          dig +noall +answer AAAA playgarba.com
+          echo '=== DNS: apex CNAME ==='
+          dig +noall +answer CNAME playgarba.com
+          echo '=== DNS: www CNAME ==='
+          dig +noall +answer CNAME www.playgarba.com
+          echo '=== DNS: NS ==='
+          dig +noall +answer NS playgarba.com
+
+          echo '=== GOOGLE DOH: live CNAME ==='
+          curl -fsSL 'https://dns.google/resolve?name=live.playgarba.com&type=CNAME' || true
+          echo
+          echo '=== CLOUDFLARE DOH: live CNAME ==='
+          curl -fsSL -H 'accept: application/dns-json' 'https://cloudflare-dns.com/dns-query?name=live.playgarba.com&type=CNAME' || true
+          echo
+
+          echo '=== PUBLIC GITHUB PAGES SITE API ==='
+          curl -sS -D /tmp/pages.headers -o /tmp/pages.json -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' 'https://api.github.com/repos/ruddvz/garba/pages'
+          cat /tmp/pages.headers
+          cat /tmp/pages.json
+          echo
+
+          for url in \
+            'http://live.playgarba.com/' \
+            'https://live.playgarba.com/' \
+            'http://playgarba.com/' \
+            'https://playgarba.com/' \
+            'https://www.playgarba.com/' \
+            'https://ruddvz.github.io/garba/'; do
+            echo "=== HTTP: $url ==="
+            curl -sS -o /dev/null -D - --max-time 15 "$url" || true
+            echo
+          done
+
+          echo '=== BYPASS DNS: live -> GitHub Pages IPv4 ==='
+          for ip in 185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153; do
+            echo "--- $ip"
+            curl -k -sS -o /dev/null -D - --max-time 10 --resolve "live.playgarba.com:443:$ip" 'https://live.playgarba.com/' || true
+          done
