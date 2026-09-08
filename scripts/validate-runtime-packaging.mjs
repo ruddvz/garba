@@ -4,10 +4,12 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [pages, sw, bootstrap] = await Promise.all([
+const [pages, sw, bootstrap, socialSource, socialInjector] = await Promise.all([
   read('.github/workflows/pages.yml'),
   read('sw.js'),
   read('simple-runtime.js'),
+  read('assets/social/playgarba-og-card.svg'),
+  read('scripts/lib/inject-social-preview.mjs'),
 ]);
 
 let failed = false;
@@ -67,6 +69,39 @@ if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
   fail('Pages must remove source visual-pack archives from the public artifact');
 }
 
+for (const marker of [
+  'librsvg2-bin',
+  'assets/social/playgarba-og-card.svg',
+  '_site/assets/social/garba-og-card.png',
+  'rsvg-convert -w 1200 -h 630',
+  'PNG image data, 1200 x 630',
+  'node scripts/lib/inject-social-preview.mjs _site/index.html',
+  'summary_large_image',
+]) {
+  if (!pages.includes(marker)) fail(`Pages social-preview contract is missing: ${marker}`);
+}
+for (const marker of [
+  'width="1200" height="630"',
+  '>PlayGarba</text>',
+  '>The open Gujarati Garba music archive</text>',
+  '>playgarba.com</text>',
+]) {
+  if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
+}
+const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
+for (const marker of [
+  imageUrl,
+  'og:image',
+  'og:image:width',
+  'og:image:height',
+  'summary_large_image',
+  'twitter:image',
+  'Structured-data URL anchor is missing',
+]) {
+  if (!socialInjector.includes(marker)) fail(`Social metadata injector is missing: ${marker}`);
+}
+if (socialInjector.includes('ruddvz.github.io/garba')) fail('Social metadata must not regress to the old GitHub Pages URL');
+
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
@@ -81,3 +116,4 @@ console.log('✓ provider route safety loads before the YouTube controllable eng
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
+console.log('✓ PlayGarba social previews are generated with librsvg from a reviewable 1200x630 source and injected at deploy time');
