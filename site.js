@@ -9,13 +9,22 @@
     return;
   }
 
+  const ensurePolishStyles = () => {
+    if (document.querySelector('link[data-playgarba-polish]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/polish.css';
+    link.dataset.playgarbaPolish = 'true';
+    document.head.appendChild(link);
+  };
+
   const header = document.querySelector('.site-header');
   const button = document.getElementById('menuButton');
   const nav = document.getElementById('siteNav');
   const year = document.getElementById('year');
 
   const setHeaderState = () => {
-    header?.classList.toggle('scrolled', window.scrollY > 18);
+    header?.classList.toggle('scrolled', window.scrollY > 18 || document.body.classList.contains('interior-page'));
   };
 
   const closeMenu = () => {
@@ -37,6 +46,82 @@
   window.addEventListener('resize', () => {
     if (window.innerWidth > 980) closeMenu();
   });
+
+  const markCurrentRoute = () => {
+    const current = window.location.pathname.replace(/index\.html$/, '');
+    document.querySelectorAll('.site-nav a[href^="/"]').forEach((link) => {
+      const href = new URL(link.href, window.location.origin).pathname.replace(/index\.html$/, '');
+      if (href === current) link.setAttribute('aria-current', 'page');
+    });
+  };
+
+  const ensureFaqNavigation = () => {
+    if (nav && !nav.querySelector('a[href="/faq/"], a[href="faq/"]')) {
+      const about = nav.querySelector('a[href="/about/"], a[href="about/"]');
+      const faq = document.createElement('a');
+      faq.href = '/faq/';
+      faq.textContent = 'FAQ';
+      if (about) nav.insertBefore(faq, about);
+      else nav.insertBefore(faq, nav.querySelector('.nav-cta'));
+      faq.addEventListener('click', closeMenu);
+    }
+
+    document.querySelectorAll('.footer-links').forEach((footer) => {
+      if (footer.querySelector('a[href="/faq/"], a[href="faq/"]')) return;
+      const about = footer.querySelector('a[href="/about/"], a[href="about/"]');
+      const faq = document.createElement('a');
+      faq.href = '/faq/';
+      faq.textContent = 'FAQ';
+      if (about) footer.insertBefore(faq, about);
+      else footer.prepend(faq);
+    });
+  };
+
+  const addMobileActionDock = () => {
+    if (!document.body.classList.contains('interior-page') || document.querySelector('.mobile-action-dock')) return;
+    const path = window.location.pathname;
+    const secondary = path.startsWith('/install/')
+      ? { href: '/how-to-use/', label: 'How to use' }
+      : path.startsWith('/how-to-use/') || path.startsWith('/faq/') || path.startsWith('/about/')
+        ? { href: '/install/', label: 'Install' }
+        : { href: '/how-to-use/', label: 'Guide' };
+
+    const dock = document.createElement('nav');
+    dock.className = 'mobile-action-dock';
+    dock.setAttribute('aria-label', 'Quick actions');
+    dock.innerHTML = `
+      <a class="dock-primary" href="https://live.playgarba.com/">Open player</a>
+      <a class="dock-secondary" href="${secondary.href}">${secondary.label}</a>
+    `;
+    document.body.appendChild(dock);
+  };
+
+  const addFaqSupport = () => {
+    if (!window.location.pathname.startsWith('/faq/') || document.getElementById('support')) return;
+    const cta = document.querySelector('.page-cta');
+    if (!cta) return;
+
+    const section = document.createElement('section');
+    section.className = 'page-section';
+    section.id = 'support';
+    section.setAttribute('aria-labelledby', 'support-title');
+    section.innerHTML = `
+      <div class="page-section-inner">
+        <div class="page-section-head">
+          <div>
+            <p class="page-kicker">REPORT A PROBLEM</p>
+            <h2 id="support-title">Found a bug or a missing song?</h2>
+          </div>
+          <p>Use the project’s existing GitHub issue forms. That keeps reports attached to the public repository instead of creating a separate support channel.</p>
+        </div>
+        <div class="support-actions">
+          <a class="button button-primary" href="https://github.com/ruddvz/garba/issues/new?template=bug-report.yml">Report a bug <span aria-hidden="true">↗</span></a>
+          <a class="button button-ghost" href="https://github.com/ruddvz/garba/issues/new?template=missing-song.yml">Report a missing song <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    `;
+    cta.before(section);
+  };
 
   // The marketing site ships reviewable SVG fallbacks so first paint never depends
   // on another hostname. Once the player host is available, progressively promote
@@ -71,6 +156,12 @@
   const promoteAllArtwork = () => {
     for (const [selector, file] of art) promoteArtwork(selector, file);
   };
+
+  ensurePolishStyles();
+  ensureFaqNavigation();
+  markCurrentRoute();
+  addMobileActionDock();
+  addFaqSupport();
 
   if ('requestIdleCallback' in window) requestIdleCallback(promoteAllArtwork, { timeout: 1800 });
   else window.setTimeout(promoteAllArtwork, 350);
