@@ -537,7 +537,7 @@ function setSheetSnap(snap) {
   els.app.dataset.sheetSnap = state.sheetSnap;
   const open = state.sheetSnap !== 'closed';
   els.songSheet.setAttribute('aria-hidden', String(!open));
-  els.browseButton.setAttribute('aria-expanded', String(open));
+  if (els.browseButton?.hasAttribute('aria-controls')) els.browseButton.setAttribute('aria-expanded', String(open));
   if (!open) {
     els.songSheet.classList.remove('searching');
     els.searchInput.blur();
@@ -777,10 +777,12 @@ function wireEvents() {
   els.miniPrev.addEventListener('click', () => changeSong(-1));
   els.miniNext.addEventListener('click', () => changeSong(1));
 
-  els.browseButton.addEventListener('click', () => {
-    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-    else closeSheet();
-  });
+  if (els.browseButton?.tagName !== 'A') {
+    els.browseButton?.addEventListener('click', () => {
+      if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
+      else closeSheet();
+    });
+  }
   els.sheetClose.addEventListener('click', closeSheet);
   els.mobileFavourite.addEventListener('click', () => toggleFavourite());
   els.favouritesButton.addEventListener('click', () => openSheet('favourites', { trigger: els.favouritesButton }));

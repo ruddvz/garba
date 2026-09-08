@@ -115,7 +115,7 @@ for (const marker of [
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
-const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
+const imageUrl = 'https://live.playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [
   imageUrl,
   'GARBA · Gujarati Garba, beautifully played',
