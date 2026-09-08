@@ -270,9 +270,9 @@ for (const marker of [
 
 const vercel = await readJson('vercel.json');
 const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'host')?.value;
-const apexRootRewrite = vercel.rewrites?.find((rule) => rule.source === '/' && rule.destination === '/public-site/' && hostValue(rule) === '^playgarba\\.com$');
-const apexPathRewrite = vercel.rewrites?.find((rule) => rule.source === '/:path*' && rule.destination === '/public-site/:path*' && hostValue(rule) === '^playgarba\\.com$');
-const wwwRedirect = vercel.redirects?.find((rule) => rule.source === '/:path*' && rule.destination === 'https://playgarba.com/:path*' && rule.permanent === true && hostValue(rule) === '^www\\.playgarba\\.com$');
+const apexRootRewrite = vercel.rewrites?.find((rule) => rule.source === '/' && rule.destination === '/public-site/' && hostValue(rule) === 'playgarba.com');
+const apexPathRewrite = vercel.rewrites?.find((rule) => rule.source === '/:path*' && rule.destination === '/public-site/:path*' && hostValue(rule) === 'playgarba.com');
+const wwwRedirect = vercel.redirects?.find((rule) => rule.source === '/:path*' && rule.destination === 'https://playgarba.com/:path*' && rule.permanent === true && hostValue(rule) === 'www.playgarba.com');
 if (!apexRootRewrite) fail('vercel.json must route the apex root to public-site/');
 if (!apexPathRewrite) fail('vercel.json must route apex paths into public-site/');
 if (!wwwRedirect) fail('vercel.json must permanently redirect www.playgarba.com to the apex');

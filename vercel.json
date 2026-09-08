@@ -6,7 +6,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^live\\.playgarba\\.com$"
+          "value": "live.playgarba.com"
         }
       ],
       "destination": "/src/catalogue/index.html"
@@ -16,7 +16,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^live\\.playgarba\\.com$"
+          "value": "live.playgarba.com"
         }
       ],
       "destination": "/src/catalogue/:path*"
@@ -26,7 +26,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^playgarba\\.com$"
+          "value": "playgarba.com"
         }
       ],
       "destination": "/public-site/"
@@ -36,7 +36,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^playgarba\\.com$"
+          "value": "playgarba.com"
         }
       ],
       "destination": "/public-site/:path*"
@@ -48,7 +48,7 @@
       "has": [
         {
           "type": "host",
-          "value": "^www\\.playgarba\\.com$"
+          "value": "www.playgarba.com"
         }
       ],
       "destination": "https://playgarba.com/:path*",
