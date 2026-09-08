@@ -313,9 +313,20 @@
     syncYoutubeButton();
   }
 
+  function loadAtmosphereRuntime() {
+    if (window.GARBA_ATMOSPHERE || document.getElementById('garbaAtmosphereRuntime')) return;
+    const script = document.createElement('script');
+    script.id = 'garbaAtmosphereRuntime';
+    script.src = 'assets/runtime/immersive-atmosphere.js';
+    script.async = false;
+    script.addEventListener('error', () => console.warn('Garba Atmosphere runtime could not load.'));
+    document.head.append(script);
+  }
+
   seedFastBoot();
   injectYoutubeControl();
   syncYoutubeButton();
+  loadAtmosphereRuntime();
 
   // Exact mapped songs deliberately fall through to youtube-player-runtime.js so the
   // normal Play/Space controls initialise and control playback in one user action.
