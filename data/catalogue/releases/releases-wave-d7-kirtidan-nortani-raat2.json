@@ -1,0 +1,28 @@
+[
+  {
+    "id":"nortani-raat-2-kirtidan-anita-2025",
+    "title":"Nortani Raat 2",
+    "artist":"Kirtidan Gadhvi & Anita Pandit",
+    "releaseDate":"2025-08-26",
+    "originalReleaseYear":2025,
+    "label":"Kirtidan Gadhvi",
+    "categories":["modern-gujarati-garba","traditional-garba","mataji-devotional","krishna-garba","folk-lokgeet"],
+    "visualGenre":"traditional",
+    "entryType":"album",
+    "songCount":11,
+    "durationSeconds":1696,
+    "series":"Nortani Raat",
+    "volume":"2",
+    "live":{"isLive":false,"venue":null},
+    "sources":[
+      {"platform":"Amazon Music","url":"https://music.amazon.in/albums/B0FP2S1NJB","kind":"official-11-track-album"}
+    ],
+    "trackImportComplete":true,
+    "rightsStatus":"commercial-catalogue",
+    "audioBundled":false,
+    "metadataStatus":"verified-provider-album",
+    "audioAvailability":"external-source-only",
+    "durationPrecision":"amazon-displayed-track-sum",
+    "notes":"Amazon Music publishes the complete 11-track August 26, 2025 album credited to Kirtidan Gadhvi and Anita Pandit. Ten exact song hrefs are independently resolved from provider pages. Track 6, Radha Ne Shyam Rame Raas Sharad Purnima Ni Raat, is confirmed in the provider tracklist but its individual track href is not independently recoverable from the indexed provider pages, so it deliberately remains on conservative release fallback instead of using an inferred ID."
+  }
+]
