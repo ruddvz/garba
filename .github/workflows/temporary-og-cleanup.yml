@@ -33,24 +33,12 @@ jobs:
               if updated != text:
                   path.write_text(updated)
                   changed.append(str(path))
-
-          validator = Path('.github/workflows/website-validate.yml')
-          text = validator.read_text()
-          guard = "\n          if grep -R -n -E 'garba-og-card\\.png\\?v=[^\\\" ]+\\?v=' --include='*.html' .; then\n            echo 'Duplicated OG image cache-buster found in public HTML.'\n            exit 1\n          fi\n"
-          marker = "          grep -q 'garba-og-card.png?v=20260908-2' faq/index.html\n"
-          if 'Duplicated OG image cache-buster found' not in text:
-              if marker not in text:
-                  raise SystemExit('website validator OG marker not found')
-              text = text.replace(marker, marker + guard, 1)
-              validator.write_text(text)
-              changed.append(str(validator))
-
           print('updated:', ', '.join(changed) if changed else 'nothing')
           PY
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- '*.html' .github/workflows/website-validate.yml
+          git add -- '*.html'
           git diff --cached --check
           if git diff --cached --quiet; then
             echo 'No OG cleanup changes required.'
