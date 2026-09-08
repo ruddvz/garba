@@ -92,9 +92,9 @@
     </button>
   </template>
 
-  <!-- Core Explore paints first; Search is a separate enhancement and must never
-       gate catalogue readiness. -->
+  <!-- Core Explore paints first. The listening layer is isolated from Search so
+       optional features cannot take the catalogue down together. -->
   <script type="module" src="catalogue.js"></script>
-  <script type="module" src="../assets/runtime/explore-search.js"></script>
+  <script type="module" src="listening-library.js"></script>
 </body>
 </html>
