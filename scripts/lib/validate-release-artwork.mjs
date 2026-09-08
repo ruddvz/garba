@@ -5,6 +5,7 @@ const root = path.resolve(import.meta.dirname, '../..');
 const readJson = async (file) => JSON.parse(await readFile(path.join(root, file), 'utf8'));
 
 const manifest = await readJson('data/release-artwork.json');
+const curation = await readJson('data/catalogue-curation.json');
 const releases = await readJson('data/releases.json');
 const releaseById = new Map(releases.filter((release) => release?.id).map((release) => [release.id, release]));
 const allowedArtworkHosts = (host) => host === 'm.media-amazon.com' || host.endsWith('.mzstatic.com');
@@ -69,5 +70,19 @@ for (const [releaseId, entry] of Object.entries(manifest.releases || {})) {
   }
 }
 
+if (curation.version !== 1 || !Array.isArray(curation.featuredReleaseIds)) {
+  fail('catalogue-curation.json must contain a version 1 featuredReleaseIds array');
+} else {
+  const featured = curation.featuredReleaseIds;
+  if (featured.length < 4 || featured.length > 12) fail('catalogue-curation.json must feature between 4 and 12 releases');
+  if (new Set(featured).size !== featured.length) fail('catalogue-curation.json must not contain duplicate featured release IDs');
+  for (const releaseId of featured) {
+    if (!releaseById.has(releaseId)) fail(`Curated release does not exist in the canonical catalogue: ${releaseId}`);
+    const art = manifest.releases?.[releaseId];
+    if (!art?.imageUrl || art.verified !== true) fail(`Curated release must have verified artwork: ${releaseId}`);
+  }
+}
+
 if (failed) process.exit(1);
 console.log(`✓ verified release artwork manifest: ${Object.keys(manifest.releases || {}).length} release covers`);
+console.log(`✓ curated essential releases: ${(curation.featuredReleaseIds || []).length}`);
