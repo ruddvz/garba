@@ -27,10 +27,8 @@ jobs:
           node --check scripts/report-playback-route-quality.mjs
           node --check scripts/report-youtube-first-coverage.mjs
           node --check scripts/validate-youtube-player-runtime.mjs
-      - name: Validate player continuity
+      - name: Validate player continuity and AutoMix
         run: node scripts/validate-player-continuity.mjs
-      - name: Validate AutoMix
-        run: npm run automix:validate
       - name: Validate runtime packaging
         run: node scripts/validate-runtime-packaging.mjs
       - name: Validate YouTube runtime
