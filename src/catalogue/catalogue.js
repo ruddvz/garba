@@ -4,6 +4,7 @@ const paths = {
   genres: '../data/genres.json',
   catalogueIndex: '../data/catalogue/index.json',
   artwork: '../data/release-artwork.json',
+  curation: '../data/catalogue-curation.json',
 };
 
 const visualByGenre = {
@@ -43,6 +44,7 @@ const state = {
   genres: [],
   artists: [],
   artwork: {},
+  curation: {},
   releaseById: new Map(),
   collections: [],
   active: null,
@@ -132,6 +134,18 @@ function fixedCollection({ id, title, kicker, description, visual, test }) {
 function buildCollections() {
   const c = [];
   const art = visualByGenre;
+  const essentialReleaseIds = new Set(state.curation?.featuredReleaseIds || []);
+
+  if (essentialReleaseIds.size) {
+    c.push(fixedCollection({
+      id:'essential-releases',
+      title:'Essential releases',
+      kicker:'Curated albums',
+      description:'A small, intentional shelf of complete Garba releases with verified artwork—good places to start listening.',
+      visual:art.traditional,
+      test:(song)=>essentialReleaseIds.has(song.releaseId),
+    }));
+  }
 
   c.push(
     fixedCollection({ id:'nonstop', title:'Nonstop Garba', kicker:'Continuous energy', description:'Long-form nonstop releases, continuous Garba albums and set-style catalogue entries.', visual:art.traditional, test:(song, release)=>includesTerm(song, release, ['non stop','nonstop']) }),
@@ -232,11 +246,64 @@ function renderCollectionCard(collection) {
   return card;
 }
 
+function openEssentialRelease(releaseId) {
+  if (!openCollection('essential-releases')) return;
+  filterToRelease(releaseId,{scroll:false});
+}
+
+function renderEssentialReleases() {
+  const ids = state.curation?.featuredReleaseIds || [];
+  const items = ids.map((releaseId) => {
+    const release = state.releaseById.get(releaseId);
+    const artwork = artworkEntry(releaseId);
+    const songs = state.songs.filter((song) => song.releaseId === releaseId);
+    return { release, artwork, songs };
+  }).filter(({ release, artwork, songs }) => release && artwork?.verified === true && artwork?.imageUrl && songs.length);
+  if (!items.length) return;
+
+  const section = document.createElement('section');
+  section.className = 'catalogue-section essential-release-section';
+  const head = document.createElement('div');
+  head.className = 'section-title-row';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Essential releases';
+  const copy = document.createElement('p');
+  copy.textContent = 'A small, intentional shelf of complete Garba releases with verified artwork—good places to start listening.';
+  head.append(heading, copy);
+
+  const rail = document.createElement('div');
+  rail.className = 'essential-release-rail';
+  rail.setAttribute('role','list');
+  rail.setAttribute('aria-label','Essential Garba releases');
+  items.forEach(({ release, songs }) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'release-card essential-release-card';
+    button.setAttribute('role','listitem');
+    button.setAttribute('aria-label',`Open ${release.title}`);
+    button.append(makeCover(release));
+    const title = document.createElement('strong');
+    title.className = 'release-title';
+    title.textContent = release.title;
+    const meta = document.createElement('span');
+    meta.className = 'release-meta';
+    const year = releaseYear(release);
+    meta.textContent = [release.artist, year || null, `${songs.length} ${songs.length===1?'song':'songs'}`].filter(Boolean).join(' · ');
+    button.append(title,meta);
+    button.addEventListener('click',()=>openEssentialRelease(release.id));
+    rail.append(button);
+  });
+
+  section.append(head,rail);
+  els.sections.append(section);
+}
+
 function renderCollectionHome() {
   els.sections.replaceChildren();
   const byId = (id) => state.collections.find((collection) => collection.id === id);
   const featuredIds = ['nonstop','live','current','classics','dandiya-raas','devotional'];
-  collectionSection('Featured', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean));
+  renderEssentialReleases();
+  collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean));
   collectionSection('Traditions & styles', 'Explore the catalogue by dance form, devotional tradition and musical style.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)));
   collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data—not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')));
   collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')));
@@ -558,18 +625,20 @@ function setLoading(loading) {
 
 async function init() {
   els.count.textContent = 'Loading catalogue…';
-  const [songs,releases,genres,index,artwork] = await Promise.all([
+  const [songs,releases,genres,index,artwork,curation] = await Promise.all([
     fetchJson(paths.songs,[]),
     fetchJson(paths.releases,[]),
     fetchJson(paths.genres,[]),
     fetchJson(paths.catalogueIndex,{}),
     fetchJson(paths.artwork,{releases:{}}),
+    fetchJson(paths.curation,{featuredReleaseIds:[]}),
   ]);
   if (!songs.length) throw new Error('Song catalogue unavailable');
   state.songs = songs;
   state.releases = releases;
   state.genres = genres;
   state.artwork = artwork || {releases:{}};
+  state.curation = curation || {featuredReleaseIds:[]};
   state.releaseById = buildReleaseIndex(releases);
   state.artists = await loadArtists(index);
   state.collections = buildCollections();
