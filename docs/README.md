@@ -19,6 +19,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-152-wave-d7-audit.md`](catalogue/issue-152-wave-d7-audit.md): Kirtidan Gadhvi and Anita Pandit Nortani Raat 2 complete album with YouTube-only executable-route audit
 - [`catalogue/issue-152-wave-d8-audit.md`](catalogue/issue-152-wave-d8-audit.md): Aditya Gadhvi and Shruti Ahir Amber Gaje expanded-edition, recording-history and YouTube-only route audit
 - [`catalogue/issue-152-wave-d9-audit.md`](catalogue/issue-152-wave-d9-audit.md): Falguni Pathak and Sudesh Bhosle Maadi Tara Mandiriye historical-edition, performer-ownership and exact Sony chapter audit
+- [`catalogue/issue-231-khamma-2-youtube-migration.md`](catalogue/issue-231-khamma-2-youtube-migration.md): Khamma 2 YouTube-only migration with 20 exact routes and one fail-closed unresolved interlude
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
 - [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
 - [`catalogue/nonstop-chapter-resolution-2026-09-08.md`](catalogue/nonstop-chapter-resolution-2026-09-08.md): final evidence audit for source-published Nonstop chapters and intentionally unchaptered continuous masters
