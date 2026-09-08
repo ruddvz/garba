@@ -50,6 +50,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`operations/agent-coordination.md`](operations/agent-coordination.md): repository agent-claim coordination protocol
 - [`operations/direct-audio-hosting.md`](operations/direct-audio-hosting.md)
 - [`operations/domain-split.md`](operations/domain-split.md): public-site and live-player domain cutover runbook
+- [`operations/agent-coordination.md`](operations/agent-coordination.md): agent handoff and coordination procedure
 - [`operations/hosting-phase-01.md`](operations/hosting-phase-01.md)
 - [`operations/master-ingestion-and-publishing.md`](operations/master-ingestion-and-publishing.md)
 - [`operations/vendor-catalogue-intake.md`](operations/vendor-catalogue-intake.md)
