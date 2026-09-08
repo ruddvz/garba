@@ -220,6 +220,60 @@
       <audio id="audio" preload="metadata"></audio>
     </div>
 
+    <script id="exploreSongHandoff">
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const requestedSong = params.get('song');
+        if (!requestedSong) return;
+
+        let handoff = null;
+        try { handoff = JSON.parse(sessionStorage.getItem('playgarba:route-handoff') || 'null'); } catch { return; }
+        if (!handoff || handoff.v !== 1 || handoff.songId !== requestedSong || Date.now() - Number(handoff.at || 0) > 15000) return;
+        try { sessionStorage.removeItem('playgarba:route-handoff'); } catch { /* storage can be unavailable */ }
+
+        const genreMeta = {
+          traditional: { label: 'Traditional Garba', background: 'assets/backgrounds/traditional.svg', accent: '#d6b06f' },
+          dandiya: { label: 'Dandiya Raas', background: 'assets/backgrounds/dandiya.svg', accent: '#a77ad6' },
+          devotional: { label: 'Devotional Garba', background: 'assets/backgrounds/devotional.svg', accent: '#c78372' },
+          folk: { label: 'Gujarati Folk', background: 'assets/backgrounds/folk.svg', accent: '#9a9fc7' },
+          sanedo: { label: 'Sanedo', background: 'assets/backgrounds/sanedo.svg', accent: '#c99872' },
+          fusion: { label: 'Modern Fusion Garba', background: 'assets/backgrounds/fusion.svg', accent: '#a78bc4' },
+        };
+        const genreId = genreMeta[handoff.genre] ? handoff.genre : 'traditional';
+        const genre = genreMeta[genreId];
+        const root = document.documentElement;
+        const app = document.getElementById('app');
+        const worldA = document.getElementById('worldA');
+        const title = document.getElementById('songTitle');
+        const artist = document.getElementById('songArtist');
+        const eyebrow = document.getElementById('genreEyebrow');
+        const miniTitle = document.getElementById('miniTitle');
+        const miniArtist = document.getElementById('miniArtist');
+
+        root.dataset.songHandoff = 'true';
+        root.style.setProperty('--accent', genre.accent);
+        if (app) app.dataset.genre = genreId;
+        if (worldA) worldA.style.backgroundImage = `url("${genre.background}")`;
+        if (title && handoff.title) title.textContent = handoff.title;
+        if (artist && handoff.artist) artist.textContent = handoff.artist;
+        if (eyebrow) eyebrow.textContent = genre.label;
+        if (miniTitle && handoff.title) miniTitle.textContent = handoff.title;
+        if (miniArtist && handoff.artist) miniArtist.textContent = handoff.artist;
+        document.querySelectorAll('[data-static-genre="true"]').forEach((button) => {
+          const active = button.dataset.genre === genreId;
+          button.classList.toggle('active', active);
+          if (active) button.setAttribute('aria-current', 'true');
+          else button.removeAttribute('aria-current');
+        });
+
+        const clear = () => { delete root.dataset.songHandoff; };
+        window.setTimeout(clear, 1100);
+        window.addEventListener('pagereveal', (event) => {
+          if (event.viewTransition) event.viewTransition.finished.finally(clear);
+        }, { once: true });
+      })();
+    </script>
+
     <noscript><p>This music player needs JavaScript enabled.</p></noscript>
     <script src="simple-runtime.js"></script>
     <script src="nonstop-browser.js" defer></script>
