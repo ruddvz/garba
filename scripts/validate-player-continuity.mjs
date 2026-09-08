@@ -37,6 +37,16 @@ for (const marker of [
 }
 
 for (const marker of [
+  "const mobileQuery = window.matchMedia('(max-width: 700px)');",
+  'function closeMobileSongBrowserAfterSelection()',
+  "if (!sheet || sheet.dataset.snap === 'closed') return;",
+  "$('sheetClose')?.click();",
+  'if (shouldStartSelectedSong) closeMobileSongBrowserAfterSelection();',
+]) {
+  if (!continuity.includes(marker)) fail(`Mobile selection handoff missing marker: ${marker}`);
+}
+
+for (const marker of [
   "const requestedSongId = new URL(location.href).searchParams.get('song');",
   'const needsFullCatalogueForDeepLink = Boolean(',
   "!fastBoot.songs.some((song) => song.id === requestedSongId)",
@@ -108,6 +118,7 @@ for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
 
 if (failed) process.exit(1);
 console.log('✓ song-row Play intent follows the newly selected provider song');
+console.log('✓ mobile song selection returns to Now Playing before provider playback resumes');
 console.log('✓ provider Previous/Next preserve listening intent across song changes');
 console.log('✓ provider routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
