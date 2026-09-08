@@ -13,17 +13,21 @@ if (!setsIndexPath) {
 
 const setsIndex = await readJson(setsIndexPath);
 const setsDir = path.posix.dirname(setsIndexPath);
-const supportedStatuses = new Set([
+const supportedChapterStatuses = new Set([
   'published-complete',
   'source-no-published-chapters',
   'source-tracklist-no-timestamps',
 ]);
+const supportedSourceStatuses = new Set(['youtube-migration-required']);
 
 const unresolved = [];
+const invalidMigrationStates = [];
 let setCount = 0;
+let youtubeSetCount = 0;
 let timestamped = 0;
 let explicitlyContinuous = 0;
 let tracklistOnly = 0;
+let migrationRequired = 0;
 
 for (const chunkName of setsIndex.chunks || []) {
   const chunkPath = path.posix.join(setsDir, chunkName);
@@ -31,37 +35,62 @@ for (const chunkName of setsIndex.chunks || []) {
   for (const set of payload.sets || []) {
     setCount += 1;
     const segments = Array.isArray(set.segments) ? set.segments : [];
-    const status = String(set.chapterStatus || '').trim();
+    const chapterStatus = String(set.chapterStatus || '').trim();
+    const sourceStatus = String(set.sourceStatus || '').trim();
+    const provider = String(set.source?.provider || '').trim().toLowerCase();
+    const isYoutube = provider === 'youtube' && Boolean(String(set.source?.videoId || '').trim());
+
+    if (!isYoutube) {
+      if (segments.length > 0 || supportedChapterStatuses.has(chapterStatus)) {
+        invalidMigrationStates.push({ id: set.id, title: set.title, provider, chunk: chunkName });
+        continue;
+      }
+      if (!supportedSourceStatuses.has(sourceStatus)) {
+        unresolved.push({ id: set.id, title: set.title, provider: provider || '(none)', videoId: '(no YouTube master)', chunk: chunkName });
+        continue;
+      }
+      migrationRequired += 1;
+      continue;
+    }
+
+    youtubeSetCount += 1;
+    if (sourceStatus) {
+      invalidMigrationStates.push({ id: set.id, title: set.title, provider, chunk: chunkName });
+      continue;
+    }
 
     if (segments.length > 0) {
       timestamped += 1;
       continue;
     }
 
-    if (!supportedStatuses.has(status)) {
-      unresolved.push({
-        id: set.id || '(missing id)',
-        title: set.title || '(missing title)',
-        videoId: set.source?.videoId || '(no video id)',
-        chunk: chunkName,
-      });
+    if (!supportedChapterStatuses.has(chapterStatus)) {
+      unresolved.push({ id: set.id, title: set.title, provider, videoId: set.source?.videoId || '(no video id)', chunk: chunkName });
       continue;
     }
 
-    if (status === 'source-tracklist-no-timestamps') tracklistOnly += 1;
+    if (chapterStatus === 'source-tracklist-no-timestamps') tracklistOnly += 1;
     else explicitlyContinuous += 1;
   }
 }
 
-if (unresolved.length) {
-  console.error(`✗ ${unresolved.length} Nonstop sets still have no timestamped chapters and no explicit source-evidence resolution:`);
-  for (const set of unresolved) {
-    console.error(`  - ${set.id} | ${set.title} | YouTube ${set.videoId} | ${set.chunk}`);
-  }
-  process.exit(1);
+if (invalidMigrationStates.length) {
+  console.error(`✗ ${invalidMigrationStates.length} Nonstop sets conflate provider migration with YouTube chapter completion:`);
+  for (const set of invalidMigrationStates) console.error(`  - ${set.id} | ${set.title} | ${set.provider} | ${set.chunk}`);
 }
 
-console.log(`✓ global Nonstop chapter resolution: ${setCount}/${setCount} sets resolved`);
-console.log(`✓ ${timestamped} sets have timestamped chapters`);
-console.log(`✓ ${explicitlyContinuous} sets explicitly document sources with no published chapter starts`);
-console.log(`✓ ${tracklistOnly} sets preserve source tracklists without fabricated timestamps`);
+if (unresolved.length) {
+  console.error(`✗ ${unresolved.length} Nonstop sets still need either YouTube chapter evidence or an explicit YouTube migration state:`);
+  for (const set of unresolved) {
+    console.error(`  - ${set.id} | ${set.title} | ${set.provider} | ${set.videoId} | ${set.chunk}`);
+  }
+}
+
+if (invalidMigrationStates.length || unresolved.length) process.exit(1);
+
+console.log(`✓ global Nonstop evidence resolution: ${setCount}/${setCount} sets classified`);
+console.log(`✓ ${youtubeSetCount} sets have YouTube masters`);
+console.log(`✓ ${timestamped} YouTube sets have timestamped chapters`);
+console.log(`✓ ${explicitlyContinuous} YouTube sets explicitly document sources with no published chapter starts`);
+console.log(`✓ ${tracklistOnly} YouTube sets preserve source tracklists without fabricated timestamps`);
+console.log(`△ ${migrationRequired} discovery sets remain explicitly classified as YouTube migration required`);
