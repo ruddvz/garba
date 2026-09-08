@@ -45,5 +45,11 @@ replaceOnce(
   'keyboard listener'
 );
 
+replaceOnce(
+`    state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });\n  }`,
+`    state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });\n    const queueBadge = $('queueBadge');\n    if (queueBadge) state.metadataObserver.observe(queueBadge, { childList: true, characterData: true, subtree: true });\n  }`,
+  'queue accessibility observer'
+);
+
 await writeFile(file, source);
 console.log('Applied issue #269 Nonstop transport and primary-genre UX patch.');
