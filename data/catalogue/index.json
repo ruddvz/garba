@@ -1,7 +1,7 @@
 {
-  "version": "0.20.1",
-  "songCount": 1437,
-  "releaseCount": 226,
+  "version": "0.20.2",
+  "songCount": 1457,
+  "releaseCount": 228,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -79,7 +79,8 @@
     "data/catalogue/songs/songs-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/songs/songs-wave-d-geeta-rabari.json",
     "data/catalogue/songs/songs-wave-d-aditya-gadhvi.json",
-    "data/catalogue/songs/songs-wave-f-dhara-rankar.json"
+    "data/catalogue/songs/songs-wave-f-dhara-rankar.json",
+    "data/catalogue/songs/songs-wave-f-meeraba-zala.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -133,7 +134,8 @@
     "data/catalogue/releases/releases-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/releases/releases-wave-d-geeta-rabari.json",
     "data/catalogue/releases/releases-wave-d-aditya-gadhvi.json",
-    "data/catalogue/releases/releases-wave-f-dhara-rankar.json"
+    "data/catalogue/releases/releases-wave-f-dhara-rankar.json",
+    "data/catalogue/releases/releases-wave-f-meeraba-zala.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -208,7 +210,8 @@
     "data/playback-sources-wave-d-falguni.json",
     "data/playback-sources-wave-d-geeta.json",
     "data/playback-sources-wave-d-aditya.json",
-    "data/playback-sources-dhara-rankar-exact.json"
+    "data/playback-sources-dhara-rankar-exact.json",
+    "data/playback-sources-meeraba-zala-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -234,5 +237,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.1 preserves Wave C, Playback Wave E, Wave D and all current route-truth hardening, then begins Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. Every Rankar component song uses an independently exposed Amazon Music song href, while the official artist-channel continuous performance is retained as release evidence without inventing one-to-one YouTube chapter mappings where the programme differs from the provider album."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.2 preserves Wave C, Playback Wave E, Wave D, Dhara Shah Rankar, and all current route-truth hardening, then expands Catalogue Wave F with Meeraba Zala's two verified 10-track Navratri Non Stop Garba releases from 2025. Eleven component songs use independently returned Amazon Music exact-song pages; the remaining nine deliberately inherit the verified release source rather than inferring neighbouring provider IDs. Split-track albums remain distinct from their separate continuous-master editions."
 }
