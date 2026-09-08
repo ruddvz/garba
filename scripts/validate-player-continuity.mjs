@@ -36,6 +36,50 @@ for (const marker of [
   if (!continuity.includes(marker)) fail(`Continuity runtime missing marker: ${marker}`);
 }
 
+for (const marker of [
+  "const requestedSongId = new URL(location.href).searchParams.get('song');",
+  'const needsFullCatalogueForDeepLink = Boolean(',
+  "!fastBoot.songs.some((song) => song.id === requestedSongId)",
+  "function setDeepLinkUi(status)",
+  "songTitle.textContent = 'Loading requested song…'",
+  "songTitle.textContent = 'Requested song unavailable'",
+  'async function ensureDeepLinkCatalogue()',
+  'const ready = await ensureDeepLinkCatalogue();',
+  'if (!ready) return unavailableCatalogueResponse();',
+  "status: 503",
+  "control.setAttribute('aria-disabled', disabled ? 'true' : 'false')",
+]) {
+  if (!continuity.includes(marker)) fail(`Deep-link boot guard missing marker: ${marker}`);
+}
+if (!continuity.includes("path.endsWith('/data/songs.json') || path.endsWith('/data/genres.json')")) {
+  fail('Deep-link hydration must gate both songs and genres catalogue requests');
+}
+if (!continuity.includes("if (event.isTrusted && needsFullCatalogueForDeepLink && !window.GARBA_CATALOGUE_READY)")) {
+  fail('A failed deep-link hydration must retry on a genuine network reconnect');
+}
+
+for (const marker of [
+  'function guardInteractiveShortcuts(event)',
+  "event.code === 'Space'",
+  "event.code === 'ArrowLeft'",
+  "event.code === 'ArrowRight'",
+  "'button, a[href], input, textarea, select, iframe, [contenteditable]:not([contenteditable=\"false\"]), [role=\"button\"], [role=\"link\"]'",
+  'if (interactive) event.stopImmediatePropagation();',
+  "document.addEventListener('keydown', guardInteractiveShortcuts)",
+]) {
+  if (!continuity.includes(marker)) fail(`Interactive-keyboard guard missing marker: ${marker}`);
+}
+
+for (const marker of [
+  'let catalogueReadyOnlinePulse = false;',
+  "window.addEventListener('garba:catalogue-ready'",
+  'function suppressHydrationOnlineToast(event)',
+  "toast?.textContent === 'Back online.'",
+  "window.addEventListener('online', (event) => {",
+]) {
+  if (!continuity.includes(marker)) fail(`Catalogue hydration toast guard missing marker: ${marker}`);
+}
+
 if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) {
   fail('Provider runtime must close the old provider surface when the selected title changes');
 }
@@ -66,4 +110,7 @@ if (failed) process.exit(1);
 console.log('✓ song-row Play intent follows the newly selected provider song');
 console.log('✓ provider Previous/Next preserve listening intent across song changes');
 console.log('✓ provider routing refreshes after full catalogue hydration and never substitutes song 1');
+console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
+console.log('✓ deep-link hydration retries on reconnect without showing a fake Back online toast');
+console.log('✓ global playback shortcuts do not steal keyboard input from interactive controls');
 console.log('✓ continuity layer loads after provider runtime and before app interaction completes');

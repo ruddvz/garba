@@ -3,10 +3,19 @@
   const songTitle = $('songTitle');
   const playButton = $('playButton');
   const catalogueFetch = window.fetch.bind(window);
+  const requestedSongId = new URL(location.href).searchParams.get('song');
+  const fastBoot = window.GARBA_FAST_BOOT;
+  const needsFullCatalogueForDeepLink = Boolean(
+    requestedSongId
+    && Array.isArray(fastBoot?.songs)
+    && !fastBoot.songs.some((song) => song.id === requestedSongId)
+  );
 
   let playAfterSelection = false;
   let continueProviderAfterNavigation = false;
   let safeSongs = [];
+  let deepLinkHydrationPromise = null;
+  let catalogueReadyOnlinePulse = false;
 
   const PROVIDER_NAMES = {
     youtube: 'YouTube',
@@ -26,6 +35,78 @@
     } catch {
       return '';
     }
+  }
+
+  function deepLinkControls() {
+    return [
+      $('playButton'), $('prevButton'), $('nextButton'),
+      $('miniPlay'), $('miniPrev'), $('miniNext'), $('progress'),
+    ].filter(Boolean);
+  }
+
+  function setDeepLinkUi(status) {
+    if (!needsFullCatalogueForDeepLink) return;
+    const app = $('app');
+    const loading = status === 'loading';
+    const failed = status === 'failed';
+
+    app?.setAttribute('aria-busy', loading ? 'true' : 'false');
+    if (app) app.dataset.loading = loading ? 'true' : 'false';
+
+    for (const control of deepLinkControls()) {
+      const disabled = loading || failed;
+      control.disabled = disabled;
+      control.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    }
+
+    if (status === 'loading') {
+      if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
+      if (songTitle) songTitle.textContent = 'Loading requested song…';
+      if ($('songArtist')) $('songArtist').textContent = 'Opening the requested track';
+      if ($('durationTime')) $('durationTime').textContent = '—';
+      if ($('miniTitle')) $('miniTitle').textContent = 'Loading song…';
+      if ($('miniArtist')) $('miniArtist').textContent = 'Opening requested track';
+      return;
+    }
+
+    if (failed) {
+      if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
+      if (songTitle) songTitle.textContent = 'Requested song unavailable';
+      if ($('songArtist')) $('songArtist').textContent = 'Could not load the full catalogue. Check your connection and try again.';
+      if ($('durationTime')) $('durationTime').textContent = '—';
+      if ($('miniTitle')) $('miniTitle').textContent = 'Song unavailable';
+      if ($('miniArtist')) $('miniArtist').textContent = 'Reconnect to load this track';
+    }
+  }
+
+  function unavailableCatalogueResponse() {
+    return new Response(JSON.stringify({ error: 'Full catalogue required for requested song' }), {
+      status: 503,
+      statusText: 'Catalogue unavailable',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    });
+  }
+
+  async function ensureDeepLinkCatalogue() {
+    if (!needsFullCatalogueForDeepLink || window.GARBA_CATALOGUE_READY) {
+      setDeepLinkUi('ready');
+      return true;
+    }
+
+    if (!deepLinkHydrationPromise) {
+      setDeepLinkUi('loading');
+      deepLinkHydrationPromise = Promise.resolve(fastBoot?.hydrate?.())
+        .then((ready) => {
+          const resolved = Boolean(ready || window.GARBA_CATALOGUE_READY);
+          setDeepLinkUi(resolved ? 'ready' : 'failed');
+          return resolved;
+        })
+        .catch(() => {
+          setDeepLinkUi('failed');
+          return false;
+        });
+    }
+    return deepLinkHydrationPromise;
   }
 
   function canonicalSourceUrl(raw = '') {
@@ -100,8 +181,15 @@
   }
 
   window.fetch = async (input, init) => {
+    const path = requestPath(input);
+    const catalogueRequest = path.endsWith('/data/songs.json') || path.endsWith('/data/genres.json');
+    if (catalogueRequest && needsFullCatalogueForDeepLink && !window.GARBA_CATALOGUE_READY) {
+      const ready = await ensureDeepLinkCatalogue();
+      if (!ready) return unavailableCatalogueResponse();
+    }
+
     const response = await catalogueFetch(input, init);
-    if (!requestPath(input).endsWith('/data/songs.json')) return response;
+    if (!path.endsWith('/data/songs.json')) return response;
     if (!response?.ok) return response;
 
     try {
@@ -207,7 +295,50 @@
     });
   }
 
+  function guardInteractiveShortcuts(event) {
+    const shortcut = event.key === '/'
+      || event.code === 'Space'
+      || event.code === 'ArrowLeft'
+      || event.code === 'ArrowRight'
+      || String(event.key || '').toLowerCase() === 'f';
+    if (!shortcut) return;
+
+    const target = event.target instanceof Element ? event.target : null;
+    const interactive = target?.closest(
+      'button, a[href], input, textarea, select, iframe, [contenteditable]:not([contenteditable="false"]), [role="button"], [role="link"]'
+    );
+    if (interactive) event.stopImmediatePropagation();
+  }
+
+  function suppressHydrationOnlineToast(event) {
+    if (!catalogueReadyOnlinePulse || event.isTrusted) return;
+    queueMicrotask(() => {
+      const toast = $('toast');
+      if (toast?.textContent === 'Back online.') {
+        toast.classList.remove('show');
+        toast.textContent = '';
+      }
+    });
+  }
+
+  window.addEventListener('garba:catalogue-ready', () => {
+    catalogueReadyOnlinePulse = true;
+    queueMicrotask(() => { catalogueReadyOnlinePulse = false; });
+  });
+  window.addEventListener('online', (event) => {
+    suppressHydrationOnlineToast(event);
+    if (event.isTrusted && needsFullCatalogueForDeepLink && !window.GARBA_CATALOGUE_READY) {
+      deepLinkHydrationPromise = null;
+      void ensureDeepLinkCatalogue();
+    }
+  });
+  document.addEventListener('keydown', guardInteractiveShortcuts);
   document.addEventListener('click', rememberPlaybackIntent, { capture: true });
+
+  if (needsFullCatalogueForDeepLink) {
+    setDeepLinkUi('loading');
+    void ensureDeepLinkCatalogue();
+  }
 
   if (songTitle) {
     new MutationObserver(resumeSelectedProviderIfNeeded)
