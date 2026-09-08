@@ -74,7 +74,9 @@ jobs:
             test -f "_site/$runtime" || { echo "Missing deployed runtime: $runtime"; exit 1; }
           done
 
-          # Assert the production-domain contract ships with every deploy.
+          # Assert the source-domain contract before the production artifact is
+          # remapped to the dedicated player hostname below. Keeping these checks in
+          # place means catalogue/SEO validation on main stays stable during the split.
           test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must remain playgarba.com'; exit 1; }
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing canonical sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical root'; exit 1; }
@@ -134,6 +136,23 @@ jobs:
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
+          fi
+
+          # The public brand site now lives at playgarba.com. GitHub Pages serves the
+          # listening app and generated catalogue from live.playgarba.com. Rewrite
+          # canonical, Open Graph, structured-data, player and sitemap URLs only in
+          # the built artifact so source/catalogue agents can continue working from
+          # the existing validated main-tree contract during the migration.
+          while IFS= read -r -d '' file; do
+            sed -i 's#https://playgarba\.com#https://live.playgarba.com#g' "$file"
+          done < <(find _site -type f \( -name '*.html' -o -name '*.xml' -o -name '*.txt' \) -print0)
+          printf 'live.playgarba.com\n' > _site/CNAME
+
+          grep -q '<link rel="canonical" href="https://live.playgarba.com/"' _site/index.html || { echo 'Player canonical was not remapped to live host'; exit 1; }
+          grep -q '^Sitemap: https://live.playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'Live robots sitemap was not remapped'; exit 1; }
+          grep -q '<loc>https://live.playgarba.com/' _site/sitemap.xml || { echo 'Live sitemap URLs were not remapped'; exit 1; }
+          if grep -Rqs 'https://playgarba.com' _site --include='*.html' --include='*.xml' --include='*.txt'; then
+            echo 'A deployed crawlable document still references the marketing origin'; exit 1
           fi
 
           touch _site/.nojekyll
