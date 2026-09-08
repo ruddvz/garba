@@ -4,10 +4,11 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [bootstrap, provider, continuity, app] = await Promise.all([
+const [bootstrap, provider, continuity, automixAudio, app] = await Promise.all([
   read('simple-runtime.js'),
   read('provider-runtime.js'),
   read('player-continuity.js'),
+  read('assets/runtime/automix-web-audio.js'),
   read('app.js'),
 ]);
 
@@ -16,10 +17,15 @@ const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
 const providerIndex = bootstrap.indexOf('provider-runtime.js');
 const continuityIndex = bootstrap.indexOf('player-continuity.js');
+const automixAudioIndex = bootstrap.indexOf('assets/runtime/automix-web-audio.js');
 if (providerIndex < 0) fail('Fast bootstrap must load provider-runtime.js');
 if (continuityIndex < 0) fail('Fast bootstrap must load player-continuity.js');
+if (automixAudioIndex < 0) fail('Fast bootstrap must load the AutoMix Web Audio compatibility runtime');
 if (providerIndex >= 0 && continuityIndex >= 0 && continuityIndex < providerIndex) {
   fail('player-continuity.js must load after provider-runtime.js');
+}
+if (continuityIndex >= 0 && automixAudioIndex >= 0 && automixAudioIndex < continuityIndex) {
+  fail('AutoMix Web Audio compatibility runtime must load after player-continuity.js');
 }
 
 for (const marker of [
@@ -63,6 +69,22 @@ if (!continuity.includes("target.closest('.song-copy, #prevButton, #nextButton, 
   fail('Manual navigation must cancel an active AutoMix transition');
 }
 
+for (const marker of [
+  'function mediaElementVolumeWorks()',
+  'window.AudioContext || window.webkitAudioContext',
+  'createMediaElementSource(primary)',
+  'createMediaElementSource(secondary)',
+  'createGain()',
+  'setValueCurveAtTime(outgoingCurve',
+  'setValueCurveAtTime(incomingCurve',
+  "primary.crossOrigin = 'anonymous'",
+  "secondary.crossOrigin = 'anonymous'",
+  'cancelUnsafeMix();',
+  "mode: 'web-audio-gain'",
+]) {
+  if (!automixAudio.includes(marker)) fail(`AutoMix Web Audio fallback missing marker: ${marker}`);
+}
+
 if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) {
   fail('Provider runtime must close the old provider surface when the selected title changes');
 }
@@ -80,4 +102,5 @@ console.log('✓ provider Previous/Next preserve listening intent across song ch
 console.log('✓ continuity layer loads after provider runtime and before app interaction completes');
 console.log('✓ AutoMix stays restricted to consecutive direct-audio tracks');
 console.log('✓ AutoMix retains equal-power transition and optional mix metadata hooks');
+console.log('✓ constrained media-volume browsers have a Web Audio GainNode fallback');
 console.log('✓ manual navigation and seeking cancel an in-flight AutoMix transition');
