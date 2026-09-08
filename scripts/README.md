@@ -18,10 +18,21 @@ Shared implementation code belongs in `scripts/lib/`, not alongside entry-point 
 
 ## Catalogue and runtime generation
 
-- `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards. Multi-song releases prefer release-shaped provider sources over representative track links.
+- `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards. Multi-song releases prefer release-shaped provider sources over representative track links. Generated YouTube performance chapters must pass credited-artist identity compatibility before they can outrank a conservative release/provider fallback.
 - `enrich-runtime-songs.mjs` adds verified playback-provider routes to the generated song catalogue after the base build. It prevents release-level track references and duplicated provider track URLs from masquerading as exact songs.
 
 The `npm run catalogue` command intentionally runs both in that order.
+
+## Performance chapter identity
+
+Reusable performer-credit normalisation lives in `lib/artist-identity.mjs`. It keeps a deliberately small explicit alias map for verified naming/stage-name variants and fails closed when a discovery set does not identify a compatible performer.
+
+- `lib/test-performance-artist-identity.mjs` covers same-artist matches, collaborations, aliases, segment-level credits, unknown performers and conflicting artists.
+- `lib/validate-performance-chapter-identity.mjs` audits every generated `verified-performance-chapter` route after catalogue generation and proves the stored route metadata still matches the canonical song and discovery-set credits.
+- `npm run performance:identity:test` runs the focused unit coverage.
+- `npm run performance:identity:validate` runs the repository-wide generated-route audit.
+
+These checks are part of `npm run check`. Do not restore title-only generated chapter matching merely to improve playback coverage. A coverage decrease caused by rejecting a different or unknown performer is a route-truth correction and should fall back conservatively.
 
 ## Playback quality reporting
 
@@ -60,6 +71,7 @@ The default `npm run check` path runs the runtime-critical and repository-level 
 - `validate-discovery.mjs`
 - `validate-repository-structure.mjs` through `npm run repo:validate`
 - `validate-documentation.mjs` through `npm run docs:validate`
+- the internal performance-identity unit and generated-route audit described above
 
 Additional deterministic rights/ingestion validators remain available for their dedicated workflows:
 
