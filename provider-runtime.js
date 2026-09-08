@@ -145,6 +145,25 @@
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
   }
 
+  function youtubeStage() {
+    return $('youtubeStage');
+  }
+
+  function dockIsVisible() {
+    return Boolean(document.querySelector('#youtubeStage.open[aria-hidden="false"]'));
+  }
+
+  function stageIsExpanded() {
+    return Boolean(youtubeStage()?.classList.contains('is-expanded'));
+  }
+
+  function setStageExpanded(expanded) {
+    const stage = youtubeStage();
+    if (!stage) return;
+    stage.classList.toggle('is-expanded', Boolean(expanded));
+    stage.dataset.presentation = expanded ? 'expanded' : 'compact';
+  }
+
   function injectYoutubeControl() {
     if ($('youtubeVideoButton')) return;
     const button = document.createElement('button');
@@ -173,17 +192,13 @@
       .youtube-video-button:active{transform:scale(.97)}
       .youtube-video-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       .youtube-video-button.is-unavailable{opacity:.38}
-      .youtube-video-button[aria-pressed="true"]{border-color:rgba(246,236,215,.34);background:rgba(16,18,28,.94);color:#fff}
+      .youtube-video-button[aria-pressed="true"]{border-color:rgba(246,236,215,.38);background:rgba(16,18,28,.96);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.30),0 0 20px color-mix(in srgb,var(--accent) 12%,transparent)}
       @media(max-width:700px){.youtube-video-button{right:max(18px,calc(env(safe-area-inset-right) + 14px));bottom:max(18px,calc(env(safe-area-inset-bottom) + 14px));width:46px;height:46px}.youtube-video-button svg{width:24px}}
       @media(max-height:560px) and (orientation:landscape){.youtube-video-button{right:max(12px,calc(env(safe-area-inset-right) + 10px));bottom:max(12px,calc(env(safe-area-inset-bottom) + 10px));width:42px;height:42px}}
       @media(prefers-reduced-motion:reduce){.youtube-video-button{transition:none}}
     `;
     document.head.append(style);
-    button.addEventListener('click', toggleYoutubeDock);
-  }
-
-  function dockIsVisible() {
-    return Boolean(document.querySelector('#youtubeStage.open[aria-hidden="false"]'));
+    button.addEventListener('click', toggleYoutubeStagePresentation);
   }
 
   function syncYoutubeButton() {
@@ -192,17 +207,31 @@
     if (!button) return;
     const song = selectedYoutubeSong();
     const available = isExactYoutube(song);
-    const open = dockIsVisible();
+    const visible = dockIsVisible();
+    const expanded = visible && stageIsExpanded();
     button.classList.toggle('is-unavailable', !available);
-    button.setAttribute('aria-pressed', String(open));
-    button.setAttribute('aria-label', open ? 'Close YouTube video' : available ? 'Show YouTube video' : 'YouTube source not mapped for this song');
-    button.title = open ? 'Close YouTube video' : available ? 'Show YouTube video' : 'YouTube source not mapped yet';
+    button.setAttribute('aria-pressed', String(expanded));
+    const label = !available
+      ? 'YouTube source not mapped for this song'
+      : !visible
+        ? 'Show YouTube video'
+        : expanded
+          ? 'Collapse YouTube video'
+          : 'Expand YouTube video';
+    button.setAttribute('aria-label', label);
+    button.title = label;
   }
 
-  async function toggleYoutubeDock() {
+  async function toggleYoutubeStagePresentation() {
     const song = selectedYoutubeSong();
     if (!isExactYoutube(song)) {
       announce('YouTube source not mapped yet. This track still needs a verified YouTube route.');
+      return;
+    }
+
+    if (dockIsVisible()) {
+      setStageExpanded(!stageIsExpanded());
+      syncYoutubeButton();
       return;
     }
 
@@ -211,16 +240,14 @@
       return;
     }
 
-    if (dockIsVisible()) {
-      youtubeApi.close?.();
-      syncYoutubeButton();
-      return;
-    }
-
     pendingYoutubeSong = song;
     const opened = await youtubeApi.open(song, { autoplay: true, resume: $('app')?.dataset.playMode !== 'nonstop' });
-    if (opened) pendingYoutubeSong = null;
-    else announce('YouTube playback could not start.');
+    if (opened) {
+      pendingYoutubeSong = null;
+      setStageExpanded(true);
+    } else {
+      announce('YouTube playback could not start.');
+    }
     syncYoutubeButton();
   }
 
@@ -262,12 +289,27 @@
   }
 
   function observeYoutubeStage() {
-    const stage = $('youtubeStage');
+    const stage = youtubeStage();
     if (!stage || stage.dataset.youtubeOnlyObserved === 'true') return;
     stage.dataset.youtubeOnlyObserved = 'true';
+    stage.dataset.presentation = stage.classList.contains('is-expanded') ? 'expanded' : 'compact';
     stageObserver?.disconnect();
-    stageObserver = new MutationObserver(syncYoutubeButton);
+    stageObserver = new MutationObserver(() => {
+      if (!dockIsVisible()) {
+        stage.classList.remove('is-expanded');
+        stage.dataset.presentation = 'compact';
+      }
+      syncYoutubeButton();
+    });
     stageObserver.observe(stage, { attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+    const stop = $('youtubeDockStop');
+    if (stop) {
+      stop.textContent = 'Stop';
+      stop.setAttribute('aria-label', 'Stop YouTube playback');
+      stop.title = 'Stop YouTube playback';
+    }
+    const open = $('youtubeDockOpen');
+    if (open) open.textContent = 'YouTube';
     syncYoutubeButton();
   }
 
