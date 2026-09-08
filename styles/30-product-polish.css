@@ -396,14 +396,6 @@ html[data-song-handoff="true"] #playButton {
 /* Now Playing and genre composition. Keeps playback and catalogue behaviour unchanged. */
 html body .app .player-shell { row-gap: 0; }
 
-html body .app .track-block {
-  height: 146px;
-  min-height: 146px;
-  max-height: 146px;
-  grid-template-rows: 18px minmax(0, 1fr) 34px;
-  padding-inline: 16px;
-}
-
 html body .app .track-block .genre-eyebrow {
   color: rgba(246, 236, 215, .58);
   letter-spacing: .075em;
@@ -476,14 +468,6 @@ html body .app #browseActions #browseButton {
     padding-bottom: max(12px, var(--safe-bottom));
   }
 
-  html body .app .track-block {
-    height: 126px;
-    min-height: 126px;
-    max-height: 126px;
-    grid-template-rows: 16px minmax(0, 1fr) 26px;
-    padding-inline: 8px;
-  }
-
   html body .app .track-block .song-title {
     max-width: min(94vw, 560px);
     line-height: .97;
@@ -537,12 +521,6 @@ html body .app #browseActions #browseButton {
 }
 
 @media (max-width: 390px) {
-  html body .app .track-block {
-    height: 120px;
-    min-height: 120px;
-    max-height: 120px;
-  }
-
   html body .app #genreStrip {
     height: 72px !important;
     min-height: 72px !important;
@@ -563,12 +541,6 @@ html body .app #browseActions #browseButton {
 }
 
 @media (max-height: 760px) and (max-width: 700px) {
-  html body .app .track-block {
-    height: 112px;
-    min-height: 112px;
-    max-height: 112px;
-  }
-
   html body .app #genreStrip {
     height: 68px !important;
     min-height: 68px !important;
@@ -589,13 +561,6 @@ html body .app #browseActions #browseButton {
 }
 
 @media (max-height: 660px) and (max-width: 700px) {
-  html body .app .track-block {
-    height: 102px;
-    min-height: 102px;
-    max-height: 102px;
-    grid-template-rows: 14px minmax(0, 1fr) 22px;
-  }
-
   html body .app #genreStrip {
     height: 62px !important;
     min-height: 62px !important;
@@ -615,12 +580,6 @@ html body .app #browseActions #browseButton {
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
-  html body .app .track-block {
-    height: 94px;
-    min-height: 94px;
-    max-height: 94px;
-  }
-
   html body .app #genreStrip {
     height: 48px !important;
     min-height: 48px !important;
