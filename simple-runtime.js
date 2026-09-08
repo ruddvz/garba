@@ -32,6 +32,8 @@
   let songsPromise = null;
   let providerSongId = null;
   let visualToken = 0;
+  let playAfterSelection = false;
+  let continueProviderAfterNavigation = false;
 
   function announce(message) {
     if (!toast) return;
@@ -352,6 +354,22 @@
     fallbackPlay();
   }
 
+  function rememberPlaybackIntent(event) {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    if (target.closest('.song-copy')) {
+      playAfterSelection = true;
+      continueProviderAfterNavigation = false;
+      return;
+    }
+
+    if (providerSongId && target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')) {
+      continueProviderAfterNavigation = true;
+      playAfterSelection = false;
+    }
+  }
+
   function interceptGlobalSpace(event) {
     if (event.code !== 'Space') return;
     const target = event.target;
@@ -488,12 +506,18 @@
   playButton?.addEventListener('click', interceptFallbackPlay, { capture: true });
   miniPlay?.addEventListener('click', interceptFallbackPlay, { capture: true });
   shareButton?.addEventListener('click', shareCurrent);
+  document.addEventListener('click', rememberPlaybackIntent, { capture: true });
   document.addEventListener('keydown', interceptGlobalSpace);
 
   if (songTitle) {
     new MutationObserver(() => {
+      const shouldStartSelectedSong = playAfterSelection;
+      const shouldContinueProvider = continueProviderAfterNavigation;
+      playAfterSelection = false;
+      continueProviderAfterNavigation = false;
       closeProvider();
       scheduleVisualPromotion();
+      if (shouldStartSelectedSong || shouldContinueProvider) queueMicrotask(() => fallbackPlay());
     }).observe(songTitle, { childList: true, characterData: true, subtree: true });
   }
 
