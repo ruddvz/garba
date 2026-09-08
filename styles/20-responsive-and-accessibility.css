@@ -58,13 +58,23 @@ html body .app #genreStrip #nonstopButton {
   transform: none !important;
 }
 
-/* Folk artwork exists in the canonical icon pack. Pin it directly so a stale custom
-   property or cached stylesheet cannot leave the Folk control without its icon. */
+/* Folk uses its own immutable asset URL. This avoids stale PWA/image cache entries
+   and pins the exact supplied dhol artwork directly in both player and Explore. */
 html body .app #genreStrip .genre-button[data-genre="folk"],
 html body .sheet-genres .genre-button[data-genre="folk"] {
-  --genre-icon-image: url("../assets/genre-icons/folk.webp?v=20260908-flat");
-  background-image: url("../assets/genre-icons/folk.webp?v=20260908-flat") !important;
+  --genre-icon-image: url("../assets/genre-icons/folk-dhol.webp");
+  background-image: url("../assets/genre-icons/folk-dhol.webp") !important;
   background-repeat: no-repeat !important;
+}
+
+html body .app #genreStrip .genre-button[data-genre="folk"] {
+  background-size: 36px 36px !important;
+  background-position: center 5px !important;
+}
+
+html body .sheet-genres .genre-button[data-genre="folk"] {
+  background-size: 27px 27px !important;
+  background-position: 2px calc(50% - 4px) !important;
 }
 
 /* Lift the Explore/Browse entry slightly while keeping it in the original player grid. */
@@ -83,8 +93,22 @@ html body .app #browseActions #browseButton {
 
 @media (max-width: 700px) {
   html body .app #browseActions { margin-top: -3px !important; }
+  html body .app #genreStrip .genre-button[data-genre="folk"] {
+    background-size: 31px 31px !important;
+    background-position: center 5px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  html body .app #genreStrip .genre-button[data-genre="folk"] {
+    background-size: 29px 29px !important;
+  }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
   html body .app #browseActions { margin-top: 0 !important; }
+  html body .app #genreStrip .genre-button[data-genre="folk"] {
+    background-size: 22px 22px !important;
+    background-position: center 1px !important;
+  }
 }
