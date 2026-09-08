@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111323" />
+  <meta name="color-scheme" content="dark" />
+  <title>Install PlayGarba · Add the player to your home screen</title>
+  <meta name="description" content="Install the PlayGarba live player as a web app on iPhone, iPad, Android, Chrome or Edge. Use live.playgarba.com for the installed app." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://playgarba.com/install/" />
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/pages.css" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PlayGarba" />
+  <meta property="og:title" content="Install PlayGarba" />
+  <meta property="og:description" content="Add the PlayGarba live player to your home screen or desktop and use it in a standalone app-style window." />
+  <meta property="og:url" content="https://playgarba.com/install/" />
+  <meta property="og:image" content="https://live.playgarba.com/assets/social/garba-og-card.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body class="interior-page" data-page="install">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header scrolled" id="top">
+    <a class="wordmark" href="/" aria-label="PlayGarba home">GARBA</a>
+    <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="siteNav">
+      <span></span><span></span>
+      <span class="sr-only">Open menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Primary navigation">
+      <a href="/how-to-use/">How to use</a>
+      <a href="/install/" aria-current="page">Install app</a>
+      <a href="/about/">About</a>
+      <a class="nav-cta" href="https://live.playgarba.com/">Open player <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="page-main">
+    <section class="page-hero install-hero" aria-labelledby="page-title">
+      <div class="page-hero-inner">
+        <span class="route-pill">PWA install guide</span>
+        <h1 id="page-title">Your Garba player.<br /><em>One tap away.</em></h1>
+        <p class="page-hero-lead">PlayGarba is a progressive web app. You can keep using it in a browser, or install the live player to your home screen or desktop for a standalone app-style experience.</p>
+        <div class="page-hero-actions">
+          <a class="button button-primary" href="https://live.playgarba.com/">Open live.playgarba.com <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="#instructions">See my device instructions <span aria-hidden="true">↓</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="before-title">
+      <div class="page-section-inner">
+        <div class="page-section-head">
+          <div>
+            <p class="page-kicker">BEFORE YOU INSTALL</p>
+            <h2 id="before-title">Install the player, not the public website.</h2>
+          </div>
+          <p>The installable PlayGarba app lives on the dedicated listening origin. Start the installation from live.playgarba.com so the installed icon launches directly into the player.</p>
+        </div>
+
+        <div class="truth-grid">
+          <article class="truth-card">
+            <b>01 · Address</b>
+            <strong>Use live.playgarba.com.</strong>
+            <p>That is where the PWA manifest, service worker, player and catalogue are deployed.</p>
+          </article>
+          <article class="truth-card">
+            <b>02 · No store</b>
+            <strong>No App Store search required.</strong>
+            <p>Install directly from a supported browser. You can also keep using the same player as a normal website.</p>
+          </article>
+          <article class="truth-card">
+            <b>03 · Updates</b>
+            <strong>The web app can update in place.</strong>
+            <p>Player code and catalogue data are designed to check the network for fresh versions instead of requiring a fresh app download.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section soft" id="instructions" aria-labelledby="instructions-title">
+      <div class="page-section-inner">
+        <div class="page-section-head">
+          <div>
+            <p class="page-kicker">INSTALL BY DEVICE</p>
+            <h2 id="instructions-title">Use the route that matches your device.</h2>
+          </div>
+          <p>Browser menu wording can shift slightly between versions. The steps below match the current platform guidance and all begin from the live player.</p>
+        </div>
+
+        <div class="platform-readout" id="platformReadout" hidden>
+          <div>
+            <strong id="platformTitle">Your device</strong>
+            <p id="platformCopy">Choose the matching instructions below.</p>
+          </div>
+          <span id="platformBadge">Recommended route</span>
+        </div>
+
+        <div class="device-grid">
+          <article class="device-card" data-device="ios">
+            <span class="device-label">iPhone and iPad</span>
+            <h3>Safari</h3>
+            <p>Apple's current web-app flow can place PlayGarba on your Home Screen and open it without the normal Safari browser chrome.</p>
+            <ol>
+              <li>Open <strong>live.playgarba.com</strong> in Safari.</li>
+              <li>Tap the Share control.</li>
+              <li>Choose <strong>Add to Home Screen</strong>.</li>
+              <li>Turn on <strong>Open as Web App</strong>.</li>
+              <li>Tap <strong>Add</strong>.</li>
+            </ol>
+            <a class="device-help" href="https://support.apple.com/guide/iphone/turn-a-website-into-an-app-iphea86e5236/ios">Apple's web app instructions ↗</a>
+          </article>
+
+          <article class="device-card" data-device="android">
+            <span class="device-label">Android</span>
+            <h3>Chrome</h3>
+            <p>Chrome can install a supported web app to your launcher so it opens in its own app-style surface.</p>
+            <ol>
+              <li>Open <strong>live.playgarba.com</strong> in Chrome.</li>
+              <li>Tap the browser menu beside the address bar.</li>
+              <li>Choose <strong>Install and create shortcut</strong>.</li>
+              <li>Choose <strong>Install</strong>.</li>
+              <li>Follow the on-screen confirmation.</li>
+            </ol>
+            <a class="device-help" href="https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&amp;hl=en">Google's Android web app instructions ↗</a>
+          </article>
+
+          <article class="device-card" data-device="desktop">
+            <span class="device-label">Mac, Windows and Linux</span>
+            <h3>Chrome</h3>
+            <p>Chrome can install PlayGarba as a desktop web app with its own window and launcher entry.</p>
+            <ol>
+              <li>Open <strong>live.playgarba.com</strong> in Chrome.</li>
+              <li>Use the Install icon in the address bar when it appears.</li>
+              <li>Or open More → <strong>Cast, save, and share</strong>.</li>
+              <li>Choose <strong>Install page as app</strong>.</li>
+              <li>Confirm the installation.</li>
+            </ol>
+            <a class="device-help" href="https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DDesktop&amp;hl=en">Google's desktop web app instructions ↗</a>
+          </article>
+
+          <article class="device-card">
+            <span class="device-label">Windows and macOS</span>
+            <h3>Microsoft Edge</h3>
+            <p>Edge also supports installing web apps and websites into a dedicated app window.</p>
+            <ol>
+              <li>Open <strong>live.playgarba.com</strong> in Edge.</li>
+              <li>Open <strong>Settings and more</strong>.</li>
+              <li>Choose More tools → <strong>Apps</strong>.</li>
+              <li>Choose <strong>Install this site as an app</strong>.</li>
+              <li>Confirm the installation.</li>
+            </ol>
+            <a class="device-help" href="https://support.microsoft.com/en-us/edge/install-manage-or-uninstall-apps-in-microsoft-edge">Microsoft's Edge app instructions ↗</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="after-title">
+      <div class="page-section-inner page-layout">
+        <aside class="contents-card" aria-label="After installation topics">
+          <span>After installation</span>
+          <nav>
+            <a href="#launch">Launching</a>
+            <a href="#shortcuts">App shortcuts</a>
+            <a href="#updates">Updates</a>
+            <a href="#offline">Offline</a>
+            <a href="#remove">Removing the app</a>
+          </nav>
+        </aside>
+
+        <div class="page-copy">
+          <section class="guide-block" id="launch">
+            <p class="page-kicker">01 · LAUNCHING</p>
+            <h2>Tap GARBA and go straight to the player.</h2>
+            <p>The installed app is configured for a standalone display. Where the browser supports the launch behaviour, opening PlayGarba again should focus the existing app instead of creating unnecessary duplicate windows.</p>
+            <p>The installed start route includes a PWA source marker, but it remains the same live PlayGarba player and catalogue.</p>
+          </section>
+
+          <section class="guide-block" id="shortcuts">
+            <p class="page-kicker">02 · SHORTCUTS</p>
+            <h2>Some devices can jump straight into a Garba world.</h2>
+            <p>The PlayGarba manifest currently publishes shortcuts for Traditional Garba, Dandiya Raas and Browse Songs. Browsers and operating systems decide whether and where those shortcuts are exposed.</p>
+            <div class="feature-row">
+              <article><strong>Traditional</strong><span>Launch directly into the Traditional Garba world where shortcuts are supported.</span></article>
+              <article><strong>Dandiya</strong><span>Open the Dandiya Raas world without navigating from the default player state.</span></article>
+              <article><strong>Browse Songs</strong><span>Open the song browser directly from a supported app shortcut surface.</span></article>
+              <article><strong>Normal launch</strong><span>Tap the main PlayGarba icon to open the standard live player.</span></article>
+            </div>
+          </section>
+
+          <section class="guide-block" id="updates">
+            <p class="page-kicker">03 · UPDATES</p>
+            <h2>You normally should not need to reinstall it.</h2>
+            <p>PlayGarba's app code, CSS, manifest and catalogue data are set up to prefer fresh network versions when available. Static artwork can be cached more aggressively so repeat visits stay efficient.</p>
+            <p>If you return after the app has been closed for a while, it can refresh catalogue data and pick up newer player files through the normal web-app update path.</p>
+          </section>
+
+          <section class="guide-block" id="offline">
+            <p class="page-kicker">04 · OFFLINE</p>
+            <h2>Installed does not mean downloaded music.</h2>
+            <p>The service worker can keep the app shell, offline page and selected static assets available after an online visit. It does not silently save external provider audio or video for offline listening.</p>
+            <div class="note-card">
+              <strong>Expect internet for playback</strong>
+              <p>If your connection drops, the interface can recover more gracefully than a normal uncached page, but normal music playback still depends on the available source and network.</p>
+            </div>
+          </section>
+
+          <section class="guide-block" id="remove">
+            <p class="page-kicker">05 · REMOVE</p>
+            <h2>Remove it like another home-screen or desktop app.</h2>
+            <p>On iPhone or iPad, touch and hold the PlayGarba icon and use the normal remove action. On Android, use the app's uninstall action. Chrome and Edge also let you manage installed web apps from their app-management screens.</p>
+            <p>You can always return to live.playgarba.com in a browser later and install it again.</p>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-cta" aria-labelledby="cta-title">
+      <div class="page-cta-inner">
+        <p class="page-kicker">READY</p>
+        <h2 id="cta-title">Open the installable player.</h2>
+        <p>Start from the live address below, then use your browser's install or Add to Home Screen action.</p>
+        <div class="live-address">
+          <code>https://live.playgarba.com/</code>
+          <a href="https://live.playgarba.com/">Open player ↗</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-mark" href="/">GARBA</a>
+    <p>Gujarati Garba, gathered with care.</p>
+    <div class="footer-links">
+      <a href="/how-to-use/">How to use</a>
+      <a href="/install/">Install app</a>
+      <a href="/about/">About</a>
+      <a href="https://live.playgarba.com/">Player</a>
+      <span>© <span id="year">2026</span> PlayGarba</span>
+    </div>
+  </footer>
+
+  <script src="/site.js" defer></script>
+  <script src="/pages.js" defer></script>
+</body>
+</html>
