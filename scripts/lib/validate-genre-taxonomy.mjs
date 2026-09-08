@@ -3,13 +3,16 @@ import path from 'node:path';
 import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '../..');
-const readJson = async (file) => JSON.parse(await readFile(path.join(root, file), 'utf8'));
+const read = (file) => readFile(path.join(root, file), 'utf8');
+const readJson = async (file) => JSON.parse(await read(file));
 
-const [genres, taxonomy, nonstop, index] = await Promise.all([
+const [genres, taxonomy, nonstop, index, playerRuntime, catalogueRuntime] = await Promise.all([
   readJson('data/genres.json'),
   readJson('data/taxonomy.json'),
   readJson('data/nonstop.json'),
   readJson('data/catalogue/index.json'),
+  read('app.js'),
+  read('src/catalogue/catalogue.js'),
 ]);
 const songParts = await Promise.all((index.songChunks || []).map(readJson));
 const songs = songParts.flat();
@@ -32,15 +35,35 @@ for (const entry of taxonomy) {
   }
 }
 
-let categoryVisualMismatches = 0;
-const mismatchExamples = [];
+let secondaryTaxonomySongs = 0;
+let secondaryTaxonomyTags = 0;
 for (const song of songs) {
   if (!visualIds.has(song.genre)) fail(`Song ${song.id} has unknown visual genre ${JSON.stringify(song.genre)}`);
-  if (song.category && !taxonomyById.has(song.category)) fail(`Song ${song.id} has unknown category ${JSON.stringify(song.category)}`);
-  const expected = song.category ? taxonomyById.get(song.category)?.visualGenre : null;
-  if (expected && expected !== song.genre) {
-    categoryVisualMismatches += 1;
-    if (mismatchExamples.length < 12) mismatchExamples.push(`${song.id}: ${song.category} -> ${expected}, currently ${song.genre}`);
+  if (!song.category || !taxonomyById.has(song.category)) {
+    fail(`Song ${song.id} has unknown or missing primary category ${JSON.stringify(song.category)}`);
+  } else {
+    const expected = taxonomyById.get(song.category)?.visualGenre;
+    if (expected !== song.genre) {
+      fail(`Song ${song.id} primary category ${song.category} maps to ${expected}, but visual genre is ${song.genre}`);
+    }
+  }
+
+  if (song.taxonomyStyles == null) continue;
+  if (!Array.isArray(song.taxonomyStyles)) {
+    fail(`Song ${song.id} taxonomyStyles must be an array when present`);
+    continue;
+  }
+
+  const seen = new Set();
+  for (const style of song.taxonomyStyles) {
+    if (!taxonomyById.has(style)) fail(`Song ${song.id} has unknown secondary taxonomy style ${JSON.stringify(style)}`);
+    if (style === song.category) fail(`Song ${song.id} repeats primary category ${style} in taxonomyStyles[]`);
+    if (seen.has(style)) fail(`Song ${song.id} repeats secondary taxonomy style ${style}`);
+    seen.add(style);
+  }
+  if (seen.size) {
+    secondaryTaxonomySongs += 1;
+    secondaryTaxonomyTags += seen.size;
   }
 }
 
@@ -55,13 +78,16 @@ for (const set of nonstop) {
   }
 }
 
+if (!playerRuntime.includes('song.taxonomyStyles')) {
+  fail('Main player search must index taxonomyStyles[]');
+}
+if (!catalogueRuntime.includes('song.taxonomyStyles')) {
+  fail('Explore search must index taxonomyStyles[]');
+}
+
 if (failed) process.exit(1);
 console.log(`✓ ${visualIds.size} visual worlds and ${taxonomyById.size} music taxonomy categories have clean IDs and mappings`);
-console.log(`✓ ${songs.length} canonical songs use known visual genres and taxonomy categories`);
+console.log(`✓ ${songs.length} canonical songs have primary taxonomy categories aligned with their visual worlds`);
+console.log(`✓ ${secondaryTaxonomySongs} songs preserve ${secondaryTaxonomyTags} secondary taxonomy classifications without overloading the primary category`);
 console.log(`✓ ${nonstop.length} Nonstop entries keep genres[] visual-only; finer classifications live in styles[]`);
-if (categoryVisualMismatches) {
-  console.log(`△ ${categoryVisualMismatches} song rows use a visual genre different from their primary taxonomy mapping. These need a catalogue-content audit, not automatic rewriting.`);
-  for (const example of mismatchExamples) console.log(`  - ${example}`);
-} else {
-  console.log('✓ song primary taxonomy categories agree with their visual worlds');
-}
+console.log('✓ main player and Explore search index secondary taxonomy styles');

@@ -82,6 +82,7 @@ const allSongText = (song, release) => normalise([
   song.genre,
   song.category,
   ...(song.styles || []),
+  ...(song.taxonomyStyles || []),
   release?.title,
   release?.artist,
   release?.label,
