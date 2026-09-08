@@ -1,28 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "playgarba.com"
-        }
-      ],
-      "destination": "/public-site/"
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "playgarba.com"
-        }
-      ],
-      "destination": "/public-site/:path*"
-    }
-  ],
   "redirects": [
+    {
+      "source": "/catalogue/:path*",
+      "destination": "https://playgarba.com/explore/:path*",
+      "permanent": true
+    },
     {
       "source": "/:path*",
       "has": [
@@ -33,6 +16,62 @@
       ],
       "destination": "https://playgarba.com/:path*",
       "permanent": true
+    },
+    {
+      "source": "/catalogue/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "live.playgarba.com"
+        }
+      ],
+      "destination": "https://playgarba.com/explore/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "live.playgarba.com"
+        }
+      ],
+      "destination": "https://playgarba.com/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/explore/",
+      "destination": "/catalogue/"
+    },
+    {
+      "source": "/explore/:path*",
+      "destination": "/catalogue/:path*"
+    },
+    {
+      "source": "/about/:path*",
+      "destination": "/public-site/about/:path*"
+    },
+    {
+      "source": "/install/:path*",
+      "destination": "/public-site/install/:path*"
+    },
+    {
+      "source": "/help/:path*",
+      "destination": "/public-site/how-to-use/:path*"
+    },
+    {
+      "source": "/how-to-use/:path*",
+      "destination": "/public-site/how-to-use/:path*"
+    },
+    {
+      "source": "/faq/:path*",
+      "destination": "/public-site/faq/:path*"
+    },
+    {
+      "source": "/live/:path*",
+      "destination": "/public-site/live/:path*"
     }
   ]
 }

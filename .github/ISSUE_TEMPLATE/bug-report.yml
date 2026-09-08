@@ -19,7 +19,7 @@ body:
     attributes:
       label: Relevant GARBA URL
       description: If the bug concerns a song or genre, paste the exact deep link.
-      placeholder: https://ruddvz.github.io/garba/?genre=...
+      placeholder: https://playgarba.com/?genre=...
   - type: input
     id: device
     attributes:

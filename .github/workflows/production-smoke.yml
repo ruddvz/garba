@@ -7,7 +7,7 @@ on:
       - scripts/lib/verify-production-hosts.mjs
       - .github/workflows/production-smoke.yml
   workflow_run:
-    workflows: ["Deploy GitHub Pages"]
+    workflows: ["Deploy live player to Vercel"]
     types: [completed]
   workflow_dispatch:
 
@@ -53,7 +53,7 @@ jobs:
           {
             echo '## Live player verification'
             echo ''
-            echo '✅ `https://live.playgarba.com/` passed the player, catalogue, deep-link, manifest, service-worker, offline-shell, robots, sitemap and OG-card smoke checks.'
+            echo '✅ `https://playgarba.com/` passed the player, Explore, deep-link, manifest, service-worker, offline-shell, robots, sitemap and OG-card smoke checks.'
           } >> "$GITHUB_STEP_SUMMARY"
 
   public-cutover-diagnostic-nonblocking:
@@ -108,7 +108,7 @@ jobs:
             if [ "$PUBLIC_READY" = 'true' ]; then
               echo '✅ Apex: `https://playgarba.com/` is serving the public website contract.'
             else
-              echo '⚠️ Apex: `https://playgarba.com/` is not ready. Finish the Porkbun static-hosting cutover.'
+              echo '⚠️ Apex: `https://playgarba.com/` is not ready.'
             fi
             echo ''
             if [ "$WWW_READY" = 'true' ]; then
@@ -117,5 +117,5 @@ jobs:
               echo '⚠️ WWW: the permanent redirect to `https://playgarba.com/` is not ready.'
             fi
             echo ''
-            echo '> This job is intentionally non-blocking until the Porkbun public-site cutover is complete. A green job means the diagnostics executed, not that every public host is ready.'
+            echo '> This job is intentionally non-blocking for supporting-page diagnostics. A green job means the diagnostics executed, not that every public route is ready.'
           } >> "$GITHUB_STEP_SUMMARY"

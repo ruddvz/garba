@@ -115,7 +115,7 @@ for (const marker of [
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
-const imageUrl = 'https://live.playgarba.com/assets/social/garba-og-card.png';
+const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [
   imageUrl,
   'PlayGarba.com · All the Garba in the world',
@@ -153,8 +153,8 @@ for (const marker of [
   if (!pages.includes(marker)) fail(`Pages Explore contract is missing: ${marker}`);
 }
 for (const marker of [
-  "'./catalogue/'",
-  "'./catalogue/index.html'",
+  "'./explore/'",
+  "'./explore/index.html'",
   "'./catalogue/catalogue.css'",
   "'./catalogue/catalogue.js'",
   "'./catalogue/listening-library.js'",
@@ -163,7 +163,8 @@ for (const marker of [
   "'/catalogue/listening-library.js'",
   'const isCatalogueNavigation = (pathname) =>',
   "pathname.endsWith('/catalogue/')",
-  "const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';",
+  "pathname.endsWith('/explore/')",
+  "const fallback = isCatalogueNavigation(url.pathname) ? './explore/index.html' : './index.html';",
   "const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');",
   'if (isJsonData(url.pathname)) {',
 ]) {
@@ -308,8 +309,8 @@ for (const file of [
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v14`")) {
-  fail('PWA cache generation must be v14 after adding the offline return-user Explore companion');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v15`")) {
+  fail('PWA cache generation must be v15 after consolidating the canonical apex origin and Explore route');
 }
 
 if (failed) process.exit(1);

@@ -16,8 +16,6 @@ const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
   '.gitignore',
-  'AGENTS.md',
-  'CNAME',
   'CONTRIBUTING.md',
   'README.md',
   'app.js',
@@ -213,24 +211,23 @@ if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fai
 const artwork = await readJson('data/release-artwork.json');
 if (artwork.version !== 1 || typeof artwork.releases !== 'object' || !artwork.releases) fail('release-artwork.json must use the versioned verified-artwork manifest contract');
 
-const cname = (await read('CNAME')).trim();
 const robots = await read('robots.txt');
 const sitemap = await read('sitemap.xml');
 const index = await read('index.html');
 const catalogueHtml = await read('src/catalogue/index.html');
 const catalogueJs = await read('src/catalogue/catalogue.js');
-if (cname !== 'live.playgarba.com') fail(`CNAME must be live.playgarba.com, found ${cname || '(empty)'}`);
-if (!robots.includes('Sitemap: https://live.playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
-if (!sitemap.includes('<loc>https://live.playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
-if (!sitemap.includes('<loc>https://live.playgarba.com/catalogue/</loc>')) fail('sitemap.xml must include the single catalogue page');
+if (await exists('CNAME')) fail('CNAME must not be present after moving the live player to Vercel');
+if (!robots.includes('Sitemap: https://playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
+if (!sitemap.includes('<loc>https://playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
+if (!sitemap.includes('<loc>https://playgarba.com/explore/</loc>')) fail('sitemap.xml must include the single catalogue page');
 if (sitemap.includes('/songs/') || sitemap.includes('/releases/')) fail('sitemap must not advertise standalone song or release pages');
 for (const marker of [
-  '<link rel="canonical" href="https://live.playgarba.com/"',
-  '<meta property="og:url" content="https://live.playgarba.com/"',
-  '"url": "https://live.playgarba.com/"',
+  '<link rel="canonical" href="https://playgarba.com/"',
+  '<meta property="og:url" content="https://playgarba.com/"',
+  '"url": "https://playgarba.com/"',
 ]) if (!index.includes(marker)) fail(`index.html missing production-domain marker: ${marker}`);
 for (const marker of [
-  '<link rel="canonical" href="https://live.playgarba.com/catalogue/"',
+  '<link rel="canonical" href="https://playgarba.com/explore/"',
   'id="catalogueSections"',
   'id="collectionDetail"',
   'catalogue.js',
@@ -266,25 +263,27 @@ for (const file of publicSiteFiles) if (!await exists(file)) fail(`Unified publi
 const publicIndex = await read('public-site/index.html');
 for (const marker of [
   '<link rel="canonical" href="https://playgarba.com/"',
-  'https://live.playgarba.com/',
+  'https://playgarba.com/',
 ]) if (!publicIndex.includes(marker)) fail(`Public homepage missing production marker: ${marker}`);
 
 const vercel = await readJson('vercel.json');
-const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'host')?.value;
-const apexRootRewrite = vercel.rewrites?.find((rule) => rule.source === '/' && rule.destination === '/public-site/' && hostValue(rule) === 'playgarba.com');
-const apexPathRewrite = vercel.rewrites?.find((rule) => rule.source === '/:path*' && rule.destination === '/public-site/:path*' && hostValue(rule) === 'playgarba.com');
-const wwwRedirect = vercel.redirects?.find((rule) => rule.source === '/:path*' && rule.destination === 'https://playgarba.com/:path*' && rule.permanent === true && hostValue(rule) === 'www.playgarba.com');
-if (!apexRootRewrite) fail('vercel.json must route the apex root to public-site/');
-if (!apexPathRewrite) fail('vercel.json must route apex paths into public-site/');
-if (!wwwRedirect) fail('vercel.json must permanently redirect www.playgarba.com to the apex');
+const hostValue = (rule) => rule?.has?.find((entry) => entry.type === 'host')?.value || null;
+const redirects = Array.isArray(vercel.redirects) ? vercel.redirects : [];
+const rewrites = Array.isArray(vercel.rewrites) ? vercel.rewrites : [];
+const hasRedirect = (source, destination, host = null) => redirects.some((rule) => rule.source === source && rule.destination === destination && rule.permanent === true && hostValue(rule) === host);
+const hasRewrite = (source, destination) => rewrites.some((rule) => rule.source === source && rule.destination === destination);
+if (!hasRedirect('/:path*', 'https://playgarba.com/:path*', 'www.playgarba.com')) fail('vercel.json must permanently redirect www.playgarba.com to the apex');
+if (!hasRedirect('/:path*', 'https://playgarba.com/:path*', 'live.playgarba.com')) fail('vercel.json must permanently redirect legacy live paths to the apex');
+if (!hasRedirect('/catalogue/:path*', 'https://playgarba.com/explore/:path*')) fail('vercel.json must permanently redirect legacy catalogue paths to /explore/');
+if (!hasRewrite('/explore/', '/catalogue/')) fail('vercel.json must serve the Explore implementation at /explore/');
 
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
-for (const file of ['CNAME', 'robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Pages workflow missing production-domain file: ${file}`);
+for (const file of ['robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Live Vercel build missing production-domain file: ${file}`);
 for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`Pages workflow missing style layer: ${layer}`);
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
-if (!pages.includes("test \"$(tr -d '\\r\\n' < _site/CNAME)\" = 'live.playgarba.com'")) fail('Pages workflow must assert the PlayGarba CNAME before upload');
+if (pages.includes('actions/configure-pages') || pages.includes('actions/deploy-pages')) fail('Live player workflow must not publish through GitHub Pages');
 for (const marker of [
   'mkdir -p _site/catalogue',
   'cp src/catalogue/index.html _site/catalogue/index.html',
@@ -304,5 +303,5 @@ ok('PlayGarba custom-domain and crawler files are source-controlled and deployme
 ok('catalogue is one crawlable page with in-page collection, release and song states');
 ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
 ok('standalone song/release SEO page generation is retired and guarded against');
-ok('Pages deployment uses explicit runtime and stylesheet contracts');
-ok('single-project Vercel host routing keeps the public site and live player isolated by hostname');
+ok('Vercel deployment uses explicit runtime and stylesheet contracts');
+ok('single-project Vercel host routing serves the player at the apex with legacy compatibility redirects');

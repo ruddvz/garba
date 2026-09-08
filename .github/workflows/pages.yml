@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Deploy live player to Vercel
 
 on:
   push:
@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -37,7 +35,6 @@ jobs:
           mkdir -p _site
 
           cp \
-            CNAME \
             robots.txt \
             sitemap.xml \
             index.html \
@@ -133,11 +130,10 @@ jobs:
             test -f "_site/$runtime" || { echo "Missing deployed runtime: $runtime"; exit 1; }
           done
 
-          # GitHub Pages owns the listening origin directly.
-          test "$(tr -d '\r\n' < _site/CNAME)" = 'live.playgarba.com' || { echo 'CNAME must be live.playgarba.com'; exit 1; }
-          grep -q '^Sitemap: https://live.playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing live sitemap'; exit 1; }
-          grep -q '<loc>https://live.playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing live root'; exit 1; }
-          grep -q '<loc>https://live.playgarba.com/catalogue/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing live catalogue'; exit 1; }
+          # Vercel owns the listening origin through the dedicated playgarba-live project.
+          grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing apex sitemap'; exit 1; }
+          grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing apex root'; exit 1; }
+          grep -q '<loc>https://playgarba.com/explore/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical Explore route'; exit 1; }
 
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
@@ -191,7 +187,7 @@ jobs:
           test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
           SOCIAL_HTML_COUNT="$(find _site -type f -name '*.html' | wc -l | tr -d ' ')"
-          SOCIAL_META_COUNT="$(grep -RIl 'https://live.playgarba.com/assets/social/garba-og-card.png' _site --include='*.html' | wc -l | tr -d ' ')"
+          SOCIAL_META_COUNT="$(grep -RIl 'https://playgarba.com/assets/social/garba-og-card.png' _site --include='*.html' | wc -l | tr -d ' ')"
           BRAND_META_COUNT="$(grep -RIl 'apple-touch-icon-167.png' _site --include='*.html' | wc -l | tr -d ' ')"
           test "$SOCIAL_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal social preview missing from some pages: $SOCIAL_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
           test "$BRAND_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal icon metadata missing from some pages: $BRAND_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
@@ -209,27 +205,17 @@ jobs:
           fi
 
           # Production artifact and metadata stay on the configured live origin.
-          grep -q '<link rel="canonical" href="https://live.playgarba.com/"' _site/index.html || { echo 'Player canonical must use live host'; exit 1; }
-          grep -q '<link rel="canonical" href="https://live.playgarba.com/catalogue/"' _site/catalogue/index.html || { echo 'Catalogue canonical must use live host'; exit 1; }
-          grep -q 'https://live.playgarba.com/assets/social/garba-og-card.png' _site/index.html || { echo 'Player social preview must use live host'; exit 1; }
+          grep -q '<link rel="canonical" href="https://playgarba.com/"' _site/index.html || { echo 'Player canonical must use apex host'; exit 1; }
+          grep -q '<link rel="canonical" href="https://playgarba.com/explore/"' _site/catalogue/index.html || { echo 'Explore canonical must use apex host'; exit 1; }
+          grep -q 'https://playgarba.com/assets/social/garba-og-card.png' _site/index.html || { echo 'Player social preview must use apex host'; exit 1; }
 
           touch _site/.nojekyll
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: _site
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy production live player to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install --global vercel@latest
+          vercel deploy _site --prod --yes --project "$VERCEL_PROJECT_ID" --scope "$VERCEL_ORG_ID" --token "$VERCEL_TOKEN"

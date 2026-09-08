@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v14`;
+const CACHE_NAME = `${CACHE_PREFIX}v15`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -12,8 +12,8 @@ const CORE_SHELL = [
   './youtube-player-runtime.js',
   './nonstop-browser.js',
   './app.js',
-  './catalogue/',
-  './catalogue/index.html',
+  './explore/',
+  './explore/index.html',
   './catalogue/catalogue.css',
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
@@ -128,7 +128,7 @@ async function catalogueNavigation(request, fallback) {
 }
 
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
-const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html');
+const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html') || pathname.endsWith('/explore/') || pathname.endsWith('/explore/index.html');
 const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');
 
 self.addEventListener('fetch', (event) => {
@@ -139,7 +139,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
+    const fallback = isCatalogueNavigation(url.pathname) ? './explore/index.html' : './index.html';
     if (isCatalogueNavigation(url.pathname)) {
       event.respondWith(catalogueNavigation(request, fallback));
       return;
