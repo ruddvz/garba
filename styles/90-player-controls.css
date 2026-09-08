@@ -1,0 +1,266 @@
+/* Canonical player-control ownership layer.
+   Loaded after genre/artwork styling so transport, utility and timeline rules do not
+   need specificity escalation or !important overrides. Keep genre geometry in 80. */
+
+.app .utilities {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  gap: 4px;
+}
+
+.app .utilities .icon-button,
+.app .utilities .mobile-heart {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: rgba(246, 236, 215, .76);
+  opacity: .86;
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease;
+}
+
+.app .utilities .mobile-heart.active {
+  background: transparent;
+  color: var(--accent);
+  opacity: 1;
+}
+
+.app .controls {
+  width: min(330px, 78vw);
+  min-height: 74px;
+  margin-top: 8px;
+  padding: 5px 14px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  gap: clamp(30px, 4.4vw, 46px);
+}
+
+.app .controls::before,
+.app .controls::after {
+  content: none;
+  display: none;
+}
+
+.app .transport {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(246, 236, 215, .76);
+  opacity: .90;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .28));
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease, transform 150ms ease;
+}
+
+.app .transport svg {
+  width: 27px;
+  height: 27px;
+  opacity: 1;
+}
+
+.app .play-button {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--ivory);
+  filter:
+    drop-shadow(0 3px 10px rgba(0, 0, 0, .36))
+    drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 14%, transparent));
+  transition: color 150ms ease, filter 180ms ease, opacity 150ms ease, transform 150ms ease;
+}
+
+.app .play-button svg {
+  width: 38px;
+  height: 38px;
+  filter: none;
+}
+
+.app .ambient-ring {
+  inset: -15px;
+  opacity: .18;
+}
+
+.app.is-playing .ambient-ring { opacity: .30; }
+
+.app .progress-wrap {
+  width: min(330px, 78vw);
+  margin-top: -3px;
+  padding: 4px 8px 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.app .progress-wrap::before {
+  content: none;
+  display: none;
+}
+
+.app .progress-wrap .time {
+  color: rgba(246, 236, 215, .52);
+  font-size: 10px;
+}
+
+.app input[type="range"]::-webkit-slider-runnable-track { height: 2px; }
+.app input[type="range"]::-moz-range-track,
+.app input[type="range"]::-moz-range-progress { height: 2px; }
+
+.app .sheet-close {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app .utilities .icon-button:hover,
+  .app .utilities .mobile-heart:hover,
+  .app .transport:hover {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--ivory);
+    opacity: 1;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 24%, transparent));
+  }
+
+  .app .play-button:hover {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: color-mix(in srgb, var(--accent) 68%, var(--ivory));
+    filter:
+      drop-shadow(0 3px 10px rgba(0, 0, 0, .34))
+      drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 24%, transparent));
+  }
+}
+
+.app .utilities .icon-button:focus-visible,
+.app .utilities .mobile-heart:focus-visible,
+.app .transport:focus-visible,
+.app .play-button:focus-visible,
+.app .sheet-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, var(--ivory));
+  outline-offset: 4px;
+}
+
+@media (max-width: 700px) {
+  .app .utilities { gap: 1px; }
+
+  .app .utilities .icon-button,
+  .app .utilities .mobile-heart {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .app .controls {
+    width: min(312px, calc(100vw - 40px));
+    min-height: 66px;
+    gap: clamp(26px, 7.5vw, 36px);
+    padding: 3px 12px 6px;
+  }
+
+  .app .transport {
+    width: 44px;
+    height: 44px;
+  }
+
+  .app .transport svg {
+    width: 25px;
+    height: 25px;
+  }
+
+  .app .play-button {
+    width: 64px;
+    height: 64px;
+  }
+
+  .app .play-button svg {
+    width: 35px;
+    height: 35px;
+  }
+
+  .app .progress-wrap {
+    width: min(312px, calc(100vw - 40px));
+    margin-top: -2px;
+    padding-inline: 6px;
+  }
+
+  .app .sheet-close {
+    border: 0;
+    background: transparent;
+  }
+}
+
+@media (max-width: 390px) {
+  .app .controls,
+  .app .progress-wrap {
+    width: min(294px, calc(100vw - 34px));
+  }
+
+  .app .controls { gap: 24px; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .app .controls {
+    width: min(276px, 40vw);
+    min-height: 46px;
+    margin-top: 2px;
+    padding: 0 8px 2px;
+    gap: 20px;
+  }
+
+  .app .transport {
+    width: 38px;
+    height: 38px;
+  }
+
+  .app .play-button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .app .play-button svg {
+    width: 29px;
+    height: 29px;
+  }
+
+  .app .progress-wrap {
+    width: min(276px, 40vw);
+    margin-top: 0;
+    padding-block: 2px 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app .utilities .icon-button,
+  .app .utilities .mobile-heart,
+  .app .transport,
+  .app .play-button {
+    transition: none;
+  }
+}
