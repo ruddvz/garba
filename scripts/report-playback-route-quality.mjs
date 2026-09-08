@@ -68,3 +68,9 @@ console.log('Reference-track batches needing exact song mapping or a proper rele
 for (const group of ranked.filter((entry) => entry.sourceType === 'verified-release-track-reference')) {
   console.log(`${String(group.count).padStart(3)} · ${group.releaseTitle} · ${group.provider} · ${group.releaseArtist}`);
 }
+
+console.log('');
+console.log('TEMP AUDIT · Rutvi Ni Ramzat 3.0 effective routes:');
+for (const song of songs.filter((entry) => entry.releaseId === 'rutvi-ni-ramzat-3-0-2024').sort((a, b) => Number(a.trackNumber) - Number(b.trackNumber))) {
+  console.log(`${String(song.trackNumber).padStart(2)} | ${exactSelection(song) ? 'exact' : 'fallback'} | ${song.id} | ${song.playbackProvider || 'none'} | ${song.playbackSourceType || 'none'} | start=${Number.isFinite(Number(song.youtubeStartSeconds)) ? Number(song.youtubeStartSeconds) : '-'} | ${song.playbackUrl || song.playbackSourceUrl || song.providerUrl || ''}`);
+}
