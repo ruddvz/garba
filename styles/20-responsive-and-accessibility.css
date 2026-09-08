@@ -113,14 +113,13 @@ html body .app #browseActions #browseButton {
   }
 }
 
-/* One selected-state language: a small crossed-dandiya marker. The icon/text can
-   brighten, but selection never adds a card, pill, border, underline or glow stack. */
+/* The first-paint production layer owns the single dandiya selection marker.
+   This layer only strips legacy card/glow state and keeps inactive choices quieter. */
 html body .app #genreStrip .genre-button[data-genre],
 html body .app #genreStrip #nonstopButton {
   box-shadow: none !important;
   transition:
     color 160ms ease,
-    filter 160ms ease,
     opacity 160ms ease !important;
 }
 
@@ -133,39 +132,9 @@ html body .app #genreStrip .genre-button[data-genre].active,
 html body .app #genreStrip #nonstopButton.active,
 html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton {
   opacity: 1;
-  color: var(--ivory) !important;
   border-color: transparent !important;
   background-color: transparent !important;
   box-shadow: none !important;
-  filter: brightness(1.08) saturate(1.05) !important;
-}
-
-html body .app #genreStrip .genre-button[data-genre].active::before,
-html body .app #genreStrip #nonstopButton.active::before,
-html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton::before {
-  width: 11px !important;
-  height: 1.5px !important;
-  left: 50% !important;
-  right: auto !important;
-  bottom: 3px !important;
-  border-radius: 999px !important;
-  transform: translateX(-50%) rotate(32deg) !important;
-  background: var(--accent) !important;
-  box-shadow: none !important;
-}
-
-html body .app #genreStrip .genre-button[data-genre].active::after,
-html body .app #genreStrip #nonstopButton.active::after,
-html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton::after {
-  width: 11px !important;
-  height: 1.5px !important;
-  left: 50% !important;
-  right: auto !important;
-  bottom: 3px !important;
-  border-radius: 999px !important;
-  transform: translateX(-50%) rotate(-32deg) !important;
-  background: color-mix(in srgb, var(--accent) 72%, var(--ivory)) !important;
-  opacity: .86;
 }
 
 html body .app #genreStrip .genre-button[data-genre]:focus-visible,
@@ -178,9 +147,7 @@ html body .app #genreStrip #nonstopButton:focus-visible {
   html body .app #genreStrip .genre-button[data-genre]:not(.active):hover,
   html body .app #genreStrip #nonstopButton:not(.active):hover {
     opacity: .94;
-    color: rgba(246, 236, 215, .90);
     background-color: transparent !important;
-    filter: brightness(1.06) saturate(1.03);
   }
 }
 
