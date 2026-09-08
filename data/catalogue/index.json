@@ -1,7 +1,7 @@
 {
-  "version": "0.19.0",
-  "songCount": 1311,
-  "releaseCount": 221,
+  "version": "0.20.0",
+  "songCount": 1414,
+  "releaseCount": 225,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -74,7 +74,11 @@
     "data/catalogue/songs/songs-67-praful-kalkamano-garbo.json",
     "data/catalogue/songs/songs-68-boot-maa-na-garba.json",
     "data/catalogue/songs/songs-69-maa-ashapura-na-garba.json",
-    "data/catalogue/songs/songs-70-praful-mata-nu-garba.json"
+    "data/catalogue/songs/songs-70-praful-mata-nu-garba.json",
+    "data/catalogue/songs/songs-wave-d-falguni-pathak.json",
+    "data/catalogue/songs/songs-wave-d-kirtidan-gadhvi.json",
+    "data/catalogue/songs/songs-wave-d-geeta-rabari.json",
+    "data/catalogue/songs/songs-wave-d-aditya-gadhvi.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -123,7 +127,11 @@
     "data/catalogue/releases/releases-44-raag-mehta.json",
     "data/catalogue/releases/releases-45-atul-completeness.json",
     "data/catalogue/releases/releases-46-hemant-completeness.json",
-    "data/catalogue/releases/releases-47-praful-hemant-completeness.json"
+    "data/catalogue/releases/releases-47-praful-hemant-completeness.json",
+    "data/catalogue/releases/releases-wave-d-falguni-pathak.json",
+    "data/catalogue/releases/releases-wave-d-kirtidan-gadhvi.json",
+    "data/catalogue/releases/releases-wave-d-geeta-rabari.json",
+    "data/catalogue/releases/releases-wave-d-aditya-gadhvi.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -194,7 +202,10 @@
     "data/playback-sources-praful-kalkamano-garbo-exact.json",
     "data/playback-sources-boot-maa-na-garba-exact.json",
     "data/playback-sources-maa-ashapura-na-garba-exact.json",
-    "data/playback-sources-praful-mata-nu-garba-exact.json"
+    "data/playback-sources-praful-mata-nu-garba-exact.json",
+    "data/playback-sources-wave-d-falguni.json",
+    "data/playback-sources-wave-d-geeta.json",
+    "data/playback-sources-wave-d-aditya.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -220,5 +231,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.19.0 completes catalogue Wave C for Atul Purohit, Hemant Chauhan and Praful Dave: 151 additional canonical songs/selections across 13 newly represented releases plus the completed existing Dhholi programme, with exact provider routes wherever independently verified and conservative release-level fallback where exact song evidence is incomplete. It preserves the v0.18.0 Rutvi route-truth hardening, Playback Wave E, and all newer Nonstop/discovery work from current main."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.0 carries forward Wave C, Playback Wave E and route-truth hardening, then adds Catalogue Wave D: 103 canonical tracks across Falguni Pathak/Tushaar Trivedi, Kirtidan Gadhvi with Kajal Maheriya/Dharmesh Barot/Rashmita Rabari, Geeta Rabari and Aditya Gadhvi; 82 exact YouTube chapter routes are pinned only where official artist/label uploads publish unambiguous timestamps. Ambiguous or malformed timestamps remain conservative provider fallbacks, and split-track albums remain distinct from continuous non-stop masters."
 }
