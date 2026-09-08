@@ -42,6 +42,13 @@ jobs:
             _site/
           cp -R assets data _site/
 
+          # The social card is kept as small text chunks in source so repository API
+          # transports remain reliable. Reconstruct the exact JPEG only in the static
+          # deployment artifact, then validate that it really is an image.
+          mkdir -p _site/assets/social
+          cat .github/assets/playgarba-og-card.b64.* | base64 --decode > _site/assets/social/garba-og-card.jpg
+          file _site/assets/social/garba-og-card.jpg | grep -q 'JPEG image data' || { echo 'Social share card is not a valid JPEG.'; exit 1; }
+
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
           cat \
