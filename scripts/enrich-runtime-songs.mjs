@@ -18,6 +18,7 @@ let enriched = 0;
 let direct = 0;
 let exactTrackFallbacks = 0;
 let singleReleaseFallbacks = 0;
+let releaseTrackReferenceFallbacks = 0;
 let unchapteredYoutubeReleaseFallbacks = 0;
 const missing = [];
 
@@ -64,11 +65,20 @@ const runtimeSongs = songs.map((song) => {
   next.playbackProvider = route.provider;
   next.playbackSourceUrl = route.sourceUrl || `https://www.youtube.com/watch?v=${encodeURIComponent(route.videoId)}`;
   next.playbackSourceType = route.sourceType || 'verified-provider-source';
+  const release = releasesById.get(song.releaseId);
+
   if (next.playbackSourceType === 'verified-release-source') {
-    const release = releasesById.get(song.releaseId);
     if (isExactTrackUrl(next.playbackProvider, next.playbackSourceUrl)) {
-      next.playbackSourceType = 'verified-track-source';
-      exactTrackFallbacks += 1;
+      if (Number(release?.songCount) === 1) {
+        next.playbackSourceType = 'verified-track-source';
+        exactTrackFallbacks += 1;
+      } else {
+        // A release-level record can contain one track link as evidence. That link
+        // cannot become every song on a multi-song release just because its URL is
+        // track-shaped.
+        next.playbackSourceType = 'verified-release-track-reference';
+        releaseTrackReferenceFallbacks += 1;
+      }
     } else if (Number(release?.songCount) === 1 && isReleaseSpecificUrl(next.playbackProvider, next.playbackSourceUrl)) {
       next.playbackSourceType = 'verified-single-release-source';
       singleReleaseFallbacks += 1;
@@ -81,7 +91,10 @@ const runtimeSongs = songs.map((song) => {
       next.playbackSourceType = 'verified-unchaptered-youtube-release';
       unchapteredYoutubeReleaseFallbacks += 1;
     }
+  } else if (next.playbackSourceType === 'verified-release-track-reference') {
+    releaseTrackReferenceFallbacks += 1;
   }
+
   if (route.videoId) next.youtubeId = route.videoId;
   if (Number.isFinite(Number(route.startSeconds))) {
     next.youtubeStartSeconds = Math.max(0, Math.floor(Number(route.startSeconds)));
@@ -97,4 +110,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} multi-song release track references, ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
