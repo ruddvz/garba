@@ -22,6 +22,9 @@ const state = {
   listeningHistory: [],
   playContextGenreId: 'traditional',
   playContextSongId: null,
+  releaseContextId: null,
+  releaseContextSongId: null,
+  releaseContextConsumedIds: new Set(),
   playing: false,
   elapsed: 0,
   duration: 0,
@@ -106,6 +109,91 @@ const formatDuration = (seconds) => {
 const currentSong = () => state.songs.find((song) => song.id === state.songId) || null;
 const currentGenre = () => state.genres.find((genre) => genre.id === state.genreId) || null;
 const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId);
+
+const numericTrackNumber = (song) => {
+  const value = Number(song?.trackNumber);
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
+function orderedReleaseSongs(releaseId) {
+  if (!releaseId) return [];
+  const byId = new Map();
+  for (const song of state.songs) {
+    if (!song?.id || song.releaseId !== releaseId || numericTrackNumber(song) == null) continue;
+    byId.set(song.id, song);
+  }
+  return [...byId.values()].sort((left, right) => {
+    const trackDelta = numericTrackNumber(left) - numericTrackNumber(right);
+    return trackDelta || left.id.localeCompare(right.id);
+  });
+}
+
+function releaseContextMatch(releaseId, songId) {
+  const ordered = orderedReleaseSongs(releaseId);
+  if (ordered.length < 2 || !songId) return null;
+  return ordered.some((song) => song.id === songId) ? { releaseId, songId, ordered } : null;
+}
+
+function clearReleaseContext() {
+  state.releaseContextId = null;
+  state.releaseContextSongId = null;
+  state.releaseContextConsumedIds.clear();
+}
+
+function setReleaseContext(releaseId, songId) {
+  const match = releaseContextMatch(releaseId, songId);
+  if (!match) {
+    clearReleaseContext();
+    return false;
+  }
+  state.releaseContextId = match.releaseId;
+  state.releaseContextSongId = match.songId;
+  state.releaseContextConsumedIds.clear();
+  return true;
+}
+
+function songBelongsToActiveRelease(song) {
+  return Boolean(
+    song?.id
+    && state.releaseContextId
+    && song.releaseId === state.releaseContextId
+    && numericTrackNumber(song) != null
+    && orderedReleaseSongs(state.releaseContextId).some((entry) => entry.id === song.id)
+  );
+}
+
+function releaseContinuationSongs(limit = Infinity) {
+  const match = releaseContextMatch(state.releaseContextId, state.releaseContextSongId);
+  if (!match) return [];
+  const index = match.ordered.findIndex((song) => song.id === state.releaseContextSongId);
+  const remaining = index >= 0
+    ? match.ordered.slice(index + 1).filter((song) => !state.releaseContextConsumedIds.has(song.id))
+    : [];
+  return Number.isFinite(limit) ? remaining.slice(0, Math.max(0, limit)) : remaining;
+}
+
+function automaticGenreContinuation(limit = 12, {
+  genreId = state.playContextGenreId || state.genreId,
+  anchorId = state.playContextSongId || state.songId,
+  excludeIds = new Set(),
+} = {}) {
+  const list = songsForGenre(genreId);
+  if (!list.length || limit <= 0) return [];
+  const excluded = excludeIds instanceof Set ? excludeIds : new Set(excludeIds || []);
+  const anchorIndex = list.findIndex((song) => song.id === anchorId);
+  const ordered = anchorIndex < 0
+    ? [...list]
+    : [...list.slice(anchorIndex + 1), ...list.slice(0, anchorIndex)];
+  const seen = new Set();
+  const result = [];
+  for (const song of ordered) {
+    if (!song?.id || song.id === state.songId || excluded.has(song.id) || seen.has(song.id)) continue;
+    seen.add(song.id);
+    result.push(song);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
 
 function persistFavourites() {
   storage.set('garba:favourites', [...state.favourites]);
@@ -303,6 +391,13 @@ function updateUrl() {
   url.searchParams.set('genre', state.genreId);
   const songId = state.pendingSongId || state.songId;
   if (songId) url.searchParams.set('song', songId);
+  const song = state.songs.find((entry) => entry.id === songId) || null;
+  if (
+    state.releaseContextId
+    && song?.releaseId === state.releaseContextId
+    && numericTrackNumber(song) != null
+  ) url.searchParams.set('release', state.releaseContextId);
+  else url.searchParams.delete('release');
   url.searchParams.delete('browse');
   url.searchParams.delete('source');
   url.searchParams.delete('library');
@@ -317,13 +412,21 @@ function updateFavouriteUI() {
 }
 
 function automaticUpNextSongs(limit = 12) {
-  const genreId = state.playContextGenreId || state.genreId;
-  const list = songsForGenre(genreId);
-  if (!list.length) return [];
-  const anchorId = state.playContextSongId || state.songId;
-  const currentIndex = list.findIndex((song) => song.id === anchorId);
-  if (currentIndex < 0) return list.slice(0, limit);
-  return [...list.slice(currentIndex + 1), ...list.slice(0, currentIndex)].slice(0, limit);
+  if (state.releaseContextId) {
+    const releaseSongs = orderedReleaseSongs(state.releaseContextId);
+    const releaseIds = new Set(releaseSongs.map((song) => song.id));
+    const remaining = releaseContinuationSongs(limit);
+    if (remaining.length >= limit) return remaining;
+    const anchorId = state.releaseContextSongId || state.songId;
+    const anchorSong = state.songs.find((song) => song.id === anchorId) || null;
+    const generic = automaticGenreContinuation(limit - remaining.length, {
+      genreId: anchorSong?.genre || state.playContextGenreId || state.genreId,
+      anchorId,
+      excludeIds: releaseIds,
+    });
+    return [...remaining, ...generic].slice(0, limit);
+  }
+  return automaticGenreContinuation(limit);
 }
 
 function manualQueueSongs() {
@@ -502,6 +605,7 @@ async function selectSong(songId, options = {}) {
   if (!song) return;
 
   if (!options.initial) state.pendingSongId = null;
+  if (!options.preserveReleaseContext && !options.initial) clearReleaseContext();
 
   const previousSongId = state.songId;
   if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
@@ -533,6 +637,12 @@ async function selectSong(songId, options = {}) {
       state.playContextGenreId = song.genre;
       state.playContextSongId = song.id;
     }
+    if ((options.releaseContextAdvance || options.syncReleaseAnchor) && songBelongsToActiveRelease(song)) {
+      state.releaseContextSongId = song.id;
+    }
+    if (options.consumeQueued && songBelongsToActiveRelease(song)) {
+      state.releaseContextConsumedIds.add(song.id);
+    }
     configureAudio(song, restoreElapsed);
     renderPlayer();
     updateMediaSession();
@@ -556,8 +666,16 @@ function selectGenre(genreId) {
   const genre = state.genres.find((entry) => entry.id === genreId);
   if (!genre) return;
   if (genreId === state.genreId) {
+    clearReleaseContext();
+    const song = currentSong();
+    if (song) {
+      state.playContextGenreId = song.genre;
+      state.playContextSongId = song.id;
+    }
     state.sheetFilter = genreId;
     syncGenreStrips();
+    updateQueueBadge();
+    updateUrl();
     return;
   }
 
@@ -696,9 +814,14 @@ function renderSheet() {
     const artist = document.createElement('small');
     artist.textContent = song.artist;
     copy.append(title, artist);
+    const releaseContinuation = state.sheetMode === 'queue'
+      && !queued
+      && releaseContinuationSongs().some((entry) => entry.id === song.id);
     copy.addEventListener('click', () => selectSong(song.id, {
       keepSheet: true,
-      preserveContext: queued,
+      preserveContext: queued || releaseContinuation,
+      preserveReleaseContext: queued || releaseContinuation,
+      releaseContextAdvance: releaseContinuation,
       consumeQueued: queued,
     }));
 
@@ -829,7 +952,13 @@ function changeSong(direction) {
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
     if (previousId) {
-      selectSong(previousId, { keepSheet: true, preservePlayback: true, preserveContext: true, fromHistory: true });
+      selectSong(previousId, {
+        keepSheet: true,
+        preservePlayback: true,
+        preserveContext: true, fromHistory: true,
+        preserveReleaseContext: true,
+        syncReleaseAnchor: true,
+      });
       return;
     }
   }
@@ -839,9 +968,48 @@ function changeSong(direction) {
     const queuedId = state.manualQueue.shift();
     if (queuedId) {
       persistManualQueue();
-      selectSong(queuedId, { keepSheet: true, preservePlayback: true, preserveContext: true });
+      selectSong(queuedId, {
+        keepSheet: true,
+        preservePlayback: true,
+        preserveContext: true,
+        preserveReleaseContext: true,
+        consumeQueued: true,
+      });
       return;
     }
+  }
+
+  if (direction > 0 && state.releaseContextId) {
+    const nextReleaseSong = releaseContinuationSongs(1)[0];
+    if (nextReleaseSong) {
+      selectSong(nextReleaseSong.id, {
+        keepSheet: true,
+        preservePlayback: true,
+        preserveContext: true,
+        preserveReleaseContext: true,
+        releaseContextAdvance: true,
+      });
+      return;
+    }
+
+    const releaseSongs = orderedReleaseSongs(state.releaseContextId);
+    const releaseIds = new Set(releaseSongs.map((song) => song.id));
+    const anchorId = state.releaseContextSongId || state.songId;
+    const anchorSong = state.songs.find((song) => song.id === anchorId) || null;
+    const nextGeneric = automaticGenreContinuation(1, {
+      genreId: anchorSong?.genre || state.playContextGenreId || state.genreId,
+      anchorId,
+      excludeIds: releaseIds,
+    })[0];
+    clearReleaseContext();
+    if (nextGeneric) {
+      selectSong(nextGeneric.id, { keepSheet: true, preservePlayback: true });
+      return;
+    }
+    updateQueueBadge();
+    renderSheet();
+    updateUrl();
+    return;
   }
 
   const genreId = state.playContextGenreId || state.genreId;
@@ -1131,7 +1299,7 @@ async function fetchCatalogue() {
 function makeCatalogueSignature(genres, songs) {
   return JSON.stringify({
     genres: genres.map((genre) => [genre.id, genre.label, genre.background, genre.accent]),
-    songs: songs.map((song) => [song.id, song.title, song.artist, song.genre, song.durationSeconds, song.audioUrl, song.youtubeId]),
+    songs: songs.map((song) => [song.id, song.title, song.artist, song.genre, song.releaseId, song.trackNumber, song.durationSeconds, song.audioUrl, song.youtubeId]),
   });
 }
 
@@ -1143,6 +1311,9 @@ async function refreshCatalogue({ quiet = false } = {}) {
     state.genres = next.genres;
     state.songs = next.songs;
     state.presentationRedirects = next.presentationRedirects;
+    if (state.releaseContextId && !releaseContextMatch(state.releaseContextId, state.releaseContextSongId || state.songId)) {
+      clearReleaseContext();
+    }
     reconcilePresentationFavourites();
     sanitiseManualQueue();
     state.catalogueSignature = signature;
@@ -1195,6 +1366,7 @@ function resolveInitialState() {
   const session = storage.get('garba:session', {});
   let requestedSong = params.get('song');
   const requestedGenre = params.get('genre');
+  const requestedRelease = params.get('release');
   const redirect = requestedSong ? state.presentationRedirects.get(requestedSong) : null;
   let pendingNonstopSetId = null;
   if (redirect?.presentationRole === 'nonstop-only' && redirect.nonstopSetId) {
@@ -1218,10 +1390,17 @@ function resolveInitialState() {
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
   if (!song || song.genre !== genre.id) song = state.songs.find((entry) => entry.genre === genre.id) || state.songs[0];
+  const releaseContext = requestedRelease
+    && requestedSong
+    && song?.id === requestedSong
+    && !pendingNonstopSetId
+    ? releaseContextMatch(requestedRelease, requestedSong)
+    : null;
   return {
     genre,
     song,
     pendingSongId,
+    releaseContextId: releaseContext?.releaseId || null,
     elapsed: Number(session.elapsed || 0),
     browse: params.get('browse') === '1',
     myGarba: params.get('library') === 'my-garba',
@@ -1256,6 +1435,12 @@ async function init() {
       syncGenreStrips({ smooth: false });
       renderSheet();
     }
+
+    if (initial.releaseContextId && initial.song) {
+      setReleaseContext(initial.releaseContextId, initial.song.id);
+      renderPlayer();
+      renderSheet();
+    } else clearReleaseContext();
 
     state.pendingSongId = initial.pendingSongId;
     if (initial.pendingNonstopSetId) {
