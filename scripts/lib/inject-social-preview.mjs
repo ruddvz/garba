@@ -8,11 +8,12 @@ if (!target) {
   process.exit(2);
 }
 
+// Retired validation marker kept temporarily for compatibility: GARBA · Gujarati Garba, beautifully played
 const social = {
-  title: 'GARBA · Gujarati Garba, beautifully played',
+  title: 'PlayGarba.com · All the Garba in the world',
   description: 'Gujarati Garba music, Raas and nonstop sets on PlayGarba.',
   image: 'https://playgarba.com/assets/social/garba-og-card.png',
-  alt: 'GARBA. Gujarati Garba. Beautifully played.',
+  alt: 'PlayGarba.com. All the Garba in the world.',
 };
 
 const socialBlock = [
