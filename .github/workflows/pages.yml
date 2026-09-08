@@ -38,7 +38,6 @@ jobs:
             index.html \
             app.js \
             simple-runtime.js \
-            interaction-runtime.js \
             provider-runtime.js \
             player-continuity.js \
             youtube-player-runtime.js \
@@ -105,7 +104,6 @@ jobs:
 
           for runtime in \
             simple-runtime.js \
-            interaction-runtime.js \
             provider-runtime.js \
             player-continuity.js \
             youtube-player-runtime.js \
