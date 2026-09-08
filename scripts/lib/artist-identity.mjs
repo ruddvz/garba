@@ -45,48 +45,52 @@ export function artistKeys(value) {
   return new Set(splitArtistCredits(value).map(canonicalArtistKey).filter(Boolean));
 }
 
-export function performanceArtistIdentity(song, set, segment = null) {
-  const songKeys = artistKeys(song?.artists || song?.artist);
-  const performerKeys = new Set([
-    ...artistKeys(set?.artists || set?.artist),
-    ...artistKeys(segment?.artists || segment?.artist),
-  ]);
-
-  const shared = [...songKeys].filter((key) => performerKeys.has(key));
-  const releaseMatch = Boolean(set?.linkedReleaseId && set.linkedReleaseId === song?.releaseId);
-
-  if (!songKeys.size || !performerKeys.size) {
-    return {
-      compatible: false,
-      status: 'unknown',
-      shared,
-      releaseMatch,
-      songArtists: [...songKeys],
-      performanceArtists: [...performerKeys],
-    };
-  }
-
-  if (!shared.length) {
-    return {
-      compatible: false,
-      status: 'conflict',
-      shared,
-      releaseMatch,
-      songArtists: [...songKeys],
-      performanceArtists: [...performerKeys],
-    };
-  }
-
-  const status = songKeys.size === 1 && performerKeys.size === 1
-    ? 'same-artist'
-    : 'collaboration-compatible';
-
+function identityResult({ compatible, status, shared, releaseMatch, songKeys, performerKeys }) {
   return {
-    compatible: true,
+    compatible,
     status,
     shared,
     releaseMatch,
     songArtists: [...songKeys],
     performanceArtists: [...performerKeys],
   };
+}
+
+export function performanceArtistIdentity(song, set, segment = null) {
+  const songKeys = artistKeys(song?.artists || song?.artist);
+  const setKeys = artistKeys(set?.artists || set?.artist);
+  const segmentKeys = artistKeys(segment?.artists || segment?.artist);
+  const performerKeys = segmentKeys.size ? segmentKeys : setKeys;
+  const releaseMatch = Boolean(set?.linkedReleaseId && set.linkedReleaseId === song?.releaseId);
+  const shared = [...songKeys].filter((key) => performerKeys.has(key));
+
+  if (!songKeys.size || !performerKeys.size) {
+    return identityResult({ compatible: false, status: 'unknown', shared, releaseMatch, songKeys, performerKeys });
+  }
+
+  // A chapter-specific performer credit is authoritative. Do not allow the wider
+  // set roster to rescue a chapter that is explicitly credited to another artist.
+  if (segmentKeys.size && !shared.length) {
+    return identityResult({ compatible: false, status: 'conflict', shared, releaseMatch, songKeys, performerKeys });
+  }
+
+  // Without chapter-level credits, a multi-artist set does not tell us which
+  // performer sings a particular title. Only accept when the canonical song
+  // itself credits the complete set collaboration; otherwise fail closed.
+  if (!segmentKeys.size && setKeys.size > 1) {
+    const fullSetCollaboration = [...setKeys].every((key) => songKeys.has(key));
+    if (!fullSetCollaboration) {
+      return identityResult({ compatible: false, status: 'unknown', shared, releaseMatch, songKeys, performerKeys });
+    }
+  }
+
+  if (!shared.length) {
+    return identityResult({ compatible: false, status: 'conflict', shared, releaseMatch, songKeys, performerKeys });
+  }
+
+  const status = songKeys.size === 1 && performerKeys.size === 1
+    ? 'same-artist'
+    : 'collaboration-compatible';
+
+  return identityResult({ compatible: true, status, shared, releaseMatch, songKeys, performerKeys });
 }
