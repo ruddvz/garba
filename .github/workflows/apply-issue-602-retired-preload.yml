@@ -1,0 +1,53 @@
+name: Apply issue 602 retired preload cleanup
+
+on:
+  push:
+    branches:
+      - perf/mobile-cold-start-602
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/perf/mobile-cold-start-602'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/mobile-cold-start-602
+          fetch-depth: 0
+
+      - name: Remove retired preload and add regression guard
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index_path = Path('index.html')
+          index = index_path.read_text()
+          preload = '    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" fetchpriority="high" />\n'
+          if index.count(preload) != 1:
+              raise SystemExit(f'Expected exactly one retired traditional.svg preload, found {index.count(preload)}')
+          index_path.write_text(index.replace(preload, '', 1))
+
+          validator_path = Path('scripts/validate-simple-runtime.mjs')
+          validator = validator_path.read_text()
+          anchor = "]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);\n\nfor (const forbidden of ["
+          guard = ""]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);\n\nif (/<link\\s+rel=\"preload\"[^>]+href=\"assets\\/backgrounds\\/traditional\\.svg\"/.test(index)) {\n  fail('Production index must not high-priority preload the retired traditional.svg world');\n}\n\nfor (const forbidden of ["
+          if anchor not in validator:
+              raise SystemExit('Validator insertion anchor not found')
+          if 'must not high-priority preload the retired traditional.svg world' in validator:
+              raise SystemExit('Retired-preload regression guard already exists unexpectedly')
+          validator_path.write_text(validator.replace(anchor, guard, 1))
+          PY
+
+      - name: Commit bounded branch patch and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-issue-602-retired-preload.yml
+          git add index.html scripts/validate-simple-runtime.mjs
+          git diff --cached --check
+          git commit -m "perf(startup): stop preloading retired world artwork"
+          git push origin HEAD:perf/mobile-cold-start-602
