@@ -22,7 +22,7 @@
     {
       "id": "catalogue",
       "label": "Catalogue and metadata",
-      "keywords": ["catalogue", "catalog", "release", "track", "album", "artist", "metadata", "duplicate", "genre", "taxonomy", "tracklist", "track list", "description"],
+      "keywords": ["catalogue", "catalog", "release", "track", "album", "artist", "metadata", "duplicate", "genre", "taxonomy", "tracklist", "track list"],
       "truthSources": ["data/README.md", "data/catalogue/index.json", "docs/catalogue/schema.md", "docs/catalogue/song-catalog-contract.md"],
       "likelyFiles": ["data/catalogue/**", "scripts/build-catalogue.mjs", "scripts/lib/**"],
       "risks": ["release identity drift", "invented metadata", "generated-file edits", "taxonomy mismatch"]
