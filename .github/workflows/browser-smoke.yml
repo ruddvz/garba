@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _smoke
-          mkdir -p _smoke/catalogue
+          mkdir -p _smoke/catalogue _smoke/explore
 
           cp \
             index.html \
@@ -108,6 +108,12 @@ jobs:
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
             _smoke/catalogue/
+          cp \
+            src/catalogue/index.html \
+            src/catalogue/catalogue.css \
+            src/catalogue/catalogue.js \
+            src/catalogue/listening-library.js \
+            _smoke/explore/
 
           # Match Pages runtime packaging: seek-state is folded into the existing
           # network-first app.js payload instead of becoming another staleable request.
@@ -153,7 +159,7 @@ jobs:
 
           # Explore is source-native. The browser fixture must preserve that source
           # contract exactly rather than reimplementing a deploy-time rewrite.
-          grep -q 'href="./catalogue/"' _smoke/index.html || { echo 'Source-native Explore link missing from browser fixture'; exit 1; }
+          grep -q 'href="./explore/"' _smoke/index.html || { echo 'Canonical /explore/ link missing from browser fixture'; exit 1; }
           grep -q '<span>Explore</span>' _smoke/index.html || { echo 'Source-native Explore label missing from browser fixture'; exit 1; }
           ! grep -q 'id="browseButton"[^>]*aria-controls' _smoke/index.html || { echo 'Explore retained legacy song-sheet semantics'; exit 1; }
 
@@ -198,7 +204,7 @@ jobs:
         run: npm install --no-save --no-package-lock @playwright/test@1.55.0
 
       - name: Install browser engines
-        run: npx playwright install --with-deps chromium webkit
+        run: npx playwright install chromium webkit
 
       - name: Start browser fixture
         run: |

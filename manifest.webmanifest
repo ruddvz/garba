@@ -75,7 +75,7 @@
       "name": "Explore catalogue",
       "short_name": "Explore",
       "description": "Open the PlayGarba Explore catalogue.",
-      "url": "./catalogue/"
+      "url": "./explore/"
     }
   ]
 }

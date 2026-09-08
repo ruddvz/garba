@@ -3,7 +3,7 @@
   const incoming = new URLSearchParams(window.location.search);
 
   if (incoming.has('browse')) {
-    const target = new URL('https://live.playgarba.com/catalogue/');
+    const target = new URL('https://playgarba.com/explore/');
     for (const [key, value] of incoming.entries()) {
       if (key !== 'browse') target.searchParams.append(key, value);
     }
@@ -13,7 +13,7 @@
   }
 
   if ([...playerParams].some((key) => incoming.has(key))) {
-    window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
+    window.location.replace(`https://playgarba.com/${window.location.search}${window.location.hash}`);
     return;
   }
 
@@ -52,7 +52,7 @@
     if (href === current) link.setAttribute('aria-current', 'page');
   });
 
-  const artBase = 'https://live.playgarba.com/assets/backgrounds/library/';
+  const artBase = 'https://playgarba.com/assets/backgrounds/library/';
   const art = [
     ['.hero-art', '11-master-dark-courtyard.webp'],
     ['.world-traditional', '15-traditional-canopy-courtyard.webp'],

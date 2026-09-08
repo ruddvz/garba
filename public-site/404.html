@@ -16,11 +16,11 @@
       const query = window.location.search;
       const hash = window.location.hash;
       if (path === '/catalogue' || path.startsWith('/catalogue/') || path === '/songs' || path.startsWith('/songs/')) {
-        window.location.replace(`https://live.playgarba.com/catalogue/${query}${hash}`);
+        window.location.replace(`https://playgarba.com/explore/${query}${hash}`);
         return;
       }
       if (path === '/releases' || path.startsWith('/releases/')) {
-        window.location.replace(`https://live.playgarba.com/catalogue/${query}${hash}`);
+        window.location.replace(`https://playgarba.com/explore/${query}${hash}`);
       }
     })();
   </script>
@@ -32,7 +32,7 @@
     <h1>This page is not here.</h1>
     <p>If you were looking for music, go straight to the live player or Explore catalogue.</p>
     <div class="actions">
-      <a class="primary" href="https://live.playgarba.com/">Open player ↗</a>
+      <a class="primary" href="https://playgarba.com/">Open player ↗</a>
       <a class="secondary" href="https://playgarba.com/">Back to PlayGarba</a>
     </div>
     <nav class="help" aria-label="Helpful pages">

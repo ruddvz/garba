@@ -11,3 +11,5 @@ node_modules/
 /data/free-audio-sources.json
 /data/playback-sources-generated.json
 /data/playback-coverage.json
+.vercel
+.env*
