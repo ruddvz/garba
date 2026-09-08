@@ -1,0 +1,40 @@
+name: Apply issue 546 Nonstop taxonomy
+
+on:
+  push:
+    branches:
+      - codex/nonstop-exact-source-taxonomy-546
+
+permissions:
+  contents: write
+
+jobs:
+  apply-validate-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply exact-source taxonomy
+        run: python3 .github/scripts/apply-issue-546-nonstop-taxonomy.py
+
+      - name: Validate repository
+        run: npm run check
+
+      - name: Validate patch whitespace
+        run: git diff --check
+
+      - name: Commit data-only result
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/discovery/sets/sets-04.json data/discovery/sets/sets-05.json
+          git rm .github/scripts/apply-issue-546-nonstop-taxonomy.py .github/workflows/apply-issue-546-nonstop-taxonomy.yml
+          git commit -m "Backfill two exact-source Nonstop taxonomy records"
+          git push origin HEAD:codex/nonstop-exact-source-taxonomy-546
