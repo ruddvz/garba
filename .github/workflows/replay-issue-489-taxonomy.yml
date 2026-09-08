@@ -1,0 +1,55 @@
+name: Replay issue 489 Nonstop taxonomy
+
+on:
+  push:
+    branches:
+      - codex/nonstop-taxonomy-backfill-489-r2
+
+permissions:
+  contents: write
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/nonstop-taxonomy-backfill-489-r2
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Replay only the audited discovery shards
+        run: |
+          git fetch origin codex/nonstop-taxonomy-backfill-489
+          git checkout origin/codex/nonstop-taxonomy-backfill-489 -- \
+            data/discovery/sets/sets-07-gaman-santhal.json \
+            data/discovery/sets/sets-10-kairavi-buch.json \
+            data/discovery/sets/sets-11-atul-purohit.json \
+            data/discovery/sets/sets-12-legacy-and-hardik.json \
+            data/discovery/sets/sets-17-trupti-kaushal.json
+
+      - name: Prove structured taxonomy outcome
+        run: |
+          npm run genre:taxonomy:validate | tee /tmp/genre-taxonomy.log
+          grep -F "structured-first for 60 sets" /tmp/genre-taxonomy.log
+          grep -F "24 legacy unclassified sets" /tmp/genre-taxonomy.log
+
+      - name: Run full repository validation
+        run: npm run check
+
+      - name: Commit clean five-shard patch and remove replay workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            data/discovery/sets/sets-07-gaman-santhal.json \
+            data/discovery/sets/sets-10-kairavi-buch.json \
+            data/discovery/sets/sets-11-atul-purohit.json \
+            data/discovery/sets/sets-12-legacy-and-hardik.json \
+            data/discovery/sets/sets-17-trupti-kaushal.json
+          git rm .github/workflows/replay-issue-489-taxonomy.yml
+          git commit -m "Backfill exact linked-release Nonstop taxonomy"
+          git push origin HEAD:codex/nonstop-taxonomy-backfill-489-r2
