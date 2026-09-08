@@ -17,6 +17,9 @@ try {
 }
 
 const index = await readJson('data/catalogue/index.json');
+if (Object.hasOwn(index, 'nonstopSets')) {
+  fail('Catalogue manifest still defines nonstopSets; discovery.setsIndex must be the only Nonstop registry pointer');
+}
 const releaseChunks = await Promise.all((index.releaseChunks || []).map(readJson));
 const releases = releaseChunks.flat();
 const { sets, setsIndexPath } = await loadDiscoverySets(root, index);
@@ -99,4 +102,4 @@ console.log(`✓ ${playableYoutubeSets} embeddable YouTube listening sets have u
 console.log(`✓ ${providerEvidenceSets} non-playable/provider-evidence discovery records remain separate from listening masters`);
 console.log(`✓ ${legacyRecordIds.size} migrated legacy records preserve provenance without a second registry`);
 console.log('✓ every release Nonstop handoff resolves to one canonical embeddable YouTube set');
-console.log('✓ data/nonstop.json is retired and validation/runtime tooling share discovery as the only Nonstop source');
+console.log('✓ legacy Nonstop file/manifest pointers are retired and validation/runtime tooling share discovery as the only source');
