@@ -3,260 +3,128 @@
 Status: active implementation  
 Programme issue: #368  
 Technical crawl/index lane: #369  
-Canonical URL architecture lane: #370  
-Current production baseline reviewed against remote `main` at `5e85ba2cafd6b14ebb96401ba812d7f171e5b31b` on 2026-09-08.
+Simplified architecture direction recorded 2026-09-08.
 
 ## Objective
 
-Make PlayGarba easy to crawl, understand, cite and recommend for Gujarati Garba discovery while keeping listening primary.
+Make PlayGarba easy to discover in search without turning the product into a large SEO website.
 
-The search strategy is built around real product value:
+The product should stay centred on listening:
 
-- a large source-truthful Gujarati Garba catalogue;
-- individual songs and artists;
-- releases and Nonstop sets;
-- Traditional, Dandiya, Devotional, Folk, Sanedo and Fusion presentation worlds;
-- deeper canonical music taxonomy;
-- direct handoff into YouTube-backed playback;
-- concise cultural/help content;
-- a seasonal Navratri discovery layer.
+- `/` is the canonical player/home experience;
+- `/explore/` is the canonical catalogue and discovery experience;
+- a compact set of useful general, cultural and help pages support the product;
+- `/navratri-2026/` is the focused 2026 seasonal page once deployed;
+- catalogue richness belongs inside Explore rather than in hundreds of public URLs.
 
-The target is not page count. The target is a coherent search graph in which every indexable PlayGarba URL answers a real intent and leads naturally into listening.
+Success is not page count. A small set of strong, maintained pages is preferred over clusters of thin pages.
 
-## Current production architecture
-
-The production contract changed on 2026-09-08 and is now single-origin.
-
-### Canonical origin
+## Canonical production architecture
 
 `https://playgarba.com/` is the canonical public origin and GitHub Pages production host.
 
-Current root signals are aligned to the apex:
+Current production principles:
 
 - `CNAME` is `playgarba.com`;
-- root `robots.txt` allows crawling and advertises `https://playgarba.com/sitemap.xml`;
-- root player HTML canonicalizes to `https://playgarba.com/`;
-- root Open Graph URL uses `https://playgarba.com/`;
-- `/explore/` is the canonical catalogue/discovery route.
+- root `robots.txt` advertises `https://playgarba.com/sitemap.xml`;
+- the player canonical is `https://playgarba.com/`;
+- `/explore/` is the canonical catalogue/discovery route;
+- public HTML page URLs use lowercase paths with trailing slashes;
+- query strings and hash states remain application state rather than separate search pages.
 
-Search work must preserve this one-origin architecture unless a later infrastructure decision explicitly supersedes it.
+Do not introduce another canonical host or another parallel catalogue website without an explicit product decision.
 
-### Current deployed route families
+## The simple public surface
 
-The GitHub Pages build currently deploys:
-
-- `/` as the player;
-- `/explore/` as the canonical catalogue/discovery page;
-- `/catalogue/` as a compatibility copy of the Explore source;
-- `/about/`;
-- `/faq/`;
-- `/how-to-use/`;
-- `/install/`;
-- `/live/`;
-- `/what-is-garba/`.
-
-The repository also contains additional authored editorial routes that are not all included in the current Pages artifact. These include:
-
-- `/learn/`;
-- `/history-of-garba/`;
-- `/navratri-and-garba/`;
-- `/dandiya-raas/`;
-- `/garba-vs-dandiya/`;
-- `/garba-music/`;
-- `/garbo/`;
-- `/garba-attire-and-craft/`;
-- `/navratri-2026/`.
-
-Those existing sources should be audited and reused where they answer distinct search intent. Do not create replacement pages with new URLs merely because they are not yet deployed.
-
-### Known sitemap defect
-
-The current root sitemap advertises `/help/`, but the production Pages build does not deploy a `/help/` route. The build deploys `/how-to-use/` instead. `/how-to-use/` and `/what-is-garba/` are currently absent from the root sitemap.
-
-Issue #369 owns that technical sitemap correction. Issue #370 does not patch deployment or sitemap files.
-
-## Search intent map
-
-### Immediate listening intent
-
-Highest product fit:
-
-- play Garba online;
-- Gujarati Garba online;
-- Garba music online;
-- Garba player;
-- listen to Garba;
-- nonstop Garba;
-- Gujarati nonstop Garba.
-
-These searches should land close to a playable experience, not on a long article.
-
-### Collection/style intent
-
-- Garba songs;
-- Gujarati Garba songs;
-- Traditional Garba;
-- Dandiya songs / Dandiya Raas songs;
-- Devotional Garba;
-- Folk Garba;
-- Sanedo;
-- Fusion Garba.
-
-These should map to useful collection pages with real catalogue membership and crawlable entity links.
-
-### Entity intent
-
-- song title;
-- artist name;
-- release/album title;
-- Nonstop set title;
-- artist + song/release combinations.
-
-These are best answered by catalogue-derived entity pages. Aliases and transliterations support discovery but do not create duplicate indexable URLs.
-
-### Seasonal intent
-
-- Navratri songs 2026;
-- Navratri Garba 2026;
-- Gujarati Garba for Navratri;
-- nonstop Garba for Navratri;
-- Dandiya songs for Navratri.
-
-The existing `public-site/navratri-2026/index.html` should be the starting asset for #372. Refine and deploy it rather than creating a competing seasonal page.
-
-### Informational / answer intent
-
-- What is Garba?
-- What is Dandiya Raas?
-- What is Sanedo?
-- What is nonstop Garba?
-- What is the difference between Garba and Dandiya?
-- What music is played during Navratri?
-- Where can I listen to Gujarati Garba online?
-
-These answers should remain concise, factual and linked to relevant listening surfaces.
-
-### Local/event intent
-
-- Garba events near me;
-- Navratri events near me;
-- city-specific Garba/Navratri events.
-
-This is evidence-gated under #375. No city/event indexation should start until real event sources, freshness, expiry and deduplication rules exist.
-
-# Canonical URL policy
-
-This section is the implementation contract from #370.
-
-## Global rules
-
-1. The canonical origin is `https://playgarba.com`.
-2. Canonical HTML page URLs use lowercase paths and a trailing slash.
-3. One public entity or intent gets one indexable canonical URL.
-4. Application state is not a second SEO URL system.
-5. Stable repository IDs are the identity key for entity paths.
-6. `displayTitle` and aliases may change presentation but must not change canonical identity.
-7. Tracking parameters never create a new canonical URL.
-8. A URL enters the sitemap only after its page exists in the production artifact and passes its indexability gate.
-9. A route that is only a redirect/handoff is not a sitemap URL.
-10. An alias or transliteration never creates a second indexable page for the same entity.
-
-## URL class A: canonical indexable pages
-
-These are allowed to appear in internal links and the sitemap after their content gates are met.
-
-### Product/discovery
+### Player
 
 ```text
 /
+```
+
+This is the primary product. Search visitors should be able to listen immediately.
+
+### Explore
+
+```text
 /explore/
 ```
 
-### Listening collections
+Explore is the single music-discovery surface.
 
-Use one collection namespace so listening intent does not collide with cultural/editorial pages:
+It should absorb the value that would otherwise be fragmented across many SEO pages:
 
-```text
-/garba-songs/
-/garba-songs/traditional/
-/garba-songs/dandiya/
-/garba-songs/devotional/
-/garba-songs/folk/
-/garba-songs/sanedo/
-/garba-songs/fusion/
-/non-stop-garba/
-```
+- strong catalogue search;
+- Traditional, Dandiya, Devotional, Folk, Sanedo and Fusion browsing;
+- one clear Nonstop area;
+- artist browsing and artist detail inside Explore;
+- release context and tracklists inside Explore;
+- factual song descriptions and available story/context fields;
+- one-tap playback;
+- stable search/filter/detail/back/scroll state;
+- good mobile and PWA behaviour;
+- useful empty, loading and error states.
 
-This is preferred over flat routes such as `/dandiya/` because PlayGarba already has a distinct informational Dandiya surface at `/dandiya-raas/`. The namespace makes the intent explicit:
+Artist, release, song and Nonstop detail may be rich in-product views. They do not need standalone public pages.
 
-- `/garba-songs/dandiya/` means listen/explore Dandiya music;
-- `/dandiya-raas/` means understand the cultural form.
+### General pages
 
-Likewise, collection pages should not replace or duplicate `/garba-music/`, `/what-is-garba/` or other editorial pages.
-
-### Entity pages
-
-Use stable IDs directly as path keys:
-
-```text
-/songs/{song-id}/
-/artists/{artist-id}/
-/releases/{release-id}/
-/nonstop/{set-id}/
-```
-
-Do not derive the canonical path from the current display title alone.
-
-Why:
-
-- canonical song and release IDs are already stable repository identity;
-- IDs are used by playback mappings, favourites and deep links;
-- discovery artists have explicit stable IDs;
-- Nonstop discovery records have canonical set IDs;
-- display titles and aliases can be corrected later without breaking inbound links;
-- duplicate human titles do not collide.
-
-Human-readable titles belong in `<title>`, H1, breadcrumbs, visible copy and structured data. The path key remains the stable ID.
-
-### Evergreen editorial and help pages
-
-Preserve strong existing routes instead of creating keyword-swapped duplicates:
+Keep only pages with genuine standalone value. Current useful production routes include:
 
 ```text
 /what-is-garba/
-/learn/
-/history-of-garba/
-/navratri-and-garba/
-/dandiya-raas/
-/garba-vs-dandiya/
-/garba-music/
-/garbo/
-/garba-attire-and-craft/
 /how-to-use/
 /install/
 /faq/
 /about/
 ```
 
-Only deploy/index a source page after editorial accuracy, internal links, canonical metadata and production artifact inclusion are validated.
+The repository also contains additional cultural/editorial source pages. Audit them individually before deployment. Consolidate overlap rather than publishing a large keyword cluster.
 
-### Seasonal
+A new general page should exist only when someone would reasonably choose to read or share that page on its own, not simply because a keyword exists.
+
+### Seasonal page
 
 ```text
 /navratri-2026/
 ```
 
-Do not create both `/navratri/2026/` and `/navratri-2026/` for the same content. The existing source has already established `/navratri-2026/` as the preferred 2026 route.
+Use the existing authored source. Keep it focused on current Navratri 2026 dates, sourced festival context and direct listening/discovery actions.
 
-A future evergreen `/navratri/` page may exist only if it has distinct year-independent value. It must not duplicate the 2026 page.
+Do not create a tree of supporting entity pages around it.
 
-## URL class B: functional but non-indexable application state
+## Explicitly cancelled route strategy
 
-These states may remain functional for listeners but are not standalone search pages.
+Issue #371 is closed as not planned.
 
-### Player query state
+Do not generate SEO pages for:
 
-Current root-player state includes:
+```text
+/songs/{id}/
+/artists/{id}/
+/releases/{id}/
+/nonstop/{id}/
+```
+
+Do not create one public page for every:
+
+- song;
+- artist;
+- release/album;
+- Nonstop set;
+- genre;
+- taxonomy value;
+- alias;
+- transliteration;
+- search/filter combination.
+
+Do not create `/garba-songs/` plus six separate style landing pages solely for SEO. The existing Explore catalogue already provides that browsing model.
+
+If a future page is proposed, it must have a clear user purpose independent of keyword capture and must be approved as a product page, not generated automatically from catalogue data.
+
+## Application-state URL policy
+
+The player may use functional query state such as:
 
 ```text
 /?song={song-id}
@@ -264,20 +132,7 @@ Current root-player state includes:
 /?nonstop={set-id}
 ```
 
-Policy:
-
-- keep these URLs functional for playback/session handoff;
-- do not add them to sitemaps;
-- do not generate crawlable faceted links to every query combination;
-- root HTML canonical remains `/` for these application-state responses;
-- future entity pages link to playback state only as an action, not as their canonical URL;
-- tracking parameters such as `utm_*`, `gclid`, `fbclid` and equivalent referral parameters do not alter canonical identity.
-
-Once `/songs/{song-id}/` or `/nonstop/{set-id}/` exists, that entity page is the searchable information URL. The query-state player URL remains the listening action.
-
-### Explore hash state
-
-Current Explore uses hash state such as:
+Explore may use hash/search/filter state such as:
 
 ```text
 /explore/#collection={id}
@@ -285,452 +140,253 @@ Current Explore uses hash state such as:
 /explore/#search={query}
 ```
 
-Policy:
+These states are allowed for product behaviour but are not separate canonical landing pages.
 
-- hashes remain UI state;
-- they are never sitemap entries;
-- search/filter state must not be multiplied into indexable pages;
-- major durable collections move to class-A collection URLs instead of trying to index hash states;
-- release/song/entity discovery should eventually point to class-A entity pages when those pages exist.
+Rules:
 
-## URL class C: compatibility aliases and handoffs
-
-Compatibility URLs must not compete with canonical pages.
-
-Current or historical examples include:
-
-```text
-/catalogue/
-/live/
-/songs/
-/releases/
-```
-
-Policy:
-
-- `/catalogue/` should resolve toward canonical `/explore/`;
-- `/live/` should resolve toward canonical `/`;
-- legacy generic `/songs/` and `/releases/` handoffs must not compete with future entity namespaces;
-- compatibility routes should be `noindex, follow` while they exist as HTML handoffs;
-- use an HTTP 301/308 when the hosting layer supports a true permanent redirect;
-- if GitHub Pages cannot provide a real server redirect for a specific compatibility path, use an explicit noindex handoff plus canonical target and document that limitation;
-- never describe a meta-refresh/client redirect as equivalent to a server-side 301/308.
-
-Do not include compatibility aliases in the sitemap.
-
-## Reserved route names
-
-Entity and collection generation must not occupy product/editorial route names.
-
-At minimum reserve:
-
-```text
-about
-assets
-catalogue
-dandiya-raas
-explore
-faq
-garba-attire-and-craft
-garba-music
-garba-songs
-garba-vs-dandiya
-garbo
-history-of-garba
-how-to-use
-install
-learn
-live
-navratri
-navratri-2026
-navratri-and-garba
-non-stop-garba
-nonstop
-offline
-releases
-songs
-artists
-what-is-garba
-```
-
-Because entities live below typed namespaces, a song ID cannot collide with a top-level editorial route. Validators should still reject duplicate IDs within each entity namespace.
-
-# Indexability gates
-
-An entity existing in repository data does not automatically deserve an indexed page.
-
-## Song page gate
-
-Index `/songs/{song-id}/` only when all of these are true:
-
-- canonical song ID exists;
-- canonical/display title exists;
-- artist credit exists;
-- primary genre/category relationship exists;
-- at least one useful additional verified relationship exists, such as a canonical release, a verified exact YouTube route, or meaningful authored metadata;
-- page exposes real links to related entities/collections and a listening action;
-- the page is not a presentation alias/source-only duplicate.
-
-If the song fails the gate, it may remain usable inside Explore/player but stays out of the sitemap and should not be indexable as a standalone page.
-
-## Artist page gate
-
-Index `/artists/{artist-id}/` only when:
-
-- the discovery artist registry contains a stable ID and canonical name;
-- the identity can be connected deterministically to canonical catalogue credits;
-- the page has at least two canonical catalogue appearances, or one canonical release/set with meaningful track relationships;
-- aliases resolve to the same artist identity rather than creating pages;
-- the page does not require an invented biography to be useful.
-
-## Release page gate
-
-Index `/releases/{release-id}/` only when:
-
-- the release is a canonical catalogue presentation, not `catalogue-alias`, `source-only` or `nonstop-only`;
-- canonical title and artist credit exist;
-- at least one canonical track relationship exists;
-- the visible track listing is source-truthful;
-- related song/artist/collection links are available.
-
-Alias/source-only release records remain provenance, not independent search pages.
-
-## Nonstop page gate
-
-Index `/nonstop/{set-id}/` only when:
-
-- the canonical discovery set exists;
-- title and performer/source context are verified;
-- the set has a truthful playable or discovery source;
-- chapter data, when shown, follows the repository evidence state and is not inferred;
-- duplicate physical YouTube recordings do not create multiple canonical set pages.
-
-## Collection page gate
-
-Index a listening collection only when:
-
-- membership is derived from canonical genre/taxonomy rules;
-- the collection contains enough real catalogue items to be independently useful;
-- the page has unique visible context, not only a copied heading;
-- it links to canonical entity pages or to truthful player actions;
-- empty or nearly empty taxonomies are not expanded solely for keyword capture.
-
-# Slug and identity policy
-
-## Canonical entity keys
-
-Use repository IDs unchanged as the primary URL key where they already satisfy URL-safe lowercase conventions.
-
-If a legacy ID contains characters that cannot safely form a path segment, create a deterministic URL-key map that is versioned and tested. Do not silently recompute keys from display titles on every build.
-
-## Aliases and transliterations
-
-`aliases[]` are discovery data, not alternate canonical URLs.
-
-They may be used for:
-
-- internal search matching;
-- visible alternate-name context where useful;
-- metadata/structured data when semantically correct.
-
-They must not automatically generate:
-
-- duplicate pages;
-- duplicate sitemap entries;
-- keyword-swapped doorway routes.
-
-## Title changes
-
-`displayTitle` changes do not change entity URLs.
-
-Canonical source-title corrections also should not change an existing public URL unless the underlying entity identity was actually wrong. If identity migration is required, use an explicit old-ID to new-ID redirect map and preserve deep-link/favourite migration.
-
-# Canonical and parameter policy
-
-For every indexable HTML page:
-
-- exactly one absolute canonical link;
-- canonical uses HTTPS apex `playgarba.com`;
-- canonical path follows the trailing-slash rule;
-- Open Graph URL matches the canonical URL;
-- title/H1/meta description describe the visible page rather than query state;
-- sitemap contains the canonical URL only.
-
-For tracking/referral parameters:
-
-- serve the same content;
-- canonicalize to the clean URL;
-- do not put parameterized URLs in the sitemap.
-
-For real application-state parameters:
-
-- preserve functionality;
+- do not add them to the sitemap;
 - do not expose infinite crawl graphs;
-- do not treat combinations as landing pages unless a future issue deliberately promotes one state into a class-A route.
+- canonicalize the player to `/` and Explore to `/explore/` as appropriate;
+- tracking parameters do not create new canonical URLs;
+- aliases and transliterations improve in-product search but do not generate URLs.
 
-# Internal-link graph
+## Compatibility routes
 
-The search graph should be deliberate and shallow enough for discovery.
+Compatibility or handoff routes such as `/catalogue/` or `/live/` must not compete with canonical pages.
 
-```text
-/
-  -> /explore/
-  -> /garba-songs/
-  -> /non-stop-garba/
-  -> /navratri-2026/
-  -> /what-is-garba/
+Prefer a true permanent redirect where the hosting layer supports it. Otherwise keep compatibility HTML explicitly non-indexable and point its canonical target to the real page.
 
-/garba-songs/
-  -> six listening collection pages
-  -> representative canonical songs
-  -> artists/releases
+Do not include compatibility URLs in the sitemap.
 
-/garba-songs/{world}/
-  -> songs
-  -> artists
-  -> releases
-  -> player actions
+## Search intent map
 
-/songs/{id}/
-  -> artist
-  -> release
-  -> relevant collection(s)
-  -> Nonstop context when verified
-  -> player action
+### Listening intent
 
-/artists/{id}/
-  -> canonical songs
-  -> canonical releases
-  -> verified Nonstop sets
+Primary targets:
 
-/releases/{id}/
-  -> canonical tracks
-  -> artist
-  -> relevant collection(s)
+- play Garba online;
+- Gujarati Garba online;
+- Gujarati Garba songs;
+- Garba music online;
+- Nonstop Garba;
+- Traditional Garba;
+- Dandiya / Dandiya Raas;
+- Devotional Garba;
+- Folk Garba;
+- Sanedo;
+- Fusion Garba.
 
-/nonstop/{id}/
-  -> verified chapters/segments when available
-  -> artists/releases when relationships are proven
-  -> Nonstop collection
-  -> player action
+These should be handled primarily by the player and Explore rather than by one URL per phrase.
 
-editorial / Navratri pages
-  -> relevant listening collections
-  -> selected verified entities
-  -> player
-```
+### Seasonal intent
 
-Important routes must be reachable through real HTML anchors. JavaScript may enhance navigation but cannot be the only discovery mechanism for core search pages.
+Primary 2026 targets:
 
-# Pagination and faceting
+- Navratri songs 2026;
+- Navratri Garba 2026;
+- Gujarati Garba for Navratri;
+- Nonstop Garba for Navratri;
+- Dandiya songs for Navratri.
 
-Do not introduce indexable faceted navigation by default.
+Handle these with `/navratri-2026/` plus direct handoff to Explore/player.
 
-If a collection or artist list eventually requires pagination:
+### Informational intent
 
-- use deterministic path pagination rather than arbitrary filter parameters;
-- each paginated page must have useful crawlable links forward/back;
-- do not canonicalize every pagination page to page 1 if the later pages contain unique items users need to discover;
-- pagination is introduced only when a real page-size/performance need exists.
+Examples:
 
-Search queries, sort order, temporary filters, favourites and queue state stay non-indexable.
+- What is Garba?
+- What is Dandiya Raas?
+- What is Sanedo?
+- What is Nonstop Garba?
+- What is the difference between Garba and Dandiya?
+- Where can I listen to Gujarati Garba online?
 
-# Sitemap lifecycle
+Prefer concise answers on a small number of substantial pages. Do not create one page for every wording variation.
 
-A route moves through these states:
+### Artist/song/release searches
 
-1. **source-only**: file/data exists but is not deployed;
-2. **deployed-noindex**: compatibility route or page not ready for search;
-3. **indexable-not-yet-submitted**: page passes content/technical gates;
-4. **sitemap-listed**: canonical production URL is advertised;
-5. **retired**: URL redirects or hands off to a replacement and is removed from sitemap.
+PlayGarba may still surface for these through:
 
-The sitemap must be generated or validated from the same route contract as the production artifact. It must never advertise source-only files or routes the build does not deploy.
+- strong visible catalogue content in Explore;
+- meaningful page titles and descriptions;
+- factual artist/release/song labels visible in the application;
+- external search understanding of the overall catalogue.
 
-# Structured-data matrix
+Do not respond by creating an individual page for every catalogue entity.
 
-Use JSON-LD only when visible page content supports the fields.
+### Local/event intent
 
-| Surface | Candidate schema |
-| --- | --- |
-| Site root | `WebSite`, `Organization` where organization details are deliberately defined |
-| Collection | `ItemList`, `BreadcrumbList` |
-| Song | `MusicRecording`, `BreadcrumbList` |
-| Release | `MusicAlbum` where semantically correct, `BreadcrumbList` |
-| Nonstop set | `MusicPlaylist` when the visible model truthfully represents a playlist/set; otherwise use only schema that matches the page |
-| Artist | `MusicGroup` or `Person` only when identity type is known |
-| Real event | `Event` only after #375 evidence contract |
+City and event pages remain evidence-gated under #375. Do not publish thin local pages without a reliable sourced event model, freshness policy, expiry logic and maintenance capacity.
 
-Do not add made-up ratings, popularity, prices, dates, credits or images to satisfy schema fields.
+## Explore-first content contract
 
-# Navratri 2026 launch surface
+The catalogue remains the source of truth.
 
-Issue #372 owns the seasonal implementation.
+Use verified repository data inside Explore for:
 
-The repository already contains `public-site/navratri-2026/index.html`. #372 should audit and improve that source rather than creating a second page.
+- canonical/display song title;
+- artist/performer;
+- release when known;
+- genre and taxonomy;
+- duration when verified;
+- authored description when available;
+- sourced story/background only when available;
+- verified YouTube playback;
+- Nonstop chapter/timestamp information only when source-backed.
 
-Recommended page responsibilities:
+Do not invent biographies, rankings, popularity, histories, dates, credits or stories to make Explore appear richer.
 
-1. direct listening/discovery action;
-2. Traditional Garba;
-3. Dandiya;
-4. Devotional;
-5. Nonstop;
-6. Sanedo/Folk/Fusion where relevant;
-7. verified featured releases/artists;
-8. concise Garba/Navratri answers;
-9. deeper catalogue/entity links as #371 lands.
+The right response to incomplete metadata is better verified metadata, not generated filler or new thin URLs.
 
-Avoid unsupported `top`, `best`, `most popular` and similar ranking language unless a real editorial method is defined.
+## Nonstop policy
 
-# AEO/GEO content rules
+Nonstop is a listening/discovery mode, not a public page tree.
 
-Issue #373 owns the answer layer.
+Use one strong Nonstop area inside Explore/player that can list verified sets and expose source-backed chapter detail when available.
 
-Use a simple pattern:
+Do not create one indexable page per Nonstop recording.
 
-1. answer the question directly in the first paragraph;
-2. add only context that improves understanding;
-3. link the concept to real PlayGarba catalogue examples or collections;
-4. source non-obvious cultural/history claims during authoring;
-5. avoid hidden crawler-only text;
-6. do not create one thin page per wording variation.
+## Artist policy
 
-The goal is extractable clarity, not AI-styled verbosity.
+Artist discovery belongs inside Explore for now.
 
-# Technical SEO baseline checklist
+Explore may provide artist collections, artist detail panels and verified catalogue appearances without creating `/artists/{id}/` pages.
 
-Issue #369 owns the technical implementation.
+If a standalone artist-page programme is ever reconsidered, it requires a new explicit product decision. It is not part of the current search plan.
 
-For every intended indexable route, validate:
+## General-page policy
 
-- 200 status on canonical URL;
-- intended redirect behaviour for aliases/alternate paths;
-- one canonical link;
-- index/follow policy;
-- unique title;
-- useful meta description;
-- one clear primary heading;
-- crawlable internal links;
-- consistent Open Graph URL/title/image;
-- sitemap inclusion only when production-ready;
-- no accidental query-state duplication;
-- no broken internal links;
-- schema parse/semantic validation where present.
+Before adding a public page, ask:
 
-For host-level files, validate:
+1. Does the page solve a distinct user need?
+2. Is there enough factual content to make it useful without filler?
+3. Is it meaningfully different from Explore, the player and existing general pages?
+4. Can it be maintained?
+5. Would we still want the page if search engines did not exist?
 
-- robots exists and points to the apex sitemap;
-- sitemap contains absolute `https://playgarba.com/` canonical URLs only;
-- sitemap paths are actually present in the Pages artifact;
-- deployed indexable pages that meet policy are not accidentally omitted;
-- compatibility/noindex pages are excluded;
-- robots policy intentionally handles search/AI crawlers;
-- sitemap output is deterministic and does not drift from the build.
+If the answer is no, do not create the page.
 
-## Current Wave 1 correction list
+Prefer consolidation. One excellent page is better than several near-duplicates.
 
-At the time of this policy review:
+## Structured data
 
-- remove or correctly implement the sitemap entry for `/help/`;
-- add `/how-to-use/` when confirmed indexable/deployed;
-- add `/what-is-garba/` when confirmed indexable/deployed;
-- reconcile `/live/` with the compatibility/noindex policy;
-- reconcile `/catalogue/` with canonical `/explore/`;
-- only add additional existing editorial sources after they are actually copied into the production artifact and pass content review.
+Use structured data only where it accurately describes visible content.
 
-# Measurement plan
+Appropriate examples can include:
 
-Issue #374 owns operations.
+- `WebSite` on the main site;
+- `BreadcrumbList` on general/editorial pages;
+- `Article` where a page is genuinely editorial;
+- `ItemList` where a visible list warrants it.
 
-Track only real data from approved tools:
+Do not create song, release or artist pages merely to emit `MusicRecording`, `MusicAlbum`, `MusicGroup` or similar schema.
+
+Never add fabricated fields to satisfy schema.
+
+## Technical SEO foundation
+
+Issue #369 owns technical crawl/index quality.
+
+Validate:
+
+- canonical origin and syntax;
+- robots behaviour;
+- sitemap only contains real deployed canonical pages;
+- one canonical per indexable page;
+- title, description and H1 quality;
+- no accidental `noindex` on intended pages;
+- no accidental indexation of application/query state;
+- Open Graph URL consistency;
+- real HTML links between important public pages;
+- compatibility routes do not compete with canonical pages;
+- crawl/index regressions fail repository validation where practical.
+
+The sitemap should stay intentionally small.
+
+## Navratri 2026
+
+Issue #372 owns the seasonal page.
+
+The page should:
+
+1. answer the 2026 date question immediately;
+2. keep separate official date ranges separate when sources differ;
+3. provide concise sourced context;
+4. send users directly to the player and Explore;
+5. explain listening choices using existing Explore categories;
+6. avoid generic festival filler;
+7. avoid links to undeployed pages;
+8. enter the sitemap only after it is actually deployed.
+
+## AEO/GEO approach
+
+Do not build a separate answer-engine page factory.
+
+Make the pages we already have easier to understand and quote:
+
+- answer obvious questions early;
+- use clear headings;
+- keep facts source-truthful;
+- avoid padded introductions;
+- connect relevant general pages to Explore/player;
+- do not duplicate the same answer across multiple pages.
+
+## Measurement
+
+Track only real data from approved tools when available:
 
 - indexed canonical URLs;
 - excluded/duplicate/error URLs;
 - impressions;
 - clicks;
 - CTR;
-- average position;
-- branded vs non-branded queries;
 - top landing pages;
-- Navratri query group visibility;
-- search-to-play conversion;
-- search-to-Explore engagement;
+- branded vs non-branded queries;
+- Navratri query visibility;
+- search to play conversion;
+- search to Explore engagement;
 - crawl errors;
-- schema/rich-result errors where applicable;
 - Core Web Vitals;
-- ChatGPT referrals when identifiable through `utm_source=chatgpt.com`.
+- identifiable answer-engine referrals.
 
-Do not commit analytics credentials or private report exports to the public repository.
+Do not invent baselines or commit credentials/private exports.
 
-# Implementation handoff
+## Delivery priority
 
-## #369 technical crawl/index
+1. Keep crawl/index signals correct.
+2. Make Explore materially better.
+3. Keep general pages compact and useful.
+4. Deploy the Navratri 2026 page and connect it to Explore/player.
+5. Improve concise factual answers inside existing pages.
+6. Measure what actually works before adding more public pages.
 
-Use this URL contract to fix sitemap/robots/canonical validators. Do not invent a competing route list inside validation code.
+## What not to do
 
-## #371 entity-page pilot
-
-The current GitHub Pages workflow explicitly rejects deployed `_site/songs` and `_site/releases` directories. That was a deliberate pre-entity-page product contract.
-
-#371 must change that deployment assertion deliberately when the entity-page pilot is ready. Do not work around it with query-string pseudo-pages.
-
-Pilot the typed stable-ID routes:
-
-```text
-/songs/{song-id}/
-/artists/{artist-id}/
-/releases/{release-id}/
-/nonstop/{set-id}/
-```
-
-Scale only after representative pages pass indexability, schema, internal-link and player-handoff tests.
-
-## #372 Navratri 2026
-
-Reuse `public-site/navratri-2026/index.html`, audit its factual claims and sources, connect it to the canonical collection graph, then add it to the production artifact and sitemap only after it passes review.
-
-## #373 editorial/AEO
-
-Prefer the already-authored cultural route set where the intent matches. Do not create duplicate `what-is-*` pages when an existing strong route can be improved.
-
-# Delivery sequence
-
-1. #369 fixes crawl/index correctness against the apex contract.
-2. #370 locks this route/indexability policy.
-3. #372 can ship the existing Navratri 2026 page as soon as its factual/content review and deployment work are complete.
-4. #371 pilots entity pages and collection routes, then scales carefully.
-5. #373 strengthens factual answer surfaces and editorial internal linking.
-6. #374 measures real indexing, search demand and search-to-play behaviour.
-7. #375 remains evidence-gated until a trustworthy event data model exists.
-
-# What not to do
-
+- no individual song pages;
+- no individual artist pages;
+- no individual release pages;
+- no individual Nonstop pages;
+- no one-page-per-genre SEO tree;
+- no alias/transliteration doorway pages;
 - no thousands of AI-generated articles;
 - no keyword-swapped city pages;
 - no fake event pages;
 - no invented song histories or artist biographies;
-- no duplicate pages for transliteration variations;
 - no hidden keyword blocks;
 - no schema fields absent from visible content;
-- no `FAQPage` implementation justified only by an expectation of rich results;
-- no indexable search/filter/query/hash permutations by default;
-- no title-derived entity URLs that change when presentation metadata changes;
-- no separate `/dandiya/` listening page that cannibalizes the existing `/dandiya-raas/` informational intent;
-- no sitemap URL that is absent from the actual production artifact;
-- no replacing the distinctive player with a generic SEO homepage.
+- no indexable search/filter/query permutations;
+- no second marketing homepage competing with the player.
 
-# Near-term success definition
+## Definition of done
 
-Before the Navratri 2026 demand peak, PlayGarba should have:
+PlayGarba has:
 
-- one authoritative apex canonical-host contract;
-- robots and sitemap behaviour validated against the real Pages artifact;
-- this documented URL/indexability policy;
-- major Garba collection pages or an implementation-ready collection generator;
-- the existing `/navratri-2026/` source reviewed, deployed and linked;
-- a first representative set of useful song/artist/release/Nonstop entity pages if #371 is ready;
-- concise factual Garba answer content using existing editorial routes where possible;
-- measurement in place to distinguish indexing problems from ranking/content problems.
+- one canonical player/home experience;
+- one excellent Explore catalogue;
+- a small, coherent set of useful general pages;
+- a strong and deployed Navratri 2026 page;
+- correct sitemap/robots/canonical behaviour;
+- useful factual metadata inside Explore;
+- measurement that shows whether existing pages are being crawled and used.
 
-The longer-term goal is for search systems to understand PlayGarba as an interconnected Gujarati Garba catalogue and listening product, not merely a single-page player or a collection of generic festival articles.
+The long-term search advantage should come from the quality of PlayGarba's catalogue and listening experience, not from manufacturing more URLs.
