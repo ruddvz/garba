@@ -115,6 +115,19 @@ const runtimeSongs = songs.map((song) => {
   } else {
     delete next.youtubeStartSeconds;
   }
+
+  const routeDuration = Number(route.durationSeconds);
+  if (
+    next.playbackProvider === 'youtube'
+    && Number.isFinite(Number(route.startSeconds))
+    && Number.isFinite(routeDuration)
+    && routeDuration > 0
+  ) {
+    next.youtubeDurationSeconds = Math.max(1, Math.floor(routeDuration));
+  } else {
+    delete next.youtubeDurationSeconds;
+  }
+
   enriched += 1;
   return next;
 });
@@ -139,6 +152,7 @@ for (const group of exactGroups.values()) {
     song.playbackSourceType = 'verified-release-track-reference';
     song.playbackReferenceUrl = song.playbackSourceUrl;
     delete song.youtubeStartSeconds;
+    delete song.youtubeDurationSeconds;
     duplicateExactDowngrades += 1;
   }
 }
