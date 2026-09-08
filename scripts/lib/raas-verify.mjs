@@ -9,6 +9,11 @@ export const REQUIRED_RAAS_FILES = Object.freeze([
   '.raas/PROJECT-CONTEXT.md',
   '.raas/EXECUTION.md',
   '.raas/LANGUAGE.md',
+  '.raas/CLIENTS.md',
+  '.raas/clients/chatgpt.md',
+  '.raas/clients/codex.md',
+  '.raas/clients/cursor.md',
+  '.raas/clients/generic.md',
   '.raas/config.json',
 ]);
 
