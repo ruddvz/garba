@@ -112,9 +112,7 @@ jobs:
               r'</button>',
               re.DOTALL,
           )
-          replacement = '''<a class="browse-button" id="browseButton" href="./catalogue/" aria-label="Explore PlayGarba catalogue" style="text-decoration:none">
-            <span>Explore</span>
-          </a>'''
+          replacement = '<a class="browse-button" id="browseButton" href="./catalogue/" aria-label="Explore PlayGarba catalogue" style="text-decoration:none">\n            <span>Explore</span>\n          </a>'
           html, count = pattern.subn(replacement, html, count=1)
           if count != 1:
               raise SystemExit(f'Expected exactly one homepage Browse songs control, transformed {count}.')
@@ -122,16 +120,8 @@ jobs:
 
           runtime = Path('_site/app.js')
           js = runtime.read_text()
-          old_click = '''  els.browseButton.addEventListener('click', () => {
-    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-    else closeSheet();
-  });'''
-          new_click = '''  if (els.browseButton?.tagName !== 'A') {
-    els.browseButton?.addEventListener('click', () => {
-      if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-      else closeSheet();
-    });
-  }'''
+          old_click = "  els.browseButton.addEventListener('click', () => {\n    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });\n    else closeSheet();\n  });"
+          new_click = "  if (els.browseButton?.tagName !== 'A') {\n    els.browseButton?.addEventListener('click', () => {\n      if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });\n      else closeSheet();\n    });\n  }"
           if old_click not in js:
               raise SystemExit('Could not locate legacy Browse songs click handler.')
           js = js.replace(old_click, new_click, 1)
