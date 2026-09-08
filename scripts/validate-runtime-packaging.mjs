@@ -72,7 +72,11 @@ if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
 
 for (const marker of [
   'librsvg2-bin',
-  'assets/social/playgarba-og-card.svg',
+  'webp',
+  'fonts-gfs-didot',
+  '04-colourful-garba-courtyard-a.webp',
+  'dwebp "$OG_BACKGROUND"',
+  '_site/assets/social/playgarba-og-card.svg',
   '_site/assets/social/garba-og-card.png',
   'rsvg-convert -w 1200 -h 630',
   'PNG image data, 1200 x 630',
@@ -84,9 +88,12 @@ for (const marker of [
 }
 for (const marker of [
   'width="1200" height="630"',
-  '>GARBA</text>',
-  '>Gujarati Garba. Beautifully played.</text>',
-  '>PLAYGARBA.COM</text>',
+  'href="og-background.png"',
+  'font-family="GFS Didot',
+  'id="text-backdrop"',
+  'feDropShadow',
+  '>PlayGarba.com</text>',
+  '>All Garba there is in the world.</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
@@ -167,6 +174,6 @@ console.log('✓ provider route safety loads before the YouTube controllable eng
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
-console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');
+console.log('✓ Universal PlayGarba social preview uses the approved courtyard artwork and renders at 1200x630');
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
 console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
