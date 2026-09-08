@@ -1,5 +1,5 @@
 {
-  "version": "0.17.5",
+  "version": "0.17.6",
   "songCount": 1169,
   "releaseCount": 209,
   "categoryCount": 19,
@@ -142,7 +142,8 @@
     "data/playback-sources-madhuvan-youtube.json",
     "data/playback-sources-jagran-youtube.json",
     "data/playback-sources-saybo-exact.json",
-    "data/playback-sources-anand-exact.json"
+    "data/playback-sources-anand-exact.json",
+    "data/playback-sources-rutvi-ramzat-3-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -168,5 +169,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.5 preserves the duplicate-release cleanup, duplicate-ID build guard, Shyam/Ude exact-provider mappings, Madhuvan one-tap chapters, safe Jagran chapters and exact Saybo routes, then maps the 17 remaining Anand provider fallbacks to official Amazon Music track pages. Anand track 14, Ghor Andhari Re, intentionally keeps its stronger generated verified YouTube performance-chapter route."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.6 preserves the existing YouTube/runtime/player improvements and exact-provider batches, then adds eight independently verified exact Rutvi Ni Ramzat 3.0 song routes. Tracks 3, 8, 16 and 18 intentionally remain on their stronger generated verified YouTube performance chapters; ambiguous same-title provider results remain conservative."
 }
