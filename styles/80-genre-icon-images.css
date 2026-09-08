@@ -14,8 +14,7 @@
   ------------------------------
   Genre rows are horizontal controls, not miniature two-axis scrollers. Keep their
   block size fixed, remove vertical overflow entirely and keep active/inactive states
-  geometrically identical. This prevents the iOS/PWA diagonal drift and layout jump
-  that can otherwise happen while swiping or when the active genre changes.
+  geometrically identical. This prevents iOS/PWA diagonal drift and layout jumps.
 */
 .genre-strip {
   align-items: center !important;
@@ -28,6 +27,7 @@
   scrollbar-width: none;
   scroll-snap-type: x proximity;
   scroll-behavior: auto;
+  scroll-padding-inline: 26px;
   contain: layout paint;
 }
 
@@ -89,8 +89,7 @@
   filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 18%, transparent));
 }
 
-/* Keep the browse control below the strip centred in a reserved slot so state changes
-   above it cannot make the button appear to jump. */
+/* Keep Browse centred in a reserved slot so state changes above it cannot move it. */
 #browseActions {
   min-height: 42px;
   align-items: center;
@@ -104,14 +103,69 @@
   white-space: nowrap;
 }
 
-/* The now-playing block reserves enough vertical room for normal title changes so
-   transport/progress/genre controls stay anchored instead of moving song to song. */
-.track-block {
-  min-height: 118px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+/*
+  The Now Playing block is a fixed three-row frame. Short, long and very long titles
+  therefore change inside the same rectangle instead of pushing transport/progress/
+  genres up and down. The full text remains in the DOM for assistive technology and
+  remains available in Browse even when the hero title needs visual truncation.
+*/
+.app .track-block {
+  height: 156px;
+  min-height: 156px;
+  max-height: 156px;
+  display: grid;
+  grid-template-rows: 20px minmax(0, 1fr) 42px;
   align-items: center;
+  justify-items: center;
+  align-content: stretch;
+  padding-inline: 12px;
+}
+
+.app .track-block .genre-eyebrow {
+  align-self: center;
+  margin: 0;
+  line-height: 1;
+}
+
+.app .track-block .song-title {
+  align-self: center;
+  max-width: 100%;
+  max-height: 2.04em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app .track-block.is-long-title .song-title {
+  font-size: clamp(34px, 3.35vw, 46px);
+}
+
+.app .track-block.is-very-long-title .song-title {
+  font-size: clamp(30px, 2.9vw, 40px);
+}
+
+.app .track-block .artist-row {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app .track-block .artist {
+  min-width: 0;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Top utilities use fixed tap boxes. Badges and state changes never alter spacing. */
@@ -151,6 +205,8 @@
 }
 
 @media (max-width: 700px) {
+  .genre-strip { scroll-padding-inline: 22px; }
+
   .app #genreStrip {
     height: 60px !important;
     min-height: 60px !important;
@@ -190,9 +246,30 @@
     background-size: 25px 25px;
   }
 
-  .track-block {
-    min-height: 132px;
+  .app .track-block {
+    height: 146px;
+    min-height: 146px;
+    max-height: 146px;
+    grid-template-rows: 18px minmax(0, 1fr) 26px;
     padding-inline: 12px;
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(33px, 8.8vw, 42px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(29px, 7.7vw, 36px);
+  }
+
+  .app .track-block .artist-row {
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+  }
+
+  .app .track-block .artist {
+    max-width: min(82vw, 520px);
   }
 
   .utilities {
@@ -200,12 +277,27 @@
     gap: 2px;
   }
 
-  #browseActions {
-    min-height: 40px;
+  /* Offline stays accessible but collapses to a status dot so it cannot squeeze the
+     logo or utility buttons on a narrow iPhone. */
+  .network-status.show {
+    flex: 0 0 28px;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
   }
+
+  .network-status.show::before { margin: 0; }
+
+  #browseActions { min-height: 40px; }
 }
 
 @media (max-width: 390px) {
+  .genre-strip { scroll-padding-inline: 18px; }
+
   .app #genreStrip {
     height: 58px !important;
     min-height: 58px !important;
@@ -228,18 +320,29 @@
     background-position-x: 1px;
   }
 
-  .sheet-genres {
-    gap: 14px !important;
-  }
+  .sheet-genres { gap: 14px !important; }
 
   .sheet-genres .genre-button[data-genre] {
     padding-left: 30px;
     background-size: 24px 24px;
   }
 
-  .track-block {
-    min-height: 126px;
+  .app .track-block {
+    height: 140px;
+    min-height: 140px;
+    max-height: 140px;
   }
+}
+
+@media (max-width: 350px) {
+  .app #genreStrip { gap: 14px !important; }
+  .app #genreStrip .genre-button,
+  .app #genreStrip #nonstopButton {
+    padding-left: 30px;
+    font-size: 13px;
+    background-size: 23px 23px;
+  }
+  .brand { font-size: 25px !important; }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
@@ -262,8 +365,23 @@
     padding-left: 31px;
   }
 
-  .track-block {
-    min-height: 82px;
+  .app .track-block {
+    height: 106px;
+    min-height: 106px;
+    max-height: 106px;
+    grid-template-rows: 14px minmax(0, 1fr) 20px;
+  }
+
+  .app .track-block .song-title,
+  .app .track-block.is-long-title .song-title,
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(27px, 5.3vw, 37px);
+  }
+
+  .app .track-block .artist-row {
+    height: 20px;
+    min-height: 20px;
+    max-height: 20px;
   }
 }
 

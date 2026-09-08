@@ -51,7 +51,8 @@
         .brand { line-height: 42px; }
         .utilities { gap: 1px; min-height: 44px; }
         .utilities .icon-button, .utilities .mobile-heart { width: 42px; min-width: 42px; height: 42px; min-height: 42px; margin: 0; padding: 8px; border: 1px solid transparent; border-radius: 999px; background: rgba(8,10,18,.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .utilities .mobile-heart { display: grid !important; flex: 0 0 42px; }
+        .artist-row > .mobile-heart { visibility: hidden; }
+        .utilities .mobile-heart { display: grid !important; flex: 0 0 42px; visibility: visible; }
         .utilities .mobile-heart svg { width: 23px; height: 23px; }
         .utilities .mobile-heart.active { background: color-mix(in srgb, var(--accent) 12%, rgba(8,10,18,.24)); }
         .artist-row { display: block; }
@@ -62,10 +63,10 @@
         .progress-wrap { width: min(440px, 84vw); margin-top: 4px; }
         .genre-strip { padding-top: 14px; padding-bottom: 8px; }
 
-        .app .browse-actions { width: min(calc(100% - 28px), 460px); display: flex; grid-template-columns: none; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 0; margin-top: 5px; padding: 3px; border: 1px solid rgba(246,236,215,.11); border-radius: 16px; background: rgba(8,10,18,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 34px rgba(0,0,0,.12); }
-        .app .browse-actions .browse-button { flex: 1 1 50%; min-width: 0; min-height: 46px; margin: 0; padding: 0 10px; justify-content: center; border-radius: 12px; font-size: 15px; line-height: 1; }
-        .app .browse-actions #browseButton { border-radius: 12px 0 0 12px; }
-        .app .browse-actions #nonstopButton { border-left: 1px solid rgba(246,236,215,.10); border-radius: 0 12px 12px 0; }
+        /* Match the final runtime geometry on first paint so Browse never changes shape
+           after Nonstop initializes. */
+        .app .browse-actions { width: auto; display: flex; grid-template-columns: none; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 0; margin-top: 0; padding: 0; border: 0; border-radius: 0; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+        .app .browse-actions .browse-button { flex: 0 0 auto; min-width: 0; min-height: 40px; margin: 0; padding: 0 13px; justify-content: center; border: 1px solid rgba(246,236,215,.11); border-radius: 999px; background: rgba(8,10,18,.20); box-shadow: 0 8px 26px rgba(0,0,0,.10); font-size: 14px; line-height: 1; }
 
         .sheet { border-radius: 24px 24px 0 0; box-shadow: 0 -24px 72px rgba(0,0,0,.48); }
         .sheet-header { grid-template-columns: minmax(0,1fr) auto auto; gap: 4px; }
@@ -78,15 +79,15 @@
         .sheet-handle { height: 27px; }
         .sheet-handle span { width: 42px; height: 4px; margin-top: 10px; }
 
-        .song-row, .genre-button, .browse-button, .transport, .play-button, .icon-button, .heart-button, .sheet-close { touch-action: manipulation; }
+        .genre-button { touch-action: pan-x; }
+        .song-row, .browse-button, .transport, .play-button, .icon-button, .heart-button, .sheet-close { touch-action: manipulation; }
         .provider-dock { bottom: max(76px, calc(var(--safe-bottom) + 66px)); box-shadow: 0 22px 72px rgba(0,0,0,.52); }
       }
 
       @media (max-width: 390px) {
         .topbar { padding-left: max(14px, var(--safe-left)); padding-right: max(14px, var(--safe-right)); }
         .utilities .icon-button, .utilities .mobile-heart { width: 39px; min-width: 39px; height: 39px; min-height: 39px; }
-        .app .browse-actions { width: calc(100% - 20px); }
-        .app .browse-actions .browse-button { padding-inline: 7px; font-size: 14px; }
+        .app .browse-actions .browse-button { min-height: 38px; padding-inline: 11px; font-size: 13px; }
       }
 
       @media (display-mode: standalone) and (max-width: 700px) {
@@ -276,7 +277,7 @@
     <noscript><p>This music player needs JavaScript enabled.</p></noscript>
     <script src="simple-runtime.js"></script>
     <script src="nonstop-browser.js" defer></script>
-    <script type="module" src="app.js?v=20260908.1"></script>
+    <script type="module" src="app.js?v=20260908.2"></script>
     <script>
       (() => {
         const $ = (id) => document.getElementById(id);
@@ -288,8 +289,6 @@
         const queueButton = $('queueButton');
         const sheetClose = $('sheetClose');
         const mobileQuery = window.matchMedia('(max-width: 700px)');
-        const genreStrips = [document.getElementById('genreStrip'), document.getElementById('sheetGenreStrip')].filter(Boolean);
-        const stripScrollState = new WeakMap();
         if (!app || !sheet) return;
 
         const backdrop = document.createElement('div');
@@ -341,68 +340,13 @@
           }
         }
 
-        function revealGenreHorizontally(button, options = {}) {
-          const strip = button?.closest?.('.genre-strip');
-          if (!strip) return;
-          const stripRect = strip.getBoundingClientRect();
-          const buttonRect = button.getBoundingClientRect();
-          const edgeInset = Math.min(28, Math.max(16, strip.clientWidth * .055));
-          const safeLeft = stripRect.left + edgeInset;
-          const safeRight = stripRect.right - edgeInset;
-          let delta = 0;
-          if (buttonRect.left < safeLeft) delta = buttonRect.left - safeLeft;
-          else if (buttonRect.right > safeRight) delta = buttonRect.right - safeRight;
-          strip.scrollTop = 0;
-          if (Math.abs(delta) < 1) return;
-          const behavior = options && typeof options === 'object' && options.behavior === 'smooth' ? 'smooth' : 'auto';
-          strip.scrollTo({ left: Math.max(0, strip.scrollLeft + delta), top: 0, behavior });
-        }
-
-        function patchGenreButton(button) {
-          if (!(button instanceof HTMLElement) || button.dataset.axisStable === 'true') return;
-          button.dataset.axisStable = 'true';
-          Object.defineProperty(button, 'scrollIntoView', {
-            configurable: true,
-            value(options = {}) { revealGenreHorizontally(button, options); },
-          });
-        }
-
-        function stabilizeGenreStrip(strip) {
-          if (!(strip instanceof HTMLElement)) return;
-          const saved = stripScrollState.get(strip);
-          strip.scrollTop = 0;
-          strip.querySelectorAll('.genre-button').forEach(patchGenreButton);
-          if (Number.isFinite(saved) && saved > 0) {
-            const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-            strip.scrollLeft = Math.min(saved, maxLeft);
-          }
-        }
-
-        genreStrips.forEach((strip) => {
-          stripScrollState.set(strip, strip.scrollLeft || 0);
-          stabilizeGenreStrip(strip);
-          strip.addEventListener('scroll', () => {
-            if (strip.scrollTop) strip.scrollTop = 0;
-            stripScrollState.set(strip, Math.max(0, strip.scrollLeft));
-          }, { passive: true });
-          new MutationObserver(() => queueMicrotask(() => stabilizeGenreStrip(strip))).observe(strip, { childList: true });
-        });
-
         placeFavourite();
         syncSheetChrome();
         new MutationObserver(syncSheetChrome).observe(sheet, { attributes: true, attributeFilter: ['data-snap', 'aria-hidden'] });
-        mobileQuery.addEventListener?.('change', () => {
-          placeFavourite();
-          syncSheetChrome();
-          genreStrips.forEach(stabilizeGenreStrip);
-        });
+        mobileQuery.addEventListener?.('change', () => { placeFavourite(); syncSheetChrome(); });
         document.addEventListener('click', closeProviderOutside);
         document.addEventListener('keydown', closeTopLayer, true);
-        window.addEventListener('pageshow', () => {
-          placeFavourite();
-          syncSheetChrome();
-          genreStrips.forEach(stabilizeGenreStrip);
-        });
+        window.addEventListener('pageshow', () => { placeFavourite(); syncSheetChrome(); });
       })();
     </script>
   </body>
