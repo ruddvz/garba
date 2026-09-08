@@ -314,10 +314,11 @@
     try { rejectReady?.(new Error('YouTube player initialisation cancelled')); } catch { /* already settled */ }
   }
 
-  async function ensurePlayer(initialVideoId) {
+  async function ensurePlayer(initialVideoId, expectedToken) {
     if (playerReadyPromise) return playerReadyPromise;
 
     await loadApi();
+    if (expectedToken !== openToken || !activeSong) throw new Error('YouTube player initialisation cancelled');
     if (playerReadyPromise) return playerReadyPromise;
 
     const media = $('youtubeProviderMedia');
@@ -442,7 +443,7 @@
     setNote('YouTube · loading', { loading: true });
 
     try {
-      const readyPlayer = await ensurePlayer(id);
+      const readyPlayer = await ensurePlayer(id, token);
       if (token !== openToken || activeSong?.id !== song.id) return false;
 
       const logicalStart = resume ? restoreElapsed(song) : 0;
