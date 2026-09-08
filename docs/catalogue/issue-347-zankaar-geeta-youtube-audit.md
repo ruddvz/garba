@@ -2,7 +2,7 @@
 
 Date: 2026-09-08
 
-Refs: #157 and #221.
+Refs: #157, #221 and #351.
 
 ## Contract
 
@@ -35,16 +35,18 @@ The three long official release tracks remain executable:
 - `taal-non-stop-geeta-2022-02-taal-2` → `RgeoEpZdMnE`
 - `taal-non-stop-geeta-2022-03-taal-3` → `R2INBS_L_UQ`
 
-Four split tracks are now independently verified as auto-generated Official Artist Channel tracks whose YouTube metadata explicitly names the same `Taal - Non Stop Garba` release and 2022-09-12 release date:
+Six split tracks are now independently verified as auto-generated Official Artist Channel tracks whose YouTube metadata explicitly names the same `Taal - Non Stop Garba` release and 2022-09-12 release date:
 
 - track 7 `taal-non-stop-geeta-2022-07-maro-sona-no-ghadulo` → `1SGvlKWV0QA`
 - track 10 `taal-non-stop-geeta-2022-10-tu-kadi-ne-kalyani` → `2J5ajucu0B4`
 - track 15 `taal-non-stop-geeta-2022-15-maa-tu-pavama-pragtani` → `_hNG920U2rQ`
+- track 16 `taal-non-stop-geeta-2022-16-khamma-mari-pavavadi-maa` → `FShvylccWmg`
+- track 18 `taal-non-stop-geeta-2022-18-ho-kaji-ha-kanji` → `ZEtOzoI0qrA`
 - track 21 `taal-non-stop-geeta-2022-21-avje-mari-mata-tari-jarur-padi-che` → `YLn26lmvgYM`
 
 ### Remaining fail-closed Taal split tracks
 
-The following 14 rows remain non-playable until exact 2022 release-track YouTube identity is independently established:
+The following 12 rows remain non-playable until exact 2022 release-track YouTube identity is independently established:
 
 - `taal-non-stop-geeta-2022-04-radhaji-nu-zanzariyu`
 - `taal-non-stop-geeta-2022-05-gabbar-ma-vage-gugghra`
@@ -55,9 +57,7 @@ The following 14 rows remain non-playable until exact 2022 release-track YouTube
 - `taal-non-stop-geeta-2022-12-devi-ambika-rame`
 - `taal-non-stop-geeta-2022-13-ae-hali-hali`
 - `taal-non-stop-geeta-2022-14-sona-no-garbo`
-- `taal-non-stop-geeta-2022-16-khamma-mari-pavavadi-maa`
 - `taal-non-stop-geeta-2022-17-sava-man-sonu`
-- `taal-non-stop-geeta-2022-18-ho-kaji-ha-kanji`
 - `taal-non-stop-geeta-2022-19-aai-aasha-pura`
 - `taal-non-stop-geeta-2022-20-vanravan-maa`
 
@@ -66,8 +66,8 @@ Several of these titles have official 2022 standalone singles or music videos. T
 ## Result
 
 - 3 previously missing Zankaar split-track routes promoted to exact YouTube playback.
-- 4 previously unresolved Taal 2022 split-track routes promoted to exact YouTube playback.
-- 14 Taal 2022 split tracks remain explicitly fail-closed.
+- 6 previously unresolved Taal 2022 split-track routes promoted to exact YouTube playback.
+- 12 Taal 2022 split tracks remain explicitly fail-closed.
 - 0 guessed YouTube IDs.
 - 0 inferred timestamps.
 - 0 different-release or same-title substitutions.
