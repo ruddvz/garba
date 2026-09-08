@@ -35,9 +35,9 @@ const requiredRuntimeSignals = [
   'let playerReadyPromise = null;',
   'let playerReadyReject = null;',
   'let playerGeneration = 0;',
-  'async function ensurePlayer(initialVideoId)',
+  'async function ensurePlayer(initialVideoId, expectedToken)',
   "mount.id = 'garba-youtube-player'",
-  'const readyPlayer = await ensurePlayer(id);',
+  'const readyPlayer = await ensurePlayer(id, token);',
   'readyPlayer.loadVideoById(request)',
   'readyPlayer.cueVideoById(request)',
 ];
@@ -49,17 +49,20 @@ for (const signal of requiredRuntimeSignals) {
 const openBlock = runtime.match(/async function open\(song, \{ autoplay = true, resume = true \} = \{\}\) \{[\s\S]*?\n  \}\n\n  function toggle/)?.[0] || '';
 const closeBlock = runtime.match(/function close\(\) \{[\s\S]*?\n  \}\n\n  function restoreElapsed/)?.[0] || '';
 const destroyBlock = runtime.match(/function destroyPlayer\(\) \{[\s\S]*?\n  \}\n\n  async function ensurePlayer/)?.[0] || '';
-const ensureBlock = runtime.match(/async function ensurePlayer\(initialVideoId\) \{[\s\S]*?\n  \}\n\n  function close/)?.[0] || '';
+const ensureBlock = runtime.match(/async function ensurePlayer\(initialVideoId, expectedToken\) \{[\s\S]*?\n  \}\n\n  function close/)?.[0] || '';
 
 if (!openBlock) fail('Could not inspect YouTube open() lifecycle');
 if (openBlock.includes('destroyPlayer();')) {
   fail('Normal YouTube song navigation must reuse the existing IFrame player instead of destroying it');
 }
-if (!openBlock.includes('await ensurePlayer(id)')) {
-  fail('YouTube open() must await the shared player readiness lifecycle');
+if (!openBlock.includes('await ensurePlayer(id, token)')) {
+  fail('YouTube open() must await the shared player readiness lifecycle with its navigation token');
 }
 if (!ensureBlock.includes('if (playerReadyPromise) return playerReadyPromise;')) {
   fail('Concurrent first-load navigation must share the same YouTube player readiness promise');
+}
+if (!ensureBlock.includes("expectedToken !== openToken || !activeSong")) {
+  fail('Closing playback while the YouTube API loads must cancel player creation before an iframe is mounted');
 }
 if (!ensureBlock.includes("mount.id = 'garba-youtube-player'")) {
   fail('Persistent YouTube playback must use one stable player mount');
@@ -201,7 +204,8 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
 if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
 console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close/offline tears it down');
-console.log('✓ concurrent first-load navigation shares readiness and stale player generations cannot resume after teardown');
+console.log('✓ concurrent first-load navigation shares readiness and Close during API loading cannot create a hidden iframe afterward');
+console.log('✓ stale player generations cannot resume after teardown');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
