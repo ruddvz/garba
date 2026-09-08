@@ -340,3 +340,43 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; }
 @media (prefers-reduced-motion: reduce) {
   .app[data-loading="true"] .track-block::after { animation: none; }
 }
+
+/* Keep the player and Explore feeling like one continuous product surface. */
+@view-transition {
+  navigation: auto;
+}
+
+#browseButton {
+  view-transition-name: playgarba-explore-entry;
+}
+
+::view-transition-group(playgarba-explore-entry) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(.2,.72,.18,1);
+}
+
+::view-transition-old(root) {
+  animation: playgarba-route-out 220ms cubic-bezier(.4,0,1,1) both;
+}
+
+::view-transition-new(root) {
+  animation: playgarba-route-in 380ms cubic-bezier(.16,.78,.18,1) both;
+}
+
+@keyframes playgarba-route-out {
+  to { opacity: .18; transform: scale(1.006); filter: blur(1.5px); }
+}
+
+@keyframes playgarba-route-in {
+  from { opacity: .14; transform: scale(.994); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #browseButton { view-transition-name: none; }
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(playgarba-explore-entry) {
+    animation-duration: 1ms !important;
+  }
+}
