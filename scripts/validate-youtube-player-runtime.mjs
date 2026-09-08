@@ -24,6 +24,7 @@ const requiredRuntimeSignals = [
   'player.pauseVideo',
   'player.seekTo',
   'loadVideoById',
+  'cueVideoById',
   'controls: 0',
   'playsinline: 1',
   'enablejsapi: 1',
@@ -31,10 +32,42 @@ const requiredRuntimeSignals = [
   'verified-unchaptered-youtube-release',
   'youtubeStage',
   'provider-dock',
+  "const PLAYER_MOUNT_ID = 'garba-youtube-player';",
+  'let playerReadyPromise = null;',
+  'if (player) return player;',
+  'await ensurePlayer(id);',
 ];
 
 for (const signal of requiredRuntimeSignals) {
   if (!runtime.includes(signal)) fail(`YouTube runtime is missing required signal ${JSON.stringify(signal)}`);
+}
+
+const openStart = runtime.indexOf('async function open(song');
+const openEnd = runtime.indexOf('function toggle(', openStart);
+const openBody = openStart >= 0 && openEnd > openStart ? runtime.slice(openStart, openEnd) : '';
+if (!openBody) {
+  fail('YouTube runtime must expose the expected open() lifecycle');
+} else {
+  if (openBody.includes('destroyPlayer();')) {
+    fail('Ordinary YouTube song changes must reuse the existing player instead of destroying it');
+  }
+  if (openBody.includes('replaceChildren(mount)') || /new\s+window\.YT\.Player/.test(openBody)) {
+    fail('Ordinary YouTube song changes must not recreate the player mount or YT.Player instance');
+  }
+  if (!openBody.includes('player.loadVideoById(request)') || !openBody.includes('player.cueVideoById(request)')) {
+    fail('Persistent YouTube player must switch media with loadVideoById/cueVideoById');
+  }
+}
+
+const destroyCalls = runtime.match(/\bdestroyPlayer\(\);/g) || [];
+if (destroyCalls.length !== 1 || !/function close\(\)\s*\{[\s\S]*?destroyPlayer\(\);/.test(runtime)) {
+  fail('YT.Player destruction must be reserved for the explicit close/offline path');
+}
+if ((runtime.match(/new\s+window\.YT\.Player/g) || []).length !== 1) {
+  fail('YouTube runtime must create at most one YT.Player instance per visible playback session');
+}
+if (!/async function ensurePlayer\(initialVideoId\)[\s\S]*?if \(player\) return player;[\s\S]*?mount\.id = PLAYER_MOUNT_ID;/.test(runtime)) {
+  fail('YouTube runtime must retain one stable player mount while the dock stays active');
 }
 
 const prohibitedPatterns = [
@@ -116,6 +149,7 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
 
 if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
+console.log('✓ YouTube queue navigation reuses one visible IFrame player and destroys it only when playback is explicitly closed');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
