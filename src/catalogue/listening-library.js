@@ -143,7 +143,8 @@ function makeCard({ song, release, artwork, kind, elapsed = 0 }) {
 
   if (kind === 'continue') {
     const duration = Number(song.durationSeconds || 0);
-    const position = Math.max(0, Number(elapsed || 0));
+    const rawPosition = Math.max(0, Number(elapsed || 0));
+    const position = duration > 0 ? Math.min(rawPosition, duration) : rawPosition;
     if (duration > 0 && position > 0) {
       const progress = document.createElement('span');
       progress.className = 'personal-listening-progress';
@@ -229,34 +230,32 @@ async function renderListeningLibrary() {
   heading.id = 'personalListeningTitle';
   heading.textContent = 'Your listening';
   const description = document.createElement('p');
-  description.textContent = continueSong
+  description.textContent = continueSong && favouriteSongs.length
     ? 'Pick up where you left off, then revisit songs you saved.'
-    : 'Songs you saved in the PlayGarba player.';
+    : continueSong
+      ? 'Pick up where you left off in the PlayGarba player.'
+      : 'Songs you saved in the PlayGarba player.';
   head.append(heading, description);
 
   const rail = document.createElement('div');
   rail.className = 'personal-listening-rail';
-  rail.setAttribute('role', 'list');
+  rail.setAttribute('role', 'group');
   rail.setAttribute('aria-label', 'Your PlayGarba listening');
 
   if (continueSong) {
     const release = releaseById.get(continueSong.releaseId);
-    const card = makeCard({
+    rail.append(makeCard({
       song: continueSong,
       release,
       artwork,
       kind: 'continue',
       elapsed: Number(stored.session.elapsed || 0),
-    });
-    card.setAttribute('role', 'listitem');
-    rail.append(card);
+    }));
   }
 
   for (const song of favouriteSongs) {
     const release = releaseById.get(song.releaseId);
-    const card = makeCard({ song, release, artwork, kind: 'favourite' });
-    card.setAttribute('role', 'listitem');
-    rail.append(card);
+    rail.append(makeCard({ song, release, artwork, kind: 'favourite' }));
   }
 
   section.append(head, rail);
