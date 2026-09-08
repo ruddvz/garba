@@ -93,6 +93,11 @@ const formatTime = (seconds = 0) => {
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
 };
 
+const formatDuration = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '--:--';
+  return formatTime(seconds);
+};
+
 const currentSong = () => state.songs.find((song) => song.id === state.songId) || null;
 const currentGenre = () => state.genres.find((genre) => genre.id === state.genreId) || null;
 const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId);
@@ -265,7 +270,7 @@ function renderPlayer() {
   els.songArtist.textContent = song.artist;
   els.miniTitle.textContent = song.title;
   els.miniArtist.textContent = song.artist;
-  els.durationTime.textContent = formatTime(state.duration || song.durationSeconds);
+  els.durationTime.textContent = formatDuration(state.duration || song.durationSeconds);
   els.elapsedTime.textContent = formatTime(state.elapsed);
 
   const ratio = state.duration ? Math.min(1, Math.max(0, state.elapsed / state.duration)) : 0;
@@ -489,7 +494,7 @@ function renderSheet() {
 
     const duration = document.createElement('span');
     duration.className = 'song-duration';
-    duration.textContent = formatTime(song.durationSeconds);
+    duration.textContent = formatDuration(song.durationSeconds);
 
     const favourite = document.createElement('button');
     favourite.type = 'button';
