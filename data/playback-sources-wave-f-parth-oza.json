@@ -1,7 +1,7 @@
 {
-  "version": "0.18.1",
+  "version": "0.18.2",
   "updated": "2026-09-08",
-  "note": "Wave F exact route for Parth Oza's 2025 Garbe Ghoome Tu single. The Amazon track page matches the provider album identity, artist and 3:22 duration; the canonical release date follows the album page because the exact track page exposes a stale display date.",
+  "note": "Wave F provenance for Parth Oza's Garbe Ghoome Tu. The Amazon track page matches the canonical single identity, artist and 3:22 duration, but non-YouTube providers are evidence-only under the current playback policy. A 2026-09-08 YouTube migration audit confirmed that the song was publicly released on YouTube, but did not recover a directly verifiable exact video ID/URL for this recording. Keep this row non-playable until an exact YouTube route is independently verified; do not substitute another recording or guess a video ID.",
   "songSources": {
     "parth-garbe-ghoome-tu-2025-01-garbe-ghoome-tu": {
       "provider": "amazon-music",
@@ -9,7 +9,9 @@
       "sourceType": "verified-track-source",
       "releaseId": "parth-garbe-ghoome-tu-2025",
       "trackNumber": 1,
-      "evidenceType": "official-amazon-music-track-page"
+      "evidenceType": "official-amazon-music-track-page",
+      "playbackRole": "provenance-only",
+      "youtubeMigrationStatus": "unresolved"
     }
   }
 }
