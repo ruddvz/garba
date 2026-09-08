@@ -1,7 +1,7 @@
 {
-  "version": "0.17.1",
-  "songCount": 1169,
-  "releaseCount": 209,
+  "version": "0.17.2",
+  "songCount": 1160,
+  "releaseCount": 208,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -108,6 +108,20 @@
     "data/catalogue/releases/releases-43-alpa-current-staples.json",
     "data/catalogue/releases/releases-44-raag-mehta.json"
   ],
+  "retiredReleaseIds": [
+    "atul-live-uwb-2015"
+  ],
+  "retiredSongIds": [
+    "atul-live-uwb-2015-01-garba-3-tali-pt-1-live",
+    "atul-live-uwb-2015-02-garba-3-tali-pt-2-live",
+    "atul-live-uwb-2015-03-garba-3-tali-pt-3-live",
+    "atul-live-uwb-2015-04-garba-3-tali-pt-4-live",
+    "atul-live-uwb-2015-05-garba-3-tali-pt-5-live",
+    "atul-live-uwb-2015-06-garba-2-tali-pt-1-live",
+    "atul-live-uwb-2015-07-garba-2-tali-pt-2-live",
+    "atul-live-uwb-2015-08-garba-2-tali-pt-3-live",
+    "atul-live-uwb-2015-09-garba-2-tali-pt-4-live"
+  ],
   "freeSourceChunks": [
     "data/catalogue/free-sources/free-sources-01.json",
     "data/catalogue/free-sources/free-sources-02.json"
@@ -163,5 +177,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.1 removes duplicate release rows so the declared release count is the true canonical unique count, and catalogue builds now reject duplicate release IDs before generation."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.2 keeps superseded catalogue rows as explicit tombstoned provenance while excluding them from generated canonical runtime data; K Hove Hove's duplicate 2016 Spotify edition is retired in favour of the richer dedicated digital-edition record."
 }
