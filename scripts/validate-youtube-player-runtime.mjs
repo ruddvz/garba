@@ -82,17 +82,29 @@ if (!(mobileLayerIndex >= 0 && outputIndex > mobileLayerIndex)) {
 }
 
 for (const marker of [
-  'function stopMainPlayback()',
-  'window.GARBA_YOUTUBE_PLAYER?.close?.()',
-  "document.querySelector('#providerStage.open[aria-hidden=\"false\"] #providerDockStop')?.click()",
-  'if (audio && !audio.paused) audio.pause()',
-  'stopMainPlayback();',
-  'min-width:200px;min-height:200px',
+  "const DEFAULT_SET_ID = 'set-aditya-ochhav-2023'",
+  "button.textContent = 'Nonstop'",
+  "strip.insertBefore(button, strip.firstElementChild)",
+  "url.searchParams.set('nonstop', set.id)",
+  "playbackProvider: 'youtube'",
+  'youtubeStartSeconds: 0',
+  'durationSeconds: 0',
+  'window.GARBA_YOUTUBE_PLAYER.open(state.activeTrack, { autoplay: true, resume: false })',
+  "$('progress')?.addEventListener('input', captureSeek, { capture: true })",
+  'function restorePreviousSession(previous)',
+  'function captureMainNavigation(event)',
+  "target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')",
+  'data-play-mode',
+  '#genreStrip{grid-row:6!important',
+  '#browseActions{grid-row:7!important',
 ]) {
-  if (!nonstop.includes(marker)) fail(`Nonstop playback coordination missing marker: ${marker}`);
+  if (!nonstop.includes(marker)) fail(`Direct Nonstop playback contract missing marker: ${marker}`);
 }
-if (!nonstop.includes('https://www.youtube-nocookie.com/embed/')) {
-  fail('Nonstop playback must retain the official YouTube embed route');
+if (nonstop.includes('window.open(')) {
+  fail('Primary Nonstop playback must not open an external provider window');
+}
+if (nonstop.includes('nonstop-overlay') || nonstop.includes('youtube-nocookie.com/embed/')) {
+  fail('Primary Nonstop playback must reuse the PlayGarba provider engine instead of a separate modal/embed player');
 }
 
 const providerIndex = bootstrap.indexOf('provider-runtime.js');
@@ -108,5 +120,6 @@ console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-rem
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
 console.log('✓ Pages flattens the mobile playback coordination layer into the PWA-cached production stylesheet');
-console.log('✓ Nonstop playback stops the main player before opening its visible YouTube embed');
+console.log('✓ Nonstop is a first-class PlayGarba mode that reuses the controllable YouTube engine and restores the prior listening state on exit');
+console.log('✓ Nonstop sits before the genre strip and Explore remains a separate lower discovery action');
 console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');
