@@ -127,13 +127,13 @@ for (const song of songs) {
   providers.set(song.playbackProvider, (providers.get(song.playbackProvider) || 0) + 1);
 }
 
-if (missing.length) fail(`${missing.length} generated songs are missing runtime provider fields (first: ${missing.slice(0, 5).map((song) => song.id).join(', ')})`);
+if (missing.length) fail(`${missing.length} generated songs are missing source evidence fields (first: ${missing.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (brokenChapters.length) fail(`${brokenChapters.length} performance-chapter routes lost their YouTube ID or start time`);
 if (misclassifiedExactTracks.length) fail(`${misclassifiedExactTracks.length} exact-shaped provider track URLs are still labelled as release-level fallbacks instead of track references`);
 if (misclassifiedSingleReleases.length) fail(`${misclassifiedSingleReleases.length} one-song release URLs are still labelled as multi-track release fallbacks`);
 if (misclassifiedUnchapteredYoutube.length) fail(`${misclassifiedUnchapteredYoutube.length} unchaptered multi-song YouTube routes are still allowed to look like exact song playback`);
 if (brokenReleaseTrackReferences.length) fail(`${brokenReleaseTrackReferences.length} release track references do not preserve a track-shaped evidence URL or incorrectly retain a timestamp`);
-if (malformedExactTrackRoutes.length) fail(`${malformedExactTrackRoutes.length} exact provider routes do not point to provider-specific track selections (first: ${malformedExactTrackRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
+if (malformedExactTrackRoutes.length) fail(`${malformedExactTrackRoutes.length} exact provider evidence routes do not point to provider-specific track selections (first: ${malformedExactTrackRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (rutviGeneratedPerformanceRoutes.length) fail(`${rutviGeneratedPerformanceRoutes.length} Rutvi Pandya songs still depend on the generic title-only performance matcher (first: ${rutviGeneratedPerformanceRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (duplicatedExactGroups.length) {
   const sample = duplicatedExactGroups.slice(0, 3).map((group) => `${group.length} songs → ${group[0].playbackSourceUrl}`).join('; ');
@@ -148,14 +148,23 @@ if (Number(coverage.verifiedReleaseTrackReference) > releaseTrackReferenceRoutes
 }
 
 for (const marker of [
-  'song?.youtubeStartSeconds',
-  "params.set('start'",
-  "song.playbackSourceType === 'verified-release-source'",
-  "song.playbackSourceType === 'verified-performance-chapter'",
-  "song?.playbackSourceType === 'verified-unchaptered-youtube-release'",
-  'Open the verified full release',
-  'exact song timestamp not verified',
-]) if (!providerRuntime.includes(marker)) fail(`Provider runtime missing enriched-route marker: ${marker}`);
+  'function applyYoutubeOnlyPolicy(song)',
+  'delete safe.audioUrl;',
+  "safe.playbackProvider = 'youtube';",
+  "safe.playbackSourceType = 'youtube-migration-pending';",
+  "button.id = 'youtubeVideoButton';",
+  'Tap the YouTube button to open this track.',
+  'YouTube source not mapped yet.',
+  "Object.defineProperty(window, 'GARBA_YOUTUBE_PLAYER'",
+  'window.GARBA_YOUTUBE_ONLY_POLICY',
+]) if (!providerRuntime.includes(marker)) fail(`YouTube-only policy runtime missing marker: ${marker}`);
+
+for (const marker of [
+  'open.spotify.com/embed',
+  'embed.music.apple.com',
+  'w.soundcloud.com/player',
+  'Continue on ${name}',
+]) if (providerRuntime.includes(marker)) fail(`YouTube-only runtime still contains executable provider fallback marker: ${marker}`);
 
 for (const marker of [
   "song.playbackSourceType === 'verified-release-track-reference'",
@@ -182,7 +191,7 @@ for (const marker of [
 const providerBootIndex = fastRuntime.indexOf('provider-runtime.js');
 const continuityBootIndex = fastRuntime.indexOf('player-continuity.js');
 if (providerBootIndex < 0 || continuityBootIndex < 0 || continuityBootIndex < providerBootIndex) {
-  fail('Fast startup runtime must load provider-runtime.js before player-continuity.js');
+  fail('Fast startup runtime must load YouTube-only policy before player-continuity.js');
 }
 
 for (const marker of [
@@ -197,22 +206,19 @@ for (const marker of [
 ]) if (!app.includes(marker)) fail(`Large-catalogue browser missing bounded-search marker: ${marker}`);
 
 if (failed) process.exit(1);
-console.log(`✓ all ${songs.length} generated songs have at least a verified source route`);
-console.log(`✓ ${exactSelectionIds.size} songs have an honest exact-selection playback route; ${releaseBrowseOnlyRoutes.length} are release/provider browsing fallbacks`);
-console.log(`✓ ${releaseTrackReferenceRoutes.length} songs are explicitly blocked from false exact playback because their route is only a release track reference`);
-console.log(`✓ ${directRoutes.length} authorised direct-audio routes are available to the native audio player`);
+console.log(`✓ all ${songs.length} generated songs retain verified source evidence for catalogue migration`);
 console.log(`✓ ${timestampedYoutubeRoutes.length} YouTube routes select a verified video/timestamp`);
 console.log(`✓ ${chapterRoutes.length} verified live/performance routes preserve their mapped chapter start`);
-console.log(`✓ ${exactTrackRoutes.length} unique-song exact provider track mappings remain after duplicate-route downgrades`);
-console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
-console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes open as full releases instead of pretending to start at a selected song`);
-console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
-console.log('✓ exact Spotify, Apple Music, and Amazon Music routes use provider-specific track selections');
-console.log('✓ Rutvi Pandya catalogue routes do not depend on generic title-only performance matching');
+console.log(`✓ ${releaseTrackReferenceRoutes.length} songs remain explicitly blocked from false exact playback because their source is reference-only`);
+console.log(`✓ ${directRoutes.length} direct-audio entries remain catalogue evidence but the runtime policy removes them as executable playback routes`);
+console.log(`✓ ${exactTrackRoutes.length} exact commercial-provider mappings remain migration evidence after duplicate-route safety checks`);
+console.log(`✓ ${singleReleaseRoutes.length} one-song release evidence entries preserve truthful source classification`);
+console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes remain manual/reference-only until exact boundaries are verified`);
+console.log(`✓ source-evidence distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
+console.log('✓ provider-runtime enforces YouTube-only execution and exposes one safe bottom-right YouTube control');
+console.log('✓ Spotify, Apple Music, Amazon Music and other commercial-provider source evidence cannot become executable runtime fallbacks');
 console.log('✓ duplicate exact-track URLs cannot map to different song identities');
-console.log('✓ browser runtime downgrades any future duplicate exact mapping to provider search instead of autoplaying the wrong song');
-console.log('✓ route coverage is not reported as equivalent to exact-song or first-party playback');
+console.log('✓ route-truth sanitisation still runs before YouTube playback decisions');
 console.log('✓ first interaction uses the embedded fast catalogue while the full catalogue hydrates after load');
-console.log('✓ split playback runtime loads provider handling before continuity/safety handling');
 console.log('✓ blank Search avoids building the full catalogue DOM and broad queries cap rendered rows at 160');
 console.log('✓ the advertised / keyboard shortcut opens Search');
