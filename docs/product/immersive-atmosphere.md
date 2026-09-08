@@ -21,6 +21,8 @@ Spatial voices use `PannerNode` with the `HRTF` panning model where applicable. 
 
 Atmosphere follows playback state instead of the settings panel. Direct audio and controllable PlayGarba playback can start, pause and resume the scene with the music. When the page is hidden, the Atmosphere master fades down and Web Audio processing is suspended after the idle window.
 
+The current one-tap YouTube player updates the application `is-playing` state, so Atmosphere can follow mapped YouTube playback without requiring the listener to operate a second audio control. The separate monochrome YouTube button controls the visible performance-stage presentation, not Atmosphere or primary playback.
+
 Opaque third-party provider embeds cannot expose reliable internal play and pause state to PlayGarba. In those cases Atmosphere fails conservatively instead of allowing crowd ambience to continue when music may have stopped.
 
 Selecting a mode while music is paused can play a short preview from a trusted user gesture. The preview ends automatically and does not turn into an independent background soundtrack.
@@ -48,11 +50,13 @@ The toolbar control exposes Off, Courtyard, Live Ground and Immersive 360°. The
 
 Immersive mode is labelled as headphone-oriented. Reduced-motion preferences disable spatial orbiting. Data Saver status is surfaced inside the panel when remote ambience is disabled.
 
+The Atmosphere control is inserted into the same top utility group as the existing player controls. It is intentionally discoverable but does not activate ambience automatically; the listener explicitly chooses a mode.
+
 ## Production packaging
 
-GitHub Pages concatenates `assets/runtime/immersive-atmosphere.js` into the existing network-first deployed `app.js` payload. This avoids another production runtime request and keeps installed PWA updates on the same freshness path as the core player.
+`provider-runtime.js` loads `assets/runtime/immersive-atmosphere.js` as an explicit player runtime layer. This makes the same Atmosphere implementation available in source previews, browser-smoke environments and production instead of relying on a deployment-only concatenation step.
 
-`data/atmosphere-sources.json` is deployed with the existing data directory and is already covered by the service worker's network-first JSON policy.
+The service worker precaches the Atmosphere runtime and treats it as network-first fresh runtime code. `data/atmosphere-sources.json` is already covered by the service worker's network-first JSON policy. The external public-domain crowd bed remains optional and the procedural local scene keeps Courtyard, Live Ground and Immersive 360° usable when that remote source is unavailable.
 
 ## QA checklist
 
@@ -60,11 +64,12 @@ Before changing Atmosphere audio or UI, verify:
 
 1. Off produces no Atmosphere audio.
 2. Courtyard, Live Ground and Immersive 360° remain quieter than the music at default intensity.
-3. Play, pause and resume coordinate correctly with controllable playback.
-4. Backgrounding the page mutes and later suspends Atmosphere processing.
-5. Data Saver prevents the remote crowd request and leaves local ambience functional.
-6. Reduced Motion keeps spatial sources stationary.
-7. Offline or failed remote audio still leaves a usable local scene.
-8. Mobile Safari and installed iOS PWA can unlock Web Audio from a trusted gesture.
-9. Keyboard focus stays inside the open panel and returns to the Atmosphere button on close.
-10. Opaque provider playback never causes Atmosphere to continue independently of an unknown playback state.
+3. Main Play starts verified YouTube playback without a second YouTube-button gate, and Atmosphere follows the resulting playback state.
+4. Play, pause and resume coordinate correctly with controllable playback.
+5. Backgrounding the page mutes and later suspends Atmosphere processing.
+6. Data Saver prevents the remote crowd request and leaves local ambience functional.
+7. Reduced Motion keeps spatial sources stationary.
+8. Offline or failed remote audio still leaves a usable local scene.
+9. Mobile Safari and installed iOS PWA can unlock Web Audio from a trusted gesture.
+10. Keyboard focus stays inside the open panel and returns to the Atmosphere button on close.
+11. Opaque provider playback never causes Atmosphere to continue independently of an unknown playback state.
