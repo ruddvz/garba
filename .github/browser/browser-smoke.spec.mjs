@@ -212,6 +212,7 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
 test('Explore is reached through the production player link and renders real catalogue content', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
   await page.goto('/');
+  // Navigation commit establishes the document boundary; visible Explore UI establishes readiness.
   await Promise.all([
     page.waitForURL(/\/explore\/$/, { waitUntil: 'commit' }),
     page.locator('#browseButton').click(),
