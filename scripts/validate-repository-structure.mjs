@@ -16,6 +16,7 @@ const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
   '.gitignore',
+  'AGENTS.md',
   'CNAME',
   'CONTRIBUTING.md',
   'README.md',
