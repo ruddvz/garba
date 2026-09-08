@@ -87,5 +87,151 @@
 
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="listening-library.js"></script>
+  <script type="module">
+    const VISUALS = [
+      '../assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
+      '../assets/backgrounds/library/02-rhythmic-drums-courtyard-a.webp',
+      '../assets/backgrounds/library/03-devotional-garba-courtyard.webp',
+      '../assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
+      '../assets/backgrounds/library/05-fusion-gujarati-neon.webp',
+      '../assets/backgrounds/library/06-fusion-abstract-neon.webp',
+      '../assets/backgrounds/library/07-dandiya-purple-courtyard.webp',
+      '../assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
+      '../assets/backgrounds/library/09-warm-stage-courtyard.webp',
+      '../assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
+      '../assets/backgrounds/library/11-master-dark-courtyard.webp',
+      '../assets/backgrounds/library/12-rhythmic-drums-courtyard-b.webp',
+      '../assets/backgrounds/library/13-traditional-marigold-courtyard.webp',
+      '../assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
+      '../assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
+    ];
+    const HOME_VISUAL = VISUALS[10];
+    const root = document.documentElement;
+    const body = document.body;
+    const sections = document.getElementById('catalogueSections');
+    const detail = document.getElementById('collectionDetail');
+    const closeExplore = document.querySelector('.close-explore');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const collectionVisuals = new Map();
+    let currentAmbient = HOME_VISUAL;
+    let fadeTimer = 0;
+    let renderQueued = false;
+
+    const atmosphereStyle = document.createElement('style');
+    atmosphereStyle.dataset.playgarbaExploreAtmosphere = '';
+    atmosphereStyle.textContent = `
+      body::before{transition:opacity .32s ease,filter .45s ease!important}
+      body.explore-ambient-fading::before{opacity:.18}
+      body[data-catalogue-open="true"]::after{background:radial-gradient(circle at 50% 7%,rgba(255,225,171,.08),transparent 25%),linear-gradient(to bottom,rgba(7,7,10,.38) 0,rgba(7,7,10,.60) 42%,rgba(7,7,10,.84) 100%)}
+      .collection-card::after{background:radial-gradient(circle at var(--gleam-x,17%) var(--gleam-y,12%),rgba(255,255,255,.30),transparent 13%),radial-gradient(circle at 74% 19%,rgba(255,226,177,.15),transparent 15%),linear-gradient(118deg,transparent 24%,rgba(255,255,255,.09) 45%,transparent 64%)!important}
+      .collection-card[data-atmosphere-bound="true"] .collection-image{will-change:transform,filter}
+      .collection-detail:not([hidden]){animation:exploreDetailReveal .34s cubic-bezier(.2,.7,.2,1) both}
+      @keyframes exploreDetailReveal{from{opacity:.55;transform:translateY(10px)}to{opacity:1;transform:none}}
+      @media(prefers-reduced-motion:reduce){body::before{transition:none!important}.collection-detail:not([hidden]){animation:none!important}}
+    `;
+    document.head.append(atmosphereStyle);
+
+    function fallbackVisual(id = '') {
+      let hash = 2166136261;
+      for (const char of String(id)) {
+        hash ^= char.codePointAt(0);
+        hash = Math.imul(hash, 16777619);
+      }
+      return VISUALS[Math.abs(hash >>> 0) % VISUALS.length];
+    }
+
+    function activeCollectionId() {
+      return new URLSearchParams(location.hash.replace(/^#/, '')).get('collection');
+    }
+
+    function commitAmbient(url) {
+      currentAmbient = url;
+      root.style.setProperty('--explore-bg', `url("${url}")`);
+      requestAnimationFrame(() => body.classList.remove('explore-ambient-fading'));
+    }
+
+    function setAmbient(url) {
+      if (!url || url === currentAmbient) return;
+      clearTimeout(fadeTimer);
+      if (reduceMotion.matches) {
+        commitAmbient(url);
+        return;
+      }
+      body.classList.add('explore-ambient-fading');
+      const preload = new Image();
+      const finish = () => {
+        clearTimeout(fadeTimer);
+        fadeTimer = window.setTimeout(() => commitAmbient(url), 90);
+      };
+      preload.addEventListener('load', finish, { once: true });
+      preload.addEventListener('error', finish, { once: true });
+      preload.src = url;
+      fadeTimer = window.setTimeout(() => commitAmbient(url), 260);
+    }
+
+    function syncAmbient() {
+      const id = activeCollectionId();
+      const detailOpen = Boolean(detail && !detail.hidden && id);
+      body.dataset.catalogueOpen = detailOpen ? 'true' : 'false';
+      setAmbient(detailOpen ? (collectionVisuals.get(id) || fallbackVisual(id)) : HOME_VISUAL);
+    }
+
+    function bindGleam(card) {
+      if (card.dataset.atmosphereBound === 'true') return;
+      card.dataset.atmosphereBound = 'true';
+      card.addEventListener('click', () => queueMicrotask(syncAmbient));
+      card.addEventListener('pointermove', (event) => {
+        if (reduceMotion.matches || !finePointer.matches) return;
+        const rect = card.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
+        card.style.setProperty('--gleam-x', `${x.toFixed(1)}%`);
+        card.style.setProperty('--gleam-y', `${y.toFixed(1)}%`);
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.removeProperty('--gleam-x');
+        card.style.removeProperty('--gleam-y');
+      });
+    }
+
+    function applyCardVisuals() {
+      renderQueued = false;
+      if (!sections) return;
+      const cards = [...sections.querySelectorAll('.collection-card[data-collection-id]')];
+      cards.forEach((card, index) => {
+        const id = card.dataset.collectionId;
+        const visual = VISUALS[index % VISUALS.length];
+        collectionVisuals.set(id, visual);
+        const image = card.querySelector('.collection-image');
+        if (image) image.style.backgroundImage = `url("${visual}")`;
+        bindGleam(card);
+      });
+      syncAmbient();
+    }
+
+    function queueVisualRefresh() {
+      if (renderQueued) return;
+      renderQueued = true;
+      queueMicrotask(applyCardVisuals);
+    }
+
+    if (sections) {
+      new MutationObserver(queueVisualRefresh).observe(sections, { childList: true, subtree: true });
+    }
+    if (detail) {
+      new MutationObserver(syncAmbient).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    window.addEventListener('popstate', () => queueMicrotask(syncAmbient));
+    window.addEventListener('hashchange', () => queueMicrotask(syncAmbient));
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !detail?.hidden || event.defaultPrevented || !closeExplore) return;
+      event.preventDefault();
+      location.assign(closeExplore.href);
+    });
+
+    queueVisualRefresh();
+    syncAmbient();
+  </script>
 </body>
 </html>
