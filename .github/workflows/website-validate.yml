@@ -3,6 +3,8 @@ name: Validate PlayGarba website
 on:
   push:
     branches: [website]
+  pull_request:
+    branches: [website]
   workflow_dispatch:
 
 permissions:
@@ -18,20 +20,55 @@ jobs:
       - name: Validate static site contract
         run: |
           set -euo pipefail
-          for file in index.html styles.css site.js robots.txt sitemap.xml 404.html; do
+
+          required_files=(
+            index.html
+            styles.css
+            pages.css
+            site.js
+            pages.js
+            robots.txt
+            sitemap.xml
+            404.html
+            how-to-use/index.html
+            install/index.html
+            live/index.html
+            about/index.html
+          )
+
+          for file in "${required_files[@]}"; do
             test -f "$file" || { echo "Missing required website file: $file"; exit 1; }
           done
 
           node --check site.js
+          node --check pages.js
+
           grep -q '<link rel="canonical" href="https://playgarba.com/"' index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/how-to-use/"' how-to-use/index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/install/"' install/index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/live/"' live/index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/about/"' about/index.html
+
           grep -q 'https://live.playgarba.com/' index.html
-          grep -q "playerParams" site.js
-          grep -q "window.location.replace" site.js
+          grep -q 'https://live.playgarba.com/' how-to-use/index.html
+          grep -q 'https://live.playgarba.com/' install/index.html
+          grep -q 'https://live.playgarba.com/' live/index.html
+          grep -q 'https://live.playgarba.com/' about/index.html
+
+          grep -q 'Open as Web App' install/index.html
+          grep -q 'playerParams' site.js
+          grep -q 'window.location.replace' site.js
           grep -q "path.startsWith('/songs/')" 404.html
           grep -q "path.startsWith('/releases/')" 404.html
           grep -q "path.startsWith('/catalogue/')" 404.html
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' robots.txt
-          grep -q '<loc>https://playgarba.com/</loc>' sitemap.xml
+
+          for route in / /how-to-use/ /install/ /live/ /about/; do
+            grep -q "<loc>https://playgarba.com${route}</loc>" sitemap.xml || {
+              echo "Missing sitemap route: ${route}"
+              exit 1
+            }
+          done
 
           python3 - <<'PY'
           from html.parser import HTMLParser
@@ -49,25 +86,53 @@ jobs:
                       if value:
                           self.refs.append(value)
 
-          root = Path('.')
-          parser = Parser()
-          parser.feed(Path('index.html').read_text())
+          root = Path('.').resolve()
+          documents = [
+              Path('index.html'),
+              Path('how-to-use/index.html'),
+              Path('install/index.html'),
+              Path('live/index.html'),
+              Path('about/index.html'),
+              Path('404.html'),
+              Path('catalogue/index.html'),
+              Path('songs/index.html'),
+              Path('releases/index.html'),
+          ]
+
           missing = []
-          for ref in parser.refs:
-              if ref.startswith(('#', 'mailto:', 'tel:', 'data:')):
-                  continue
-              parsed = urlparse(ref)
-              if parsed.scheme or parsed.netloc:
-                  continue
-              path = parsed.path.lstrip('/')
-              if not path:
-                  continue
-              candidate = root / path
-              if path.endswith('/'):
-                  candidate = candidate / 'index.html'
-              if not candidate.exists():
-                  missing.append(ref)
+          for document in documents:
+              parser = Parser()
+              parser.feed(document.read_text())
+              for ref in parser.refs:
+                  if ref.startswith(('#', 'mailto:', 'tel:', 'data:')):
+                      continue
+
+                  parsed = urlparse(ref)
+                  if parsed.scheme or parsed.netloc:
+                      continue
+
+                  path = parsed.path
+                  if not path:
+                      continue
+
+                  if path.startswith('/'):
+                      candidate = root / path.lstrip('/')
+                  else:
+                      candidate = root / document.parent / path
+
+                  if path.endswith('/'):
+                      candidate = candidate / 'index.html'
+
+                  candidate = candidate.resolve()
+                  if root not in candidate.parents and candidate != root:
+                      missing.append(f'{document}: {ref} (outside site root)')
+                      continue
+
+                  if not candidate.exists():
+                      missing.append(f'{document}: {ref}')
+
           if missing:
-              raise SystemExit('Missing local references: ' + ', '.join(sorted(set(missing))))
-          print('Static website references validated.')
+              raise SystemExit('Missing local references:\n' + '\n'.join(sorted(set(missing))))
+
+          print('Static website references validated across public pages.')
           PY
