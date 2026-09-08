@@ -1,0 +1,32 @@
+[
+  {
+    "id":"taal-non-stop-geeta-rabari-2022",
+    "title":"Taal - Non Stop Garba",
+    "artist":"Geeta Rabari",
+    "releaseDate":"2022-09-12",
+    "originalReleaseYear":2022,
+    "label":"Geeta Rabari Official",
+    "categories":["modern-gujarati-garba","traditional-garba","mataji-devotional","krishna-garba","folk-lokgeet"],
+    "visualGenre":"traditional",
+    "entryType":"album",
+    "songCount":21,
+    "durationSeconds":8781,
+    "series":"Taal",
+    "volume":"2022",
+    "live":{"isLive":false,"venue":null},
+    "sources":[
+      {"platform":"Amazon Music","url":"https://music.amazon.co.uk/albums/B0BFFC9H6L","kind":"official-21-track-album"},
+      {"platform":"Qobuz","url":"https://www.qobuz.com/us-en/album/taal-non-stop-garba-geeta-rabari/ql356c90lh1va","kind":"provider-21-track-album"},
+      {"platform":"YouTube","url":"https://www.youtube.com/watch?v=msCZCOHy74U","kind":"official-auto-generated-taal-1"},
+      {"platform":"YouTube","url":"https://www.youtube.com/watch?v=RgeoEpZdMnE","kind":"official-auto-generated-taal-2"},
+      {"platform":"YouTube","url":"https://www.youtube.com/watch?v=R2INBS_L_UQ","kind":"official-auto-generated-taal-3"}
+    ],
+    "trackImportComplete":true,
+    "rightsStatus":"commercial-catalogue",
+    "audioBundled":false,
+    "metadataStatus":"verified-with-provider-rounding",
+    "audioAvailability":"external-source-only",
+    "durationPrecision":"amazon-displayed-track-sum",
+    "notes":"Amazon Music publishes the full 21-track September 12, 2022 edition and exposes a distinct track href for every item. Tracks 1-3 are long nonstop masters named Taal (1), Taal (2) and Taal (3); they are tracks within this release, not separate album volumes. Qobuz independently confirms the 21-track order and reports a 2:26:09 total, while the rounded Amazon track displays sum to 2:26:21. Canonical durations retain Amazon's displayed values and document the 12-second aggregate provider-rounding variance. Geeta Rabari's official YouTube distribution independently confirms the three long master tracks."
+  }
+]
