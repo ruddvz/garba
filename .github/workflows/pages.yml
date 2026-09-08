@@ -54,6 +54,29 @@ jobs:
           cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
           cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
 
+          # Product navigation: the homepage remains the player. Its primary browse
+          # action opens the single Explore catalogue; Search/Favourites/Queue still
+          # use the lightweight in-player song sheet. Keep the source player markup
+          # stable while the concurrent playback runtime is actively evolving.
+          python3 - <<'PY'
+          from pathlib import Path
+          page = Path('_site/index.html')
+          html = page.read_text()
+          old = '''          <button class="browse-button" id="browseButton" type="button" aria-expanded="false" aria-controls="songSheet">
+            <span>Browse songs</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"></path></svg>
+          </button>'''
+          new = '''          <a class="browse-button" id="browseButton" href="./catalogue/" aria-label="Explore PlayGarba catalogues" style="text-decoration:none">
+            <span>Explore</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg>
+          </a>'''
+          if old not in html:
+              raise SystemExit('Homepage Browse songs control changed; update the Explore transform intentionally.')
+          page.write_text(html.replace(old, new, 1))
+          PY
+          grep -q 'href="./catalogue/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
+          grep -q '<span>Explore</span>' _site/index.html || { echo 'Homepage Explore label missing'; exit 1; }
+
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
           cat \
