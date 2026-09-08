@@ -9,6 +9,7 @@
     loading: null,
     activeSet: null,
     activeTrack: null,
+    previousSession: null,
     buttonObserver: null,
     metadataObserver: null,
     toastTimer: null,
@@ -135,7 +136,6 @@
     style.id = 'nonstopPlaybackStyles';
     style.textContent = `
       #nonstopButton{display:inline-flex;align-items:center;gap:6px}
-      #nonstopButton::first-letter{font-feature-settings:"tnum"}
       .app[data-play-mode="nonstop"] #nonstopButton{color:var(--ivory)}
       .app[data-play-mode="nonstop"] #nonstopButton::after{background:color-mix(in srgb,var(--accent) 70%,var(--ivory))}
       .app[data-play-mode="nonstop"] #nonstopButton::before{background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 48%,transparent)}
@@ -195,9 +195,7 @@
       button.setAttribute('aria-pressed', 'false');
       button.addEventListener('click', () => startNonstop());
       strip.insertBefore(button, strip.firstElementChild);
-    } else if (button.parentElement !== strip) {
-      strip.insertBefore(button, strip.firstElementChild);
-    } else if (strip.firstElementChild !== button) {
+    } else if (button.parentElement !== strip || strip.firstElementChild !== button) {
       strip.insertBefore(button, strip.firstElementChild);
     }
     syncButton();
@@ -253,6 +251,77 @@
     state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });
   }
 
+  function urlWithoutNonstop() {
+    const url = new URL(location.href);
+    url.searchParams.delete('nonstop');
+    return `${url.pathname}${url.search ? url.search : ''}${url.hash}`;
+  }
+
+  function capturePreviousSession(songs) {
+    const params = new URLSearchParams(location.search);
+    const songId = params.get('song');
+    const song = songs.find((entry) => entry.id === songId)
+      || songs.find((entry) => entry.title === $('songTitle')?.textContent && entry.artist === $('songArtist')?.textContent)
+      || null;
+    const audio = $('audio');
+    return {
+      url: urlWithoutNonstop(),
+      song,
+      audioTime: Number(audio?.currentTime || 0),
+      hadAudioSource: Boolean(audio?.getAttribute('src')),
+      appGenre: $('app')?.dataset.genre || song?.genre || 'traditional',
+      eyebrow: $('genreEyebrow')?.textContent || '',
+      title: song?.title || $('songTitle')?.textContent || '',
+      artist: song?.artist || $('songArtist')?.textContent || '',
+      duration: $('durationTime')?.textContent || '--:--',
+      miniTitle: song?.title || $('miniTitle')?.textContent || '',
+      miniArtist: song?.artist || $('miniArtist')?.textContent || '',
+    };
+  }
+
+  function restorePreviousSession(previous) {
+    if (!previous) return;
+    history.replaceState(history.state, '', previous.url);
+    const app = $('app');
+    if (app) app.dataset.genre = previous.appGenre;
+    if ($('genreEyebrow')) $('genreEyebrow').textContent = previous.eyebrow;
+    if ($('songTitle')) $('songTitle').textContent = previous.title;
+    if ($('songArtist')) $('songArtist').textContent = previous.artist;
+    if ($('durationTime')) $('durationTime').textContent = previous.duration;
+    if ($('miniTitle')) $('miniTitle').textContent = previous.miniTitle;
+    if ($('miniArtist')) $('miniArtist').textContent = previous.miniArtist;
+
+    const audio = $('audio');
+    if (audio) {
+      audio.removeAttribute('src');
+      try { audio.load(); } catch { /* no-op */ }
+      if (previous.hadAudioSource && previous.song?.audioUrl) {
+        audio.src = previous.song.audioUrl;
+        try { audio.load(); } catch { /* no-op */ }
+        if (previous.audioTime > 0) {
+          const restoreTime = () => {
+            try { audio.currentTime = previous.audioTime; } catch { /* no-op */ }
+            audio.removeEventListener('loadedmetadata', restoreTime);
+          };
+          audio.addEventListener('loadedmetadata', restoreTime);
+        }
+      }
+    }
+
+    try {
+      if (previous.song && 'mediaSession' in navigator && 'MediaMetadata' in window) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: previous.song.title,
+          artist: previous.song.artist,
+          album: previous.eyebrow || 'GARBA',
+          artwork: [{ src: 'assets/icons/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        });
+      }
+    } catch {
+      // Media Session metadata is optional.
+    }
+  }
+
   function setUrlForNonstop(set, anchor) {
     const url = new URL(location.href);
     url.searchParams.set('genre', anchor.genre || 'traditional');
@@ -260,13 +329,6 @@
     url.searchParams.set('nonstop', set.id);
     url.searchParams.delete('browse');
     url.searchParams.delete('source');
-    history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
-  }
-
-  function clearNonstopUrl() {
-    const url = new URL(location.href);
-    if (!url.searchParams.has('nonstop')) return;
-    url.searchParams.delete('nonstop');
     history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
   }
 
@@ -310,6 +372,7 @@
         return true;
       }
 
+      if (!state.activeSet) state.previousSession = capturePreviousSession(songs);
       stopNativeAudio();
       state.activeSet = set;
       state.activeTrack = {
@@ -337,7 +400,7 @@
       return true;
     } catch (error) {
       console.warn('PlayGarba nonstop playback failed', error);
-      deactivateNonstop({ closePlayer: true, clearUrl: true });
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
       announce('Nonstop Garba could not start in the player. Try again when online.');
       return false;
     } finally {
@@ -345,16 +408,19 @@
     }
   }
 
-  function deactivateNonstop({ closePlayer = true, clearUrl = true } = {}) {
+  function deactivateNonstop({ closePlayer = true, restoreSession = true } = {}) {
     if (!state.activeSet && !new URL(location.href).searchParams.has('nonstop')) return;
+    const previous = state.previousSession;
     state.activeSet = null;
     state.activeTrack = null;
+    state.previousSession = null;
     $('app')?.removeAttribute('data-play-mode');
     if (closePlayer) {
       try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* player may already be closed */ }
     }
     markDock();
-    if (clearUrl) clearNonstopUrl();
+    if (restoreSession && previous) restorePreviousSession(previous);
+    else if (restoreSession) history.replaceState(history.state, '', urlWithoutNonstop());
     syncButton();
   }
 
@@ -373,7 +439,7 @@
     }
 
     if (target.closest('#genreStrip .genre-button, .song-copy')) {
-      deactivateNonstop({ closePlayer: true, clearUrl: true });
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
     }
   }
 
@@ -388,9 +454,7 @@
   }
 
   function warmNonstop() {
-    const warm = () => {
-      Promise.all([findSet(), loadSongs()]).catch(() => null);
-    };
+    const warm = () => Promise.all([findSet(), loadSongs()]).catch(() => null);
     if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
     else setTimeout(warm, 1800);
   }
@@ -406,13 +470,13 @@
 
     window.addEventListener('offline', () => {
       if (!state.activeSet) return;
-      deactivateNonstop({ closePlayer: true, clearUrl: false });
+      deactivateNonstop({ closePlayer: true, restoreSession: true });
       announce('Offline. Nonstop Garba playback stopped.');
     });
     window.addEventListener('popstate', () => {
       const id = new URL(location.href).searchParams.get('nonstop');
       if (id && !state.activeSet) startNonstop(id, { quiet: true });
-      else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, clearUrl: false });
+      else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: false });
     });
 
     warmNonstop();
@@ -421,7 +485,7 @@
 
   window.GARBA_NONSTOP = {
     play: startNonstop,
-    stop: () => deactivateNonstop({ closePlayer: true, clearUrl: true }),
+    stop: () => deactivateNonstop({ closePlayer: true, restoreSession: true }),
     get activeSetId() { return state.activeSet?.id || null; },
   };
 
