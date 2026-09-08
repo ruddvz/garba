@@ -15,7 +15,7 @@ const checks = [
   [css.includes('touch-action: pan-x;'), 'genre touch behavior must remain horizontal'],
   [css.includes('overflow-y: hidden !important;'), 'genre strips must not regain vertical overflow'],
   [css.includes('-webkit-line-clamp: 2;'), 'Now Playing title must remain visually bounded to two lines'],
-  [css.includes('.app .track-block {') && css.includes('height: 156px;') && css.includes('height: 146px;'), 'Now Playing frame must stay fixed on desktop and mobile'],
+  [css.includes('.app .track-block {') && css.includes('height: 146px;') && css.includes('height: 126px;'), 'Now Playing frame must stay fixed on desktop and mobile'],
   [css.includes('.network-status.show {') && css.includes('font-size: 0;'), 'mobile offline state must not widen the utility row'],
 ];
 
