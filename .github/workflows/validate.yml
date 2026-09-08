@@ -16,3 +16,9 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - name: Render social preview
+        run: |
+          mkdir -p /tmp/playgarba-social
+          convert -background none assets/social/playgarba-og-card.svg /tmp/playgarba-social/garba-og-card.png
+          identify -format '%wx%h' /tmp/playgarba-social/garba-og-card.png | grep -qx '1200x630'
+          file /tmp/playgarba-social/garba-og-card.png | grep -q 'PNG image data'
