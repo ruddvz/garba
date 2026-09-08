@@ -130,11 +130,34 @@ for (const marker of [
   if (!pages.includes(marker)) fail(`Pages PWA-icon contract is missing: ${marker}`);
 }
 
+for (const marker of [
+  'src/catalogue/index.html _site/catalogue/index.html',
+  'src/catalogue/catalogue.css _site/catalogue/catalogue.css',
+  'src/catalogue/catalogue.js _site/catalogue/catalogue.js',
+]) {
+  if (!pages.includes(marker)) fail(`Pages Explore contract is missing: ${marker}`);
+}
+for (const marker of [
+  "'./catalogue/'",
+  "'./catalogue/index.html'",
+  "'./catalogue/catalogue.css'",
+  "'./catalogue/catalogue.js'",
+  "'/catalogue/catalogue.css'",
+  "'/catalogue/catalogue.js'",
+  'const isCatalogueNavigation = (pathname) =>',
+  "pathname.endsWith('/catalogue/')",
+  "const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';",
+  "const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');",
+  'if (isJsonData(url.pathname)) {',
+]) {
+  if (!sw.includes(marker)) fail(`Explore PWA/offline contract is missing: ${marker}`);
+}
+
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v11`")) {
-  fail('PWA cache generation must be v11 after adding the full rendered install-icon matrix');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v12`")) {
+  fail('PWA cache generation must be v12 after making Explore shell/data routing offline-safe');
 }
 
 if (failed) process.exit(1);
@@ -146,3 +169,4 @@ console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps leg
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
 console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
+console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
