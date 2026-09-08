@@ -40,6 +40,16 @@ for (const marker of [
   if (!explore.includes(marker)) fail(`Explore album-rail interaction is missing: ${marker}`);
 }
 
+const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
+inlineModules.forEach((source, index) => {
+  try {
+    new Function(source);
+  } catch (error) {
+    fail(`Explore inline module ${index + 1} has invalid JavaScript: ${error.message}`);
+  }
+});
+
 if (runtime.includes("active.scrollIntoView(")) {
   fail('Selected release reveal must stay horizontal-only and must not use scrollIntoView');
 }
