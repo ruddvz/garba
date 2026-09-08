@@ -1,5 +1,5 @@
 {
-  "version": "0.18.0",
+  "version": "0.18.1",
   "songCount": 1160,
   "releaseCount": 208,
   "categoryCount": 19,
@@ -162,7 +162,11 @@
     "data/playback-sources-rutvi-ramzat-3-safety.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
     "data/playback-sources-rutvi-ramzat-4-exact.json",
-    "data/playback-sources-ho-raj-exact.json"
+    "data/playback-sources-ho-raj-exact.json",
+    "data/playback-sources-garbi-exact.json",
+    "data/playback-sources-killol-2-exact.json",
+    "data/playback-sources-maro-garbo-exact.json",
+    "data/playback-sources-zankaar-2022-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -188,5 +192,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.18.0 hardens the Rutvi Pandya wave against same-title false matches: the full 2022 album is pinned to Rutvi's own verified official YouTube chapters; all 2023 selections remain exact with Mathura Ma Vagi Morli upgraded to Rutvi's exact official YouTube track; Rutvi Ni Ramzat 3.0 now has thirteen independently verified exact provider tracks while nine unresolved songs are explicitly pinned to the verified Apple Music album fallback; and all 2026 selections remain exact. Rutvi catalogue songs no longer depend on the generic title-only performance matcher. Exact Amazon album selections with a provider-returned trackAsin are now recognised and validated as track-specific routes."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.18.1 preserves the Rutvi Pandya safety/routing work from v0.18.0 and all newer runtime, nonstop and social-preview work, then completes Playback Wave A with release-specific exact routes for Garbi, Killol 2.0, Maro Garbo Non Stop Garba Tran Taali and Zankaar [Clean]. Lower-priority provider links are deliberately omitted wherever a stronger verified YouTube chapter or exact YouTube song already exists. Exact Amazon album-track hrefs are accepted only when surfaced directly by the provider; unverified and edition-ambiguous songs remain conservative rather than inferring IDs or timestamps."
 }
