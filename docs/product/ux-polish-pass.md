@@ -1,8 +1,17 @@
 # GARBA product polish pass
 
-Date: 7 September 2026
+Date: 7 September 2026  
+Status: historical implementation note; not the current playback/deployment contract
 
-This pass focuses on interaction quality, accessibility, first paint, PWA behaviour, provider playback consistency and community contribution UX. It does not change canonical catalogue facts or overwrite the active song-discovery work.
+For current production policy and deployed identity, use:
+
+- [`youtube-first-playback.md`](youtube-first-playback.md)
+- [`playback-runtime-coverage.md`](playback-runtime-coverage.md)
+- `https://playgarba.com/build-info.json`
+
+Some provider-language below describes the pre-YouTube-only implementation that existed during this pass. It is preserved as history, not as permission to execute Spotify, Apple Music, Amazon Music or direct-audio routes today.
+
+This pass focused on interaction quality, accessibility, first paint, PWA behaviour, provider playback consistency and community contribution UX. It did not change canonical catalogue facts or overwrite active song-discovery work.
 
 ## Problems found and addressed
 
@@ -16,63 +25,61 @@ The app now starts in an explicit loading state with a restrained skeleton. Init
 
 The provider bridge dynamically inserted a second `.browse-button` immediately before the existing Browse Songs button. Both inherited the same CSS grid row, so they could occupy the same grid cell and visually overlap.
 
-Both actions now share a `browse-actions` wrapper. The dynamically inserted Nonstop Garba action automatically lands in that wrapper and the pair uses a responsive flex layout.
+Both actions were moved into a shared `browse-actions` wrapper so the pair could lay out responsively. Later Explore/Nonstop work superseded parts of that original browser structure; current runtime/viewport tests are authoritative.
 
 ### 3. Current-song favourite was effectively mobile-only
 
 The heart beside the current track was hidden on larger screens. Desktop users could open the favourites collection but did not have an equally direct current-track action.
 
-The current-track heart is now available beside the artist across responsive sizes while the top utility still opens the saved collection.
+The current-track heart became available beside the artist across responsive sizes while the top utility continued to open the saved collection.
 
 ### 4. Playback-provider UI felt disconnected from the player
 
-YouTube/Spotify/nonstop playback used a separate injected visual style. The overlay is now brought back into the GARBA glass/ivory/accent system through the final polish stylesheet.
+At the time of this pass, injected provider/Nonstop surfaces used a separate visual style. The polish layer brought those surfaces into the GARBA glass/ivory/accent system and strengthened focus handling.
 
-Keyboard/focus handling is also strengthened: when a provider dialog opens, background controls become inert, focus moves into the dialog, Tab remains contained inside it, and focus returns to the originating control when it closes.
+That observation predates the current YouTube-only execution policy. The present contract is one visible YouTube playback engine; other provider identities may remain only as source/migration evidence.
 
 ### 5. Provider provenance was not visible until playback
 
-A subtle source badge is now attached to the current track when a verified playback mapping is available, e.g. `YouTube source` or `Spotify source`. This gives listeners a clearer expectation about what the Play button will do.
+This pass introduced source provenance so listeners could understand where a catalogue mapping came from.
+
+Under the current policy, a source/provenance label must never imply that PlayGarba will execute that provider. An Apple Music, Spotify, Amazon Music or other provider record can remain useful evidence while the song is still awaiting an exact YouTube route. Executable state must come from the YouTube-only route/readiness contract.
 
 ### 6. Sharing a specific track was unnecessarily awkward
 
-The top utility bar now includes Share. On supported devices it uses the native share sheet; otherwise it copies the deep link. The current `genre` + `song` state is preserved so the recipient can open the same track.
+The top utility bar added Share. On supported devices it used the native share sheet; otherwise it copied the deep link. The current `genre` + `song` state was preserved so the recipient could open the same track.
 
 Keyboard shortcut: `Shift+S`.
 
 ### 7. Search had no discoverable keyboard shortcut
 
-Pressing `/` outside a text field now opens the existing search interface. The search field wording is clearer: `Search songs or artists`.
+Pressing `/` outside a text field opened the existing search interface. Search wording was clarified around songs/artists.
 
 ### 8. Song-browser result volume was unclear
 
-The sheet now reports the number of currently rendered results next to its title. Song rows also use `content-visibility` where supported to reduce rendering cost for large result sets.
+The browser reported the number of rendered results and used `content-visibility` where supported to reduce rendering cost for large result sets. Current Explore progressive-loading behavior is covered by later validators.
 
 ### 9. Offline state was only communicated after a transition
 
-A compact Offline indicator now appears in the utility area whenever the browser reports loss of connectivity. Existing offline/back-online toasts still provide transition feedback.
+A compact Offline indicator was added whenever the browser reported loss of connectivity. Existing offline/back-online toasts continued to provide transition feedback.
 
 ### 10. The first screen needed stronger readability without hiding the artwork
 
-The player remains artwork-first. Instead of adding an opaque card, a localized radial scrim sits behind track metadata. Controls receive restrained glass treatment and the progress control has a larger interactive thumb.
+The player remained artwork-first. Instead of adding an opaque card, a localized radial scrim sat behind track metadata. Controls received restrained glass treatment and the progress control gained a larger interactive thumb.
 
 ### 11. SEO/share metadata was too generic
 
-The static page now describes GARBA as an open community-built catalogue and includes canonical/Open Graph/Twitter metadata plus minimal WebApplication structured data.
+The static page gained canonical/Open Graph/Twitter metadata plus minimal WebApplication structured data.
 
 When a real track is selected, page title and metadata update to the track and artist for better history, tab identification and sharing context.
 
 ### 12. PWA polish
 
-The service-worker shell version was bumped so existing installations receive the new UI assets. The new polish JS/CSS are precached. Navigation fallback now ignores query-string differences when matching the cached shell.
-
-The manifest now has a stronger description and launch handling that prefers focusing an existing installed app window where supported.
+The service-worker shell version was bumped so existing installations could receive the new UI assets. Navigation fallback was hardened for query-string differences and the manifest received stronger launch/install handling.
 
 ### 13. Open-source contribution UX was incomplete
 
-The repository mission says everyone should be able to help find missing Garba, but there was no dedicated contributor path.
-
-This pass adds:
+This pass added:
 
 - `CONTRIBUTING.md`;
 - a Missing song / release issue form;
@@ -81,26 +88,17 @@ This pass adds:
 
 Non-code contributions such as old track lists, regional artist information, Gujarati spelling corrections and live-set timestamps are explicitly welcomed.
 
-## Important remaining visual blocker
+## Historical visual note
 
-The current production `data/genres.json` still points to the lightweight SVG courtyard worlds. The 15 supplied 2752 × 1536 source images have been curated and lossless WebP masters were prepared separately, but those large binary masters are not yet present on this GitHub branch.
+The original pass recorded a blocker around lightweight SVG worlds and a separately prepared 15-image source pack. That note is no longer a current deployment decision: later work added and validated the production artwork-pack flow.
 
-Do **not** point production genre JSON at missing WebP paths. The site should keep working with the current SVG worlds until the actual WebP files are committed.
-
-Once the binaries are present, the correct follow-up is:
-
-1. keep the 15 highest-quality masters as source/archive assets;
-2. derive separate web-delivery variants rather than forcing multi-megabyte masters into first load;
-3. art-direct mobile crops or `object-position`/background positions per image;
-4. preload only the first critical world and stage the others after first interaction/idle time;
-5. update service-worker version and validation together with the asset mapping;
-6. verify visual contrast against every selected world on phone, tablet and desktop.
+Current artwork/runtime packaging checks, the Pages workflow and `/build-info.json` are authoritative for what ships. Do not reintroduce old image-pack assumptions from this historical document.
 
 ## Validation expectations
 
-`npm run check` remains the source-controlled validation entry point. This pass extends static checks so the polish layer, Browse/Nonstop wrapper, Share control and provider focus helper cannot silently disappear in a future refactor.
+`npm run check` remains the source-controlled validation entry point.
 
-Static validation is not a substitute for real device testing. Before calling the product visually complete, test the HTTPS deployment on at least:
+Static validation is not a substitute for real-device testing. Before calling the product visually/reliably complete, verify at least:
 
 - iPhone Safari portrait;
 - iPhone Safari short landscape;
@@ -112,6 +110,8 @@ Static validation is not a substitute for real device testing. Before calling th
 - keyboard-only navigation;
 - reduced-motion mode;
 - offline/reconnect;
-- YouTube provider playback;
-- Spotify provider playback;
+- exact YouTube playback through the visible player;
+- migration-only/unavailable recording behavior;
 - Nonstop set and chapter playback.
+
+For every result, record the exact deployed revision from `/build-info.json` rather than assuming source and assembled production files are byte-identical.

@@ -1,118 +1,100 @@
 # Garba catalogue status
 
-Updated: 6 September 2026
+Updated: 8 September 2026
 
-## Current verified database
+The live catalogue is changing quickly. Do not use an old Markdown count, screenshot, source-file byte comparison or chat transcript as proof of what is deployed.
 
-- 6 visual worlds
-- 19 music taxonomy categories
-- 79 verified releases
-- 585 verified song records
-- 61 releases marked track-import complete
-- 535 songs with exact source-backed durations
-- 50 songs with duration deliberately left unknown
-- 20 rights-audited free/access resources
-- 40 discovery artists
-- 93 community/editorial/blog recommendation signals
-- 10 indexed live/nonstop sets
-- 158 timestamped live/nonstop chapters
-- 2 playback-source maps
-- 0 commercial audio files bundled
+The deployed source of truth is:
 
-## Song records by primary category
+```text
+https://playgarba.com/build-info.json
+```
 
-| Category | Songs |
-| --- | ---: |
-| Roots / Archive | 1 |
-| Traditional Garba | 20 |
-| Tran Taali / 3 Taali | 78 |
-| Be Taali / 2 Taali | 5 |
-| Raas / Dandiya | 36 |
-| Dodhiyu / Dodiyo | 2 |
-| Hinch | 5 |
-| Dakla | 11 |
-| Sanedo | 4 |
-| Mataji / Devotional | 233 |
-| Krishna Garba / Raas | 45 |
-| Folk / Lokgeet | 3 |
-| Live Garba | 11 |
-| Modern Gujarati Garba | 83 |
-| Hip-hop Garba | 21 |
-| Electronic / Fusion | 19 |
-| DJ / Remix | 1 |
-| Bollywood / Filmi Garba | 2 |
-| Instrumental / Cinematic | 5 |
+`/build-info.json` is generated from the exact GitHub Pages build after the production `app.js` and `styles.css` bundles are assembled. It identifies the deployed Git commit, catalogue version, source/active/ordinary-listening counts, YouTube coverage and SHA-256 digests for key deployed files.
 
-`category` is the primary classification. `styles` and release-level `categories` provide secondary classification without duplicating a track.
+## Dated source baseline
 
-## Current discovery layer
+This snapshot is useful for historical comparison only. The live diagnostic supersedes it after the next deployment.
 
-The discovery layer is intentionally separate from canonical release metadata. It can retain community and live-performance leads without presenting an unofficial upload as an official release.
+Baseline revision: `7de0b41a7dfa8c347e966e3a60b0700444011de8`  
+Catalogue index version: `0.29.1`  
+Captured: 8 September 2026
 
-Current discovery files include:
+| Measure | Baseline | Meaning |
+| --- | ---: | --- |
+| Raw indexed source-song rows | 1,682 | Song rows across indexed source chunks before retired IDs are removed |
+| Retired song IDs | 9 | Historical duplicate IDs retained for migration/redirect safety |
+| Active generated song rows | 1,673 | Non-retired rows generated into `data/songs.json` |
+| Raw indexed source-release rows | 241 | Release rows across indexed source chunks before retirement |
+| Retired release IDs | 2 | Historical release IDs retained for migration/redirect safety |
+| Active releases | 239 | Non-retired rows generated into `data/releases.json` |
+| Music taxonomy categories | 19 | Canonical browse taxonomy categories |
+| Visual worlds | 6 | Presentation worlds; they are not the music taxonomy |
+| Rights-audited free/access resources | 20 | Provenance/acquisition resources, not automatically redistributable masters |
+| Exact controllable YouTube routes | 883 | Build-time routes classified as executable under the YouTube-only policy |
+| YouTube-playable coverage | 52.8% | 883 / 1,673 active generated song rows at this baseline |
+| YouTube migration backlog | 790 | Active rows not yet classified as exact controllable YouTube playback |
 
-- Aditya Gadhvi / Gadhavi and the complete 25-track `Ochhav` import
-- Rishikesh Gadhvi and the timestamped `Araj` 2025 nonstop set
-- Dhara Shah `Rankar` and `Rankar 2.0` 3-taali material
-- Geeta Rabari `Taal 4.0`, `GORI` and 2026 `Garbe Haal`
-- Kinjal Dave `Navrangi 2.0`
-- Rajesh Ahir and Sabhiben Ahir `Raas Utsav`
-- Parth Oza `Garbe Ghoome`
-- Hardik Dave, Jaysinh Gadhavi, Ishani Dave, Kairavi Buch, Santvani Trivedi, Umesh Barot, Jignesh Barot, Jigardan Gadhavi and other current/live candidates
-- recommendation signals from Spotify/editorial and community playlists, Reddit, publicly indexed Instagram posts, current event listings and Gujarati/Navratri blogs
+The ordinary-listening song/release counts are intentionally not frozen in this document because presentation-only aliases, provenance-only source editions and Nonstop handoffs are still being reconciled. `/build-info.json` reports those counts for each deployed revision.
 
-No stable public X/Twitter recommendation evidence was found in the current indexed pass, so none is fabricated.
+## Count vocabulary
 
-## Playback model
+Use these terms precisely:
 
-Playback follows the source rather than pretending every catalogue row is a locally hosted MP3.
+- **Raw source songs/releases**: every row in the indexed catalogue source chunks, including rows retained only so historical IDs can be migrated safely.
+- **Active songs/releases**: raw rows after `retiredSongIds` / `retiredReleaseIds` are removed. This is the generated catalogue denominator.
+- **Ordinary-listening / curated-visible songs/releases**: active rows whose `presentationRole` is normal `catalogue`. `catalogue-alias`, `source-only` and `nonstop-only` rows remain source truth but do not become duplicate ordinary listening objects.
+- **Source-evidence mapped**: an active row has retained provider/source evidence. This does **not** mean the source may execute in PlayGarba.
+- **YouTube playable**: an active row has an exact controllable YouTube route accepted by the repository's YouTube coverage policy.
+- **Playable in this session**: a runtime/browser fact, not a build-time catalogue count. An exact YouTube route can still be temporarily unusable because of connectivity, YouTube API loading, embed availability, autoplay/user-gesture state or another browser/session failure. `build-info.json` therefore reports this value as `null` with an explanation rather than fabricating a number.
 
-1. Licensed/local `audioUrl` uses the native audio player.
-2. Verified YouTube sources use a visible YouTube embed.
-3. Timestamped nonstop sets expose chapter buttons and start at the selected section.
-4. Verified Spotify tracks use Spotify's embedded player.
-5. Other verified providers open their original source.
-6. A provider search is shown only when a direct verified source has not yet been attached.
-7. Official artist and label sources rank above distributor sources, which rank above community uploads.
+This vocabulary prevents four different denominators from being called “the catalogue” or “playable.”
 
-Community uploads may be retained for discovery, but they are not silently promoted to canonical releases or mirrored into the repository.
+## Playback policy
 
-## Fully imported examples
+PlayGarba is YouTube-only for executable music playback.
 
-Complete track-level imports currently include:
+- Exact verified YouTube routes may play through the visible YouTube IFrame player.
+- Apple Music, Spotify, Amazon Music, SoundCloud, Bandcamp, Qobuz, direct-audio records and other provider URLs may remain as provenance/migration evidence, but they are not executable fallbacks.
+- A release page or representative provider track is not exact-song playback.
+- An unchaptered multi-song YouTube upload is not promoted to a selected song unless the selected boundary is verified.
+- Same-title recordings by another performer are not substitutions for the selected recording.
+- Continuous/Nonstop recordings remain one recording; verified chapters identify positions inside that recording rather than manufacturing separate audio files.
 
-- Aditya Gadhvi's 25-track `Ochhav`
-- Falguni Pathak's 30-track `Non Stop Garba by Falguni Pathak`
-- Atul Purohit's `Maro Garbo Non Stop Garba Tran Taali`
-- Praful Dave's `Navdurgani Navratri`
-- Aishwarya Majmudar's `Rangtaali`
-- `Ramzat - Non Stop Garba`
-- `Ramzat 2 - Non Stop Trantaali Garba`
-- `Khamma 2`
-- the 1993 `Khelaiya Non-Stop Disco Dandia 93`
-- Soor Mandir `Re Lol`, `Anand`, `Jay Ho`, `Jagran`, `Ude Re Gulal`, `Taali`, `Rangoli`, `Chandaliyo` and `Thanganat` releases
-- Hemant Chauhan's `Shyam (Non Stop Raas, Vol. 3)` and `Madhuvan (Bansari-2) Non-Stop Raas`
-- verified Be Taali, Hinch and live United Way material
-- current canonical singles from Aditya Gadhvi, Geeta Rabari, Parth Oza, Jaysinh Gadhavi and Dhara Shah
+Run `npm run youtube:coverage` after rebuilding the catalogue to inspect the current source revision. Use the deployed `/build-info.json` when the question is what production actually contains.
+
+## Discovery layer
+
+Discovery is separate from canonical release identity so PlayGarba can retain verified live/Nonstop sets, artist research and recommendation evidence without pretending every discovery source is an official release.
+
+At the baseline above, repository validation reported 84 canonical discovery/Nonstop records, 50 discovery artists and 94 recommendation signals. Those are dated facts, not permanent totals.
+
+`data/discovery/sets/index.json` is the canonical Nonstop registry. The retired parallel `data/nonstop.json` must not be recreated.
 
 ## Source-of-truth layout
 
-The catalogue is deliberately chunked so it stays reviewable and collision-resistant.
+- `data/catalogue/index.json` declares the catalogue version, expected active counts, indexed song/release/free-source chunks, retirement lists, playback-source manifests and generated-file paths.
+- `data/catalogue/songs/` contains source song shards.
+- `data/catalogue/releases/` contains source release shards.
+- `data/catalogue/free-sources/` contains rights/access research records.
+- `data/songs.json` and `data/releases.json` are generated active runtime/catalogue outputs.
+- `data/taxonomy.json` is the 19-category music taxonomy.
+- `data/genres.json` maps catalogue content into six presentation worlds.
+- `data/discovery/sets/` is the canonical Nonstop/discovery-set source.
+- playback manifests listed by `data/catalogue/index.json` preserve exact routes and migration evidence.
 
-- `data/catalogue/songs/` contains 19 song chunks totalling 585 records.
-- `data/catalogue/releases/` contains 7 release chunks totalling 79 records.
-- `data/catalogue/free-sources/` contains 2 rights-audited acquisition chunks totalling 20 records.
-- `data/discovery/artists-2026*.json` contains the current artist discovery map.
-- `data/discovery/recommendations-2026-*.json` stores recommendation signals with source provenance.
-- `data/discovery/sets/` stores official/community live and nonstop set records plus timestamp chapters.
-- `data/catalogue/index.json` records the expected counts, discovery paths and generated-file paths.
-- `data/taxonomy.json` contains the 19-category music taxonomy.
-- `data/genres.json` maps the catalogue into the six presentation worlds.
+Run:
 
-Run `npm run check` to rebuild the combined catalogue and validate the UI, catalogue, discovery data and playback references.
+```sh
+npm run check
+```
 
-## What complete means
+That rebuilds the catalogue and validates release identity, taxonomy, Nonstop modelling, route truth, YouTube-only runtime policy, PWA packaging, documentation and the build-identity contract.
 
-This repository does not claim to contain every Garba recording or every private/unindexed social recommendation on the internet. `trackImportComplete: true` means the named release has been imported at track level from the verified source used in the relevant pass.
+## What “complete” means
 
-Unknown dates, durations and tracklists remain unknown rather than being guessed.
+This repository does not claim to contain every Garba recording or every private/unindexed social recommendation on the internet.
+
+`trackImportComplete: true` means the named release was imported at track level from the verified source used for that release. It does not mean licensing is complete, every track is playable on YouTube, or the release is the only edition that exists.
+
+Unknown dates, durations, credits, tracklists and timestamps remain unknown rather than being guessed.
