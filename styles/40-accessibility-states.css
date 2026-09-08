@@ -133,8 +133,76 @@
 }
 
 @media (prefers-contrast: more) {
-  .retry-catalogue { border-color: rgba(246,236,215,.58); }
-  .search-empty-prompt { color: rgba(246,236,215,.78); }
+  :root {
+    --muted: rgba(246,236,215,.90);
+    --faint: rgba(246,236,215,.50);
+  }
+
+  .retry-catalogue { border-color: rgba(246,236,215,.68); }
+  .search-empty-prompt { color: rgba(246,236,215,.86); }
+
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart,
+  html body .app .transport,
+  html body .app .play-button {
+    color: var(--ivory) !important;
+    opacity: 1 !important;
+  }
+
+  html body .app .progress-wrap .time {
+    color: rgba(246,236,215,.90) !important;
+  }
+
+  html body .app input[type="range"]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--ivory) 0 var(--progress,0%), rgba(246,236,215,.50) var(--progress,0%) 100%);
+  }
+
+  html body .app input[type="range"]::-moz-range-track {
+    background: rgba(246,236,215,.50);
+  }
+}
+
+/* Apple platforms expose a reduced-transparency preference. Keep the same hierarchy,
+   but trade glass/blur for opaque-enough surfaces and cheaper compositing. Browsers
+   that do not support this media feature simply ignore the block. */
+@media (prefers-reduced-transparency: reduce) {
+  .sheet,
+  .provider-overlay,
+  .provider-panel,
+  .provider-head,
+  .toast,
+  .retry-catalogue,
+  .source-badge,
+  .network-status {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .sheet {
+    background: #101421 !important;
+  }
+
+  .provider-overlay {
+    background: rgba(6,8,15,.96) !important;
+  }
+
+  .provider-panel {
+    background: #0d111d !important;
+  }
+
+  .provider-head {
+    background: #111522 !important;
+  }
+
+  .toast {
+    background: #090d17 !important;
+  }
+
+  .retry-catalogue,
+  .source-badge,
+  .network-status {
+    background: #111522 !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
