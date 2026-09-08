@@ -1,0 +1,27 @@
+{
+  "version": "0.1.0",
+  "songSources": {
+    "re-lol-vol7-2000-01-chhand": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":0},
+    "re-lol-vol7-2000-02-pawama-pavo-vagyo": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":103},
+    "re-lol-vol7-2000-03-ramto-bhamto-jay": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":358},
+    "re-lol-vol7-2000-04-asmanani-rangni-chundadi-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":562},
+    "re-lol-vol7-2000-05-sonal-garbo-shire-ambe-maa": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":748},
+    "re-lol-vol7-2000-06-range-rame-anande-rame": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":923},
+    "re-lol-vol7-2000-07-uncha-uncha-re-madi-tara": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1059},
+    "re-lol-vol7-2000-08-aakashmathi-utrya-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1243},
+    "re-lol-vol7-2000-09-me-joi-re-rudi-sharad-punam": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1418},
+    "re-lol-vol7-2000-10-tiladi-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1545},
+    "re-lol-vol7-2000-11-o-madi-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1677},
+    "re-lol-vol7-2000-12-kumkum-pagle-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":1843},
+    "re-lol-vol7-2000-13-garbe-rame-tran-taali": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2070},
+    "re-lol-vol7-2000-14-jay-jay-bahuchar-birdari": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2289},
+    "re-lol-vol7-2000-15-albeli-matwali-maiya": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2471},
+    "re-lol-vol7-2000-16-mansarovar-tire-mata": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2595},
+    "re-lol-vol7-2000-17-eke-lal-darvaje": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2722},
+    "re-lol-vol7-2000-18-asho-maso-sharad-punamni": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":2933},
+    "re-lol-vol7-2000-19-eke-chande-bije-chande": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":3085},
+    "re-lol-vol7-2000-20-rangtali-rangtali-ragtali-re": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":3264},
+    "re-lol-vol7-2000-21-shobhe-chhe-shangar": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":3457},
+    "re-lol-vol7-2000-22-aavo-ne-amba-aavo-jagdamba": {"provider":"youtube","videoId":"UPSpGqgWWME","sourceUrl":"https://www.youtube.com/watch?v=UPSpGqgWWME","sourceType":"verified-performance-chapter","startSeconds":3551}
+  }
+}
