@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#111323" />
+  <title>Page not found · PlayGarba</title>
+  <style>
+    :root{color-scheme:dark;background:#111323;color:#f6ecd7;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0,#303455 0,#111323 42%,#090b13 100%)}main{width:min(720px,calc(100% - 32px));padding:42px;border:1px solid rgba(246,236,215,.13);border-radius:28px;background:rgba(17,19,35,.72)}.mark{font-weight:800;letter-spacing:.16em;font-size:.86rem}h1{font-size:clamp(2.6rem,9vw,5.4rem);line-height:.95;letter-spacing:-.055em;margin:54px 0 18px}p{color:#aaa7b7;line-height:1.65;max-width:50ch}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}a{display:inline-flex;align-items:center;min-height:46px;padding:0 17px;border-radius:999px;text-decoration:none;font-weight:700;color:#111323;background:#f6ecd7}.secondary{color:#f6ecd7;background:transparent;border:1px solid rgba(246,236,215,.16)}
+  </style>
+  <script>
+    (() => {
+      const path = window.location.pathname;
+      const legacy = path === '/catalogue' || path.startsWith('/catalogue/') || path === '/songs' || path.startsWith('/songs/') || path === '/releases' || path.startsWith('/releases/');
+      if (legacy) {
+        window.location.replace(`https://live.playgarba.com${path}${window.location.search}${window.location.hash}`);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main>
+    <div class="mark">GARBA</div>
+    <h1>This page moved.</h1>
+    <p>If you were looking for a song, release or the catalogue, PlayGarba now keeps the listening experience at live.playgarba.com.</p>
+    <div class="actions">
+      <a href="https://live.playgarba.com/">Open the player ↗</a>
+      <a class="secondary" href="https://playgarba.com/">Go to PlayGarba</a>
+    </div>
+  </main>
+</body>
+</html>
