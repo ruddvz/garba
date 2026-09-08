@@ -21,24 +21,29 @@ const runtimeFiles = [
   'app.js',
   'sw.js',
 ];
+const automixAudioRuntime = 'assets/runtime/automix-web-audio.js';
 
 for (const file of runtimeFiles) {
   if (!pages.includes(file)) fail(`Pages artifact contract does not mention ${file}`);
 }
+if (!pages.includes('cp -R assets data _site/')) fail('Pages artifact must copy assets so the AutoMix compatibility runtime is deployed');
 
 for (const file of ['provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
   if (!sw.includes(`'/${file}'`)) fail(`PWA fresh-runtime list does not include ${file}`);
 }
+if (!sw.includes(`'./${automixAudioRuntime}'`)) fail('PWA core shell does not cache the AutoMix compatibility runtime');
+if (!sw.includes(`'/${automixAudioRuntime}'`)) fail('PWA fresh-runtime list does not include the AutoMix compatibility runtime');
 
-for (const file of ['provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
+for (const file of ['provider-runtime.js', 'player-continuity.js', automixAudioRuntime, 'youtube-player-runtime.js']) {
   if (!bootstrap.includes(file)) fail(`Fast bootstrap must load ${file}`);
 }
 const providerIndex = bootstrap.indexOf('provider-runtime.js');
 const continuityIndex = bootstrap.indexOf('player-continuity.js');
+const automixAudioIndex = bootstrap.indexOf(automixAudioRuntime);
 const youtubeIndex = bootstrap.indexOf('youtube-player-runtime.js');
-if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > continuityIndex)) {
-  fail('Playback runtime order must be provider-runtime.js → player-continuity.js → youtube-player-runtime.js');
+if (!(providerIndex >= 0 && continuityIndex > providerIndex && automixAudioIndex > continuityIndex && youtubeIndex > automixAudioIndex)) {
+  fail('Playback runtime order must be provider-runtime.js → player-continuity.js → AutoMix audio compatibility → youtube-player-runtime.js');
 }
 
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
@@ -50,6 +55,6 @@ if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v9`")) {
 
 if (failed) process.exit(1);
 console.log('✓ Pages ships every direct and transitive playback runtime file');
-console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
-console.log('✓ provider route safety loads before the YouTube controllable engine');
+console.log('✓ PWA precache contains the YouTube engine and AutoMix compatibility runtime');
+console.log('✓ provider route safety loads before AutoMix compatibility and YouTube control');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
