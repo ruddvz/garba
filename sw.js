@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v14`;
+const CACHE_NAME = `${CACHE_PREFIX}v15`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -17,6 +17,7 @@ const CORE_SHELL = [
   './catalogue/catalogue.css',
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
+  './assets/runtime/explore-search.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -55,6 +56,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/catalogue.css',
   '/catalogue/catalogue.js',
   '/catalogue/listening-library.js',
+  '/assets/runtime/explore-search.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -125,8 +127,11 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
-    event.respondWith(networkFirst(request, fallback));
+    if (isCatalogueNavigation(url.pathname)) {
+      event.respondWith(staleWhileRevalidate(request));
+      return;
+    }
+    event.respondWith(networkFirst(request, './index.html'));
     return;
   }
 
