@@ -159,6 +159,10 @@ for (const marker of [
   "['sanedo', 'Sanedo']",
   'id="nonstopBrowserSearch"',
   'function matchesQuery(set, query)',
+  'Array.isArray(set.tracklist) ? set.tracklist : []',
+  "'official-topic': 5",
+  "set.sourceType === 'official-topic'",
+  "return 'Official YouTube'",
   'function trapBrowserFocus(event)',
   'function setBackgroundInert(inert)',
   "localStorage.getItem('garba:session')",
@@ -211,6 +215,7 @@ console.log('✓ the embedded YouTube player retains a visible minimum 200×200 
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
 console.log('✓ Pages flattens the mobile playback coordination layer into the PWA-cached production stylesheet');
 console.log('✓ Nonstop is a first-class PlayGarba mode that reuses the controllable YouTube engine and restores the prior listening state on exit');
+console.log('✓ Nonstop search indexes source tracklists and ranks official Topic/label masters ahead of generic sources');
 console.log('✓ Nonstop search, taxonomy, history, focus and partial-load hardening are regression-guarded');
 console.log('✓ Nonstop sits before the genre strip and Explore remains a separate lower discovery action');
 console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');
