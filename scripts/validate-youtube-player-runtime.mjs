@@ -89,7 +89,6 @@ for (const marker of [
   "playbackProvider: 'youtube'",
   'youtubeStartSeconds: 0',
   "$('progress')?.addEventListener('input', captureSeek, { capture: true })",
-  'function restorePreviousSession(previous)',
   'function captureMainNavigation(event)',
   "target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')",
   'data-play-mode',
@@ -97,6 +96,31 @@ for (const marker of [
   '#browseActions{grid-row:7!important',
 ]) {
   if (!nonstop.includes(marker)) fail(`Direct Nonstop playback contract missing marker: ${marker}`);
+}
+
+const restoreForms = [
+  'function restorePreviousSession(previous)',
+  'function restorePreviousSession(previous, { updateHistory = true } = {})',
+];
+if (!restoreForms.some((marker) => nonstop.includes(marker))) {
+  fail('Direct Nonstop playback contract must restore the previous listening session');
+}
+
+for (const marker of [
+  "['traditional', 'Traditional']",
+  "['sanedo', 'Sanedo']",
+  'id="nonstopBrowserSearch"',
+  'function matchesQuery(set, query)',
+  'function trapBrowserFocus(event)',
+  'function setBackgroundInert(inert)',
+  "localStorage.getItem('garba:session')",
+  'history.pushState(history.state',
+  "url.searchParams.delete('song')",
+  'seenVideos.has(set.videoId)',
+  'state.failedChunks.size',
+  '@media(prefers-reduced-motion:reduce)',
+]) {
+  if (!nonstop.includes(marker)) fail(`Hardened Nonstop UX contract missing marker: ${marker}`);
 }
 
 const nonstopDurationForms = [
@@ -136,5 +160,6 @@ console.log('✓ the embedded YouTube player retains a visible minimum 200×200 
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
 console.log('✓ Pages flattens the mobile playback coordination layer into the PWA-cached production stylesheet');
 console.log('✓ Nonstop is a first-class PlayGarba mode that reuses the controllable YouTube engine and restores the prior listening state on exit');
+console.log('✓ Nonstop search, taxonomy, history, focus and partial-load hardening are regression-guarded');
 console.log('✓ Nonstop sits before the genre strip and Explore remains a separate lower discovery action');
 console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');
