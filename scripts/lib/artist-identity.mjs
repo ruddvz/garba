@@ -64,6 +64,13 @@ export function performanceArtistIdentity(song, set, segment = null) {
   const releaseMatch = Boolean(set?.linkedReleaseId && set.linkedReleaseId === song?.releaseId);
   const shared = [...songKeys].filter((key) => performerKeys.has(key));
 
+  // A chapter may exist purely as published browsing/search metadata. It remains
+  // useful in the Nonstop catalogue, but it must never become generated exact
+  // playback for a canonical song unless a curator explicitly opts it back in.
+  if (segment?.routingEligible === false) {
+    return identityResult({ compatible: false, status: 'metadata-only', shared, releaseMatch, songKeys, performerKeys });
+  }
+
   if (!songKeys.size || !performerKeys.size) {
     return identityResult({ compatible: false, status: 'unknown', shared, releaseMatch, songKeys, performerKeys });
   }
