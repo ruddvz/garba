@@ -142,14 +142,14 @@ function makeCard({ song, release, artwork, kind, elapsed = 0 }) {
   const link = document.createElement('a');
   link.className = `personal-listening-card ${kind === 'continue' ? 'is-continue' : 'is-favourite'}`;
   link.href = playerUrl(song);
-  link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to favourite'} ${song.title} by ${song.artist}`);
+  link.setAttribute('aria-label', `${kind === 'continue' ? 'Continue listening to' : 'Listen to saved song'} ${song.title} by ${song.artist}`);
   if (kind === 'favourite') link.addEventListener('click', () => primeFavouriteSession(song));
   link.append(coverFor(song, release, artwork));
 
   const copy = document.createElement('span');
   copy.className = 'personal-listening-copy';
   const kicker = document.createElement('small');
-  kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Favourite';
+  kicker.textContent = kind === 'continue' ? 'Continue listening' : 'Saved';
   const title = document.createElement('strong');
   title.textContent = song.title;
   const meta = document.createElement('span');
@@ -245,11 +245,11 @@ async function renderListeningLibrary() {
   head.className = 'section-title-row';
   const heading = document.createElement('h2');
   heading.id = 'personalListeningTitle';
-  heading.textContent = 'Your listening';
+  heading.textContent = 'My Garba';
   const description = document.createElement('p');
   description.textContent = continueSong
-    ? 'Pick up where you left off, then revisit songs you saved.'
-    : 'Songs you saved in the PlayGarba player.';
+    ? 'Continue where you left off, then return to songs you saved.'
+    : 'Songs you saved with the heart in PlayGarba.';
   head.append(heading, description);
 
   const rail = document.createElement('div');
