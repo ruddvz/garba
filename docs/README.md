@@ -55,6 +55,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 ## Project
 
 - [`project/roadmap.md`](project/roadmap.md): project-level roadmap
+- [`project/search-discovery-programme.md`](project/search-discovery-programme.md): SEO, GEO and AEO strategy, baseline, route model, crawl/index rules and Navratri 2026 delivery sequence
 
 ## Naming convention
 
