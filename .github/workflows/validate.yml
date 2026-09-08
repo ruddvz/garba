@@ -15,4 +15,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm run check
+      - name: Build catalogue
+        run: npm run catalogue
+      - name: Check runtime syntax
+        run: npm run check:modules
+      - name: Check generated SEO catalogue
+        run: npm run seo:check
+      - name: Validate playback support scripts
+        run: |
+          node --check scripts/lib/generate-static-catalogue-pages.mjs
+          node --check scripts/report-playback-route-quality.mjs
+          node --check scripts/report-youtube-first-coverage.mjs
+          node --check scripts/validate-youtube-player-runtime.mjs
+      - name: Validate player continuity
+        run: node scripts/validate-player-continuity.mjs
+      - name: Validate AutoMix
+        run: npm run automix:validate
+      - name: Validate runtime packaging
+        run: node scripts/validate-runtime-packaging.mjs
+      - name: Validate YouTube runtime
+        run: node scripts/validate-youtube-player-runtime.mjs
+      - name: Validate runtime song routes
+        run: node scripts/validate-runtime-song-routes.mjs
+      - name: Report playback route quality
+        run: node scripts/report-playback-route-quality.mjs
+      - name: Validate discovery data
+        run: node scripts/validate-discovery.mjs
+      - name: Validate repository structure
+        run: npm run repo:validate
+      - name: Validate documentation
+        run: npm run docs:validate
