@@ -37,6 +37,62 @@
       .world-layer { background-size: cover; background-position: center; background-repeat: no-repeat; }
     </style>
     <link rel="stylesheet" href="styles.css" />
+    <style id="mobilePwaPolish">
+      .sheet-backdrop { position: fixed; z-index: 19; inset: 0; background: rgba(4,5,10,.34); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+      .sheet-backdrop[hidden] { display: none !important; }
+      #providerDockStop { width: 36px; min-width: 36px; height: 36px; min-height: 36px; padding: 0 !important; font-size: 0 !important; display: grid; place-items: center; }
+      #providerDockStop::before { content: "×"; color: var(--ivory); font: 300 24px/1 var(--sans); }
+
+      @media (max-width: 700px) {
+        html, body { height: 100% !important; min-height: 100% !important; }
+        .app { position: fixed !important; inset: 0 !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important; }
+        .world, .world-layer { position: fixed !important; inset: -6px !important; }
+        .topbar { padding-top: max(18px, var(--safe-top)); padding-left: max(18px, var(--safe-left)); padding-right: max(18px, var(--safe-right)); }
+        .brand { line-height: 42px; }
+        .utilities { gap: 1px; min-height: 44px; }
+        .utilities .icon-button, .utilities .mobile-heart { width: 42px; min-width: 42px; height: 42px; min-height: 42px; margin: 0; padding: 8px; border: 1px solid transparent; border-radius: 999px; background: rgba(8,10,18,.16); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .utilities .mobile-heart { display: grid !important; flex: 0 0 42px; }
+        .utilities .mobile-heart svg { width: 23px; height: 23px; }
+        .utilities .mobile-heart.active { background: color-mix(in srgb, var(--accent) 12%, rgba(8,10,18,.24)); }
+        .artist-row { display: block; }
+        .artist { margin-top: 10px; }
+        .player-shell { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); padding-bottom: max(16px, calc(var(--safe-bottom) + 2px)); }
+        .track-block { max-width: min(91vw, 560px); }
+        .controls { margin-top: 8px; gap: clamp(20px, 6.2vw, 28px); }
+        .progress-wrap { width: min(440px, 84vw); margin-top: 4px; }
+        .genre-strip { padding-top: 14px; padding-bottom: 8px; }
+
+        .app .browse-actions { width: min(calc(100% - 28px), 460px); display: flex; grid-template-columns: none; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 0; margin-top: 5px; padding: 3px; border: 1px solid rgba(246,236,215,.11); border-radius: 16px; background: rgba(8,10,18,.22); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 34px rgba(0,0,0,.12); }
+        .app .browse-actions .browse-button { flex: 1 1 50%; min-width: 0; min-height: 46px; margin: 0; padding: 0 10px; justify-content: center; border-radius: 12px; font-size: 15px; line-height: 1; }
+        .app .browse-actions #browseButton { border-radius: 12px 0 0 12px; }
+        .app .browse-actions #nonstopButton { border-left: 1px solid rgba(246,236,215,.10); border-radius: 0 12px 12px 0; }
+
+        .sheet { border-radius: 24px 24px 0 0; box-shadow: 0 -24px 72px rgba(0,0,0,.48); }
+        .sheet-header { grid-template-columns: minmax(0,1fr) auto auto; gap: 4px; }
+        .sheet-close { display: grid !important; width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0; place-items: center; border: 1px solid rgba(246,236,215,.10); background: rgba(246,236,215,.055); }
+        .sheet-close svg { display: none; }
+        .sheet-close::before { content: "×"; font: 300 27px/1 var(--sans); transform: translateY(-1px); }
+        .sheet[data-snap="medium"] { height: 60vh; height: 60dvh; }
+        .sheet[data-snap="full"] { height: 88vh; height: 88dvh; }
+        .sheet-inner { padding-bottom: max(14px, var(--safe-bottom)); }
+        .sheet-handle { height: 27px; }
+        .sheet-handle span { width: 42px; height: 4px; margin-top: 10px; }
+
+        .song-row, .genre-button, .browse-button, .transport, .play-button, .icon-button, .heart-button, .sheet-close { touch-action: manipulation; }
+        .provider-dock { bottom: max(76px, calc(var(--safe-bottom) + 66px)); box-shadow: 0 22px 72px rgba(0,0,0,.52); }
+      }
+
+      @media (max-width: 390px) {
+        .topbar { padding-left: max(14px, var(--safe-left)); padding-right: max(14px, var(--safe-right)); }
+        .utilities .icon-button, .utilities .mobile-heart { width: 39px; min-width: 39px; height: 39px; min-height: 39px; }
+        .app .browse-actions { width: calc(100% - 20px); }
+        .app .browse-actions .browse-button { padding-inline: 7px; font-size: 14px; }
+      }
+
+      @media (display-mode: standalone) and (max-width: 700px) {
+        .app { inset: 0 !important; width: auto !important; height: auto !important; }
+      }
+    </style>
 
     <script type="application/ld+json">
       {
@@ -168,5 +224,76 @@
     <script src="simple-runtime.js"></script>
     <script src="nonstop-browser.js" defer></script>
     <script type="module" src="app.js"></script>
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const app = $('app');
+        const sheet = $('songSheet');
+        const mobileFavourite = $('mobileFavourite');
+        const artistRow = document.querySelector('.artist-row');
+        const utilities = document.querySelector('.utilities');
+        const queueButton = $('queueButton');
+        const sheetClose = $('sheetClose');
+        const mobileQuery = window.matchMedia('(max-width: 700px)');
+        if (!app || !sheet) return;
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'sheet-backdrop';
+        backdrop.hidden = true;
+        backdrop.setAttribute('aria-hidden', 'true');
+        backdrop.addEventListener('click', () => sheetClose?.click());
+        app.insertBefore(backdrop, sheet);
+
+        function placeFavourite() {
+          if (!mobileFavourite) return;
+          if (mobileQuery.matches && utilities) {
+            if (mobileFavourite.parentElement !== utilities) utilities.insertBefore(mobileFavourite, queueButton || null);
+          } else if (artistRow && mobileFavourite.parentElement !== artistRow) {
+            artistRow.append(mobileFavourite);
+          }
+        }
+
+        function syncSheetChrome() {
+          const snap = sheet.dataset.snap || 'closed';
+          const modal = mobileQuery.matches && (snap === 'medium' || snap === 'full');
+          backdrop.hidden = !modal;
+          backdrop.setAttribute('aria-hidden', String(!modal));
+          sheet.setAttribute('aria-modal', String(modal));
+          if (sheetClose) {
+            sheetClose.title = 'Close song browser';
+            sheetClose.setAttribute('aria-label', 'Close song browser');
+          }
+        }
+
+        function closeProviderOutside(event) {
+          const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
+          if (!stage || !(event.target instanceof Element)) return;
+          if (stage.contains(event.target) || $('playButton')?.contains(event.target) || $('miniPlay')?.contains(event.target)) return;
+          stage.querySelector('#providerDockStop')?.click();
+        }
+
+        function closeTopLayer(event) {
+          if (event.key !== 'Escape') return;
+          const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
+          if (stage) {
+            event.preventDefault();
+            stage.querySelector('#providerDockStop')?.click();
+            return;
+          }
+          if (mobileQuery.matches && ['medium', 'full'].includes(sheet.dataset.snap || '')) {
+            event.preventDefault();
+            sheetClose?.click();
+          }
+        }
+
+        placeFavourite();
+        syncSheetChrome();
+        new MutationObserver(syncSheetChrome).observe(sheet, { attributes: true, attributeFilter: ['data-snap', 'aria-hidden'] });
+        mobileQuery.addEventListener?.('change', () => { placeFavourite(); syncSheetChrome(); });
+        document.addEventListener('click', closeProviderOutside);
+        document.addEventListener('keydown', closeTopLayer, true);
+        window.addEventListener('pageshow', () => { placeFavourite(); syncSheetChrome(); });
+      })();
+    </script>
   </body>
 </html>
