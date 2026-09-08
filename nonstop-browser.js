@@ -22,6 +22,8 @@
 
   const rank = {
     'official-artist-channel': 6,
+    'official-topic': 5,
+    'official-label-channel': 5,
     'artist-channel': 5,
     'verified-label-channel': 4,
     'label-channel': 4,
@@ -179,7 +181,8 @@
       set.setType,
       ...(Array.isArray(set.categories) ? set.categories : []),
       ...(Array.isArray(set.tags) ? set.tags : []),
-      ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
+      ...(Array.isArray(set.tracklist) ? set.tracklist : []),
+      ...(Array.isArray(set.segments) ? set.segments.map((segment) => segment.title) : []),
     ].filter(Boolean).join(' ').toLowerCase();
   }
 
@@ -234,6 +237,8 @@
 
   function sourceLabel(set) {
     if (set.sourceType === 'official-artist-channel') return 'Official artist';
+    if (set.sourceType === 'official-topic') return 'Official YouTube';
+    if (set.sourceType === 'official-label-channel') return 'Official label';
     if (set.sourceType === 'artist-channel') return 'Artist channel';
     if (set.sourceType === 'verified-label-channel') return 'Verified label';
     if (set.sourceType === 'label-channel') return 'Label channel';
