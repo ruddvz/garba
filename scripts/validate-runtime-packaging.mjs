@@ -4,10 +4,11 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [pages, sw, bootstrap, socialSource, socialInjector] = await Promise.all([
+const [pages, sw, bootstrap, manifest, socialSource, socialInjector] = await Promise.all([
   read('.github/workflows/pages.yml'),
   read('sw.js'),
   read('simple-runtime.js'),
+  read('manifest.webmanifest'),
   read('assets/social/playgarba-og-card.svg'),
   read('scripts/lib/inject-social-preview.mjs'),
 ]);
@@ -104,11 +105,36 @@ for (const marker of [
 }
 if (socialInjector.includes('ruddvz.github.io/garba')) fail('Social metadata must not regress to the old GitHub Pages URL');
 
+const pwaIcons = [
+  ['assets/icons/icon-192.png', '192x192', 'any'],
+  ['assets/icons/icon-512.png', '512x512', 'any'],
+  ['assets/icons/maskable-192.png', '192x192', 'maskable'],
+  ['assets/icons/maskable-512.png', '512x512', 'maskable'],
+];
+for (const [src, sizes, purpose] of pwaIcons) {
+  for (const marker of [src, `\"sizes\": \"${sizes}\"`, `\"purpose\": \"${purpose}\"`]) {
+    if (!manifest.includes(marker)) fail(`PWA manifest is missing icon contract marker: ${marker}`);
+  }
+  if (!sw.includes(`'./${src}'`)) fail(`PWA core shell does not cache ${src}`);
+}
+for (const marker of [
+  'rsvg-convert -w 192 -h 192 assets/icons/icon.svg',
+  'rsvg-convert -w 512 -h 512 assets/icons/icon.svg',
+  'rsvg-convert -w 192 -h 192 assets/icons/maskable.svg',
+  'rsvg-convert -w 512 -h 512 assets/icons/maskable.svg',
+  'PWA 192 icon is invalid',
+  'PWA 512 icon is invalid',
+  'Maskable 192 icon is invalid',
+  'Maskable 512 icon is invalid',
+]) {
+  if (!pages.includes(marker)) fail(`Pages PWA-icon contract is missing: ${marker}`);
+}
+
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v10`")) {
-  fail('PWA cache generation must be v10 after refreshing the installed-app brand icon assets');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v11`")) {
+  fail('PWA cache generation must be v11 after adding the full rendered install-icon matrix');
 }
 
 if (failed) process.exit(1);
@@ -119,3 +145,4 @@ console.log('✓ split playback runtime stays network-first across installed-app
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
 console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');
+console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');

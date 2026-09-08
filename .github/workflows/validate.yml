@@ -20,6 +20,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y librsvg2-bin
+      - name: Render PWA icons
+        run: |
+          mkdir -p /tmp/playgarba-icons
+          rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o /tmp/playgarba-icons/icon-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o /tmp/playgarba-icons/icon-512.png
+          rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o /tmp/playgarba-icons/maskable-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o /tmp/playgarba-icons/maskable-512.png
+          file /tmp/playgarba-icons/icon-192.png | grep -q 'PNG image data, 192 x 192'
+          file /tmp/playgarba-icons/icon-512.png | grep -q 'PNG image data, 512 x 512'
+          file /tmp/playgarba-icons/maskable-192.png | grep -q 'PNG image data, 192 x 192'
+          file /tmp/playgarba-icons/maskable-512.png | grep -q 'PNG image data, 512 x 512'
       - name: Render social preview
         run: |
           mkdir -p /tmp/playgarba-social

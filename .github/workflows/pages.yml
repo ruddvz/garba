@@ -51,6 +51,19 @@ jobs:
             _site/
           cp -R assets data _site/
 
+          # Render the install-icon matrix from the canonical Garba mark. Android
+          # receives separate maskable artwork so circular, squircle and rounded-square
+          # launcher crops keep the complete emblem inside the safe zone.
+          mkdir -p _site/assets/icons
+          rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o _site/assets/icons/icon-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _site/assets/icons/icon-512.png
+          rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o _site/assets/icons/maskable-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o _site/assets/icons/maskable-512.png
+          file _site/assets/icons/icon-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'PWA 192 icon is invalid'; exit 1; }
+          file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
+          file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 icon is invalid'; exit 1; }
+          file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 icon is invalid'; exit 1; }
+
           # Generate the universal 1200x630 share card from a reviewable SVG source.
           # PNG is used for broad Open Graph crawler compatibility.
           mkdir -p _site/assets/social
