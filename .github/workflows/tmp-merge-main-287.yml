@@ -17,10 +17,189 @@ jobs:
         with:
           ref: codex/listening-flow-287
           fetch-depth: 0
-      - name: Merge latest main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Merge latest main and resolve overlapping player contracts
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git merge --no-edit origin/main
+          if git merge --no-commit --no-ff origin/main; then
+            echo "Latest main merged without conflicts."
+          else
+            conflicts="$(git diff --name-only --diff-filter=U | sort | tr '\n' ' ' | sed 's/ $//')"
+            test "$conflicts" = "app.js package.json" || { echo "Unexpected conflicts: $conflicts"; exit 1; }
+
+            # Keep the reviewed listening-flow implementation, then layer main's
+            # canonical presentation redirect/favourite reconciliation onto it.
+            git checkout --ours app.js
+            python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('app.js')
+          text = path.read_text()
+
+          def patch(before, after, label):
+              global text
+              if after in text:
+                  return
+              if before not in text:
+                  raise SystemExit(f'App merge target missing: {label}')
+              text = text.replace(before, after, 1)
+
+          patch(
+          """  pendingSongId: null,
+            sheetTrigger: null,
+          };""",
+          """  pendingSongId: null,
+            sheetTrigger: null,
+            presentationRedirects: new Map(),
+          };""",
+          'presentation redirect state')
+
+          patch(
+          """function persistFavourites() {
+            storage.set('garba:favourites', [...state.favourites]);
+          }
+
+          function persistManualQueue()""",
+          """function persistFavourites() {
+            storage.set('garba:favourites', [...state.favourites]);
+          }
+
+          function reconcilePresentationFavourites() {
+            const visibleIds = new Set(state.songs.map((song) => song.id));
+            const next = new Set();
+            let changed = false;
+            for (const id of state.favourites) {
+              const redirect = state.presentationRedirects.get(id);
+              const mapped = redirect?.canonicalSongId || id;
+              if (visibleIds.has(mapped)) next.add(mapped);
+              if (mapped !== id || !visibleIds.has(id)) changed = true;
+            }
+            if (changed || next.size !== state.favourites.size) {
+              state.favourites = next;
+              persistFavourites();
+            }
+          }
+
+          function persistManualQueue()""",
+          'canonical favourite reconciliation')
+
+          patch(
+          """  if (!genresResponse.ok || !songsResponse.ok) throw new Error('Failed to load catalogue');
+            return {
+              genres: await genresResponse.json(),
+              songs: await songsResponse.json(),
+            };
+          }""",
+          """  if (!genresResponse.ok || !songsResponse.ok) throw new Error('Failed to load catalogue');
+            const [genres, allSongs] = await Promise.all([genresResponse.json(), songsResponse.json()]);
+            const songs = [];
+            const presentationRedirects = new Map();
+            for (const song of allSongs) {
+              const role = String(song?.presentationRole || 'catalogue');
+              if (role === 'catalogue') songs.push(song);
+              else if (song?.id) presentationRedirects.set(song.id, song);
+            }
+            return { genres, songs, presentationRedirects };
+          }""",
+          'catalogue presentation filtering')
+
+          patch(
+          """    state.genres = next.genres;
+              state.songs = next.songs;
+              sanitiseManualQueue();""",
+          """    state.genres = next.genres;
+              state.songs = next.songs;
+              state.presentationRedirects = next.presentationRedirects;
+              reconcilePresentationFavourites();
+              sanitiseManualQueue();""",
+          'refresh canonical presentation')
+
+          patch(
+          """  const session = storage.get('garba:session', {});
+            const requestedSong = params.get('song');
+            const requestedGenre = params.get('genre');
+            const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;""",
+          """  const session = storage.get('garba:session', {});
+            let requestedSong = params.get('song');
+            const requestedGenre = params.get('genre');
+            const redirect = requestedSong ? state.presentationRedirects.get(requestedSong) : null;
+            let pendingNonstopSetId = null;
+            if (redirect?.presentationRole === 'nonstop-only' && redirect.nonstopSetId) {
+              pendingNonstopSetId = redirect.nonstopSetId;
+              const url = new URL(location.href);
+              url.searchParams.delete('song');
+              url.searchParams.set('nonstop', pendingNonstopSetId);
+              history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+              requestedSong = redirect.canonicalSongId || null;
+            } else if (redirect?.canonicalSongId) {
+              requestedSong = redirect.canonicalSongId;
+            }
+            const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;""",
+          'legacy/duplicate deep-link redirect')
+
+          patch(
+          """    browse: params.get('browse') === '1',
+              myGarba: params.get('library') === 'my-garba',
+            };""",
+          """    browse: params.get('browse') === '1',
+              myGarba: params.get('library') === 'my-garba',
+              pendingNonstopSetId,
+            };""",
+          'pending nonstop return')
+
+          patch(
+          """    state.genres = catalogue.genres;
+              state.songs = catalogue.songs;
+              state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);""",
+          """    state.genres = catalogue.genres;
+              state.songs = catalogue.songs;
+              state.presentationRedirects = catalogue.presentationRedirects;
+              reconcilePresentationFavourites();
+              sanitiseManualQueue();
+              state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);""",
+          'initial canonical presentation')
+
+          patch(
+          """    state.pendingSongId = initial.pendingSongId;
+              if (initial.myGarba) openSheet('favourites', { snap: 'full', history: false });
+              else if (initial.browse) openSheet('all', { snap: 'full', history: false });""",
+          """    state.pendingSongId = initial.pendingSongId;
+              if (initial.pendingNonstopSetId) {
+                setTimeout(() => window.GARBA_NONSTOP?.play?.(initial.pendingNonstopSetId, { quiet: true }), 0);
+              }
+              if (initial.myGarba) openSheet('favourites', { snap: 'full', history: false });
+              else if (initial.browse) openSheet('all', { snap: 'full', history: false });""",
+          'nonstop handoff with My Garba')
+
+          path.write_text(text)
+          PY
+
+            # package.json: latest main owns the command set. Add only #287's
+            # focused validator and leave every newer presentation validator intact.
+            git checkout --theirs package.json
+            node <<'NODE'
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.scripts['listening:flow:validate'] = 'node scripts/lib/validate-listening-flow.mjs';
+          if (!pkg.scripts['check:modules'].includes('scripts/lib/validate-listening-flow.mjs')) {
+            pkg.scripts['check:modules'] += ' && node --check scripts/lib/validate-listening-flow.mjs';
+          }
+          if (!pkg.scripts.check.includes('npm run listening:flow:validate')) {
+            pkg.scripts.check = pkg.scripts.check.replace(
+              'npm run nonstop:transport:validate &&',
+              'npm run nonstop:transport:validate && npm run listening:flow:validate &&'
+            );
+          }
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+            git add app.js package.json
+            test -z "$(git diff --name-only --diff-filter=U)" || { echo 'Unresolved conflicts remain'; exit 1; }
+            git commit -m "Merge latest main into listening flow"
+          fi
           git push origin HEAD:codex/listening-flow-287
