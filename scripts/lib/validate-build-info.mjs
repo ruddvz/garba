@@ -50,13 +50,15 @@ function validateInfo(info, expectedRevision = '') {
 async function main() {
   const artifactPath = process.argv[2] || '';
   const expectedRevision = String(process.argv[3] || '').trim().toLowerCase();
-  const [index, workflow, statusDoc, roadmapDoc, playbackDoc, runtimeCoverageDoc] = await Promise.all([
+  const [index, workflow, readme, statusDoc, roadmapDoc, playbackDoc, runtimeCoverageDoc, uxPolishDoc] = await Promise.all([
     readJson('data/catalogue/index.json'),
     readText('.github/workflows/pages.yml'),
+    readText('README.md'),
     readText('docs/catalogue/status.md'),
     readText('docs/project/roadmap.md'),
     readText('docs/product/youtube-first-playback.md'),
     readText('docs/product/playback-runtime-coverage.md'),
+    readText('docs/product/ux-polish-pass.md'),
   ]);
 
   const info = artifactPath
@@ -73,26 +75,32 @@ async function main() {
   assert(workflow.includes("test -f _site/build-info.json"), 'Pages workflow must require build-info.json in the artifact');
 
   for (const [name, doc] of [
+    ['README', readme],
     ['catalogue status', statusDoc],
     ['roadmap', roadmapDoc],
     ['YouTube playback policy', playbackDoc],
     ['playback runtime coverage', runtimeCoverageDoc],
+    ['historical UX polish note', uxPolishDoc],
   ]) {
     assert(doc.includes('/build-info.json'), `${name} must point auditors to /build-info.json`);
   }
 
+  assert(readme.includes('Executable music playback is YouTube-only'), 'README must state the YouTube-only executable playback policy');
+  assert(!readme.includes('Spotify and Apple Music embeds where supported'), 'README still advertises non-YouTube executable playback');
   assert(!statusDoc.includes('585 verified song records'), 'catalogue status still contains the obsolete 585-song claim');
   assert(!statusDoc.includes("Spotify's embedded player"), 'catalogue status still describes Spotify as executable playback');
   assert(!roadmapDoc.includes('Decide and implement authorised playback provider(s)'), 'roadmap still treats the playback provider decision as open');
   assert(!playbackDoc.includes('the user clicks the YouTube button;'), 'playback policy still prescribes the retired second-step YouTube-button gate');
   assert(runtimeCoverageDoc.includes('source evidence'), 'runtime coverage doc must distinguish source evidence from executable playback');
   assert(runtimeCoverageDoc.includes('YouTube-only'), 'runtime coverage doc must state the executable YouTube-only policy');
+  assert(uxPolishDoc.includes('Status: historical implementation note'), 'UX polish pass must remain explicitly historical');
+  assert(!uxPolishDoc.includes('Spotify provider playback;'), 'historical UX note still asks release QA to exercise Spotify playback');
 
   if (process.exitCode) return;
   console.log(`✓ deployed build identity is regression-guarded at /build-info.json`);
   console.log(`✓ catalogue ${info.catalogue.version}: ${info.catalogue.activeSongs} active songs, ${info.catalogue.ordinaryListeningSongs} ordinary-listening songs`);
   console.log(`✓ YouTube-only coverage is reported separately: ${info.playback.youtubePlayable}/${info.catalogue.activeSongs}; session playability remains runtime-dependent`);
-  console.log('✓ status, roadmap and playback docs no longer compete with the current source/deployment contracts');
+  console.log('✓ README, status, roadmap and playback docs no longer compete with current source/deployment contracts');
 }
 
 await main();
