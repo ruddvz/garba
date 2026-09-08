@@ -21,6 +21,7 @@ let singleReleaseFallbacks = 0;
 let releaseTrackReferenceFallbacks = 0;
 let duplicateExactDowngrades = 0;
 let unchapteredYoutubeReleaseFallbacks = 0;
+let continuousYoutubeChapters = 0;
 const missing = [];
 
 function isExactTrackUrl(provider, sourceUrl) {
@@ -61,6 +62,15 @@ function canonicalSourceKey(provider, sourceUrl) {
   } catch {
     return `${provider || ''}|${String(sourceUrl || '').trim()}`;
   }
+}
+
+function isContinuousYoutubeChapter(route) {
+  if (String(route?.provider || '').toLowerCase() !== 'youtube' || !route?.videoId) return false;
+  if (!Number.isFinite(Number(route.startSeconds))) return false;
+  const evidence = String(route.evidenceType || '').toLowerCase();
+  return route.sourceType === 'verified-performance-chapter'
+    || Boolean(route.performanceSetId)
+    || evidence.includes('chapter');
 }
 
 const runtimeSongs = songs.map((song) => {
@@ -115,6 +125,20 @@ const runtimeSongs = songs.map((song) => {
   } else {
     delete next.youtubeStartSeconds;
   }
+
+  // A published chapter inside one long YouTube performance is an entry point into
+  // one continuous recording, not a separate audio file. Preserve the canonical
+  // chapter duration for catalogue display, but let the runtime duration come from
+  // the underlying YouTube video so playback does not cut at the next chapter mark.
+  if (isContinuousYoutubeChapter(route)) {
+    next.playbackContainerType = 'youtube-continuous-set';
+    next.playbackContainerId = String(route.performanceSetId || route.releaseId || route.videoId);
+    next.playbackContainerTitle = String(route.performanceTitle || release?.title || '').trim() || null;
+    next.chapterDurationSeconds = Number.isFinite(Number(song.durationSeconds)) ? Number(song.durationSeconds) : null;
+    next.durationSeconds = 0;
+    continuousYoutubeChapters += 1;
+  }
+
   enriched += 1;
   return next;
 });
@@ -149,4 +173,4 @@ if (missing.length) {
 }
 
 await writeFile(path.join(root, songsPath), `${JSON.stringify(runtimeSongs, null, 2)}\n`);
-console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${missing.length} unresolved.`);
+console.log(`Enriched runtime catalogue: ${enriched} provider-routed songs, ${direct} direct-audio songs, ${exactTrackFallbacks} exact track fallbacks, ${singleReleaseFallbacks} one-song release fallbacks, ${releaseTrackReferenceFallbacks} release track references (${duplicateExactDowngrades} duplicate exact routes downgraded), ${unchapteredYoutubeReleaseFallbacks} unchaptered multi-song YouTube fallbacks, ${continuousYoutubeChapters} continuous YouTube chapters, ${missing.length} unresolved.`);
