@@ -1,20 +1,14 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v6`;
+const CACHE_NAME = `${CACHE_PREFIX}v7`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
   './',
   './index.html',
   './styles.css',
-  './styles/00-foundation-and-player.css',
-  './styles/10-browser-and-shell.css',
-  './styles/20-responsive-and-accessibility.css',
-  './styles/30-product-polish.css',
-  './styles/40-accessibility-states.css',
-  './styles/50-discovery-and-performance.css',
-  './styles/60-runtime-and-provider.css',
   './simple-runtime.js',
   './provider-runtime.js',
+  './player-continuity.js',
   './nonstop-browser.js',
   './app.js',
   './manifest.webmanifest',
@@ -36,6 +30,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/styles.css',
   '/simple-runtime.js',
   '/provider-runtime.js',
+  '/player-continuity.js',
   '/nonstop-browser.js',
   '/app.js',
 ];
@@ -111,13 +106,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isFreshRuntime(url.pathname)) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  // Imported stylesheet layers carry the final mobile viewport and control rules.
-  // Keep them network-first so an installed PWA does not retain stale CSS.
-  if (url.pathname.includes('/styles/')) {
     event.respondWith(networkFirst(request));
     return;
   }
