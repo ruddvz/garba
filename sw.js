@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v12`;
+const CACHE_NAME = `${CACHE_PREFIX}v13`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -12,6 +12,10 @@ const CORE_SHELL = [
   './youtube-player-runtime.js',
   './nonstop-browser.js',
   './app.js',
+  './catalogue/',
+  './catalogue/index.html',
+  './catalogue/catalogue.css',
+  './catalogue/catalogue.js',
   './manifest.webmanifest',
   './browserconfig.xml',
   './offline.html',
@@ -47,6 +51,8 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/youtube-player-runtime.js',
   '/nonstop-browser.js',
   '/app.js',
+  '/catalogue/catalogue.css',
+  '/catalogue/catalogue.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -106,6 +112,8 @@ async function networkFirst(request, fallback = null) {
 }
 
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
+const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html');
+const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -115,7 +123,8 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, './index.html'));
+    const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
+    event.respondWith(networkFirst(request, fallback));
     return;
   }
 
@@ -124,15 +133,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/data/songs.json')) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  if (
-    url.pathname.endsWith('/data/genres.json')
-    || url.pathname.includes('/data/discovery/sets/')
-  ) {
+  if (isJsonData(url.pathname)) {
     event.respondWith(networkFirst(request));
     return;
   }
