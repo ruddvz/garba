@@ -138,7 +138,7 @@ for (const marker of [
   'youtubeStartSeconds: 0',
   "$('progress')?.addEventListener('input', captureSeek, { capture: true })",
   'function captureMainNavigation(event)',
-  "target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')",
+  "target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')",
   'data-play-mode',
   '#genreStrip{grid-row:6!important',
   '#browseActions{grid-row:7!important',
