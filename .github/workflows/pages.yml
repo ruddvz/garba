@@ -54,6 +54,7 @@ jobs:
           cp src/catalogue/index.html _site/catalogue/index.html
           cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
           cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
+          cp src/catalogue/listening-library.js _site/catalogue/listening-library.js
 
           # Render every platform icon from the canonical Garba mark. Android gets
           # separate maskable artwork, while Apple, browser and Windows surfaces use
@@ -194,6 +195,8 @@ jobs:
           test -f _site/catalogue/index.html || { echo 'Catalogue page is missing'; exit 1; }
           test -f _site/catalogue/catalogue.js || { echo 'Catalogue runtime is missing'; exit 1; }
           test -f _site/catalogue/catalogue.css || { echo 'Catalogue styles are missing'; exit 1; }
+          test -f _site/catalogue/listening-library.js || { echo 'Return-user listening companion is missing'; exit 1; }
+          grep -q 'src="listening-library.js"' _site/catalogue/index.html || { echo 'Catalogue does not load return-user listening companion'; exit 1; }
           test ! -d _site/songs || { echo 'Standalone song pages must not be deployed'; exit 1; }
           test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
