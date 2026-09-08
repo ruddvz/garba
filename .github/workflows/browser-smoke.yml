@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _smoke
-          mkdir -p _smoke/catalogue
+          mkdir -p _smoke/catalogue _smoke/explore
 
           cp \
             index.html \
@@ -108,6 +108,12 @@ jobs:
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
             _smoke/catalogue/
+          cp \
+            src/catalogue/index.html \
+            src/catalogue/catalogue.css \
+            src/catalogue/catalogue.js \
+            src/catalogue/listening-library.js \
+            _smoke/explore/
 
           # Match Pages runtime packaging: seek-state is folded into the existing
           # network-first app.js payload instead of becoming another staleable request.
