@@ -50,3 +50,41 @@
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 1ms !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
   .world-layer { transform: none; }
 }
+
+/* Keep the player controls on the original straight baseline. The late Nonstop
+   runtime may restate layout values, so these intentionally use higher specificity. */
+html body .app #genreStrip .genre-button,
+html body .app #genreStrip #nonstopButton {
+  transform: none !important;
+}
+
+/* Folk artwork exists in the canonical icon pack. Pin it directly so a stale custom
+   property or cached stylesheet cannot leave the Folk control without its icon. */
+html body .app #genreStrip .genre-button[data-genre="folk"],
+html body .sheet-genres .genre-button[data-genre="folk"] {
+  --genre-icon-image: url("../assets/genre-icons/folk.webp?v=20260908-flat");
+  background-image: url("../assets/genre-icons/folk.webp?v=20260908-flat") !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Lift the Explore/Browse entry slightly while keeping it in the original player grid. */
+html body .app #browseActions {
+  margin-top: -4px !important;
+}
+
+/* The text label is enough here. Removing the chevron also keeps the control centred. */
+html body .app #browseActions .browse-button svg {
+  display: none !important;
+}
+
+html body .app #browseActions #browseButton {
+  border-radius: 999px !important;
+}
+
+@media (max-width: 700px) {
+  html body .app #browseActions { margin-top: -3px !important; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  html body .app #browseActions { margin-top: 0 !important; }
+}
