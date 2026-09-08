@@ -452,6 +452,109 @@ watchCatalogueRenders();
 
 (() => {
   const detail = document.getElementById('collectionDetail');
+  const releaseRail = document.getElementById('releaseRail');
+  const songList = document.getElementById('catalogueSongList');
+  if (!detail || !releaseRail || !songList) return;
+
+  let queued = false;
+  let syncToken = 0;
+
+  const releaseTrackNumberForHandoff = (song) => {
+    const value = Number(song?.trackNumber);
+    return Number.isFinite(value) && value > 0 ? value : null;
+  };
+
+  function selectedReleaseId() {
+    if (detail.hidden) return null;
+    const active = releaseRail.querySelector('.release-card.active[data-release-id]');
+    return active instanceof HTMLElement ? active.dataset.releaseId || null : null;
+  }
+
+  async function syncReleaseListenHandoff() {
+    queued = false;
+    const releaseId = selectedReleaseId();
+    const token = ++syncToken;
+    const { songById } = await loadCatalogue();
+    if (token !== syncToken) return;
+    if (releaseId !== selectedReleaseId()) {
+      queueReleaseListenHandoff();
+      return;
+    }
+
+    for (const link of songList.querySelectorAll('a.play-link[href]')) {
+      let destination;
+      try { destination = new URL(link.href, location.href); }
+      catch { continue; }
+      if (destination.origin !== location.origin) continue;
+      const songId = destination.searchParams.get('song');
+      const song = songId ? songById.get(songId) : null;
+      const validReleasePair = Boolean(
+        releaseId
+        && song?.releaseId === releaseId
+        && releaseTrackNumberForHandoff(song) != null
+      );
+      if (validReleasePair) destination.searchParams.set('release', releaseId);
+      else destination.searchParams.delete('release');
+      const nextHref = destination.toString();
+      if (link.href !== nextHref) link.href = nextHref;
+      if (validReleasePair) link.dataset.releaseContext = releaseId;
+      else delete link.dataset.releaseContext;
+    }
+  }
+
+  function queueReleaseListenHandoff() {
+    if (queued) return;
+    queued = true;
+    queueMicrotask(() => { void syncReleaseListenHandoff(); });
+  }
+
+  new MutationObserver(queueReleaseListenHandoff).observe(songList, {
+    childList: true,
+    subtree: true,
+  });
+  new MutationObserver(queueReleaseListenHandoff).observe(releaseRail, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+  new MutationObserver(queueReleaseListenHandoff).observe(detail, {
+    attributes: true,
+    attributeFilter: ['hidden'],
+  });
+  window.addEventListener('popstate', queueReleaseListenHandoff);
+  window.addEventListener('pageshow', queueReleaseListenHandoff);
+  queueReleaseListenHandoff();
+
+  document.addEventListener('click', (event) => {
+    if (!plainPrimaryNavigation(event)) return;
+    const link = event.target instanceof Element
+      ? event.target.closest('#catalogueSongList a.play-link[href]')
+      : null;
+    if (!link || link.target || link.hasAttribute('download')) return;
+    const releaseId = selectedReleaseId();
+    if (!releaseId || link.dataset.releaseContext === releaseId) return;
+
+    event.preventDefault();
+    void (async () => {
+      const { songById } = await loadCatalogue();
+      let destination;
+      try { destination = new URL(link.href, location.href); }
+      catch { return; }
+      const songId = destination.searchParams.get('song');
+      const song = songId ? songById.get(songId) : null;
+      if (
+        song?.releaseId === releaseId
+        && releaseTrackNumberForHandoff(song) != null
+      ) destination.searchParams.set('release', releaseId);
+      else destination.searchParams.delete('release');
+      location.assign(destination.toString());
+    })();
+  }, true);
+})();
+
+(() => {
+  const detail = document.getElementById('collectionDetail');
   const detailHead = detail?.querySelector('.detail-head');
   const releaseRail = document.getElementById('releaseRail');
   if (!detail || !detailHead || !releaseRail) return;
