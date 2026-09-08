@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 const runtime = await readFile(new URL('../../assets/runtime/explore-search.js', import.meta.url), 'utf8');
+const explore = await readFile(new URL('../../src/catalogue/index.html', import.meta.url), 'utf8');
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
@@ -22,9 +23,32 @@ for (const marker of [
   if (!runtime.includes(marker)) fail(`Explore detail refinement is missing: ${marker}`);
 }
 
+for (const marker of [
+  'id="showAllSongs" type="button" class="quiet-button" hidden',
+  'id="releaseRail" role="group" aria-label="Albums and releases"',
+  'playgarbaExploreRailInteraction',
+  "rail.setAttribute('role', 'group');",
+  "card.removeAttribute('role')",
+  "['ArrowLeft', 'ArrowRight', 'Home', 'End']",
+  'focus({ preventScroll: true })',
+  'revealHorizontally(rail, next)',
+  'pendingReleaseFocusId',
+  'data-scroll-left="true"',
+  'data-scroll-right="true"',
+  "bindRail(rail, 'Essential Garba releases')",
+]) {
+  if (!explore.includes(marker)) fail(`Explore album-rail interaction is missing: ${marker}`);
+}
+
 if (runtime.includes("active.scrollIntoView(")) {
   fail('Selected release reveal must stay horizontal-only and must not use scrollIntoView');
 }
+if (explore.includes('releaseRail.scrollIntoView(') || explore.includes('next.scrollIntoView(')) {
+  fail('Album-rail keyboard navigation must never use two-axis scrollIntoView');
+}
+if (explore.includes('id="releaseRail" role="list"')) {
+  fail('Interactive album rail must preserve native button semantics instead of exposing list-only semantics');
+}
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, selected-release state, mobile rows and horizontal-only reveal are protected');
+console.log('✓ Explore detail hierarchy, album semantics, keyboard navigation, overflow cues and horizontal-only focus are protected');
