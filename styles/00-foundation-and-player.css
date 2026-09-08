@@ -178,20 +178,18 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .track-block .mobile-heart:focus-visible { outline-offset: 2px; }
 
 .controls {
-  grid-row: 3; display: flex; align-items: center; gap: clamp(23px, 3.1vw, 46px);
-  margin-top: clamp(20px, 2.8vh, 36px);
+  grid-row: 3;
+  display: flex;
+  align-items: center;
 }
-.transport { width: 48px; height: 48px; }
-.transport svg { width: 29px; height: 29px; }
 .play-button {
-  position: relative; width: 70px; height: 70px; border-radius: 50%;
-  border: 1px solid rgba(246,236,215,.78); color: var(--ivory); background: rgba(12,15,25,.24);
-  display: grid; place-items: center; cursor: pointer;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent), 0 6px 28px rgba(0,0,0,.18);
-  transition: transform 160ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  position: relative;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
 .play-button:active { transform: scale(.96); }
-.play-button svg { width: 31px; height: 31px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.play-button svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 .pause-icon { display: none; }
 .is-playing .play-icon { display: none; }
 .is-playing .pause-icon { display: block; }
@@ -203,10 +201,11 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .ambient-ring::after { inset: 22px; }
 
 .progress-wrap {
-  grid-row: 4; display: grid; grid-template-columns: auto minmax(210px, 330px) auto; align-items: center; gap: 12px;
-  margin-top: clamp(22px, 3.2vh, 40px);
+  grid-row: 4;
+  display: grid;
+  align-items: center;
 }
-.time { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.time { font-variant-numeric: tabular-nums; }
 .progress { width: 100%; accent-color: var(--accent); cursor: pointer; }
 input[type="range"] { appearance: none; height: 18px; background: transparent; }
 input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(to right, var(--ivory) 0 var(--progress,0%), var(--faint) var(--progress,0%) 100%); }
