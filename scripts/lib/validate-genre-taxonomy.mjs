@@ -7,12 +7,13 @@ const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
 const readJson = async (file) => JSON.parse(await read(file));
 
-const [genres, taxonomy, index, playerRuntime, catalogueRuntime] = await Promise.all([
+const [genres, taxonomy, index, playerRuntime, catalogueRuntime, nonstopRuntime] = await Promise.all([
   readJson('data/genres.json'),
   readJson('data/taxonomy.json'),
   readJson('data/catalogue/index.json'),
   read('app.js'),
   read('src/catalogue/catalogue.js'),
+  read('nonstop-browser.js'),
 ]);
 const songParts = await Promise.all((index.songChunks || []).map(readJson));
 const songs = songParts.flat();
@@ -97,9 +98,39 @@ if (!catalogueRuntime.includes('song.taxonomyStyles')) {
   fail('Explore search must index taxonomyStyles[]');
 }
 
+const structuredNonstopSets = nonstop.filter((set) => [set.genres, set.categories, set.styles]
+  .some((values) => Array.isArray(values) && values.length > 0)).length;
+const legacyFallbackSets = nonstop.length - structuredNonstopSets;
+
+for (const entry of taxonomy) {
+  const pair = `['${entry.id}', '${entry.visualGenre}']`;
+  if (!nonstopRuntime.includes(pair)) {
+    fail(`Nonstop runtime taxonomy mapping is missing canonical pair ${pair}`);
+  }
+}
+
+const fallbackFunction = nonstopRuntime.match(/function categoryFallbackText\(set\) \{[\s\S]*?\n  \}/)?.[0] || '';
+if (!fallbackFunction) {
+  fail('Nonstop runtime must define the narrow categoryFallbackText() helper');
+} else {
+  if (/artistsText/.test(fallbackFunction)) fail('Nonstop category fallback must not scan artist names');
+  if (/segments/.test(fallbackFunction)) fail('Nonstop category fallback must not scan chapter/segment titles');
+}
+
+const categoryFunction = nonstopRuntime.match(/function categoriesFor\(set\) \{[\s\S]*?\n  \}/)?.[0] || '';
+if (!categoryFunction) {
+  fail('Nonstop runtime must define categoriesFor()');
+} else {
+  if (categoryFunction.includes('setSearchText(')) fail('Nonstop category membership must not reuse broad search text');
+  if (!categoryFunction.includes('if (structured.size > 0)')) fail('Nonstop structured taxonomy must take precedence over legacy fallback');
+  if (!categoryFunction.includes('addStructuredBrowseCategories(categories, structured)')) fail('Nonstop runtime must map structured browse tokens before fallback');
+  if (!categoryFunction.includes('addLegacyFallbackCategories(categories, fallbackText')) fail('Nonstop runtime must keep a bounded fallback for unclassified legacy sets');
+}
+
 if (failed) process.exit(1);
 console.log(`✓ ${visualIds.size} visual worlds and ${taxonomyById.size} music taxonomy categories have clean IDs and mappings`);
 console.log(`✓ ${songs.length} canonical songs have primary taxonomy categories aligned with their visual worlds`);
 console.log(`✓ ${secondaryTaxonomySongs} songs preserve ${secondaryTaxonomyTags} secondary taxonomy classifications without overloading the primary category`);
 console.log(`✓ ${nonstop.length} canonical discovery Nonstop sets keep ${discoveryGenreTags} genre tags, ${discoveryStyleTags} style tags, and ${discoveryCategoryTags} browse categories inside known visual/taxonomy IDs`);
 console.log('✓ main player and Explore search index secondary taxonomy styles');
+console.log(`✓ Nonstop browse membership is structured-first for ${structuredNonstopSets} sets, with narrow set-level fallback retained for ${legacyFallbackSets} legacy unclassified sets`);
