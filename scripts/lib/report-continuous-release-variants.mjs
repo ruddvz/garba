@@ -17,12 +17,19 @@ for (const sourceChunk of index.releaseChunks || []) {
   for (const release of await readJson(sourceChunk)) releases.push({ ...release, sourceChunk });
 }
 
-const songCounts = new Map();
+const songsByRelease = new Map();
 for (const sourceChunk of index.songChunks || []) {
   for (const song of await readJson(sourceChunk)) {
-    songCounts.set(song.releaseId, (songCounts.get(song.releaseId) || 0) + 1);
+    const songs = songsByRelease.get(song.releaseId) || [];
+    songs.push(song);
+    songsByRelease.set(song.releaseId, songs);
   }
 }
+
+const signature = (releaseId) => (songsByRelease.get(releaseId) || [])
+  .slice()
+  .sort((a, b) => Number(a.trackNumber || 0) - Number(b.trackNumber || 0) || String(a.id).localeCompare(String(b.id)))
+  .map((song) => normalise(song.title));
 
 const groups = new Map();
 for (const release of releases) {
@@ -53,10 +60,27 @@ for (const [titleKey, group] of collisions) {
       `- ${release.id}`,
       `entryType=${release.entryType || 'unknown'}`,
       `declaredSongs=${release.songCount ?? 'unknown'}`,
-      `canonicalSongs=${songCounts.get(release.id) || 0}`,
+      `canonicalSongs=${(songsByRelease.get(release.id) || []).length}`,
       `year=${release.originalReleaseYear || release.releaseDate || 'unknown'}`,
       `source=${release.sourceChunk}`,
       youtube ? `youtube=${youtube}` : 'youtube=none',
     ].join(' | '));
+  }
+
+  const segmented = group.filter((release) => !String(release.entryType || '').includes('continuous') && (songsByRelease.get(release.id) || []).length > 1);
+  for (let i = 0; i < segmented.length; i += 1) {
+    for (let j = i + 1; j < segmented.length; j += 1) {
+      const a = segmented[i];
+      const b = segmented[j];
+      const aSig = signature(a.id);
+      const bSig = signature(b.id);
+      const exact = aSig.length === bSig.length && aSig.every((title, index) => title === bSig[index]);
+      console.log(`  segmented-compare ${a.id} <-> ${b.id}: ${exact ? 'IDENTICAL TITLE ORDER' : 'DIFFERENT TITLE ORDER'} (${aSig.length}/${bSig.length})`);
+      if (!exact) {
+        const max = Math.max(aSig.length, bSig.length);
+        const mismatch = Array.from({ length: max }, (_, index) => index).find((index) => aSig[index] !== bSig[index]);
+        if (mismatch != null) console.log(`    first difference at ${mismatch + 1}: ${JSON.stringify(aSig[mismatch] || null)} vs ${JSON.stringify(bSig[mismatch] || null)}`);
+      }
+    }
   }
 }
