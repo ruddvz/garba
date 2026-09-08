@@ -58,9 +58,9 @@
       <section class="release-section" id="releaseSection">
         <div class="section-heading">
           <div><p class="eyebrow">Albums & releases</p><h3>From this catalogue</h3></div>
-          <button id="showAllSongs" type="button" class="quiet-button">Show all songs</button>
+          <button id="showAllSongs" type="button" class="quiet-button" hidden>Show all songs</button>
         </div>
-        <div class="release-rail" id="releaseRail" role="list"></div>
+        <div class="release-rail" id="releaseRail" role="group" aria-label="Albums and releases"></div>
       </section>
 
       <section class="songs-section">
@@ -88,6 +88,137 @@
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="listening-library.js"></script>
   <script type="module" src="../assets/runtime/explore-search.js"></script>
+  <script type="module">
+    (() => {
+      const sectionRoot = document.getElementById('catalogueSections');
+      const releaseRail = document.getElementById('releaseRail');
+      if (!sectionRoot || !releaseRail) return;
+
+      const railStyle = document.createElement('style');
+      railStyle.dataset.playgarbaExploreRailInteraction = '';
+      railStyle.textContent = `
+        .release-rail,.essential-release-rail{transition:-webkit-mask-image .16s ease,mask-image .16s ease}
+        .release-rail[data-scroll-left="true"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 calc(100% - 24px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 calc(100% - 24px),transparent 100%)}
+        .release-rail[data-scroll-left="true"][data-scroll-right="false"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="false"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 100%);mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 100%)}
+        .release-rail[data-scroll-left="false"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="false"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%)}
+        .release-rail:focus-within,.essential-release-rail:focus-within{scroll-behavior:smooth}
+        @media(max-width:640px){
+          .release-rail[data-scroll-left="true"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 calc(100% - 17px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 calc(100% - 17px),transparent 100%)}
+          .release-rail[data-scroll-left="true"][data-scroll-right="false"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="false"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 100%);mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 100%)}
+          .release-rail[data-scroll-left="false"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="false"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 17px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 17px),transparent 100%)}
+        }
+        @media(prefers-reduced-motion:reduce){.release-rail,.essential-release-rail{transition:none!important;scroll-behavior:auto!important}}
+      `;
+      document.head.append(railStyle);
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const resizeObservers = new WeakMap();
+      let pendingReleaseFocusId = '';
+      let refreshQueued = false;
+
+      function cardsFor(rail) {
+        return [...rail.querySelectorAll(':scope > .release-card:not([disabled])')];
+      }
+
+      function revealHorizontally(rail, target) {
+        if (!(target instanceof HTMLElement)) return;
+        const railRect = rail.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const inset = 6;
+        let delta = 0;
+        if (targetRect.left < railRect.left + inset) delta = targetRect.left - railRect.left - inset;
+        else if (targetRect.right > railRect.right - inset) delta = targetRect.right - railRect.right + inset;
+        if (Math.abs(delta) < 1) return;
+        rail.scrollTo({
+          left: Math.max(0, rail.scrollLeft + delta),
+          behavior: reduced.matches ? 'auto' : 'smooth',
+        });
+      }
+
+      function updateOverflow(rail) {
+        const max = Math.max(0, rail.scrollWidth - rail.clientWidth);
+        rail.dataset.scrollLeft = rail.scrollLeft > 4 ? 'true' : 'false';
+        rail.dataset.scrollRight = rail.scrollLeft < max - 4 ? 'true' : 'false';
+      }
+
+      function normalizeRail(rail, label) {
+        rail.setAttribute('role', 'group');
+        rail.setAttribute('aria-label', label);
+        cardsFor(rail).forEach((card) => card.removeAttribute('role'));
+        updateOverflow(rail);
+      }
+
+      function restorePendingFocus() {
+        if (!pendingReleaseFocusId) return;
+        const target = releaseRail.querySelector(`.release-card[data-release-id="${CSS.escape(pendingReleaseFocusId)}"]`);
+        if (!(target instanceof HTMLElement)) return;
+        pendingReleaseFocusId = '';
+        target.focus({ preventScroll: true });
+        revealHorizontally(releaseRail, target);
+      }
+
+      function bindRail(rail, label) {
+        normalizeRail(rail, label);
+        if (rail.dataset.keyboardRailBound === 'true') return;
+        rail.dataset.keyboardRailBound = 'true';
+
+        rail.addEventListener('keydown', (event) => {
+          if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          const current = event.target instanceof Element ? event.target.closest('.release-card') : null;
+          if (!(current instanceof HTMLElement) || current.parentElement !== rail) return;
+          const cards = cardsFor(rail);
+          const currentIndex = cards.indexOf(current);
+          if (currentIndex < 0 || !cards.length) return;
+          let nextIndex = currentIndex;
+          if (event.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
+          if (event.key === 'ArrowRight') nextIndex = Math.min(cards.length - 1, currentIndex + 1);
+          if (event.key === 'Home') nextIndex = 0;
+          if (event.key === 'End') nextIndex = cards.length - 1;
+          if (nextIndex === currentIndex && !['Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const next = cards[nextIndex];
+          next?.focus({ preventScroll: true });
+          if (next) revealHorizontally(rail, next);
+        });
+
+        rail.addEventListener('click', (event) => {
+          if (rail !== releaseRail) return;
+          const card = event.target instanceof Element ? event.target.closest('.release-card[data-release-id]') : null;
+          if (!(card instanceof HTMLElement) || document.activeElement !== card) return;
+          pendingReleaseFocusId = card.dataset.releaseId || '';
+        }, { capture: true });
+
+        rail.addEventListener('scroll', () => requestAnimationFrame(() => updateOverflow(rail)), { passive: true });
+        if ('ResizeObserver' in window) {
+          const observer = new ResizeObserver(() => updateOverflow(rail));
+          observer.observe(rail);
+          resizeObservers.set(rail, observer);
+        }
+      }
+
+      function refreshRails() {
+        refreshQueued = false;
+        bindRail(releaseRail, 'Albums and releases');
+        document.querySelectorAll('.essential-release-rail').forEach((rail) => {
+          if (rail instanceof HTMLElement) bindRail(rail, 'Essential Garba releases');
+        });
+        requestAnimationFrame(restorePendingFocus);
+      }
+
+      function queueRefreshRails() {
+        if (refreshQueued) return;
+        refreshQueued = true;
+        queueMicrotask(refreshRails);
+      }
+
+      new MutationObserver(queueRefreshRails).observe(sectionRoot, { childList: true, subtree: true });
+      new MutationObserver(queueRefreshRails).observe(releaseRail, { childList: true, subtree: true, attributes: true, attributeFilter: ['role', 'class'] });
+      window.addEventListener('resize', queueRefreshRails, { passive: true });
+      window.addEventListener('pageshow', queueRefreshRails);
+      queueRefreshRails();
+    })();
+  </script>
   <script type="module">
     const VISUALS = [
       '../assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
