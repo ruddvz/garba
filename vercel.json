@@ -1,19 +1,26 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "redirects": [
+  "rewrites": [
     {
-      "source": "/:path*",
+      "source": "/catalogue/",
       "has": [
         {
           "type": "host",
-          "value": "^www\\.playgarba\\.com$"
+          "value": "^live\\.playgarba\\.com$"
         }
       ],
-      "destination": "https://playgarba.com/:path*",
-      "permanent": true
-    }
-  ],
-  "rewrites": [
+      "destination": "/src/catalogue/index.html"
+    },
+    {
+      "source": "/catalogue/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "^live\\.playgarba\\.com$"
+        }
+      ],
+      "destination": "/src/catalogue/:path*"
+    },
     {
       "source": "/",
       "has": [
@@ -33,6 +40,19 @@
         }
       ],
       "destination": "/public-site/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "^www\\.playgarba\\.com$"
+        }
+      ],
+      "destination": "https://playgarba.com/:path*",
+      "permanent": true
     }
   ]
 }
