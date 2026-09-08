@@ -1,0 +1,36 @@
+name: Apply Nonstop Recording UX
+
+on:
+  push:
+    branches:
+      - codex/garba-nonstop-recording-ux-v1
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/garba-nonstop-recording-ux-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply one-recording Nonstop UX
+        run: node scripts/lib/apply-nonstop-recording-ux.mjs
+      - name: Commit UX implementation
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No Nonstop recording UX changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nonstop-browser.js .github/browser/browser-smoke.spec.mjs
+          git commit -m 'Clarify Nonstop as one recording with optional chapters'
+          git push origin HEAD:codex/garba-nonstop-recording-ux-v1
