@@ -216,6 +216,182 @@ jobs:
               return commentsByIssue;
             }
 
+            function normalizeIssueNode(node) {
+              return {
+                number: Number(node.number),
+                nodeId: node.id,
+                state: String(node.state || '').toLowerCase(),
+                labels: (node.labels?.nodes || []).map(label => ({ name: label.name })),
+                pull_request: null,
+              };
+            }
+
+            async function listClaimIssues(extraIssueNumbers = []) {
+              const byNumber = new Map();
+              let cursor = null;
+
+              do {
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      issues(first: 100, after: $cursor, states: OPEN, labels: ["agent:claimed"]) {
+                        nodes {
+                          id
+                          number
+                          state
+                          labels(first: 50) { nodes { name } }
+                        }
+                        pageInfo { hasNextPage endCursor }
+                      }
+                    }
+                  }
+                `, { owner, repo, cursor });
+
+                const connection = response.repository?.issues;
+                for (const node of connection?.nodes || []) {
+                  if (Number(node.number) === boardIssue) continue;
+                  byNumber.set(Number(node.number), normalizeIssueNode(node));
+                }
+                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                if (connection?.pageInfo?.hasNextPage && !cursor) {
+                  throw new Error('Claimed issue connection reports another page without an end cursor.');
+                }
+              } while (cursor);
+
+              const missing = [...new Set(extraIssueNumbers.filter(Boolean))]
+                .filter(issueNumber => issueNumber !== boardIssue && !byNumber.has(issueNumber));
+
+              for (let offset = 0; offset < missing.length; offset += graphBatchSize) {
+                const chunk = missing.slice(offset, offset + graphBatchSize);
+                const fields = chunk.map((issueNumber, index) => [
+                  `i${index}: issue(number: ${issueNumber}) {`,
+                  '  id',
+                  '  number',
+                  '  state',
+                  '  labels(first: 50) { nodes { name } }',
+                  '}',
+                ].join('\n'));
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!) {
+                    repository(owner: $owner, name: $repo) {
+                      ${fields.join('\n')}
+                    }
+                  }
+                `, { owner, repo });
+                const repository = response.repository || {};
+                chunk.forEach((issueNumber, index) => {
+                  const node = repository[`i${index}`];
+                  if (!node || String(node.state).toUpperCase() !== 'OPEN') return;
+                  byNumber.set(issueNumber, normalizeIssueNode(node));
+                });
+              }
+
+              return byNumber;
+            }
+
+            function buildGraphFilePage(entries) {
+              const variableDefs = ['$owner: String!', '$repo: String!'];
+              const variables = { owner, repo };
+              const fields = [];
+
+              entries.forEach(([pullNumber, cursor], index) => {
+                const cursorName = `cursor${index}`;
+                if (cursor) {
+                  variableDefs.push(`$${cursorName}: String!`);
+                  variables[cursorName] = cursor;
+                }
+                fields.push([
+                  `p${index}: pullRequest(number: ${pullNumber}) {`,
+                  '  number',
+                  `  files(first: 100${cursor ? `, after: $${cursorName}` : ''}) {`,
+                  '    nodes { path }',
+                  '    pageInfo { hasNextPage endCursor }',
+                  '  }',
+                  '}',
+                ].join('\n'));
+              });
+
+              return {
+                query: [
+                  `query(${variableDefs.join(', ')}) {`,
+                  '  repository(owner: $owner, name: $repo) {',
+                  fields.join('\n'),
+                  '  }',
+                  '}',
+                ].join('\n'),
+                variables,
+              };
+            }
+
+            async function listFilesByPullRequest(pullNumbers) {
+              const unique = [...new Set(pullNumbers.filter(Boolean))];
+              const filesByPull = new Map(unique.map(pullNumber => [pullNumber, []]));
+              let pending = new Map(unique.map(pullNumber => [pullNumber, null]));
+
+              while (pending.size) {
+                const next = new Map();
+                const pendingEntries = [...pending.entries()];
+
+                for (let offset = 0; offset < pendingEntries.length; offset += graphBatchSize) {
+                  const chunk = pendingEntries.slice(offset, offset + graphBatchSize);
+                  const { query, variables } = buildGraphFilePage(chunk);
+                  const response = await github.graphql(query, variables);
+                  const repository = response.repository || {};
+
+                  chunk.forEach(([expectedPullNumber], index) => {
+                    const pull = repository[`p${index}`];
+                    if (!pull) return;
+                    if (Number(pull.number) !== Number(expectedPullNumber)) {
+                      throw new Error(`GraphQL file batch returned PR #${pull.number} for expected #${expectedPullNumber}.`);
+                    }
+
+                    const connection = pull.files;
+                    const bucket = filesByPull.get(expectedPullNumber);
+                    for (const node of connection.nodes || []) bucket.push(node.path);
+
+                    if (connection.pageInfo?.hasNextPage) {
+                      const cursor = connection.pageInfo.endCursor;
+                      if (!cursor) throw new Error(`PR #${expectedPullNumber} reports another file page without an end cursor.`);
+                      next.set(expectedPullNumber, cursor);
+                    }
+                  });
+                }
+
+                pending = next;
+              }
+
+              return filesByPull;
+            }
+
+            async function listLegacyPullNumbers() {
+              const numbers = [];
+              let cursor = null;
+
+              do {
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequests(first: 100, after: $cursor, states: OPEN) {
+                        nodes { number }
+                        pageInfo { hasNextPage endCursor }
+                      }
+                    }
+                  }
+                `, { owner, repo, cursor });
+                const connection = response.repository?.pullRequests;
+                for (const node of connection?.nodes || []) {
+                  const number = Number(node.number);
+                  if (number <= legacyPrMax) numbers.push(number);
+                }
+                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                if (connection?.pageInfo?.hasNextPage && !cursor) {
+                  throw new Error('Open pull-request connection reports another page without an end cursor.');
+                }
+              } while (cursor);
+
+              return [...new Set(numbers)].sort((a, b) => a - b);
+            }
+
             function normalizeFileToken(raw) {
               let token = String(raw || '').trim().replace(/^`+|`+$/g, '').replace(/^\.\//, '');
               token = token.replace(/^(?:expected|likely)\s+/i, '').trim();
@@ -344,6 +520,11 @@ jobs:
               const nextPage = buildGraphCommentPage([[12, 'cursor-value']]);
               assert(firstPage.query.includes('comments(first: 100)') && !firstPage.query.includes('after:'), 'first GraphQL comment page omits cursor');
               assert(nextPage.query.includes('after: $cursor0') && nextPage.variables.cursor0 === 'cursor-value', 'follow-up GraphQL comment page carries its cursor');
+
+              const firstFiles = buildGraphFilePage([[299, null]]);
+              const nextFiles = buildGraphFilePage([[299, 'file-cursor']]);
+              assert(firstFiles.query.includes('files(first: 100)') && !firstFiles.query.includes('after:'), 'first GraphQL file page omits cursor');
+              assert(nextFiles.query.includes('after: $cursor0') && nextFiles.variables.cursor0 === 'file-cursor', 'follow-up GraphQL file page carries its cursor');
             }
 
             function labelNames(issue) {
@@ -396,30 +577,7 @@ jobs:
             }
 
             async function collectClaimRows(extraIssueNumbers = []) {
-              const claimed = await github.paginate(github.rest.issues.listForRepo, {
-                owner,
-                repo,
-                state: 'open',
-                labels: 'agent:claimed',
-                per_page: 100,
-              });
-
-              const byNumber = new Map();
-              for (const issue of claimed) {
-                if (issue.pull_request || issue.number === boardIssue) continue;
-                byNumber.set(issue.number, issue);
-              }
-
-              for (const issueNumber of extraIssueNumbers) {
-                if (!issueNumber || issueNumber === boardIssue || byNumber.has(issueNumber)) continue;
-                try {
-                  const issue = (await github.rest.issues.get({ owner, repo, issue_number: issueNumber })).data;
-                  if (!issue.pull_request && issue.state === 'open') byNumber.set(issue.number, issue);
-                } catch (error) {
-                  if (error.status !== 404) throw error;
-                }
-              }
-
+              const byNumber = await listClaimIssues(extraIssueNumbers);
               const commentsByIssue = await listCommentsByIssue([...byNumber.keys()]);
               const rows = [];
               for (const issue of byNumber.values()) {
@@ -435,24 +593,12 @@ jobs:
             }
 
             async function collectLegacyRows() {
-              const openPulls = await github.paginate(github.rest.pulls.list, {
-                owner,
-                repo,
-                state: 'open',
-                per_page: 100,
-              });
-
-              const legacy = [];
-              for (const pr of openPulls.filter(item => item.number <= legacyPrMax).sort((a, b) => a.number - b.number)) {
-                const changed = await github.paginate(github.rest.pulls.listFiles, {
-                  owner,
-                  repo,
-                  pull_number: pr.number,
-                  per_page: 100,
-                });
-                legacy.push({ pr, files: changed.map(file => file.filename).join('; ') });
-              }
-              return legacy;
+              const numbers = await listLegacyPullNumbers();
+              const filesByPull = await listFilesByPullRequest(numbers);
+              return numbers.map(number => ({
+                pr: { number },
+                files: (filesByPull.get(number) || []).join('; '),
+              }));
             }
 
             function annotateConflicts(rows, legacyRows) {
@@ -603,7 +749,6 @@ jobs:
             }
 
             runSelfTests();
-            await ensureConflictLabel();
 
             const extraIssueNumbers = [];
             if (context.eventName === 'issue_comment' || context.eventName === 'issues') {
@@ -618,6 +763,35 @@ jobs:
               await collectLegacyRows(),
             );
 
+            const blocked = rows.filter(row => row.fileConflicts.length);
+            core.summary
+              .addHeading('Cross-issue file ownership')
+              .addRaw(`${rows.length} active claim(s) checked; ${blocked.length} later claim(s) currently blocked by earlier file ownership.`)
+              .write();
+
+            // Pull-request checks are gate-only. Compute the live ownership graph from
+            // GraphQL and return before label/board reconciliation so a required merge
+            // check never depends on the installation's core REST quota.
+            if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {
+              const pr = context.payload.pull_request;
+              if (pr.number <= legacyPrMax) return;
+
+              const issueNumber = prClaimIssue(pr);
+              if (!issueNumber) return;
+
+              const current = rows.find(row => row.issue.number === issueNumber);
+              if (!current || !current.fileConflicts.length) return;
+
+              const details = current.fileConflicts
+                .map(conflict => `${conflict.blocker} on ${conflict.paths.join(', ')}`)
+                .join('; ');
+              core.setFailed(`Agent-Claim #${issueNumber} loses cross-issue file ownership to earlier work: ${details}. Narrow the claim or wait for release before this PR can proceed.`);
+              return;
+            }
+
+            // Claim/release/close events still maintain labels, per-issue status and the
+            // board. They are not the PR merge gate and may perform the necessary writes.
+            await ensureConflictLabel();
             for (const row of rows) {
               if (row.fileConflicts.length) await addConflictLabel(row.issue);
               else await removeConflictLabel(row.issue);
@@ -625,25 +799,3 @@ jobs:
             }
             await clearStaleLabels(rows);
             await updateBoard(rows);
-
-            const blocked = rows.filter(row => row.fileConflicts.length);
-            core.summary
-              .addHeading('Cross-issue file ownership')
-              .addRaw(`${rows.length} active claim(s) checked; ${blocked.length} later claim(s) currently blocked by earlier file ownership.`)
-              .write();
-
-            if (context.eventName !== 'pull_request' || context.payload.action === 'closed') return;
-
-            const pr = context.payload.pull_request;
-            if (pr.number <= legacyPrMax) return;
-
-            const issueNumber = prClaimIssue(pr);
-            if (!issueNumber) return;
-
-            const current = rows.find(row => row.issue.number === issueNumber);
-            if (!current || !current.fileConflicts.length) return;
-
-            const details = current.fileConflicts
-              .map(conflict => `${conflict.blocker} on ${conflict.paths.join(', ')}`)
-              .join('; ');
-            core.setFailed(`Agent-Claim #${issueNumber} loses cross-issue file ownership to earlier work: ${details}. Narrow the claim or wait for release before this PR can proceed.`);
