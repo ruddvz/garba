@@ -37,7 +37,7 @@ Use the optional editorial fields below when a cleaner user-facing name or riche
 
 If `description` and `story` are absent, Explore generates a factual fallback from existing catalogue metadata such as artist credit, taxonomy, release, year and label. A generated fallback is not presented as historical or biographical fact beyond those fields.
 
-The same `displayTitle`, `aliases[]` and `description` fields may be used on release and featured nonstop records. Featured nonstop records may additionally use `series` and `volume` to separate a series name from its numbered edition without changing stable IDs.
+The same `displayTitle`, `aliases[]` and `description` fields may be used on release and discovery Nonstop records. Nonstop records may additionally use `series` and `volume` to separate a series name from its numbered edition without changing stable IDs.
 
 ## Song record
 
@@ -131,6 +131,31 @@ npm run presentation:validate
 
 This verifies role values, canonical targets, alias track-order identity, Nonstop set safety, generated song redirects and the main-player/Explore filtering contracts.
 
+## Nonstop discovery source of truth
+
+`data/discovery/sets/index.json` and the chunks it lists are the only canonical registry for Nonstop/full-set listening and discovery. The live Nonstop browser, catalogue audits and taxonomy validators all read this registry.
+
+The former parallel file `data/nonstop.json` is retired and must not be recreated. Provider-only Amazon, Apple Music, Spotify or other evidence belongs in release/source manifests or in explicitly non-playable discovery records that carry `sourceStatus: "youtube-migration-required"`; it must not become a second listening catalogue.
+
+A physical YouTube recording has one canonical discovery set identity. Do not add a second card because the same recording was researched under another release, artist lane or legacy ID. Alternate URLs or historical IDs may be preserved as provenance fields or notes, but one `videoId` must not resolve to multiple playable Nonstop set IDs.
+
+Discovery records with an embeddable YouTube source are full-set listening objects. Chapter data is optional, but its evidence state must be truthful:
+
+- `published-complete`: source-backed timestamped chapter sequence is present.
+- `source-no-published-chapters`: the audited source explicitly exposes no published chapter starts.
+- `source-tracklist-no-timestamps`: a source tracklist exists but exact starts do not.
+- `full-set-only-no-chapter-evidence`: a verified full-set YouTube master was preserved or migrated, but no trustworthy chapter evidence was carried into the record. Play the full recording only; do not infer starts from song durations, another release, or neighbouring videos.
+
+Multi-artist chapter lists without per-chapter performer evidence remain `segmentRouting: "metadata-only"` unless a chapter explicitly becomes routing-eligible with verified performer credit.
+
+Run:
+
+```sh
+npm run nonstop:source:validate
+```
+
+This verifies that the retired parallel registry is absent, playable YouTube recordings are unique, release `nonstopSetId` handoffs resolve to canonical embeddable sets, and runtime/validation code points at discovery rather than a second source.
+
 ## Free/access resource record
 
 The free-source manifest is separate from the canonical song catalogue because a free download, stream, sample or archive document is not automatically a redistributable song master.
@@ -157,7 +182,7 @@ Run:
 npm run catalogue:metadata:audit
 ```
 
-The audit checks canonical title hygiene, optional editorial field shapes, aliases, release references, taxonomy IDs, featured nonstop metadata and the difference between primary visual-world counts and Explore's primary-plus-secondary taxonomy membership.
+The audit checks canonical title hygiene, optional editorial field shapes, aliases, release references, taxonomy IDs, discovery Nonstop metadata and the difference between primary visual-world counts and Explore's primary-plus-secondary taxonomy membership.
 
 ## Chunking and generation
 
