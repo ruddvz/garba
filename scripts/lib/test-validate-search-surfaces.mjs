@@ -66,6 +66,7 @@ function expectInvalid(name, mutate, expected) {
 expectValid('valid production fixture', (root) => {
   const result = validateSearchSurfaces(root, { quiet: true });
   assert.equal(result.routes.length, 9, 'current Pages-style fixture should expose root, Explore, catalogue alias and six public pages');
+  assert.match(result.warnings.join('\n'), /\/live\/.*not listed in sitemap/, 'deployed indexable helper routes outside the sitemap should be visible as audit warnings');
 });
 
 expectValid('compatibility alias may share Explore canonical when omitted from sitemap', (root) => {
