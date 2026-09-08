@@ -70,8 +70,8 @@ if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v9`")) {
-  fail('PWA cache generation must be v9 after combining the domain launch refresh with the YouTube playback runtime');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v10`")) {
+  fail('PWA cache generation must be v10 after refreshing the installed-app brand icon assets');
 }
 
 if (failed) process.exit(1);
