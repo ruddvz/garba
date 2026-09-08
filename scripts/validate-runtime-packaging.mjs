@@ -12,7 +12,7 @@ const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInject
   read('assets/social/playgarba-og-card.svg'),
   read('scripts/lib/inject-social-preview.mjs'),
   read('scripts/lib/inject-brand-metadata.mjs'),
-  read('browserconfig.xml'),
+  read('assets/icons/browserconfig.xml'),
 ]);
 
 let failed = false;
@@ -175,7 +175,7 @@ for (const marker of [
   'apple-touch-icon.png',
   'msapplication-TileColor',
   'msapplication-config',
-  '/browserconfig.xml',
+  '/assets/icons/browserconfig.xml',
 ]) {
   if (!brandInjector.includes(marker)) fail(`Brand metadata injector is missing: ${marker}`);
 }
@@ -189,8 +189,8 @@ for (const marker of [
   if (!browserconfig.includes(marker)) fail(`browserconfig.xml is missing: ${marker}`);
 }
 for (const file of [
-  'browserconfig.xml',
   'favicon.ico',
+  'assets/icons/browserconfig.xml',
   'assets/icons/favicon-16.png',
   'assets/icons/favicon-32.png',
   'assets/icons/favicon-48.png',
