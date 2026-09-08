@@ -1,0 +1,78 @@
+name: Agent2 Explore liveness diagnostic
+
+on:
+  push:
+    branches:
+      - fix/issue-638-explore-instant-liveness
+    paths:
+      - 'src/catalogue/index.html'
+      - '.github/browser/agent2-explore-liveness.spec.mjs'
+      - '.github/workflows/agent2-explore-liveness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent2-explore-liveness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  liveness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build catalogue
+        run: npm run catalogue
+
+      - name: Prepare isolated Explore fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _explore_diag
+          mkdir -p _explore_diag/explore
+          cp -R assets data _explore_diag/
+          cp src/catalogue/index.html _explore_diag/explore/index.html
+          cp src/catalogue/catalogue.css _explore_diag/explore/catalogue.css
+          cp src/catalogue/catalogue.js _explore_diag/explore/catalogue.js
+          cp src/catalogue/listening-library.js _explore_diag/explore/listening-library.js
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then PACK='assets/backgrounds/garba15-2048-q90.zip';
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then PACK='assets/backgrounds/garba15-2k.zip';
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then PACK='assets/backgrounds/garba15-2k-q82.zip'; fi
+          if [ -n "$PACK" ]; then
+            rm -rf _explore_diag/assets/backgrounds/library
+            mkdir -p _explore_diag/assets/backgrounds/library
+            unzip -oq "$PACK" -d _explore_diag/assets/backgrounds/library
+          fi
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright@1.55.0
+
+      - name: Install Chromium and WebKit with host dependencies
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Start isolated Explore fixture
+        run: |
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory _explore_diag >/tmp/agent2-explore.log 2>&1 &
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4174/explore/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/agent2-explore.log
+          exit 1
+
+      - name: Run direct Explore liveness matrix
+        run: node .github/browser/agent2-explore-liveness.spec.mjs
+
+      - name: Show fixture server log on failure
+        if: failure()
+        run: cat /tmp/agent2-explore.log || true
