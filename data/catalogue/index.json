@@ -129,7 +129,8 @@
     "data/playback-sources-jordar-exact.json",
     "data/playback-sources-rangoli-exact.json",
     "data/playback-sources-taali-exact.json",
-    "data/playback-sources-garba-ni-ramzat-4-exact.json"
+    "data/playback-sources-garba-ni-ramzat-4-exact.json",
+    "data/playback-sources-jay-ho-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
