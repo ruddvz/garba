@@ -44,6 +44,18 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
   fail('Playback runtime order must be provider-runtime.js → player-continuity.js → youtube-player-runtime.js');
 }
 
+for (const marker of [
+  'shareCurrentTrack',
+  'setupKeyboardGuard',
+  'syncSheetModal',
+  'syncNetworkStatus',
+  'aria-valuetext',
+  'data-save-data',
+  'page-hidden',
+]) {
+  if (!bootstrap.includes(marker)) fail(`Fast bootstrap is missing interaction-hardening marker: ${marker}`);
+}
+
 const q90Pack = 'garba15-2048-q90.zip';
 const q90Sha = '4690046d30ecd5400b3fc953a2a93f877d64921a69955d2b5dc6aa0bd65a769d';
 const legacyPack = 'garba15-2k.zip';
@@ -169,6 +181,7 @@ if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v12`")) {
 
 if (failed) process.exit(1);
 console.log('✓ Pages ships every direct and transitive playback runtime file');
+console.log('✓ fast bootstrap contains production interaction hardening without adding another runtime request');
 console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
 console.log('✓ provider route safety loads before the YouTube controllable engine');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
