@@ -1,0 +1,95 @@
+{
+  "version": "0.1.0",
+  "updated": "2026-09-07",
+  "note": "Curated exact Apple Music song routes for Jordar DJ Garba Nonstop. Each mapping was verified against a public Apple Music song page matching the canonical title, artists, album, and 2022 release. Unverified tracks intentionally remain on the release-level fallback.",
+  "songSources": {
+    "gaman-kajal-jordar-01-gogo-gujarat-ni-dharti-no-goam-dhani-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/ca/song/1648650154",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 1,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-03-mari-meldi-maa-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650156",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 3,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-04-heer-gajro-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650157",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 4,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-05-uncho-uncho-joganima-no-limbado-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650158",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 5,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-06-har-har-gange-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/ca/song/1648650159",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 6,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-07-ler-karave-bhai-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650160",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 7,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-10-jog-maya-jogani-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650163",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 10,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-11-ray-ranchhod-ji-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650164",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 11,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-13-veli-upade-patan-vadi-gaadi-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650376",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 13,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-19-kora-kagad-ma-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/us/song/1648650382",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 19,
+      "evidenceType": "official-apple-music-song-page"
+    },
+    "gaman-kajal-jordar-22-helo-maro-2022": {
+      "provider": "apple-music",
+      "sourceUrl": "https://music.apple.com/au/song/1648650385",
+      "sourceType": "verified-track-source",
+      "releaseId": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+      "trackNumber": 22,
+      "evidenceType": "official-apple-music-song-page"
+    }
+  }
+}
