@@ -30,6 +30,22 @@ node scripts/raas-task.test.mjs
 
 The compiler reads `.raas/config.json`, and its client/bootstrap contract is `.raas/BOOTSTRAP.md`. Keep client-specific rules as thin pointers to those canonical files rather than copying the product context into Codex, ChatGPT, Cursor or another agent surface.
 
+## RAAS completion and next-issue selection
+
+`lib/raas-completion.mjs` evaluates a supplied current-state record for one claimed lane and reports `complete`, `incomplete` or `blocked`. It also filters a supplied fresh issue snapshot to safe next-issue candidates after excluding active claims, overlapping open PRs, coordination-only issues and blockers.
+
+The module deliberately does not call GitHub or claim work. ChatGPT, Codex, Cursor or another client must fetch current GitHub evidence first, then pass that evidence into the deterministic evaluator. Ownership remains in issue comments and issue #364.
+
+Run:
+
+```bash
+node scripts/lib/raas-completion.mjs evaluate --file completion.json
+node scripts/lib/raas-completion.mjs candidates --file candidates.json
+node scripts/lib/test-raas-completion.mjs
+```
+
+The record schema and production-verification rules are documented in `.raas/COMPLETION.md`.
+
 ## Catalogue and runtime generation
 
 - `build-catalogue.mjs` rebuilds runtime aggregate files from `data/catalogue/index.json` and its canonical shards. Multi-song releases prefer release-shaped provider sources over representative track links. Generated YouTube performance chapters must pass credited-artist identity compatibility before they can outrank a conservative release/provider fallback.
