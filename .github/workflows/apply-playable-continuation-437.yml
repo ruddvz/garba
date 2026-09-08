@@ -20,6 +20,8 @@ jobs:
           fetch-depth: 0
       - name: Apply truthful playable continuation
         run: python3 scripts/tmp-437.py
+      - name: Build catalogue for focused validation
+        run: npm run catalogue
       - name: Run focused validation
         run: npm run playable:continuation:validate
       - name: Run full repository validation
