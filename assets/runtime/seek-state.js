@@ -60,3 +60,6 @@
 
   window.GARBA_SEEK_STATE_RUNTIME = { sync: scheduleSync };
 })();
+
+import(new URL('assets/runtime/visual-world-state.js', document.baseURI).href)
+  .catch((error) => console.warn('GARBA 2K visual world runtime failed to load; SVG fallbacks remain active.', error));
