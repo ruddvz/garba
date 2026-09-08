@@ -8,10 +8,10 @@ A song appearing on YouTube, Apple Music, Amazon Music, Spotify, SoundCloud, Ban
 
 Use this priority order:
 
-1. **Licensed direct audio** — a master that GARBA is explicitly authorised to redistribute. This is native HTML audio with no provider login, provider ads or provider UI.
-2. **Verified song-level provider stream** — an official artist, label or distributor source where embedding is permitted.
-3. **Verified release page** — navigation or release context only. Never present a release page as if it were a track-specific stream.
-4. **Unavailable** — keep the catalogue metadata, but do not claim the track is playable.
+1. **Licensed direct audio**: a master that GARBA is explicitly authorised to redistribute. This is native HTML audio with no provider login, provider ads or provider UI.
+2. **Verified song-level provider stream**: an official artist, label or distributor source where embedding is permitted.
+3. **Verified release page**: navigation or release context only. Never present a release page as if it were a track-specific stream.
+4. **Unavailable**: keep the catalogue metadata, but do not claim the track is playable.
 
 ## Where audio should live
 
@@ -49,6 +49,27 @@ Example:
 
 Do not add a direct entry unless the recording itself is cleared. Clearing the musical composition alone is not enough when a third party owns the sound recording.
 
+## Runtime promotion
+
+`npm run catalogue` builds the canonical song data and then runs `scripts/enrich-runtime-songs.mjs`. During enrichment, an entry from `data/direct-audio.json` is promoted only when it has an `audioUrl` and `rights.redistributionAuthorized` is exactly `true`.
+
+The generated public song object receives only playback-safe data: the direct URL, MIME type, encoded-byte checksum and bounded AutoMix fields. Rights-holder names, licence names and proof URLs remain in the direct-audio manifest rather than being copied into the public player catalogue.
+
+An authorised direct master takes priority over provider fallback routes for the same song. If the direct entry is removed, the normal verified-provider routing system becomes eligible again on the next catalogue build.
+
+## AutoMix analysis sequence
+
+Once an authorised master is registered, use this order:
+
+1. Confirm the encoded file is the exact file intended for publication and record its SHA-256 in `data/direct-audio.json`.
+2. Run `npm run automix:analyze -- song-id` as a dry analysis.
+3. Review the reported BPM, confidence, mix-in, mix-out and transition duration. The generated points are beat-grid candidates, not musician-approved phrase boundaries.
+4. If the recommendation is sensible, run `npm run automix:analyze -- --write song-id`.
+5. Run `npm run check` before publishing.
+6. Listen to the transition with the actual neighbouring direct tracks on desktop and installed mobile/PWA playback. Adjust the mix points manually when musical judgement is better than the automatic candidate.
+
+The analyser requires `ffprobe` and `ffmpeg` in `PATH`. It verifies the source bytes against the manifest checksum before analysing. Low-confidence analysis does not publish operational AutoMix fields. Existing human-curated AutoMix fields are preserved unless `--force` is deliberately supplied.
+
 ## Acceptable ways to obtain direct masters
 
 - Obtain written permission or a licence from the recording rights holder that explicitly allows GARBA to host and stream the master.
@@ -62,6 +83,8 @@ A purchased download, streaming subscription, public YouTube upload or free-down
 ## CI guard
 
 `scripts/validate-direct-audio.mjs` rejects direct entries that do not include explicit redistribution evidence, do not match a catalogue song, or try to use major provider pages as direct masters.
+
+It also checks that authorised direct entries were promoted into the generated runtime catalogue, validates AutoMix ranges and links machine-generated analysis to the exact encoded-byte checksum. A generated analysis marked low-confidence or failed cannot publish operational BPM or mix points.
 
 The validator reduces accidental misuse. It does not replace legal review of the underlying licence or permission.
 
