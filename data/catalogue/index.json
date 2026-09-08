@@ -1,7 +1,7 @@
 {
-  "version": "0.18.0",
-  "songCount": 1160,
-  "releaseCount": 208,
+  "version": "0.19.0",
+  "songCount": 1311,
+  "releaseCount": 221,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -60,7 +60,21 @@
     "data/catalogue/songs/songs-53-purva-current-discovery.json",
     "data/catalogue/songs/songs-54-trupti-kaushal-rajesh.json",
     "data/catalogue/songs/songs-55-alpa-current-staples.json",
-    "data/catalogue/songs/songs-56-raag-mehta.json"
+    "data/catalogue/songs/songs-56-raag-mehta.json",
+    "data/catalogue/songs/songs-57-atul-maa-ni-chundadi.json",
+    "data/catalogue/songs/songs-58-atul-tara-vina-shyam.json",
+    "data/catalogue/songs/songs-59-atul-fagan-aayo.json",
+    "data/catalogue/songs/songs-60-atul-amba-no-darbar.json",
+    "data/catalogue/songs/songs-61-atul-chundadi-re.json",
+    "data/catalogue/songs/songs-62-atul-rang-rasiya-vol3.json",
+    "data/catalogue/songs/songs-63-hemant-maa-na-norta.json",
+    "data/catalogue/songs/songs-64-hemant-maa-na-norta-2.json",
+    "data/catalogue/songs/songs-65-hemant-ghammar-vol3.json",
+    "data/catalogue/songs/songs-66-hemant-dhholi-vol15.json",
+    "data/catalogue/songs/songs-67-praful-kalkamano-garbo.json",
+    "data/catalogue/songs/songs-68-boot-maa-na-garba.json",
+    "data/catalogue/songs/songs-69-maa-ashapura-na-garba.json",
+    "data/catalogue/songs/songs-70-praful-mata-nu-garba.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -106,7 +120,10 @@
     "data/catalogue/releases/releases-41-purva-current-discovery.json",
     "data/catalogue/releases/releases-42-trupti-kaushal-rajesh.json",
     "data/catalogue/releases/releases-43-alpa-current-staples.json",
-    "data/catalogue/releases/releases-44-raag-mehta.json"
+    "data/catalogue/releases/releases-44-raag-mehta.json",
+    "data/catalogue/releases/releases-45-atul-completeness.json",
+    "data/catalogue/releases/releases-46-hemant-completeness.json",
+    "data/catalogue/releases/releases-47-praful-hemant-completeness.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -163,7 +180,21 @@
     "data/playback-sources-rutvi-ramzat-3-exact.json",
     "data/playback-sources-rutvi-ramzat-4-exact.json",
     "data/playback-sources-ho-raj-exact.json",
-    "data/playback-sources-youtube-wave-e.json"
+    "data/playback-sources-youtube-wave-e.json",
+    "data/playback-sources-atul-maa-ni-chundadi-exact.json",
+    "data/playback-sources-atul-tara-vina-shyam-exact.json",
+    "data/playback-sources-atul-fagan-aayo-exact.json",
+    "data/playback-sources-atul-amba-no-darbar-exact.json",
+    "data/playback-sources-atul-chundadi-re-exact.json",
+    "data/playback-sources-atul-rang-rasiya-vol3-exact.json",
+    "data/playback-sources-hemant-maa-na-norta-exact.json",
+    "data/playback-sources-hemant-maa-na-norta-2-exact.json",
+    "data/playback-sources-hemant-ghammar-vol3-exact.json",
+    "data/playback-sources-hemant-dhholi-exact.json",
+    "data/playback-sources-praful-kalkamano-garbo-exact.json",
+    "data/playback-sources-boot-maa-na-garba-exact.json",
+    "data/playback-sources-maa-ashapura-na-garba-exact.json",
+    "data/playback-sources-praful-mata-nu-garba-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -189,5 +220,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.18.0 hardens the Rutvi Pandya wave against same-title false matches: the full 2022 album is pinned to Rutvi's own verified official YouTube chapters; all 2023 selections remain exact with Mathura Ma Vagi Morli upgraded to Rutvi's exact official YouTube track; Rutvi Ni Ramzat 3.0 now has thirteen independently verified exact provider tracks while nine unresolved songs are explicitly pinned to the verified Apple Music album fallback; and all 2026 selections remain exact. Rutvi catalogue songs no longer depend on the generic title-only performance matcher. Exact Amazon album selections with a provider-returned trackAsin are now recognised and validated as track-specific routes."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.19.0 completes catalogue Wave C for Atul Purohit, Hemant Chauhan and Praful Dave: 151 additional canonical songs/selections across 13 newly represented releases plus the completed existing Dhholi programme, with exact provider routes wherever independently verified and conservative release-level fallback where exact song evidence is incomplete. It preserves the v0.18.0 Rutvi route-truth hardening, Playback Wave E, and all newer Nonstop/discovery work from current main."
 }

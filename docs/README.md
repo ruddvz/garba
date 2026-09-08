@@ -9,6 +9,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/rights.md`](catalogue/rights.md): source, licensing and redistribution policy
 - [`catalogue/content-sources.md`](catalogue/content-sources.md): source guidance
 - [`catalogue/song-catalog-contract.md`](catalogue/song-catalog-contract.md): player/catalogue integration contract
+- [`catalogue/issue-151-foundational-artists-audit.md`](catalogue/issue-151-foundational-artists-audit.md): Atul Purohit, Hemant Chauhan and Praful Dave catalogue-completeness and playback-routing audit
 
 ## Product
 
