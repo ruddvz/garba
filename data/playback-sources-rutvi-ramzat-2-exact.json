@@ -1,7 +1,7 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "updated": "2026-09-08",
-  "note": "Exact-song mappings for Rutvi Ni Ramzat 2.0. All fourteen component tracks use provider-owned Amazon Music track pages returned by the official album tracklist. The NonStop Garba entry uses Amazon Music's provider-returned selected-track URL. No provider IDs or timestamps are inferred.",
+  "note": "Exact-song mappings for Rutvi Ni Ramzat 2.0. Thirteen component tracks use provider-owned Amazon Music track pages returned by the official album tracklist. Mathura Ma Vagi Morli uses Rutvi Pandya's exact official YouTube track, preferred over its Amazon alternative. The NonStop Garba entry uses Amazon Music's provider-returned selected-track URL. No provider IDs or timestamps are inferred.",
   "songSources": {
     "rutvi-chalde-aai-rulaai-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL51CBZY","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":1,"evidenceType":"official-amazon-music-track-page"},
     "rutvi-chand-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL52ZF6C","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":2,"evidenceType":"official-amazon-music-track-page"},
@@ -11,7 +11,7 @@
     "rutvi-laving-keri-lakadiye-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL51BGPD","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":6,"evidenceType":"official-amazon-music-track-page"},
     "rutvi-maa-no-garbo-re-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL537ZXK","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":7,"evidenceType":"official-amazon-music-track-page"},
     "rutvi-mara-vada-lilu-ghas-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL52JMBK","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":8,"evidenceType":"official-amazon-music-track-page"},
-    "rutvi-mathura-ma-vagi-morli-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL52F6FY","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":9,"evidenceType":"official-amazon-music-track-page"},
+    "rutvi-mathura-ma-vagi-morli-2023": {"provider":"youtube","videoId":"EoORXPJnFfA","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=EoORXPJnFfA","sourceType":"official-artist-channel","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":9,"evidenceType":"official-youtube-auto-generated-track"},
     "rutvi-mithe-ras-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL51RC1K","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":10,"evidenceType":"official-amazon-music-track-page"},
     "rutvi-ombaliya-ni-daale-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL52GMNH","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":11,"evidenceType":"official-amazon-music-track-page"},
     "rutvi-saachi-re-2023": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0CL51MVBD","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-2-0-2023","trackNumber":12,"evidenceType":"official-amazon-music-track-page"},
