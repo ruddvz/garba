@@ -1,0 +1,22 @@
+{
+  "version": "0.1.0",
+  "updated": "2026-09-08",
+  "note": "Release-specific exact routes for all 15 canonical Saybo - Non Stop Garba songs, matched to the official 15-track Soor Mandir Amazon Music album. Track IDs were taken from Amazon's own album track links; no IDs, positions or titles were inferred. The shorter later Spotify edition is not used for canonical routing.",
+  "songSources": {
+    "saybo-2022-01": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4W61YF","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":1,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-02": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4VYLMC","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":2,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-03": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4XGZ4C","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":3,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-04": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4TGN21","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":4,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-05": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4Y4SFF","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":5,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-06": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4VKRYS","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":6,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-07": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4V6ZCH","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":7,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-08": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4XQNW6","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":8,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-09": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4Z1PX5","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":9,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-10": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4ZGM9T","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":10,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-11": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4X1WWK","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":11,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-12": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4XZCSP","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":12,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-13": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4XLZF7","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":13,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-14": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4V9DKM","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":14,"evidenceType":"official-amazon-music-album-track-link"},
+    "saybo-2022-15": {"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0BF4YBY6Q","sourceType":"verified-track-source","releaseId":"saybo-nonstop-garba-2022","trackNumber":15,"evidenceType":"official-amazon-music-album-track-link"}
+  }
+}
