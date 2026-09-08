@@ -16,6 +16,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-152-wave-d4-audit.md`](catalogue/issue-152-wave-d4-audit.md): Rangili Ramzat 8 complete multi-artist split-track and exact Amazon routing audit
 - [`catalogue/issue-152-wave-d5-audit.md`](catalogue/issue-152-wave-d5-audit.md): Geeta Rabari Taal 2022 complete album, exact Amazon routing and Nonstop master audit
 - [`catalogue/issue-152-wave-d6-audit.md`](catalogue/issue-152-wave-d6-audit.md): Kirtidan Gadhvi and Anita Pandit Nortani Raat split-album, exact Amazon routing and continuous-master audit
+- [`catalogue/issue-152-wave-d7-audit.md`](catalogue/issue-152-wave-d7-audit.md): Kirtidan Gadhvi and Anita Pandit Nortani Raat 2 complete album with YouTube-only executable-route audit
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
 - [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
 - [`catalogue/nonstop-chapter-resolution-2026-09-08.md`](catalogue/nonstop-chapter-resolution-2026-09-08.md): final evidence audit for source-published Nonstop chapters and intentionally unchaptered continuous masters
