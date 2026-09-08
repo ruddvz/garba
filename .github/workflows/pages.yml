@@ -50,7 +50,7 @@ jobs:
 
           # Keep seek truth inside the existing network-first app.js payload so the
           # installed PWA does not gain another runtime request or stale cache surface.
-          cat app.js seek-state-runtime.js > _site/app.js
+          cat app.js assets/runtime/seek-state.js > _site/app.js
           grep -q 'GARBA_SEEK_STATE_RUNTIME' _site/app.js || { echo 'Seek-state runtime missing from deployed app.js'; exit 1; }
 
           # The catalogue is one supporting page. Collection, album and song browsing
