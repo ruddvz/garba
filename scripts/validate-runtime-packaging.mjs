@@ -46,6 +46,18 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
   fail('Playback runtime order must be provider-runtime.js → player-continuity.js → youtube-player-runtime.js');
 }
 
+for (const marker of [
+  'shareCurrentTrack',
+  'setupKeyboardGuard',
+  'syncSheetModal',
+  'syncNetworkStatus',
+  'aria-valuetext',
+  'data-save-data',
+  'page-hidden',
+]) {
+  if (!bootstrap.includes(marker)) fail(`Fast bootstrap is missing interaction-hardening marker: ${marker}`);
+}
+
 const q90Pack = 'garba15-2048-q90.zip';
 const q90Sha = '4690046d30ecd5400b3fc953a2a93f877d64921a69955d2b5dc6aa0bd65a769d';
 const legacyPack = 'garba15-2k.zip';
@@ -59,14 +71,26 @@ const q82Index = pages.indexOf(q82Pack);
 if (!(q90Index >= 0 && legacyIndex > q90Index && q82Index > legacyIndex)) {
   fail('Pages must prefer Q90, then current 2K, then named Q82 fallback');
 }
-if (!pages.includes("rm -f _site/assets/backgrounds/library/*.webp")) fail('Pages must clear stale extracted WebPs before unpacking the selected visual pack');
-if (!pages.includes("test \"$WEBP_COUNT\" -eq 15")) fail('Pages must require exactly 15 extracted WebPs');
-if (!pages.includes("file \"$image\" | grep -q 'Web/P image'")) fail('Pages must validate every extracted artwork file as WebP data');
-if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) fail('Pages must remove source visual-pack archives from the public artifact');
+if (!pages.includes("rm -f _site/assets/backgrounds/library/*.webp")) {
+  fail('Pages must clear stale extracted WebPs before unpacking the selected visual pack');
+}
+if (!pages.includes("test \"$WEBP_COUNT\" -eq 15")) {
+  fail('Pages must require exactly 15 extracted WebPs');
+}
+if (!pages.includes("file \"$image\" | grep -q 'Web/P image'")) {
+  fail('Pages must validate every extracted artwork file as WebP data');
+}
+if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
+  fail('Pages must remove source visual-pack archives from the public artifact');
+}
 
 for (const marker of [
   'librsvg2-bin',
-  'assets/social/playgarba-og-card.svg',
+  'webp',
+  'fonts-gfs-didot',
+  '04-colourful-garba-courtyard-a.webp',
+  'dwebp "$OG_BACKGROUND"',
+  '_site/assets/social/playgarba-og-card.svg',
   '_site/assets/social/garba-og-card.png',
   'rsvg-convert -w 1200 -h 630',
   'PNG image data, 1200 x 630',
@@ -78,9 +102,12 @@ for (const marker of [
 }
 for (const marker of [
   'width="1200" height="630"',
-  '>GARBA</text>',
-  '>Gujarati Garba. Beautifully played.</text>',
-  '>PLAYGARBA.COM</text>',
+  'href="og-background.png"',
+  'font-family="GFS Didot',
+  'id="text-backdrop"',
+  'feDropShadow',
+  '>PlayGarba.com</text>',
+  '>All Garba there is in the world.</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
@@ -165,7 +192,6 @@ for (const marker of [
 ]) {
   if (!pages.includes(marker)) fail(`Pages icon-branding contract is missing: ${marker}`);
 }
-
 for (const marker of [
   'href="/favicon.ico"',
   'favicon-32.png',
@@ -203,19 +229,22 @@ for (const file of [
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
 }
 
-if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
+if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
+  fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
+}
 if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v13`")) {
   fail('PWA cache generation must be v13 after combining Explore offline safety with complete cross-platform icon coverage');
 }
 
 if (failed) process.exit(1);
 console.log('✓ Pages ships every direct and transitive playback runtime file');
+console.log('✓ fast bootstrap contains production interaction hardening without adding another runtime request');
 console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
 console.log('✓ provider route safety loads before the YouTube controllable engine');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
-console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');
+console.log('✓ Universal PlayGarba social preview uses the approved courtyard artwork and renders at 1200x630');
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
 console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
 console.log('✓ Browser favicons, Apple touch sizes and Windows tiles are generated from the canonical Garba emblem and injected across the deployed site');
