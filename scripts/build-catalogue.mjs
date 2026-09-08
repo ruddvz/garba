@@ -333,15 +333,19 @@ for (const song of songs) {
   songsByReleaseId.set(song.releaseId, list);
 }
 
-function canonicalPresentationSong(song, canonicalReleaseId) {
+function canonicalPresentationSong(song, canonicalReleaseId, role) {
   const candidates = songsByReleaseId.get(canonicalReleaseId) || [];
   if (!candidates.length) return null;
+  const title = normalise(song.title);
+  if (role === 'source-only' && title) {
+    const exactTitleMatches = candidates.filter((candidate) => normalise(candidate.title) === title);
+    if (exactTitleMatches.length === 1) return exactTitleMatches[0];
+  }
   const trackNumber = Number(song.trackNumber);
   if (Number.isFinite(trackNumber) && trackNumber > 0) {
     const byTrack = candidates.find((candidate) => Number(candidate.trackNumber) === trackNumber);
     if (byTrack) return byTrack;
   }
-  const title = normalise(song.title);
   const byTitle = candidates.find((candidate) => normalise(candidate.title) === title);
   return byTitle || candidates[0] || null;
 }
@@ -351,7 +355,7 @@ const presentationSongs = songs.map((song) => {
   const role = String(release?.presentationRole || 'catalogue');
   if (role === 'catalogue') return song;
   const canonicalReleaseId = String(release?.canonicalReleaseId || '').trim();
-  const canonicalSong = canonicalReleaseId ? canonicalPresentationSong(song, canonicalReleaseId) : null;
+  const canonicalSong = canonicalReleaseId ? canonicalPresentationSong(song, canonicalReleaseId, role) : null;
   return {
     ...song,
     presentationRole: role,

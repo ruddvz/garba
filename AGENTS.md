@@ -2,6 +2,19 @@
 
 These rules apply to every automated or human implementation agent working in this repository.
 
+## Load the RAAS harness first
+
+RAAS is the compact PlayGarba context and execution harness. Before implementation, read:
+
+1. `.raas/RAAS.md`
+2. `.raas/PROJECT-CONTEXT.md`
+3. `.raas/EXECUTION.md`
+4. `.raas/LANGUAGE.md` whenever user-facing copy, labels, metadata presentation, docs, SEO or public text may change
+
+RAAS does not replace the ownership protocol below. It explains the product, source authority, language system and end-to-end completion loop so an agent does not stop at a locally correct patch or an open PR.
+
+When the user asks an agent to keep working through the backlog, finishing one lane means returning to preflight and selecting the next safe open, unowned, non-overlapping implementation issue. Every new lane requires a fresh claim and branch.
+
 ## Before touching code
 
 Do not start implementation until the work is claimed.
