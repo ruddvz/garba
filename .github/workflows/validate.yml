@@ -128,7 +128,7 @@ jobs:
           test "$(find _perf/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15
           rm -f _perf/assets/backgrounds/garba15-*.zip
 
-      - name: Measure one-run warm-cache diagnostic
+      - name: Measure final cache-aware seven-run baseline
         shell: bash
         env:
           PLAYGARBA_TESTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -147,29 +147,18 @@ jobs:
           done
           curl -fsS http://127.0.0.1:4173/ >/dev/null
 
-          set +e
           node scripts/performance/measure-player.mjs \
             --origin=http://127.0.0.1:4173 \
-            --runs=1 \
+            --runs=7 \
             --output=/tmp/playgarba-performance/player-baseline.json \
             >/tmp/playgarba-performance/stdout.json \
             2>/tmp/playgarba-performance/stderr.log
-          STATUS=$?
-          set -e
-
-          echo "measure-player exit status: $STATUS"
-          if [ -s /tmp/playgarba-performance/stderr.log ]; then
-            echo '--- measure-player stderr ---'
-            cat /tmp/playgarba-performance/stderr.log
-          fi
-          if [ "$STATUS" -ne 0 ]; then
-            exit "$STATUS"
-          fi
 
           BASELINE=/tmp/playgarba-performance/player-baseline.json
-          jq -e '.schemaVersion >= 2 and .runsPerProfile == 1 and (.profiles | length == 2)' "$BASELINE" >/dev/null
+          jq -e '.schemaVersion == 3 and .runsPerProfile == 7 and (.profiles | length == 2)' "$BASELINE" >/dev/null
           jq -e '[.profiles[].cold[], .profiles[].warm[]] | all(.failures | length == 0)' "$BASELINE" >/dev/null
           jq -e '[.profiles[].cold[], .profiles[].warm[]] | all(.searchMatchedQuery == true and .searchResultCount > 0 and .nonstopSetCount > 0 and (.nonstopPresentationMs | type == "number"))' "$BASELINE" >/dev/null
+          jq -e '[.profiles[].warm[]] | all(.songsTransferBytes <= 1000)' "$BASELINE" >/dev/null
 
       - name: Upload player performance baseline
         if: always()
