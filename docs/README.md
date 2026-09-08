@@ -14,6 +14,8 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-152-wave-d2-audit.md`](catalogue/issue-152-wave-d2-audit.md): Geeta Rabari Zankaar 3.0 and Kirtidan Gadhvi Tahukar 10 follow-up audit
 - [`catalogue/issue-152-wave-d3-audit.md`](catalogue/issue-152-wave-d3-audit.md): Kirtidan Gadhvi Tahukar 11 complete split-track and exact chapter-routing audit
 - [`catalogue/issue-152-wave-d4-audit.md`](catalogue/issue-152-wave-d4-audit.md): Rangili Ramzat 8 complete multi-artist split-track and exact Amazon routing audit
+- [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
+- [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
 
 ## Product
 
