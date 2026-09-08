@@ -1,0 +1,34 @@
+name: Temporary listening flow patch
+
+on:
+  push:
+    branches:
+      - codex/listening-flow-287
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/listening-flow-287
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply listening flow patch
+        run: node scripts/tmp-patch-listening-flow-287.mjs
+      - name: Commit patched sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js index.html simple-runtime.js src/catalogue/listening-library.js styles/10-browser-and-shell.css package.json scripts/lib/validate-listening-flow.mjs
+          if git diff --cached --quiet; then
+            echo "No patch changes to commit."
+            exit 0
+          fi
+          git commit -m "Implement contextual Up next and My Garba"
+          git push origin HEAD:codex/listening-flow-287
