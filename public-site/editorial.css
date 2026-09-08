@@ -6,8 +6,9 @@
  * Public-site artwork policy
  *
  * The six retired SVG worlds remain repository fallbacks for the player runtime only.
- * The public website must never present them as its visible artwork. Public pages use
- * the same current 2K WebP library as live.playgarba.com.
+ * The public website must never present them as its visible artwork. The six listening
+ * worlds use the same current 2K WebP library as live.playgarba.com. Approved editorial
+ * photography is reserved for cultural storytelling outside those six world cards.
  */
 .hero-art {
   background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
@@ -62,7 +63,7 @@
 }
 
 .page-hero.garba-hero {
-  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp");
+  --page-hero-image: url("/assets/editorial/001-what-is-garba.webp");
 }
 
 .culture-feature {
@@ -81,7 +82,7 @@
   position: absolute;
   z-index: -3;
   inset: 0;
-  background: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
+  background: url("/assets/editorial/001-what-is-garba.webp") center 48% / cover no-repeat;
   transform: scale(1.012);
 }
 
