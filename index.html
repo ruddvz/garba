@@ -289,6 +289,8 @@
         const queueButton = $('queueButton');
         const sheetClose = $('sheetClose');
         const mobileQuery = window.matchMedia('(max-width: 700px)');
+        const genreStrips = [document.getElementById('genreStrip'), document.getElementById('sheetGenreStrip')].filter(Boolean);
+        const stripScrollState = new WeakMap();
         if (!app || !sheet) return;
 
         const backdrop = document.createElement('div');
@@ -340,13 +342,68 @@
           }
         }
 
+        function revealGenreHorizontally(button, options = {}) {
+          const strip = button?.closest?.('.genre-strip');
+          if (!strip) return;
+          const stripRect = strip.getBoundingClientRect();
+          const buttonRect = button.getBoundingClientRect();
+          const edgeInset = Math.min(28, Math.max(16, strip.clientWidth * .055));
+          const safeLeft = stripRect.left + edgeInset;
+          const safeRight = stripRect.right - edgeInset;
+          let delta = 0;
+          if (buttonRect.left < safeLeft) delta = buttonRect.left - safeLeft;
+          else if (buttonRect.right > safeRight) delta = buttonRect.right - safeRight;
+          strip.scrollTop = 0;
+          if (Math.abs(delta) < 1) return;
+          const behavior = options && typeof options === 'object' && options.behavior === 'smooth' ? 'smooth' : 'auto';
+          strip.scrollTo({ left: Math.max(0, strip.scrollLeft + delta), top: 0, behavior });
+        }
+
+        function patchGenreButton(button) {
+          if (!(button instanceof HTMLElement) || button.dataset.axisStable === 'true') return;
+          button.dataset.axisStable = 'true';
+          Object.defineProperty(button, 'scrollIntoView', {
+            configurable: true,
+            value(options = {}) { revealGenreHorizontally(button, options); },
+          });
+        }
+
+        function stabilizeGenreStrip(strip) {
+          if (!(strip instanceof HTMLElement)) return;
+          const saved = stripScrollState.get(strip);
+          strip.scrollTop = 0;
+          strip.querySelectorAll('.genre-button').forEach(patchGenreButton);
+          if (Number.isFinite(saved) && saved > 0) {
+            const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+            strip.scrollLeft = Math.min(saved, maxLeft);
+          }
+        }
+
+        genreStrips.forEach((strip) => {
+          stripScrollState.set(strip, strip.scrollLeft || 0);
+          stabilizeGenreStrip(strip);
+          strip.addEventListener('scroll', () => {
+            if (strip.scrollTop) strip.scrollTop = 0;
+            stripScrollState.set(strip, Math.max(0, strip.scrollLeft));
+          }, { passive: true });
+          new MutationObserver(() => queueMicrotask(() => stabilizeGenreStrip(strip))).observe(strip, { childList: true });
+        });
+
         placeFavourite();
         syncSheetChrome();
         new MutationObserver(syncSheetChrome).observe(sheet, { attributes: true, attributeFilter: ['data-snap', 'aria-hidden'] });
-        mobileQuery.addEventListener?.('change', () => { placeFavourite(); syncSheetChrome(); });
+        mobileQuery.addEventListener?.('change', () => {
+          placeFavourite();
+          syncSheetChrome();
+          genreStrips.forEach(stabilizeGenreStrip);
+        });
         document.addEventListener('click', closeProviderOutside);
         document.addEventListener('keydown', closeTopLayer, true);
-        window.addEventListener('pageshow', () => { placeFavourite(); syncSheetChrome(); });
+        window.addEventListener('pageshow', () => {
+          placeFavourite();
+          syncSheetChrome();
+          genreStrips.forEach(stabilizeGenreStrip);
+        });
       })();
     </script>
   </body>
