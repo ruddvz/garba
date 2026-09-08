@@ -4,7 +4,7 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInjector, browserconfig] = await Promise.all([
+const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInjector, browserconfig, cataloguePage, catalogueRuntime, catalogueCss] = await Promise.all([
   read('.github/workflows/pages.yml'),
   read('sw.js'),
   read('simple-runtime.js'),
@@ -13,6 +13,9 @@ const [pages, sw, bootstrap, manifest, socialSource, socialInjector, brandInject
   read('scripts/lib/inject-social-preview.mjs'),
   read('scripts/lib/inject-brand-metadata.mjs'),
   read('assets/icons/browserconfig.xml'),
+  read('src/catalogue/index.html'),
+  read('src/catalogue/catalogue.js'),
+  read('src/catalogue/catalogue.css'),
 ]);
 
 let failed = false;
@@ -162,6 +165,60 @@ for (const marker of [
   if (!sw.includes(marker)) fail(`Explore PWA/offline contract is missing: ${marker}`);
 }
 
+for (const marker of [
+  'id="catalogueSearch"',
+  'id="catalogueCount"',
+  'id="collectionHome"',
+  'id="collectionDetail"',
+  'id="backToCollections"',
+  'id="releaseRail"',
+  'id="catalogueSongList"',
+]) {
+  if (!cataloguePage.includes(marker)) fail(`Explore page is missing required control: ${marker}`);
+}
+for (const marker of [
+  'const SONG_BATCH_SIZE = 160;',
+  'const RELEASE_BATCH_SIZE = 40;',
+  'function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {})',
+  "function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})",
+  "more.className = 'release-more';",
+  "more.className = 'song-more';",
+  'renderSongs(songs, title, { limit: limit + SONG_BATCH_SIZE })',
+  'renderReleases(songs, { limit: limit + RELEASE_BATCH_SIZE })',
+]) {
+  if (!catalogueRuntime.includes(marker)) fail(`Explore progressive-render contract is missing: ${marker}`);
+}
+if (catalogueRuntime.includes('songs.slice(0, 300)')) fail('Explore must not silently truncate every song list at 300 rows');
+if (catalogueRuntime.includes('items.slice(0, 40).forEach')) fail('Explore must not silently truncate every release rail at 40 cards');
+for (const marker of [
+  "const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');",
+  "const motionBehavior = () => reducedMotion.matches ? 'auto' : 'smooth';",
+  'behavior:motionBehavior()',
+  'function returnToCollections()',
+  'if (history.state?.collection || history.state?.search)',
+  "if (history.state?.search) history.replaceState({search:q},'',nextUrl);",
+  "else history.pushState({search:q},'',nextUrl);",
+  "if (event.key !== 'Escape' || els.detail.hidden) return;",
+  'function renderLoadFailure(error)',
+  "retry.className = 'retry-button';",
+  "retry.textContent = 'Retry catalogue';",
+  "window.addEventListener('online', () => {",
+  'if (state.loadFailed) void start();',
+]) {
+  if (!catalogueRuntime.includes(marker)) fail(`Explore resilient UX contract is missing: ${marker}`);
+}
+for (const marker of [
+  '.release-more',
+  '.song-more',
+  '.retry-button',
+  '.catalogue-error',
+  '.song-more:focus-visible',
+  '.retry-button:focus-visible',
+  '.release-more:focus-visible',
+]) {
+  if (!catalogueCss.includes(marker)) fail(`Explore resilient-state styling is missing: ${marker}`);
+}
+
 const renderedIcons = [
   ['favicon-16.png', 16],
   ['favicon-32.png', 32],
@@ -248,3 +305,5 @@ console.log('✓ Universal PlayGarba social preview uses the approved courtyard 
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
 console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
 console.log('✓ Browser favicons, Apple touch sizes and Windows tiles are generated from the canonical Garba emblem and injected across the deployed site');
+console.log('✓ Explore long lists render progressively with explicit load-more controls instead of silent truncation');
+console.log('✓ Explore history, Escape navigation, reduced motion and in-place catalogue recovery are regression-guarded');
