@@ -213,7 +213,7 @@ test('Explore is reached through the production player link and renders real cat
   const failures = collectRuntimeFailures(page);
   await page.goto('/');
   await Promise.all([
-    page.waitForURL(/\/explore\/$/, { waitUntil: 'domcontentloaded' }),
+    page.waitForURL(/\/explore\/$/, { waitUntil: 'commit' }),
     page.locator('#browseButton').click(),
   ]);
 
@@ -228,7 +228,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/explore/', { waitUntil: 'domcontentloaded' });
+  await page.goto('/explore/', { waitUntil: 'commit' });
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();
