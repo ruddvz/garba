@@ -180,6 +180,7 @@
     "data/playback-sources-rutvi-ramzat-3-exact.json",
     "data/playback-sources-rutvi-ramzat-4-exact.json",
     "data/playback-sources-ho-raj-exact.json",
+    "data/playback-sources-youtube-wave-e.json",
     "data/playback-sources-atul-maa-ni-chundadi-exact.json",
     "data/playback-sources-atul-tara-vina-shyam-exact.json",
     "data/playback-sources-atul-fagan-aayo-exact.json",
@@ -219,5 +220,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.19.0 completes catalogue Wave C for Atul Purohit, Hemant Chauhan and Praful Dave: 151 additional canonical songs/selections across 13 newly represented releases plus the completed existing Dhholi programme, with exact provider routes wherever independently verified and conservative release-level fallback where exact song evidence is incomplete. It preserves the v0.18.0 Rutvi route-truth hardening and all newer Nonstop/discovery work from current main."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.19.0 completes catalogue Wave C for Atul Purohit, Hemant Chauhan and Praful Dave: 151 additional canonical songs/selections across 13 newly represented releases plus the completed existing Dhholi programme, with exact provider routes wherever independently verified and conservative release-level fallback where exact song evidence is incomplete. It preserves the v0.18.0 Rutvi route-truth hardening, Playback Wave E, and all newer Nonstop/discovery work from current main."
 }
