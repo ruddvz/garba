@@ -393,72 +393,15 @@
 }
 
 /*
-  Player composition refresh
-  --------------------------
-  The transport and timeline read as one lightweight Garba console. The genre rail
-  becomes icon-led and follows a shallow bowl curve while keeping fixed geometry.
+  Genre composition and timeline details
+  --------------------------------------
+  This layer owns genre artwork and a few geometry primitives. Open player-control
+  chrome is owned earlier by the responsive/accessibility layer, so do not restyle
+  transport surfaces here just to have them cancelled again later.
 */
-.utilities {
-  padding: 3px;
-  border: 1px solid rgba(246, 236, 215, .11);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(13, 16, 27, .26), rgba(8, 10, 18, .18));
-  box-shadow: 0 10px 34px rgba(0, 0, 0, .14);
-  backdrop-filter: blur(14px) saturate(1.04);
-  -webkit-backdrop-filter: blur(14px) saturate(1.04);
-}
-
-.utilities .icon-button {
-  background: transparent !important;
-  border-color: transparent !important;
-}
-
 .controls {
   position: relative;
-  width: min(360px, 82vw);
-  min-height: 82px;
   justify-content: center;
-  gap: clamp(26px, 3.4vw, 42px);
-  margin-top: clamp(14px, 2vh, 24px);
-  padding: 10px 24px 18px;
-  border: 1px solid rgba(246, 236, 215, .13);
-  border-bottom-color: transparent;
-  border-radius: 38px 38px 18px 18px;
-  background:
-    linear-gradient(180deg, rgba(20, 22, 34, .42), rgba(10, 13, 22, .30)),
-    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%);
-  box-shadow: 0 20px 54px rgba(0, 0, 0, .22);
-  backdrop-filter: blur(18px) saturate(1.05);
-  -webkit-backdrop-filter: blur(18px) saturate(1.05);
-}
-
-.controls::before {
-  content: "";
-  position: absolute;
-  left: 15%;
-  right: 15%;
-  top: 0;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(246, 236, 215, .30), transparent);
-  pointer-events: none;
-}
-
-.transport {
-  border: 1px solid transparent;
-  background: rgba(246, 236, 215, .025);
-}
-
-.play-button {
-  width: 76px;
-  height: 76px;
-  border-color: color-mix(in srgb, var(--accent) 42%, rgba(246, 236, 215, .78));
-  background:
-    radial-gradient(circle at 50% 35%, rgba(246, 236, 215, .13), transparent 46%),
-    rgba(10, 13, 22, .52);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
-    0 12px 32px rgba(0, 0, 0, .28),
-    0 0 28px color-mix(in srgb, var(--accent) 9%, transparent);
 }
 
 .ambient-ring {
@@ -487,23 +430,8 @@
 }
 
 .progress-wrap {
-  width: min(360px, 82vw);
   grid-template-columns: 34px minmax(190px, 1fr) 34px;
   gap: 10px;
-  margin-top: -11px;
-  padding: 12px 17px 11px;
-  border: 1px solid rgba(246, 236, 215, .13);
-  border-top: 0;
-  border-radius: 0 0 18px 18px;
-  background: linear-gradient(180deg, rgba(10, 13, 22, .30), rgba(8, 10, 18, .40));
-  box-shadow: 0 20px 54px rgba(0, 0, 0, .20);
-  backdrop-filter: blur(18px) saturate(1.05);
-  -webkit-backdrop-filter: blur(18px) saturate(1.05);
-}
-
-.progress-wrap .time {
-  color: rgba(246, 236, 215, .58);
-  font-size: 11px;
 }
 
 input[type="range"]::-webkit-slider-runnable-track {
@@ -543,11 +471,6 @@ input[type="range"]::-moz-range-thumb {
 }
 
 @media (hover: hover) {
-  .transport:hover {
-    background: rgba(246, 236, 215, .07);
-    border-color: rgba(246, 236, 215, .08);
-  }
-
   .progress:hover::-webkit-slider-thumb,
   .progress:focus-visible::-webkit-slider-thumb {
     background: var(--accent);
@@ -675,31 +598,8 @@ html body .app #browseActions #browseButton::after {
 }
 
 @media (max-width: 700px) {
-  .utilities {
-    padding: 2px;
-    background: rgba(8, 10, 18, .22);
-  }
-
-  .controls {
-    width: min(342px, calc(100vw - 32px));
-    min-height: 76px;
-    gap: clamp(22px, 7vw, 30px);
-    margin-top: 8px;
-    padding: 8px 18px 17px;
-    border-radius: 34px 34px 16px 16px;
-  }
-
-  .play-button {
-    width: 70px;
-    height: 70px;
-  }
-
   .progress-wrap {
-    width: min(342px, calc(100vw - 32px));
     grid-template-columns: 31px minmax(150px, 1fr) 31px;
-    margin-top: -10px;
-    padding: 11px 14px 10px;
-    border-radius: 0 0 16px 16px;
   }
 
   .app #genreStrip {
@@ -738,11 +638,6 @@ html body .app #browseActions #browseButton::after {
 }
 
 @media (max-width: 390px) {
-  .controls,
-  .progress-wrap {
-    width: min(324px, calc(100vw - 28px));
-  }
-
   .app #genreStrip {
     height: 80px !important;
     min-height: 80px !important;
@@ -765,13 +660,6 @@ html body .app #browseActions #browseButton::after {
 }
 
 @media (max-width: 350px) {
-  .controls,
-  .progress-wrap {
-    width: calc(100vw - 24px);
-  }
-
-  .controls { gap: 17px; }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     min-width: 62px;
@@ -781,22 +669,8 @@ html body .app #browseActions #browseButton::after {
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
-  .controls {
-    width: min(300px, 44vw);
-    min-height: 52px;
-    margin-top: 5px;
-    padding: 3px 15px 9px;
-    border-radius: 26px 26px 12px 12px;
-  }
-
-  .play-button { width: 50px; height: 50px; }
-
   .progress-wrap {
-    width: min(300px, 44vw);
     grid-template-columns: 28px minmax(120px, 1fr) 28px;
-    margin-top: -7px;
-    padding: 7px 11px 6px;
-    border-radius: 0 0 12px 12px;
   }
 
   .app #genreStrip {
