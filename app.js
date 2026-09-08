@@ -115,11 +115,12 @@ function persistManualQueue() {
 }
 
 function sanitiseManualQueue() {
-  const known = new Set(state.songs.map((song) => song.id));
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
   const next = [];
   const seen = new Set();
   for (const id of state.manualQueue) {
-    if (!known.has(id) || id === state.songId || seen.has(id)) continue;
+    const song = byId.get(id);
+    if (!song?.youtubeId || id === state.songId || seen.has(id)) continue;
     seen.add(id);
     next.push(id);
     if (next.length >= 30) break;
@@ -287,6 +288,7 @@ function updateUrl() {
   if (songId) url.searchParams.set('song', songId);
   url.searchParams.delete('browse');
   url.searchParams.delete('source');
+  url.searchParams.delete('library');
   history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
 }
 
@@ -325,7 +327,12 @@ function queueSong(songId) {
     showToast('That song is already playing.');
     return;
   }
-  if (!state.songs.some((song) => song.id === songId)) return;
+  const queuedSong = state.songs.find((song) => song.id === songId);
+  if (!queuedSong) return;
+  if (!queuedSong.youtubeId) {
+    showToast('This song is not YouTube-ready yet.');
+    return;
+  }
   if (state.manualQueue.includes(songId)) {
     showToast('Already in Up next.');
     return;
@@ -682,9 +689,12 @@ function renderSheet() {
     duration.className = 'song-duration';
     duration.textContent = formatDuration(song.durationSeconds);
 
+    const queuePlayable = Boolean(song.youtubeId);
     const queueAction = document.createElement('button');
     queueAction.type = 'button';
     queueAction.className = 'song-queue-action';
+    queueAction.hidden = !queuePlayable || song.id === state.songId;
+    queueAction.disabled = !queuePlayable || song.id === state.songId;
     queueAction.setAttribute('aria-label', queued ? `Remove ${song.title} from Up next` : `Play ${song.title} next`);
     queueAction.title = queued ? 'Remove from Up next' : 'Play next';
     queueAction.innerHTML = queued
@@ -802,7 +812,7 @@ function changeSong(direction) {
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
     if (previousId) {
-      selectSong(previousId, { keepSheet: true, preservePlayback: true, fromHistory: true });
+      selectSong(previousId, { keepSheet: true, preservePlayback: true, preserveContext: true, fromHistory: true });
       return;
     }
   }
@@ -1178,6 +1188,7 @@ function resolveInitialState() {
     pendingSongId,
     elapsed: Number(session.elapsed || 0),
     browse: params.get('browse') === '1',
+    myGarba: params.get('library') === 'my-garba',
   };
 }
 
@@ -1207,7 +1218,8 @@ async function init() {
     }
 
     state.pendingSongId = initial.pendingSongId;
-    if (initial.browse) openSheet('all', { snap: 'full', history: false });
+    if (initial.myGarba) openSheet('favourites', { snap: 'full', history: false });
+    else if (initial.browse) openSheet('all', { snap: 'full', history: false });
     updateUrl();
   } catch (error) {
     console.error(error);
