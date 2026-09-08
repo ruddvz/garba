@@ -25,6 +25,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-234-youtube-audit.md`](catalogue/issue-234-youtube-audit.md): Parth Oza Garbe Ghoome Tu exact-recording audit and fail-closed YouTube migration evidence boundary
 - [`catalogue/issue-246-youtube-audit.md`](catalogue/issue-246-youtube-audit.md): Hemant Chauhan Ghammar Vol. 3 exact-release audit and fail-closed YouTube migration evidence boundary
 - [`catalogue/issue-346-rangili-ramzat-youtube-audit.md`](catalogue/issue-346-rangili-ramzat-youtube-audit.md): Rangili Ramzat 7/8 exact YouTube split-track audit and explicit evidence boundary
+- [`catalogue/issue-347-zankaar-geeta-youtube-audit.md`](catalogue/issue-347-zankaar-geeta-youtube-audit.md): Zankaar 2/3 and Geeta Rabari Taal 2022 exact YouTube split-track reconciliation and fail-closed boundary
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
 - [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
 - [`catalogue/nonstop-chapter-resolution-2026-09-08.md`](catalogue/nonstop-chapter-resolution-2026-09-08.md): final evidence audit for source-published Nonstop chapters and intentionally unchaptered continuous masters
