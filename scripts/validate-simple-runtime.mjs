@@ -12,7 +12,7 @@ for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'nonstop-browse
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, nonstop, sw, genres, songs, playerCss, nonstopIndex] = await Promise.all([
+const [index, app, simple, nonstop, sw, genres, songs, shellCss, playerCss, nonstopIndex] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
@@ -20,6 +20,7 @@ const [index, app, simple, nonstop, sw, genres, songs, playerCss, nonstopIndex] 
   read('sw.js'),
   readJson('data/genres.json'),
   readJson('data/songs.json'),
+  read('styles/10-browser-and-shell.css'),
   read('styles/60-runtime-and-provider.css'),
   readJson('data/discovery/sets/index.json'),
 ]);
@@ -118,9 +119,14 @@ for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-doc
   if (!playerCss.includes(marker)) fail(`Provider UI styling missing marker: ${marker}`);
 }
 
+const sheetZ = Number(shellCss.match(/\.sheet\s*\{[\s\S]*?z-index:\s*(\d+)/)?.[1]);
+const providerZ = Number(playerCss.match(/\.provider-dock\s*\{[\s\S]*?z-index:\s*(\d+)/)?.[1]);
+if (!Number.isFinite(sheetZ) || !Number.isFinite(providerZ)) fail('Could not resolve song-sheet/provider stacking order');
+else if (providerZ <= sheetZ) fail(`Provider player z-index ${providerZ} must be above song browser z-index ${sheetZ}`);
+
 for (const marker of [
   "const CACHE_PREFIX = 'garba-live-'",
-  "const CACHE_NAME = `${CACHE_PREFIX}v4`",
+  "const CACHE_NAME = `${CACHE_PREFIX}v5`",
   "const LEGACY_PREFIX = 'garba-shell-'",
   'const CORE_SHELL = [',
   'const FRESH_RUNTIME_SUFFIXES = [',
@@ -140,7 +146,6 @@ for (const marker of [
   'await self.clients.claim()',
   'request.mode === \'navigate\'',
   "url.pathname.endsWith('/data/songs.json')",
-  "request.cache === 'force-cache' ? cacheFirst(request) : networkFirst(request)",
   "url.pathname.includes('/data/discovery/sets/')",
   "url.pathname.includes('/assets/backgrounds/library/')",
   'event.respondWith(networkFirst(request))',
@@ -148,7 +153,11 @@ for (const marker of [
   'event.respondWith(staleWhileRevalidate(request))',
 ]) if (!sw.includes(marker)) fail(`Minimal PWA worker missing marker: ${marker}`);
 
-for (const staleCache of ['v2', 'v3']) {
+if (sw.includes("request.cache === 'force-cache' ? cacheFirst(request) : networkFirst(request)")) {
+  fail('songs.json must not become cache-first merely because a helper asks for force-cache');
+}
+
+for (const staleCache of ['v2', 'v3', 'v4']) {
   if (sw.includes(`const CACHE_NAME = \`${'${CACHE_PREFIX}'}${staleCache}\``)) fail(`PWA runtime cache must not remain on the stale ${staleCache} contract`);
 }
 for (const forbidden of ['self.registration.unregister()', 'client.navigate(client.url)']) {
@@ -182,13 +191,14 @@ console.log(`✓ production runtime uses ${scriptSources.join(' + ')}`);
 console.log(`✓ ${songs.length} songs and six genres remain available`);
 console.log(`✓ ${nonstopIndex.chunks.length} Nonstop discovery chunks remain available`);
 console.log('✓ primary player controls retain direct event bindings');
+console.log(`✓ provider playback surface stacks above the song browser (${providerZ} > ${sheetZ})`);
 console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
 console.log('✓ Space follows the provider-aware Play path without stealing native button/input behaviour');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
-console.log('✓ core runtime assets are network-first with cached offline fallback');
-console.log('✓ the provider helper reuses the app-fetched catalogue instead of downloading songs.json twice');
+console.log('✓ core runtime assets and songs.json are network-first with cached offline fallback');
+console.log('✓ installed clients cannot keep an old playback-route catalogue after a successful online deploy');
 console.log('✓ minimal PWA shell stays installable without reviving the old heavy cache graph');
 console.log('✓ Nonstop data waits for intent, traps focus correctly, restores focus on close and fails visibly offline');
 console.log('✓ visited Nonstop set data can be reused through the service worker while provider media stays network-bound');
