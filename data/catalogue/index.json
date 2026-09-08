@@ -1,5 +1,5 @@
 {
-  "version": "0.17.1",
+  "version": "0.17.2",
   "songCount": 1169,
   "releaseCount": 209,
   "categoryCount": 19,
@@ -138,7 +138,8 @@
     "data/playback-sources-rangili-ramzat-6-exact.json",
     "data/playback-sources-navdurgani-exact.json",
     "data/playback-sources-ude-re-gulal-exact.json",
-    "data/playback-sources-shyam-exact.json"
+    "data/playback-sources-shyam-exact.json",
+    "data/playback-sources-madhuvan-youtube.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -164,5 +165,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.1 removes duplicate release rows so the declared release count is the true canonical unique count, and catalogue builds now reject duplicate release IDs before generation."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.2 preserves the duplicate-release cleanup and duplicate-ID build guard from v0.17.1, keeps the Shyam and Ude Re Gulal exact-provider mappings, and adds provider-published Soor Mandir YouTube chapters for all 18 Madhuvan (Bansari-2) songs; Poonam/Saiyar are matched by title because provider order differs. Ambiguous or unpublished timestamps remain fallbacks."
 }
