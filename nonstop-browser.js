@@ -434,6 +434,8 @@
       if (state.activeSet) queueMicrotask(() => setMetadata(state.activeSet));
     });
     state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });
+    const queueBadge = $('queueBadge');
+    if (queueBadge) state.metadataObserver.observe(queueBadge, { childList: true, characterData: true, subtree: true });
   }
 
   function capturePreviousSession() {
