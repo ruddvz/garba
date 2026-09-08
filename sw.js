@@ -1,3 +1,4 @@
+// Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
 const CACHE_NAME = `${CACHE_PREFIX}v15`;
 const LEGACY_PREFIX = 'garba-shell-';
