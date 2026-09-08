@@ -80,6 +80,26 @@ async function expectNoRuntimeFailures(page, failures, label) {
   expect(failures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
+async function playerAnchors(page) {
+  return page.evaluate(() => {
+    const anchors = {};
+    for (const id of ['playButton', 'progress', 'genreStrip', 'browseButton']) {
+      const rect = document.getElementById(id)?.getBoundingClientRect();
+      anchors[id] = rect ? { top: rect.top, centerY: rect.top + rect.height / 2 } : null;
+    }
+    return anchors;
+  });
+}
+
+function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
+  for (const id of ['playButton', 'progress', 'genreStrip', 'browseButton']) {
+    expect(longTitleAnchors[id], `${id} should exist for the long title`).toBeTruthy();
+    expect(shortTitleAnchors[id], `${id} should exist for the short title`).toBeTruthy();
+    const centerDelta = Math.abs(longTitleAnchors[id].centerY - shortTitleAnchors[id].centerY);
+    expect(centerDelta, `${id} should not jump vertically when song-title length changes`).toBeLessThanOrEqual(3);
+  }
+}
+
 test('production player shell is stable, complete and uses the custom genre artwork', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
   await page.goto('/');
@@ -108,6 +128,30 @@ test('production player shell is stable, complete and uses the custom genre artw
   expect(nonstopBackground).toContain('nonstop.webp');
 
   await expectNoRuntimeFailures(page, failures, 'player');
+});
+
+test('short and very long song titles keep transport and discovery controls anchored', async ({ page, context }) => {
+  const longFailures = collectRuntimeFailures(page);
+  await page.goto('/?genre=dandiya&song=bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014');
+  await expect(page.locator('#songTitle')).toHaveText('Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014');
+  await page.waitForTimeout(250);
+  await expectNoDocumentOverflow(page);
+  const longTitleAnchors = await playerAnchors(page);
+  await expectNoRuntimeFailures(page, longFailures, 'long-title player');
+
+  const shortPage = await context.newPage();
+  const shortFailures = collectRuntimeFailures(shortPage);
+  try {
+    await shortPage.goto('/?genre=traditional&song=ochhav-2023-01-ochhav-theme');
+    await expect(shortPage.locator('#songTitle')).toHaveText('Ochhav Theme');
+    await shortPage.waitForTimeout(250);
+    await expectNoDocumentOverflow(shortPage);
+    const shortTitleAnchors = await playerAnchors(shortPage);
+    expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors);
+    await expectNoRuntimeFailures(shortPage, shortFailures, 'short-title player');
+  } finally {
+    await shortPage.close();
+  }
 });
 
 test('Search opens without clipping and closing restores focus to the opener', async ({ page }) => {
