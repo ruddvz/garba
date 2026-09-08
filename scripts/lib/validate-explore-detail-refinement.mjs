@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 const runtime = await readFile(new URL('../../assets/runtime/explore-search.js', import.meta.url), 'utf8');
 const explore = await readFile(new URL('../../src/catalogue/index.html', import.meta.url), 'utf8');
+const catalogue = await readFile(new URL('../../src/catalogue/catalogue.js', import.meta.url), 'utf8');
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
@@ -40,6 +41,26 @@ for (const marker of [
   if (!explore.includes(marker)) fail(`Explore album-rail interaction is missing: ${marker}`);
 }
 
+for (const marker of [
+  "taxonomy: '../data/taxonomy.json'",
+  'const displayTitle = (entity)',
+  'const taxonomyIdsForSong = (song)',
+  'const belongsToVisualGenre = (song, genreId)',
+  'function songDescription(song, release)',
+  'function releaseDescription(release, songs = [])',
+  'function makeSongContext(song, release)',
+  "details.className = 'song-context';",
+  "summary.textContent = 'About';",
+  'song.description',
+  'song.story',
+  'song.displayTitle',
+  '...aliasesFor(song)',
+  "test:(song)=>belongsToVisualGenre(song,genre.id)",
+  'songHasTaxonomy(song,taxonomyIds)',
+]) {
+  if (!catalogue.includes(marker)) fail(`Explore catalogue metadata refinement is missing: ${marker}`);
+}
+
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
 inlineModules.forEach((source, index) => {
@@ -61,4 +82,4 @@ if (explore.includes('id="releaseRail" role="list"')) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, album semantics, keyboard navigation, overflow cues and horizontal-only focus are protected');
+console.log('✓ Explore detail hierarchy, metadata descriptions, taxonomy-driven browsing, album semantics, keyboard navigation and horizontal-only focus are protected');
