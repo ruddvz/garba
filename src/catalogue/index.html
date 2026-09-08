@@ -213,7 +213,7 @@
       }
 
       new MutationObserver(queueRefreshRails).observe(sectionRoot, { childList: true, subtree: true });
-      new MutationObserver(queueRefreshRails).observe(releaseRail, { childList: true, subtree: true, attributes: true, attributeFilter: ['role', 'class'] });
+      new MutationObserver(queueRefreshRails).observe(releaseRail, { childList: true, subtree: true });
       window.addEventListener('resize', queueRefreshRails, { passive: true });
       window.addEventListener('pageshow', queueRefreshRails);
       queueRefreshRails();
