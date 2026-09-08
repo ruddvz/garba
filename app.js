@@ -161,37 +161,96 @@ function setWorld(background, immediate = false) {
   state.activeWorld = state.activeWorld === 'A' ? 'B' : 'A';
 }
 
-function renderGenreButtons(container, activeId, onSelect) {
-  const previousFocus = document.activeElement?.dataset?.genre;
-  container.innerHTML = '';
+function configureGenreButton(button, genre, activeId, onSelect) {
+  if (button.dataset.genreBound !== 'true') {
+    button.dataset.genreBound = 'true';
+    button.addEventListener('click', () => {
+      if (typeof button._garbaGenreSelect === 'function') button._garbaGenreSelect(button.dataset.genre);
+    });
+  }
 
-  state.genres.forEach((genre) => {
-    const button = document.createElement('button');
-    button.className = `genre-button${genre.id === activeId ? ' active' : ''}`;
-    button.type = 'button';
-    button.textContent = genre.name;
-    button.dataset.genre = genre.id;
-    if (genre.id === activeId) button.setAttribute('aria-current', 'true');
-    button.addEventListener('click', () => onSelect(genre.id));
-    container.append(button);
+  button._garbaGenreSelect = onSelect;
+  button.classList.add('genre-button');
+  button.classList.toggle('active', genre.id === activeId);
+  button.type = 'button';
+  button.dataset.genre = genre.id;
+  if (button.textContent !== genre.name) button.textContent = genre.name;
+  if (genre.id === activeId) button.setAttribute('aria-current', 'true');
+  else button.removeAttribute('aria-current');
+}
+
+function reconcileGenreButtons(container, activeId, onSelect) {
+  if (!container) return;
+  const previousScrollLeft = Math.max(0, container.scrollLeft || 0);
+  const focusedGenre = container.contains(document.activeElement) ? document.activeElement?.dataset?.genre : null;
+  const desiredIds = new Set(state.genres.map((genre) => genre.id));
+  const existing = new Map(
+    [...container.querySelectorAll(':scope > .genre-button[data-genre]')]
+      .map((button) => [button.dataset.genre, button])
+  );
+
+  const desiredButtons = state.genres.map((genre) => {
+    const button = existing.get(genre.id) || document.createElement('button');
+    configureGenreButton(button, genre, activeId, onSelect);
+    existing.delete(genre.id);
+    return button;
   });
 
-  if (previousFocus) container.querySelector(`[data-genre="${CSS.escape(previousFocus)}"]`)?.focus({ preventScroll: true });
+  existing.forEach((button, genreId) => {
+    if (!desiredIds.has(genreId)) button.remove();
+  });
+
+  const nonstop = container.querySelector(':scope > #nonstopButton');
+  if (nonstop && container.firstElementChild !== nonstop) container.insertBefore(nonstop, container.firstElementChild);
+  const offset = nonstop ? 1 : 0;
+  desiredButtons.forEach((button, index) => {
+    const slot = container.children[offset + index] || null;
+    if (slot !== button) container.insertBefore(button, slot);
+  });
+
+  const maxLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+  container.scrollLeft = Math.min(previousScrollLeft, maxLeft);
+  container.scrollTop = 0;
+
+  if (focusedGenre && !container.contains(document.activeElement)) {
+    container.querySelector(`[data-genre="${CSS.escape(focusedGenre)}"]`)?.focus({ preventScroll: true });
+  }
+}
+
+function revealGenreHorizontally(strip, button, { smooth = true } = {}) {
+  if (!strip || !button) return;
+  const stripRect = strip.getBoundingClientRect();
+  const buttonRect = button.getBoundingClientRect();
+  const edgeInset = Math.min(28, Math.max(16, strip.clientWidth * .055));
+  const safeLeft = stripRect.left + edgeInset;
+  const safeRight = stripRect.right - edgeInset;
+  let delta = 0;
+
+  if (buttonRect.left < safeLeft) delta = buttonRect.left - safeLeft;
+  else if (buttonRect.right > safeRight) delta = buttonRect.right - safeRight;
+
+  strip.scrollTop = 0;
+  if (Math.abs(delta) < 1) return;
+
+  const maxLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
+  const left = Math.min(maxLeft, Math.max(0, strip.scrollLeft + delta));
+  const behavior = smooth && !state.reducedMotion ? 'smooth' : 'auto';
+  if (typeof strip.scrollTo === 'function') strip.scrollTo({ left, top: 0, behavior });
+  else strip.scrollLeft = left;
 }
 
 function syncGenreStrips({ smooth = true } = {}) {
-  renderGenreButtons(els.genreStrip, state.genreId, selectGenre);
+  reconcileGenreButtons(els.genreStrip, state.genreId, selectGenre);
   syncSheetGenresOnly();
 
   requestAnimationFrame(() => {
-    const behavior = smooth && !state.reducedMotion ? 'smooth' : 'auto';
-    els.genreStrip.querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior });
-    els.sheetGenreStrip.querySelector('.active')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior });
+    revealGenreHorizontally(els.genreStrip, els.genreStrip.querySelector('.active'), { smooth });
+    revealGenreHorizontally(els.sheetGenreStrip, els.sheetGenreStrip.querySelector('.active'), { smooth });
   });
 }
 
 function syncSheetGenresOnly() {
-  renderGenreButtons(els.sheetGenreStrip, state.sheetFilter, (genreId) => {
+  reconcileGenreButtons(els.sheetGenreStrip, state.sheetFilter, (genreId) => {
     state.sheetFilter = genreId;
     state.sheetMode = 'all';
     renderSheet();
