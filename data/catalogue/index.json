@@ -133,7 +133,8 @@
     "data/playback-sources-jay-ho-exact.json",
     "data/playback-sources-khamma-2-exact.json",
     "data/playback-sources-re-lol-exact.json",
-    "data/playback-sources-chandaliyo-exact.json"
+    "data/playback-sources-chandaliyo-exact.json",
+    "data/playback-sources-de-taali-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
