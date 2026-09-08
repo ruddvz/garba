@@ -106,6 +106,12 @@ console.log('');
 console.log('Reference-track batches needing exact song mapping or a proper release source:');
 for (const group of ranked.filter((entry) => entry.sourceType === 'verified-release-track-reference')) {
   console.log(`${String(group.count).padStart(3)} · ${group.releaseTitle} · ${group.provider} · ${group.releaseArtist}`);
+  const ids = group.songs
+    .slice()
+    .sort((a, b) => Number(a.trackNumber || 0) - Number(b.trackNumber || 0) || String(a.id).localeCompare(String(b.id)))
+    .map((song) => `${Number(song.trackNumber || 0)}:${song.id}`)
+    .join(', ');
+  console.log(`      song IDs · ${ids}`);
 }
 
 if (titleCollisions.length) {
