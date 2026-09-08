@@ -80,6 +80,28 @@ for (const marker of [
   if (!continuity.includes(marker)) fail(`Catalogue hydration toast guard missing marker: ${marker}`);
 }
 
+for (const marker of [
+  'const MEDIA_ARTWORK = [',
+  "assets/icons/icon-192.png",
+  "assets/icons/icon-512.png",
+  'function clearMediaMetadata()',
+  'function syncMediaMetadata()',
+  "navigator.mediaSession.metadata = new MediaMetadata({",
+  'title,',
+  'artist,',
+  'artwork: MEDIA_ARTWORK',
+  'new MutationObserver(syncMediaMetadata)',
+  'queueMicrotask(syncMediaMetadata)',
+]) {
+  if (!continuity.includes(marker)) fail(`Media Session metadata guard missing marker: ${marker}`);
+}
+if (!continuity.includes("title === 'Loading requested song…'") || !continuity.includes("title === 'Requested song unavailable'")) {
+  fail('Media Session metadata must not publish transient deep-link loading/error labels as song metadata');
+}
+if ((continuity.match(/clearMediaMetadata\(\);/g) || []).length < 3) {
+  fail('Loading, failed and generic transient metadata paths must be able to clear stale Media Session metadata');
+}
+
 if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) {
   fail('Provider runtime must close the old provider surface when the selected title changes');
 }
@@ -113,4 +135,5 @@ console.log('✓ provider routing refreshes after full catalogue hydration and n
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
 console.log('✓ deep-link hydration retries on reconnect without showing a fake Back online toast');
 console.log('✓ global playback shortcuts do not steal keyboard input from interactive controls');
+console.log('✓ Media Session publishes the current song/artist with PlayGarba artwork and clears transient loading metadata');
 console.log('✓ continuity layer loads after provider runtime and before app interaction completes');
