@@ -525,6 +525,32 @@ watchCatalogueRenders();
   window.addEventListener('popstate', queueReleaseListenHandoff);
   window.addEventListener('pageshow', queueReleaseListenHandoff);
   queueReleaseListenHandoff();
+
+  document.addEventListener('click', (event) => {
+    if (!plainPrimaryNavigation(event)) return;
+    const link = event.target instanceof Element
+      ? event.target.closest('#catalogueSongList a.play-link[href]')
+      : null;
+    if (!link || link.target || link.hasAttribute('download')) return;
+    const releaseId = selectedReleaseId();
+    if (!releaseId || link.dataset.releaseContext === releaseId) return;
+
+    event.preventDefault();
+    void (async () => {
+      const { songById } = await loadCatalogue();
+      let destination;
+      try { destination = new URL(link.href, location.href); }
+      catch { return; }
+      const songId = destination.searchParams.get('song');
+      const song = songId ? songById.get(songId) : null;
+      if (
+        song?.releaseId === releaseId
+        && releaseTrackNumberForHandoff(song) != null
+      ) destination.searchParams.set('release', releaseId);
+      else destination.searchParams.delete('release');
+      location.assign(destination.toString());
+    })();
+  }, true);
 })();
 
 (() => {

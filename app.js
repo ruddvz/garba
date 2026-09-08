@@ -24,6 +24,7 @@ const state = {
   playContextSongId: null,
   releaseContextId: null,
   releaseContextSongId: null,
+  releaseContextConsumedIds: new Set(),
   playing: false,
   elapsed: 0,
   duration: 0,
@@ -136,6 +137,7 @@ function releaseContextMatch(releaseId, songId) {
 function clearReleaseContext() {
   state.releaseContextId = null;
   state.releaseContextSongId = null;
+  state.releaseContextConsumedIds.clear();
 }
 
 function setReleaseContext(releaseId, songId) {
@@ -146,6 +148,7 @@ function setReleaseContext(releaseId, songId) {
   }
   state.releaseContextId = match.releaseId;
   state.releaseContextSongId = match.songId;
+  state.releaseContextConsumedIds.clear();
   return true;
 }
 
@@ -163,7 +166,9 @@ function releaseContinuationSongs(limit = Infinity) {
   const match = releaseContextMatch(state.releaseContextId, state.releaseContextSongId);
   if (!match) return [];
   const index = match.ordered.findIndex((song) => song.id === state.releaseContextSongId);
-  const remaining = index >= 0 ? match.ordered.slice(index + 1) : [];
+  const remaining = index >= 0
+    ? match.ordered.slice(index + 1).filter((song) => !state.releaseContextConsumedIds.has(song.id))
+    : [];
   return Number.isFinite(limit) ? remaining.slice(0, Math.max(0, limit)) : remaining;
 }
 
@@ -635,6 +640,9 @@ async function selectSong(songId, options = {}) {
     if ((options.releaseContextAdvance || options.syncReleaseAnchor) && songBelongsToActiveRelease(song)) {
       state.releaseContextSongId = song.id;
     }
+    if (options.consumeQueued && songBelongsToActiveRelease(song)) {
+      state.releaseContextConsumedIds.add(song.id);
+    }
     configureAudio(song, restoreElapsed);
     renderPlayer();
     updateMediaSession();
@@ -965,6 +973,7 @@ function changeSong(direction) {
         preservePlayback: true,
         preserveContext: true,
         preserveReleaseContext: true,
+        consumeQueued: true,
       });
       return;
     }
