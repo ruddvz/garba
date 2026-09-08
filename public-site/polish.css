@@ -268,7 +268,8 @@ body.interior-page .site-header {
 .device-grid,
 .truth-grid,
 .feature-row {
-  gap: 10px;
+  column-gap: clamp(24px, 3vw, 40px);
+  row-gap: clamp(30px, 4vw, 48px);
   border: 0;
   background: transparent;
 }
@@ -279,31 +280,32 @@ body.interior-page .site-header {
 .device-card,
 .truth-card,
 .feature-row article {
-  border: 1px solid rgba(242, 236, 226, .1);
-  border-radius: 12px;
-  background: #0f1016;
+  border: 0;
+  border-top: 1px solid rgba(242, 236, 226, .14);
+  border-radius: 0;
+  background: transparent;
 }
 
 .learn-card,
 .link-card {
   min-height: 210px;
-  padding: 26px;
+  padding: 26px 0 0;
 }
 
 .learn-card:hover,
 .link-card:hover {
-  background: #13141a;
+  background: transparent;
 }
 
 .learn-card .page-kicker {
   top: 26px;
-  left: 26px;
+  left: 0;
 }
 
 .link-card .card-arrow,
 .learn-card .card-arrow {
   top: 24px;
-  right: 24px;
+  right: 0;
 }
 
 .site-footer {
@@ -469,7 +471,7 @@ body.interior-page .site-header {
 .step-card,
 .device-card {
   min-height: auto;
-  padding: 26px;
+  padding: 26px 0 0;
 }
 
 .step-number {
@@ -490,9 +492,37 @@ body.interior-page .site-header {
   margin-bottom: 36px;
 }
 
+.device-card[data-recommended='true'],
+html[data-platform='ios'] .device-card[data-device='ios'],
+html[data-platform='android'] .device-card[data-device='android'],
+html[data-platform='desktop'] .device-card[data-device='desktop'] {
+  border-top-color: rgba(196, 154, 98, .62);
+  background: transparent;
+}
+
+html[data-platform='ios'] .device-card[data-device='ios'] .device-label::before,
+html[data-platform='android'] .device-card[data-device='android'] .device-label::before,
+html[data-platform='desktop'] .device-card[data-device='desktop'] .device-label::before {
+  box-shadow: none;
+}
+
+.platform-readout {
+  padding: 18px 0;
+  border: 0;
+  border-top: 1px solid rgba(196, 154, 98, .32);
+  border-bottom: 1px solid rgba(242, 236, 226, .1);
+  background: transparent;
+}
+
+.platform-readout span {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
 .feature-row article {
-  min-height: 150px;
-  padding: 24px;
+  min-height: 0;
+  padding: 24px 0 0;
 }
 
 .feature-row strong,
@@ -503,8 +533,8 @@ body.interior-page .site-header {
 }
 
 .truth-card {
-  min-height: 170px;
-  padding: 24px;
+  min-height: 0;
+  padding: 24px 0 0;
 }
 
 .truth-card b {
