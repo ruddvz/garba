@@ -1,0 +1,37 @@
+name: Audit issue 489 Nonstop taxonomy
+
+on:
+  push:
+    branches:
+      - codex/nonstop-taxonomy-backfill-489
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/nonstop-taxonomy-backfill-489
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit and apply exact linked-release taxonomy
+        run: python3 .github/scripts/audit-issue-489-nonstop-taxonomy.py
+
+      - name: Validate repository
+        run: npm run check
+
+      - name: Commit data patch and remove temporary audit tooling
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/discovery/sets/*.json
+          git rm .github/workflows/audit-issue-489-nonstop-taxonomy.yml .github/scripts/audit-issue-489-nonstop-taxonomy.py
+          git commit -m "Backfill exact linked-release Nonstop taxonomy"
+          git push origin HEAD:codex/nonstop-taxonomy-backfill-489
