@@ -17,6 +17,7 @@ const supportedChapterStatuses = new Set([
   'published-complete',
   'source-no-published-chapters',
   'source-tracklist-no-timestamps',
+  'full-set-only-no-chapter-evidence',
 ]);
 const supportedSourceStatuses = new Set(['youtube-migration-required']);
 
@@ -27,6 +28,7 @@ let youtubeSetCount = 0;
 let timestamped = 0;
 let explicitlyContinuous = 0;
 let tracklistOnly = 0;
+let fullSetOnly = 0;
 let migrationRequired = 0;
 
 // Chapter completion is only meaningful once a trustworthy YouTube master exists.
@@ -72,6 +74,7 @@ for (const chunkName of setsIndex.chunks || []) {
     }
 
     if (chapterStatus === 'source-tracklist-no-timestamps') tracklistOnly += 1;
+    else if (chapterStatus === 'full-set-only-no-chapter-evidence') fullSetOnly += 1;
     else explicitlyContinuous += 1;
   }
 }
@@ -95,4 +98,5 @@ console.log(`✓ ${youtubeSetCount} sets have YouTube masters`);
 console.log(`✓ ${timestamped} YouTube sets have timestamped chapters`);
 console.log(`✓ ${explicitlyContinuous} YouTube sets explicitly document sources with no published chapter starts`);
 console.log(`✓ ${tracklistOnly} YouTube sets preserve source tracklists without fabricated timestamps`);
+console.log(`✓ ${fullSetOnly} migrated YouTube sets are explicitly full-set-only with no carried chapter evidence`);
 console.log(`△ ${migrationRequired} discovery sets remain explicitly classified as YouTube migration required`);
