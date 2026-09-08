@@ -141,6 +141,7 @@
     "data/playback-sources-trupti-kaushal.json",
     "data/playback-sources-alpa-current.json",
     "data/playback-sources-raag-mehta.json",
+    "data/playback-sources-dhara-rankar.json",
     "data/playback-sources-ranked-fallbacks.json",
     "data/playback-sources-jordar-exact.json",
     "data/playback-sources-rangoli-exact.json",
@@ -186,5 +187,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 preserves all v0.17.8 route/runtime work and begins issue #156 Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. Rankar uses its official Amazon album as the conservative generated release-level route; the official artist-channel continuous video is retained as release evidence but is not promoted to per-track exact playback because two published chapter labels do not map one-for-one to the provider album."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 preserves all v0.17.8 route/runtime work and begins issue #156 Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. All 23 Rankar songs are explicitly pinned to the verified official Amazon album as conservative release-level playback so global title matching cannot substitute a different artist's performance. The official artist-channel continuous video remains release evidence but is not promoted to per-track exact playback because two published chapter labels do not map one-for-one to the provider album."
 }
