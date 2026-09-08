@@ -36,6 +36,33 @@ for (const marker of [
   if (!continuity.includes(marker)) fail(`Continuity runtime missing marker: ${marker}`);
 }
 
+for (const marker of [
+  "const MIX_ENABLED_KEY = 'garba:automix-enabled';",
+  'const MIX_DEFAULT_SECONDS = 7.5;',
+  'function nextDirectSong(song)',
+  'function equalPower(progress)',
+  'function mixDurationSeconds(current, next)',
+  'next?.transitionSeconds',
+  'current?.bpm || next?.bpm',
+  'song?.mixOutSeconds',
+  'next.mixInSeconds || next.introSilenceSeconds',
+  'navigator.connection?.saveData',
+  'function beginAutoMix(current, next)',
+  '!current?.audioUrl || !next?.audioUrl',
+  'function requestCoreNavigation(nextSong, secondary, token)',
+  'data-garba-automix-toggle',
+  'window.GARBA_AUTOMIX',
+]) {
+  if (!continuity.includes(marker)) fail(`AutoMix runtime missing marker: ${marker}`);
+}
+
+if (!continuity.includes('Math.cos(t * Math.PI * 0.5)') || !continuity.includes('Math.sin(t * Math.PI * 0.5)')) {
+  fail('AutoMix must retain an equal-power crossfade curve');
+}
+if (!continuity.includes("target.closest('.song-copy, #prevButton, #nextButton, #miniPrev, #miniNext, #progress')")) {
+  fail('Manual navigation must cancel an active AutoMix transition');
+}
+
 if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) {
   fail('Provider runtime must close the old provider surface when the selected title changes');
 }
@@ -51,3 +78,6 @@ if (failed) process.exit(1);
 console.log('✓ song-row Play intent follows the newly selected provider song');
 console.log('✓ provider Previous/Next preserve listening intent across song changes');
 console.log('✓ continuity layer loads after provider runtime and before app interaction completes');
+console.log('✓ AutoMix stays restricted to consecutive direct-audio tracks');
+console.log('✓ AutoMix retains equal-power transition and optional mix metadata hooks');
+console.log('✓ manual navigation and seeking cancel an in-flight AutoMix transition');
