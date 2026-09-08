@@ -179,7 +179,8 @@
   function syncConnectionPreference() {
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const constrained = Boolean(connection?.saveData) || /(^|-)2g$/.test(String(connection?.effectiveType || ''));
-    app?.toggleAttribute('data-save-data', constrained);
+    if (constrained) app?.setAttribute('data-save-data', 'true');
+    else app?.removeAttribute('data-save-data');
   }
 
   function setupKeyboardGuard() {
@@ -194,7 +195,7 @@
         return;
       }
 
-      if (event.key.toLowerCase() === 's' && event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey && !isInteractiveTarget(event.target)) {
+      if (String(event.key || '').toLowerCase() === 's' && event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey && !isInteractiveTarget(event.target)) {
         event.preventDefault();
         event.stopImmediatePropagation();
         shareCurrentTrack();
@@ -210,9 +211,12 @@
 
   function setupObservers() {
     const metadataObserver = new MutationObserver(syncControlLabels);
-    for (const element of [songTitle, songArtist, queueBadge, favouriteButton, elapsedTime, durationTime]) {
+    for (const element of [songTitle, songArtist, queueBadge, elapsedTime, durationTime]) {
       if (!element) continue;
-      metadataObserver.observe(element, { childList: true, characterData: true, subtree: true, attributes: element === favouriteButton, attributeFilter: element === favouriteButton ? ['aria-pressed'] : undefined });
+      metadataObserver.observe(element, { childList: true, characterData: true, subtree: true });
+    }
+    if (favouriteButton) {
+      metadataObserver.observe(favouriteButton, { attributes: true, attributeFilter: ['aria-pressed'] });
     }
 
     if (songSheet) {
