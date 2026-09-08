@@ -2,6 +2,7 @@ const paths = {
   songs: '../data/songs.json',
   releases: '../data/releases.json',
   genres: '../data/genres.json',
+  taxonomy: '../data/taxonomy.json',
   catalogueIndex: '../data/catalogue/index.json',
   artwork: '../data/release-artwork.json',
   curation: '../data/catalogue-curation.json',
@@ -45,6 +46,8 @@ const state = {
   songs: [],
   releases: [],
   genres: [],
+  taxonomy: [],
+  taxonomyById: new Map(),
   artists: [],
   artwork: {},
   curation: {},
@@ -76,17 +79,84 @@ const formatDuration = (seconds) => {
   return `${Math.floor(total / 60)}:${String(Math.round(total % 60)).padStart(2, '0')}`;
 };
 const releaseYear = (release) => Number(release?.originalReleaseYear || String(release?.releaseDate || '').slice(0, 4)) || 0;
+const displayTitle = (entity) => String(entity?.displayTitle || entity?.title || '').trim();
+const aliasesFor = (entity) => Array.isArray(entity?.aliases) ? entity.aliases.filter(Boolean) : [];
+const taxonomyIdsForSong = (song) => [...new Set([song?.category, ...(Array.isArray(song?.taxonomyStyles) ? song.taxonomyStyles : [])].filter(Boolean))];
+const taxonomyLabel = (id) => state.taxonomyById.get(id)?.label || id || '';
+const songHasTaxonomy = (song, ids) => {
+  const wanted = ids instanceof Set ? ids : new Set(ids);
+  return taxonomyIdsForSong(song).some((id) => wanted.has(id));
+};
+const browseVisualGenres = (song) => {
+  const genres = new Set(song?.genre ? [song.genre] : []);
+  taxonomyIdsForSong(song).forEach((id) => {
+    const visualGenre = state.taxonomyById.get(id)?.visualGenre;
+    if (visualGenre) genres.add(visualGenre);
+  });
+  return genres;
+};
+const belongsToVisualGenre = (song, genreId) => browseVisualGenres(song).has(genreId);
+
 const allSongText = (song, release) => normalise([
   song.title,
+  song.displayTitle,
+  ...aliasesFor(song),
   song.artist,
+  song.description,
+  song.story,
   song.genre,
   song.category,
+  ...taxonomyIdsForSong(song),
   ...(song.styles || []),
-  ...(song.taxonomyStyles || []),
   release?.title,
+  release?.displayTitle,
+  ...aliasesFor(release),
   release?.artist,
   release?.label,
+  release?.description,
 ].filter(Boolean).join(' '));
+
+function songDescription(song, release) {
+  const editorial = String(song?.description || song?.story || '').trim();
+  if (editorial) return editorial;
+
+  const title = displayTitle(song) || 'This track';
+  const artist = String(song?.artist || '').trim();
+  const primaryTaxonomy = taxonomyLabel(song?.category);
+  const releaseTitle = displayTitle(release);
+  const year = releaseYear(release);
+  const label = String(release?.label || '').trim();
+  const sentences = [];
+
+  if (artist && primaryTaxonomy) sentences.push(`${title} is a ${primaryTaxonomy} catalogue track credited to ${artist}.`);
+  else if (artist) sentences.push(`${title} is credited to ${artist}.`);
+  else if (primaryTaxonomy) sentences.push(`${title} is catalogued as ${primaryTaxonomy}.`);
+
+  if (releaseTitle) {
+    const releaseParts = [year || null, label || null].filter(Boolean).join(' · ');
+    sentences.push(`It appears on ${releaseTitle}${releaseParts ? ` (${releaseParts})` : ''}.`);
+  }
+
+  const secondary = taxonomyIdsForSong(song).slice(1).map(taxonomyLabel).filter(Boolean);
+  if (secondary.length) sentences.push(`Also tagged: ${secondary.join(', ')}.`);
+  return sentences.join(' ') || 'Catalogue details are being enriched for this track.';
+}
+
+function releaseDescription(release, songs = []) {
+  const editorial = String(release?.description || '').trim();
+  if (editorial) return editorial;
+  const title = displayTitle(release) || 'This release';
+  const artist = String(release?.artist || '').trim();
+  const year = releaseYear(release);
+  const label = String(release?.label || '').trim();
+  const songCount = songs.length || Number(release?.songCount) || 0;
+  const pieces = [];
+  if (artist) pieces.push(`${title} is credited to ${artist}.`);
+  const metadata = [year || null, label || null, songCount ? `${songCount} ${songCount === 1 ? 'song' : 'songs'}` : null].filter(Boolean);
+  if (metadata.length) pieces.push(metadata.join(' · ') + '.');
+  if (release?.live?.isLive && release.live.venue) pieces.push(`Live recording venue: ${release.live.venue}.`);
+  return pieces.join(' ') || 'Release details are being enriched in the PlayGarba catalogue.';
+}
 
 function ensureShareUi() {
   if (!els.detail) return;
@@ -121,8 +191,15 @@ function ensureShareUi() {
       .share-explore-state{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:var(--text);background:rgba(20,19,24,.44);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease}
       .share-explore-state:hover{transform:translateY(-1px);background:rgba(31,29,35,.58);border-color:rgba(255,255,255,.24)}
       .share-explore-state:active{transform:scale(.98)}
-      .share-explore-state:focus-visible{outline:2px solid var(--gold,var(--accent,#d9b26f));outline-offset:3px}
-      @media(max-width:640px){.detail-actions{margin-bottom:18px}.share-explore-state{min-height:40px;padding-inline:14px}}
+      .share-explore-state:focus-visible,.song-context summary:focus-visible{outline:2px solid var(--gold,var(--accent,#d9b26f));outline-offset:3px}
+      .song-context{margin-top:7px;color:rgba(255,248,236,.68);font-size:.75rem;line-height:1.48}
+      .song-context summary{display:inline-flex;align-items:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.11);border-radius:999px;color:rgba(255,248,236,.72);background:rgba(255,255,255,.035);font-size:.7rem;font-weight:700;cursor:pointer;list-style:none}
+      .song-context summary::-webkit-details-marker{display:none}
+      .song-context[open] summary{border-color:rgba(231,201,143,.26);color:var(--gold,var(--accent,#d9b26f));background:rgba(231,201,143,.055)}
+      .song-context-copy{max-width:68ch;margin:8px 0 0;color:rgba(255,248,236,.67)}
+      .song-context-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+      .song-context-meta span{display:inline-flex;align-items:center;min-height:23px;padding:0 7px;border:1px solid rgba(255,255,255,.08);border-radius:999px;color:rgba(255,248,236,.52);background:rgba(255,255,255,.025);font-size:.64rem}
+      @media(max-width:640px){.detail-actions{margin-bottom:18px}.share-explore-state{min-height:40px;padding-inline:14px}.song-context{font-size:.72rem}.song-context-copy{line-height:1.46}}
       @media(prefers-reduced-motion:reduce){.share-explore-state{transition:none!important}}
     `;
     document.head.append(style);
@@ -163,8 +240,9 @@ function syncCollectionIdentity() {
   if (!state.active || state.active.id === 'search') return;
   const release = state.activeReleaseId ? state.releaseById.get(state.activeReleaseId) : null;
   if (release) {
-    document.title = `${release.title} · PlayGarba`;
-    syncShareLabel(release.title);
+    const title = displayTitle(release);
+    document.title = `${title} · PlayGarba`;
+    syncShareLabel(title);
     return;
   }
   document.title = `${state.active.title} · PlayGarba`;
@@ -194,13 +272,10 @@ function renderCollectionDetailIdentity(collection = state.active) {
 
 function renderReleaseDetailIdentity(release, songs) {
   if (!state.active || state.active.id === 'search' || !release) return;
-  const credits = [release.artist, release.label]
-    .map((value) => String(value || '').trim())
-    .filter((value, index, values) => value && values.indexOf(value) === index);
   const year = releaseYear(release);
   els.detailKicker.textContent = `${state.active.title} · Release`;
-  els.detailTitle.textContent = release.title;
-  els.detailDescription.textContent = credits.join(' · ') || `Selected from ${state.active.title}.`;
+  els.detailTitle.textContent = displayTitle(release);
+  els.detailDescription.textContent = releaseDescription(release, songs);
   replaceDetailMeta([
     year ? String(year) : '',
     `${songs.length.toLocaleString()} ${songs.length === 1 ? 'song' : 'songs'}`,
@@ -266,7 +341,7 @@ function buildCollections() {
       id:'essential-releases',
       title:'Essential releases',
       kicker:'Curated albums',
-      description:'A small, intentional shelf of complete Garba releases with verified artwork—good places to start listening.',
+      description:'A small, intentional shelf of complete Garba releases with verified artwork, with complete release context kept together.',
       visual:art.traditional,
       test:(song)=>essentialReleaseIds.has(song.releaseId),
     }));
@@ -274,11 +349,11 @@ function buildCollections() {
 
   c.push(
     fixedCollection({ id:'nonstop', title:'Nonstop Garba', kicker:'Continuous energy', description:'Long-form nonstop releases, continuous Garba albums and set-style catalogue entries.', visual:art.traditional, test:(song, release)=>includesTerm(song, release, ['non stop','nonstop']) }),
-    fixedCollection({ id:'live', title:'Live Garba', kicker:'On stage', description:'Live Garba performances, event recordings and United Way-style concert releases.', visual:art.folk, test:(song, release)=>Boolean(release?.live?.isLive)||includesTerm(song, release, ['live garba','live at','live']) }),
+    fixedCollection({ id:'live', title:'Live Garba', kicker:'On stage', description:'Live Garba performances and event recordings identified by verified live metadata or the Live Garba taxonomy.', visual:art.folk, test:(song, release)=>Boolean(release?.live?.isLive)||songHasTaxonomy(song,['live-garba']) }),
     fixedCollection({ id:'current', title:'New generation', kicker:'2020s', description:'Recent Gujarati Garba and folk releases from 2020 onward.', visual:art.fusion, test:(song, release)=>releaseYear(release)>=2020 }),
-    fixedCollection({ id:'classics', title:'Garba classics', kicker:'Foundation', description:'Traditional Garba catalogue entries—the core repertoire before modern remixes and crossover styles.', visual:art.traditional, test:(song)=>song.genre==='traditional' }),
-    fixedCollection({ id:'dandiya-raas', title:'Dandiya & Raas', kicker:'Raas', description:'Dandiya Raas, Krishna Raas and high-motion circular dance repertoire.', visual:art.dandiya, test:(song, release)=>song.genre==='dandiya'||includesTerm(song, release,['raas','dandiya']) }),
-    fixedCollection({ id:'devotional', title:'Devotional Garba', kicker:'Bhakti', description:'Garba centred on Mataji, Shakti, Krishna and devotional traditions.', visual:art.devotional, test:(song)=>song.genre==='devotional' }),
+    fixedCollection({ id:'classics', title:'Garba classics', kicker:'Foundation', description:'Traditional Garba catalogue entries, focused on the core repertoire before modern remixes and crossover styles.', visual:art.traditional, test:(song)=>belongsToVisualGenre(song,'traditional') }),
+    fixedCollection({ id:'dandiya-raas', title:'Dandiya & Raas', kicker:'Raas', description:'Dandiya, Raas, Dodhiyu and related repertoire matched from the catalogue taxonomy.', visual:art.dandiya, test:(song)=>belongsToVisualGenre(song,'dandiya') }),
+    fixedCollection({ id:'devotional', title:'Devotional Garba', kicker:'Bhakti', description:'Mataji, Shakti, Krishna and devotional Garba matched from primary and secondary catalogue taxonomy.', visual:art.devotional, test:(song)=>belongsToVisualGenre(song,'devotional') }),
   );
 
   state.genres.forEach((genre) => {
@@ -286,24 +361,31 @@ function buildCollections() {
       id:`genre-${genre.id}`,
       title:genre.label || genre.name,
       kicker:'By tradition',
-      description:`Explore every PlayGarba track currently classified as ${genre.label || genre.name}.`,
+      description:`Explore PlayGarba tracks whose primary or secondary catalogue taxonomy maps to ${genre.label || genre.name}.`,
       visual:visualByGenre[genre.id] || art.traditional,
-      test:(song)=>song.genre===genre.id,
+      test:(song)=>belongsToVisualGenre(song,genre.id),
     }));
   });
 
   const styleCollections = [
-    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna','radha','kanudo','kanuda'],art.devotional],
-    ['mataji-shakti','Mataji & Shakti','Devi Garba',['mataji','ambe','amba','shakti','navdurga','jagdamba','mahakali'],art.devotional],
-    ['tran-taali','Tran Taali','Three-clap tradition',['tran taali','tran-taali','three taali','3 taali'],art.traditional],
-    ['be-taali','Be Taali','Two-clap tradition',['be taali','be-taali','two taali','2 taali'],art.traditional],
-    ['dakla','Dakla','Percussive folk',['dakla'],art.fusion],
-    ['timli','Timli','Regional folk dance',['timli'],art.folk],
-    ['folk-fusion','Folk fusion','New folk',['folk fusion','folk-fusion','electronic'],art.fusion],
-    ['filmi-pop','Filmi & pop Garba','Crossover',['filmi','film','pop garba'],art.fusion],
-    ['sanedo-style','Sanedo','Call-and-response',['sanedo'],art.sanedo],
+    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna-garba'],[],art.devotional],
+    ['mataji-shakti','Mataji & Shakti','Devi Garba',['mataji-devotional'],[],art.devotional],
+    ['tran-taali','Tran Taali','Three-clap tradition',['tran-taali'],[],art.traditional],
+    ['be-taali','Be Taali','Two-clap tradition',['be-taali'],[],art.traditional],
+    ['dakla','Dakla','Percussive folk',['dakla'],[],art.fusion],
+    ['timli','Timli','Regional folk dance',[],['timli'],art.folk],
+    ['folk-fusion','Folk fusion','New folk',['electronic-fusion'],['folk fusion','folk-fusion'],art.fusion],
+    ['filmi-pop','Filmi & pop Garba','Crossover',['bollywood-filmi'],['pop garba'],art.fusion],
+    ['sanedo-style','Sanedo','Call-and-response',['sanedo'],[],art.sanedo],
   ];
-  styleCollections.forEach(([id,title,kicker,terms,visual]) => c.push(fixedCollection({ id,title,kicker,description:`Songs and releases connected to ${title}.`,visual,test:(song,release)=>includesTerm(song,release,terms) })));
+  styleCollections.forEach(([id,title,kicker,taxonomyIds,terms,visual]) => c.push(fixedCollection({
+    id,
+    title,
+    kicker,
+    description:`Songs and releases connected to ${title}, using canonical catalogue taxonomy${terms.length ? ' with a limited metadata fallback' : ''}.`,
+    visual,
+    test:(song,release)=>songHasTaxonomy(song,taxonomyIds)||(terms.length > 0 && includesTerm(song,release,terms)),
+  })));
 
   const decades = [
     [2020,2029,'2020s'],
@@ -394,7 +476,7 @@ function renderEssentialReleases() {
   const heading = document.createElement('h2');
   heading.textContent = 'Essential releases';
   const copy = document.createElement('p');
-  copy.textContent = 'A small, intentional shelf of complete Garba releases with verified artwork—good places to start listening.';
+  copy.textContent = 'A small, intentional shelf of complete Garba releases with verified artwork and catalogue context.';
   head.append(heading, copy);
 
   const rail = document.createElement('div');
@@ -405,11 +487,11 @@ function renderEssentialReleases() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'release-card essential-release-card';
-    button.setAttribute('aria-label',`Open ${release.title}`);
+    button.setAttribute('aria-label',`Open ${displayTitle(release)}`);
     button.append(makeCover(release));
     const title = document.createElement('strong');
     title.className = 'release-title';
-    title.textContent = release.title;
+    title.textContent = displayTitle(release);
     const meta = document.createElement('span');
     meta.className = 'release-meta';
     const year = releaseYear(release);
@@ -429,8 +511,8 @@ function renderCollectionHome() {
   const featuredIds = ['nonstop','live','current','classics','dandiya-raas','devotional'];
   renderEssentialReleases();
   collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean));
-  collectionSection('Traditions & styles', 'Explore the catalogue by dance form, devotional tradition and musical style.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)));
-  collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data—not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')));
+  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)));
+  collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data, not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')));
   collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')));
 }
 
@@ -446,20 +528,20 @@ function makeCover(release, className = 'release-cover') {
     const img = document.createElement('img');
     img.loading = 'lazy';
     img.decoding = 'async';
-    img.alt = `${release?.title || 'Release'} cover`;
+    img.alt = `${displayTitle(release) || 'Release'} cover`;
     img.src = entry.imageUrl;
     img.addEventListener('error', () => {
       img.remove();
       wrap.classList.add('fallback');
       const fallback = document.createElement('span');
-      fallback.textContent = initials(release?.title);
+      fallback.textContent = initials(displayTitle(release));
       wrap.append(fallback);
     }, { once:true });
     wrap.append(img);
   } else {
     wrap.classList.add('fallback');
     const fallback = document.createElement('span');
-    fallback.textContent = initials(release?.title);
+    fallback.textContent = initials(displayTitle(release));
     wrap.append(fallback);
   }
   return wrap;
@@ -474,7 +556,7 @@ function releasesForSongs(songs) {
   const counts = new Map();
   songs.forEach((song)=>{ if (song.releaseId) counts.set(song.releaseId,(counts.get(song.releaseId)||0)+1); });
   return [...counts.entries()].map(([id,count])=>({ release:state.releaseById.get(id), count })).filter((item)=>item.release)
-    .sort((a,b)=>releaseYear(b.release)-releaseYear(a.release)||b.count-a.count||String(a.release.title).localeCompare(String(b.release.title)));
+    .sort((a,b)=>releaseYear(b.release)-releaseYear(a.release)||b.count-a.count||displayTitle(a.release).localeCompare(displayTitle(b.release)));
 }
 
 function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
@@ -486,15 +568,16 @@ function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
   const visible = items.slice(0, resolvedLimit);
   visible.forEach(({release,count})=>{
     const active = state.activeReleaseId===release.id;
+    const titleText = displayTitle(release);
     const button = document.createElement('button');
     button.type = 'button';
     button.className = `release-card${active?' active':''}`;
     button.dataset.releaseId = release.id;
-    button.setAttribute('aria-label', active ? `${release.title}, current release filter` : `Filter songs to ${release.title}`);
+    button.setAttribute('aria-label', active ? `${titleText}, current release filter` : `Filter songs to ${titleText}`);
     button.append(makeCover(release));
     const title = document.createElement('strong');
     title.className = 'release-title';
-    title.textContent = release.title;
+    title.textContent = titleText;
     const meta = document.createElement('span');
     meta.className = 'release-meta';
     const year = releaseYear(release);
@@ -526,9 +609,32 @@ function songArtwork(song) {
   const cover = makeCover(release, 'song-art');
   if (cover.classList.contains('fallback')) {
     cover.replaceChildren();
-    cover.textContent = initials(release?.title || song.title);
+    cover.textContent = initials(displayTitle(release) || displayTitle(song));
   }
   return cover;
+}
+
+function makeSongContext(song, release) {
+  const details = document.createElement('details');
+  details.className = 'song-context';
+  const summary = document.createElement('summary');
+  summary.textContent = 'About';
+  summary.setAttribute('aria-label', `About ${displayTitle(song)}`);
+  const description = document.createElement('p');
+  description.className = 'song-context-copy';
+  description.textContent = songDescription(song, release);
+  const meta = document.createElement('div');
+  meta.className = 'song-context-meta';
+  const labels = taxonomyIdsForSong(song).map(taxonomyLabel).filter(Boolean);
+  const year = releaseYear(release);
+  [song.genre ? `World: ${song.genre}` : null, ...labels, year ? String(year) : null].filter(Boolean).forEach((text) => {
+    const pill = document.createElement('span');
+    pill.textContent = text;
+    meta.append(pill);
+  });
+  details.append(summary, description);
+  if (meta.childElementCount) details.append(meta);
+  return details;
 }
 
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
@@ -548,25 +654,27 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   const fragment = document.createDocumentFragment();
   visible.forEach((song)=>{
     const release = state.releaseById.get(song.releaseId);
+    const songTitle = displayTitle(song);
     const row = document.createElement('div');
     row.className = 'song-row';
     row.setAttribute('role','listitem');
+    row.dataset.songId = song.id;
     row.append(songArtwork(song));
     const copy = document.createElement('div');
     copy.className = 'song-copy';
     const titleEl = document.createElement('strong');
-    titleEl.textContent = song.title;
+    titleEl.textContent = songTitle;
     const artist = document.createElement('span');
     artist.textContent = [song.artist, formatDuration(song.durationSeconds)].filter(Boolean).join(' · ');
-    copy.append(titleEl,artist);
+    copy.append(titleEl,artist,makeSongContext(song,release));
     const releaseEl = document.createElement('span');
     releaseEl.className = 'song-release';
-    releaseEl.textContent = release?.title || '';
+    releaseEl.textContent = displayTitle(release);
     const play = document.createElement('a');
     play.className = 'play-link';
     play.textContent = 'Listen';
     play.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
-    play.setAttribute('aria-label',`Open ${song.title} by ${song.artist} in the PlayGarba player`);
+    play.setAttribute('aria-label',`Open ${songTitle} by ${song.artist} in the PlayGarba player`);
     row.append(copy,releaseEl,play);
     fragment.append(row);
   });
@@ -627,7 +735,7 @@ function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}
   syncCollectionIdentity();
   renderReleaseDetailIdentity(release, songs);
   renderReleases(state.activeSongs);
-  renderSongs(songs, release.title || 'Release songs');
+  renderSongs(songs, displayTitle(release) || 'Release songs');
   if (updateHistory) {
     const nextState = { collection:state.active.id, release:releaseId };
     const nextHash = collectionHash(state.active.id, releaseId);
@@ -698,7 +806,7 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
     return terms.every((term)=>text.includes(term));
   });
   if (state.active?.id !== 'search') state.returnFocusTarget = searchReturnControl();
-  state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists and release metadata from the PlayGarba catalogue.', songs };
+  state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists, aliases, descriptions and release metadata from the PlayGarba catalogue.', songs };
   state.activeSongs = songs;
   state.activeReleaseId = null;
   syncBackLabel();
@@ -706,11 +814,10 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
   els.detail.hidden = false;
   els.detailKicker.textContent = 'Search results';
   els.detailTitle.textContent = query.trim();
-  els.detailDescription.textContent = 'Matching songs, artists and albums from the PlayGarba catalogue.';
+  els.detailDescription.textContent = 'Matching songs, artists, aliases, descriptions and albums from the PlayGarba catalogue.';
   document.title = `Search “${query.trim()}” · PlayGarba`;
   syncShareLabel(`search results for ${query.trim()}`);
-  els.detailMeta.replaceChildren();
-  const pill = document.createElement('span'); pill.textContent=`${songs.length.toLocaleString()} matches`; els.detailMeta.append(pill);
+  replaceDetailMeta([`${songs.length.toLocaleString()} matches`]);
   renderReleases(songs);
   renderSongs(songs,'Matching songs');
   if (updateHistory) {
@@ -737,15 +844,16 @@ async function shareExploreState() {
   if (!state.active) return;
   const query = els.search.value.trim();
   const release = state.activeReleaseId ? state.releaseById.get(state.activeReleaseId) : null;
+  const releaseTitle = displayTitle(release);
   const title = state.active.id === 'search'
     ? `Search “${query}” · PlayGarba`
     : release
-      ? `${release.title} · PlayGarba`
+      ? `${releaseTitle} · PlayGarba`
       : `${state.active.title} · PlayGarba`;
   const text = state.active.id === 'search'
     ? `PlayGarba search results for ${query}.`
     : release
-      ? `${release.title} from ${state.active.title} on PlayGarba.`
+      ? releaseDescription(release, state.activeSongs.filter((song)=>song.releaseId===release.id))
       : state.active.description;
   const payload = { title, text, url: location.href };
 
@@ -814,10 +922,11 @@ function setLoading(loading) {
 
 async function init() {
   els.count.textContent = 'Loading catalogue…';
-  const [songs,releases,genres,index,artwork,curation] = await Promise.all([
+  const [songs,releases,genres,taxonomy,index,artwork,curation] = await Promise.all([
     fetchJson(paths.songs,[]),
     fetchJson(paths.releases,[]),
     fetchJson(paths.genres,[]),
+    fetchJson(paths.taxonomy,[]),
     fetchJson(paths.catalogueIndex,{}),
     fetchJson(paths.artwork,{releases:{}}),
     fetchJson(paths.curation,{featuredReleaseIds:[]}),
@@ -826,6 +935,8 @@ async function init() {
   state.songs = songs;
   state.releases = releases;
   state.genres = genres;
+  state.taxonomy = taxonomy;
+  state.taxonomyById = new Map(taxonomy.map((entry)=>[entry.id,entry]));
   state.artwork = artwork || {releases:{}};
   state.curation = curation || {featuredReleaseIds:[]};
   state.releaseById = buildReleaseIndex(releases);
