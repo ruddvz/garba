@@ -1,5 +1,5 @@
 {
-  "version": "0.17.4",
+  "version": "0.17.5",
   "songCount": 1169,
   "releaseCount": 209,
   "categoryCount": 19,
@@ -141,7 +141,8 @@
     "data/playback-sources-shyam-exact.json",
     "data/playback-sources-madhuvan-youtube.json",
     "data/playback-sources-jagran-youtube.json",
-    "data/playback-sources-saybo-exact.json"
+    "data/playback-sources-saybo-exact.json",
+    "data/playback-sources-anand-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -167,5 +168,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.4 preserves the duplicate-release cleanup, duplicate-ID build guard, Shyam/Ude exact-provider mappings, Madhuvan one-tap chapters and safe Jagran chapters, then maps all 15 canonical Saybo songs to official Amazon Music track pages from the verified Soor Mandir 15-track edition. The shorter Spotify edition is not used for canonical Saybo routing."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.5 preserves the duplicate-release cleanup, duplicate-ID build guard, Shyam/Ude exact-provider mappings, Madhuvan one-tap chapters, safe Jagran chapters and exact Saybo routes, then maps the 17 remaining Anand provider fallbacks to official Amazon Music track pages. Anand track 14, Ghor Andhari Re, intentionally keeps its stronger generated verified YouTube performance-chapter route."
 }
