@@ -217,18 +217,18 @@ const sitemap = await read('sitemap.xml');
 const index = await read('index.html');
 const catalogueHtml = await read('src/catalogue/index.html');
 const catalogueJs = await read('src/catalogue/catalogue.js');
-if (cname !== 'playgarba.com') fail(`CNAME must be playgarba.com, found ${cname || '(empty)'}`);
-if (!robots.includes('Sitemap: https://playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
-if (!sitemap.includes('<loc>https://playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
-if (!sitemap.includes('<loc>https://playgarba.com/catalogue/</loc>')) fail('sitemap.xml must include the single catalogue page');
+if (cname !== 'live.playgarba.com') fail(`CNAME must be live.playgarba.com, found ${cname || '(empty)'}`);
+if (!robots.includes('Sitemap: https://live.playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
+if (!sitemap.includes('<loc>https://live.playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
+if (!sitemap.includes('<loc>https://live.playgarba.com/catalogue/</loc>')) fail('sitemap.xml must include the single catalogue page');
 if (sitemap.includes('/songs/') || sitemap.includes('/releases/')) fail('sitemap must not advertise standalone song or release pages');
 for (const marker of [
-  '<link rel="canonical" href="https://playgarba.com/"',
-  '<meta property="og:url" content="https://playgarba.com/"',
-  '"url": "https://playgarba.com/"',
+  '<link rel="canonical" href="https://live.playgarba.com/"',
+  '<meta property="og:url" content="https://live.playgarba.com/"',
+  '"url": "https://live.playgarba.com/"',
 ]) if (!index.includes(marker)) fail(`index.html missing production-domain marker: ${marker}`);
 for (const marker of [
-  '<link rel="canonical" href="https://playgarba.com/catalogue/"',
+  '<link rel="canonical" href="https://live.playgarba.com/catalogue/"',
   'id="catalogueSections"',
   'id="collectionDetail"',
   'catalogue.js',
@@ -251,7 +251,7 @@ for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workfl
 for (const file of ['CNAME', 'robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Pages workflow missing production-domain file: ${file}`);
 for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`Pages workflow missing style layer: ${layer}`);
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
-if (!pages.includes("test \"$(tr -d '\\r\\n' < _site/CNAME)\" = 'playgarba.com'")) fail('Pages workflow must assert the PlayGarba CNAME before upload');
+if (!pages.includes("test \"$(tr -d '\\r\\n' < _site/CNAME)\" = 'live.playgarba.com'")) fail('Pages workflow must assert the PlayGarba CNAME before upload');
 for (const marker of [
   'mkdir -p _site/catalogue',
   'cp src/catalogue/index.html _site/catalogue/index.html',
