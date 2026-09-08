@@ -4,7 +4,7 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [runtime, nonstop, styles, mobileStyles, bootstrap, styleIndex, pages] = await Promise.all([
+const [runtime, nonstop, styles, mobileStyles, bootstrap, styleIndex, pages, enrichment] = await Promise.all([
   read('youtube-player-runtime.js'),
   read('nonstop-browser.js'),
   read('styles/60-runtime-and-provider.css'),
@@ -12,6 +12,7 @@ const [runtime, nonstop, styles, mobileStyles, bootstrap, styleIndex, pages] = a
   read('simple-runtime.js'),
   read('styles.css'),
   read('.github/workflows/pages.yml'),
+  read('scripts/enrich-runtime-songs.mjs'),
 ]);
 
 let failed = false;
@@ -40,6 +41,10 @@ const requiredRuntimeSignals = [
   'const readyPlayer = await ensurePlayer(id, token);',
   'readyPlayer.loadVideoById(request)',
   'readyPlayer.cueVideoById(request)',
+  'function logicalDuration(song)',
+  'song?.youtubeDurationSeconds || song?.durationSeconds',
+  'trackDuration = logicalDuration(song);',
+  'const max = logicalDuration(song);',
 ];
 
 for (const signal of requiredRuntimeSignals) {
@@ -47,7 +52,9 @@ for (const signal of requiredRuntimeSignals) {
 }
 
 const openBlock = runtime.match(/async function open\(song, \{ autoplay = true, resume = true \} = \{\}\) \{[\s\S]*?\n  \}\n\n  function toggle/)?.[0] || '';
-const closeBlock = runtime.match(/function close\(\) \{[\s\S]*?\n  \}\n\n  function restoreElapsed/)?.[0] || '';
+const closeBlock = runtime.match(/function close\(\) \{[\s\S]*?\n  \}\n\n  function logicalDuration/)?.[0] || '';
+const durationBlock = runtime.match(/function logicalDuration\(song\) \{[\s\S]*?\n  \}\n\n  function restoreElapsed/)?.[0] || '';
+const restoreBlock = runtime.match(/function restoreElapsed\(song\) \{[\s\S]*?\n  \}\n\n  async function open/)?.[0] || '';
 const destroyBlock = runtime.match(/function destroyPlayer\(\) \{[\s\S]*?\n  \}\n\n  async function ensurePlayer/)?.[0] || '';
 const ensureBlock = runtime.match(/async function ensurePlayer\(initialVideoId, expectedToken\) \{[\s\S]*?\n  \}\n\n  function close/)?.[0] || '';
 
@@ -57,6 +64,18 @@ if (openBlock.includes('destroyPlayer();')) {
 }
 if (!openBlock.includes('await ensurePlayer(id, token)')) {
   fail('YouTube open() must await the shared player readiness lifecycle with its navigation token');
+}
+if (!openBlock.includes('trackDuration = logicalDuration(song);')) {
+  fail('YouTube open() must use the provider-specific logical chapter duration when available');
+}
+if (!openBlock.includes('const endSeconds = trackDuration > 0 ? baseStart + trackDuration : undefined;')) {
+  fail('YouTube IFrame load/cue requests must use the logical chapter duration as their end boundary');
+}
+if (!durationBlock.includes('song?.youtubeDurationSeconds || song?.durationSeconds')) {
+  fail('Provider-specific YouTube duration must override, but never mutate, canonical song duration');
+}
+if (!restoreBlock.includes('const max = logicalDuration(song);')) {
+  fail('Saved YouTube resume positions must clamp to the provider-specific chapter duration');
 }
 if (!ensureBlock.includes('if (playerReadyPromise) return playerReadyPromise;')) {
   fail('Concurrent first-load navigation must share the same YouTube player readiness promise');
@@ -83,6 +102,17 @@ if (!ensureBlock.includes('generation !== playerGeneration')) {
 }
 if (!runtime.includes("window.addEventListener('offline', () => { if (activeSong) close(); });")) {
   fail('Offline transition must tear down active YouTube playback');
+}
+
+for (const marker of [
+  'const routeDuration = Number(route.durationSeconds);',
+  "next.playbackProvider === 'youtube'",
+  'Number.isFinite(Number(route.startSeconds))',
+  'routeDuration > 0',
+  'next.youtubeDurationSeconds = Math.max(1, Math.floor(routeDuration));',
+  'delete next.youtubeDurationSeconds;',
+]) {
+  if (!enrichment.includes(marker)) fail(`Runtime enrichment is missing provider-duration safety marker: ${marker}`);
 }
 
 const prohibitedPatterns = [
@@ -206,6 +236,8 @@ console.log('✓ YouTube playback uses the documented IFrame Player API and GARB
 console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close/offline tears it down');
 console.log('✓ concurrent first-load navigation shares readiness and Close during API loading cannot create a hidden iframe afterward');
 console.log('✓ stale player generations cannot resume after teardown');
+console.log('✓ verified provider-specific YouTube chapter durations override playback boundaries without changing canonical album durations');
+console.log('✓ chapter-specific duration controls resume clamping, progress, seek bounds, IFrame endSeconds and automatic advance');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
