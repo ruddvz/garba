@@ -16,6 +16,18 @@ const [songs, releaseRows] = await Promise.all([
 ]);
 
 const identity = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLocaleLowerCase('en');
+const releaseRichness = (release) => {
+  let score = 0;
+  const artist = String(release?.artist || '').trim();
+  if (artist && identity(artist) !== 'various artists') score += 20;
+  score += Math.min(artist.length, 180) / 20;
+  score += Array.isArray(release?.sources) ? release.sources.length * 3 : 0;
+  if (release?.label) score += 2;
+  if (release?.releaseDate) score += 2;
+  if (release?.metadataStatus === 'verified') score += 2;
+  if (release?.trackImportComplete) score += 1;
+  return score;
+};
 const releaseRowsById = new Map();
 const conflictingReleaseIds = [];
 for (const release of releaseRows) {
@@ -24,12 +36,14 @@ for (const release of releaseRows) {
     releaseRowsById.set(release.id, release);
     continue;
   }
-  if (identity(existing.title) !== identity(release.title) || identity(existing.artist) !== identity(release.artist)) {
+  if (identity(existing.title) !== identity(release.title)) {
     conflictingReleaseIds.push({ id: release.id, first: `${existing.title} — ${existing.artist}`, duplicate: `${release.title} — ${release.artist}` });
+    continue;
   }
+  if (releaseRichness(release) > releaseRichness(existing)) releaseRowsById.set(release.id, release);
 }
 if (conflictingReleaseIds.length) {
-  throw new Error(`Conflicting duplicate release IDs: ${conflictingReleaseIds.map((item) => `${item.id} (${item.first} <> ${item.duplicate})`).join('; ')}`);
+  throw new Error(`Conflicting duplicate release IDs with different titles: ${conflictingReleaseIds.map((item) => `${item.id} (${item.first} <> ${item.duplicate})`).join('; ')}`);
 }
 const releases = [...releaseRowsById.values()];
 const duplicateReleaseRowCount = releaseRows.length - releases.length;
