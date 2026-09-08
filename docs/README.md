@@ -29,6 +29,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 ## Operations
 
 - [`operations/direct-audio-hosting.md`](operations/direct-audio-hosting.md)
+- [`operations/domain-split.md`](operations/domain-split.md): `playgarba.com` public-site and `live.playgarba.com` player migration runbook
 - [`operations/hosting-phase-01.md`](operations/hosting-phase-01.md)
 - [`operations/master-ingestion-and-publishing.md`](operations/master-ingestion-and-publishing.md)
 - [`operations/vendor-catalogue-intake.md`](operations/vendor-catalogue-intake.md)
