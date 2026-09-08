@@ -77,4 +77,4 @@
   else window.addEventListener('load', scheduleHydration, { once: true });
 })();
 
-document.write('<script src="provider-runtime.js"><\/script><script src="player-continuity.js"><\/script>');
+document.write('<script src="provider-runtime.js"><\/script><script src="player-continuity.js"><\/script><script src="youtube-player-runtime.js"><\/script>');
