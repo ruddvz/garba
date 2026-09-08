@@ -2,26 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/catalogue/",
-      "has": [
-        {
-          "type": "host",
-          "value": "live.playgarba.com"
-        }
-      ],
-      "destination": "/src/catalogue/index.html"
-    },
-    {
-      "source": "/catalogue/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "live.playgarba.com"
-        }
-      ],
-      "destination": "/src/catalogue/:path*"
-    },
-    {
       "source": "/",
       "has": [
         {

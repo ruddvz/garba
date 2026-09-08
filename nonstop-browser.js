@@ -321,10 +321,43 @@
     document.head.append(style);
   }
 
+  function syncMainTransport(active) {
+    const queueButton = $('queueButton');
+    const queueBadge = $('queueBadge');
+    if (queueButton) {
+      if (active) {
+        queueButton.dataset.nonstopContext = 'true';
+        queueButton.title = 'Browse Nonstop Garba';
+        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba sets');
+      } else if (queueButton.dataset.nonstopContext === 'true') {
+        delete queueButton.dataset.nonstopContext;
+        queueButton.title = 'Up next';
+        queueButton.setAttribute('aria-label', 'Show queue');
+      }
+    }
+    if (active) queueBadge?.classList.remove('show');
+
+    for (const id of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
+      const control = $(id);
+      if (!control) continue;
+      const previous = id === 'prevButton' || id === 'miniPrev';
+      if (active) {
+        control.dataset.nonstopContext = 'true';
+        control.title = 'Choose another Nonstop set';
+        control.setAttribute('aria-label', 'Choose another Nonstop set');
+      } else if (control.dataset.nonstopContext === 'true') {
+        delete control.dataset.nonstopContext;
+        control.removeAttribute('title');
+        control.setAttribute('aria-label', previous ? 'Previous song' : 'Next song');
+      }
+    }
+  }
+
   function syncButton() {
     const button = $('nonstopButton');
     if (!button) return;
     const active = Boolean(state.activeSet);
+    syncMainTransport(active);
     button.classList.toggle('active', active);
     button.setAttribute('aria-current', active ? 'true' : 'false');
     button.setAttribute('aria-pressed', String(active));
@@ -401,6 +434,8 @@
       if (state.activeSet) queueMicrotask(() => setMetadata(state.activeSet));
     });
     state.metadataObserver.observe(title, { childList: true, characterData: true, subtree: true });
+    const queueBadge = $('queueBadge');
+    if (queueBadge) state.metadataObserver.observe(queueBadge, { childList: true, characterData: true, subtree: true });
   }
 
   function capturePreviousSession() {
@@ -488,12 +523,37 @@
     $('youtubeStage')?.classList.toggle('is-nonstop', Boolean(state.activeSet));
   }
 
+  function visualGenreForSet(set) {
+    const aliases = new Map([
+      ['traditional', 'traditional'],
+      ['traditional-garba', 'traditional'],
+      ['dandiya', 'dandiya'],
+      ['raas-dandiya', 'dandiya'],
+      ['devotional', 'devotional'],
+      ['mataji-devotional', 'devotional'],
+      ['folk', 'folk'],
+      ['folk-lokgeet', 'folk'],
+      ['sanedo', 'sanedo'],
+      ['fusion', 'fusion'],
+      ['electronic-fusion', 'fusion'],
+    ]);
+    for (const category of Array.isArray(set?.categories) ? set.categories : []) {
+      const visual = aliases.get(String(category).toLowerCase().trim());
+      if (visual) return visual;
+    }
+    const inferred = categoriesFor(set);
+    for (const visual of ['sanedo', 'dandiya', 'devotional', 'folk', 'fusion', 'traditional']) {
+      if (inferred.has(visual)) return visual;
+    }
+    return 'traditional';
+  }
+
   function trackForSet(set) {
     return {
       id: `nonstop:${set.id}`,
       title: set.title,
       artist: set.artistsText,
-      genre: 'traditional',
+      genre: visualGenreForSet(set),
       audioUrl: null,
       youtubeId: set.videoId,
       youtubeStartSeconds: 0,
@@ -795,10 +855,10 @@
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
     if (target.closest('#nonstopButton, #nonstopBrowser')) return;
-    if (target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')) {
+    if (target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      announce('Nonstop Garba plays continuously. Pick another set from Nonstop to switch.');
+      openBrowser();
       return;
     }
     if (target.closest('#genreStrip .genre-button, .song-copy')) {
@@ -826,12 +886,23 @@
     else setTimeout(warm, 1800);
   }
 
+  function captureNonstopKeyboard(event) {
+    if (!state.activeSet) return;
+    const target = event.target;
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return;
+    if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    openBrowser();
+  }
+
   function init() {
     injectStyles();
     ensureButton();
     watchGenreStrip();
     watchMetadata();
     document.addEventListener('click', captureMainNavigation, { capture: true });
+    document.addEventListener('keydown', captureNonstopKeyboard, { capture: true });
     $('progress')?.addEventListener('input', captureSeek, { capture: true });
     window.addEventListener('offline', () => {
       closeBrowser();
