@@ -164,7 +164,9 @@
     "data/playback-sources-jagran-youtube.json",
     "data/playback-sources-saybo-exact.json",
     "data/playback-sources-anand-exact.json",
+    "data/playback-sources-rutvi-ramzat-2-exact.json",
     "data/playback-sources-rutvi-ramzat-3-exact.json",
+    "data/playback-sources-rutvi-ramzat-4-exact.json",
     "data/playback-sources-ho-raj-exact.json",
     "data/playback-sources-atul-maa-ni-chundadi-exact.json",
     "data/playback-sources-atul-tara-vina-shyam-exact.json",
@@ -197,5 +199,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 adds six missing Atul Purohit releases, 60 canonical songs/selections, and 60 independently verified exact Amazon Music track routes for issue #151. The split preserves the K Hove Hove tombstoned provenance and leaves the issue #149-owned Maro Garbo and Ho Raj playback clusters unchanged."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.9 completes the safely verifiable Rutvi Pandya routing wave: all fifteen 2023 selections and all eight 2026 selections now use exact provider-owned song selections, Rutvi Ni Ramzat 3.0 gains three additional exact Amazon Music selections, and its four stronger generated YouTube chapters remain untouched. Seven 2024 component songs remain conservative release/provider fallbacks because an exact Rutvi Pandya track could not be independently verified without inferring provider IDs. Existing Ho Raj and other route/runtime improvements are preserved."
 }
