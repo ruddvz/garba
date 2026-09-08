@@ -6,6 +6,7 @@ const readJson = async (file) => JSON.parse(await readFile(path.join(root, file)
 
 const index = await readJson('data/catalogue/index.json');
 const releaseChunks = Array.isArray(index.releaseChunks) ? index.releaseChunks : [];
+const retiredReleaseIds = new Set(Array.isArray(index.retiredReleaseIds) ? index.retiredReleaseIds : []);
 const chunkRows = await Promise.all(releaseChunks.map(async (file) => ({
   file,
   releases: await readJson(file),
@@ -13,11 +14,11 @@ const chunkRows = await Promise.all(releaseChunks.map(async (file) => ({
 
 const seen = new Map();
 const duplicates = new Map();
-let releaseCount = 0;
+let sourceReleaseCount = 0;
 
 for (const { file, releases } of chunkRows) {
   if (!Array.isArray(releases)) throw new Error(`${file} must contain a release array`);
-  releaseCount += releases.length;
+  sourceReleaseCount += releases.length;
   for (const release of releases) {
     const id = String(release?.id || '').trim();
     if (!id) throw new Error(`${file} contains a release without an id`);
@@ -38,8 +39,14 @@ if (duplicates.size) {
   throw new Error(`Duplicate release IDs are not allowed: ${detail}`);
 }
 
-if (releaseCount !== index.releaseCount) {
-  throw new Error(`Expected ${index.releaseCount} canonical releases, got ${releaseCount}`);
+const missingRetiredIds = [...retiredReleaseIds].filter((id) => !seen.has(id));
+if (missingRetiredIds.length) {
+  throw new Error(`Retired release IDs must exist in exactly one source row: ${missingRetiredIds.join(', ')}`);
 }
 
-console.log(`✓ canonical release IDs are unique: ${releaseCount} releases across ${releaseChunks.length} chunks`);
+const canonicalReleaseCount = sourceReleaseCount - retiredReleaseIds.size;
+if (canonicalReleaseCount !== index.releaseCount) {
+  throw new Error(`Expected ${index.releaseCount} canonical releases after ${retiredReleaseIds.size} retirements, got ${canonicalReleaseCount}`);
+}
+
+console.log(`✓ canonical release IDs are unique: ${canonicalReleaseCount} active + ${retiredReleaseIds.size} retired across ${releaseChunks.length} chunks`);
