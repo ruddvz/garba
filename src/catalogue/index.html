@@ -92,8 +92,9 @@
     </button>
   </template>
 
-  <!-- P0 bootstrap: the core catalogue owns first meaningful paint. Optional
-       decoration/search/listening layers are reintroduced only after liveness is proven. -->
+  <!-- Core Explore paints first; Search is a separate enhancement and must never
+       gate catalogue readiness. -->
   <script type="module" src="catalogue.js"></script>
+  <script type="module" src="../assets/runtime/explore-search.js"></script>
 </body>
 </html>
