@@ -63,11 +63,14 @@ export function performanceArtistIdentity(song, set, segment = null) {
   const performerKeys = segmentKeys.size ? segmentKeys : setKeys;
   const releaseMatch = Boolean(set?.linkedReleaseId && set.linkedReleaseId === song?.releaseId);
   const shared = [...songKeys].filter((key) => performerKeys.has(key));
+  const setMetadataOnly = set?.segmentRouting === 'metadata-only';
+  const segmentMetadataOnly = segment?.routingEligible === false;
+  const explicitSegmentOptIn = segment?.routingEligible === true;
 
-  // A chapter may exist purely as published browsing/search metadata. It remains
-  // useful in the Nonstop catalogue, but it must never become generated exact
-  // playback for a canonical song unless a curator explicitly opts it back in.
-  if (segment?.routingEligible === false) {
+  // Published chapter metadata is not automatically playback evidence. A whole
+  // set may default its chapter list to metadata-only, while a specifically
+  // verified chapter can opt back in with routingEligible:true.
+  if (segmentMetadataOnly || (setMetadataOnly && !explicitSegmentOptIn)) {
     return identityResult({ compatible: false, status: 'metadata-only', shared, releaseMatch, songKeys, performerKeys });
   }
 
