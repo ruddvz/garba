@@ -1,0 +1,75 @@
+name: Apply release context 403 v3
+
+on:
+  push:
+    branches: [codex/release-context-403]
+    paths:
+      - '.github/workflows/apply-release-context-403-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout claimed branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/release-context-403
+          fetch-depth: 0
+
+      - name: Reuse guarded v2 patch and preserve #287 source contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          workflow = Path('.github/workflows/apply-release-context-403-v2.yml').read_text()
+          start = "          python3 - <<'PY'\n"
+          end = "\n          PY\n\n      - name: Validate focused release context"
+          if workflow.count(start) != 1 or workflow.count(end) != 1:
+              raise SystemExit('Could not uniquely extract guarded v2 patch')
+          code = workflow.split(start, 1)[1].split(end, 1)[0]
+          exec(compile(textwrap.dedent(code), 'release-context-403-v2-patch', 'exec'))
+
+          app_path = Path('app.js')
+          app = app_path.read_text()
+          old = "        preserveContext: true,\n        preserveReleaseContext: true,\n        syncReleaseAnchor: true,\n        fromHistory: true,\n"
+          new = "        preserveContext: true, fromHistory: true,\n        preserveReleaseContext: true,\n        syncReleaseAnchor: true,\n"
+          if app.count(old) != 1:
+              raise SystemExit(f'Expected one Previous-history option block, found {app.count(old)}')
+          app_path.write_text(app.replace(old, new, 1))
+          PY
+
+      - name: Validate focused and inherited listening contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module --check < app.js
+          node --check src/catalogue/listening-library.js
+          node --check scripts/lib/validate-release-listening-context.mjs
+          npm run catalogue
+          npm run listening:flow:validate
+          npm run release:context:validate
+
+      - name: Run full repository validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run check
+
+      - name: Commit claimed implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app.js src/catalogue/listening-library.js package.json scripts/lib/validate-release-listening-context.mjs
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'No implementation changes'; exit 0; }
+          git commit -m 'Add release-aware listening continuation'
+          git push origin HEAD:codex/release-context-403
