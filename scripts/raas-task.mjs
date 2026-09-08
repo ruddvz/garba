@@ -23,9 +23,38 @@ function unique(items) {
   return [...new Set(items)]
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function containsKeyword(haystack, keyword) {
+  const pattern = normalize(keyword)
+    .split(' ')
+    .map(escapeRegex)
+    .join('\\s+')
+  return new RegExp(`(^|[^a-z0-9])${pattern}(?=$|[^a-z0-9])`, 'i').test(haystack)
+}
+
+function isNegatedKeyword(haystack, keyword) {
+  const key = normalize(keyword)
+  const negations = [
+    `without ${key}`,
+    `without changing ${key}`,
+    `without touching ${key}`,
+    `do not change ${key}`,
+    `don't change ${key}`,
+    `not change ${key}`,
+    `avoid changing ${key}`,
+    `leave ${key} unchanged`
+  ]
+  return negations.some((phrase) => haystack.includes(phrase))
+}
+
 function matchRoute(text, route) {
   const haystack = normalize(text)
-  const matchedKeywords = route.keywords.filter((keyword) => haystack.includes(normalize(keyword)))
+  const matchedKeywords = route.keywords.filter((keyword) => (
+    containsKeyword(haystack, keyword) && !isNegatedKeyword(haystack, keyword)
+  ))
   return matchedKeywords.length > 0 ? { ...route, matchedKeywords } : null
 }
 
@@ -42,7 +71,7 @@ function inferLanguageContext(text, matchedRoutes, config) {
     'title', 'metadata presentation', 'onboarding', 'public page', 'social preview', 'open graph'
   ]
 
-  const needsLanguage = languageSignals.some((signal) => haystack.includes(signal))
+  const needsLanguage = languageSignals.some((signal) => containsKeyword(haystack, signal))
     || matchedRoutes.some((route) => route.id === 'content-seo')
 
   return needsLanguage ? config.languageContext : null
