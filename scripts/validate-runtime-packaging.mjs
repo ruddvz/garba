@@ -40,8 +40,8 @@ if (bootstrap.indexOf('player-continuity.js') < bootstrap.indexOf('provider-runt
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v7`")) {
-  fail('PWA cache generation must be v7 after the split-runtime packaging repair');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v8`")) {
+  fail('PWA cache generation must be v8 after the player-runtime cache refresh');
 }
 
 if (failed) process.exit(1);
