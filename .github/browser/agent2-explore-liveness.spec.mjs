@@ -28,12 +28,24 @@ for (const [engineName, engine] of engines) {
         await page.locator('#catalogueTitle').waitFor({ state: 'visible' });
         const title = await page.locator('#catalogueTitle').textContent();
         if (title?.trim() !== 'Explore') throw new Error(`Explore heading mismatch: ${JSON.stringify(title)}`);
-        await page.locator('.collection-card').first().waitFor({ state: 'visible' });
+
+        const firstCard = page.locator('.collection-card').first();
+        await firstCard.waitFor({ state: 'visible' });
         const count = await page.locator('.collection-card').count();
         const elapsed = Date.now() - started;
         if (count < 1) throw new Error('No collection cards rendered');
         if (elapsed > 5000) throw new Error(`First collection card took ${elapsed}ms (>5000ms)`);
-        console.log(`PASS ${engineName}/${label}: status=${response?.status()} cards=${count} ready=${elapsed}ms`);
+
+        await firstCard.click();
+        await page.locator('#collectionDetail').waitFor({ state: 'visible' });
+        const detailTitle = (await page.locator('#detailTitle').textContent())?.trim() || '';
+        if (!detailTitle) throw new Error('Collection detail title did not render');
+        const responsiveness = await page.evaluate(() => 2 + 2);
+        if (responsiveness !== 4) throw new Error('Main-thread responsiveness probe failed');
+
+        await page.locator('#backToCollections').click();
+        await firstCard.waitFor({ state: 'visible' });
+        console.log(`PASS ${engineName}/${label}: status=${response?.status()} cards=${count} ready=${elapsed}ms detail=${JSON.stringify(detailTitle)}`);
         if (failures.length) console.log(`NOTE ${engineName}/${label}: ${failures.join(' | ')}`);
       } catch (error) {
         failed = true;
@@ -46,6 +58,8 @@ for (const [engineName, engine] of engines) {
               title: document.title,
               heading: document.querySelector('#catalogueTitle')?.outerHTML || null,
               count: document.querySelectorAll('.collection-card').length,
+              detailHidden: document.querySelector('#collectionDetail')?.hidden ?? null,
+              detailTitle: document.querySelector('#detailTitle')?.textContent || '',
               bodyClass: document.body?.className || '',
             })),
             new Promise((resolve) => setTimeout(() => resolve('main-thread-unresponsive'), 1500)),
