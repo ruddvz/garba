@@ -16,6 +16,18 @@ const fail = (message) => {
   failed = true;
 };
 
+const assertHttpsUrl = (releaseId, field, value, { artwork = false } = {}) => {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:') fail(`${releaseId}: ${field} must use HTTPS`);
+    if (artwork && !allowedArtworkHosts(url.hostname)) fail(`${releaseId}: unapproved artwork host ${url.hostname}`);
+    return url;
+  } catch {
+    fail(`${releaseId}: ${field} must be a valid absolute URL`);
+    return null;
+  }
+};
+
 if (manifest.version !== 1 || !manifest.releases || typeof manifest.releases !== 'object' || Array.isArray(manifest.releases)) {
   fail('release-artwork.json must contain a version 1 releases object');
 }
@@ -26,38 +38,35 @@ for (const [releaseId, entry] of Object.entries(manifest.releases || {})) {
     fail(`Artwork references unknown release: ${releaseId}`);
     continue;
   }
+
   if (entry?.verified !== true) fail(`${releaseId}: artwork entries must be explicitly verified`);
   if (!entry?.sourceProvider || typeof entry.sourceProvider !== 'string') fail(`${releaseId}: sourceProvider is required`);
   if (!datePattern.test(String(entry?.verifiedAt || ''))) fail(`${releaseId}: verifiedAt must be YYYY-MM-DD`);
 
-  for (const [field, value] of [['imageUrl', entry?.imageUrl], ['sourceUrl', entry?.sourceUrl]]) {
-    try {
-      const url = new URL(value);
-      if (url.protocol !== 'https:') fail(`${releaseId}: ${field} must use HTTPS`);
-      if (field === 'imageUrl' && !allowedArtworkHosts(url.hostname)) fail(`${releaseId}: unapproved artwork host ${url.hostname}`);
-    } catch {
-      fail(`${releaseId}: ${field} must be a valid absolute URL`);
-    }
-  }
+  assertHttpsUrl(releaseId, 'imageUrl', entry?.imageUrl, { artwork: true });
+  assertHttpsUrl(releaseId, 'sourceUrl', entry?.sourceUrl);
+  assertHttpsUrl(releaseId, 'canonicalSourceUrl', entry?.canonicalSourceUrl);
 
   if (!Array.isArray(entry?.verificationSources) || entry.verificationSources.length < 2) {
     fail(`${releaseId}: at least two release identity verification sources are required`);
   } else {
     for (const source of entry.verificationSources) {
       if (!source?.platform) fail(`${releaseId}: verification source platform is required`);
-      try {
-        const url = new URL(source?.url);
-        if (url.protocol !== 'https:') fail(`${releaseId}: verification source must use HTTPS`);
-      } catch {
-        fail(`${releaseId}: verification source URL is invalid`);
-      }
+      assertHttpsUrl(releaseId, 'verification source URL', source?.url);
     }
   }
 
   const canonicalSources = new Set((release.sources || []).map((source) => source.url));
-  if (!canonicalSources.has(entry.sourceUrl)) fail(`${releaseId}: artwork sourceUrl must also be a canonical release source`);
+  if (!canonicalSources.has(entry.canonicalSourceUrl)) {
+    fail(`${releaseId}: canonicalSourceUrl must be present in the canonical PlayGarba release sources`);
+  }
+
   const verifiedSourceUrls = new Set((entry.verificationSources || []).map((source) => source.url));
   if (!verifiedSourceUrls.has(entry.sourceUrl)) fail(`${releaseId}: sourceUrl must appear in verificationSources`);
+  if (!verifiedSourceUrls.has(entry.canonicalSourceUrl)) fail(`${releaseId}: canonicalSourceUrl must appear in verificationSources`);
+  if (!(entry.verificationSources || []).some((source) => source.platform === entry.sourceProvider && source.url === entry.sourceUrl)) {
+    fail(`${releaseId}: sourceProvider must identify the provider for sourceUrl`);
+  }
 }
 
 if (failed) process.exit(1);
