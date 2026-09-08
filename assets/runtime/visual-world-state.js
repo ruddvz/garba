@@ -1,5 +1,7 @@
 (() => {
   const base = 'assets/backgrounds/library/';
+  const highResBase = 'assets/backgrounds/library-4k/';
+  const highResPhysicalWidth = 2200;
   const library = Object.freeze({
     traditional: Object.freeze([
       '11-master-dark-courtyard.webp',
@@ -33,11 +35,15 @@
   const allAssets = Object.freeze(
     Object.values(library).flat().map((filename) => `${base}${filename}`)
   );
+  const highResAssets = Object.freeze(
+    Object.values(library).flat().map((filename) => `${highResBase}${filename}`)
+  );
   const loaded = new Set();
   const loading = new Map();
   let syncToken = 0;
   let syncScheduled = false;
   let warmScheduled = false;
+  let resizeTimer = 0;
 
   function hash(value = '') {
     let result = 2166136261;
@@ -65,21 +71,38 @@
     return title ? `${title}|${artist}` : '';
   }
 
-  function candidateFor(genreId = currentGenreId(), songSeed = currentSongSeed()) {
+  function candidateFilename(genreId = currentGenreId(), songSeed = currentSongSeed()) {
     const candidates = library[genreId] || [];
     if (!candidates.length) return null;
     const index = songSeed ? hash(`${genreId}:${songSeed}`) % candidates.length : 0;
-    return `${base}${candidates[index]}`;
-  }
-
-  function fallbackFor(genreId) {
-    return `assets/backgrounds/${genreId}.svg`;
+    return candidates[index];
   }
 
   function connectionConstrained() {
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (!connection) return false;
     return Boolean(connection.saveData || /(^|-)2g$/.test(String(connection.effectiveType || '')));
+  }
+
+  function prefers4kArtwork() {
+    if (connectionConstrained()) return false;
+    const dpr = Math.max(1, Math.min(3, Number(window.devicePixelRatio) || 1));
+    const viewportWidth = Math.max(1, Number(window.innerWidth) || document.documentElement.clientWidth || 1);
+    return Math.ceil(viewportWidth * dpr) > highResPhysicalWidth;
+  }
+
+  function candidateFor(
+    genreId = currentGenreId(),
+    songSeed = currentSongSeed(),
+    { highRes = prefers4kArtwork() } = {},
+  ) {
+    const filename = candidateFilename(genreId, songSeed);
+    if (!filename) return null;
+    return `${highRes ? highResBase : base}${filename}`;
+  }
+
+  function fallbackFor(genreId) {
+    return `assets/backgrounds/${genreId}.svg`;
   }
 
   function loadImage(url, { highPriority = false } = {}) {
@@ -116,10 +139,21 @@
     syncScheduled = false;
     const token = ++syncToken;
     const genreId = currentGenreId();
-    const candidate = candidateFor(genreId);
-    if (!candidate) return;
+    const filename = candidateFilename(genreId);
+    if (!filename) return;
 
-    const ready = await loadImage(candidate, { highPriority: true });
+    const wants4k = prefers4kArtwork();
+    const highResCandidate = `${highResBase}${filename}`;
+    const standardCandidate = `${base}${filename}`;
+    let candidate = wants4k ? highResCandidate : standardCandidate;
+    let quality = wants4k ? '4k-q95-webp' : '2k-webp';
+    let ready = await loadImage(candidate, { highPriority: true });
+
+    if (!ready && wants4k) {
+      candidate = standardCandidate;
+      quality = '2k-webp-fallback';
+      ready = await loadImage(candidate, { highPriority: true });
+    }
     if (!ready || token !== syncToken) return;
 
     // The player can cross-fade world layers one frame after a genre change.
@@ -131,22 +165,30 @@
     if (!layer) return;
 
     const fallback = fallbackFor(genreId);
+    const imageLayers = [candidate];
+    if (candidate !== standardCandidate) imageLayers.push(standardCandidate);
+    imageLayers.push(fallback);
     layer.style.setProperty(
       'background-image',
-      `url("${candidate}"), url("${fallback}")`,
+      imageLayers.map((url) => `url("${url}")`).join(', '),
       'important'
     );
     layer.style.setProperty('background-size', 'cover', 'important');
     layer.style.setProperty('background-position', 'center center', 'important');
     layer.style.setProperty('background-repeat', 'no-repeat', 'important');
-    layer.dataset.backgroundQuality = '2k-webp';
-    layer.dataset.backgroundAsset = candidate.slice(base.length);
+    layer.dataset.backgroundQuality = quality;
+    layer.dataset.backgroundAsset = filename;
   }
 
   function scheduleSync() {
     if (syncScheduled) return;
     syncScheduled = true;
     queueMicrotask(syncNow);
+  }
+
+  function scheduleViewportSync() {
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(scheduleSync, 120);
   }
 
   function patchHistory() {
@@ -197,7 +239,9 @@
     warmScheduled = true;
 
     const run = async () => {
-      const active = candidateFor();
+      // Warm the compact 2K library only. 4K files are intentionally fetched
+      // on demand so a capable display does not automatically download 23 MB.
+      const active = candidateFor(undefined, undefined, { highRes: false });
       for (const url of allAssets) {
         if (url === active || loaded.has(url)) continue;
         await loadImage(url);
@@ -215,14 +259,20 @@
 
   window.GARBA_VISUAL_WORLDS = Object.freeze({
     base,
+    highResBase,
+    highResPhysicalWidth,
     library,
     allAssets,
+    highResAssets,
     candidateFor,
+    prefers4kArtwork,
     sync: scheduleSync,
   });
 
   patchHistory();
   observePlayer();
+  window.addEventListener('resize', scheduleViewportSync, { passive: true });
+  window.addEventListener('orientationchange', scheduleViewportSync, { passive: true });
   window.addEventListener('popstate', scheduleSync);
   window.addEventListener('pageshow', scheduleSync);
   window.addEventListener('garba:catalogue-ready', scheduleSync);
