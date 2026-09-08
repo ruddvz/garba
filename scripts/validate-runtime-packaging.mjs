@@ -4,10 +4,11 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [pages, sw, bootstrap, manifest, socialSource, socialInjector] = await Promise.all([
+const [pages, sw, bootstrap, interaction, manifest, socialSource, socialInjector] = await Promise.all([
   read('.github/workflows/pages.yml'),
   read('sw.js'),
   read('simple-runtime.js'),
+  read('interaction-runtime.js'),
   read('manifest.webmanifest'),
   read('assets/social/playgarba-og-card.svg'),
   read('scripts/lib/inject-social-preview.mjs'),
@@ -17,6 +18,7 @@ let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 const runtimeFiles = [
   'simple-runtime.js',
+  'interaction-runtime.js',
   'provider-runtime.js',
   'player-continuity.js',
   'youtube-player-runtime.js',
@@ -29,19 +31,29 @@ for (const file of runtimeFiles) {
   if (!pages.includes(file)) fail(`Pages artifact contract does not mention ${file}`);
 }
 
-for (const file of ['provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
+for (const file of ['interaction-runtime.js', 'provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
   if (!sw.includes(`'/${file}'`)) fail(`PWA fresh-runtime list does not include ${file}`);
 }
 
-for (const file of ['provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
+for (const file of ['interaction-runtime.js', 'provider-runtime.js', 'player-continuity.js', 'youtube-player-runtime.js']) {
   if (!bootstrap.includes(file)) fail(`Fast bootstrap must load ${file}`);
 }
+const interactionIndex = bootstrap.indexOf('interaction-runtime.js');
 const providerIndex = bootstrap.indexOf('provider-runtime.js');
 const continuityIndex = bootstrap.indexOf('player-continuity.js');
 const youtubeIndex = bootstrap.indexOf('youtube-player-runtime.js');
-if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > continuityIndex)) {
-  fail('Playback runtime order must be provider-runtime.js → player-continuity.js → youtube-player-runtime.js');
+if (!(interactionIndex >= 0 && providerIndex > interactionIndex && continuityIndex > providerIndex && youtubeIndex > continuityIndex)) {
+  fail('Runtime order must be interaction-runtime.js → provider-runtime.js → player-continuity.js → youtube-player-runtime.js');
+}
+
+try {
+  new Function(interaction);
+} catch (error) {
+  fail(`interaction-runtime.js has invalid JavaScript syntax: ${error.message}`);
+}
+for (const marker of ['shareCurrentTrack', 'setupKeyboardGuard', 'syncSheetModal', 'syncNetworkStatus', 'aria-valuetext']) {
+  if (!interaction.includes(marker)) fail(`Interaction runtime is missing UX contract marker: ${marker}`);
 }
 
 const q90Pack = 'garba15-2048-q90.zip';
@@ -133,12 +145,13 @@ for (const marker of [
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v11`")) {
-  fail('PWA cache generation must be v11 after adding the full rendered install-icon matrix');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v12`")) {
+  fail('PWA cache generation must be v12 after adding the interaction runtime to the installed shell');
 }
 
 if (failed) process.exit(1);
-console.log('✓ Pages ships every direct and transitive playback runtime file');
+console.log('✓ Pages ships every direct and transitive playback/runtime file');
+console.log('✓ interaction runtime is parsed, packaged, cached and loaded before global player handlers');
 console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
 console.log('✓ provider route safety loads before the YouTube controllable engine');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
