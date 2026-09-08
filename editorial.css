@@ -1,0 +1,213 @@
+:root {
+  --live-art-base: "https://live.playgarba.com/assets/backgrounds/library/";
+}
+
+/* Public pages use the current 2K artwork library shared with the live player. */
+.hero-art {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+}
+
+.world-traditional {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp") !important;
+}
+
+.world-dandiya {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp") !important;
+}
+
+.world-devotional {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
+}
+
+.world-folk {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
+}
+
+.world-sanedo {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
+}
+
+.world-fusion {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
+}
+
+.nonstop-art {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp") !important;
+}
+
+.player-scene {
+  background-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
+}
+
+.page-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp");
+}
+
+.page-hero.install-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/07-dandiya-purple-courtyard.webp");
+}
+
+.page-hero.live-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/05-fusion-gujarati-neon.webp");
+}
+
+.page-hero.about-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp");
+}
+
+.page-hero.garba-hero {
+  --page-hero-image: url("https://live.playgarba.com/assets/backgrounds/library/15-traditional-canopy-courtyard.webp");
+}
+
+.culture-feature {
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(0, 1fr);
+  gap: clamp(36px, 6vw, 80px);
+  align-items: center;
+  padding: clamp(72px, 8vw, 108px) var(--pad);
+  border-top: 1px solid rgba(242, 236, 226, .08);
+  border-bottom: 1px solid rgba(242, 236, 226, .08);
+  background: #0b0c11;
+}
+
+.culture-feature-art {
+  min-height: clamp(280px, 34vw, 460px);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(7, 8, 13, .02), rgba(7, 8, 13, .24)),
+    url("https://live.playgarba.com/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") center 48% / cover no-repeat;
+}
+
+.culture-feature-inner {
+  max-width: 620px;
+}
+
+.culture-feature h2 {
+  margin: 0;
+  font: 400 clamp(44px, 5.8vw, 76px)/.94 var(--serif);
+  letter-spacing: -.045em;
+}
+
+.culture-feature p:not(.eyebrow) {
+  max-width: 560px;
+  margin: 22px 0 28px;
+  color: rgba(242, 236, 226, .66);
+  font-size: clamp(15px, 1.25vw, 17px);
+  line-height: 1.68;
+}
+
+.learn-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid rgba(242, 236, 226, .12);
+  border-bottom: 1px solid rgba(242, 236, 226, .12);
+}
+
+.learn-card {
+  min-height: 178px;
+  padding: 26px 28px 24px;
+  border: 0;
+  border-right: 1px solid rgba(242, 236, 226, .1);
+  border-radius: 0;
+  background: transparent;
+}
+
+.learn-card:last-child {
+  border-right: 0;
+}
+
+.learn-card:hover {
+  background: rgba(242, 236, 226, .025);
+}
+
+.learn-card .page-kicker {
+  top: 26px;
+  left: 28px;
+}
+
+.learn-card .card-arrow {
+  top: 24px;
+  right: 28px;
+}
+
+.editorial-source {
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(242, 236, 226, .12);
+  color: rgba(242, 236, 226, .52);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.editorial-source a {
+  color: rgba(242, 236, 226, .78);
+  border-bottom: 1px solid rgba(242, 236, 226, .24);
+}
+
+@media (max-width: 760px) {
+  .culture-feature {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-top: 58px;
+    padding-bottom: 58px;
+  }
+
+  .culture-feature-art {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+    border-radius: 12px;
+    background-position: 58% center;
+  }
+
+  .culture-feature h2 {
+    font-size: clamp(38px, 11vw, 54px);
+  }
+
+  .world-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .world-card {
+    min-height: 210px;
+    padding: 14px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .world-number {
+    display: none;
+  }
+
+  .world-name {
+    font-size: clamp(17px, 5.2vw, 21px);
+  }
+
+  .world-arrow {
+    font-size: 14px;
+  }
+
+  .learn-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .learn-card {
+    min-height: 150px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(242, 236, 226, .1);
+  }
+
+  .learn-card:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .world-card {
+    min-height: 188px;
+  }
+
+  .world-name {
+    font-size: 16px;
+  }
+}

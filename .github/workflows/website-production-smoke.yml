@@ -14,25 +14,25 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Verify apex serves current public design
+        id: apex
         shell: bash
         run: |
           set -euo pipefail
           html=''
           for attempt in 1 2 3 4; do
             if html="$(curl -fsSL --max-time 15 https://playgarba.com/)"; then
-              if grep -Fq 'All the Garba' <<<"$html" && grep -Fq 'Choose a sound.' <<<"$html" && grep -Fq 'Only what you need.' <<<"$html"; then
-                echo 'playgarba.com is serving the simplified public website.'
-                break
+              if grep -Fq 'All the Garba' <<<"$html" && grep -Fq 'Choose a sound.' <<<"$html" && grep -Fq 'What is Garba?' <<<"$html" && grep -Fq 'Useful links.' <<<"$html"; then
+                echo 'playgarba.com is serving the current public website.'
+                exit 0
               fi
             fi
-            if [ "$attempt" -eq 4 ]; then
-              echo 'playgarba.com is reachable but is not serving the current website branch.' >&2
-              exit 1
-            fi
-            sleep 5
+            [ "$attempt" -lt 4 ] && sleep 5
           done
+          echo 'playgarba.com is reachable but is not serving the current website branch.' >&2
+          exit 1
 
       - name: Verify www redirects to apex
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
@@ -41,3 +41,4 @@ jobs:
             echo 'www.playgarba.com is not redirecting to the canonical apex.' >&2
             exit 1
           }
+          echo 'www.playgarba.com redirects to the canonical apex.'

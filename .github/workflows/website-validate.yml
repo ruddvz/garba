@@ -26,11 +26,13 @@ jobs:
             styles.css
             pages.css
             polish.css
+            editorial.css
             site.js
             pages.js
             robots.txt
             sitemap.xml
             404.html
+            what-is-garba/index.html
             how-to-use/index.html
             install/index.html
             live/index.html
@@ -46,6 +48,7 @@ jobs:
           node --check pages.js
 
           grep -q '<link rel="canonical" href="https://playgarba.com/"' index.html
+          grep -q '<link rel="canonical" href="https://playgarba.com/what-is-garba/"' what-is-garba/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/how-to-use/"' how-to-use/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/install/"' install/index.html
           grep -q '<link rel="canonical" href="https://playgarba.com/live/"' live/index.html
@@ -53,13 +56,14 @@ jobs:
           grep -q '<link rel="canonical" href="https://playgarba.com/about/"' about/index.html
 
           grep -q 'href="polish.css"' index.html
-          grep -q 'href="/polish.css"' how-to-use/index.html
-          grep -q 'href="/polish.css"' install/index.html
-          grep -q 'href="/polish.css"' live/index.html
-          grep -q 'href="/polish.css"' faq/index.html
-          grep -q 'href="/polish.css"' about/index.html
+          grep -q 'href="editorial.css"' index.html
+          grep -q 'href="../editorial.css"' what-is-garba/index.html
+          grep -q '11-master-dark-courtyard.webp' editorial.css
+          grep -q '15-traditional-canopy-courtyard.webp' editorial.css
+          grep -q '14-gujarati-folk-courtyard.webp' editorial.css
 
           grep -q 'https://live.playgarba.com/' index.html
+          grep -q 'https://live.playgarba.com/' what-is-garba/index.html
           grep -q 'https://live.playgarba.com/' how-to-use/index.html
           grep -q 'https://live.playgarba.com/' install/index.html
           grep -q 'https://live.playgarba.com/' live/index.html
@@ -94,6 +98,8 @@ jobs:
           grep -q 'verified YouTube routes' how-to-use/index.html
           grep -q 'verified YouTube routes' faq/index.html
           grep -q 'YouTube is the playback source' about/index.html
+          grep -q 'Garba is a Gujarati dance tradition' index.html
+          grep -q 'UNESCO' what-is-garba/index.html
           grep -q 'playerParams' site.js
           grep -q 'window.location.replace' site.js
 
@@ -107,7 +113,7 @@ jobs:
           grep -q "path.startsWith('/catalogue/')" 404.html
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' robots.txt
 
-          for route in / /how-to-use/ /install/ /live/ /faq/ /about/; do
+          for route in / /what-is-garba/ /how-to-use/ /install/ /live/ /faq/ /about/; do
             grep -q "<loc>https://playgarba.com${route}</loc>" sitemap.xml || {
               echo "Missing sitemap route: ${route}"
               exit 1
@@ -133,6 +139,7 @@ jobs:
           root = Path('.').resolve()
           documents = [
               Path('index.html'),
+              Path('what-is-garba/index.html'),
               Path('how-to-use/index.html'),
               Path('install/index.html'),
               Path('live/index.html'),
