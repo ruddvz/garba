@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Audit exact linked-release and source identities
         run: python3 .github/scripts/audit-remaining-nonstop-taxonomy.py
@@ -20,7 +22,8 @@ jobs:
       - name: Confirm no production data changes
         run: |
           set -euo pipefail
-          changed="$(git diff --name-only HEAD^ HEAD)"
+          git fetch origin main --quiet
+          changed="$(git diff --name-only origin/main...HEAD)"
           printf '%s\n' "$changed"
           if printf '%s\n' "$changed" | grep -Ev '^\.github/(scripts/audit-remaining-nonstop-taxonomy\.py|workflows/audit-remaining-nonstop-taxonomy\.yml)$' | grep -q .; then
             echo "Unexpected production-data change in research-only audit branch" >&2
