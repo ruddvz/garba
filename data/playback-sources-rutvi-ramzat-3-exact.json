@@ -1,7 +1,7 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "updated": "2026-09-08",
-  "note": "Conservative exact-song mappings for Rutvi Ni Ramzat 3.0. Eleven independently verified Rutvi Pandya song/track selections are included. Tracks 3, 8, 16 and 18 are intentionally omitted so their stronger generated verified YouTube performance chapters remain in control. The remaining seven fallback songs stay conservative because no exact provider track was safely verified without inferring an ID.",
+  "note": "Conservative exact-song mappings for Rutvi Ni Ramzat 3.0. Thirteen independently verified Rutvi Pandya song/track selections are included. Khel Khel Re Bhawani Maa and Mare Todle Betho Re Mor now use official Apple Music song pages instead of generic title-matched YouTube performances. Songs without independently verified exact Rutvi URLs are pinned by the companion safety manifest to the verified Apple Music album page rather than allowing another artist's same-title recording.",
   "songSources": {
     "rutvi-aavi-aaso-ni-radhiyali-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/gb/song/1773146913","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":2,"evidenceType":"official-apple-music-song-page"},
     "rutvi-bahuchar-maa-na-dera-pachad-2024": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/tracks/B0DJRXRG5D","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":4,"evidenceType":"official-amazon-music-track-page"},
@@ -12,6 +12,8 @@
     "rutvi-hu-tane-vinvu-khodiyaar-ma-dakla-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1773146922","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":11,"evidenceType":"official-apple-music-song-page"},
     "rutvi-humbo-humbo-vichudo-2024": {"provider":"amazon-music","sourceUrl":"https://music.amazon.in/albums/B0DJRYTBD9?trackAsin=B0DJRVZC94","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":12,"evidenceType":"official-amazon-music-track-selection"},
     "rutvi-kesariyo-rang-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/gb/song/1773146926","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":15,"evidenceType":"official-apple-music-song-page"},
+    "rutvi-khel-khel-re-bhawani-maa-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1773146927","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":16,"evidenceType":"official-apple-music-song-page"},
+    "rutvi-mare-todle-betho-re-mor-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1773147079","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":18,"evidenceType":"official-apple-music-song-page"},
     "rutvi-pethalpur-ma-pavo-vagyo-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1773147080","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":19,"evidenceType":"official-apple-music-song-page"},
     "rutvi-ramti-aave-madi-ramti-aave-dakla-2024": {"provider":"apple-music","sourceUrl":"https://music.apple.com/us/song/1773147081","sourceType":"verified-track-source","releaseId":"rutvi-ni-ramzat-3-0-2024","trackNumber":20,"evidenceType":"official-apple-music-song-page"}
   }

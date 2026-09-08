@@ -9,10 +9,10 @@ if (!target) {
 }
 
 const social = {
-  title: 'GARBA · Gujarati Garba, beautifully played',
+  title: 'PlayGarba.com · All the Garba in the world',
   description: 'Gujarati Garba music, Raas and nonstop sets on PlayGarba.',
-  image: 'https://live.playgarba.com/assets/social/garba-og-card.png',
-  alt: 'GARBA. Gujarati Garba. Beautifully played.',
+  image: 'https://playgarba.com/assets/social/garba-og-card.png',
+  alt: 'PlayGarba.com. All the Garba in the world.',
 };
 
 const socialBlock = [
@@ -56,11 +56,11 @@ async function collectHtmlFiles(input) {
 
 function addStructuredImage(html, file) {
   if (path.basename(file) !== 'index.html') return html;
-  if (!html.includes('"url": "https://live.playgarba.com/",')) return html;
+  if (!html.includes('"url": "https://playgarba.com/",')) return html;
   if (html.includes(`"image": "${social.image}"`)) return html;
   return html.replace(
-    '"url": "https://live.playgarba.com/",',
-    `"url": "https://live.playgarba.com/",\n        "image": "${social.image}",`,
+    '"url": "https://playgarba.com/",',
+    `"url": "https://playgarba.com/",\n        "image": "${social.image}",`,
   );
 }
 

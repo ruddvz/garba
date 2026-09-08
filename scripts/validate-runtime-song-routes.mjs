@@ -25,7 +25,7 @@ function isExactTrackUrl(song) {
     const pathname = url.pathname.toLowerCase();
     if (song.playbackProvider === 'spotify') return /\/(?:intl-[^/]+\/)?track\/[^/]+/.test(pathname);
     if (song.playbackProvider === 'apple-music') return pathname.includes('/song/') || url.searchParams.has('i');
-    if (song.playbackProvider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname);
+    if (song.playbackProvider === 'amazon-music') return /\/tracks\/[^/]+/.test(pathname) || (pathname.includes('/albums/') && Boolean(url.searchParams.get('trackAsin')));
   } catch {
     return false;
   }
@@ -103,6 +103,12 @@ const brokenUnchapteredYoutube = unchapteredYoutubeRoutes.filter((song) => {
   return Number(releasesById.get(song.releaseId)?.songCount) <= 1;
 });
 const brokenChapters = chapterRoutes.filter((song) => song.playbackProvider !== 'youtube' || !song.youtubeId || !Number.isFinite(Number(song.youtubeStartSeconds)) || Number(song.youtubeStartSeconds) < 0);
+const exactShapeProviders = new Set(['spotify', 'apple-music', 'amazon-music']);
+const malformedExactTrackRoutes = exactTrackRoutes.filter((song) => exactShapeProviders.has(song.playbackProvider) && !isExactTrackUrl(song));
+const rutviGeneratedPerformanceRoutes = songs.filter((song) => (
+  String(song.artist || '').trim().toLowerCase() === 'rutvi pandya'
+  && song.playbackSourceType === 'verified-performance-chapter'
+));
 
 const exactGroups = new Map();
 for (const song of exactTrackRoutes) {
@@ -127,6 +133,8 @@ if (misclassifiedExactTracks.length) fail(`${misclassifiedExactTracks.length} ex
 if (misclassifiedSingleReleases.length) fail(`${misclassifiedSingleReleases.length} one-song release URLs are still labelled as multi-track release fallbacks`);
 if (misclassifiedUnchapteredYoutube.length) fail(`${misclassifiedUnchapteredYoutube.length} unchaptered multi-song YouTube routes are still allowed to look like exact song playback`);
 if (brokenReleaseTrackReferences.length) fail(`${brokenReleaseTrackReferences.length} release track references do not preserve a track-shaped evidence URL or incorrectly retain a timestamp`);
+if (malformedExactTrackRoutes.length) fail(`${malformedExactTrackRoutes.length} exact provider routes do not point to provider-specific track selections (first: ${malformedExactTrackRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
+if (rutviGeneratedPerformanceRoutes.length) fail(`${rutviGeneratedPerformanceRoutes.length} Rutvi Pandya songs still depend on the generic title-only performance matcher (first: ${rutviGeneratedPerformanceRoutes.slice(0, 5).map((song) => song.id).join(', ')})`);
 if (duplicatedExactGroups.length) {
   const sample = duplicatedExactGroups.slice(0, 3).map((group) => `${group.length} songs → ${group[0].playbackSourceUrl}`).join('; ');
   fail(`${duplicatedExactGroups.length} exact-track URL group(s) still map one provider track to different songs (${sample})`);
@@ -199,6 +207,8 @@ console.log(`✓ ${exactTrackRoutes.length} unique-song exact provider track map
 console.log(`✓ ${singleReleaseRoutes.length} one-song release URLs avoid unnecessary multi-track selection messaging`);
 console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes open as full releases instead of pretending to start at a selected song`);
 console.log(`✓ provider distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
+console.log('✓ exact Spotify, Apple Music, and Amazon Music routes use provider-specific track selections');
+console.log('✓ Rutvi Pandya catalogue routes do not depend on generic title-only performance matching');
 console.log('✓ duplicate exact-track URLs cannot map to different song identities');
 console.log('✓ browser runtime downgrades any future duplicate exact mapping to provider search instead of autoplaying the wrong song');
 console.log('✓ route coverage is not reported as equivalent to exact-song or first-party playback');
