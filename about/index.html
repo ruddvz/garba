@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111323" />
+  <meta name="color-scheme" content="dark" />
+  <title>About PlayGarba · A listening home for Gujarati Garba</title>
+  <meta name="description" content="Learn what PlayGarba is, why the public website and live player are separate, and how the open community-built Garba catalogue is organised." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://playgarba.com/about/" />
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/pages.css" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PlayGarba" />
+  <meta property="og:title" content="About PlayGarba" />
+  <meta property="og:description" content="A focused listening home for Gujarati Garba, from individual tracks to longer nonstop sets." />
+  <meta property="og:url" content="https://playgarba.com/about/" />
+  <meta property="og:image" content="https://live.playgarba.com/assets/social/garba-og-card.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body class="interior-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header scrolled" id="top">
+    <a class="wordmark" href="/" aria-label="PlayGarba home">GARBA</a>
+    <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="siteNav">
+      <span></span><span></span>
+      <span class="sr-only">Open menu</span>
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Primary navigation">
+      <a href="/how-to-use/">How to use</a>
+      <a href="/install/">Install app</a>
+      <a href="/about/" aria-current="page">About</a>
+      <a class="nav-cta" href="https://live.playgarba.com/">Open player <span aria-hidden="true">↗</span></a>
+    </nav>
+  </header>
+
+  <main id="main" class="page-main">
+    <section class="page-hero about-hero" aria-labelledby="page-title">
+      <div class="page-hero-inner">
+        <span class="route-pill">About PlayGarba</span>
+        <h1 id="page-title">One place for Garba.<br /><em>Built around listening.</em></h1>
+        <p class="page-hero-lead">PlayGarba is an open, community-built Gujarati Garba catalogue and player for songs, artists, releases, live sets and nonstop Garba.</p>
+        <div class="page-hero-actions">
+          <a class="button button-primary" href="https://live.playgarba.com/">Listen now <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="https://github.com/ruddvz/garba">View the project on GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="idea-title">
+      <div class="page-section-inner">
+        <div class="page-section-head">
+          <div>
+            <p class="page-kicker">THE IDEA</p>
+            <h2 id="idea-title">Make Garba easier to find, understand and keep playing.</h2>
+          </div>
+          <p>The product is intentionally centred on Garba rather than trying to become a general-purpose music service.</p>
+        </div>
+
+        <div class="truth-grid">
+          <article class="truth-card">
+            <b>01 · Catalogue</b>
+            <strong>Garba first.</strong>
+            <p>Songs, artists, releases and longer sets are organised as a dedicated Gujarati Garba catalogue.</p>
+          </article>
+          <article class="truth-card">
+            <b>02 · Player</b>
+            <strong>Listening stays central.</strong>
+            <p>Search, browsing, queue, favourites and Nonstop sit around one player instead of becoming separate products.</p>
+          </article>
+          <article class="truth-card">
+            <b>03 · Access</b>
+            <strong>Web first.</strong>
+            <p>The live player works in a browser and can also be installed as a progressive web app on supported devices.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section soft">
+      <div class="page-section-inner page-layout">
+        <aside class="contents-card" aria-label="About page contents">
+          <span>PlayGarba</span>
+          <nav>
+            <a href="#split">Why two sites</a>
+            <a href="#worlds">Six worlds</a>
+            <a href="#catalogue">Catalogue approach</a>
+            <a href="#playback">Playback approach</a>
+            <a href="#product">Product principles</a>
+            <a href="#open">Open project</a>
+          </nav>
+        </aside>
+
+        <div class="page-copy">
+          <section class="guide-block" id="split">
+            <p class="page-kicker">01 · PUBLIC SITE + LIVE PLAYER</p>
+            <h2>Two addresses, two jobs.</h2>
+            <p><strong>playgarba.com</strong> is the public website. It explains the product, introduces the six Garba worlds, provides help and installation guidance, and sends listeners to the right place.</p>
+            <p><strong>live.playgarba.com</strong> is the listening application. It owns the player, catalogue, PWA manifest, service worker and listening state.</p>
+            <div class="note-card">
+              <strong>Why separate them?</strong>
+              <p>The split keeps the public site fast and editorial while letting the live player evolve around playback, mobile behaviour, caching and catalogue updates without turning every public page into part of the runtime.</p>
+            </div>
+          </section>
+
+          <section class="guide-block" id="worlds">
+            <p class="page-kicker">02 · THE SIX WORLDS</p>
+            <h2>A consistent courtyard, six musical entry points.</h2>
+            <p>The visual system uses six worlds: Traditional, Dandiya, Devotional, Folk, Sanedo and Fusion. Each world keeps the same premium Gujarati courtyard language while shifting atmosphere and catalogue context.</p>
+            <div class="feature-row">
+              <article><strong>Traditional</strong><span>The core starting point for traditional Garba listening.</span></article>
+              <article><strong>Dandiya</strong><span>A dedicated Dandiya Raas listening context.</span></article>
+              <article><strong>Devotional</strong><span>Devotional Garba within the same player system.</span></article>
+              <article><strong>Folk</strong><span>Gujarati folk-led repertoire and related discovery.</span></article>
+              <article><strong>Sanedo</strong><span>Sanedo as its own recognisable listening world.</span></article>
+              <article><strong>Fusion</strong><span>Contemporary and crossover Garba listening.</span></article>
+            </div>
+          </section>
+
+          <section class="guide-block" id="catalogue">
+            <p class="page-kicker">03 · CATALOGUE</p>
+            <h2>Discovery starts with what the music actually is.</h2>
+            <p>The catalogue is source-driven. It keeps song and release records separate from the visual interface so collection work can grow without being tied to one screen design.</p>
+            <p>Search starts with title and artist matching, then can use Garba taxonomy, styles and aliases to support broader discovery. Nonstop sets are represented separately so a long performance is not forced into the same shape as a single track.</p>
+          </section>
+
+          <section class="guide-block" id="playback">
+            <p class="page-kicker">04 · PLAYBACK</p>
+            <h2>One catalogue can point to more than one kind of source.</h2>
+            <p>A catalogue item can resolve through different approved playback routes. Depending on the item, that can include direct audio or a cited external provider. The player keeps the surrounding Garba context stable even when the underlying source changes.</p>
+            <p>External providers retain control over their own availability, sign-in, advertising and provider-specific playback behaviour.</p>
+          </section>
+
+          <section class="guide-block" id="product">
+            <p class="page-kicker">05 · PRODUCT PRINCIPLES</p>
+            <h2>Keep the interface quieter than the music.</h2>
+            <div class="feature-row">
+              <article><strong>Responsive first</strong><span>Phone, iPad and desktop are treated as distinct interaction contexts, not simple scaled versions of one layout.</span></article>
+              <article><strong>Stable controls</strong><span>Track title changes and visual transitions should not make primary playback controls jump around.</span></article>
+              <article><strong>Accessible motion</strong><span>Decorative movement is restrained and non-essential animation yields to reduced-motion preferences.</span></article>
+              <article><strong>Truthful states</strong><span>Unknown durations, failed catalogue loads and offline conditions should be shown clearly instead of being disguised as valid playback state.</span></article>
+            </div>
+          </section>
+
+          <section class="guide-block" id="open">
+            <p class="page-kicker">06 · OPEN PROJECT</p>
+            <h2>The project is visible.</h2>
+            <p>PlayGarba is community-built and its repository is public. The project includes the player runtime, catalogue data, discovery records, PWA implementation, validation scripts and operating documentation.</p>
+            <a class="button button-ghost" href="https://github.com/ruddvz/garba">Open GitHub repository <span aria-hidden="true">↗</span></a>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-cta" aria-labelledby="cta-title">
+      <div class="page-cta-inner">
+        <p class="page-kicker">LISTENING APP</p>
+        <h2 id="cta-title">The public site explains it. The live player plays it.</h2>
+        <p>Open the dedicated listening address, browse the catalogue or add it to your home screen.</p>
+        <div class="page-hero-actions">
+          <a class="button button-primary" href="https://live.playgarba.com/">Open PlayGarba <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="/how-to-use/">Read the player guide <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-mark" href="/">GARBA</a>
+    <p>Gujarati Garba, gathered with care.</p>
+    <div class="footer-links">
+      <a href="/how-to-use/">How to use</a>
+      <a href="/install/">Install app</a>
+      <a href="/about/">About</a>
+      <a href="https://live.playgarba.com/">Player</a>
+      <a href="https://github.com/ruddvz/garba">GitHub</a>
+      <span>© <span id="year">2026</span> PlayGarba</span>
+    </div>
+  </footer>
+
+  <script src="/site.js" defer></script>
+</body>
+</html>
