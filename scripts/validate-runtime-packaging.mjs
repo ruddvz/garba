@@ -75,28 +75,30 @@ for (const marker of [
   '_site/assets/social/garba-og-card.png',
   'rsvg-convert -w 1200 -h 630',
   'PNG image data, 1200 x 630',
-  'node scripts/lib/inject-social-preview.mjs _site/index.html',
+  'node scripts/lib/inject-social-preview.mjs _site',
+  'SOCIAL_META_COUNT',
   'summary_large_image',
 ]) {
   if (!pages.includes(marker)) fail(`Pages social-preview contract is missing: ${marker}`);
 }
 for (const marker of [
   'width="1200" height="630"',
-  '>PlayGarba</text>',
-  '>The open Gujarati Garba music archive</text>',
-  '>playgarba.com</text>',
+  '>GARBA</text>',
+  '>Gujarati Garba. Beautifully played.</text>',
+  '>PLAYGARBA.COM</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
 const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [
   imageUrl,
+  'GARBA · Gujarati Garba, beautifully played',
+  'collectHtmlFiles',
   'og:image',
   'og:image:width',
   'og:image:height',
   'summary_large_image',
   'twitter:image',
-  'Structured-data URL anchor is missing',
 ]) {
   if (!socialInjector.includes(marker)) fail(`Social metadata injector is missing: ${marker}`);
 }
@@ -116,4 +118,4 @@ console.log('✓ provider route safety loads before the YouTube controllable eng
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
-console.log('✓ PlayGarba social previews are generated with librsvg from a reviewable 1200x630 source and injected at deploy time');
+console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');

@@ -51,14 +51,11 @@ jobs:
             _site/
           cp -R assets data _site/
 
-          # Generate the share card from a reviewable source and inject canonical
-          # Open Graph/Twitter metadata only into the deployed root document.
+          # Generate the universal 1200x630 share card from a reviewable SVG source.
+          # PNG is used for broad Open Graph crawler compatibility.
           mkdir -p _site/assets/social
           rsvg-convert -w 1200 -h 630 assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
           file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
-          node scripts/lib/inject-social-preview.mjs _site/index.html
-          grep -q 'property="og:image" content="https://playgarba.com/assets/social/garba-og-card.png"' _site/index.html || { echo 'Open Graph image metadata was not injected'; exit 1; }
-          grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
 
           # Flatten the ordered source layers into one production stylesheet so the
           # browser paints from one CSS request instead of an @import chain.
@@ -137,6 +134,11 @@ jobs:
           # the player uses. The generator also replaces the seed sitemap with the
           # complete canonical catalogue sitemap.
           node scripts/lib/generate-static-catalogue-pages.mjs _site
+
+          # Preserve page-specific canonical URLs and SEO metadata while applying the
+          # exact same branded OG/Twitter share card to every deployed HTML page.
+          node scripts/lib/inject-social-preview.mjs _site
+
           SONG_PAGE_COUNT="$(find _site/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
           RELEASE_PAGE_COUNT="$(find _site/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
           SITEMAP_URL_COUNT="$(grep -o '<loc>' _site/sitemap.xml | wc -l | tr -d ' ')"
@@ -144,6 +146,11 @@ jobs:
           test "$RELEASE_PAGE_COUNT" -ge 100 || { echo "Expected 100+ release pages, found $RELEASE_PAGE_COUNT"; exit 1; }
           test "$SITEMAP_URL_COUNT" -ge 1100 || { echo "Expected 1100+ sitemap URLs, found $SITEMAP_URL_COUNT"; exit 1; }
           test -f _site/catalogue/index.html || { echo 'Catalogue index page is missing'; exit 1; }
+
+          SOCIAL_HTML_COUNT="$(find _site -type f -name '*.html' | wc -l | tr -d ' ')"
+          SOCIAL_META_COUNT="$(grep -RIl 'https://playgarba.com/assets/social/garba-og-card.png' _site --include='*.html' | wc -l | tr -d ' ')"
+          test "$SOCIAL_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal social preview missing from some pages: $SOCIAL_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
+          grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
