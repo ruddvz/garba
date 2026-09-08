@@ -132,6 +132,7 @@ jobs:
             styles/50-discovery-and-performance.css \
             styles/60-runtime-and-provider.css \
             styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
             > _site/styles.css
 
           for runtime in \
