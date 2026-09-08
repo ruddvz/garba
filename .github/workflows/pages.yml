@@ -44,7 +44,6 @@ jobs:
             nonstop-browser.js \
             sw.js \
             manifest.webmanifest \
-            browserconfig.xml \
             offline.html \
             _site/
           cp -R assets data _site/
@@ -202,7 +201,7 @@ jobs:
           grep -q 'sizes="152x152"' _site/index.html || { echo 'iPad 152 icon metadata was not injected'; exit 1; }
           grep -q 'sizes="167x167"' _site/index.html || { echo 'iPad Pro 167 icon metadata was not injected'; exit 1; }
           grep -q 'sizes="180x180"' _site/index.html || { echo 'iPhone 180 icon metadata was not injected'; exit 1; }
-          grep -q 'name="msapplication-config" content="/browserconfig.xml"' _site/index.html || { echo 'Windows tile metadata was not injected'; exit 1; }
+          grep -q 'name="msapplication-config" content="/assets/icons/browserconfig.xml"' _site/index.html || { echo 'Windows tile metadata was not injected'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1
