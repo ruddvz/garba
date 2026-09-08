@@ -1,7 +1,7 @@
 {
-  "version": "0.24.0",
-  "songCount": 1599,
-  "releaseCount": 234,
+  "version": "0.25.0",
+  "songCount": 1620,
+  "releaseCount": 235,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -70,7 +70,7 @@
     "data/catalogue/songs/songs-63-hemant-maa-na-norta.json",
     "data/catalogue/songs/songs-64-hemant-maa-na-norta-2.json",
     "data/catalogue/songs/songs-65-hemant-ghammar-vol3.json",
-    "data/catalogue/songs/songs-66-hemant-dhholi-vol15.json",
+    "data/catalogue/songs/songs-66-hemant-dhholi-exact.json",
     "data/catalogue/songs/songs-67-praful-kalkamano-garbo.json",
     "data/catalogue/songs/songs-68-boot-maa-na-garba.json",
     "data/catalogue/songs/songs-69-maa-ashapura-na-garba.json",
@@ -86,7 +86,8 @@
     "data/catalogue/songs/songs-wave-f-kinjal-garbe-ramvane.json",
     "data/catalogue/songs/songs-wave-d4-kirtidan-rangili-ramzat8.json",
     "data/catalogue/songs/songs-wave-f-rangtaali2-parth.json",
-    "data/catalogue/songs/songs-wave-f-rangtaali4.json"
+    "data/catalogue/songs/songs-wave-f-rangtaali4.json",
+    "data/catalogue/songs/songs-wave-d5-geeta-taal-2022.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -146,9 +147,12 @@
     "data/catalogue/releases/releases-wave-d3-kirtidan-tahukar11.json",
     "data/catalogue/releases/releases-wave-f-kinjal-garbe-ramvane.json",
     "data/catalogue/releases/releases-wave-d4-kirtidan-rangili-ramzat8.json",
-    "data/catalogue/releases/releases-wave-f-rangtaali-parth.json"
+    "data/catalogue/releases/releases-wave-f-rangtaali-parth.json",
+    "data/catalogue/releases/releases-wave-d5-geeta-taal-2022.json"
   ],
-  "retiredReleaseIds": ["atul-live-uwb-2015"],
+  "retiredReleaseIds": [
+    "atul-live-uwb-2015"
+  ],
   "retiredSongIds": [
     "atul-live-uwb-2015-01-garba-3-tali-pt-1-live",
     "atul-live-uwb-2015-02-garba-3-tali-pt-2-live",
@@ -227,7 +231,8 @@
     "data/playback-sources-wave-d4-kirtidan-rangili-ramzat8.json",
     "data/playback-sources-wave-f-rangtaali2.json",
     "data/playback-sources-wave-f-parth-oza.json",
-    "data/playback-sources-wave-f-rangtaali4.json"
+    "data/playback-sources-wave-f-rangtaali4.json",
+    "data/playback-sources-wave-d5-geeta-taal-2022.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -253,5 +258,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.24.0 preserves all v0.23.0 catalogue, Wave D, Kinjal Dave, Rangili Ramzat 8, Nonstop and route-truth work, then completes the issue #156 Wave F closeout with Rangtaali 2 (36 entries), Parth Oza's Garbe Ghoome Tu single, and Rangtaali 4 (27 entries). Cumulative Wave F now contains 114 accepted songs across 5 releases with 113 exact official/provider routes and one documented conservative Amazon release fallback. Published YouTube chapter starts and provider track URLs are used only where explicitly exposed; no timestamps, track identifiers or consumer-stream audio are inferred or extracted."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.25.0 preserves all v0.24.0 catalogue, Wave D, Wave F, Nonstop and route-truth work, then adds Geeta Rabari's 21-track Taal - Non Stop Garba (2022) for issue #152. All 21 tracks use provider-published Amazon Music track URLs. Tracks 1-3 are long nonstop masters within the same album, not separate Taal 2/Taal 3 releases; those masters also appear as official YouTube Nonstop listening entries. No track identifiers, timestamps or chapter boundaries are inferred."
 }
