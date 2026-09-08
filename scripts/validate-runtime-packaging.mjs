@@ -59,18 +59,10 @@ const q82Index = pages.indexOf(q82Pack);
 if (!(q90Index >= 0 && legacyIndex > q90Index && q82Index > legacyIndex)) {
   fail('Pages must prefer Q90, then current 2K, then named Q82 fallback');
 }
-if (!pages.includes("rm -f _site/assets/backgrounds/library/*.webp")) {
-  fail('Pages must clear stale extracted WebPs before unpacking the selected visual pack');
-}
-if (!pages.includes("test \"$WEBP_COUNT\" -eq 15")) {
-  fail('Pages must require exactly 15 extracted WebPs');
-}
-if (!pages.includes("file \"$image\" | grep -q 'Web/P image'")) {
-  fail('Pages must validate every extracted artwork file as WebP data');
-}
-if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) {
-  fail('Pages must remove source visual-pack archives from the public artifact');
-}
+if (!pages.includes("rm -f _site/assets/backgrounds/library/*.webp")) fail('Pages must clear stale extracted WebPs before unpacking the selected visual pack');
+if (!pages.includes("test \"$WEBP_COUNT\" -eq 15")) fail('Pages must require exactly 15 extracted WebPs');
+if (!pages.includes("file \"$image\" | grep -q 'Web/P image'")) fail('Pages must validate every extracted artwork file as WebP data');
+if (!pages.includes('rm -f _site/assets/backgrounds/garba15-*.zip')) fail('Pages must remove source visual-pack archives from the public artifact');
 
 for (const marker of [
   'librsvg2-bin',
@@ -120,6 +112,29 @@ for (const [src, sizes, purpose] of pwaIcons) {
   if (!sw.includes(`'./${src}'`)) fail(`PWA core shell does not cache ${src}`);
 }
 
+for (const marker of [
+  'src/catalogue/index.html _site/catalogue/index.html',
+  'src/catalogue/catalogue.css _site/catalogue/catalogue.css',
+  'src/catalogue/catalogue.js _site/catalogue/catalogue.js',
+]) {
+  if (!pages.includes(marker)) fail(`Pages Explore contract is missing: ${marker}`);
+}
+for (const marker of [
+  "'./catalogue/'",
+  "'./catalogue/index.html'",
+  "'./catalogue/catalogue.css'",
+  "'./catalogue/catalogue.js'",
+  "'/catalogue/catalogue.css'",
+  "'/catalogue/catalogue.js'",
+  'const isCatalogueNavigation = (pathname) =>',
+  "pathname.endsWith('/catalogue/')",
+  "const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';",
+  "const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');",
+  'if (isJsonData(url.pathname)) {',
+]) {
+  if (!sw.includes(marker)) fail(`Explore PWA/offline contract is missing: ${marker}`);
+}
+
 const renderedIcons = [
   ['favicon-16.png', 16],
   ['favicon-32.png', 32],
@@ -164,7 +179,6 @@ for (const marker of [
 ]) {
   if (!brandInjector.includes(marker)) fail(`Brand metadata injector is missing: ${marker}`);
 }
-
 for (const marker of [
   'square150x150logo',
   '/assets/icons/mstile-150x150.png',
@@ -174,7 +188,6 @@ for (const marker of [
 ]) {
   if (!browserconfig.includes(marker)) fail(`browserconfig.xml is missing: ${marker}`);
 }
-
 for (const file of [
   'browserconfig.xml',
   'favicon.ico',
@@ -190,11 +203,9 @@ for (const file of [
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
 }
 
-if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
-  fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
-}
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v12`")) {
-  fail('PWA cache generation must be v12 after adding browser, Apple and Windows icon coverage');
+if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v13`")) {
+  fail('PWA cache generation must be v13 after combining Explore offline safety with complete cross-platform icon coverage');
 }
 
 if (failed) process.exit(1);
@@ -206,4 +217,5 @@ console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps leg
 console.log('✓ Pages verifies exactly 15 WebPs and strips source visual-pack ZIPs');
 console.log('✓ Universal GARBA social previews are rendered at 1200x630 and injected across every deployed HTML page');
 console.log('✓ PlayGarba ships regular and maskable 192/512 PWA icons and precaches the full install-icon matrix');
+console.log('✓ Explore shell is precached, has its own offline navigation fallback, and visited catalogue JSON stays fresh online with cached offline fallback');
 console.log('✓ Browser favicons, Apple touch sizes and Windows tiles are generated from the canonical Garba emblem and injected across the deployed site');
