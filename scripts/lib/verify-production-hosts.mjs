@@ -2,6 +2,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const LIVE_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_LIVE_ORIGIN || 'https://live.playgarba.com');
 const PUBLIC_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_PUBLIC_ORIGIN || 'https://playgarba.com');
+const WWW_ORIGIN = normaliseOrigin(process.env.PLAYGARBA_WWW_ORIGIN || 'https://www.playgarba.com');
 const ATTEMPTS = positiveInt(process.env.SMOKE_ATTEMPTS, 6);
 const RETRY_DELAY_MS = positiveInt(process.env.SMOKE_RETRY_DELAY_MS, 5000);
 const REQUEST_TIMEOUT_MS = positiveInt(process.env.SMOKE_TIMEOUT_MS, 12000);
@@ -34,7 +35,7 @@ function canonicalFrom(html) {
   return null;
 }
 
-async function fetchWithRetry(url, { as = 'text' } = {}) {
+async function requestWithRetry(url, { as = 'text', redirect = 'follow', requireOk = true } = {}) {
   let lastError;
 
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
@@ -45,13 +46,13 @@ async function fetchWithRetry(url, { as = 'text' } = {}) {
       const response = await fetch(url, {
         headers: {
           'cache-control': 'no-cache',
-          'user-agent': 'PlayGarba-production-smoke/1.0',
+          'user-agent': 'PlayGarba-production-smoke/1.1',
         },
-        redirect: 'follow',
+        redirect,
         signal: controller.signal,
       });
 
-      if (!response.ok) {
+      if (requireOk && !response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
 
@@ -75,7 +76,7 @@ async function fetchWithRetry(url, { as = 'text' } = {}) {
 
 async function fetchLive(path, options) {
   const requested = new URL(path, LIVE_ORIGIN);
-  const result = await fetchWithRetry(requested, options);
+  const result = await requestWithRetry(requested, options);
   const finalUrl = new URL(result.response.url);
   assert(
     finalUrl.origin === LIVE_ORIGIN.origin,
@@ -153,7 +154,7 @@ async function verifyPublic() {
 
   for (const [path, expectedCanonical] of requiredPages) {
     const requested = new URL(path, PUBLIC_ORIGIN);
-    const { response, body: html } = await fetchWithRetry(requested);
+    const { response, body: html } = await requestWithRetry(requested);
     const finalUrl = new URL(response.url);
     assert(finalUrl.origin === PUBLIC_ORIGIN.origin, `${requested} redirected off the public origin to ${finalUrl}`);
     assert(/<html\b/i.test(html), `${path} did not return HTML`);
@@ -162,10 +163,10 @@ async function verifyPublic() {
     assert(html.includes('https://live.playgarba.com/'), `${path} does not expose the live player handoff`);
   }
 
-  const { body: robots } = await fetchWithRetry(new URL('/robots.txt', PUBLIC_ORIGIN));
+  const { body: robots } = await requestWithRetry(new URL('/robots.txt', PUBLIC_ORIGIN));
   assert(robots.includes(`Sitemap: ${new URL('/sitemap.xml', PUBLIC_ORIGIN).href}`), 'Public robots.txt does not advertise the apex sitemap');
 
-  const { body: sitemap } = await fetchWithRetry(new URL('/sitemap.xml', PUBLIC_ORIGIN));
+  const { body: sitemap } = await requestWithRetry(new URL('/sitemap.xml', PUBLIC_ORIGIN));
   for (const [, expectedCanonical] of requiredPages) {
     assert(sitemap.includes(`<loc>${expectedCanonical}</loc>`), `Public sitemap is missing ${expectedCanonical}`);
   }
@@ -173,10 +174,27 @@ async function verifyPublic() {
   console.log('Public website production smoke test passed.');
 }
 
+async function verifyWww() {
+  console.log(`Verifying www redirect: ${WWW_ORIGIN.href} → ${PUBLIC_ORIGIN.href}`);
+  const { response } = await requestWithRetry(WWW_ORIGIN, {
+    redirect: 'manual',
+    requireOk: false,
+  });
+
+  assert([301, 308].includes(response.status), `www must use a permanent redirect (301 or 308), got HTTP ${response.status}`);
+  const location = response.headers.get('location');
+  assert(location, 'www redirect is missing a Location header');
+  const target = new URL(location, WWW_ORIGIN);
+  assert(target.href === PUBLIC_ORIGIN.href, `www redirects to ${target.href}, expected ${PUBLIC_ORIGIN.href}`);
+
+  console.log('www permanent redirect verification passed.');
+}
+
 try {
   if (MODE === 'live') await verifyLive();
   else if (MODE === 'public') await verifyPublic();
-  else throw new Error(`Unknown mode "${MODE}". Use "live" or "public".`);
+  else if (MODE === 'www') await verifyWww();
+  else throw new Error(`Unknown mode "${MODE}". Use "live", "public" or "www".`);
 } catch (error) {
   console.error(error instanceof Error ? error.stack : error);
   process.exitCode = 1;
