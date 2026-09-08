@@ -1,0 +1,225 @@
+/* Explore scroll/performance layer.
+   Keeps the premium visual system while reducing long-page paint/GPU pressure. */
+
+html {
+  scroll-padding-top: 92px;
+}
+
+.catalogue-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
+}
+
+.collection-card {
+  transform: none;
+  contain: layout paint style;
+}
+
+.song-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 72px;
+  contain: layout paint style;
+}
+
+.release-card,
+.release-more {
+  content-visibility: auto;
+  contain-intrinsic-size: 236px;
+}
+
+.collection-grid,
+.release-rail,
+.essential-release-rail {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+}
+
+.collection-grid {
+  scrollbar-gutter: stable both-edges;
+}
+
+.song-more[data-auto-paging="true"] {
+  position: relative;
+  justify-self: stretch;
+  width: 100%;
+  min-height: 52px;
+  border-style: dashed;
+  color: rgba(255, 248, 236, .66);
+  background: rgba(255,255,255,.025);
+  pointer-events: none;
+}
+
+.song-more[data-auto-paging="true"]::after {
+  content: "";
+  width: 13px;
+  height: 13px;
+  margin-left: 9px;
+  border: 1.5px solid rgba(255,248,236,.28);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: explore-auto-page-spin .75s linear infinite;
+}
+
+@keyframes explore-auto-page-spin {
+  to { transform: rotate(1turn); }
+}
+
+@media (max-width: 900px) {
+  .catalogue-section {
+    margin-bottom: 30px;
+    contain-intrinsic-size: auto 330px;
+  }
+
+  .section-title-row {
+    align-items: center;
+    margin-bottom: 11px;
+  }
+
+  .collection-grid {
+    grid-template-columns: none !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(235px, 68vw);
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-inline: -17px;
+    padding: 4px 17px 14px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    touch-action: pan-x pan-y;
+  }
+
+  .collection-grid::-webkit-scrollbar,
+  .release-rail::-webkit-scrollbar,
+  .essential-release-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .collection-card {
+    width: auto;
+    min-height: 198px;
+    aspect-ratio: 1.18 / 1;
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+
+  .collection-copy strong {
+    font-size: clamp(1.28rem, 4.6vw, 1.68rem);
+  }
+
+  .section-title-row p {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  html {
+    scroll-padding-top: 78px;
+  }
+
+  main {
+    padding-bottom: max(64px, calc(42px + env(safe-area-inset-bottom)));
+  }
+
+  .collection-home {
+    padding-top: 2px;
+  }
+
+  .catalogue-section {
+    margin-bottom: 24px;
+    contain-intrinsic-size: auto 292px;
+  }
+
+  .collection-grid {
+    grid-auto-columns: minmax(242px, 82vw);
+    gap: 10px;
+    margin-inline: -11px;
+    padding: 3px 11px 12px;
+  }
+
+  .collection-card {
+    min-height: 176px;
+    aspect-ratio: 1.34 / 1;
+    border-radius: 23px;
+  }
+
+  .collection-copy {
+    inset: 16px;
+  }
+
+  .collection-copy strong {
+    max-width: 15ch;
+    font-size: clamp(1.28rem, 6.2vw, 1.58rem);
+  }
+
+  .collection-copy span {
+    margin-top: 8px;
+    font-size: .68rem;
+  }
+
+  .essential-release-section {
+    margin-bottom: 25px;
+    padding: 12px 12px 10px;
+  }
+
+  .essential-release-rail {
+    grid-auto-columns: minmax(142px, 43vw);
+    gap: 9px;
+  }
+
+  .songs-section,
+  .release-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 620px;
+  }
+
+  .song-row {
+    contain-intrinsic-size: 66px;
+  }
+}
+
+@media (pointer: coarse) {
+  body::before {
+    filter: saturate(1.01) contrast(1.01);
+    transform: scale(1.008);
+  }
+
+  .collection-card,
+  .collection-image,
+  .collection-card::after,
+  .essential-release-card,
+  .release-cover {
+    transition-duration: .12s !important;
+  }
+
+  .collection-card {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.09),
+      0 14px 34px rgba(0,0,0,.22);
+  }
+
+  .collection-card::after {
+    mix-blend-mode: normal;
+    opacity: .14;
+    transform: none;
+  }
+
+  .collection-image {
+    transform: scale(1.018);
+  }
+
+  .detail-head,
+  .release-section,
+  .songs-section,
+  .essential-release-section,
+  .close-explore {
+    backdrop-filter: blur(12px) saturate(1.03);
+    -webkit-backdrop-filter: blur(12px) saturate(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .song-more[data-auto-paging="true"]::after {
+    animation: none;
+  }
+}
