@@ -8,7 +8,7 @@ Issue: #152 / migration child #230.
 
 `Rangili Ramzat 8` remains a complete 17-track canonical 2025 album credited to Umesh Barot, Osman Mir, Kirtidan Gadhvi and Rashmita Rabari. The old Amazon track selections are now provenance only and are no longer executable.
 
-The separate verified official YouTube continuous edition remains available in `data/nonstop.json` as `rangili-ramzat-8-2-taali-kirtidan-2025` (`xT_1V0j4LXU`). It has no source-published 17-song chapter map. No split timestamp is calculated from the provider durations.
+The separate verified official YouTube continuous edition is preserved in the canonical discovery registry at `data/discovery/sets/sets-36-legacy-full-set-migration.json` as `set-rangili-ramzat-8-2-taali-2025` (`xT_1V0j4LXU`). It is a full-set listening object with no carried chapter evidence. No split timestamp is calculated from provider durations.
 
 ## YouTube-only split-track audit
 
@@ -36,4 +36,4 @@ These rows are handed to issue #157 for the final YouTube evidence burn-down. Sa
 
 ## Catalogue decision
 
-The release itself is complete and retained. This migration closes #230 because every canonical row is now either truthful exact YouTube or explicitly unresolved/non-playable, with the continuous verified YouTube master preserved separately.
+The release itself is complete and retained. This migration closes #230 because every canonical row is now either truthful exact YouTube or explicitly unresolved/non-playable, with the continuous verified YouTube master preserved separately in the discovery source of truth.
