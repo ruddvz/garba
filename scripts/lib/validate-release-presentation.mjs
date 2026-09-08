@@ -120,6 +120,14 @@ for (const release of releases) {
       const canonicalSong = runtimeById.get(runtime.canonicalSongId);
       if (!canonicalSong) issues.push(`song ${sourceSong.id}: canonicalSongId ${runtime.canonicalSongId} does not exist`);
       else if (canonicalSong.releaseId !== canonicalId) issues.push(`song ${sourceSong.id}: canonicalSongId does not belong to ${canonicalId}`);
+      else if (role === 'source-only') {
+        const title = normalise(sourceSong.title);
+        const exactTitleMatches = (sourceSongsByRelease.get(canonicalId) || [])
+          .filter((candidate) => normalise(candidate.title) === title);
+        if (title && exactTitleMatches.length === 1 && canonicalSong.id !== exactTitleMatches[0].id) {
+          issues.push(`song ${sourceSong.id}: source-only redirect must prefer unique title match ${exactTitleMatches[0].id}`);
+        }
+      }
     }
     if (role === 'nonstop-only' && runtime.nonstopSetId !== release.nonstopSetId) {
       issues.push(`song ${sourceSong.id}: runtime nonstopSetId does not match ${release.id}`);
