@@ -27,6 +27,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-341-ramzat-2017-youtube-audit.md`](catalogue/issue-341-ramzat-2017-youtube-audit.md): Ramzat 2017 exact YouTube split-track reconciliation and explicit fail-closed evidence boundary
 - [`catalogue/issue-346-rangili-ramzat-youtube-audit.md`](catalogue/issue-346-rangili-ramzat-youtube-audit.md): Rangili Ramzat 7/8 exact YouTube split-track audit and explicit evidence boundary
 - [`catalogue/issue-347-zankaar-geeta-youtube-audit.md`](catalogue/issue-347-zankaar-geeta-youtube-audit.md): Zankaar 2/3 and Geeta Rabari Taal 2022 exact YouTube split-track reconciliation and fail-closed boundary
+- [`catalogue/issue-572-maro-garbo-youtube-audit.md`](catalogue/issue-572-maro-garbo-youtube-audit.md): Maro Garbo 2000 exact Soor Mandir chapter migration prepared for conflict-free catalogue-index activation
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
 - [`catalogue/issue-156-wave-f-closeout.md`](catalogue/issue-156-wave-f-closeout.md): current-main Wave F closeout metrics, accepted additions, deferred candidates and validation gate
 - [`catalogue/nonstop-chapter-resolution-2026-09-08.md`](catalogue/nonstop-chapter-resolution-2026-09-08.md): final evidence audit for source-published Nonstop chapters and intentionally unchaptered continuous masters
