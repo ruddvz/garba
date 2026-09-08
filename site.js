@@ -1,4 +1,14 @@
 (() => {
+  // Preserve every previously shared player deep link after playgarba.com becomes
+  // the public site. Marketing/analytics query strings stay on the homepage, while
+  // player state moves to the dedicated listening origin unchanged.
+  const playerParams = new Set(['song', 'genre', 'browse', 'nonstop', 'queue', 'source']);
+  const incoming = new URLSearchParams(window.location.search);
+  if ([...playerParams].some((key) => incoming.has(key))) {
+    window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
+    return;
+  }
+
   const header = document.querySelector('.site-header');
   const button = document.getElementById('menuButton');
   const nav = document.getElementById('siteNav');
