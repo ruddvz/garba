@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v4`;
+const CACHE_NAME = `${CACHE_PREFIX}v5`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -106,8 +106,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Playback routing changes live in songs.json. Always ask the network first so an
+  // installed PWA cannot keep an old provider map after a successful deployment.
   if (url.pathname.endsWith('/data/songs.json')) {
-    event.respondWith(request.cache === 'force-cache' ? cacheFirst(request) : networkFirst(request));
+    event.respondWith(networkFirst(request));
     return;
   }
 
