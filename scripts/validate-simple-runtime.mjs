@@ -66,9 +66,13 @@ for (const marker of [
   "fetch('data/songs.json'",
   'function ensureProviderStage()',
   'function providerEmbed(',
+  'function soundCloudEmbedUrl(',
   'https://www.youtube-nocookie.com/embed/',
   'https://open.spotify.com/embed/',
   "url.hostname = 'embed.music.apple.com'",
+  'https://w.soundcloud.com/player/',
+  "fullReleaseOnly ? '0' : '1'",
+  'providerDockOpen',
   'function externalProviderCard(',
   "media?.replaceChildren(iframe)",
   "$('providerMedia')?.replaceChildren()",
@@ -81,9 +85,13 @@ for (const marker of [
   "navigator.mediaSession.setActionHandler('nexttrack'",
   "window.addEventListener('offline'",
   'Provider-backed songs need an internet connection',
+  'setTimeout(() => { loadSongs(); }, 600)',
 ]) if (!simple.includes(marker)) fail(`Simple runtime missing launch-hardening marker: ${marker}`);
 
 if (simple.includes('window.open(')) fail('Primary Play must not automatically throw users out to a new provider tab');
+if (simple.includes("if (song?.playbackSourceType === 'verified-unchaptered-youtube-release') return null;")) {
+  fail('Unchaptered verified YouTube releases must remain available as non-autoplay in-app full-release players');
+}
 
 for (const marker of [
   'function loadSetsOnce(',
@@ -115,7 +123,7 @@ const expectedVisualFiles = [
 ];
 for (const visual of expectedVisualFiles) if (!simple.includes(visual)) fail(`Missing art-directed 2K visual mapping: ${visual}`);
 
-for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-dock.is-spotify', '.provider-dock.is-apple', '.provider-dock.is-external', '.provider-external-action']) {
+for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-dock.is-spotify', '.provider-dock.is-apple', '.provider-dock.is-soundcloud', '.provider-dock.is-external', '.provider-dock-open', '.provider-external-action']) {
   if (!playerCss.includes(marker)) fail(`Provider UI styling missing marker: ${marker}`);
 }
 
@@ -192,7 +200,10 @@ console.log(`✓ ${songs.length} songs and six genres remain available`);
 console.log(`✓ ${nonstopIndex.chunks.length} Nonstop discovery chunks remain available`);
 console.log('✓ primary player controls retain direct event bindings');
 console.log(`✓ provider playback surface stacks above the song browser (${providerZ} > ${sheetZ})`);
-console.log('✓ provider-backed Play stays inside GARBA when a safe embed is available');
+console.log('✓ YouTube, Spotify, Apple Music and SoundCloud have in-app provider paths when their source format is embeddable');
+console.log('✓ unchaptered YouTube releases stay in GARBA without autoplaying the wrong selected song');
+console.log('✓ every in-app provider player exposes an explicit source fallback');
+console.log('✓ provider catalogue data is warmed after page load so first Play does not normally wait for route discovery');
 console.log('✓ Space follows the provider-aware Play path without stealing native button/input behaviour');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
