@@ -1,0 +1,73 @@
+name: Validate PlayGarba website
+
+on:
+  push:
+    branches: [website]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout website branch
+        uses: actions/checkout@v4
+
+      - name: Validate static site contract
+        run: |
+          set -euo pipefail
+          for file in index.html styles.css site.js robots.txt sitemap.xml 404.html; do
+            test -f "$file" || { echo "Missing required website file: $file"; exit 1; }
+          done
+
+          node --check site.js
+          grep -q '<link rel="canonical" href="https://playgarba.com/"' index.html
+          grep -q 'https://live.playgarba.com/' index.html
+          grep -q "playerParams" site.js
+          grep -q "window.location.replace" site.js
+          grep -q "path.startsWith('/songs/')" 404.html
+          grep -q "path.startsWith('/releases/')" 404.html
+          grep -q "path.startsWith('/catalogue/')" 404.html
+          grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' robots.txt
+          grep -q '<loc>https://playgarba.com/</loc>' sitemap.xml
+
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          class Parser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.refs = []
+              def handle_starttag(self, tag, attrs):
+                  values = dict(attrs)
+                  for key in ('href', 'src'):
+                      value = values.get(key)
+                      if value:
+                          self.refs.append(value)
+
+          root = Path('.')
+          parser = Parser()
+          parser.feed(Path('index.html').read_text())
+          missing = []
+          for ref in parser.refs:
+              if ref.startswith(('#', 'mailto:', 'tel:', 'data:')):
+                  continue
+              parsed = urlparse(ref)
+              if parsed.scheme or parsed.netloc:
+                  continue
+              path = parsed.path.lstrip('/')
+              if not path:
+                  continue
+              candidate = root / path
+              if path.endswith('/'):
+                  candidate = candidate / 'index.html'
+              if not candidate.exists():
+                  missing.append(ref)
+          if missing:
+              raise SystemExit('Missing local references: ' + ', '.join(sorted(set(missing))))
+          print('Static website references validated.')
+          PY
