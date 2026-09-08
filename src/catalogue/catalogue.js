@@ -171,6 +171,43 @@ function syncCollectionIdentity() {
   syncShareLabel(state.active.title);
 }
 
+function replaceDetailMeta(values = []) {
+  els.detailMeta.replaceChildren();
+  values.filter(Boolean).forEach((value) => {
+    const pill = document.createElement('span');
+    pill.textContent = String(value);
+    els.detailMeta.append(pill);
+  });
+}
+
+function renderCollectionDetailIdentity(collection = state.active) {
+  if (!collection || collection.id === 'search') return;
+  els.detailKicker.textContent = collection.kicker;
+  els.detailTitle.textContent = collection.title;
+  els.detailDescription.textContent = collection.description;
+  const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
+  replaceDetailMeta([
+    `${collection.songs.length.toLocaleString()} songs`,
+    `${releaseCount.toLocaleString()} releases`,
+  ]);
+}
+
+function renderReleaseDetailIdentity(release, songs) {
+  if (!state.active || state.active.id === 'search' || !release) return;
+  const credits = [release.artist, release.label]
+    .map((value) => String(value || '').trim())
+    .filter((value, index, values) => value && values.indexOf(value) === index);
+  const year = releaseYear(release);
+  els.detailKicker.textContent = `${state.active.title} · Release`;
+  els.detailTitle.textContent = release.title;
+  els.detailDescription.textContent = credits.join(' · ') || `Selected from ${state.active.title}.`;
+  replaceDetailMeta([
+    year ? String(year) : '',
+    `${songs.length.toLocaleString()} ${songs.length === 1 ? 'song' : 'songs'}`,
+    'Selected release',
+  ]);
+}
+
 async function fetchJson(url, fallback = null) {
   try {
     const response = await fetch(url, { cache: 'no-store' });
@@ -362,13 +399,12 @@ function renderEssentialReleases() {
 
   const rail = document.createElement('div');
   rail.className = 'essential-release-rail';
-  rail.setAttribute('role','list');
+  rail.setAttribute('role','group');
   rail.setAttribute('aria-label','Essential Garba releases');
   items.forEach(({ release, songs }) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'release-card essential-release-card';
-    button.setAttribute('role','listitem');
     button.setAttribute('aria-label',`Open ${release.title}`);
     button.append(makeCover(release));
     const title = document.createElement('strong');
@@ -454,7 +490,6 @@ function renderReleases(songs, { limit = RELEASE_BATCH_SIZE } = {}) {
     button.type = 'button';
     button.className = `release-card${active?' active':''}`;
     button.dataset.releaseId = release.id;
-    button.setAttribute('role','listitem');
     button.setAttribute('aria-label', active ? `${release.title}, current release filter` : `Filter songs to ${release.title}`);
     button.append(makeCover(release));
     const title = document.createElement('strong');
@@ -572,15 +607,8 @@ function openCollection(id, { updateHash = true, trigger = null, focusHeading = 
   syncBackLabel();
   els.home.hidden = true;
   els.detail.hidden = false;
-  els.detailKicker.textContent = collection.kicker;
-  els.detailTitle.textContent = collection.title;
-  els.detailDescription.textContent = collection.description;
+  renderCollectionDetailIdentity(collection);
   syncCollectionIdentity();
-  const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
-  els.detailMeta.replaceChildren();
-  [`${collection.songs.length.toLocaleString()} songs`,`${releaseCount.toLocaleString()} releases`].forEach((text)=>{
-    const pill = document.createElement('span'); pill.textContent=text; els.detailMeta.append(pill);
-  });
   renderReleases(collection.songs);
   renderSongs(collection.songs);
   if (updateHash) history.pushState({collection:id},'',collectionHash(id));
@@ -597,6 +625,7 @@ function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}
   state.activeReleaseId = releaseId;
   syncBackLabel();
   syncCollectionIdentity();
+  renderReleaseDetailIdentity(release, songs);
   renderReleases(state.activeSongs);
   renderSongs(songs, release.title || 'Release songs');
   if (updateHistory) {
@@ -617,6 +646,7 @@ function showAllSongs({ updateHistory = true } = {}) {
   state.activeReleaseId = null;
   syncBackLabel();
   syncCollectionIdentity();
+  renderCollectionDetailIdentity(state.active);
   renderReleases(state.activeSongs);
   renderSongs(state.activeSongs);
   if (updateHistory) history.pushState({collection:state.active.id},'',collectionHash(state.active.id));
