@@ -17,7 +17,7 @@ const brandBlock = [
   '<link rel="apple-touch-icon" sizes="167x167" href="/assets/icons/apple-touch-icon-167.png" />',
   '<link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />',
   '<meta name="msapplication-TileColor" content="#111323" />',
-  '<meta name="msapplication-config" content="/browserconfig.xml" />',
+  '<meta name="msapplication-config" content="/assets/icons/browserconfig.xml" />',
 ].join('\n');
 
 const removable = [
@@ -57,7 +57,7 @@ function applyBrandMeta(html, file) {
     'sizes="167x167"',
     'sizes="180x180"',
     'name="msapplication-TileColor" content="#111323"',
-    'name="msapplication-config" content="/browserconfig.xml"',
+    'name="msapplication-config" content="/assets/icons/browserconfig.xml"',
   ]) {
     if (!next.includes(marker)) throw new Error(`Brand metadata injection failed for ${file}: ${marker}`);
   }
