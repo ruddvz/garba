@@ -73,6 +73,34 @@ The 205-row matrix is split only for reviewability. Every row includes artist, t
 | Rangtaali 2 continuous master | outside split matrix | Do not duplicate | Already represented as a Nonstop set. |
 | Rangtaali 4 continuous provider single | outside split matrix | Do not duplicate | Same listening programme, not a 28th split track. |
 
+## Final registered-graph validation
+
+The registered Wave F graph was validated at commit `978458aec7e5580423362787445c755d18ed88c7` before final reconciliation with `main`.
+
+- canonical catalogue: **1,597 songs, 233 releases**
+- canonical release IDs: **233 active + 1 retired**, all unique
+- honest exact-selection routes: **1,153**
+- release/provider fallbacks: **444**
+- reference-track safety blocks: **40**
+- unresolved routes: **0**
+- duplicate exact-route downgrades: **0**
+- controllable YouTube routes: **665**
+- YouTube routes with mapped starts: **599**
+- untimestamped controllable YouTube routes: **66**
+- YouTube one-tap coverage: **41.6%**
+- provider distribution: **YouTube 649, Amazon Music 599, Apple Music 193, Spotify 118, external 38**
+- discovery catalogue validation: **1,597 songs, 233 releases**
+- recommendation signals retained: **94**
+- live/nonstop sets: **75**
+- playback source maps: **61**
+- repository structure validation: **green**
+- documentation validation: **39 Markdown files / 57 local links, green**
+- PWA icon rendering and social-preview rendering: **green**
+
+Source Health was deliberately retriggered after final manifest registration. It checked **156** YouTube sources: **152 embeddable**, **4 expected pre-existing watch-page-only**, **0 unexpected embed restrictions**, **0 confirmed dead/invalid**, and **0 transient warnings**.
+
+The four expected watch-page-only sources are the pre-existing Atul Purohit United Way sets `EGCC4g6YKHw`, `AGVmcVHcM_o`, `UQQJZfs5K-U` and `tYHqtUPD9Wc`.
+
 ## Closing quality gate
 
-Close #156 only after the final branch is reconciled with current `main` and the actual merge-result head passes `npm run check`, canonical/dedupe checks, discovery validation, runtime route validation, playback route-quality reporting, YouTube-first reporting, repository-structure validation, documentation validation and Source Health.
+Close #156 only after this branch is reconciled with the latest remote `main`, the PR merge-result head passes the complete validation suite again, and the merged `main` is verified to contain the Wave F catalogue, route manifests and 205-candidate matrix.
