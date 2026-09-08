@@ -34,9 +34,18 @@ jobs:
               'Use Browse when you already have something in mind.': 'Use Explore when you already have something in mind.',
               'On phones, Browse opens as a bottom sheet. You can expand or collapse it without losing the player underneath. On larger screens, it becomes a centred browsing panel.': 'Explore opens the dedicated catalogue page. Search, shelves and detail views adapt across phones, tablets and larger screens instead of covering the player as a temporary sheet.',
               'Use Browse Songs in the live player. On phones it opens as a bottom sheet; on larger screens it uses a wider browsing surface.': 'Use Explore in the live player. It opens the dedicated catalogue page with responsive search and browsing across phones, tablets and larger screens.',
+              'Use Explore catalogue in the live player. On phones it opens as a bottom sheet; on larger screens it uses a wider browsing surface.': 'Use Explore in the live player. It opens the dedicated catalogue page with responsive search and browsing across phones, tablets and larger screens.',
               'the browser or Nonstop instead of always dropping you at the same default screen.': 'the Explore catalogue or Nonstop instead of always dropping you at the same default screen.',
               'Open the catalogue browser immediately and search from there.': 'Open the dedicated Explore catalogue immediately and search from there.',
               'Open the song browser directly from a supported app shortcut surface.': 'Open the Explore catalogue directly from a supported app shortcut surface.',
+              '03 · BROWSE AND SEARCH': '03 · EXPLORE AND SEARCH',
+              '<span class="page-kicker">BROWSE</span>': '<span class="page-kicker">EXPLORE</span>',
+              'without reopening Browse.': 'without returning to Explore.',
+              'Playback, catalogue state, Browse, Nonstop, PWA installation, service worker and installed app launch.': 'Playback, Explore catalogue, Nonstop, PWA installation, service worker and installed app launch.',
+              'On phones, the genre strip scrolls horizontally and Browse becomes a draggable bottom sheet. iPad portrait and landscape have their own responsive treatment, and safe-area spacing protects controls around notches, the Dynamic Island and home indicator.': 'On phones, the genre strip scrolls horizontally while Explore opens the dedicated responsive catalogue. iPad portrait and landscape have their own responsive treatment, and safe-area spacing protects controls around notches, the Dynamic Island and home indicator.',
+              'Understand the six worlds, Browse, queue, favourites, Nonstop and how different playback sources behave.': 'Understand the six worlds, Explore, queue, favourites, Nonstop and how different playback sources behave.',
+              'then play or browse.': 'then play or explore.',
+              'live listening app, browse songs, enter Nonstop Garba': 'live listening app, explore the catalogue, enter Nonstop Garba',
           }
 
           for path in html_files:
@@ -53,9 +62,10 @@ jobs:
           old_params = "  const playerParams = new Set(['song', 'genre', 'browse', 'nonstop', 'queue', 'source']);"
           new_params = "  const playerParams = new Set(['song', 'genre', 'nonstop', 'queue', 'source']);"
           marker = "  const incoming = new URLSearchParams(window.location.search);\n"
-          if old_params not in text or marker not in text:
-              raise SystemExit('Expected legacy player routing markers not found')
-          browse_redirect = """  const incoming = new URLSearchParams(window.location.search);
+          if old_params in text:
+              if marker not in text:
+                  raise SystemExit('Expected player routing marker not found')
+              browse_redirect = """  const incoming = new URLSearchParams(window.location.search);
           if (incoming.has('browse')) {
             const target = new URL('https://live.playgarba.com/catalogue/');
             for (const [key, value] of incoming.entries()) {
@@ -66,10 +76,14 @@ jobs:
             return;
           }
           """
-          text = text.replace(old_params, new_params, 1)
-          text = text.replace(marker, browse_redirect, 1)
-          site.write_text(text)
-          print('updated site.js legacy Browse redirect')
+              text = text.replace(old_params, new_params, 1)
+              text = text.replace(marker, browse_redirect, 1)
+              site.write_text(text)
+              print('updated site.js legacy Browse redirect')
+          elif new_params in text and "incoming.has('browse')" in text and 'https://live.playgarba.com/catalogue/' in text:
+              print('site.js already migrated')
+          else:
+              raise SystemExit('Unrecognised player routing state')
           PY
 
           git config user.name 'github-actions[bot]'
@@ -80,5 +94,5 @@ jobs:
             echo 'No website migration changes required.'
             exit 0
           fi
-          git commit -m 'Align public website with Explore catalogue'
+          git commit -m 'Finish public Explore terminology migration'
           git push origin HEAD:codex/website-live-handoff
