@@ -333,13 +333,14 @@ Make the pages we already have easier to understand and quote:
 
 ## Measurement
 
-Track only real data from approved tools when available:
+Issue #374 owns search measurement and indexing operations. Track only real data from approved connected tools when available:
 
 - indexed canonical URLs;
 - excluded/duplicate/error URLs;
 - impressions;
 - clicks;
 - CTR;
+- average position;
 - top landing pages;
 - branded vs non-branded queries;
 - Navratri query visibility;
@@ -350,6 +351,165 @@ Track only real data from approved tools when available:
 - identifiable answer-engine referrals.
 
 Do not invent baselines or commit credentials/private exports.
+
+### Measurement source authority
+
+Every reported number must name the system that produced it, the property/origin, the date window and the comparison window. If the required source is not connected or cannot expose the metric, record the metric as `unavailable`, not zero and not estimated.
+
+Use these sources for these questions:
+
+| Question | Preferred evidence | Do not substitute |
+| --- | --- | --- |
+| Is a canonical URL indexed or excluded? | Google Search Console page/indexing reports and URL Inspection; Bing Webmaster Tools for Bing | `site:` result counts or a successful HTTP 200 |
+| What queries and landing pages receive Google search traffic? | Google Search Console Performance report/API | browser history, rank-check guesses or copied search-result screenshots |
+| What receives Bing search traffic? | Bing Webmaster Tools | Google data relabelled as Bing |
+| Are public pages passing field Core Web Vitals? | Search Console Core Web Vitals / CrUX where enough field data exists | local Lighthouse or the player lab harness as a field percentile |
+| Did a search visitor play or enter Explore? | an explicitly approved first-party product analytics or privacy-reviewed server-side source | Search Console clicks, which end at the landing-page visit |
+| Did an answer engine refer a visit? | an approved analytics/log source with an identifiable referrer | user-agent guessing or anecdotal mentions |
+| Was a sitemap submitted or processed? | the relevant webmaster-tool sitemap report | presence of `/sitemap.xml` alone |
+
+Search Console and Bing credentials, verification secrets, API tokens and private exports stay outside the repository. Repository documentation may record that a connection is `verified`, `not verified`, `not checked` or `access unavailable`, with a date and responsible operator, but never a secret value.
+
+### Metric definitions
+
+Use one definition per metric so reports remain comparable:
+
+- **Impressions:** source-reported search impressions for the named property, filters and date window.
+- **Clicks:** source-reported organic search clicks for the same scope.
+- **CTR:** clicks divided by impressions for the same source scope. Prefer the source-reported value rather than recomputing from differently filtered exports.
+- **Average position:** source-reported average position. Treat it as a directional aggregate, not a literal fixed rank.
+- **Indexed canonical URLs:** canonical production URLs the connected indexing source reports as indexed. State whether the count is a complete property report or a checked URL subset.
+- **Excluded/error URLs:** URLs grouped by the source's actual exclusion/error reason. Do not merge duplicates, redirects, crawled-not-indexed and server errors into one unexplained total.
+- **Landing-page performance:** impressions, clicks, CTR and average position grouped by canonical landing page.
+- **Search to play conversion:** approved analytics sessions/visits from organic search that trigger the defined successful Play event divided by the matching eligible organic-search visits. This metric is unavailable until the event source and privacy decision exist.
+- **Search to Explore engagement:** approved organic-search visits that enter Explore divided by the matching eligible organic-search visits. This metric is likewise unavailable without an approved product-event source.
+- **Core Web Vitals:** field LCP, INP and CLS status from the named field source and population. Keep lab diagnostics separate.
+
+Always state filters that materially alter the denominator, especially country, device, search type, page and query filters.
+
+### Reporting intent taxonomy
+
+Group query data consistently before comparing periods. A query may be assigned to one primary reporting intent; when classification is genuinely ambiguous, use `other/unclear` rather than forcing a category.
+
+1. **Brand**: PlayGarba/Play Garba product-name and domain/navigation queries.
+2. **Generic listening**: Garba music/song listening intent such as Garba songs, Nonstop Garba, Dandiya, Traditional, Devotional, Folk, Sanedo and Fusion queries without a specific named recording/person.
+3. **Seasonal Navratri**: queries where the seasonal/festival intent is material, including year-qualified Navratri music queries.
+4. **Cultural/informational**: questions about what Garba, Dandiya Raas, Sanedo or related concepts are and how they differ.
+5. **Artist/song/release discovery**: named artist, song, album/release or recording searches. This category measures discovery demand; it does not authorize standalone entity-page generation.
+6. **Local/event**: venue, city, event or local-intent searches. Keep this evidence-gated with #375 rather than manufacturing city pages from query volume.
+7. **Other/unclear**: relevant queries that cannot be classified safely from the available text/context.
+
+Do not publish raw query exports in the repository. Rare queries can reveal user-entered personal information. Public reports should use aggregated intent groups, sanitized examples only where useful, and no attempt to identify a searcher.
+
+### Landing-page groups
+
+Use stable page groups so a route rename does not silently change the meaning of reports:
+
+- `player`: `/`;
+- `explore`: `/explore/`;
+- `seasonal`: `/navratri-2026/` when deployed/indexable;
+- `general-help`: `/how-to-use/`, `/install/`, `/faq/`, `/about/`;
+- `cultural-editorial`: `/what-is-garba/` and any future substantial approved cultural page;
+- `compatibility/non-indexable`: redirects/handoffs tracked for technical errors only, never counted as target landing pages.
+
+If the sitemap/public route set changes, update the grouping from deployed canonical truth before the next report.
+
+### Operating cadence
+
+Use the lightest cadence that can change a decision.
+
+**Normal / pre-Navratri:** review once per week. The weekly review should cover:
+
+1. property/verification access status for each connected search tool;
+2. sitemap processing and material indexing/exclusion changes;
+3. crawl, redirect, canonical and server-error regressions;
+4. impressions/clicks/CTR/average position by landing-page group and intent group;
+5. seasonal Navratri query visibility when the seasonal page is deployed;
+6. field Core Web Vitals status where the source has sufficient data;
+7. any approved search-to-play/search-to-Explore measures;
+8. one action list ranked by user impact and evidence strength.
+
+Do not switch to daily reporting simply because Navratri is approaching. Daily checks are justified only during the highest-demand window when connected data shows active seasonal demand, or while an indexing/crawl incident or material seasonal deployment needs close verification. Daily review should be a short exception-focused check, not a full dashboard rebuild.
+
+After the high-demand window, return to weekly review. Keep historical comparisons aligned to equivalent day counts and note major deployment/content changes that make a period non-comparable.
+
+### Evidence-safe observation template
+
+Use this structure in a private operating note, issue comment or approved reporting system. Do not commit private exports merely to fill the template.
+
+```text
+Search observation date:
+Deployed revision/build identity:
+Source/tool:
+Property/origin:
+Measurement window:
+Comparison window:
+Filters/denominator:
+Intent group:
+Landing-page group:
+Observed result:
+Evidence status: verified | partial | unavailable
+Material change since prior check:
+Likely interpretation:
+Action / no action:
+Owner:
+Follow-up date:
+Public-safe summary (optional):
+```
+
+Interpretation must stay separate from the observed result. A ranking or traffic change after a deployment is correlation until evidence supports a cause.
+
+### Recrawl and resubmission procedure
+
+Use recrawl/resubmission for material deployed changes, not as a ritual after every commit.
+
+1. Confirm the intended change is live on the canonical origin and identify the deployed revision through the repository's build identity where available.
+2. Verify the affected URL returns the intended status, canonical and robots state before asking a crawler to revisit it.
+3. If the sitemap's canonical URL set changed, confirm the deployed sitemap first, then resubmit or refresh it in the connected webmaster tools as appropriate.
+4. For a small number of high-priority changed canonical pages, use the search engine's URL inspection/request-indexing mechanism where available. Do not mass-submit unchanged URLs.
+5. Record the request date, source/tool, affected canonical URL(s), deployed revision and result/status. Never record credentials.
+6. Recheck through the same source on the next appropriate cadence. A submitted request is not proof of indexing.
+
+For redirects, removals or canonical changes, verify both the old and new URL behavior before requesting recrawl. Do not ask indexing tools to index compatibility/query-state URLs that policy says are non-canonical.
+
+### Bing and IndexNow
+
+Bing Webmaster Tools status must be recorded from the actual connected property. Do not assume it is configured because Google Search Console is configured.
+
+IndexNow is optional. Implement or use it only when the production publishing flow has an intentionally configured key and owner. If enabled:
+
+- keep the key/secret configuration out of committed docs and source where it would expose a credential;
+- notify only canonical URLs that were added, materially updated or removed;
+- do not submit player query/hash states or unchanged catalogue permutations;
+- record submission timestamp, changed URL set, deployed revision and response/outcome in the private operational record;
+- treat successful submission as notification delivery, not proof of crawl or indexation.
+
+If IndexNow is not configured, document that state and use the normal Bing sitemap/webmaster workflow instead. Do not create a fake setup record.
+
+### Privacy and repository boundary
+
+Search measurement is an operational input, not a reason to add tracking by default.
+
+- No analytics/tracking script is added by this programme without a separate product/privacy decision.
+- Do not commit credentials, verification secrets, cookies, API tokens, user identifiers, raw analytics exports or full query dumps.
+- Keep private account-level metrics in the approved account/reporting system. Public issues/docs may contain only the minimum aggregated evidence needed to explain a repository decision when publication is appropriate.
+- If search-to-play, search-to-Explore or answer-engine referral data cannot be measured without new tracking, report `unavailable pending product/privacy decision` rather than inventing a proxy.
+- Do not infer individual user journeys by joining small or rare search-query groups with product data.
+
+### Minimum weekly decision output
+
+A useful search review ends with answers to these questions, each tied to a named evidence source or marked unavailable:
+
+- Are the intended canonical pages indexed, and are any important pages excluded for a fixable technical reason?
+- What intent groups are generating impressions and clicks?
+- Which canonical landing-page groups are gaining or losing qualified search visibility?
+- Are Navratri seasonal queries reaching the intended seasonal/player/Explore surfaces?
+- Are crawl/canonical/sitemap errors blocking discovery?
+- Are field Core Web Vitals showing a search-surface problem?
+- Can approved evidence show whether organic visitors play or enter Explore?
+- Is there one evidence-backed action worth taking now, or is the correct action to make no change and collect more data?
+
+This operating contract makes the repository ready for real connected data. It does not assert that Google Search Console, Bing Webmaster Tools, IndexNow, product analytics or answer-engine referral measurement are currently connected; those statuses must be verified from the actual accounts/tools.
 
 ## Delivery priority
 
