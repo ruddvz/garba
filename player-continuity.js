@@ -27,6 +27,10 @@
     qobuz: 'Qobuz',
     external: 'source provider',
   };
+  const MEDIA_ARTWORK = [
+    { src: new URL('assets/icons/icon-192.png', location.href).href, sizes: '192x192', type: 'image/png' },
+    { src: new URL('assets/icons/icon-512.png', location.href).href, sizes: '512x512', type: 'image/png' },
+  ];
 
   function requestPath(input) {
     try {
@@ -60,6 +64,7 @@
     }
 
     if (status === 'loading') {
+      clearMediaMetadata();
       if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
       if (songTitle) songTitle.textContent = 'Loading requested song…';
       if ($('songArtist')) $('songArtist').textContent = 'Opening the requested track';
@@ -70,6 +75,7 @@
     }
 
     if (failed) {
+      clearMediaMetadata();
       if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
       if (songTitle) songTitle.textContent = 'Requested song unavailable';
       if ($('songArtist')) $('songArtist').textContent = 'Could not load the full catalogue. Check your connection and try again.';
@@ -212,6 +218,35 @@
     return safeSongs.find((song) => song.title === title && song.artist === artist) || null;
   }
 
+  function clearMediaMetadata() {
+    if (!('mediaSession' in navigator)) return;
+    try { navigator.mediaSession.metadata = null; } catch { /* unsupported metadata setter */ }
+  }
+
+  function syncMediaMetadata() {
+    if (!('mediaSession' in navigator) || !('MediaMetadata' in window)) return;
+    const title = String(songTitle?.textContent || '').trim();
+    const artist = String($('songArtist')?.textContent || '').trim();
+    const transient = title === 'Loading requested song…'
+      || title === 'Requested song unavailable'
+      || title === 'Loading Garba…'
+      || artist.startsWith('Opening requested')
+      || artist.startsWith('Could not load');
+
+    if (!title || !artist || transient) {
+      clearMediaMetadata();
+      return;
+    }
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist,
+        artwork: MEDIA_ARTWORK,
+      });
+    } catch { /* older browsers can expose mediaSession without MediaMetadata construction */ }
+  }
+
   function providerName(provider = '') {
     const key = String(provider || '').toLowerCase();
     return PROVIDER_NAMES[key] || key.replace(/(^|-)([a-z])/g, (_, prefix, letter) => `${prefix ? ' ' : ''}${letter.toUpperCase()}`) || 'provider';
@@ -343,7 +378,14 @@
   if (songTitle) {
     new MutationObserver(resumeSelectedProviderIfNeeded)
       .observe(songTitle, { childList: true, characterData: true, subtree: true });
+    new MutationObserver(syncMediaMetadata)
+      .observe(songTitle, { childList: true, characterData: true, subtree: true });
   }
+  if ($('songArtist')) {
+    new MutationObserver(syncMediaMetadata)
+      .observe($('songArtist'), { childList: true, characterData: true, subtree: true });
+  }
+  queueMicrotask(syncMediaMetadata);
 
   new MutationObserver(guardReferenceOnlyProvider)
     .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
