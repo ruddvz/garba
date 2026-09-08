@@ -1,31 +1,21 @@
 (() => {
-  // Preserve every previously shared player deep link after playgarba.com becomes
-  // the public site. Marketing/analytics query strings stay on the homepage, while
-  // player state moves to the dedicated listening origin unchanged.
   const playerParams = new Set(['song', 'genre', 'nonstop', 'queue', 'source']);
   const incoming = new URLSearchParams(window.location.search);
-if (incoming.has('browse')) {
-  const target = new URL('https://live.playgarba.com/catalogue/');
-  for (const [key, value] of incoming.entries()) {
-    if (key !== 'browse') target.searchParams.append(key, value);
+
+  if (incoming.has('browse')) {
+    const target = new URL('https://live.playgarba.com/catalogue/');
+    for (const [key, value] of incoming.entries()) {
+      if (key !== 'browse') target.searchParams.append(key, value);
+    }
+    target.hash = window.location.hash;
+    window.location.replace(target.toString());
+    return;
   }
-  target.hash = window.location.hash;
-  window.location.replace(target.toString());
-  return;
-}
+
   if ([...playerParams].some((key) => incoming.has(key))) {
     window.location.replace(`https://live.playgarba.com/${window.location.search}${window.location.hash}`);
     return;
   }
-
-  const ensurePolishStyles = () => {
-    if (document.querySelector('link[data-playgarba-polish]')) return;
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = '/polish.css';
-    link.dataset.playgarbaPolish = 'true';
-    document.head.appendChild(link);
-  };
 
   const header = document.querySelector('.site-header');
   const button = document.getElementById('menuButton');
@@ -44,10 +34,10 @@ if (incoming.has('browse')) {
   };
 
   button?.addEventListener('click', () => {
-    const open = button.getAttribute('aria-expanded') === 'true';
-    button.setAttribute('aria-expanded', String(!open));
-    nav?.classList.toggle('open', !open);
-    document.body.style.overflow = open ? '' : 'hidden';
+    const isOpen = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!isOpen));
+    nav?.classList.toggle('open', !isOpen);
+    document.body.style.overflow = isOpen ? '' : 'hidden';
   });
 
   nav?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
@@ -56,85 +46,12 @@ if (incoming.has('browse')) {
     if (window.innerWidth > 980) closeMenu();
   });
 
-  const markCurrentRoute = () => {
-    const current = window.location.pathname.replace(/index\.html$/, '');
-    document.querySelectorAll('.site-nav a[href^="/"]').forEach((link) => {
-      const href = new URL(link.href, window.location.origin).pathname.replace(/index\.html$/, '');
-      if (href === current) link.setAttribute('aria-current', 'page');
-    });
-  };
+  const current = window.location.pathname.replace(/index\.html$/, '');
+  document.querySelectorAll('.site-nav a[href^="/"]').forEach((link) => {
+    const href = new URL(link.href, window.location.origin).pathname.replace(/index\.html$/, '');
+    if (href === current) link.setAttribute('aria-current', 'page');
+  });
 
-  const ensureFaqNavigation = () => {
-    if (nav && !nav.querySelector('a[href="/faq/"], a[href="faq/"]')) {
-      const about = nav.querySelector('a[href="/about/"], a[href="about/"]');
-      const faq = document.createElement('a');
-      faq.href = '/faq/';
-      faq.textContent = 'FAQ';
-      if (about) nav.insertBefore(faq, about);
-      else nav.insertBefore(faq, nav.querySelector('.nav-cta'));
-      faq.addEventListener('click', closeMenu);
-    }
-
-    document.querySelectorAll('.footer-links').forEach((footer) => {
-      if (footer.querySelector('a[href="/faq/"], a[href="faq/"]')) return;
-      const about = footer.querySelector('a[href="/about/"], a[href="about/"]');
-      const faq = document.createElement('a');
-      faq.href = '/faq/';
-      faq.textContent = 'FAQ';
-      if (about) footer.insertBefore(faq, about);
-      else footer.prepend(faq);
-    });
-  };
-
-  const addMobileActionDock = () => {
-    if (!document.body.classList.contains('interior-page') || document.querySelector('.mobile-action-dock')) return;
-    const path = window.location.pathname;
-    const secondary = path.startsWith('/install/')
-      ? { href: '/how-to-use/', label: 'How to use' }
-      : path.startsWith('/how-to-use/') || path.startsWith('/faq/') || path.startsWith('/about/')
-        ? { href: '/install/', label: 'Install' }
-        : { href: '/how-to-use/', label: 'Guide' };
-
-    const dock = document.createElement('nav');
-    dock.className = 'mobile-action-dock';
-    dock.setAttribute('aria-label', 'Quick actions');
-    dock.innerHTML = `
-      <a class="dock-primary" href="https://live.playgarba.com/">Open player</a>
-      <a class="dock-secondary" href="${secondary.href}">${secondary.label}</a>
-    `;
-    document.body.appendChild(dock);
-  };
-
-  const addFaqSupport = () => {
-    if (!window.location.pathname.startsWith('/faq/') || document.getElementById('support')) return;
-    const cta = document.querySelector('.page-cta');
-    if (!cta) return;
-
-    const section = document.createElement('section');
-    section.className = 'page-section';
-    section.id = 'support';
-    section.setAttribute('aria-labelledby', 'support-title');
-    section.innerHTML = `
-      <div class="page-section-inner">
-        <div class="page-section-head">
-          <div>
-            <p class="page-kicker">REPORT A PROBLEM</p>
-            <h2 id="support-title">Found a bug or a missing song?</h2>
-          </div>
-          <p>Use the project’s existing GitHub issue forms. That keeps reports attached to the public repository instead of creating a separate support channel.</p>
-        </div>
-        <div class="support-actions">
-          <a class="button button-primary" href="https://github.com/ruddvz/garba/issues/new?template=bug-report.yml">Report a bug <span aria-hidden="true">↗</span></a>
-          <a class="button button-ghost" href="https://github.com/ruddvz/garba/issues/new?template=missing-song.yml">Report a missing song <span aria-hidden="true">↗</span></a>
-        </div>
-      </div>
-    `;
-    cta.before(section);
-  };
-
-  // The marketing site ships reviewable SVG fallbacks so first paint never depends
-  // on another hostname. Once the player host is available, progressively promote
-  // the exact same 2K WebP visual library used by GARBA itself.
   const artBase = 'https://live.playgarba.com/assets/backgrounds/library/';
   const art = [
     ['.hero-art', '11-master-dark-courtyard.webp'],
@@ -145,35 +62,52 @@ if (incoming.has('browse')) {
     ['.world-sanedo', '08-colourful-garba-courtyard-b.webp'],
     ['.world-fusion', '05-fusion-gujarati-neon.webp'],
     ['.nonstop-art', '04-colourful-garba-courtyard-a.webp'],
-    ['.player-scene', '11-master-dark-courtyard.webp'],
   ];
 
-  const promoteArtwork = (selector, file) => {
-    const element = document.querySelector(selector);
-    if (!element) return;
-    const url = `${artBase}${file}`;
+  const heroArtByPath = [
+    ['/how-to-use/', '11-master-dark-courtyard.webp'],
+    ['/install/', '07-dandiya-purple-courtyard.webp'],
+    ['/faq/', '03-devotional-garba-courtyard.webp'],
+    ['/about/', '14-gujarati-folk-courtyard.webp'],
+    ['/live/', '05-fusion-gujarati-neon.webp'],
+  ];
+
+  const loadArtwork = (url, onReady) => {
     const image = new Image();
     image.decoding = 'async';
     image.onload = async () => {
-      try { await image.decode?.(); } catch { /* loaded pixels are already usable */ }
-      element.style.backgroundImage = `url("${url}")`;
-      element.dataset.artworkQuality = '2k-webp';
+      try { await image.decode?.(); } catch { /* Loaded pixels are already usable. */ }
+      onReady(url);
     };
     image.src = url;
   };
 
-  const promoteAllArtwork = () => {
-    for (const [selector, file] of art) promoteArtwork(selector, file);
+  const promoteArtwork = () => {
+    for (const [selector, file] of art) {
+      const element = document.querySelector(selector);
+      if (!element) continue;
+      const url = `${artBase}${file}`;
+      loadArtwork(url, (readyUrl) => {
+        element.style.backgroundImage = `url("${readyUrl}")`;
+        element.dataset.artworkQuality = '2k-webp';
+      });
+    }
+
+    const pageHero = document.querySelector('.page-hero');
+    if (pageHero) {
+      const match = heroArtByPath.find(([path]) => window.location.pathname.startsWith(path));
+      if (match) {
+        const url = `${artBase}${match[1]}`;
+        loadArtwork(url, (readyUrl) => {
+          pageHero.style.setProperty('--page-hero-image', `url("${readyUrl}")`);
+          pageHero.dataset.artworkQuality = '2k-webp';
+        });
+      }
+    }
   };
 
-  ensurePolishStyles();
-  ensureFaqNavigation();
-  markCurrentRoute();
-  addMobileActionDock();
-  addFaqSupport();
-
-  if ('requestIdleCallback' in window) requestIdleCallback(promoteAllArtwork, { timeout: 1800 });
-  else window.setTimeout(promoteAllArtwork, 350);
+  if ('requestIdleCallback' in window) requestIdleCallback(promoteArtwork, { timeout: 1400 });
+  else window.setTimeout(promoteArtwork, 250);
 
   if (year) year.textContent = String(new Date().getFullYear());
   setHeaderState();
