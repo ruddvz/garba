@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-07",
+  "updated": "2026-09-08",
   "sets": [
     {
       "id": "set-ramzat-2017-official-jukebox",
@@ -15,6 +15,7 @@
         "embeddable": true
       },
       "linkedReleaseId": "ramzat-2017",
+      "segmentRouting": "metadata-only",
       "durationSeconds": 4159,
       "segments": [
         {"title": "Sachi Re Mari - Chhand - Charni Sapakharu", "startSeconds": 0, "endSeconds": 203},
@@ -54,7 +55,7 @@
         {"title": "Maa Ni Dhun Lagi", "startSeconds": 3972, "endSeconds": 4159}
       ],
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Verified Sur Sagar Music official album jukebox. Chapter boundaries transcribe the label's published timestamp list; canonical titles are used where the label's transliteration differs."
+      "notes": "Verified Sur Sagar Music official album jukebox. Chapter boundaries transcribe the label's published timestamp list; canonical titles are used where the label's transliteration differs. Multi-artist chapter timestamps remain discovery metadata until a specific performer is verified."
     }
   ]
 }
