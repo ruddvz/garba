@@ -42,6 +42,21 @@ if (!provider.includes("new MutationObserver(() => {\n      closeProvider();")) 
 if (!provider.includes("playButton?.addEventListener('click', interceptFallbackPlay, { capture: true })")) {
   fail('Provider-aware primary Play interception is missing');
 }
+for (const marker of [
+  'function loadSongs({ refresh = false } = {})',
+  "window.addEventListener('garba:catalogue-ready'",
+  'loadSongs({ refresh: true })',
+  'window.GARBA_FAST_BOOT.hydrate()',
+  'This selected track could not be resolved.',
+]) {
+  if (!provider.includes(marker)) fail(`Provider catalogue hydration guard missing marker: ${marker}`);
+}
+if (provider.includes('|| songs[0] || null')) {
+  fail('Provider currentSong must never silently fall back to the first catalogue song');
+}
+if (provider.includes('setTimeout(() => { loadSongs(); }, 600);')) {
+  fail('Provider runtime must not permanently cache the fast-boot catalogue before hydration');
+}
 if (!app.includes("copy.className = 'song-copy'")) fail('Song rows must retain the song-copy action target');
 for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
   if (!app.includes(`els.${control}.addEventListener('click'`)) fail(`Core app lost ${control} transport binding`);
@@ -50,4 +65,5 @@ for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
 if (failed) process.exit(1);
 console.log('✓ song-row Play intent follows the newly selected provider song');
 console.log('✓ provider Previous/Next preserve listening intent across song changes');
+console.log('✓ provider routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ continuity layer loads after provider runtime and before app interaction completes');
