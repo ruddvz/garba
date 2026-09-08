@@ -402,7 +402,7 @@ function buildCollections() {
     test:(song,release)=>releaseYear(release)>=from&&releaseYear(release)<=to,
   })));
 
-  state.artists.slice(0, 24).forEach((artist, index) => {
+  state.artists.forEach((artist, index) => {
     const names = [artist.name, ...(artist.aliases || [])].map(normalise).filter(Boolean);
     c.push(fixedCollection({
       id:`artist-${artist.id}`,

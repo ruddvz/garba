@@ -4,6 +4,8 @@ const runtime = await readFile(new URL('../../assets/runtime/explore-search.js',
 const explore = await readFile(new URL('../../src/catalogue/index.html', import.meta.url), 'utf8');
 const catalogue = await readFile(new URL('../../src/catalogue/catalogue.js', import.meta.url), 'utf8');
 const listening = await readFile(new URL('../../src/catalogue/listening-library.js', import.meta.url), 'utf8');
+const artistArtworkPayload = JSON.parse(await readFile(new URL('../../data/artist-artwork.json', import.meta.url), 'utf8'));
+const catalogueIndex = JSON.parse(await readFile(new URL('../../data/catalogue/index.json', import.meta.url), 'utf8'));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
@@ -110,6 +112,55 @@ for (const marker of [
   if (!listening.includes(marker)) fail(`Selected release tracklist cleanup is missing: ${marker}`);
 }
 
+for (const marker of [
+  'playgarbaArtistIdentity',
+  'artist-collection-card',
+  'artist-card-portrait',
+  'artist-detail-portrait',
+  'artist-photo-credit',
+  "entry?.verified === true && entry.imageUrl",
+  "detailHead.dataset.artistArtwork = 'true';",
+  'delete detailHead.dataset.artistArtwork;',
+  "fetchJson('../data/artist-artwork.json', { artists: {} })",
+  'artist.garbaFootprint',
+  'artist.notable',
+  "credit.target = '_blank';",
+  "credit.rel = 'noopener noreferrer';",
+]) {
+  if (!listening.includes(marker)) fail(`Artist identity experience is missing: ${marker}`);
+}
+
+if (!catalogue.includes('state.artists.forEach((artist, index) => {')) {
+  fail('Explore must build artist collections from the full discovery artist set');
+}
+if (catalogue.includes('state.artists.slice(0, 24)')) {
+  fail('Explore artist collections must not regress to the legacy 24-artist cap');
+}
+
+const discoveryArtistIds = new Set();
+for (const file of catalogueIndex?.discovery?.artists || []) {
+  const payload = JSON.parse(await readFile(new URL(`../../${file}`, import.meta.url), 'utf8'));
+  for (const artist of payload?.artists || []) {
+    if (artist?.id) discoveryArtistIds.add(artist.id);
+  }
+}
+
+const artistArtwork = artistArtworkPayload?.artists || {};
+if (!Object.keys(artistArtwork).length) fail('Artist portrait registry must contain at least one audited portrait');
+for (const [artistId, entry] of Object.entries(artistArtwork)) {
+  if (!discoveryArtistIds.has(artistId)) fail(`Artist portrait registry contains unknown discovery artist: ${artistId}`);
+  if (entry?.verified !== true) fail(`Artist portrait must be explicitly verified: ${artistId}`);
+  for (const field of ['imageUrl', 'sourcePage', 'license', 'licenseUrl', 'attribution', 'sourceType']) {
+    if (!String(entry?.[field] || '').trim()) fail(`Artist portrait ${artistId} is missing ${field}`);
+  }
+  for (const field of ['imageUrl', 'sourcePage', 'licenseUrl']) {
+    if (!String(entry?.[field] || '').startsWith('https://')) fail(`Artist portrait ${artistId} ${field} must use HTTPS`);
+  }
+  if (!/^CC BY(?:-SA)? \d(?:\.\d)?$/.test(String(entry?.license || ''))) {
+    fail(`Artist portrait ${artistId} uses an unapproved or unclear licence label: ${entry?.license || 'missing'}`);
+  }
+}
+
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
 inlineModules.forEach((source, index) => {
@@ -146,4 +197,4 @@ if (listening.includes('release-hero-art fallback')) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, verified release hero, clean selected tracklists, release identity, metadata descriptions, taxonomy-driven browsing, album semantics and keyboard navigation are protected');
+console.log('✓ Explore detail hierarchy, verified release and artist artwork, full artist discovery, clean tracklists, rich metadata, taxonomy browsing, album semantics and keyboard navigation are protected');
