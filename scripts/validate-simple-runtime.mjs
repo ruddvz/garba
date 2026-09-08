@@ -58,6 +58,15 @@ for (const forbidden of [
 for (const marker of [
   'clearStaleInert',
   'interceptFallbackPlay',
+  'function rememberPlaybackIntent(event)',
+  'let playAfterSelection = false;',
+  'let continueProviderAfterNavigation = false;',
+  "target.closest('.song-copy')",
+  "target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')",
+  "document.addEventListener('click', rememberPlaybackIntent, { capture: true })",
+  'const shouldStartSelectedSong = playAfterSelection;',
+  'const shouldContinueProvider = continueProviderAfterNavigation;',
+  'if (shouldStartSelectedSong || shouldContinueProvider) queueMicrotask(() => fallbackPlay());',
   'function interceptGlobalSpace(event)',
   "target.closest('button, a[href], input, textarea, select, [contenteditable]:not([contenteditable=\"false\"])')",
   "document.addEventListener('keydown', interceptGlobalSpace)",
@@ -199,6 +208,8 @@ console.log(`✓ production runtime uses ${scriptSources.join(' + ')}`);
 console.log(`✓ ${songs.length} songs and six genres remain available`);
 console.log(`✓ ${nonstopIndex.chunks.length} Nonstop discovery chunks remain available`);
 console.log('✓ primary player controls retain direct event bindings');
+console.log('✓ song-row Play intent follows the newly selected provider song instead of only changing metadata');
+console.log('✓ provider Next and Previous reopen the new song source instead of silently stopping playback');
 console.log(`✓ provider playback surface stacks above the song browser (${providerZ} > ${sheetZ})`);
 console.log('✓ YouTube, Spotify, Apple Music and SoundCloud have in-app provider paths when their source format is embeddable');
 console.log('✓ unchaptered YouTube releases stay in GARBA without autoplaying the wrong selected song');
