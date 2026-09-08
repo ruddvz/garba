@@ -23,6 +23,12 @@ function collectRuntimeFailures(page) {
   return failures;
 }
 
+function isExpectedOfflineNetworkFailure(failure) {
+  if (failure.startsWith('pageerror:')) return false;
+  if (failure === 'console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED') return true;
+  return failure.startsWith('requestfailed:') && failure.includes('net::ERR_INTERNET_DISCONNECTED');
+}
+
 async function expectNoDocumentOverflow(page) {
   const metrics = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
@@ -75,9 +81,10 @@ async function expectAppCoversViewport(page) {
   expect(coverage.layer.bottom).toBeGreaterThanOrEqual(coverage.height - 2);
 }
 
-async function expectNoRuntimeFailures(page, failures, label) {
+async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = null } = {}) {
   await page.waitForTimeout(150);
-  expect(failures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
+  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures;
+  expect(unexpectedFailures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
 async function playerAnchors(page) {
@@ -113,7 +120,7 @@ test('production player shell is stable, complete and uses the custom genre artw
   }
 
   const browse = page.locator('#browseButton');
-  await expect(browse).toHaveAttribute('href', './catalogue/');
+  await expect(browse).toHaveAttribute('href', './explore/');
   await expect(browse).not.toHaveAttribute('aria-controls', /.+/);
 
   const genreButtons = page.locator('#genreStrip .genre-button[data-genre]');
@@ -206,7 +213,7 @@ test('Explore is reached through the production player link and renders real cat
   const failures = collectRuntimeFailures(page);
   await page.goto('/');
   await Promise.all([
-    page.waitForURL(/\/explore\/$/),
+    page.waitForURL(/\/explore\/$/, { waitUntil: 'domcontentloaded' }),
     page.locator('#browseButton').click(),
   ]);
 
@@ -221,7 +228,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/explore/');
+  await page.goto('/explore/', { waitUntil: 'domcontentloaded' });
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();
@@ -259,5 +266,5 @@ test('installed shell survives an offline reload after the service worker is rea
     await context.setOffline(false);
   }
 
-  await expectNoRuntimeFailures(page, failures, 'offline PWA shell');
+  await expectNoRuntimeFailures(page, failures, 'offline PWA shell', { ignoreFailure: isExpectedOfflineNetworkFailure });
 });
