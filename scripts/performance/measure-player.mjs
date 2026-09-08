@@ -315,34 +315,37 @@ async function measurePhase(page, options, phase) {
   page.on('console', onConsole);
   page.on('response', onResponse);
 
-  await page.goto(options.origin, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-  await page.waitForFunction(() => {
-    const title = document.getElementById('songTitle');
-    const play = document.getElementById('playButton');
-    return Boolean(title?.textContent?.trim() && play?.getBoundingClientRect().width);
-  }, null, { timeout: 15_000 });
-  const shellReadyMs = await page.evaluate(() => performance.now());
+  try {
+    await page.goto(options.origin, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForFunction(() => {
+      const title = document.getElementById('songTitle');
+      const play = document.getElementById('playButton');
+      return Boolean(title?.textContent?.trim() && play?.getBoundingClientRect().width);
+    }, null, { timeout: 15_000 });
+    const shellReadyMs = await page.evaluate(() => performance.now());
 
-  const search = await measureSearch(page);
-  const nonstop = await measureNonstop(page);
-  await page.waitForTimeout(250);
-  const browser = await collectBrowserMetrics(page, options.originValue);
+    const search = await measureSearch(page);
+    const nonstop = await measureNonstop(page);
+    await page.waitForLoadState('load', { timeout: 10_000 }).catch(() => {});
+    await page.waitForTimeout(250);
+    const browser = await collectBrowserMetrics(page, options.originValue);
 
-  page.off('pageerror', onPageError);
-  page.off('console', onConsole);
-  page.off('response', onResponse);
-
-  return {
-    phase,
-    shellReadyMs,
-    searchPresentationMs: search.duration,
-    searchResultCount: search.resultCount,
-    searchMatchedQuery: search.matchedQuery,
-    nonstopPresentationMs: nonstop.duration,
-    nonstopSetCount: nonstop.setCount,
-    ...browser,
-    failures,
-  };
+    return {
+      phase,
+      shellReadyMs,
+      searchPresentationMs: search.duration,
+      searchResultCount: search.resultCount,
+      searchMatchedQuery: search.matchedQuery,
+      nonstopPresentationMs: nonstop.duration,
+      nonstopSetCount: nonstop.setCount,
+      ...browser,
+      failures,
+    };
+  } finally {
+    page.off('pageerror', onPageError);
+    page.off('console', onConsole);
+    page.off('response', onResponse);
+  }
 }
 
 async function runProfile(browser, profileName, profile, options) {
@@ -407,6 +410,7 @@ async function main() {
   }
 
   const browser = await chromium.launch({ headless: true });
+  const browserVersion = browser.version();
   const profileNames = options.profile === 'all' ? Object.keys(PROFILES) : [options.profile];
   const profiles = [];
 
@@ -425,7 +429,7 @@ async function main() {
     runsPerProfile: options.runs,
     browser: {
       name: 'chromium',
-      version: browser.version?.() || null,
+      version: browserVersion,
       playwright: '1.55.0 expected',
     },
     measurementBoundary: {
