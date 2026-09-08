@@ -61,6 +61,7 @@ const styleLayers = [
   '50-discovery-and-performance.css',
   '60-runtime-and-provider.css',
   '70-mobile-playback-coordination.css',
+  '80-genre-icon-images.css',
 ];
 const actualStyles = (await readdir(path.join(root, 'styles'))).filter((file) => file.endsWith('.css')).sort();
 if (!same(actualStyles, styleLayers)) {
