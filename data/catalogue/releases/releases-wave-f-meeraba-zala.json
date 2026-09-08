@@ -1,0 +1,79 @@
+[
+  {
+    "id": "meeraba-navratri-non-stop-part-1-2025",
+    "title": "Navratri Non Stop Garba (Part-1)",
+    "artist": "Meeraba Zala",
+    "releaseDate": "2025-09-01",
+    "originalReleaseYear": 2025,
+    "label": "Meera Music",
+    "categories": [
+      "traditional-garba",
+      "mataji-devotional"
+    ],
+    "visualGenre": "traditional",
+    "entryType": "album",
+    "songCount": 10,
+    "durationSeconds": 1723,
+    "series": "Navratri Non Stop Garba",
+    "volume": 1,
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
+    "sources": [
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.com/albums/B0FPGGGTRB",
+        "kind": "official-10-track-album"
+      }
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified",
+    "audioAvailability": "external-source-only",
+    "durationPrecision": "track-sum",
+    "notes": "Amazon Music exposes this as a 10-track Meeraba Zala release with the listed component order and durations. Storefronts disagree between Aug 30 and Sep 1, 2025; Sep 1 is used here because the Canada album surface and the exact component-song pages publish that date. A separate 28:43 one-track continuous master also exists and is not conflated with this split-track edition."
+  },
+  {
+    "id": "meeraba-navratri-non-stop-part-2-2025",
+    "title": "Navratri Non Stop Garba (Part-2)",
+    "artist": "Meeraba Zala",
+    "releaseDate": "2025-09-02",
+    "originalReleaseYear": 2025,
+    "label": "Meera Music",
+    "categories": [
+      "traditional-garba",
+      "mataji-devotional"
+    ],
+    "visualGenre": "traditional",
+    "entryType": "album",
+    "songCount": 10,
+    "durationSeconds": 1926,
+    "series": "Navratri Non Stop Garba",
+    "volume": 2,
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
+    "sources": [
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.in/albums/B0FPQMJLQ6",
+        "kind": "official-10-track-album"
+      },
+      {
+        "platform": "Apple Music",
+        "url": "https://music.apple.com/us/album/navratri-non-stop-garba-part-2/1837613826",
+        "kind": "official-album-stream"
+      }
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified-multi-source",
+    "audioAvailability": "external-source-only",
+    "durationPrecision": "track-sum",
+    "notes": "Amazon Music exposes the 10-track split edition and Apple Music corroborates the release. Exact song pages publish Sep 2, 2025, which is retained despite an Amazon India album surface showing Aug 30. A separate one-track continuous master exists and remains a distinct recording/segmentation."
+  }
+]
