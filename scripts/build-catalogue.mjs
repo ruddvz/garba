@@ -181,7 +181,16 @@ function makePerformanceResolver(sets) {
       const similarity = exact ? 1 : titleSimilarity(song.title, candidate.segment.title);
       const threshold = songTokens.length <= 1 ? 1 : 0.9;
       if (similarity < threshold) continue;
-      matches.push({ candidate, similarity, score: similarity * 100 + candidate.rank * 10 + (exact ? 10 : 0) });
+      // When the verified chapter belongs to the selected song's own release,
+      // prefer it over a higher-ranked but different performance with the same
+      // traditional title. This keeps album-jukebox timestamps faithful to the
+      // catalogue recording while retaining the normal quality order elsewhere.
+      const releaseMatch = candidate.set.linkedReleaseId && candidate.set.linkedReleaseId === song.releaseId;
+      matches.push({
+        candidate,
+        similarity,
+        score: (releaseMatch ? 1000 : 0) + similarity * 100 + candidate.rank * 10 + (exact ? 10 : 0),
+      });
     }
     matches.sort((a, b) => b.score - a.score);
     const best = matches[0];
