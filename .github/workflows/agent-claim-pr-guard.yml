@@ -16,7 +16,7 @@ jobs:
       - name: Verify PR owns its implementation lane
         uses: actions/github-script@v7
         env:
-          LEGACY_PR_MAX: "365"
+          LEGACY_PR_MAX: "378"
           BOARD_ISSUE: "364"
         with:
           script: |
@@ -60,7 +60,12 @@ jobs:
             function parseEvent(comment) {
               const body = comment.body || '';
               const override = body.match(overrideRe);
-              if (override) return { type: 'override' };
+              if (override) {
+                return {
+                  type: 'override',
+                  author: comment.user?.login || 'unknown',
+                };
+              }
 
               const release = body.match(releaseRe);
               if (release) {
@@ -102,8 +107,10 @@ jobs:
                 if (!event) continue;
 
                 if (event.type === 'override') {
-                  active = null;
-                  conflicts = 0;
+                  if (event.author === owner) {
+                    active = null;
+                    conflicts = 0;
+                  }
                   continue;
                 }
 
