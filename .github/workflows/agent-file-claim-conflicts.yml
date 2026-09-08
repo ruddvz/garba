@@ -14,10 +14,10 @@ permissions:
   issues: write
   pull-requests: read
 
-# Share the registry lock so board writes from the two coordination workflows
-# cannot race and overwrite each other.
+# Keep this workflow independent from the ordinary claim registry. GitHub may
+# replace a pending run when separate workflows share one concurrency group.
 concurrency:
-  group: agent-claim-registry
+  group: agent-file-claim-conflicts
   cancel-in-progress: false
 
 jobs:
@@ -423,6 +423,31 @@ jobs:
               return String(value || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
             }
 
+            function renderBoardBody(currentBody, table) {
+              const start = '<!-- agent-file-conflicts:start -->';
+              const end = '<!-- agent-file-conflicts:end -->';
+              let body = currentBody || '';
+
+              if (body.includes(start) && body.includes(end)) {
+                return body.replace(new RegExp(`${start}[\\s\\S]*?${end}`), `${start}\n${table}\n${end}`);
+              }
+
+              const anchor = '<!-- agent-work-board:managed-end -->';
+              if (!body.includes(anchor)) throw new Error(`Board issue #${boardIssue} is missing ${anchor}.`);
+              const block = [
+                anchor,
+                '',
+                '## Cross-issue file ownership',
+                '',
+                'Earlier active claims and legacy PRs own their declared files first. A later claim listed below must narrow its scope or wait for release before implementation or merge.',
+                '',
+                start,
+                table,
+                end,
+              ].join('\n');
+              return body.replace(anchor, block);
+            }
+
             async function updateBoard(rows) {
               const conflictRows = rows.flatMap(row => row.fileConflicts.map(conflict => ({ row, conflict })));
               const table = conflictRows.length
@@ -435,33 +460,30 @@ jobs:
                   ].join('\n')
                 : '_No active cross-issue file conflicts._';
 
-              const board = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
-              let body = board.data.body || '';
               const start = '<!-- agent-file-conflicts:start -->';
               const end = '<!-- agent-file-conflicts:end -->';
+              const expectedBlock = `${start}\n${table}\n${end}`;
 
-              if (body.includes(start) && body.includes(end)) {
-                body = body.replace(new RegExp(`${start}[\\s\\S]*?${end}`), `${start}\n${table}\n${end}`);
-              } else {
-                const anchor = '<!-- agent-work-board:managed-end -->';
-                if (!body.includes(anchor)) throw new Error(`Board issue #${boardIssue} is missing ${anchor}.`);
-                const block = [
-                  anchor,
-                  '',
-                  '## Cross-issue file ownership',
-                  '',
-                  'Earlier active claims and legacy PRs own their declared files first. A later claim listed below must narrow its scope or wait for release before implementation or merge.',
-                  '',
-                  start,
-                  table,
-                  end,
-                ].join('\n');
-                body = body.replace(anchor, block);
+              // The ordinary claim registry also updates #364. Use a separate workflow
+              // lock, then verify/retry this marker block so a concurrent board update
+              // cannot permanently erase the cross-file section.
+              await new Promise(resolve => setTimeout(resolve, 500));
+              for (let attempt = 1; attempt <= 5; attempt += 1) {
+                const board = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
+                const current = board.data.body || '';
+                if (current.includes(expectedBlock)) return;
+
+                const wanted = renderBoardBody(current, table);
+                if (wanted !== current) {
+                  await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body: wanted });
+                }
+
+                await new Promise(resolve => setTimeout(resolve, attempt * 400));
+                const verify = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
+                if ((verify.data.body || '').includes(expectedBlock)) return;
               }
 
-              if (body !== (board.data.body || '')) {
-                await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body });
-              }
+              throw new Error(`Could not persist cross-issue file ownership section on board #${boardIssue} after retries.`);
             }
 
             async function clearStaleLabels(activeRows) {
