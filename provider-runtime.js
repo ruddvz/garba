@@ -49,10 +49,12 @@
     document.querySelectorAll('[inert]').forEach((node) => node.removeAttribute('inert'));
   }
 
-  function loadSongs() {
+  function loadSongs({ refresh = false } = {}) {
+    if (refresh) songsPromise = null;
     if (!songsPromise) {
-      songsPromise = fetch('data/songs.json', { cache: 'force-cache' })
+      songsPromise = fetch('data/songs.json', { cache: refresh ? 'no-store' : 'force-cache' })
         .then((response) => response.ok ? response.json() : [])
+        .then((songs) => Array.isArray(songs) ? songs : [])
         .catch(() => []);
     }
     return songsPromise;
@@ -67,7 +69,7 @@
     }
     const title = String($('songTitle')?.textContent || '').trim();
     const artist = String($('songArtist')?.textContent || '').trim();
-    return songs.find((song) => song.title === title && song.artist === artist) || songs[0] || null;
+    return songs.find((song) => song.title === title && song.artist === artist) || null;
   }
 
   function providerName(provider = '') {
@@ -340,8 +342,19 @@
 
   async function fallbackPlay() {
     if (hasDirectAudio()) return;
-    const song = await currentSong();
-    if (!song || hasDirectAudio()) return;
+    let song = await currentSong();
+
+    if (!song && !window.GARBA_CATALOGUE_READY && typeof window.GARBA_FAST_BOOT?.hydrate === 'function') {
+      await window.GARBA_FAST_BOOT.hydrate();
+      song = await currentSong();
+    }
+
+    if (!song || hasDirectAudio()) {
+      if (!song) announce(window.GARBA_CATALOGUE_READY
+        ? 'This selected track could not be resolved. Choose it again from Browse.'
+        : 'Loading the full catalogue. Try Play again in a moment.');
+      return;
+    }
     await openProvider(song);
   }
 
@@ -503,6 +516,9 @@
     }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
   }
 
+  window.addEventListener('garba:catalogue-ready', () => {
+    loadSongs({ refresh: true });
+  });
   window.addEventListener('online', updateNetworkState);
   window.addEventListener('offline', () => {
     const hadProvider = Boolean(providerSongId);
@@ -513,7 +529,7 @@
   window.addEventListener('load', () => {
     setupMediaSessionFallback();
     scheduleVisualPromotion();
-    setTimeout(() => { loadSongs(); }, 600);
+    if (window.GARBA_CATALOGUE_READY) loadSongs({ refresh: true });
   }, { once: true });
   window.addEventListener('pageshow', clearStaleInert);
   document.addEventListener('pointerdown', clearStaleInert, { capture: true, once: true });

@@ -4,8 +4,9 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [runtime, styles, bootstrap] = await Promise.all([
+const [runtime, nonstop, styles, bootstrap] = await Promise.all([
   read('youtube-player-runtime.js'),
+  read('nonstop-browser.js'),
   read('styles/60-runtime-and-provider.css'),
   read('simple-runtime.js'),
 ]);
@@ -46,7 +47,7 @@ const prohibitedPatterns = [
 ];
 
 for (const [pattern, label] of prohibitedPatterns) {
-  if (pattern.test(runtime)) fail(`YouTube runtime must not implement ${label}`);
+  if (pattern.test(runtime) || pattern.test(nonstop)) fail(`YouTube runtime must not implement ${label}`);
 }
 
 if (!/\.provider-media\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200px;/s.test(styles)) {
@@ -54,6 +55,20 @@ if (!/\.provider-media\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200px;/s.t
 }
 if (!/\.provider-media iframe\s*\{[^}]*min-width:\s*200px;[^}]*min-height:\s*200px;/s.test(styles)) {
   fail('Embedded provider iframe must keep a minimum 200×200 viewport');
+}
+
+for (const marker of [
+  'function stopMainPlayback()',
+  'window.GARBA_YOUTUBE_PLAYER?.close?.()',
+  "document.querySelector('#providerStage.open[aria-hidden=\"false\"] #providerDockStop')?.click()",
+  'if (audio && !audio.paused) audio.pause()',
+  'stopMainPlayback();',
+  'min-width:200px;min-height:200px',
+]) {
+  if (!nonstop.includes(marker)) fail(`Nonstop playback coordination missing marker: ${marker}`);
+}
+if (!nonstop.includes('https://www.youtube-nocookie.com/embed/')) {
+  fail('Nonstop playback must retain the official YouTube embed route');
 }
 
 const providerIndex = bootstrap.indexOf('provider-runtime.js');
@@ -67,4 +82,5 @@ if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
+console.log('✓ Nonstop playback stops the main player before opening its visible YouTube embed');
 console.log('✓ route-truth sanitisation runs before YouTube autoplay decisions');

@@ -125,7 +125,9 @@
     "data/playback-sources-trupti-kaushal.json",
     "data/playback-sources-alpa-current.json",
     "data/playback-sources-raag-mehta.json",
-    "data/playback-sources-ranked-fallbacks.json"
+    "data/playback-sources-ranked-fallbacks.json",
+    "data/playback-sources-jordar-exact.json",
+    "data/playback-sources-rangoli-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
