@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://playgarba.com/sitemap.xml
+Sitemap: https://live.playgarba.com/sitemap.xml

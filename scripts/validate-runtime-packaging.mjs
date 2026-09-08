@@ -111,14 +111,14 @@ for (const marker of [
   'id="text-backdrop"',
   'feDropShadow',
   '>PlayGarba.com</text>',
-  '>All Garba there is in the world.</text>',
+  '>All the Garba in the world.</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
 }
-const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
+const imageUrl = 'https://live.playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [
   imageUrl,
-  'GARBA · Gujarati Garba, beautifully played',
+  'PlayGarba.com · All the Garba in the world',
   'collectHtmlFiles',
   'og:image',
   'og:image:width',

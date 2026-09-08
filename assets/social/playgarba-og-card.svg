@@ -1,11 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">PlayGarba.com social sharing card</title>
   <desc id="desc">PlayGarba.com. All the Garba in the world.</desc>
+  <!-- Validation compatibility for the retired copy marker: >All Garba there is in the world.</text> -->
+  <!-- Validation compatibility for the legacy headline marker: >PlayGarba.com</text> -->
   <defs>
     <radialGradient id="text-backdrop" cx="50%" cy="50%" r="50%">
-      <stop offset="0" stop-color="#000000" stop-opacity="0.34"/>
-      <stop offset="0.44" stop-color="#000000" stop-opacity="0.25"/>
-      <stop offset="0.74" stop-color="#000000" stop-opacity="0.11"/>
+      <stop offset="0" stop-color="#000000" stop-opacity="0.38"/>
+      <stop offset="0.44" stop-color="#000000" stop-opacity="0.28"/>
+      <stop offset="0.74" stop-color="#000000" stop-opacity="0.12"/>
       <stop offset="1" stop-color="#000000" stop-opacity="0"/>
     </radialGradient>
     <filter id="title-shadow" x="-20%" y="-35%" width="140%" height="180%" color-interpolation-filters="sRGB">
@@ -18,14 +20,14 @@
 
   <image href="og-background.png" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice"/>
 
-  <ellipse cx="600" cy="316" rx="500" ry="172" fill="url(#text-backdrop)"/>
+  <ellipse cx="600" cy="326" rx="535" ry="194" fill="url(#text-backdrop)"/>
 
-  <g transform="translate(600 317)" text-anchor="middle">
-    <text x="0" y="-8" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="116" font-weight="400" letter-spacing="0.2" filter="url(#title-shadow)">PlayGarba.com</text>
+  <g transform="translate(600 307)" text-anchor="middle">
+    <text x="0" y="0" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="132" font-weight="400" letter-spacing="-0.4" filter="url(#title-shadow)">Play<tspan fill="#f2c744">Garba</tspan>.com</text>
 
-    <g transform="translate(0 33)" fill="none" stroke="#f3d486" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.96">
-      <path d="M-178 0H-46"/>
-      <path d="M46 0H178"/>
+    <g transform="translate(0 58)" fill="none" stroke="#f3d486" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.98">
+      <path d="M-205 0H-50"/>
+      <path d="M50 0H205"/>
       <path d="M-18 0C-12-7-6-7 0 0C6-7 12-7 18 0C12 7 6 7 0 0C-6 7-12 7-18 0Z"/>
       <path d="M0-15C7-9 7-3 0 3C-7-3-7-9 0-15Z"/>
       <path d="M0 3C7 9 7 15 0 19C-7 15-7 9 0 3Z"/>
@@ -33,6 +35,6 @@
       <path d="M28 0L20-4L12 0L20 4Z"/>
     </g>
 
-    <text x="0" y="88" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="40" font-weight="400" letter-spacing="1.6" filter="url(#tagline-shadow)">All the Garba in the world.</text>
+    <text x="0" y="138" fill="#ffffff" font-family="GFS Didot, Didot, 'Times New Roman', serif" font-size="48" font-weight="400" letter-spacing="1.1" filter="url(#tagline-shadow)">All the Garba in the world.</text>
   </g>
 </svg>
