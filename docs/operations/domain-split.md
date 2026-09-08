@@ -1,6 +1,6 @@
 # PlayGarba production domain
 
-Status: consolidated on Vercel.
+Status: consolidated on GitHub Pages.
 
 ## Architecture
 
@@ -12,16 +12,16 @@ PlayGarba is one product on one canonical origin:
 | `https://playgarba.com/explore/` | Catalogue and discovery experience |
 | `https://playgarba.com/about/`, `/install/`, `/help/`, `/faq/` | Small supporting pages |
 | `https://www.playgarba.com/*` | Permanent redirect to the equivalent apex URL |
-| `https://live.playgarba.com/*` | Legacy compatibility redirect to the apex |
+| `https://live.playgarba.com/*` | Retired legacy host; registrar forwarding to the apex |
 
-The production Vercel project is `playgarba-public`. The root player remains the source entry point; Explore is served from the existing catalogue implementation through the `/explore/` rewrite.
+The single production artifact is published by the repository's GitHub Pages workflow. The root player is the source entry point, and Explore is published at `/explore/`.
 
 ## Compatibility rules
 
 - `www.playgarba.com/<path>` permanently redirects to `playgarba.com/<path>`.
-- `live.playgarba.com/<path>` permanently redirects to `playgarba.com/<path>`.
-- `live.playgarba.com/catalogue/<path>` and `playgarba.com/catalogue/<path>` permanently redirect to `playgarba.com/explore/<path>`.
-- Query strings are preserved by Vercel redirects so player state such as `?genre=`, `?song=` and `?nonstop=` survives old links.
+- `live.playgarba.com` is retired and should permanently forward to `playgarba.com` while preserving paths and query strings where the registrar supports it.
+- `/catalogue/` is retained only as a compatibility path and the canonical public catalogue route is `/explore/`.
+- Query strings must be preserved so player state such as `?genre=`, `?song=` and `?nonstop=` survives old links.
 - Standalone song and release trees are not published; catalogue detail remains in-page Explore state.
 
 ## PWA contract
@@ -30,9 +30,7 @@ The manifest, service worker, canonical tags, sitemap, robots file and social me
 
 ## Deployment
 
-The Vercel project builds the current remote `main` with `npm run catalogue`, then serves the repository root. The checked-in workflow retains the validated static-artifact preparation and deploys `_site` to the same Vercel project using `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` secrets.
-
-GitHub Pages is not a production dependency. `CNAME` is intentionally absent, and the hosting validator fails if Pages ownership assumptions return.
+The Pages workflow builds the current `main` artifact and deploys `_site` with the official Pages actions. See [`docs/deployment/GITHUB-PAGES.md`](../deployment/GITHUB-PAGES.md) for the DNS and cutover runbook.
 
 ## Verification checklist
 
@@ -45,4 +43,4 @@ After a production deployment, verify:
 5. PWA install, offline shell, player deep links and Explore navigation work.
 6. YouTube playback, Nonstop, queue, favourites and mobile controls remain intact.
 
-DNS changes should be limited to the domain records required by Vercel. Do not remove unrelated mail, verification or registrar records.
+DNS changes should be limited to the domain records required by GitHub Pages. Do not remove unrelated mail, verification or registrar records.

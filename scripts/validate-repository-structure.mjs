@@ -272,7 +272,7 @@ if (await exists('vercel.json')) fail('vercel.json must not remain in a Pages-on
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
-for (const file of ['robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Live Vercel build missing production-domain file: ${file}`);
+for (const file of ['robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Pages build missing production-domain file: ${file}`);
 for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`Pages workflow missing style layer: ${layer}`);
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
 for (const action of ['actions/configure-pages@v5', 'actions/upload-pages-artifact@v4', 'actions/deploy-pages@v4']) if (!pages.includes(action)) fail(`Pages workflow must use ${action}`);
@@ -295,5 +295,5 @@ ok('PlayGarba custom-domain and crawler files are source-controlled and deployme
 ok('catalogue is one crawlable page with in-page collection, release and song states');
 ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
 ok('standalone song/release SEO page generation is retired and guarded against');
-ok('Vercel deployment uses explicit runtime and stylesheet contracts');
-ok('single-project Vercel host routing serves the player at the apex with legacy compatibility redirects');
+ok('Pages deployment uses explicit runtime and stylesheet contracts');
+ok('single Pages artifact serves the player at the apex with legacy compatibility paths');

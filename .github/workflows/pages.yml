@@ -49,6 +49,7 @@ jobs:
             manifest.webmanifest \
             offline.html \
             _site/
+          cp public-site/404.html _site/404.html
           cp -R assets data _site/
 
           # Keep seek and continuous-set truth inside the existing network-first app.js

@@ -46,6 +46,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 ## Operations
 
+- [`deployment/GITHUB-PAGES.md`](deployment/GITHUB-PAGES.md): production hosting, DNS and cutover runbook
 - [`operations/direct-audio-hosting.md`](operations/direct-audio-hosting.md)
 - [`operations/domain-split.md`](operations/domain-split.md): public-site and live-player domain cutover runbook
 - [`operations/hosting-phase-01.md`](operations/hosting-phase-01.md)
