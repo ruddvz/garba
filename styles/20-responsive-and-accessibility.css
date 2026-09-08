@@ -28,12 +28,8 @@
   .song-title { font-size: clamp(29px, 6vw, 43px); }
   .artist { font-size: 14px; margin-top: 5px; }
   .mobile-heart { display: none; }
-  .controls { grid-row: 2; margin-top: 6px; gap: 14px; }
-  .transport { width: 38px; height: 38px; }
-  .transport svg { width: 24px; height: 24px; }
-  .play-button { width: 46px; height: 46px; }
-  .play-button svg { width: 27px; height: 27px; }
-  .progress-wrap { grid-row: 3; width: min(420px, 50vw); margin-top: 0; }
+  .controls { grid-row: 2; }
+  .progress-wrap { grid-row: 3; }
   .genre-strip { grid-row: 4; width: min(720px, 78vw); padding-top: 3px; padding-bottom: 2px; }
   .genre-button { font-size: 14px; padding-bottom: 8px; }
   .browse-button { grid-row: 5; position: fixed; right: max(18px, var(--safe-right)); bottom: max(9px, var(--safe-bottom)); margin: 0; font-size: 13px; }
