@@ -16,6 +16,7 @@ const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 
 const requiredRootFiles = new Set([
   '.gitignore',
+  'CNAME',
   'CONTRIBUTING.md',
   'README.md',
   'app.js',
@@ -26,7 +27,9 @@ const requiredRootFiles = new Set([
   'package.json',
   'player-continuity.js',
   'provider-runtime.js',
+  'robots.txt',
   'simple-runtime.js',
+  'sitemap.xml',
   'styles.css',
   'sw.js',
 ]);
@@ -188,15 +191,31 @@ if (!packageScripts.check?.includes('npm run repo:validate')) fail('npm run chec
 if (!packageScripts.check?.includes('npm run docs:validate')) fail('npm run check must retain documentation validation');
 if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');
 
+const cname = (await read('CNAME')).trim();
+const robots = await read('robots.txt');
+const sitemap = await read('sitemap.xml');
+const index = await read('index.html');
+if (cname !== 'playgarba.com') fail(`CNAME must be playgarba.com, found ${cname || '(empty)'}`);
+if (!robots.includes('Sitemap: https://playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
+if (!sitemap.includes('<loc>https://playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
+for (const marker of [
+  '<link rel="canonical" href="https://playgarba.com/"',
+  '<meta property="og:url" content="https://playgarba.com/"',
+  '"url": "https://playgarba.com/"',
+]) if (!index.includes(marker)) fail(`index.html missing production-domain marker: ${marker}`);
+
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
+for (const file of ['CNAME', 'robots.txt', 'sitemap.xml']) if (!pages.includes(file)) fail(`Pages workflow missing production-domain file: ${file}`);
 for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`Pages workflow missing style layer: ${layer}`);
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
+if (!pages.includes("test \"$(tr -d '\\r\\n' < _site/CNAME)\" = 'playgarba.com'")) fail('Pages workflow must assert the PlayGarba CNAME before upload');
 
 if (failed) process.exit(1);
 ok('catalogue source directories contain only manifest-indexed shards');
 ok('discovery shards use explicit ordered filenames and resolve through the manifest');
 ok('unindexed historical catalogue fragments are isolated in archive/');
 ok('documentation is grouped by responsibility');
+ok('PlayGarba custom-domain and crawler files are source-controlled and deployment-validated');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
