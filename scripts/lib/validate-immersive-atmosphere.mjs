@@ -4,10 +4,11 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
 
-const [runtime, manifestText, pages, pkg, docsIndex, productDoc] = await Promise.all([
+const [runtime, manifestText, provider, sw, pkg, docsIndex, productDoc] = await Promise.all([
   read('assets/runtime/immersive-atmosphere.js'),
   read('data/atmosphere-sources.json'),
-  read('.github/workflows/pages.yml'),
+  read('provider-runtime.js'),
+  read('sw.js'),
   read('package.json'),
   read('docs/README.md'),
   read('docs/product/immersive-atmosphere.md'),
@@ -28,8 +29,17 @@ for (const marker of [
   'garba:atmosphere-change',
   "aria-modal', 'true'",
   'setBackgroundInert',
+  'Immersive 360°',
 ]) {
   if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing: ${marker}`);
+}
+
+for (const marker of [
+  'function loadAtmosphereRuntime()',
+  "script.src = 'assets/runtime/immersive-atmosphere.js'",
+  'loadAtmosphereRuntime();',
+]) {
+  if (!provider.includes(marker)) fail(`Playback bootstrap is missing Atmosphere loader: ${marker}`);
 }
 
 if (manifest.version !== '1.1.0') fail('Atmosphere source manifest version must be 1.1.0');
@@ -46,18 +56,18 @@ for (const source of enabledSources) {
 }
 
 for (const marker of [
-  'assets/runtime/immersive-atmosphere.js',
-  "grep -q 'GARBA_ATMOSPHERE' _site/app.js",
+  "'./assets/runtime/immersive-atmosphere.js'",
+  "'/assets/runtime/immersive-atmosphere.js'",
 ]) {
-  if (!pages.includes(marker)) fail(`Pages Atmosphere packaging is missing: ${marker}`);
+  if (!sw.includes(marker)) fail(`PWA Atmosphere packaging is missing: ${marker}`);
 }
 
 if (!pkg.includes('node --check assets/runtime/immersive-atmosphere.js')) fail('check:modules must syntax-check the Atmosphere runtime');
 if (!pkg.includes('node scripts/lib/validate-immersive-atmosphere.mjs')) fail('npm run check must validate Atmosphere');
 if (!docsIndex.includes('product/immersive-atmosphere.md')) fail('Atmosphere product documentation must be indexed');
-for (const marker of ['Immersive 360°', 'Data Saver', 'HRTF', 'public-domain']) {
+for (const marker of ['Immersive 360°', 'Data Saver', 'HRTF', 'public-domain', 'provider-runtime.js']) {
   if (!productDoc.includes(marker)) fail(`Atmosphere product documentation is missing: ${marker}`);
 }
 
 if (failed) process.exit(1);
-console.log('✓ Garba Atmosphere runtime, provenance, UX and production packaging are coherent');
+console.log('✓ Garba Atmosphere runtime, provenance, visible boot path and PWA packaging are coherent');
