@@ -12,7 +12,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 ## Product
 
-- [`product/automix.md`](product/automix.md): direct-audio song transition architecture and mix metadata hooks
+- [`product/automix.md`](product/automix.md): direct-audio song transition architecture and offline mix-analysis metadata workflow
 - [`product/design-system.md`](product/design-system.md): visual system and interaction direction
 - [`product/playback-runtime-coverage.md`](product/playback-runtime-coverage.md): generated song-route and playback coverage contract
 - [`product/youtube-first-playback.md`](product/youtube-first-playback.md): one-tap YouTube IFrame playback architecture, route safety and provider fallback hierarchy

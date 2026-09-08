@@ -4,10 +4,10 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [engine, compatibility, bootstrap, sw, enrichment, packageText] = await Promise.all([
+const [engine, compatibility, indexHtml, sw, enrichment, packageText] = await Promise.all([
   read('assets/runtime/automix-engine.js'),
   read('assets/runtime/automix-web-audio.js'),
-  read('simple-runtime.js'),
+  read('index.html'),
   read('sw.js'),
   read('scripts/enrich-runtime-songs.mjs'),
   read('package.json'),
@@ -55,27 +55,33 @@ for (const marker of [
   if (!compatibility.includes(marker)) fail(`AutoMix Web Audio compatibility layer missing marker: ${marker}`);
 }
 
-const order = [
-  'provider-runtime.js',
-  'player-continuity.js',
+const indexOrder = [
+  'simple-runtime.js',
   'assets/runtime/automix-engine.js',
   'assets/runtime/automix-web-audio.js',
-  'youtube-player-runtime.js',
+  'nonstop-browser.js',
+  'app.js',
 ];
 let previous = -1;
-for (const file of order) {
-  const index = bootstrap.indexOf(file);
-  if (index < 0) fail(`Fast bootstrap does not load ${file}`);
-  if (index >= 0 && index <= previous) fail(`Fast bootstrap runtime order is invalid around ${file}`);
+for (const file of indexOrder) {
+  const index = indexHtml.indexOf(file);
+  if (index < 0) fail(`Player HTML does not load ${file}`);
+  if (index >= 0 && index <= previous) fail(`Player runtime order is invalid around ${file}`);
   previous = index;
+}
+for (const marker of [
+  '<script src="assets/runtime/automix-engine.js" defer></script>',
+  '<script src="assets/runtime/automix-web-audio.js" defer></script>',
+]) {
+  if (!indexHtml.includes(marker)) fail(`AutoMix player loader is missing: ${marker}`);
 }
 
 for (const file of ['assets/runtime/automix-engine.js', 'assets/runtime/automix-web-audio.js']) {
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
   if (!sw.includes(`'/${file}'`)) fail(`PWA fresh-runtime list does not include ${file}`);
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v12`")) {
-  fail('AutoMix runtime requires the v12 PWA cache generation');
+if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v14`")) {
+  fail('AutoMix integration must preserve the current v14 PWA cache generation contract');
 }
 
 for (const marker of [
@@ -95,6 +101,7 @@ const scripts = packageJson.scripts || {};
 if (!scripts['automix:analyze']?.includes('scripts/lib/analyze-automix.mjs')) fail('package.json must expose automix:analyze');
 if (!scripts['check:modules']?.includes('assets/runtime/automix-engine.js')) fail('check:modules must syntax-check the AutoMix engine');
 if (!scripts['check:modules']?.includes('assets/runtime/automix-web-audio.js')) fail('check:modules must syntax-check the AutoMix compatibility runtime');
+if (!scripts.check?.includes('scripts/lib/analyze-automix.mjs')) fail('npm run check must syntax-check the offline AutoMix analyser');
 if (!scripts.check?.includes('scripts/lib/validate-automix-runtime.mjs')) fail('npm run check must validate the AutoMix runtime contract');
 if (!scripts.check?.includes('scripts/validate-direct-audio.mjs')) fail('npm run check must validate direct-audio rights and AutoMix metadata');
 

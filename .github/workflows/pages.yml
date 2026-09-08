@@ -22,18 +22,15 @@ jobs:
         uses: actions/checkout@v6
       - name: Validate app
         run: npm run check
-      - name: Install SVG renderer
+      - name: Install social and icon renderers
         run: |
           sudo apt-get update
-          sudo apt-get install -y librsvg2-bin
+          sudo apt-get install -y librsvg2-bin webp fonts-gfs-didot icoutils
       - name: Prepare static site
         run: |
           rm -rf _site
           mkdir -p _site
 
-          # Copy only the production runtime and launch metadata. Optional/prototype
-          # browser modules live under src/optional and are intentionally excluded
-          # from the Pages artifact.
           cp \
             CNAME \
             robots.txt \
@@ -51,27 +48,76 @@ jobs:
             _site/
           cp -R assets data _site/
 
-          # Render the install-icon matrix from the canonical Garba mark. Android
-          # receives separate maskable artwork so circular, squircle and rounded-square
-          # launcher crops keep the complete emblem inside the safe zone.
+          # The catalogue is one supporting page. Collection, album and song browsing
+          # are in-page states rather than standalone song/release URL trees.
+          mkdir -p _site/catalogue
+          cp src/catalogue/index.html _site/catalogue/index.html
+          cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
+          cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
+          cp src/catalogue/listening-library.js _site/catalogue/listening-library.js
+
+          # Render every platform icon from the canonical Garba mark. Android gets
+          # separate maskable artwork, while Apple, browser and Windows surfaces use
+          # the canonical mark at their native dimensions.
           mkdir -p _site/assets/icons
+          rsvg-convert -w 16 -h 16 assets/icons/icon.svg -o _site/assets/icons/favicon-16.png
+          rsvg-convert -w 32 -h 32 assets/icons/icon.svg -o _site/assets/icons/favicon-32.png
+          rsvg-convert -w 48 -h 48 assets/icons/icon.svg -o _site/assets/icons/favicon-48.png
+          rsvg-convert -w 152 -h 152 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon-152.png
+          rsvg-convert -w 167 -h 167 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon-167.png
+          rsvg-convert -w 180 -h 180 assets/icons/icon.svg -o _site/assets/icons/apple-touch-icon.png
           rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o _site/assets/icons/icon-192.png
           rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _site/assets/icons/icon-512.png
+          rsvg-convert -w 150 -h 150 assets/icons/icon.svg -o _site/assets/icons/mstile-150x150.png
+          rsvg-convert -w 310 -h 310 assets/icons/icon.svg -o _site/assets/icons/mstile-310x310.png
           rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o _site/assets/icons/maskable-192.png
           rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o _site/assets/icons/maskable-512.png
+          icotool -c -o _site/favicon.ico \
+            _site/assets/icons/favicon-16.png \
+            _site/assets/icons/favicon-32.png \
+            _site/assets/icons/favicon-48.png
+
+          file _site/assets/icons/favicon-16.png | grep -q 'PNG image data, 16 x 16' || { echo 'Favicon 16 is invalid'; exit 1; }
+          file _site/assets/icons/favicon-32.png | grep -q 'PNG image data, 32 x 32' || { echo 'Favicon 32 is invalid'; exit 1; }
+          file _site/assets/icons/favicon-48.png | grep -q 'PNG image data, 48 x 48' || { echo 'Favicon 48 is invalid'; exit 1; }
+          file _site/favicon.ico | grep -q 'MS Windows icon resource' || { echo 'favicon.ico is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'PWA 192 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
+          file _site/assets/icons/mstile-150x150.png | grep -q 'PNG image data, 150 x 150' || { echo 'Windows 150 tile is invalid'; exit 1; }
+          file _site/assets/icons/mstile-310x310.png | grep -q 'PNG image data, 310 x 310' || { echo 'Windows 310 tile is invalid'; exit 1; }
           file _site/assets/icons/maskable-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'Maskable 192 icon is invalid'; exit 1; }
           file _site/assets/icons/maskable-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'Maskable 512 icon is invalid'; exit 1; }
 
-          # Generate the universal 1200x630 share card from a reviewable SVG source.
-          # PNG is used for broad Open Graph crawler compatibility.
-          mkdir -p _site/assets/social
-          rsvg-convert -w 1200 -h 630 assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
-          file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
+          # Homepage remains the primary player. Explore opens the catalogue while
+          # Search, Favourites and Queue retain the lightweight in-player song sheet.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
-          # Flatten the ordered source layers into one production stylesheet so the
-          # browser paints from one CSS request instead of an @import chain.
+          page = Path('_site/index.html')
+          html = page.read_text()
+          pattern = re.compile(
+              r'<button\s+class="browse-button"\s+id="browseButton"[^>]*>\s*'
+              r'<span>Browse songs</span>\s*'
+              r'<svg[^>]*>.*?</svg>\s*'
+              r'</button>',
+              re.DOTALL,
+          )
+          replacement = '''<a class="browse-button" id="browseButton" href="./catalogue/" aria-label="Explore PlayGarba catalogues" style="text-decoration:none">
+            <span>Explore</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg>
+          </a>'''
+          html, count = pattern.subn(replacement, html, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one homepage Browse songs control, transformed {count}.')
+          page.write_text(html)
+          PY
+          grep -q 'href="./catalogue/"' _site/index.html || { echo 'Homepage Explore link missing'; exit 1; }
+          grep -q '<span>Explore</span>' _site/index.html || { echo 'Homepage Explore label missing'; exit 1; }
+
           cat \
             styles/00-foundation-and-player.css \
             styles/10-browser-and-shell.css \
@@ -80,12 +126,9 @@ jobs:
             styles/40-accessibility-states.css \
             styles/50-discovery-and-performance.css \
             styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
             > _site/styles.css
 
-          # Assert direct and transitive production runtime files are all present.
-          # provider-runtime.js, player-continuity.js and youtube-player-runtime.js are
-          # loaded synchronously by simple-runtime.js, so checking index.html alone
-          # is not sufficient.
           for runtime in \
             simple-runtime.js \
             provider-runtime.js \
@@ -97,14 +140,11 @@ jobs:
             test -f "_site/$runtime" || { echo "Missing deployed runtime: $runtime"; exit 1; }
           done
 
-          # Assert the production-domain contract ships with every deploy.
           test "$(tr -d '\r\n' < _site/CNAME)" = 'playgarba.com' || { echo 'CNAME must remain playgarba.com'; exit 1; }
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing canonical sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical root'; exit 1; }
+          grep -q '<loc>https://playgarba.com/catalogue/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing catalogue'; exit 1; }
 
-          # Assert every local runtime script referenced directly by index.html exists
-          # in the deploy artifact as an additional guard. Versioned runtime URLs use
-          # query strings, so validate the underlying deployed path.
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
             case "$src" in
@@ -113,9 +153,6 @@ jobs:
             test -f "_site/$src" || { echo "Missing deployed script: $src"; exit 1; }
           done
 
-          # Canonical visual pack: prefer the approved 2048px Q90 export. Keep the
-          # existing 2K/Q82 pack only as a temporary fallback until the Q90 archive
-          # is uploaded. Pages serves extracted WebPs only, never the source ZIP.
           PACK=''
           if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
             PACK='assets/backgrounds/garba15-2048-q90.zip'
@@ -125,7 +162,6 @@ jobs:
           elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
             PACK='assets/backgrounds/garba15-2k-q82.zip'
           fi
-
           test -n "$PACK" || { echo 'Required 15-image WebP pack is missing.'; exit 1; }
           echo "Deploying visual pack: $PACK"
           mkdir -p _site/assets/backgrounds/library
@@ -134,36 +170,48 @@ jobs:
 
           WEBP_COUNT="$(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')"
           test "$WEBP_COUNT" -eq 15 || { echo "Expected 15 WebPs, found $WEBP_COUNT"; exit 1; }
-
           while IFS= read -r image; do
             file "$image" | grep -q 'Web/P image' || { echo "Not a valid WebP: $image"; exit 1; }
           done < <(find _site/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | sort)
 
-          # Do not ship source archives to visitors. They duplicate every background
-          # and are not needed at runtime.
+          # Build the universal social card from the exact approved courtyard artwork,
+          # not a regenerated version of it. The temporary PNG only bridges WebP into
+          # the SVG renderer and is removed immediately after the 1200x630 card exists.
+          OG_BACKGROUND='_site/assets/backgrounds/library/04-colourful-garba-courtyard-a.webp'
+          test -f "$OG_BACKGROUND" || { echo 'Approved OG courtyard artwork is missing'; exit 1; }
+          mkdir -p _site/assets/social
+          dwebp "$OG_BACKGROUND" -quiet -o _site/assets/social/og-background.png
+          rsvg-convert -w 1200 -h 630 _site/assets/social/playgarba-og-card.svg -o _site/assets/social/garba-og-card.png
+          file _site/assets/social/garba-og-card.png | grep -q 'PNG image data, 1200 x 630' || { echo 'Social preview must be a valid 1200x630 PNG'; exit 1; }
+          rm -f _site/assets/social/og-background.png
           rm -f _site/assets/backgrounds/garba15-*.zip
 
-          # Build crawlable catalogue pages from the same generated song/release data
-          # the player uses. The generator also replaces the seed sitemap with the
-          # complete canonical catalogue sitemap.
-          node scripts/lib/generate-static-catalogue-pages.mjs _site
-
-          # Preserve page-specific canonical URLs and SEO metadata while applying the
-          # exact same branded OG/Twitter share card to every deployed HTML page.
+          # Apply universal social and icon metadata to every real HTML surface while
+          # preserving each page's canonical metadata.
           node scripts/lib/inject-social-preview.mjs _site
+          node scripts/lib/inject-brand-metadata.mjs _site
 
-          SONG_PAGE_COUNT="$(find _site/songs -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          RELEASE_PAGE_COUNT="$(find _site/releases -mindepth 2 -maxdepth 2 -type f -name 'index.html' | wc -l | tr -d ' ')"
-          SITEMAP_URL_COUNT="$(grep -o '<loc>' _site/sitemap.xml | wc -l | tr -d ' ')"
-          test "$SONG_PAGE_COUNT" -ge 1000 || { echo "Expected 1000+ song pages, found $SONG_PAGE_COUNT"; exit 1; }
-          test "$RELEASE_PAGE_COUNT" -ge 100 || { echo "Expected 100+ release pages, found $RELEASE_PAGE_COUNT"; exit 1; }
-          test "$SITEMAP_URL_COUNT" -ge 1100 || { echo "Expected 1100+ sitemap URLs, found $SITEMAP_URL_COUNT"; exit 1; }
-          test -f _site/catalogue/index.html || { echo 'Catalogue index page is missing'; exit 1; }
+          # Product contract: do not deploy standalone song/release pages.
+          test -f _site/catalogue/index.html || { echo 'Catalogue page is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.js || { echo 'Catalogue runtime is missing'; exit 1; }
+          test -f _site/catalogue/catalogue.css || { echo 'Catalogue styles are missing'; exit 1; }
+          test -f _site/catalogue/listening-library.js || { echo 'Return-user listening companion is missing'; exit 1; }
+          grep -q 'src="listening-library.js"' _site/catalogue/index.html || { echo 'Catalogue does not load return-user listening companion'; exit 1; }
+          test ! -d _site/songs || { echo 'Standalone song pages must not be deployed'; exit 1; }
+          test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
           SOCIAL_HTML_COUNT="$(find _site -type f -name '*.html' | wc -l | tr -d ' ')"
           SOCIAL_META_COUNT="$(grep -RIl 'https://playgarba.com/assets/social/garba-og-card.png' _site --include='*.html' | wc -l | tr -d ' ')"
+          BRAND_META_COUNT="$(grep -RIl 'apple-touch-icon-167.png' _site --include='*.html' | wc -l | tr -d ' ')"
           test "$SOCIAL_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal social preview missing from some pages: $SOCIAL_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
+          test "$BRAND_META_COUNT" -eq "$SOCIAL_HTML_COUNT" || { echo "Universal icon metadata missing from some pages: $BRAND_META_COUNT/$SOCIAL_HTML_COUNT"; exit 1; }
           grep -q 'name="twitter:card" content="summary_large_image"' _site/index.html || { echo 'Large Twitter card metadata was not injected'; exit 1; }
+          grep -q 'name="twitter:card" content="summary_large_image"' _site/catalogue/index.html || { echo 'Catalogue large Twitter card metadata was not injected'; exit 1; }
+          grep -q 'href="/favicon.ico"' _site/index.html || { echo 'favicon.ico metadata was not injected'; exit 1; }
+          grep -q 'sizes="152x152"' _site/index.html || { echo 'iPad 152 icon metadata was not injected'; exit 1; }
+          grep -q 'sizes="167x167"' _site/index.html || { echo 'iPad Pro 167 icon metadata was not injected'; exit 1; }
+          grep -q 'sizes="180x180"' _site/index.html || { echo 'iPhone 180 icon metadata was not injected'; exit 1; }
+          grep -q 'name="msapplication-config" content="/assets/icons/browserconfig.xml"' _site/index.html || { echo 'Windows tile metadata was not injected'; exit 1; }
 
           if grep -q '@import' _site/styles.css; then
             echo 'Production styles.css still contains @import'; exit 1

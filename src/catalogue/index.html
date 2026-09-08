@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0c0b10" />
+  <meta name="color-scheme" content="dark" />
+  <title>Explore Gujarati Garba · PlayGarba</title>
+  <meta name="description" content="Explore PlayGarba through visual Gujarati Garba catalogues, then open releases and songs without leaving the experience." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://playgarba.com/catalogue/" />
+  <link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="PlayGarba" />
+  <meta property="og:title" content="Explore Gujarati Garba · PlayGarba" />
+  <meta property="og:description" content="Visual Gujarati Garba catalogues for traditions, artists, eras, live performances and nonstop sets." />
+  <meta property="og:url" content="https://playgarba.com/catalogue/" />
+  <meta property="og:image" content="https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="catalogue.css" />
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"CollectionPage","name":"Explore Gujarati Garba · PlayGarba","url":"https://playgarba.com/catalogue/","isPartOf":{"@type":"WebSite","name":"PlayGarba","url":"https://playgarba.com/"}}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="topbar-spacer" aria-hidden="true"></span>
+    <h1 class="explore-title" id="catalogueTitle">Explore</h1>
+    <a class="close-explore" href="../" aria-label="Close Explore and return to the PlayGarba player">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+    </a>
+  </header>
+
+  <main aria-labelledby="catalogueTitle">
+    <section class="catalogue-status" aria-hidden="true">
+      <label>
+        <span class="sr-only">Search the catalogue</span>
+        <input id="catalogueSearch" type="search" autocomplete="off" tabindex="-1" />
+      </label>
+      <p id="catalogueCount" aria-live="polite">Loading catalogue…</p>
+    </section>
+
+    <section id="collectionHome" class="collection-home" aria-label="Garba catalogues">
+      <div id="catalogueSections"></div>
+    </section>
+
+    <section id="collectionDetail" class="collection-detail" hidden aria-live="polite">
+      <button class="back-button" id="backToCollections" type="button">← All catalogues</button>
+
+      <header class="detail-head">
+        <p class="eyebrow" id="detailKicker">Catalogue</p>
+        <h2 id="detailTitle" tabindex="-1"></h2>
+        <p id="detailDescription"></p>
+        <div class="detail-meta" id="detailMeta"></div>
+      </header>
+
+      <section class="release-section" id="releaseSection">
+        <div class="section-heading">
+          <div><p class="eyebrow">Albums & releases</p><h3>From this catalogue</h3></div>
+          <button id="showAllSongs" type="button" class="quiet-button">Show all songs</button>
+        </div>
+        <div class="release-rail" id="releaseRail" role="list"></div>
+      </section>
+
+      <section class="songs-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">Songs</p><h3 id="songSectionTitle">All songs</h3></div>
+          <span id="songCount"></span>
+        </div>
+        <div class="song-list" id="catalogueSongList" role="list"></div>
+      </section>
+    </section>
+  </main>
+
+  <template id="collectionCardTemplate">
+    <button class="collection-card" type="button">
+      <span class="collection-image" aria-hidden="true"></span>
+      <span class="collection-shade" aria-hidden="true"></span>
+      <span class="collection-copy">
+        <small></small>
+        <strong></strong>
+        <span></span>
+      </span>
+    </button>
+  </template>
+
+  <script type="module" src="catalogue.js"></script>
+  <script type="module" src="listening-library.js"></script>
+  <script type="module" src="../assets/runtime/explore-search.js"></script>
+  <script type="module">
+    const VISUALS = [
+      '../assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
+      '../assets/backgrounds/library/02-rhythmic-drums-courtyard-a.webp',
+      '../assets/backgrounds/library/03-devotional-garba-courtyard.webp',
+      '../assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
+      '../assets/backgrounds/library/05-fusion-gujarati-neon.webp',
+      '../assets/backgrounds/library/06-fusion-abstract-neon.webp',
+      '../assets/backgrounds/library/07-dandiya-purple-courtyard.webp',
+      '../assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
+      '../assets/backgrounds/library/09-warm-stage-courtyard.webp',
+      '../assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
+      '../assets/backgrounds/library/11-master-dark-courtyard.webp',
+      '../assets/backgrounds/library/12-rhythmic-drums-courtyard-b.webp',
+      '../assets/backgrounds/library/13-traditional-marigold-courtyard.webp',
+      '../assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
+      '../assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
+    ];
+    const HOME_VISUAL = VISUALS[10];
+    const root = document.documentElement;
+    const body = document.body;
+    const sections = document.getElementById('catalogueSections');
+    const detail = document.getElementById('collectionDetail');
+    const detailHead = document.querySelector('.detail-head');
+    const backButton = document.getElementById('backToCollections');
+    const closeExplore = document.querySelector('.close-explore');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const collectionVisuals = new Map();
+    let currentAmbient = HOME_VISUAL;
+    let fadeTimer = 0;
+    let renderQueued = false;
+    let replayingTransitionClick = false;
+
+    const atmosphereStyle = document.createElement('style');
+    atmosphereStyle.dataset.playgarbaExploreAtmosphere = '';
+    atmosphereStyle.textContent = `
+      @view-transition{navigation:auto}
+      .explore-title{view-transition-name:playgarba-explore-entry}
+      .collection-card[data-view-origin="true"]{view-transition-name:playgarba-catalogue-card}
+      .detail-head[data-view-target="true"]{view-transition-name:playgarba-catalogue-card}
+      ::view-transition-group(playgarba-explore-entry),::view-transition-group(playgarba-catalogue-card){animation-duration:420ms;animation-timing-function:cubic-bezier(.2,.72,.18,1)}
+      ::view-transition-old(root){animation:playgarbaExploreRouteOut 220ms cubic-bezier(.4,0,1,1) both}
+      ::view-transition-new(root){animation:playgarbaExploreRouteIn 380ms cubic-bezier(.16,.78,.18,1) both}
+      @keyframes playgarbaExploreRouteOut{to{opacity:.18;transform:scale(1.006);filter:blur(1.5px)}}
+      @keyframes playgarbaExploreRouteIn{from{opacity:.14;transform:scale(.994);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+      body::before{transition:opacity .32s ease,filter .45s ease!important}
+      body.explore-ambient-fading::before{opacity:.18}
+      body[data-catalogue-open="true"]::after{background:radial-gradient(circle at 50% 7%,rgba(255,225,171,.08),transparent 25%),linear-gradient(to bottom,rgba(7,7,10,.38) 0,rgba(7,7,10,.60) 42%,rgba(7,7,10,.84) 100%)}
+      body.route-leaving{opacity:0;transform:scale(.997);transition:opacity .15s ease,transform .15s ease}
+      .collection-card::after{background:radial-gradient(circle at var(--gleam-x,17%) var(--gleam-y,12%),rgba(255,255,255,.30),transparent 13%),radial-gradient(circle at 74% 19%,rgba(255,226,177,.15),transparent 15%),linear-gradient(118deg,transparent 24%,rgba(255,255,255,.09) 45%,transparent 64%)!important}
+      .collection-card[data-atmosphere-bound="true"] .collection-image{will-change:transform,filter}
+      .collection-detail:not([hidden]){animation:exploreDetailReveal .34s cubic-bezier(.2,.7,.2,1) both}
+      @keyframes exploreDetailReveal{from{opacity:.55;transform:translateY(10px)}to{opacity:1;transform:none}}
+      @media(prefers-reduced-motion:reduce){.explore-title,.collection-card[data-view-origin="true"],.detail-head[data-view-target="true"]{view-transition-name:none!important}body::before{transition:none!important}.collection-detail:not([hidden]){animation:none!important}::view-transition-old(root),::view-transition-new(root),::view-transition-group(playgarba-explore-entry),::view-transition-group(playgarba-catalogue-card){animation-duration:1ms!important}}
+    `;
+    document.head.append(atmosphereStyle);
+
+    function fallbackVisual(id = '') {
+      let hash = 2166136261;
+      for (const char of String(id)) {
+        hash ^= char.codePointAt(0);
+        hash = Math.imul(hash, 16777619);
+      }
+      return VISUALS[Math.abs(hash >>> 0) % VISUALS.length];
+    }
+
+    function activeCollectionId() {
+      return new URLSearchParams(location.hash.replace(/^#/, '')).get('collection');
+    }
+
+    function commitAmbient(url) {
+      currentAmbient = url;
+      root.style.setProperty('--explore-bg', `url("${url}")`);
+      requestAnimationFrame(() => body.classList.remove('explore-ambient-fading'));
+    }
+
+    function setAmbient(url) {
+      if (!url || url === currentAmbient) return;
+      clearTimeout(fadeTimer);
+      if (reduceMotion.matches) {
+        commitAmbient(url);
+        return;
+      }
+      body.classList.add('explore-ambient-fading');
+      const preload = new Image();
+      const finish = () => {
+        clearTimeout(fadeTimer);
+        fadeTimer = window.setTimeout(() => commitAmbient(url), 90);
+      };
+      preload.addEventListener('load', finish, { once: true });
+      preload.addEventListener('error', finish, { once: true });
+      preload.src = url;
+      fadeTimer = window.setTimeout(() => commitAmbient(url), 260);
+    }
+
+    function syncAmbient() {
+      const id = activeCollectionId();
+      const detailOpen = Boolean(detail && !detail.hidden && id);
+      body.dataset.catalogueOpen = detailOpen ? 'true' : 'false';
+      setAmbient(detailOpen ? (collectionVisuals.get(id) || fallbackVisual(id)) : HOME_VISUAL);
+    }
+
+    function bindGleam(card) {
+      if (card.dataset.atmosphereBound === 'true') return;
+      card.dataset.atmosphereBound = 'true';
+      card.addEventListener('click', () => queueMicrotask(syncAmbient));
+      card.addEventListener('pointermove', (event) => {
+        if (reduceMotion.matches || !finePointer.matches) return;
+        const rect = card.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
+        card.style.setProperty('--gleam-x', `${x.toFixed(1)}%`);
+        card.style.setProperty('--gleam-y', `${y.toFixed(1)}%`);
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.removeProperty('--gleam-x');
+        card.style.removeProperty('--gleam-y');
+      });
+    }
+
+    function applyCardVisuals() {
+      renderQueued = false;
+      if (!sections) return;
+      const cards = [...sections.querySelectorAll('.collection-card[data-collection-id]')];
+      cards.forEach((card, index) => {
+        const id = card.dataset.collectionId;
+        const visual = VISUALS[index % VISUALS.length];
+        collectionVisuals.set(id, visual);
+        const image = card.querySelector('.collection-image');
+        if (image) image.style.backgroundImage = `url("${visual}")`;
+        bindGleam(card);
+      });
+      syncAmbient();
+    }
+
+    function queueVisualRefresh() {
+      if (renderQueued) return;
+      renderQueued = true;
+      queueMicrotask(applyCardVisuals);
+    }
+
+    function clearViewTransitionNames() {
+      sections?.querySelectorAll('[data-view-origin="true"]').forEach((element) => {
+        element.removeAttribute('data-view-origin');
+      });
+      detailHead?.removeAttribute('data-view-target');
+    }
+
+    function transitionIntoCatalogue(card) {
+      if (!card || reduceMotion.matches || typeof document.startViewTransition !== 'function') return false;
+      card.dataset.viewOrigin = 'true';
+      const transition = document.startViewTransition(() => {
+        replayingTransitionClick = true;
+        card.click();
+        replayingTransitionClick = false;
+        if (detailHead && !detail?.hidden) detailHead.dataset.viewTarget = 'true';
+      });
+      transition.finished.finally(clearViewTransitionNames);
+      return true;
+    }
+
+    function transitionBackToCard(button) {
+      if (!button || reduceMotion.matches || typeof document.startViewTransition !== 'function') return false;
+      const collectionId = activeCollectionId();
+      if (detailHead) detailHead.dataset.viewTarget = 'true';
+      const transition = document.startViewTransition(async () => {
+        const usesHistory = Boolean(history.state?.release || history.state?.collection || history.state?.search);
+        let settled = null;
+        if (usesHistory) {
+          settled = new Promise((resolve) => {
+            const timeout = window.setTimeout(resolve, 260);
+            window.addEventListener('popstate', () => {
+              clearTimeout(timeout);
+              queueMicrotask(resolve);
+            }, { once: true });
+          });
+        }
+        replayingTransitionClick = true;
+        button.click();
+        replayingTransitionClick = false;
+        if (settled) await settled;
+        const selector = collectionId ? `.collection-card[data-collection-id="${CSS.escape(collectionId)}"]` : '';
+        const target = selector ? sections?.querySelector(selector) : null;
+        if (target && detail?.hidden) target.dataset.viewOrigin = 'true';
+      });
+      transition.finished.finally(clearViewTransitionNames);
+      return true;
+    }
+
+    function isPlainPrimaryClick(event) {
+      return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+    }
+
+    document.addEventListener('click', (event) => {
+      if (replayingTransitionClick || !isPlainPrimaryClick(event)) return;
+      const card = event.target.closest('.collection-card[data-collection-id]');
+      if (card && transitionIntoCatalogue(card)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      const back = event.target.closest('#backToCollections');
+      if (back && transitionBackToCard(back)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, true);
+
+    document.addEventListener('click', (event) => {
+      if (replayingTransitionClick || typeof document.startViewTransition === 'function' || reduceMotion.matches || !isPlainPrimaryClick(event)) return;
+      const link = event.target.closest('a[href]');
+      if (!link || link.target || link.hasAttribute('download')) return;
+      const destination = new URL(link.href, location.href);
+      if (destination.origin !== location.origin) return;
+      event.preventDefault();
+      body.classList.add('route-leaving');
+      window.setTimeout(() => location.assign(destination.href), 150);
+    }, true);
+
+    if (sections) {
+      new MutationObserver(queueVisualRefresh).observe(sections, { childList: true, subtree: true });
+    }
+    if (detail) {
+      new MutationObserver(syncAmbient).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    window.addEventListener('popstate', () => queueMicrotask(syncAmbient));
+    window.addEventListener('hashchange', () => queueMicrotask(syncAmbient));
+    window.addEventListener('pageshow', () => body.classList.remove('route-leaving'));
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !detail?.hidden || event.defaultPrevented || !closeExplore) return;
+      event.preventDefault();
+      location.assign(closeExplore.href);
+    });
+
+    queueVisualRefresh();
+    syncAmbient();
+  </script>
+</body>
+</html>

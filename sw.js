@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v12`;
+const CACHE_NAME = `${CACHE_PREFIX}v14`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -9,16 +9,32 @@ const CORE_SHELL = [
   './simple-runtime.js',
   './provider-runtime.js',
   './player-continuity.js',
+  './assets/runtime/automix-engine.js',
   './assets/runtime/automix-web-audio.js',
   './youtube-player-runtime.js',
   './nonstop-browser.js',
   './app.js',
+  './catalogue/',
+  './catalogue/index.html',
+  './catalogue/catalogue.css',
+  './catalogue/catalogue.js',
+  './catalogue/listening-library.js',
+  './assets/runtime/explore-search.js',
   './manifest.webmanifest',
   './offline.html',
+  './favicon.ico',
+  './assets/icons/browserconfig.xml',
   './assets/icons/icon.svg',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
+  './assets/icons/favicon-16.png',
+  './assets/icons/favicon-32.png',
+  './assets/icons/favicon-48.png',
   './assets/icons/apple-touch-icon.png',
+  './assets/icons/apple-touch-icon-152.png',
+  './assets/icons/apple-touch-icon-167.png',
+  './assets/icons/mstile-150x150.png',
+  './assets/icons/mstile-310x310.png',
   './assets/icons/maskable.svg',
   './assets/icons/maskable-192.png',
   './assets/icons/maskable-512.png',
@@ -36,10 +52,15 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/simple-runtime.js',
   '/provider-runtime.js',
   '/player-continuity.js',
+  '/assets/runtime/automix-engine.js',
   '/assets/runtime/automix-web-audio.js',
   '/youtube-player-runtime.js',
   '/nonstop-browser.js',
   '/app.js',
+  '/catalogue/catalogue.css',
+  '/catalogue/catalogue.js',
+  '/catalogue/listening-library.js',
+  '/assets/runtime/explore-search.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -98,7 +119,21 @@ async function networkFirst(request, fallback = null) {
   }
 }
 
+async function catalogueNavigation(request, fallback) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request) || await cache.match(fallback);
+  const refresh = fetch(request)
+    .then((response) => {
+      if (response.ok) cache.put(request, response.clone());
+      return response;
+    })
+    .catch(() => null);
+  return cached || await refresh || Response.error();
+}
+
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));
+const isCatalogueNavigation = (pathname) => pathname.endsWith('/catalogue/') || pathname.endsWith('/catalogue/index.html');
+const isJsonData = (pathname) => pathname.includes('/data/') && pathname.endsWith('.json');
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
@@ -108,7 +143,12 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, './index.html'));
+    const fallback = isCatalogueNavigation(url.pathname) ? './catalogue/index.html' : './index.html';
+    if (isCatalogueNavigation(url.pathname)) {
+      event.respondWith(catalogueNavigation(request, fallback));
+      return;
+    }
+    event.respondWith(networkFirst(request, fallback));
     return;
   }
 
@@ -117,15 +157,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.endsWith('/data/songs.json')) {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
-  if (
-    url.pathname.endsWith('/data/genres.json')
-    || url.pathname.includes('/data/discovery/sets/')
-  ) {
+  if (isJsonData(url.pathname)) {
     event.respondWith(networkFirst(request));
     return;
   }

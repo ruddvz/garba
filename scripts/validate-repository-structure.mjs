@@ -60,6 +60,7 @@ const styleLayers = [
   '40-accessibility-states.css',
   '50-discovery-and-performance.css',
   '60-runtime-and-provider.css',
+  '70-mobile-playback-coordination.css',
 ];
 const actualStyles = (await readdir(path.join(root, 'styles'))).filter((file) => file.endsWith('.css')).sort();
 if (!same(actualStyles, styleLayers)) {
@@ -86,7 +87,13 @@ const optionalFiles = [
 ];
 for (const file of optionalFiles) if (!await exists(`src/optional/${file}`)) fail(`Missing retained optional module: src/optional/${file}`);
 if (!await exists('src/optional/README.md')) fail('src/optional/README.md must document the production boundary');
-if (!await exists('scripts/lib/generate-static-catalogue-pages.mjs')) fail('Missing static catalogue page generator: scripts/lib/generate-static-catalogue-pages.mjs');
+for (const file of [
+  'src/catalogue/index.html',
+  'src/catalogue/catalogue.css',
+  'src/catalogue/catalogue.js',
+  'data/release-artwork.json',
+]) if (!await exists(file)) fail(`Missing catalogue product file: ${file}`);
+if (await exists('scripts/lib/generate-static-catalogue-pages.mjs')) fail('Standalone song/release page generator must not remain active');
 
 const expectedScriptEntrypoints = [
   'audit-direct-host-health.mjs',
@@ -189,29 +196,53 @@ const packageScripts = packageJson.scripts || {};
 if (!packageScripts.catalogue?.includes('scripts/enrich-runtime-songs.mjs')) fail('npm run catalogue must retain runtime playback-route enrichment');
 if (!packageScripts['playback:report']?.includes('scripts/report-playback-route-quality.mjs')) fail('playback:report must expose the ranked route-quality backlog');
 if (!packageScripts['youtube:coverage']?.includes('scripts/report-youtube-first-coverage.mjs')) fail('youtube:coverage must expose the YouTube-first one-tap coverage baseline');
-if (!packageScripts['seo:check']?.includes('scripts/lib/generate-static-catalogue-pages.mjs --check')) fail('seo:check must validate static catalogue route generation');
-if (!packageScripts.check?.includes('node --check scripts/lib/generate-static-catalogue-pages.mjs')) fail('npm run check must syntax-check the static catalogue generator');
-if (!packageScripts.check?.includes('npm run seo:check')) fail('npm run check must validate static catalogue generation');
+if (packageScripts['seo:check']) fail('Standalone song/release SEO generation must not return as seo:check');
+if (!packageScripts['check:modules']?.includes('node --check src/catalogue/catalogue.js')) fail('check:modules must syntax-check the catalogue runtime');
 if (!packageScripts.check?.includes('scripts/validate-player-continuity.mjs')) fail('npm run check must retain player-continuity validation');
 if (!packageScripts.check?.includes('scripts/validate-runtime-packaging.mjs')) fail('npm run check must retain runtime packaging validation');
 if (!packageScripts.check?.includes('scripts/validate-runtime-song-routes.mjs')) fail('npm run check must retain complete runtime song-route validation');
 if (!packageScripts.check?.includes('scripts/validate-youtube-player-runtime.mjs')) fail('npm run check must retain YouTube player architecture validation');
 if (!packageScripts.check?.includes('npm run repo:validate')) fail('npm run check must retain repository-structure validation');
 if (!packageScripts.check?.includes('npm run docs:validate')) fail('npm run check must retain documentation validation');
+if (JSON.stringify(packageScripts).includes('generate-static-catalogue-pages.mjs')) fail('Package scripts must not reference the retired standalone-page generator');
 if (JSON.stringify(packageScripts).includes('label-acquisition-report.mjs')) fail('package scripts still reference retired label-acquisition-report.mjs');
+
+const artwork = await readJson('data/release-artwork.json');
+if (artwork.version !== 1 || typeof artwork.releases !== 'object' || !artwork.releases) fail('release-artwork.json must use the versioned verified-artwork manifest contract');
 
 const cname = (await read('CNAME')).trim();
 const robots = await read('robots.txt');
 const sitemap = await read('sitemap.xml');
 const index = await read('index.html');
+const catalogueHtml = await read('src/catalogue/index.html');
+const catalogueJs = await read('src/catalogue/catalogue.js');
 if (cname !== 'playgarba.com') fail(`CNAME must be playgarba.com, found ${cname || '(empty)'}`);
 if (!robots.includes('Sitemap: https://playgarba.com/sitemap.xml')) fail('robots.txt must advertise the PlayGarba sitemap');
 if (!sitemap.includes('<loc>https://playgarba.com/</loc>')) fail('sitemap.xml must include the canonical PlayGarba root');
+if (!sitemap.includes('<loc>https://playgarba.com/catalogue/</loc>')) fail('sitemap.xml must include the single catalogue page');
+if (sitemap.includes('/songs/') || sitemap.includes('/releases/')) fail('sitemap must not advertise standalone song or release pages');
 for (const marker of [
   '<link rel="canonical" href="https://playgarba.com/"',
   '<meta property="og:url" content="https://playgarba.com/"',
   '"url": "https://playgarba.com/"',
 ]) if (!index.includes(marker)) fail(`index.html missing production-domain marker: ${marker}`);
+for (const marker of [
+  '<link rel="canonical" href="https://playgarba.com/catalogue/"',
+  'id="catalogueSections"',
+  'id="collectionDetail"',
+  'catalogue.js',
+]) if (!catalogueHtml.includes(marker)) fail(`Catalogue page missing product marker: ${marker}`);
+for (const marker of [
+  "id:'nonstop'",
+  "id:'live'",
+  "id:'current'",
+  "id:'classics'",
+  "id:'dandiya-raas'",
+  "id:'devotional'",
+  "Artist essentials",
+  "By era",
+  'release-artwork.json',
+]) if (!catalogueJs.includes(marker)) fail(`Catalogue runtime missing collection/artwork marker: ${marker}`);
 
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
@@ -221,12 +252,14 @@ for (const layer of styleLayers) if (!pages.includes(`styles/${layer}`)) fail(`P
 if (!pages.includes("PACK='assets/backgrounds/garba15-2k.zip'")) fail('Pages workflow must use the canonical artwork-pack filename');
 if (!pages.includes("test \"$(tr -d '\\r\\n' < _site/CNAME)\" = 'playgarba.com'")) fail('Pages workflow must assert the PlayGarba CNAME before upload');
 for (const marker of [
-  'node scripts/lib/generate-static-catalogue-pages.mjs _site',
-  'SONG_PAGE_COUNT=',
-  'RELEASE_PAGE_COUNT=',
-  'SITEMAP_URL_COUNT=',
-  'test -f _site/catalogue/index.html',
-]) if (!pages.includes(marker)) fail(`Pages workflow missing static catalogue generation marker: ${marker}`);
+  'mkdir -p _site/catalogue',
+  'cp src/catalogue/index.html _site/catalogue/index.html',
+  'cp src/catalogue/catalogue.css _site/catalogue/catalogue.css',
+  'cp src/catalogue/catalogue.js _site/catalogue/catalogue.js',
+  'test ! -d _site/songs',
+  'test ! -d _site/releases',
+]) if (!pages.includes(marker)) fail(`Pages workflow missing single-page catalogue contract marker: ${marker}`);
+if (pages.includes('generate-static-catalogue-pages.mjs') || pages.includes('SONG_PAGE_COUNT=') || pages.includes('RELEASE_PAGE_COUNT=')) fail('Pages workflow must not regenerate standalone song/release trees');
 
 if (failed) process.exit(1);
 ok('catalogue source directories contain only manifest-indexed shards');
@@ -234,5 +267,7 @@ ok('discovery shards use explicit ordered filenames and resolve through the mani
 ok('unindexed historical catalogue fragments are isolated in archive/');
 ok('documentation is grouped by responsibility');
 ok('PlayGarba custom-domain and crawler files are source-controlled and deployment-validated');
-ok('static song/release catalogue generation is validated and required by Pages');
+ok('catalogue is one crawlable page with in-page collection, release and song states');
+ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
+ok('standalone song/release SEO page generation is retired and guarded against');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
