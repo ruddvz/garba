@@ -10,6 +10,7 @@ if (input && status && topbar && spacer) {
   button.setAttribute('aria-label', 'Search PlayGarba');
   button.setAttribute('aria-controls', 'catalogueSearchPanel');
   button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-keyshortcuts', '/ Control+K Meta+K');
   button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="5.8"></circle><path d="m15.4 15.4 4.6 4.6"></path></svg>';
   spacer.replaceWith(button);
 
@@ -60,6 +61,7 @@ if (input && status && topbar && spacer) {
     .explore-search-field-icon{color:rgba(255,248,236,.62)}
     .explore-search-label input{min-width:0;width:100%;padding:0;border:0;outline:0;color:var(--text);background:transparent;font-size:1rem;line-height:1.2}
     .explore-search-label input::placeholder{color:rgba(255,248,236,.44)}
+    .explore-search-label input::-webkit-search-cancel-button{display:none}
     .explore-search-clear{display:grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;color:rgba(255,248,236,.70);background:rgba(255,255,255,.065);cursor:pointer}
     .explore-search-clear[hidden]{display:none}
     .catalogue-status #catalogueCount{margin:8px 4px 0;color:rgba(255,248,236,.48);font-size:.72rem;line-height:1.35}
