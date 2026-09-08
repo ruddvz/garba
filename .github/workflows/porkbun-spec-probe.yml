@@ -16,7 +16,11 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsSL https://porkbun.com/api/json/v3/spec -o /tmp/spec.json
-          for path in '/hosting/get/{domain}' '/hosting/deploy/{domain}' '/domain/getUrlForwarding/{domain}' '/domain/addUrlForward/{domain}' '/domain/deleteUrlForward/{domain}/{id}' '/dns/retrieve/{domain}'; do
-            echo "=== $path ==="
-            jq --arg p "$path" '.paths[$p]' /tmp/spec.json
-          done
+          echo '=== matching API paths ==='
+          jq -r '.paths | keys[] | select(test("fix|hosting|forward"; "i"))' /tmp/spec.json
+          echo '=== AddUrlForwardRequest ==='
+          jq '.components.schemas.AddUrlForwardRequest' /tmp/spec.json
+          echo '=== GetUrlForwardingResponse ==='
+          jq '.components.schemas.GetUrlForwardingResponse' /tmp/spec.json
+          echo '=== hosting get response sample ==='
+          jq '.paths["/hosting/get/{domain}"].get.responses["200"]' /tmp/spec.json
