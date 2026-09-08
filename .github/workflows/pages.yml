@@ -53,10 +53,16 @@ jobs:
             _site/
           cp -R assets data _site/
 
-          # Keep seek truth inside the existing network-first app.js payload so the
-          # installed PWA does not gain another runtime request or stale cache surface.
-          cat app.js assets/runtime/seek-state.js > _site/app.js
+          # Keep seek and continuous-set truth inside the existing network-first app.js
+          # payload so the installed PWA does not gain extra runtime requests or stale
+          # cache surfaces.
+          cat \
+            app.js \
+            assets/runtime/seek-state.js \
+            assets/runtime/continuous-set-state.js \
+            > _site/app.js
           grep -q 'GARBA_SEEK_STATE_RUNTIME' _site/app.js || { echo 'Seek-state runtime missing from deployed app.js'; exit 1; }
+          grep -q 'GARBA_CONTINUOUS_SET_RUNTIME' _site/app.js || { echo 'Continuous-set runtime missing from deployed app.js'; exit 1; }
 
           # The catalogue is one supporting Explore page. Collection, album and song
           # browsing remain in-page states rather than standalone song/release trees.
