@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v15`;
+const CACHE_NAME = `${CACHE_PREFIX}v14`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
