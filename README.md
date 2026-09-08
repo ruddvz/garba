@@ -1,10 +1,10 @@
-# GARBA
+# PlayGarba
 
 > A community-built home for Garba music, discovery, live sets, archives and listening.
 
-[Open the live GARBA player](https://ruddvz.github.io/garba/) · [Catalogue status](docs/catalogue/status.md) · [Rights policy](docs/catalogue/rights.md) · [Documentation](docs/README.md)
+[Open the live PlayGarba player](https://playgarba.com/) · [Catalogue status](docs/catalogue/status.md) · [Rights policy](docs/catalogue/rights.md) · [Documentation](docs/README.md)
 
-GARBA exists because Garba music is everywhere, but it is scattered across albums, cassettes, CDs, streaming releases, live Navratri performances, nonstop sets, community uploads, artist pages, labels and local archives.
+PlayGarba exists because Garba music is everywhere, but it is scattered across albums, cassettes, CDs, streaming releases, live Navratri performances, nonstop sets, community uploads, artist pages, labels and local archives.
 
 The project has two connected goals:
 
@@ -38,7 +38,7 @@ For continuously changing counts and coverage, see [`docs/catalogue/status.md`](
 
 ## Playback and rights
 
-GARBA is a discovery and listening project, not a raw-audio mirror.
+PlayGarba is a discovery and listening project, not a raw-audio mirror.
 
 Playback can use:
 
@@ -141,4 +141,4 @@ Start at [`docs/README.md`](docs/README.md). The main references are:
 
 The repository is public, but a repository-wide software/data licence still needs to be selected. Public visibility by itself does not make reuse rights legally unambiguous. Underlying songs, recordings, artwork, embeds and third-party material retain their own copyrights and licence terms.
 
-GARBA should become more complete over time without pretending it is already complete. If something is missing, preserve the gap, find the evidence and add it carefully.
+PlayGarba should become more complete over time without pretending it is already complete. If something is missing, preserve the gap, find the evidence and add it carefully.
