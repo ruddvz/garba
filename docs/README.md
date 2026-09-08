@@ -9,6 +9,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/rights.md`](catalogue/rights.md): source, licensing and redistribution policy
 - [`catalogue/content-sources.md`](catalogue/content-sources.md): source guidance
 - [`catalogue/song-catalog-contract.md`](catalogue/song-catalog-contract.md): player/catalogue integration contract
+- [`catalogue/issue-151-atul-audit.md`](catalogue/issue-151-atul-audit.md): Atul Purohit catalogue-completeness and playback evidence audit for issue #151
 
 ## Product
 
