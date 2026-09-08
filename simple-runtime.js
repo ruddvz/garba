@@ -304,4 +304,4 @@
   syncSheetModal();
 })();
 
-document.write('<script src="provider-runtime.js"><\/script><script src="player-continuity.js"><\/script><script src="youtube-player-runtime.js"><\/script>');
+document.write('<script src="provider-runtime.js"><\/script><script src="player-continuity.js"><\/script><script src="assets/runtime/immersive-atmosphere.js"><\/script><script src="youtube-player-runtime.js"><\/script>');
