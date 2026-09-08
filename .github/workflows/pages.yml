@@ -237,6 +237,13 @@ jobs:
           grep -q '<link rel="canonical" href="https://playgarba.com/explore/"' _site/catalogue/index.html || { echo 'Explore canonical must use apex host'; exit 1; }
           grep -q 'https://playgarba.com/assets/social/garba-og-card.png' _site/index.html || { echo 'Player social preview must use apex host'; exit 1; }
 
+          # Emit deploy-time identity only after the production artifact is assembled.
+          # The digests describe the bytes that Pages uploads, including concatenated
+          # app.js/styles.css rather than assuming source files are byte-identical.
+          node scripts/lib/generate-build-info.mjs _site/build-info.json "$GITHUB_SHA" _site
+          node scripts/lib/validate-build-info.mjs _site/build-info.json "$GITHUB_SHA"
+          test -f _site/build-info.json || { echo 'Deployed build identity is missing'; exit 1; }
+
           touch _site/.nojekyll
 
       - name: Configure GitHub Pages
