@@ -1,7 +1,7 @@
 {
-  "version": "0.20.0",
-  "songCount": 1414,
-  "releaseCount": 225,
+  "version": "0.20.1",
+  "songCount": 1437,
+  "releaseCount": 226,
   "categoryCount": 19,
   "freeSourceCount": 20,
   "songChunks": [
@@ -78,7 +78,8 @@
     "data/catalogue/songs/songs-wave-d-falguni-pathak.json",
     "data/catalogue/songs/songs-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/songs/songs-wave-d-geeta-rabari.json",
-    "data/catalogue/songs/songs-wave-d-aditya-gadhvi.json"
+    "data/catalogue/songs/songs-wave-d-aditya-gadhvi.json",
+    "data/catalogue/songs/songs-wave-f-dhara-rankar.json"
   ],
   "releaseChunks": [
     "data/catalogue/releases/releases-01.json",
@@ -131,7 +132,8 @@
     "data/catalogue/releases/releases-wave-d-falguni-pathak.json",
     "data/catalogue/releases/releases-wave-d-kirtidan-gadhvi.json",
     "data/catalogue/releases/releases-wave-d-geeta-rabari.json",
-    "data/catalogue/releases/releases-wave-d-aditya-gadhvi.json"
+    "data/catalogue/releases/releases-wave-d-aditya-gadhvi.json",
+    "data/catalogue/releases/releases-wave-f-dhara-rankar.json"
   ],
   "retiredReleaseIds": [
     "atul-live-uwb-2015"
@@ -205,7 +207,8 @@
     "data/playback-sources-praful-mata-nu-garba-exact.json",
     "data/playback-sources-wave-d-falguni.json",
     "data/playback-sources-wave-d-geeta.json",
-    "data/playback-sources-wave-d-aditya.json"
+    "data/playback-sources-wave-d-aditya.json",
+    "data/playback-sources-dhara-rankar-exact.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -231,5 +234,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.0 carries forward Wave C, Playback Wave E and route-truth hardening, then adds Catalogue Wave D: 103 canonical tracks across Falguni Pathak/Tushaar Trivedi, Kirtidan Gadhvi with Kajal Maheriya/Dharmesh Barot/Rashmita Rabari, Geeta Rabari and Aditya Gadhvi; 82 exact YouTube chapter routes are pinned only where official artist/label uploads publish unambiguous timestamps. Ambiguous or malformed timestamps remain conservative provider fallbacks, and split-track albums remain distinct from continuous non-stop masters."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.20.1 preserves Wave C, Playback Wave E, Wave D and all current route-truth hardening, then begins Catalogue Wave F with Dhara Shah's verified 23-track Rankar (2025) album. Every Rankar component song uses an independently exposed Amazon Music song href, while the official artist-channel continuous performance is retained as release evidence without inventing one-to-one YouTube chapter mappings where the programme differs from the provider album."
 }
