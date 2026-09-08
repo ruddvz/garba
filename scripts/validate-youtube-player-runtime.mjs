@@ -88,8 +88,6 @@ for (const marker of [
   "url.searchParams.set('nonstop', set.id)",
   "playbackProvider: 'youtube'",
   'youtubeStartSeconds: 0',
-  'durationSeconds: 0',
-  'window.GARBA_YOUTUBE_PLAYER.open(state.activeTrack, { autoplay: true, resume: false })',
   "$('progress')?.addEventListener('input', captureSeek, { capture: true })",
   'function restorePreviousSession(previous)',
   'function captureMainNavigation(event)',
@@ -100,6 +98,23 @@ for (const marker of [
 ]) {
   if (!nonstop.includes(marker)) fail(`Direct Nonstop playback contract missing marker: ${marker}`);
 }
+
+const nonstopDurationForms = [
+  'durationSeconds: 0',
+  'durationSeconds: set.durationSeconds || 0',
+];
+if (!nonstopDurationForms.some((marker) => nonstop.includes(marker))) {
+  fail('Direct Nonstop playback contract must use a zero/known duration compatible with the YouTube engine');
+}
+
+const nonstopOpenForms = [
+  'window.GARBA_YOUTUBE_PLAYER.open(state.activeTrack, { autoplay: true, resume: false })',
+  'window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: true, resume: false })',
+];
+if (!nonstopOpenForms.some((marker) => nonstop.includes(marker))) {
+  fail('Direct Nonstop playback contract must open the selected track through GARBA_YOUTUBE_PLAYER');
+}
+
 if (nonstop.includes('window.open(')) {
   fail('Primary Nonstop playback must not open an external provider window');
 }
