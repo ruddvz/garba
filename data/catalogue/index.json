@@ -1,5 +1,5 @@
 {
-  "version": "0.17.2",
+  "version": "0.17.3",
   "songCount": 1169,
   "releaseCount": 209,
   "categoryCount": 19,
@@ -139,7 +139,8 @@
     "data/playback-sources-navdurgani-exact.json",
     "data/playback-sources-ude-re-gulal-exact.json",
     "data/playback-sources-shyam-exact.json",
-    "data/playback-sources-madhuvan-youtube.json"
+    "data/playback-sources-madhuvan-youtube.json",
+    "data/playback-sources-jagran-youtube.json"
   ],
   "nonstopSets": "data/nonstop.json",
   "discovery": {
@@ -165,5 +166,5 @@
     "releasePlayback": "data/playback-sources-generated.json",
     "playbackCoverage": "data/playback-coverage.json"
   },
-  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.2 preserves the duplicate-release cleanup and duplicate-ID build guard from v0.17.1, keeps the Shyam and Ude Re Gulal exact-provider mappings, and adds provider-published Soor Mandir YouTube chapters for all 18 Madhuvan (Bansari-2) songs; Poonam/Saiyar are matched by title because provider order differs. Ambiguous or unpublished timestamps remain fallbacks."
+  "notes": "Canonical songs and releases remain separate from recommendation and live-performance discovery. Exact track mappings override deterministic verified performance-chapter routes, which override verified release fallbacks. v0.17.3 preserves the duplicate-release cleanup, duplicate-ID build guard, Shyam/Ude exact-provider mappings and Madhuvan one-tap chapters, then adds provider-published Soor Mandir YouTube chapters for 16 Jagran songs. Jagran tracks 11 and 18 intentionally remain on existing fallbacks because their published YouTube chapter boundaries end materially earlier than the canonical album durations; no unsafe end boundary is promoted to one-tap playback."
 }
