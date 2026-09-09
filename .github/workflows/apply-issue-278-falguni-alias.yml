@@ -1,0 +1,155 @@
+name: Apply issue 278 Falguni alias recovery
+
+on:
+  push:
+    branches:
+      - fix/issue-278-falguni-alias-current-main
+    paths:
+      - .github/workflows/apply-issue-278-falguni-alias.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/issue-278-falguni-alias-current-main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Restore only the missing Falguni catalogue alias
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const indexPath = 'data/catalogue/index.json';
+          const releasePath = 'data/catalogue/releases/releases-04.json';
+          const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+          const releaseChunk = JSON.parse(fs.readFileSync(releasePath, 'utf8'));
+          const allReleases = (index.releaseChunks || []).flatMap((path) => JSON.parse(fs.readFileSync(path, 'utf8')));
+          const allSongs = (index.songChunks || []).flatMap((path) => JSON.parse(fs.readFileSync(path, 'utf8')));
+
+          const legacyId = 'falguni-non-stop-2022';
+          const canonicalId = 'non-stop-garba-falguni-pathak-2022';
+          if (allReleases.some((release) => release.id === legacyId)) {
+            throw new Error(`${legacyId} already exists; refusing duplicate insertion`);
+          }
+          const canonical = allReleases.find((release) => release.id === canonicalId);
+          if (!canonical) throw new Error(`Missing canonical release ${canonicalId}`);
+          if (canonical.songCount !== 30 || canonical.label !== 'Music Nova' || canonical.releaseDate !== '2022-09-19') {
+            throw new Error('Canonical Falguni release identity drifted; audit required before alias recovery');
+          }
+
+          const legacySongs = allSongs.filter((song) => song.releaseId === legacyId);
+          if (legacySongs.length !== 30) throw new Error(`Expected 30 legacy Falguni rows, found ${legacySongs.length}`);
+          const tracks = legacySongs.map((song) => Number(song.trackNumber)).sort((a,b) => a-b);
+          if (tracks.some((track, i) => track !== i + 1)) throw new Error(`Legacy Falguni tracks are not exactly 1..30: ${tracks.join(',')}`);
+          if (legacySongs.some((song) => !String(song.id || '').startsWith('legacy-falguni-non-stop-2022-'))) {
+            throw new Error('A legacy Falguni row is not namespaced; refusing recovery');
+          }
+
+          const alias = {
+            id: legacyId,
+            title: 'Non Stop Garba by Falguni Pathak',
+            artist: 'Falguni Pathak & Tushaar Trivedi',
+            releaseDate: '2022-09-19',
+            originalReleaseYear: 2022,
+            label: 'Music Nova',
+            categories: ['modern-gujarati-garba', 'mataji-devotional'],
+            visualGenre: 'traditional',
+            entryType: 'album',
+            songCount: 30,
+            durationSeconds: 4617,
+            series: null,
+            volume: null,
+            live: { isLive: false, venue: null },
+            sources: [
+              { platform: 'Apple Music', url: 'https://music.apple.com/us/album/non-stop-garba-by-falguni-pathak/1646310386', kind: 'stream' },
+              { platform: 'Amazon Music', url: 'https://music.amazon.in/albums/B0BG4MDXY4', kind: 'stream' }
+            ],
+            trackImportComplete: true,
+            rightsStatus: 'commercial-catalogue',
+            audioBundled: false,
+            metadataStatus: 'verified',
+            audioAvailability: 'external-source-only',
+            durationPrecision: 'track-sum',
+            presentationRole: 'catalogue-alias',
+            canonicalReleaseId: canonicalId
+          };
+
+          releaseChunk.push(alias);
+          if (index.releaseCount !== allReleases.length) {
+            throw new Error(`Index releaseCount ${index.releaseCount} does not match current source release count ${allReleases.length}`);
+          }
+          index.releaseCount += 1;
+          if (index.version === '0.29.1') index.version = '0.29.2';
+
+          fs.writeFileSync(releasePath, JSON.stringify(releaseChunk) + '\n');
+          fs.writeFileSync(indexPath, JSON.stringify(index) + '\n');
+          NODE
+
+      - name: Build and validate presentation redirects
+        run: |
+          node scripts/build-catalogue.mjs
+          node scripts/lib/validate-release-presentation.mjs
+          node <<'NODE'
+          const fs = require('fs');
+          const songs = JSON.parse(fs.readFileSync('data/songs.json', 'utf8'));
+          const releases = JSON.parse(fs.readFileSync('data/releases.json', 'utf8'));
+          const legacyId = 'falguni-non-stop-2022';
+          const canonicalId = 'non-stop-garba-falguni-pathak-2022';
+          const alias = releases.find((release) => release.id === legacyId);
+          if (!alias || alias.presentationRole !== 'catalogue-alias' || alias.canonicalReleaseId !== canonicalId) {
+            throw new Error('Generated releases do not preserve the Falguni alias contract');
+          }
+          const legacySongs = songs.filter((song) => song.releaseId === legacyId);
+          if (legacySongs.length !== 30) throw new Error(`Expected 30 generated alias songs, got ${legacySongs.length}`);
+          for (const song of legacySongs) {
+            if (song.presentationRole !== 'catalogue-alias') throw new Error(`Missing catalogue-alias role on ${song.id}`);
+            if (song.canonicalReleaseId !== canonicalId) throw new Error(`Wrong canonical release on ${song.id}`);
+            if (!song.canonicalSongId) throw new Error(`Missing canonicalSongId on ${song.id}`);
+            const target = songs.find((candidate) => candidate.id === song.canonicalSongId);
+            if (!target || target.releaseId !== canonicalId) throw new Error(`Invalid canonicalSongId target for ${song.id}`);
+          }
+          NODE
+
+      - name: Run full repository validation
+        run: npm run check
+
+      - name: Keep final PR source-only and remove temporary workflow
+        run: |
+          node <<'NODE' > /tmp/generated-files.txt
+          const index = require('./data/catalogue/index.json');
+          for (const path of Object.values(index.generatedFiles || {})) {
+            if (typeof path === 'string') console.log(path);
+          }
+          NODE
+          while IFS= read -r path; do
+            if [ -n "$path" ] && git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+              git restore "$path"
+            fi
+          done < /tmp/generated-files.txt
+          git rm .github/workflows/apply-issue-278-falguni-alias.yml
+          git add data/catalogue/releases/releases-04.json data/catalogue/index.json
+          unexpected="$(git diff --name-only -- . ':!.github/workflows/apply-issue-278-falguni-alias.yml' ':!data/catalogue/releases/releases-04.json' ':!data/catalogue/index.json')"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected working-tree changes:" >&2
+            echo "$unexpected" >&2
+            exit 1
+          fi
+          staged="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/apply-issue-278-falguni-alias.yml' 'data/catalogue/index.json' 'data/catalogue/releases/releases-04.json' | sort)"
+          if [ "$staged" != "$expected" ]; then
+            echo "Unexpected staged paths:" >&2
+            echo "$staged" >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Restore Falguni 2022 catalogue alias migration (#278)'
+          git push origin HEAD:fix/issue-278-falguni-alias-current-main
