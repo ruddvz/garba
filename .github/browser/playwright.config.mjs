@@ -16,7 +16,11 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // retain-on-failure video still records every passing test before deleting
+    // it. Across the seven-project WebKit/Chromium matrix that creates avoidable
+    // encoder/process pressure and has caused late WebKit target crashes. Keep
+    // the retained trace + failure screenshot as deterministic diagnostics.
+    video: 'off',
   },
   projects: [
     {
