@@ -5,7 +5,7 @@ Product: PlayGarba Admin
 Short name: PGA  
 Reviewed: 2026-09-09
 
-This document defines the analytics, privacy, retention, freshness and data semantics that PGA must use. Later telemetry, backend and UI work must follow this contract unless a later issue deliberately changes it with evidence.
+This document defines the analytics, privacy, retention, precision, freshness and data semantics that PGA must use. Later telemetry, backend and UI work must follow this contract unless a later issue deliberately changes it with evidence.
 
 PGA exists to answer four founder questions quickly:
 
@@ -34,7 +34,7 @@ The existing GitHub Pages deployment remains the canonical public product. PGA m
 Use Cloudflare for the private/analytics plane while leaving the public GitHub Pages origin intact:
 
 - a public Worker accepts telemetry at `events.playgarba.com`;
-- Workers Analytics Engine stores recent event-level analytics;
+- Workers Analytics Engine stores recent product events and presence heartbeats;
 - a scheduled Worker reads recent analytics and writes durable aggregate rollups to D1;
 - a separate PGA Worker serves the private PWA and protected aggregate APIs at `pga.playgarba.com`;
 - Cloudflare Access protects the PGA Worker or hostname before PGA code runs;
@@ -42,13 +42,16 @@ Use Cloudflare for the private/analytics plane while leaving the public GitHub P
 
 The public telemetry Worker must not serve PGA. Keeping the untrusted public write endpoint and the founder application in separate Workers reduces the blast radius of an ingestion bug.
 
-Cloudflare capabilities were rechecked on 2026-09-09. Workers Analytics Engine currently retains data for three months, so it is a recent-detail store, not the source for lifetime history. D1 is therefore used only for non-user-level durable rollups. Current Cloudflare limits are capacity-planning inputs, not metric semantics and not assumptions that the free tier will always be sufficient.
+Cloudflare capabilities were rechecked on 2026-09-09. Workers Analytics Engine currently retains data for three months and may use adaptive sampling at high volume. D1 is therefore used for non-user-level durable rollups, and every Analytics Engine query must account for `_sample_interval` rather than assuming every stored row represents exactly one original event.
+
+Current Cloudflare limits are capacity-planning inputs, not metric semantics and not assumptions that the free tier will always be sufficient.
 
 Official references:
 
 - https://developers.cloudflare.com/analytics/analytics-engine/
 - https://developers.cloudflare.com/analytics/analytics-engine/limits/
 - https://developers.cloudflare.com/analytics/analytics-engine/sql-api/
+- https://developers.cloudflare.com/analytics/analytics-engine/sampling/
 - https://developers.cloudflare.com/d1/platform/limits/
 - https://developers.cloudflare.com/workers/configuration/cloudflare-access/
 - https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
@@ -83,7 +86,7 @@ Rules:
 5. Recent detailed queries come from Analytics Engine.
 6. Long-term charts and lifetime counters come from D1 aggregates.
 7. PGA receives aggregates only. PGA v1 has no raw-event explorer and no listener-level session list.
-8. A dashboard query must preserve data status. Backend failure is not converted to a numeric zero.
+8. A dashboard query must preserve data status and precision. Backend failure is not converted to a numeric zero, and sampled data is not labelled exact.
 
 ## 3. Identity semantics
 
@@ -115,13 +118,21 @@ A session is a browser activity window, not a login session.
 - a new session after inactivity gets a new random ID;
 - ingestion HMACs the ID into `session_key` before storage.
 
-A session can span midnight. Day-level **Sessions** counts session starts inside the day. A separate **Active sessions in period** query may count any distinct session observed in the selected window when that distinction is useful.
+A session can span midnight.
 
-### 3.3 Tab and playback instance
+**Sessions** means accepted `session_started` events in the selected window. **Active sessions** means distinct session keys observed in the selected window. PGA must not silently switch between those meanings.
 
-Each document gets an ephemeral `tab_id`. Each newly selected playable content instance gets an ephemeral `playback_instance_id`.
+### 3.3 Tab, search and playback correlation
 
-These exist only to deduplicate events and distinguish actual playback transitions. They must not become founder-visible identity.
+Each document gets an ephemeral random `tab_id`. Each search gets a random `search_id`. Each newly selected playable content instance gets a random `playback_instance_id`.
+
+The ingestion Worker transforms them into bounded HMAC pseudonyms when they must be retained for joins:
+
+- `tab_key`;
+- `search_key`;
+- `playback_key`.
+
+These exist only to deduplicate events and correlate product transitions. They must not become founder-visible identity.
 
 ## 4. Reporting timezone
 
@@ -152,8 +163,10 @@ Every accepted event has this logical envelope after ingestion normalisation.
 | `received_at` | Yes | Server receive time |
 | `browser_key` | Yes | Server-HMAC anonymous browser pseudonym |
 | `session_key` | Yes | Server-HMAC analytics session pseudonym |
-| `tab_key` | Usually | Server-HMAC ephemeral tab key where event dedupe needs it |
-| `surface` | Yes | `player`, `explore`, `nonstop`, `editorial`, `pga-not-applicable` |
+| `tab_key` | When needed | Server-HMAC ephemeral tab pseudonym |
+| `search_key` | Search attribution | Server-HMAC search correlation key |
+| `playback_key` | Playback attribution | Server-HMAC playback-instance correlation key |
+| `surface` | Yes | `player`, `explore`, `nonstop`, `editorial` |
 | `display_mode` | Yes | `browser`, `standalone`, `minimal-ui`, `unknown` |
 | `world` | When applicable | One of the six PlayGarba presentation worlds |
 | `content_type` | When applicable | Canonical object type such as `song`, `release`, `nonstop_set`, `chapter` |
@@ -168,6 +181,7 @@ Every accepted event has this logical envelope after ingestion normalisation.
 | `browser_family` | Server normalised | Coarse family only |
 | `event_value` | Event specific | Small numeric value such as played milliseconds |
 | `error_code` | Event specific | Allowlisted product/runtime error class |
+| `build_id` | Recommended | Deployed PlayGarba build identity for regression attribution |
 
 Unknown keys are rejected or dropped by an explicit schema-version rule. The backend must never store arbitrary client objects.
 
@@ -208,7 +222,7 @@ Do not emit `surface_viewed` for every internal re-render. One human-visible nav
 | `search_result_selected` | A result is selected from a search context |
 | `collection_selected` | A supported Explore collection/filter is selected |
 
-Each search creates a random `search_id` so conversion can be joined without relying on query text.
+Each search creates a random `search_id` that becomes `search_key` at ingestion so conversion can be joined without relying on query text.
 
 Raw search text is potentially user-entered free text. The ingestion Worker must:
 
@@ -238,7 +252,7 @@ The normal recent-event retention therefore bounds raw search-term retention to 
 
 `play_intent` and `playback_started` must never be collapsed. A click is not proof that audio played.
 
-A resume is not a new play start. A content change creates a new playback instance.
+A resume is not a new play start. A content change creates a new playback instance and `playback_key`.
 
 Provider or YouTube state churn must be deduplicated so repeated callbacks for the same transition do not produce repeated events.
 
@@ -263,7 +277,7 @@ Listening time is calculated from accepted heartbeat deltas and capped to at mos
 
 ## 7. Live-presence semantics
 
-PGA `Live now` is an approximate active-session measure.
+PGA `Live now` is an approximate active-session measure, with precision metadata from the analytics source.
 
 ### 7.1 Live now
 
@@ -291,11 +305,10 @@ Breakdowns that could reveal one anonymous listener's current context use a mini
 
 - live geography;
 - current content/title breakdown;
-- fine-grained live source breakdown.
+- fine-grained live source breakdown;
+- world breakdown by default in v1.
 
 Below threshold, PGA shows `Insufficient volume` or groups the row into `Other` rather than exposing the dimension.
-
-The normal world-level breakdown may be shown below three only if it cannot be combined with another dimension to identify a specific session. Default v1 behaviour should still use the same threshold for consistency.
 
 ## 8. Acquisition, device and geography
 
@@ -332,22 +345,62 @@ Derive coarse geography at the edge if available. Do not geolocate from stored I
 
 ## 9. Recent and durable storage
 
-### 9.1 Workers Analytics Engine
+### 9.1 Workers Analytics Engine datasets
 
-Dataset: logical name `playgarba_events_v1`.
+Use two logical datasets so high-frequency presence does not drown product events:
 
-Use it for:
+#### `playgarba_events_v1`
 
-- last 90 days of event detail;
-- current presence;
-- 7d/30d/90d distinct-browser calculations;
+Contains non-heartbeat product events.
+
+Recommended sampling index: `browser_key`.
+
+Use for:
+
+- recent product/navigation/playback events;
+- 7d/30d/90d browser/session calculations;
 - recent search-term demand;
 - recent content/source/device/geography breakdowns;
 - recent errors and playback failures.
 
-Analytics Engine currently retains events for three months. PGA must not imply older event-level history exists.
+#### `playgarba_presence_v1`
 
-### 9.2 D1 aggregate history
+Contains `presence_heartbeat` only.
+
+Recommended sampling index: `session_key`.
+
+Use for:
+
+- Live now;
+- Listening now;
+- short live trends;
+- listening-time heartbeat aggregation.
+
+Both datasets follow the current Analytics Engine three-month retention boundary.
+
+### 9.2 Sampling and precision contract
+
+Analytics Engine can sample on write and read. Every stored row exposes `_sample_interval`.
+
+Required query rules:
+
+- event counts use `SUM(_sample_interval)`, not plain `COUNT()`, when sampling is possible;
+- numeric sums use weighted values such as `SUM(_sample_interval * value)`;
+- weighted averages use weighted numerator / weighted denominator;
+- rollups preserve whether source rows were sampled;
+- distinct-browser/session metrics are **exact** only when the implementation proves the query window is unsampled or uses a verified exact strategy;
+- if sampling affects a distinct metric and no exact strategy exists, PGA marks it **estimated** or **unavailable**, never exact;
+- a sampled metric must not be rendered with more visual precision than the evidence supports.
+
+API metric objects must be able to expose:
+
+- `precision: exact | estimated | unknown`;
+- `sampled: true | false | unknown`;
+- an optional denominator/sample count when useful.
+
+The low-volume launch state is likely unsampled, but the product contract must remain truthful after traffic grows.
+
+### 9.3 D1 aggregate history
 
 D1 stores non-user-level rollups only.
 
@@ -361,6 +414,8 @@ Recommended logical tables:
 - `dimension_value`
 - `value_num`
 - `sample_count`
+- `precision`
+- `sampled`
 - `schema_version`
 - `generated_at`
 
@@ -382,10 +437,11 @@ Examples:
 
 - `metric_key`
 - `value_num`
+- `precision`
 - `through_date_ist`
 - `updated_at`
 
-Use only for additive metrics that can be safely summed across days, such as:
+Use only for additive metrics that can be safely combined across finalised daily rollups, such as:
 
 - browser identifiers created;
 - sessions started;
@@ -397,9 +453,9 @@ Do not create a lifetime `unique people` or `unique browsers` counter by summing
 
 #### `rollup_runs`
 
-Track each rollup interval, source window, status, schema version and generated time so PGA can detect stale or partial history.
+Track each rollup interval, source window, status, schema version, sampling/precision state and generated time so PGA can detect stale or partial history.
 
-### 9.3 Long-term free text
+### 9.4 Long-term free text
 
 Do not copy individual search queries, runtime messages or raw referrers into D1.
 
@@ -418,8 +474,8 @@ Long-term D1 data should remain aggregate and non-user-level. Search terms stay 
 | Sessions | Accepted `session_started` events in selected window |
 | Active sessions | Distinct session keys with any accepted event in selected window |
 | New browser IDs | Accepted `browser_created` events in selected window |
-| Returning browsers | Distinct browser keys active in window whose identifier creation predates the new-browser window rule |
-| Surface views | Accepted `surface_viewed` events |
+| Returning browsers | Distinct active browser keys in the selected window that do not have `browser_created` inside that same window |
+| Surface views | Weighted accepted `surface_viewed` events |
 | PWA sessions | Sessions whose first accepted event reports standalone/minimal-ui display mode |
 | Browser sessions | Sessions not classified as PWA sessions |
 
@@ -427,33 +483,37 @@ Long-term D1 data should remain aggregate and non-user-level. Search terms stay 
 
 For older/all-time context use **Browser IDs created**, **Sessions started**, **Confirmed plays** and other additive lifetime counters. Do not rename them to `all-time people`.
 
+A lost `browser_created` event can make a browser look returning. Data-quality health should make ingestion loss visible rather than silently claiming perfect classification.
+
 ### 10.2 Listening
 
 | PGA label | Definition |
 | --- | --- |
-| Play intents | Accepted `play_intent` events |
-| Confirmed play starts | Deduplicated `playback_started` events |
-| Play success rate | Confirmed play starts divided by eligible play intents in same attribution window |
-| Listening time | Sum of deduplicated capped heartbeat playback milliseconds |
+| Play intents | Weighted accepted `play_intent` events |
+| Confirmed play starts | Deduplicated/weighted `playback_started` events |
+| Play success rate | Eligible `play_intent` playback keys followed by `playback_started` on the same playback key within 30 seconds / eligible play-intent playback keys |
+| Listening time | Sum of deduplicated capped heartbeat playback milliseconds, weighted for source sampling |
 | Listening sessions | Sessions with at least one confirmed play start |
 | Avg listening session | Listening time divided by listening sessions |
-| Pauses | Accepted `playback_paused` events |
-| Next | Accepted `next_requested` events |
-| Previous | Accepted `previous_requested` events |
-| Unavailable attempts | Accepted `playback_unavailable` events |
-| Playback failures | Accepted `playback_error` events |
+| Pauses | Weighted accepted `playback_paused` events |
+| Next | Weighted accepted `next_requested` events |
+| Previous | Weighted accepted `previous_requested` events |
+| Unavailable attempts | Weighted accepted `playback_unavailable` events |
+| Playback failures | Weighted accepted `playback_error` events |
 
-Do not call measured top content `popular`, `iconic` or `trending` unless the label explicitly describes the measurement, for example `Most played · last 30 days`.
+Do not call measured top content `popular`, `iconic` or `trending` unless the label explicitly describes the measurement, for example `Most played · 30d`.
+
+If sampling makes a rate estimated, both numerator and denominator must use compatible weighting and the response must carry estimated precision.
 
 ### 10.3 Search and discovery
 
 | PGA label | Definition |
 | --- | --- |
-| Searches | Accepted `search_submitted` events |
-| Zero-result searches | Accepted `search_zero_results` events |
+| Searches | Weighted accepted `search_submitted` events |
+| Zero-result searches | Weighted accepted `search_zero_results` events |
 | Zero-result rate | Zero-result searches / Searches |
-| Search-to-play conversion | Distinct search IDs followed by a confirmed play within 10 minutes / eligible searches |
-| Explore-to-play conversion | Explore sessions with confirmed play after Explore entry / Explore entries |
+| Search-to-play conversion | Eligible search keys followed by a confirmed play within 10 minutes / eligible search keys |
+| Explore-to-play conversion | Explore entries followed by a confirmed play in the same session attribution window / eligible Explore entries |
 | Unmet demand | Thresholded zero-result and unavailable-attempt aggregates, kept separate by cause |
 
 Search conversion attribution ends when:
@@ -461,6 +521,8 @@ Search conversion attribution ends when:
 - 10 minutes pass;
 - a new search supersedes the current search; or
 - the analytics session ends.
+
+A search conversion join uses `search_key`, not the raw search string.
 
 ### 10.4 Worlds and Nonstop
 
@@ -527,12 +589,14 @@ Required controls:
 - per-event field count and string length limits;
 - allowlisted event names and enum values;
 - bounded timestamp skew;
-- duplicate `event_id` defence for the useful dedupe window;
+- deterministic event IDs and duplicate defence for the useful retry window;
 - server-side HMAC for pseudonyms;
 - rate limiting using edge controls that do not require storing raw IPs in product analytics;
 - reject arbitrary nested JSON;
 - no user-supplied SQL/filter expression reaches Analytics Engine or D1;
 - no secrets accepted from or returned to the public client.
+
+Transport may be at-least-once. Metric queries/rollups therefore must use the event id/correlation contract to avoid retry duplication where exact event counts matter.
 
 Abuse can make public analytics noisy. PGA should expose data-quality health so suspicious volume changes can be investigated without pretending every accepted event is a real listener.
 
@@ -560,7 +624,7 @@ Do not store:
 
 Unknown client errors use a generic class plus source/build context. Health can still identify a regression by build without collecting uncontrolled text.
 
-## 15. Data-status and API response contract
+## 15. Data-status, precision and API response contract
 
 Every protected PGA data endpoint returns data plus status metadata.
 
@@ -577,10 +641,16 @@ Logical envelope:
     "timezone": "Asia/Kolkata"
   },
   "sources": [
-    { "name": "analytics-engine", "status": "complete" },
-    { "name": "d1-rollups", "status": "complete" }
+    { "name": "analytics-engine", "status": "complete", "sampled": false },
+    { "name": "d1-rollups", "status": "complete", "sampled": false }
   ],
-  "data": {}
+  "data": {
+    "sessions": {
+      "value": 123,
+      "precision": "exact",
+      "sampled": false
+    }
+  }
 }
 ```
 
@@ -591,6 +661,12 @@ Allowed top-level statuses:
 - `stale`: the endpoint returned a previously valid snapshot older than its freshness target;
 - `unavailable`: no trustworthy data can be returned.
 
+Allowed metric precision:
+
+- `exact`: implementation can support the value exactly under the active source/query semantics;
+- `estimated`: value is statistically/weighted estimated, including sampled distinct metrics without exact recovery;
+- `unknown`: source cannot establish precision.
+
 Rules:
 
 - real measured zero is numeric `0` with `complete` status;
@@ -599,6 +675,7 @@ Rules:
 - stale cached values keep their original `dataThrough` timestamp;
 - partial data identifies which source is missing;
 - every live/presence response includes a freshness timestamp;
+- sampled metrics expose sampled/precision state;
 - no endpoint returns raw HMAC keys to the PGA browser.
 
 ## 16. Freshness targets
@@ -620,6 +697,8 @@ If a source is older than its target, PGA marks it stale rather than silently pr
 The scheduled rollup job is idempotent.
 
 - roll up a closed IST day from Analytics Engine;
+- use `_sample_interval` weighting for sampled source rows;
+- persist precision/sampled metadata with affected daily metrics;
 - write/replace that day's aggregate rows in one controlled transaction/batch strategy;
 - record a `rollup_runs` status;
 - allow a bounded re-run of recent days when schema/late-event repair is required;
@@ -716,6 +795,7 @@ Health source contracts are defined in #844, but analytics/backend health must e
 - query health;
 - rollup freshness/status;
 - event-schema version distribution;
+- sampled/estimated metric state;
 - suspicious event-volume signal where implementable;
 - current PGA build identity.
 
@@ -728,11 +808,12 @@ Later PGA UI issues must preserve these rules:
 3. A real no-data period says `No data yet` when that is clearer than `0`.
 4. A failed query says it failed and offers recovery where useful.
 5. Stale data shows its age.
-6. Percentages expose a denominator/sample count when small samples could mislead.
-7. Top-content labels describe measured behaviour, for example `Most played · 30d`.
-8. Live breakdowns obey minimum-volume privacy suppression.
-9. Charts have accessible textual equivalents and do not rely on colour alone.
-10. Home prioritises live/current founder questions over decorative analytics.
+6. Estimated/sample-weighted metrics are visually distinguishable from exact metrics when the distinction matters.
+7. Percentages expose a denominator/sample count when small samples could mislead.
+8. Top-content labels describe measured behaviour, for example `Most played · 30d`.
+9. Live breakdowns obey minimum-volume privacy suppression.
+10. Charts have accessible textual equivalents and do not rely on colour alone.
+11. Home prioritises live/current founder questions over decorative analytics.
 
 ## 22. Versioning
 
@@ -771,6 +852,7 @@ Required separation:
 | Telemetry endpoint down | Listening continues; bounded events may queue/drop | Analytics source becomes stale/degraded |
 | Analytics Engine write rejected | Listening continues | Health shows ingestion/rejection degradation |
 | Analytics Engine query unavailable | No public effect | Recent/live metrics partial or unavailable, not zero |
+| Analytics Engine sampling active | No public effect | Weighted metrics expose estimated/sampled precision where required |
 | D1 unavailable | No public effect | Long-term metrics partial/unavailable; recent detail may still work |
 | Rollup misses a day | No public effect | History marked stale/partial; repair job can rerun |
 | Access unavailable/expired | No public effect | PGA fails closed to login/denied state |
