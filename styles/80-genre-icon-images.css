@@ -749,3 +749,138 @@ html body .app #browseActions #browseButton::after {
 @media (prefers-reduced-motion: reduce) {
   .app.is-playing .ambient-ring { animation: none; }
 }
+
+/* Final Now Playing metadata geometry. Keep transport anchors stable while text changes. */
+.app .track-block .song-title {
+  width: 100%;
+  min-width: 0;
+  max-width: min(780px, 88vw);
+  max-height: 1.96em;
+  font-size: clamp(40px, 4.1vw, 47px);
+  line-height: .98;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.app .track-block.is-long-title .song-title {
+  font-size: clamp(34px, 3.35vw, 44px);
+}
+
+.app .track-block.is-very-long-title .song-title {
+  font-size: clamp(30px, 2.9vw, 38px);
+}
+
+.app .track-block .artist-row {
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+}
+
+.app .track-block .artist {
+  max-width: min(620px, 82vw);
+  color: rgba(246, 236, 215, .76);
+}
+
+@media (max-width: 700px) {
+  .app .track-block .song-title {
+    max-width: min(94vw, 560px);
+    max-height: 1.94em;
+    font-size: clamp(34px, 9vw, 40px);
+    line-height: .97;
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(31px, 8vw, 37px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(28px, 7.2vw, 34px);
+  }
+
+  .app .track-block .artist-row {
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+  }
+
+  .app .track-block .artist {
+    max-width: 74vw;
+  }
+}
+
+@media (max-width: 390px) {
+  .app .track-block .song-title {
+    font-size: clamp(31px, 8.7vw, 35px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(29px, 8vw, 33px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(27px, 7.3vw, 31px);
+  }
+}
+
+@media (max-height: 760px) and (max-width: 700px) {
+  .app .track-block {
+    grid-template-rows: 14px minmax(0, 1fr) 26px;
+  }
+
+  .app .track-block .song-title {
+    font-size: clamp(30px, 8vw, 34px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(29px, 7.6vw, 32px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(27px, 7vw, 30px);
+  }
+}
+
+@media (max-height: 660px) and (max-width: 700px) {
+  .app .track-block {
+    grid-template-rows: 12px minmax(0, 1fr) 26px;
+  }
+
+  .app .track-block .song-title {
+    font-size: clamp(28px, 7.4vw, 32px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(27px, 7vw, 30px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(25px, 6.5vw, 28px);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .app .track-block {
+    grid-template-rows: 12px minmax(0, 1fr) 18px;
+  }
+
+  .app .track-block .song-title {
+    max-height: 1.92em;
+    font-size: clamp(25px, 4.4vw, 30px);
+    line-height: .96;
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(24px, 4.1vw, 29px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(23px, 3.8vw, 27px);
+  }
+
+  .app .track-block .artist-row {
+    height: 18px;
+    min-height: 18px;
+    max-height: 18px;
+  }
+}
