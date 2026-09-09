@@ -18,6 +18,7 @@
   const UNKNOWN_TIER = Number.MAX_SAFE_INTEGER;
 
   function finiteNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
@@ -46,8 +47,8 @@
     const leftKey = left.stableKey;
     const rightKey = right.stableKey;
     for (let index = 0; index < leftKey.length; index += 1) {
-      const comparison = leftKey[index].localeCompare(rightKey[index], 'en');
-      if (comparison) return comparison;
+      if (leftKey[index] < rightKey[index]) return -1;
+      if (leftKey[index] > rightKey[index]) return 1;
     }
     return 0;
   }
@@ -79,10 +80,25 @@
 
   function releaseDateValue(value) {
     if (value === null || value === undefined || value === '') return null;
+
     const direct = finiteNumber(value);
-    if (direct !== null) return direct;
-    const timestamp = Date.parse(String(value));
-    return Number.isFinite(timestamp) ? timestamp : null;
+    if (direct !== null) {
+      if (Number.isInteger(direct) && direct >= 1000 && direct <= 9999) return direct * 10000;
+      return direct;
+    }
+
+    const text = String(value).trim();
+    const iso = text.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?/);
+    if (iso) {
+      const year = Number(iso[1]);
+      const month = Number(iso[2] || 0);
+      const day = Number(iso[3] || 0);
+      if (month >= 0 && month <= 12 && day >= 0 && day <= 31) {
+        return (year * 10000) + (month * 100) + day;
+      }
+    }
+
+    return null;
   }
 
   function resolveChronology(song, options) {
@@ -92,7 +108,7 @@
     const explicit = releaseDateValue(fromResolver);
     if (explicit !== null) return explicit;
 
-    const originalYear = finiteNumber(song?.originalReleaseYear);
+    const originalYear = releaseDateValue(song?.originalReleaseYear);
     if (originalYear !== null) return originalYear;
 
     return releaseDateValue(song?.releaseDate);
