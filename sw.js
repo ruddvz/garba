@@ -19,6 +19,7 @@ const CORE_SHELL = [
   './catalogue/catalogue.js',
   './catalogue/listening-library.js',
   './assets/runtime/explore-search.js',
+  './assets/runtime/immersive-atmosphere.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -58,6 +59,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/catalogue.js',
   '/catalogue/listening-library.js',
   '/assets/runtime/explore-search.js',
+  '/assets/runtime/immersive-atmosphere.js',
 ];
 
 self.addEventListener('install', (event) => {

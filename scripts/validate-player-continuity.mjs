@@ -4,12 +4,13 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [bootstrap, provider, continuity, youtube, app] = await Promise.all([
+const [bootstrap, provider, continuity, youtube, app, mobileStyles] = await Promise.all([
   read('simple-runtime.js'),
   read('provider-runtime.js'),
   read('player-continuity.js'),
   read('youtube-player-runtime.js'),
   read('app.js'),
+  read('styles/70-mobile-playback-coordination.css'),
 ]);
 
 let failed = false;
@@ -51,13 +52,13 @@ for (const marker of [
   "const requestedSongId = new URL(location.href).searchParams.get('song');",
   'const needsFullCatalogueForDeepLink = Boolean(',
   "!fastBoot.songs.some((song) => song.id === requestedSongId)",
-  "function setDeepLinkUi(status)",
+  'function setDeepLinkUi(status)',
   "songTitle.textContent = 'Loading requested song…'",
   "songTitle.textContent = 'Requested song unavailable'",
   'async function ensureDeepLinkCatalogue()',
   'const ready = await ensureDeepLinkCatalogue();',
   'if (!ready) return unavailableCatalogueResponse();',
-  "status: 503",
+  'status: 503',
   "control.setAttribute('aria-disabled', disabled ? 'true' : 'false')",
 ]) {
   if (!continuity.includes(marker)) fail(`Deep-link boot guard missing marker: ${marker}`);
@@ -93,11 +94,11 @@ for (const marker of [
 
 for (const marker of [
   'const MEDIA_ARTWORK = [',
-  "assets/icons/icon-192.png",
-  "assets/icons/icon-512.png",
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
   'function clearMediaMetadata()',
   'function syncMediaMetadata()',
-  "navigator.mediaSession.metadata = new MediaMetadata({",
+  'navigator.mediaSession.metadata = new MediaMetadata({',
   'title,',
   'artist,',
   'artwork: MEDIA_ARTWORK',
@@ -115,14 +116,62 @@ if ((continuity.match(/clearMediaMetadata\(\);/g) || []).length < 3) {
 
 for (const marker of [
   'function applyYoutubeOnlyPolicy(song)',
-  'function selectedYoutubeSong()',
-  "button.id = 'youtubeVideoButton';",
-  "document.addEventListener('click', interceptPlay, { capture: true })",
-  "document.addEventListener('keydown', interceptSpace, { capture: true })",
-  'pendingYoutubeSong = song;',
-  'Tap the YouTube button to open this track.',
+  "document.addEventListener('click', interceptUnavailablePlay, { capture: true })",
+  "document.addEventListener('keydown', interceptUnavailableSpace, { capture: true })",
+  'if (!song || isExactYoutube(song)) return;',
+  'youtubeApi = api;',
+  'function observeYoutubeStage()',
+  "stop.textContent = 'Stop'",
+  "stop.setAttribute('aria-label', 'Stop YouTube playback')",
 ]) {
-  if (!provider.includes(marker)) fail(`YouTube-only playback intent guard missing marker: ${marker}`);
+  if (!provider.includes(marker)) fail(`YouTube-first one-control contract missing marker: ${marker}`);
+}
+
+for (const prohibited of [
+  'Tap the YouTube button to open this track.',
+  'let youtubeUnlocked = false;',
+  'function installYoutubeApiGate(api)',
+  "button.id = 'youtubeVideoButton';",
+  'function injectYoutubeControl()',
+  'function stageIsExpanded()',
+  'function setStageExpanded(expanded)',
+  'function toggleYoutubeStagePresentation()',
+  "stage.classList.toggle('is-expanded', Boolean(expanded))",
+]) {
+  if (provider.includes(prohibited)) fail(`Secondary YouTube playback/presentation control must stay removed: ${prohibited}`);
+}
+
+const captureClickBlock = youtube.match(/function captureClick\(event\) \{[\s\S]*?\n  \}\n\n  function captureKeys/)?.[0] || '';
+if (!captureClickBlock) fail('Could not inspect YouTube document-click handling');
+if (!captureClickBlock.includes("if (!target.closest('#playButton, #miniPlay')) return;")) {
+  fail('Unrelated page clicks must fall through without changing YouTube playback');
+}
+if (captureClickBlock.includes("target.closest('#youtubeStage')") || captureClickBlock.includes('closeGenericProvider()')) {
+  fail('The YouTube click handler must not treat ordinary page interaction as stage dismissal');
+}
+if (!youtube.includes("$('youtubeDockStop')?.addEventListener('click', () => close());")) {
+  fail('YouTube teardown must remain an explicit Stop action');
+}
+for (const marker of [
+  'if (activeSong?.id !== song.id || !player) {',
+  'open(song, { autoplay: true });',
+  'player.pauseVideo();',
+  'player.playVideo();',
+  "document.addEventListener('click', captureClick, { capture: true });",
+]) {
+  if (!youtube.includes(marker)) fail(`Main Play/Pause YouTube transport missing marker: ${marker}`);
+}
+
+for (const marker of [
+  '#youtubeStage.youtube-dock',
+  'body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage',
+  'width: 216px;',
+  'height: 200px;',
+  'min-width: 200px;',
+  'min-height: 200px;',
+  'border-radius: 22px 22px 16px 16px;',
+]) {
+  if (!mobileStyles.includes(marker)) fail(`Integrated YouTube performance-stage style missing marker: ${marker}`);
 }
 
 for (const marker of [
@@ -159,6 +208,11 @@ for (const control of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
 if (failed) process.exit(1);
 console.log('✓ song-row playback intent follows the newly selected song without opening a non-YouTube provider');
 console.log('✓ mobile song selection returns to Now Playing before playback intent resumes');
+console.log('✓ mapped YouTube songs start from the normal Play/Space controls with no second YouTube button');
+console.log('✓ main Play/Pause toggles the YouTube IFrame player directly');
+console.log('✓ unrelated page clicks do not dismiss the visible YouTube performance stage');
+console.log('✓ explicit Stop still tears down YouTube playback');
+console.log('✓ the YouTube stage preserves the visible 200×200 minimum playback surface');
 console.log('✓ Previous/Next preserve listening intent while the YouTube engine closes on non-controllable destinations');
 console.log('✓ YouTube-only routing refreshes after full catalogue hydration and never substitutes song 1');
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');

@@ -1,0 +1,39 @@
+{
+  "version": "1.1.0",
+  "runtimePolicy": {
+    "remoteAudioOptional": true,
+    "allowRemoteOnDataSaver": false,
+    "requireNoEmbeddedMusic": true,
+    "fallback": "procedural-local-scene"
+  },
+  "sources": [
+    {
+      "id": "public-domain-crowd-bed",
+      "role": "crowd-bed",
+      "enabled": true,
+      "title": "1 minute at the Alexa mall in Berlin",
+      "author": "thore",
+      "channels": 2,
+      "durationSeconds": 60.0555,
+      "license": "public-domain",
+      "containsMusic": false,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:1_minute_at_the_alexa_mall_in_berlin.ogg",
+      "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/f/fd/1_minute_at_the_alexa_mall_in_berlin.ogg",
+      "notes": "Stereo crowd murmur recorded with a Zoom H2 using the 120-degree rear microphone pattern. It is used only as a very low-level environmental bed and is never treated as a Garba performance."
+    },
+    {
+      "id": "public-domain-applause-reference",
+      "role": "accent-reference",
+      "enabled": false,
+      "title": "applause-I",
+      "author": "thore",
+      "channels": 2,
+      "durationSeconds": 17.2931,
+      "license": "public-domain",
+      "containsMusic": false,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Applause_i.ogg",
+      "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Applause_i.ogg",
+      "notes": "Reference only. Runtime applause is generated locally so a recognisable event recording is not looped beneath songs."
+    }
+  ]
+}

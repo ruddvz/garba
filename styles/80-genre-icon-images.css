@@ -4,7 +4,7 @@
 .genre-button[data-genre="traditional"] { --genre-icon-image: url("../assets/genre-icons/traditional.webp"); }
 .genre-button[data-genre="dandiya"] { --genre-icon-image: url("../assets/genre-icons/dandiya.webp"); }
 .genre-button[data-genre="devotional"] { --genre-icon-image: url("../assets/genre-icons/devotional.webp"); }
-.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk.webp"); }
+.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk-dhol.webp"); }
 .genre-button[data-genre="sanedo"] { --genre-icon-image: url("../assets/genre-icons/sanedo.webp"); }
 .genre-button[data-genre="fusion"] { --genre-icon-image: url("../assets/genre-icons/fusion.webp"); }
 #nonstopButton { --genre-icon-image: url("../assets/genre-icons/nonstop.webp"); }
