@@ -98,6 +98,47 @@ if (!catalogueRuntime.includes('song.taxonomyStyles')) {
   fail('Explore search must index taxonomyStyles[]');
 }
 
+// The player is a presentation/play-context surface: its genre rail must stay keyed
+// to the canonical primary visual world. Secondary taxonomy is searchable, but must
+// not silently broaden automatic player continuation or rewrite primary identity.
+const playerGenreFilter = playerRuntime.match(/const songsForGenre = \(genreId\) =>[^;]+;/)?.[0] || '';
+if (!playerGenreFilter) {
+  fail('Main player must define a bounded songsForGenre() primary-world filter');
+} else {
+  if (!playerGenreFilter.includes('song.genre === genreId')) {
+    fail('Main player genre membership must filter by canonical song.genre');
+  }
+  if (/taxonomyStyles|song\.category|browseVisualGenres|taxonomyIdsForSong/.test(playerGenreFilter)) {
+    fail('Main player genre membership must not broaden from secondary taxonomy');
+  }
+}
+if (!playerRuntime.includes('state.genreId = song.genre')) {
+  fail('Selecting a song must keep state.genreId aligned to the song primary visual genre');
+}
+if (!playerRuntime.includes('state.playContextGenreId = song.genre')) {
+  fail('Player continuation context must anchor to the selected song primary visual genre');
+}
+if (!playerRuntime.includes('const list = songsForGenre(genreId)')) {
+  fail('Automatic player continuation must consume the primary-world songsForGenre() list');
+}
+
+// Explore is deliberately broader: verified category + taxonomyStyles[] may add a
+// song to additional visual browse collections without changing song.genre.
+const exploreBrowseFunction = catalogueRuntime.match(/const browseVisualGenres = \(song\) => \{[\s\S]*?\n\};/)?.[0] || '';
+if (!exploreBrowseFunction) {
+  fail('Explore must define browseVisualGenres() for broader discovery membership');
+} else {
+  if (!exploreBrowseFunction.includes('song?.genre ? [song.genre] : []')) {
+    fail('Explore browse membership must preserve the primary song.genre visual world');
+  }
+  if (!exploreBrowseFunction.includes('taxonomyIdsForSong(song)')) {
+    fail('Explore browse membership must include verified primary/secondary taxonomy IDs');
+  }
+  if (!exploreBrowseFunction.includes('state.taxonomyById.get(id)?.visualGenre')) {
+    fail('Explore taxonomy browse membership must resolve through canonical taxonomy visualGenre mappings');
+  }
+}
+
 const structuredNonstopSets = nonstop.filter((set) => [set.genres, set.categories, set.styles]
   .some((values) => Array.isArray(values) && values.length > 0)).length;
 const legacyFallbackSets = nonstop.length - structuredNonstopSets;
@@ -132,5 +173,6 @@ console.log(`✓ ${visualIds.size} visual worlds and ${taxonomyById.size} music 
 console.log(`✓ ${songs.length} canonical songs have primary taxonomy categories aligned with their visual worlds`);
 console.log(`✓ ${secondaryTaxonomySongs} songs preserve ${secondaryTaxonomyTags} secondary taxonomy classifications without overloading the primary category`);
 console.log(`✓ ${nonstop.length} canonical discovery Nonstop sets keep ${discoveryGenreTags} genre tags, ${discoveryStyleTags} style tags, and ${discoveryCategoryTags} browse categories inside known visual/taxonomy IDs`);
-console.log('✓ main player and Explore search index secondary taxonomy styles');
+console.log('✓ player genre selection/continuation stays anchored to canonical song.genre while secondary taxonomy remains searchable');
+console.log('✓ Explore preserves primary genre identity while allowing verified taxonomy to broaden discovery membership');
 console.log(`✓ Nonstop browse membership is structured-first for ${structuredNonstopSets} sets, with narrow set-level fallback retained for ${legacyFallbackSets} legacy unclassified sets`);
