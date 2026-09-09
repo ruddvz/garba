@@ -1,16 +1,8 @@
 export const DEFAULT_ORIGIN = 'http://127.0.0.1:4173';
 
 export const SESSION_PROFILES = Object.freeze({
-  ci: Object.freeze({
-    cycles: 6,
-    settleMs: 350,
-    postGcSettleMs: 250,
-  }),
-  diagnostic: Object.freeze({
-    cycles: 30,
-    settleMs: 500,
-    postGcSettleMs: 500,
-  }),
+  ci: Object.freeze({ cycles: 6, settleMs: 350, postGcSettleMs: 250 }),
+  diagnostic: Object.freeze({ cycles: 30, settleMs: 500, postGcSettleMs: 500 }),
 });
 
 export const DEFAULT_BUDGETS = Object.freeze({
@@ -64,9 +56,7 @@ export function parseSessionArgs(argv) {
   }
 
   const parsedOrigin = new URL(options.origin);
-  if (!['http:', 'https:'].includes(parsedOrigin.protocol)) {
-    throw new Error('--origin must use http or https');
-  }
+  if (!['http:', 'https:'].includes(parsedOrigin.protocol)) throw new Error('--origin must use http or https');
   parsedOrigin.hash = '';
   parsedOrigin.search = '';
   options.origin = parsedOrigin.href;
@@ -151,25 +141,23 @@ export function installSessionInstrumentation() {
   wrapObserver('IntersectionObserver', 'intersection');
 
   if (window.URL && typeof window.URL.createObjectURL === 'function') {
-    const originalCreateObjectURL = window.URL.createObjectURL.bind(window.URL);
-    const originalRevokeObjectURL = window.URL.revokeObjectURL.bind(window.URL);
+    const originalCreate = window.URL.createObjectURL.bind(window.URL);
+    const originalRevoke = window.URL.revokeObjectURL.bind(window.URL);
     window.URL.createObjectURL = (...args) => {
-      const url = originalCreateObjectURL(...args);
+      const url = originalCreate(...args);
       state.objectUrlsCreated += 1;
       state.activeObjectUrls.add(url);
       return url;
     };
     window.URL.revokeObjectURL = (url) => {
       if (state.activeObjectUrls.delete(url)) state.objectUrlsRevoked += 1;
-      return originalRevokeObjectURL(url);
+      return originalRevoke(url);
     };
   }
 
   try {
     new PerformanceObserver((list) => {
-      for (const entry of list.getEntries()) {
-        state.longTasks.push({ startTime: entry.startTime, duration: entry.duration });
-      }
+      for (const entry of list.getEntries()) state.longTasks.push({ startTime: entry.startTime, duration: entry.duration });
     }).observe({ type: 'longtask', buffered: true });
   } catch {
     // Long Task timing is Chromium-specific and optional.
@@ -204,6 +192,7 @@ export async function collectSessionSnapshot(page, cdp, label, networkState) {
       const liveObservers = state?.observers
         ? state.observers.mutationLive + state.observers.resizeLive + state.observers.intersectionLive
         : null;
+      const heap = performance.memory?.usedJSHeapSize;
       return {
         domNodeCount: document.getElementsByTagName('*').length,
         iframeCount: document.querySelectorAll('iframe').length,
@@ -222,7 +211,7 @@ export async function collectSessionSnapshot(page, cdp, label, networkState) {
         longTaskCount: longTasks.length,
         longTaskTotalMs: longTasks.reduce((sum, entry) => sum + entry.duration, 0),
         longTaskMaxMs: longTasks.length ? Math.max(...longTasks.map((entry) => entry.duration)) : 0,
-        heapFromPerformanceMemory: finiteNumber(performance.memory?.usedJSHeapSize),
+        heapFromPerformanceMemory: Number.isFinite(heap) ? heap : null,
       };
     }),
   ]);
@@ -280,9 +269,7 @@ export function attachNetworkAccounting(page, networkState) {
       if (url.origin !== networkState.originValue) return;
       const headers = await response.allHeaders().catch(() => ({}));
       const contentLength = Number.parseInt(headers['content-length'] || '0', 10);
-      if (Number.isFinite(contentLength) && contentLength > 0) {
-        networkState.sameOriginTransferBytes += contentLength;
-      }
+      if (Number.isFinite(contentLength) && contentLength > 0) networkState.sameOriginTransferBytes += contentLength;
     } catch {
       // Ignore unavailable response metadata.
     }
@@ -300,8 +287,12 @@ export async function clickIfUsable(page, selector) {
   if (!(await locator.count())) return false;
   if (!(await locator.isVisible().catch(() => false))) return false;
   if (!(await locator.isEnabled().catch(() => false))) return false;
-  await locator.click({ timeout: 2_500 }).catch(() => null);
-  return true;
+  try {
+    await locator.click({ timeout: 2_500 });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function closeTransientSurfaces(page) {
@@ -334,43 +325,28 @@ async function exerciseQueueAndFavourites(page) {
 }
 
 async function exerciseNonstop(page) {
-  const opened = await clickIfUsable(page, '#nonstopButton');
-  if (!opened) return 'unavailable';
+  if (!(await clickIfUsable(page, '#nonstopButton'))) return 'unavailable';
   await page.waitForTimeout(50);
   const firstSet = page.locator('#nonstopBrowser .nonstop-set, #nonstopBrowser button[data-set-id]').first();
-  if (await firstSet.isVisible().catch(() => false)) {
-    await firstSet.click({ timeout: 2_000 }).catch(() => {});
-  }
+  if (await firstSet.isVisible().catch(() => false)) await firstSet.click({ timeout: 2_000 }).catch(() => {});
   await closeTransientSurfaces(page);
   return 'exercised';
 }
 
 async function exerciseAtmosphere(page) {
-  const selector = [
-    '[aria-label*="atmosphere" i]',
-    '[title*="atmosphere" i]',
-    '[aria-label*="courtyard" i]',
-  ].join(', ');
-  const opened = await clickIfUsable(page, selector);
-  if (!opened) return 'unavailable';
+  const selector = '[aria-label*="atmosphere" i], [title*="atmosphere" i], [aria-label*="courtyard" i]';
+  if (!(await clickIfUsable(page, selector))) return 'unavailable';
   await page.waitForTimeout(40);
   await closeTransientSurfaces(page);
   return 'exercised';
 }
 
 async function exerciseBackground(page) {
-  const selector = [
-    '[aria-label*="background" i]',
-    '[title*="background" i]',
-    'button[data-background]',
-  ].join(', ');
-  const opened = await clickIfUsable(page, selector);
-  if (!opened) return 'unavailable';
+  const selector = '[aria-label*="background" i], [title*="background" i], button[data-background]';
+  if (!(await clickIfUsable(page, selector))) return 'unavailable';
   await page.waitForTimeout(40);
   const candidate = page.locator('[data-background]:visible, [data-background-id]:visible').nth(1);
-  if (await candidate.isVisible().catch(() => false)) {
-    await candidate.click({ timeout: 2_000 }).catch(() => {});
-  }
+  if (await candidate.isVisible().catch(() => false)) await candidate.click({ timeout: 2_000 }).catch(() => {});
   await closeTransientSurfaces(page);
   return 'exercised';
 }
@@ -378,7 +354,8 @@ async function exerciseBackground(page) {
 async function exerciseExplore(page, origin) {
   const returnUrl = page.url();
   const exploreUrl = new URL('./explore/', origin).href;
-  await page.goto(exploreUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => null);
+  const navigation = await page.goto(exploreUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => null);
+  if (!navigation) return 'navigation-failed';
   const input = page.locator('#catalogueSearch, #exploreSearch, input[type="search"]').first();
   if (await input.isVisible().catch(() => false)) {
     await input.fill('Garba').catch(() => {});
@@ -386,12 +363,12 @@ async function exerciseExplore(page, origin) {
     await input.fill('').catch(() => {});
   }
   const release = page.locator('.release-card, [data-release-id]').first();
-  if (await release.isVisible().catch(() => false)) {
-    await release.click({ timeout: 2_000 }).catch(() => {});
-  }
+  if (await release.isVisible().catch(() => false)) await release.click({ timeout: 2_000 }).catch(() => {});
   await page.goto(returnUrl || origin, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => null);
-  await page.waitForFunction(() => Boolean(document.getElementById('playButton')), null, { timeout: 8_000 }).catch(() => {});
-  return 'exercised';
+  const playerReturned = await page.waitForFunction(() => Boolean(document.getElementById('playButton')), null, { timeout: 8_000 })
+    .then(() => true)
+    .catch(() => false);
+  return playerReturned ? 'exercised' : 'return-failed';
 }
 
 async function exerciseVisibility(cdp) {
@@ -475,8 +452,8 @@ export async function exerciseSessionCycle(page, cdp, options, cycleIndex) {
     const index = (cycleIndex + offset) % Math.max(1, genreCount);
     const button = genres.nth(index);
     if (await button.isVisible().catch(() => false)) {
-      await button.click({ timeout: 2_000 }).catch(() => {});
-      journey.genres += 1;
+      const clicked = await button.click({ timeout: 2_000 }).then(() => true).catch(() => false);
+      if (clicked) journey.genres += 1;
     }
   }
 
@@ -485,10 +462,7 @@ export async function exerciseSessionCycle(page, cdp, options, cycleIndex) {
   journey.nonstop = await exerciseNonstop(page);
   journey.atmosphere = await exerciseAtmosphere(page);
   journey.background = await exerciseBackground(page);
-
-  if (cycleIndex % 2 === 0) journey.explore = await exerciseExplore(page, options.origin);
-  else journey.explore = 'deferred-this-cycle';
-
+  journey.explore = cycleIndex % 2 === 0 ? await exerciseExplore(page, options.origin) : 'deferred-this-cycle';
   journey.visibility = await exerciseVisibility(cdp);
   journey.offlineRecovery = cycleIndex === options.cycles - 1
     ? await exerciseOfflineRecovery(page, cdp, options.originValue)
@@ -499,9 +473,7 @@ export async function exerciseSessionCycle(page, cdp, options, cycleIndex) {
 }
 
 function delta(finalValue, baselineValue) {
-  return Number.isFinite(finalValue) && Number.isFinite(baselineValue)
-    ? finalValue - baselineValue
-    : null;
+  return Number.isFinite(finalValue) && Number.isFinite(baselineValue) ? finalValue - baselineValue : null;
 }
 
 function monotonicGrowth(samples, read, meaningfulDelta) {
@@ -530,9 +502,7 @@ export function evaluateSessionBudgets(snapshots, runtimeFailures, budgets = DEF
     ['iframe-growth', delta(final.page.iframeCount, baseline.page.iframeCount), budgets.iframeGrowth],
   ];
   for (const [code, growth, budget] of checks) {
-    if (Number.isFinite(growth) && growth > budget) {
-      failures.push({ code, growth, budget, message: `${code} exceeded budget: +${growth} > +${budget}` });
-    }
+    if (Number.isFinite(growth) && growth > budget) failures.push({ code, growth, budget, message: `${code} exceeded budget: +${growth} > +${budget}` });
   }
 
   const warmRequestGrowth = delta(final.network.sameOriginRequestCount, baseline.network.sameOriginRequestCount);
