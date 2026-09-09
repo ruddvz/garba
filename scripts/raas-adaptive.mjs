@@ -33,9 +33,12 @@ function detectDeliveryStop(text) {
   if (includesAny(text, ['merge the pr', 'merge this', 'merge it', 'through merge'])) return 'merge'
   if (includesAny(text, ['open a pr', 'create a pr', 'pull request', 'through pr'])) return 'pull-request'
 
-  const implementationSignals = ['implement', 'fix', 'change', 'update', 'edit', 'add', 'remove', 'build', 'code', 'create']
+  const planSignals = ['plan only', 'just plan', 'make a plan', 'create a plan', 'plan this', 'strategy only']
+  const executeAfterPlanSignals = ['then implement', 'and implement', 'then fix', 'start fixing', 'execute the plan', 'implement it after']
+  if (includesAny(text, planSignals) && !includesAny(text, executeAfterPlanSignals)) return 'plan'
+
+  const implementationSignals = ['implement', 'fix', 'change', 'update', 'edit', 'add', 'remove', 'build', 'code']
   const hasImplementationSignal = includesAny(text, implementationSignals)
-  if (includesAny(text, ['plan only', 'just plan', 'make a plan', 'create a plan', 'plan this', 'strategy only']) && !hasImplementationSignal) return 'plan'
   if (includesAny(text, ['explain', 'what is', 'what are', 'why ', 'how does', 'how do ', 'tell me']) && !hasImplementationSignal) return 'answer'
   return 'local-change'
 }
@@ -105,7 +108,7 @@ function isMetadataOnly(text, task) {
   return includesAny(text, metadataSignals) && !includesAny(text, identitySignals)
 }
 
-function selectTier({ task, text, risk, truthSensitivity, deliveryStop }) {
+function selectTier({ task, text, risk, deliveryStop }) {
   const routes = new Set(routeIds(task))
   if (risk === 'critical' || deliveryStop === 'production-verification') return 'critical'
   if (task.needs_split || routes.size >= 3 || routes.has('pwa') || (routes.has('playback') && routes.has('catalogue'))) return 'deep'
@@ -163,7 +166,7 @@ export function compileAdaptiveTask(text, config = loadAdaptiveConfig()) {
   const blastRadius = detectBlastRadius(task, truthSensitivity)
   const reversibility = detectReversibility(truthSensitivity, blastRadius)
   const risk = detectRisk(task, truthSensitivity, mode)
-  const tier = selectTier({ task, text: normalized, risk, truthSensitivity, deliveryStop })
+  const tier = selectTier({ task, text: normalized, risk, deliveryStop })
   const budget = config.tiers[tier]
 
   return {
