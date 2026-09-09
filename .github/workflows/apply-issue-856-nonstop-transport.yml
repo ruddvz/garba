@@ -74,8 +74,8 @@ jobs:
           )
           validator = replace_once(
               validator,
-              "if (!navigation.includes('openBrowser();')) fail('Nonstop Queue/Previous/Next must open the Nonstop chooser');\nif (navigation.includes(\"announce('Nonstop Garba plays continuously.')\")) fail('Nonstop transport must not stop at a toast instead of offering the chooser');",
-              "if (!navigation.includes('openBrowser();')) fail('Nonstop chooser action must open the Nonstop chooser');\nfor (const retiredControl of ['#prevButton', '#nextButton', '#miniPrev', '#miniNext']) {\n  if (navigation.includes(retiredControl)) fail(`Nonstop previous/next control must not be repurposed as chooser navigation: ${retiredControl}`);\n}\nif (source.includes(\"Choose another Nonstop recording\")) fail('Nonstop previous/next controls must not be relabeled as set chooser actions');\nif (navigation.includes(\"announce('Nonstop Garba plays continuously.')\")) fail('Nonstop transport must not stop at a toast instead of offering the chooser');",
+              "if (!navigation.includes('openBrowser();')) fail('Nonstop Queue/Previous/Next must open the Nonstop chooser');",
+              "if (!navigation.includes('openBrowser();')) fail('Nonstop chooser action must open the Nonstop chooser');\nfor (const retiredControl of ['#prevButton', '#nextButton', '#miniPrev', '#miniNext']) {\n  if (navigation.includes(retiredControl)) fail(`Nonstop previous/next control must not be repurposed as chooser navigation: ${retiredControl}`);\n}\nif (source.includes(\"Choose another Nonstop recording\")) fail('Nonstop previous/next controls must not be relabeled as set chooser actions');",
               'validator navigation assertions',
           )
           validator = replace_once(
