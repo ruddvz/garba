@@ -206,21 +206,11 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; }
 .search-field input { caret-color: var(--accent); }
 .search-field input::-webkit-search-cancel-button { filter: invert(1); opacity: .6; }
 
-/* Desktop WebKit is more reliable when the fixed sheet uses the conventional
-   left anchor with a negative half-width translation. This is geometrically
-   equivalent to the base right-anchor form, while keeping header controls on
-   stable local paint layers. Mobile keeps its separate bottom-sheet geometry. */
+/* Desktop WebKit can mis-composite controls inside the transformed, blurred sheet
+   when paint containment is active. Preserve layout containment but let WebKit
+   paint the header controls in their normal viewport space. */
 @media (min-width: 701px) {
-  .sheet {
-    left: 50%;
-    right: auto;
-    transform: translate(-50%, calc(100% + 14px));
-  }
-  .sheet[data-snap="medium"],
-  .sheet[data-snap="full"],
-  .sheet[data-snap="collapsed"] {
-    transform: translate(-50%, 0);
-  }
+  .sheet { contain: layout; }
   .sheet .sheet-header {
     position: relative;
     z-index: 1;
