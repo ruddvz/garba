@@ -206,6 +206,7 @@ if (input && status && topbar && spacer) {
       .collection-image{transform:scale(1.018)}
       .detail-head,.release-section,.songs-section,.essential-release-section,.close-explore,.search-explore{backdrop-filter:blur(12px) saturate(1.03);-webkit-backdrop-filter:blur(12px) saturate(1.03)}
     }
+    @media(max-width:560px){body::before{transform:none}}
     @media(prefers-reduced-motion:reduce){.song-more[data-auto-paging="true"]::after{animation:none}}
   `;
   document.head.append(performanceStyle);
@@ -594,6 +595,10 @@ if (input && status && topbar && spacer) {
     });
   }
 
+  function setText(node, value) {
+    if (node.textContent !== value) node.textContent = value;
+  }
+
   function syncDetailState() {
     syncQueued = false;
     const cards = [...releaseRail.querySelectorAll('.release-card')];
@@ -601,9 +606,9 @@ if (input && status && topbar && spacer) {
     const hasActiveRelease = Boolean(active);
     detail.dataset.releaseFilter = hasActiveRelease ? 'true' : 'false';
     showAll.hidden = !hasActiveRelease;
-    showAll.textContent = 'All songs';
+    setText(showAll, 'All songs');
     showAll.setAttribute('aria-label', 'Show all songs in this catalogue');
-    songsEyebrow.textContent = hasActiveRelease ? 'Selected release' : 'Songs';
+    setText(songsEyebrow, hasActiveRelease ? 'Selected release' : 'Songs');
 
     cards.forEach((card) => {
       if (card === active) card.setAttribute('aria-current', 'true');
@@ -611,11 +616,12 @@ if (input && status && topbar && spacer) {
     });
 
     if (active) {
-      selectedContext.textContent = active.querySelector('.release-meta')?.textContent?.trim() || '';
-      selectedContext.hidden = !selectedContext.textContent;
+      const context = active.querySelector('.release-meta')?.textContent?.trim() || '';
+      setText(selectedContext, context);
+      selectedContext.hidden = !context;
       requestAnimationFrame(() => revealActiveRelease(active));
     } else {
-      selectedContext.textContent = '';
+      setText(selectedContext, '');
       selectedContext.hidden = true;
     }
   }
