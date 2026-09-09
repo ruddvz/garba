@@ -33,13 +33,17 @@ jobs:
 
           validator_path = Path('scripts/validate-simple-runtime.mjs')
           validator = validator_path.read_text()
-          anchor = "]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);\n\nfor (const forbidden of ["
-          guard = ""]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);\n\nif (/<link\\s+rel=\"preload\"[^>]+href=\"assets\\/backgrounds\\/traditional\\.svg\"/.test(index)) {\n  fail('Production index must not high-priority preload the retired traditional.svg world');\n}\n\nfor (const forbidden of ["
-          if anchor not in validator:
-              raise SystemExit('Validator insertion anchor not found')
+          marker = "for (const forbidden of [\n  'navigator.serviceWorker.register = async ()',"
+          guard = """if (/<link\\s+rel=\"preload\"[^>]+href=\"assets\\/backgrounds\\/traditional\\.svg\"/.test(index)) {
+  fail('Production index must not high-priority preload the retired traditional.svg world');
+}
+
+"""
+          if marker not in validator:
+              raise SystemExit('Validator insertion marker not found')
           if 'must not high-priority preload the retired traditional.svg world' in validator:
               raise SystemExit('Retired-preload regression guard already exists unexpectedly')
-          validator_path.write_text(validator.replace(anchor, guard, 1))
+          validator_path.write_text(validator.replace(marker, guard + marker, 1))
           PY
 
       - name: Commit bounded branch patch and remove temporary workflow
