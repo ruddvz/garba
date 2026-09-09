@@ -34,11 +34,11 @@ jobs:
           validator_path = Path('scripts/validate-simple-runtime.mjs')
           validator = validator_path.read_text()
           marker = "for (const forbidden of [\n  'navigator.serviceWorker.register = async ()',"
-          guard = """if (/<link\\s+rel=\"preload\"[^>]+href=\"assets\\/backgrounds\\/traditional\\.svg\"/.test(index)) {
-  fail('Production index must not high-priority preload the retired traditional.svg world');
-}
-
-"""
+          guard = (
+              'if (/<link\\s+rel="preload"[^>]+href="assets\\/backgrounds\\/traditional\\.svg"/.test(index)) {\n'
+              "  fail('Production index must not high-priority preload the retired traditional.svg world');\n"
+              '}\n\n'
+          )
           if marker not in validator:
               raise SystemExit('Validator insertion marker not found')
           if 'must not high-priority preload the retired traditional.svg world' in validator:
