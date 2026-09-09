@@ -2,11 +2,13 @@
   const progress = document.getElementById('progress');
   const audio = document.getElementById('audio');
   const durationTime = document.getElementById('durationTime');
-  const youtubeStage = document.getElementById('youtubeStage');
   if (!progress || !audio) return;
 
   const defaultLabel = progress.getAttribute('aria-label') || 'Seek';
   let scheduled = false;
+  let youtubeStage = null;
+  let youtubeStageObserver = null;
+  let stageMountObserver = null;
 
   function durationTextIsKnown() {
     const text = String(durationTime?.textContent || '').trim();
@@ -42,15 +44,39 @@
     queueMicrotask(sync);
   }
 
-  for (const eventName of ['loadedmetadata', 'durationchange', 'emptied', 'abort', 'error']) {
-    audio.addEventListener(eventName, scheduleSync);
-  }
-
-  if (youtubeStage) {
-    new MutationObserver(scheduleSync).observe(youtubeStage, {
+  function bindYoutubeStage(stage) {
+    if (!stage || stage === youtubeStage) return false;
+    youtubeStageObserver?.disconnect();
+    youtubeStage = stage;
+    youtubeStageObserver = new MutationObserver(scheduleSync);
+    youtubeStageObserver.observe(youtubeStage, {
       attributes: true,
       attributeFilter: ['class', 'aria-hidden'],
     });
+    stageMountObserver?.disconnect();
+    stageMountObserver = null;
+    scheduleSync();
+    return true;
+  }
+
+  function observeYoutubeStageMount() {
+    if (bindYoutubeStage(document.getElementById('youtubeStage'))) return;
+    if (!document.body) return;
+    stageMountObserver = new MutationObserver((records, observer) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node?.nodeType !== 1 || node.id !== 'youtubeStage') continue;
+          observer.disconnect();
+          bindYoutubeStage(node);
+          return;
+        }
+      }
+    });
+    stageMountObserver.observe(document.body, { childList: true });
+  }
+
+  for (const eventName of ['loadedmetadata', 'durationchange', 'emptied', 'abort', 'error']) {
+    audio.addEventListener(eventName, scheduleSync);
   }
 
   if (durationTime) {
@@ -61,6 +87,7 @@
     });
   }
 
+  observeYoutubeStageMount();
   window.addEventListener('garba:catalogue-ready', scheduleSync);
   window.addEventListener('pageshow', scheduleSync);
   scheduleSync();
