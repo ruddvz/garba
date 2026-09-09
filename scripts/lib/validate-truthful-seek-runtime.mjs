@@ -14,12 +14,27 @@ const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
 for (const marker of [
   "progress.disabled = !seekable",
-  "stage.classList.contains('is-loading')",
+  "const youtubeStage = document.getElementById('youtubeStage')",
+  "youtubeStage.classList.contains('is-loading')",
   'GARBA_YOUTUBE_PLAYER?.activeSongId',
   "progress.setAttribute('aria-disabled', String(!seekable))",
   'GARBA_SEEK_STATE_RUNTIME',
 ]) {
   if (!runtime.includes(marker)) fail(`Seek-state runtime is missing: ${marker}`);
+}
+
+if (/observe\(document\.(?:body|documentElement)/.test(runtime)) {
+  fail('Seek-state runtime must not observe the whole document for playback-local seek changes');
+}
+
+const stageObserver = /new MutationObserver\(scheduleSync\)\.observe\(youtubeStage,\s*\{\s*attributes:\s*true,\s*attributeFilter:\s*\['class', 'aria-hidden'\],\s*\}\);/s;
+if (!stageObserver.test(runtime)) {
+  fail('Seek-state runtime must observe only YouTube stage class/aria-hidden attributes');
+}
+
+const durationObserver = /new MutationObserver\(scheduleSync\)\.observe\(durationTime,\s*\{\s*subtree:\s*true,\s*childList:\s*true,\s*characterData:\s*true,\s*\}\);/s;
+if (!durationObserver.test(runtime)) {
+  fail('Seek-state runtime must observe only duration text mutations for YouTube seek readiness');
 }
 
 const legacyBundle = pages.includes('cat app.js assets/runtime/seek-state.js > _site/app.js');
@@ -47,4 +62,5 @@ if (!pkg.includes('node scripts/lib/validate-truthful-seek-runtime.mjs')) fail('
 if (failed) process.exit(1);
 console.log('✓ seek remains disabled for unseekable provider playback');
 console.log('✓ direct audio and ready controllable YouTube playback can enable seek');
+console.log('✓ seek observation is bounded to playback-local stage and duration state');
 console.log('✓ Pages folds the seek runtime into the network-first app.js payload, including extended bundled runtimes');
