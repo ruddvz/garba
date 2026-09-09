@@ -99,6 +99,7 @@ export class TelemetryClient {
     this.tabId = randomId(this.cryptoObj)
     this.dedupe = new Map()
     this.flushTimer = null
+    this.flushDueAt = null
     this.heartbeatTimer = null
     this.retryIndex = 0
     this.flushing = null
@@ -157,7 +158,7 @@ export class TelemetryClient {
       const event = this.buildEvent('session_started', {}, nowMs)
       if (event) this.queue.enqueue(event, nowMs)
     }
-    if (browserCreated || sessionStarted) this.scheduleFlush(0)
+    if ((browserCreated || sessionStarted) && this.started) this.scheduleFlush(0)
   }
 
   buildEvent(eventName, fields = {}, nowMs = this.now()) {
@@ -201,11 +202,10 @@ export class TelemetryClient {
     const source = sanitiseToken(fields.source ?? this.acquisition.source)
     const medium = sanitiseToken(fields.medium ?? this.acquisition.medium)
     const campaign = sanitiseToken(fields.campaign ?? this.acquisition.campaign)
-    const referrerHost = fields.referrerHost === undefined ? this.acquisition.referrerHost : sanitiseToken(fields.referrerHost, 255)
     if (source) event.source = source
     if (medium) event.medium = medium
     if (campaign) event.campaign = campaign
-    if (referrerHost) event.referrer_host = referrerHost
+    if (this.acquisition.referrerHost) event.referrer_host = this.acquisition.referrerHost
 
     if (eventName.startsWith('search_') && !searchId) return null
     if (['play_intent', 'playback_started', 'playback_resumed', 'playback_paused', 'playback_ended'].includes(eventName) && !playbackId) return null
@@ -251,8 +251,7 @@ export class TelemetryClient {
 
   accruePlaying(nowMs) {
     if (this.current.playbackState === 'playing' && this.playingSinceMs != null) {
-      const elapsed = Math.max(0, nowMs - this.playingSinceMs)
-      this.accumulatedPlayedMs += elapsed
+      this.accumulatedPlayedMs += Math.max(0, nowMs - this.playingSinceMs)
       this.playingSinceMs = nowMs
     }
   }
@@ -297,9 +296,7 @@ export class TelemetryClient {
       this.accruePlaying(nowMs)
       const playedMs = Math.min(MAX_HEARTBEAT_PLAYED_MS, Math.max(0, this.accumulatedPlayedMs))
       this.accumulatedPlayedMs = 0
-      if (this.current.playbackState === 'playing') {
-        this.refreshIdentity(nowMs, true)
-      }
+      if (this.current.playbackState === 'playing') this.refreshIdentity(nowMs, true)
       if (!this.shouldSendPresence(nowMs)) return false
       if (this.navigatorObj?.onLine === false) return false
 
@@ -359,10 +356,19 @@ export class TelemetryClient {
   }
 
   scheduleFlush(delayMs = 0) {
-    if (typeof this.scheduler.setTimeout !== 'function' || this.flushTimer != null) return
+    if (typeof this.scheduler.setTimeout !== 'function') return
     const bounded = Math.max(0, Math.min(5 * 60_000, Number(delayMs) || 0))
+    const dueAt = this.now() + bounded
+    if (this.flushTimer != null) {
+      if (this.flushDueAt != null && this.flushDueAt <= dueAt) return
+      if (typeof this.scheduler.clearTimeout === 'function') this.scheduler.clearTimeout(this.flushTimer)
+      this.flushTimer = null
+      this.flushDueAt = null
+    }
+    this.flushDueAt = dueAt
     this.flushTimer = this.scheduler.setTimeout(() => {
       this.flushTimer = null
+      this.flushDueAt = null
       void this.flush()
     }, bounded)
   }
@@ -389,6 +395,7 @@ export class TelemetryClient {
     if (this.flushTimer != null && typeof this.scheduler.clearTimeout === 'function') {
       this.scheduler.clearTimeout(this.flushTimer)
       this.flushTimer = null
+      this.flushDueAt = null
     }
     this.windowObj?.removeEventListener?.('online', this.boundOnline)
     this.windowObj?.removeEventListener?.('pagehide', this.boundPageHide)
