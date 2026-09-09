@@ -47,17 +47,15 @@ export function getBrowserIdentity(storage, nowMs, cryptoObj = globalThis.crypto
   return { ...record, isNew: true }
 }
 
+export function readActiveSession(storage, nowMs) {
+  const existing = parseRecord(storage, SESSION_STORAGE_KEY)
+  if (!sessionIsActive(existing, nowMs)) return null
+  return { id: existing.id, lastActivityMs: existing.lastActivityMs, isNew: false }
+}
+
 export function getSessionIdentity(storage, nowMs, cryptoObj = globalThis.crypto, forceNew = false) {
-  const existing = forceNew ? null : parseRecord(storage, SESSION_STORAGE_KEY)
-  if (
-    existing &&
-    validId(existing.id) &&
-    Number.isFinite(existing.lastActivityMs) &&
-    nowMs >= existing.lastActivityMs &&
-    nowMs - existing.lastActivityMs < SESSION_TTL_MS
-  ) {
-    return { id: existing.id, lastActivityMs: existing.lastActivityMs, isNew: false }
-  }
+  const existing = forceNew ? null : readActiveSession(storage, nowMs)
+  if (existing) return existing
 
   const record = { id: randomId(cryptoObj), lastActivityMs: nowMs }
   storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(record))
