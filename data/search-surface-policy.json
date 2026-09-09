@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "canonicalOrigin": "https://playgarba.com",
+  "admittedSitemapRoutes": [
+    "/",
+    "/explore/",
+    "/what-is-garba/",
+    "/how-to-use/",
+    "/about/",
+    "/install/",
+    "/faq/",
+    "/navratri-2026/",
+    "/learn/",
+    "/history-of-garba/",
+    "/garba-vs-dandiya/",
+    "/dandiya-raas/",
+    "/garba-music/",
+    "/navratri-and-garba/",
+    "/garbo/",
+    "/garba-attire-and-craft/"
+  ],
+  "forbiddenRoutePrefixes": [
+    "/songs/",
+    "/artists/",
+    "/releases/",
+    "/nonstop/"
+  ],
+  "notes": "Admission is permission for possible canonical sitemap inclusion, not a requirement to publish every listed route. New routes require an explicit reviewed policy change."
+}
