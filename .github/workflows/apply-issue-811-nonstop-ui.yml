@@ -23,6 +23,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Repair validator generator escaping
+        run: python -c "from pathlib import Path; p=Path('.github/scripts/apply-issue-811.py'); s=p.read_text(); p.write_text(s.replace(\"ui_checks = '''\", \"ui_checks = r'''\", 1))"
+
       - name: Apply bounded chooser cleanup
         run: python .github/scripts/apply-issue-811.py
 
