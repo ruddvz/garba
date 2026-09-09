@@ -8,7 +8,10 @@
   const BACKGROUND_KEY = 'player-background';
   const STYLE_ID = 'garbaLocalBackgroundStyles';
   const CONTROL_ID = 'garbaLocalBackgroundControl';
+  const MENU_ID = 'garbaLocalBackgroundMenu';
+  const GALLERY_ID = 'garbaLocalBackgroundGallery';
   const LIBRARY_BASE = 'assets/backgrounds/library/';
+  const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
   const LIBRARY_BACKGROUNDS = [
     ['01-bollywood-garba-courtyard.webp', 'Bollywood courtyard'],
     ['02-rhythmic-drums-courtyard-a.webp', 'Rhythmic drums courtyard'],
@@ -30,6 +33,8 @@
   const state = {
     objectUrl: '',
     fileName: '',
+    source: '',
+    selectedLibraryFile: '',
     persistent: false,
     picker: null,
     trigger: null,
@@ -37,6 +42,7 @@
     resetButton: null,
     exploreButton: null,
     gallery: null,
+    galleryHydrated: false,
     observer: null,
   };
 
@@ -77,12 +83,16 @@
         min-width:94px;
         padding:0 14px;
       }
+      .atmosphere-local-background-trigger[data-active="true"] {
+        border-color:rgba(246,236,215,.26);
+        background:rgba(246,236,215,.10);
+      }
       .atmosphere-local-background-trigger:hover,
-      .atmosphere-local-background-action:hover {
-        background:rgba(246,236,215,.09);
+      .atmosphere-local-background-action:hover:not(:disabled) {
+        background:rgba(246,236,215,.10);
       }
       .atmosphere-local-background-trigger:active,
-      .atmosphere-local-background-action:active {
+      .atmosphere-local-background-action:active:not(:disabled) {
         transform:scale(.98);
       }
       .atmosphere-local-background-trigger:focus-visible,
@@ -96,7 +106,10 @@
         right:0;
         bottom:calc(100% + 8px);
         z-index:12;
-        width:min(310px,calc(100vw - 44px));
+        width:min(310px,calc(100vw - 32px));
+        max-height:min(420px,70vh);
+        overflow:auto;
+        overscroll-behavior:contain;
         padding:7px;
         border:1px solid rgba(246,236,215,.12);
         border-radius:22px;
@@ -136,27 +149,46 @@
         border-top:1px solid rgba(246,236,215,.08);
       }
       .atmosphere-local-background-thumb {
+        position:relative;
         aspect-ratio:1/.78;
         min-width:0;
+        overflow:hidden;
         padding:0;
         border:1px solid rgba(246,236,215,.12);
         border-radius:12px;
-        background-position:center;
-        background-size:cover;
+        background:rgba(246,236,215,.04);
         cursor:pointer;
         -webkit-tap-highlight-color:transparent;
+      }
+      .atmosphere-local-background-thumb img {
+        display:block;
+        width:100%;
+        height:100%;
+        object-fit:cover;
       }
       .atmosphere-local-background-thumb:hover {
         border-color:rgba(246,236,215,.34);
       }
-      @media (max-width:390px) {
-        .atmosphere-local-background-control,
-        .atmosphere-local-background-trigger { width:100%; }
-        .atmosphere-local-background-menu {
-          left:0;
-          right:auto;
-          width:100%;
-        }
+      .atmosphere-local-background-thumb[aria-pressed="true"] {
+        border-color:#f6ecd7;
+        box-shadow:inset 0 0 0 1px #f6ecd7;
+      }
+      .atmosphere-local-background-thumb[aria-pressed="true"]::after {
+        content:'✓';
+        position:absolute;
+        right:4px;
+        bottom:4px;
+        display:grid;
+        place-items:center;
+        width:17px;
+        height:17px;
+        border-radius:999px;
+        color:#17141c;
+        background:#f6ecd7;
+        font:800 10px/1 var(--sans,system-ui);
+      }
+      @media (max-width:350px) {
+        .atmosphere-local-background-gallery { grid-template-columns:repeat(4,minmax(0,1fr)); }
       }
       @media (prefers-reduced-motion:reduce) {
         .atmosphere-local-background-trigger:active,
@@ -169,6 +201,14 @@
   function announce(message) {
     const status = document.querySelector('#atmospherePanel .atmosphere-status');
     if (status) status.textContent = message;
+  }
+
+  function focusTrigger() {
+    try {
+      state.trigger?.focus({ preventScroll: true });
+    } catch {
+      state.trigger?.focus();
+    }
   }
 
   function openDatabase() {
@@ -222,11 +262,18 @@
   }
 
   function syncControls() {
-    if (state.resetButton) state.resetButton.disabled = app.dataset.customBackground !== 'true';
+    const active = app.dataset.customBackground === 'true';
+    if (state.resetButton) state.resetButton.disabled = !active;
+    if (state.trigger) state.trigger.dataset.active = String(active);
+    if (!state.galleryHydrated || !state.gallery) return;
+    state.gallery.querySelectorAll('[data-library-background]').forEach((button) => {
+      const selected = state.source === 'library' && button.dataset.libraryBackground === state.selectedLibraryFile;
+      button.setAttribute('aria-pressed', String(selected));
+    });
   }
 
   function closeMenu() {
-    if (!state.menu) return;
+    if (!state.menu || state.menu.hidden) return;
     state.menu.hidden = true;
     state.trigger?.setAttribute('aria-expanded', 'false');
     if (state.gallery) state.gallery.hidden = true;
@@ -235,6 +282,7 @@
 
   function applyBackground(value, fileName, source, persistent, message) {
     state.fileName = fileName;
+    state.source = source;
     state.persistent = persistent;
     app.style.setProperty('--garba-custom-background', `url("${value}")`);
     app.dataset.customBackground = 'true';
@@ -243,9 +291,15 @@
     if (message) announce(message);
   }
 
+  function isSafeImageBlob(blob) {
+    const type = String(blob?.type || '').toLowerCase();
+    return blob instanceof Blob && type.startsWith('image/') && type !== 'image/svg+xml';
+  }
+
   function applyBackgroundBlob(blob, fileName = '', { persistent = false, announceChange = true } = {}) {
-    if (!(blob instanceof Blob) || !String(blob.type || '').startsWith('image/')) return false;
+    if (!isSafeImageBlob(blob)) return false;
     releaseObjectUrl();
+    state.selectedLibraryFile = '';
     state.objectUrl = URL.createObjectURL(blob);
     applyBackground(
       state.objectUrl,
@@ -257,12 +311,36 @@
     return true;
   }
 
-  function applyLibraryBackground(fileName, { persistent = false, announceChange = true } = {}) {
-    const match = LIBRARY_BACKGROUNDS.find(([file]) => file === fileName);
+  function libraryMatch(fileName) {
+    return LIBRARY_BACKGROUNDS.find(([file]) => file === fileName) || null;
+  }
+
+  function libraryUrl(fileName) {
+    return `${LIBRARY_BASE}${fileName}`;
+  }
+
+  function imageUrlLoads(url) {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => resolve(true);
+      image.onerror = () => resolve(false);
+      image.src = url;
+    });
+  }
+
+  async function applyLibraryBackground(fileName, { persistent = false, announceChange = true } = {}) {
+    const match = libraryMatch(fileName);
     if (!match) return false;
+    const url = libraryUrl(match[0]);
+    if (!await imageUrlLoads(url)) {
+      if (announceChange) announce('That PlayGarba background is not available right now.');
+      return false;
+    }
     releaseObjectUrl();
+    state.selectedLibraryFile = match[0];
     applyBackground(
-      `${LIBRARY_BASE}${match[0]}`,
+      url,
       match[1],
       'library',
       persistent,
@@ -274,6 +352,8 @@
   function restoreBuiltInBackground() {
     releaseObjectUrl();
     state.fileName = '';
+    state.source = '';
+    state.selectedLibraryFile = '';
     state.persistent = false;
     app.style.removeProperty('--garba-custom-background');
     delete app.dataset.customBackground;
@@ -281,9 +361,41 @@
     syncControls();
   }
 
+  function validateUpload(file) {
+    const type = String(file?.type || '').toLowerCase();
+    if (!file || !type.startsWith('image/')) return 'Choose a photo or image file.';
+    if (type === 'image/svg+xml') return 'SVG backgrounds are not supported. Choose a photo or raster image.';
+    if (!file.size) return 'That image is empty. Choose another image.';
+    if (file.size > MAX_UPLOAD_BYTES) return 'Choose an image smaller than 20 MB.';
+    return '';
+  }
+
+  function imageFileDecodes(file) {
+    return new Promise((resolve) => {
+      const temporaryUrl = URL.createObjectURL(file);
+      const image = new Image();
+      const finish = (valid) => {
+        URL.revokeObjectURL(temporaryUrl);
+        resolve(Boolean(valid));
+      };
+      image.onload = () => finish(image.naturalWidth > 0 && image.naturalHeight > 0);
+      image.onerror = () => finish(false);
+      image.src = temporaryUrl;
+    });
+  }
+
   async function chooseFile(file) {
     if (!file) return;
-    if (!String(file.type || '').startsWith('image/')) return announce('Choose an image file.');
+    const validationMessage = validateUpload(file);
+    if (validationMessage) {
+      announce(validationMessage);
+      return;
+    }
+    if (!await imageFileDecodes(file)) {
+      announce('That image cannot be displayed by this browser. Choose another image.');
+      return;
+    }
+
     const blob = file.slice(0, file.size, file.type);
     applyBackgroundBlob(blob, file.name, { announceChange: false });
     try {
@@ -297,7 +409,10 @@
   }
 
   async function chooseLibraryBackground(fileName) {
-    if (!applyLibraryBackground(fileName, { announceChange: false })) return;
+    if (!await applyLibraryBackground(fileName, { announceChange: false })) {
+      announce('That PlayGarba background is not available right now.');
+      return;
+    }
     try {
       await saveStoredBackground({ kind: 'library', file: fileName, updatedAt: Date.now() });
       state.persistent = true;
@@ -306,6 +421,7 @@
       state.persistent = false;
       announce('Background selected for this session.');
     }
+    syncControls();
   }
 
   async function clearBackground() {
@@ -322,27 +438,37 @@
     try {
       const record = await readStoredBackground();
       if (record?.kind === 'library' && typeof record.file === 'string') {
-        applyLibraryBackground(record.file, { persistent: true, announceChange: false });
+        await applyLibraryBackground(record.file, { persistent: true, announceChange: false });
         return;
       }
-      if (!record?.blob || !String(record.blob.type || record.type || '').startsWith('image/')) return;
+      if (!isSafeImageBlob(record?.blob)) {
+        if (record?.blob) await deleteStoredBackground().catch(() => {});
+        return;
+      }
       applyBackgroundBlob(record.blob, record.name || '', { persistent: true, announceChange: false });
     } catch {
       // Storage-disabled contexts still support session-only uploads and library choices.
     }
   }
 
-  function libraryButtonsMarkup() {
+  function galleryMarkup() {
     return LIBRARY_BACKGROUNDS.map(([file, label]) => `
       <button
         class="atmosphere-local-background-thumb"
         type="button"
         data-library-background="${file}"
         aria-label="${label}"
+        aria-pressed="false"
         title="${label}"
-        style="background-image:url('${LIBRARY_BASE}${file}')"
-      ></button>
+      ><img src="${LIBRARY_BASE}${file}" alt="" loading="lazy" decoding="async" fetchpriority="low" /></button>
     `).join('');
+  }
+
+  function hydrateGallery() {
+    if (!state.gallery || state.galleryHydrated) return;
+    state.gallery.innerHTML = galleryMarkup();
+    state.galleryHydrated = true;
+    syncControls();
   }
 
   function mountControls() {
@@ -356,14 +482,21 @@
     row.setAttribute('aria-label', 'Background image');
     row.innerHTML = `
       <div class="atmosphere-local-background-control">
-        <button class="atmosphere-local-background-trigger" type="button" aria-haspopup="menu" aria-expanded="false" data-action="toggle-background-menu">Background</button>
-        <div class="atmosphere-local-background-menu" role="menu" hidden>
+        <button
+          class="atmosphere-local-background-trigger"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="${MENU_ID}"
+          aria-expanded="false"
+          data-action="toggle-background-menu"
+        >Background</button>
+        <div id="${MENU_ID}" class="atmosphere-local-background-menu" role="dialog" aria-label="Background options" hidden>
           <div class="atmosphere-local-background-actions">
-            <button class="atmosphere-local-background-action" type="button" role="menuitem" data-action="upload-background">Upload</button>
-            <button class="atmosphere-local-background-action" type="button" role="menuitem" data-action="reset-background" disabled>Reset</button>
-            <button class="atmosphere-local-background-action" type="button" role="menuitem" aria-expanded="false" data-action="explore-backgrounds">Explore</button>
+            <button class="atmosphere-local-background-action" type="button" data-action="upload-background">Upload</button>
+            <button class="atmosphere-local-background-action" type="button" data-action="reset-background" disabled>Reset</button>
+            <button class="atmosphere-local-background-action" type="button" aria-controls="${GALLERY_ID}" aria-expanded="false" data-action="explore-backgrounds">Explore</button>
           </div>
-          <div class="atmosphere-local-background-gallery" aria-label="Explore backgrounds" hidden>${libraryButtonsMarkup()}</div>
+          <div id="${GALLERY_ID}" class="atmosphere-local-background-gallery" aria-label="Explore backgrounds" hidden></div>
         </div>
         <input type="file" accept="image/*" data-local-background-picker hidden />
       </div>
@@ -383,43 +516,52 @@
     state.trigger.addEventListener('click', () => {
       const opening = state.menu.hidden;
       closeMenu();
-      if (opening) {
-        state.menu.hidden = false;
-        state.trigger.setAttribute('aria-expanded', 'true');
-      }
+      if (!opening) return;
+      state.menu.hidden = false;
+      state.trigger.setAttribute('aria-expanded', 'true');
     });
+
     row.querySelector('[data-action="upload-background"]').addEventListener('click', () => {
       closeMenu();
       state.picker.click();
     });
+
     state.resetButton.addEventListener('click', () => {
       closeMenu();
-      void clearBackground();
+      void clearBackground().finally(focusTrigger);
     });
+
     state.exploreButton.addEventListener('click', () => {
       const opening = state.gallery.hidden;
+      if (opening) hydrateGallery();
       state.gallery.hidden = !opening;
       state.exploreButton.setAttribute('aria-expanded', String(opening));
     });
+
     state.gallery.addEventListener('click', (event) => {
-      const button = event.target.closest('[data-library-background]');
+      const target = event.target instanceof Element ? event.target : null;
+      const button = target?.closest('[data-library-background]');
       if (!button) return;
+      const fileName = button.dataset.libraryBackground || '';
       closeMenu();
-      void chooseLibraryBackground(button.dataset.libraryBackground || '');
+      void chooseLibraryBackground(fileName).finally(focusTrigger);
     });
+
     state.picker.addEventListener('change', () => {
       const file = state.picker.files?.[0] || null;
       state.picker.value = '';
-      void chooseFile(file);
+      void chooseFile(file).finally(focusTrigger);
     });
 
     document.addEventListener('pointerdown', (event) => {
       if (!row.contains(event.target)) closeMenu();
     });
+
     document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || !state.menu || state.menu.hidden) return;
+      event.preventDefault();
       closeMenu();
-      state.trigger?.focus();
+      focusTrigger();
     });
 
     syncControls();
@@ -444,7 +586,16 @@
     get active() { return app.dataset.customBackground === 'true'; },
     get persistent() { return state.persistent; },
     get fileName() { return state.fileName; },
+    get source() { return state.source; },
     pick() { state.picker?.click(); },
+    explore() {
+      if (!state.menu || !state.exploreButton || !state.gallery) return;
+      state.menu.hidden = false;
+      state.trigger?.setAttribute('aria-expanded', 'true');
+      hydrateGallery();
+      state.gallery.hidden = false;
+      state.exploreButton.setAttribute('aria-expanded', 'true');
+    },
     clear: clearBackground,
   };
 })();
