@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict'
-import { compileAdaptiveTask } from './raas-adaptive.mjs'
+import {
+  compileAdaptiveTask,
+  evaluateRunEfficiency,
+  operationFingerprint,
+  selectCapabilityClass,
+  shouldParallelize,
+  shouldReuseOperation
+} from './raas-adaptive.mjs'
 
 function routeIds(result) {
   return result.routes.map((route) => route.id)
@@ -87,6 +94,78 @@ function routeIds(result) {
   assert.equal(result.budget_is_ceiling_not_target, true)
   assert.equal(result.value_of_information.skipWhenNo, true)
   assert.equal(result.context_policy.max_sources, 4)
+}
+
+{
+  const key = operationFingerprint({ kind: 'source-read', target: 'release:ochhav', sourceFingerprint: 'sha-1', purpose: 'identity' })
+  const seen = new Set([key])
+  assert.equal(shouldReuseOperation({ seen, key }).reuse, true)
+  assert.equal(shouldReuseOperation({ seen, key, protectedEvidence: true }).reuse, false)
+  assert.equal(shouldReuseOperation({ seen, key, stateChanged: true }).reuse, false)
+}
+
+{
+  const playback = compileAdaptiveTask('Verify the exact YouTube playback route before changing it.')
+  assert.equal(selectCapabilityClass({ task: playback }), 'source-rights-evidence')
+  assert.equal(selectCapabilityClass({ task: playback, deterministic: true }), 'deterministic-local')
+  assert.equal(selectCapabilityClass({ task: playback, independentReview: true }), 'independent-review')
+}
+
+{
+  assert.equal(shouldParallelize({ independent: true }).parallel, true)
+  assert.equal(shouldParallelize({ independent: true, sharedMutation: true }).parallel, false)
+  assert.equal(shouldParallelize({ independent: true, duplicatedContext: true }).parallel, false)
+  assert.equal(shouldParallelize({ independent: true, decisiveEvidenceAlreadyFound: true }).parallel, false)
+}
+
+{
+  const task = compileAdaptiveTask('Add a concise description to the Garbi release.')
+  const efficiency = evaluateRunEfficiency(task, {
+    sources: 2,
+    contextChars: 4200,
+    toolCalls: 4,
+    readOnlyAgents: 0,
+    mutationLanes: 1,
+    repairRounds: 1,
+    duplicateOperationsSuppressed: 2,
+    duplicateOperationsExecuted: 0,
+    requiredVerificationPassed: true,
+    acceptanceProven: true,
+    unresolvedHighRiskFinding: false,
+    sourceTruthBroken: false,
+    ownershipConflict: false
+  })
+  assert.equal(efficiency.within_budget, true)
+  assert.equal(efficiency.quality_green, true)
+  assert.equal(efficiency.efficient, true)
+  assert.equal(efficiency.decision, 'stop-success')
+}
+
+{
+  const task = compileAdaptiveTask('Fix the player transport controls on mobile.')
+  const efficiency = evaluateRunEfficiency(task, {
+    sources: 2,
+    contextChars: 5000,
+    toolCalls: 4,
+    mutationLanes: 1,
+    duplicateOperationsExecuted: 1,
+    requiredVerificationPassed: true,
+    acceptanceProven: true
+  })
+  assert.equal(efficiency.duplicate_waste_detected, true)
+  assert.equal(efficiency.efficient, false)
+}
+
+{
+  const task = compileAdaptiveTask('Add a concise description to the Garbi release.')
+  const efficiency = evaluateRunEfficiency(task, {
+    sources: 5,
+    requiredVerificationPassed: true,
+    acceptanceProven: false
+  })
+  assert.equal(efficiency.within_budget, false)
+  assert.equal(efficiency.exceeded.includes('sources'), true)
+  assert.equal(efficiency.decision, 're-evaluate-or-escalate')
 }
 
 console.log('RAAS adaptive CTO tests: PASS')
