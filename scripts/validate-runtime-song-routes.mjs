@@ -8,12 +8,13 @@ const readJson = async (file) => JSON.parse(await read(file));
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-const [songs, releases, coverage, fastRuntime, providerRuntime, continuityRuntime, app] = await Promise.all([
+const [songs, releases, coverage, fastRuntime, providerRuntime, youtubeRuntime, continuityRuntime, app] = await Promise.all([
   readJson('data/songs.json'),
   readJson('data/releases.json'),
   readJson('data/playback-coverage.json'),
   read('simple-runtime.js'),
   read('provider-runtime.js'),
+  read('youtube-player-runtime.js'),
   read('player-continuity.js'),
   read('app.js'),
 ]);
@@ -152,8 +153,6 @@ for (const marker of [
   'delete safe.audioUrl;',
   "safe.playbackProvider = 'youtube';",
   "safe.playbackSourceType = 'youtube-migration-pending';",
-  "button.id = 'youtubeVideoButton';",
-  "button.setAttribute('aria-label', 'Show YouTube video');",
   'YouTube source not mapped yet.',
   "Object.defineProperty(window, 'GARBA_YOUTUBE_PLAYER'",
   'window.GARBA_YOUTUBE_ONLY_POLICY',
@@ -163,7 +162,19 @@ for (const prohibited of [
   'Tap the YouTube button to open this track.',
   'let youtubeUnlocked = false;',
   'function installYoutubeApiGate(api)',
-]) if (providerRuntime.includes(prohibited)) fail(`Main Play must not require a second YouTube-button action: ${prohibited}`);
+  'youtubeVideoButton',
+  'function injectYoutubeControl()',
+  'function toggleYoutubeStagePresentation()',
+  'Show YouTube video',
+]) if (providerRuntime.includes(prohibited)) fail(`Main Play/Pause must be the only required YouTube playback control: ${prohibited}`);
+
+for (const marker of [
+  "if (!target.closest('#playButton, #miniPlay')) return;",
+  "if (playerState === states().PLAYING || playerState === states().BUFFERING) player.pauseVideo();",
+  "open(song, { autoplay: true });",
+  "document.addEventListener('click', captureClick, { capture: true });",
+  "$('youtubeDockStop')?.addEventListener('click', () => close());",
+]) if (!youtubeRuntime.includes(marker)) fail(`YouTube player runtime missing one-control/persistent-stage marker: ${marker}`);
 
 for (const marker of [
   'open.spotify.com/embed',
@@ -221,7 +232,8 @@ console.log(`✓ ${exactTrackRoutes.length} exact commercial-provider mappings r
 console.log(`✓ ${singleReleaseRoutes.length} one-song release evidence entries preserve truthful source classification`);
 console.log(`✓ ${unchapteredYoutubeRoutes.length} unchaptered multi-song YouTube routes remain manual/reference-only until exact boundaries are verified`);
 console.log(`✓ source-evidence distribution: ${[...providers.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => `${name}=${count}`).join(', ')}`);
-console.log('✓ provider-runtime enforces YouTube-only execution with one-tap main playback and one secondary video-stage control');
+console.log('✓ provider-runtime enforces YouTube-only execution with one-tap main Play/Pause and no secondary YouTube playback button');
+console.log('✓ unrelated document clicks do not dismiss the YouTube stage; Stop remains an explicit close action');
 console.log('✓ Spotify, Apple Music, Amazon Music and other commercial-provider source evidence cannot become executable runtime fallbacks');
 console.log('✓ duplicate exact-track URLs cannot map to different song identities');
 console.log('✓ route-truth sanitisation still runs before YouTube playback decisions');
