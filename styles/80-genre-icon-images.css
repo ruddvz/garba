@@ -4,7 +4,7 @@
 .genre-button[data-genre="traditional"] { --genre-icon-image: url("../assets/genre-icons/traditional.webp"); }
 .genre-button[data-genre="dandiya"] { --genre-icon-image: url("../assets/genre-icons/dandiya.webp"); }
 .genre-button[data-genre="devotional"] { --genre-icon-image: url("../assets/genre-icons/devotional.webp"); }
-.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk.webp"); }
+.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk-dhol.webp"); }
 .genre-button[data-genre="sanedo"] { --genre-icon-image: url("../assets/genre-icons/sanedo.webp"); }
 .genre-button[data-genre="fusion"] { --genre-icon-image: url("../assets/genre-icons/fusion.webp"); }
 #nonstopButton { --genre-icon-image: url("../assets/genre-icons/nonstop.webp"); }
@@ -65,18 +65,6 @@
   background-size: 30px 30px;
   background-position: 2px calc(50% - 4px);
   transition: color 160ms ease, filter 160ms ease;
-}
-
-/* The primary strip keeps one stable block size regardless of active state or runtime mode.
-   .app raises specificity above the late Nonstop runtime layout rules. */
-.app #genreStrip {
-  height: 62px !important;
-  min-height: 62px !important;
-  max-height: 62px !important;
-  gap: 22px !important;
-  padding-top: 5px !important;
-  padding-bottom: 3px !important;
-  align-self: end !important;
 }
 
 .app #genreStrip .genre-button[data-genre],
@@ -207,17 +195,6 @@
 @media (max-width: 700px) {
   .genre-strip { scroll-padding-inline: 22px; }
 
-  .app #genreStrip {
-    height: 60px !important;
-    min-height: 60px !important;
-    max-height: 60px !important;
-    gap: 18px !important;
-    padding-left: max(22px, var(--safe-left)) !important;
-    padding-right: max(22px, var(--safe-right)) !important;
-    padding-top: 4px !important;
-    padding-bottom: 2px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 48px;
@@ -298,17 +275,6 @@
 @media (max-width: 390px) {
   .genre-strip { scroll-padding-inline: 18px; }
 
-  .app #genreStrip {
-    height: 58px !important;
-    min-height: 58px !important;
-    max-height: 58px !important;
-    gap: 16px !important;
-    padding-left: max(18px, var(--safe-left)) !important;
-    padding-right: max(18px, var(--safe-right)) !important;
-    padding-top: 3px !important;
-    padding-bottom: 1px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 46px;
@@ -335,7 +301,6 @@
 }
 
 @media (max-width: 350px) {
-  .app #genreStrip { gap: 14px !important; }
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     padding-left: 30px;
@@ -363,14 +328,6 @@
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
-  .app #genreStrip {
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 44px;
@@ -504,6 +461,7 @@ input[type="range"]::-moz-range-thumb {
   min-height: 82px !important;
   max-height: 82px !important;
   align-items: flex-start !important;
+  align-self: end !important;
   gap: clamp(9px, 1.7vw, 18px) !important;
   padding: 6px 12px 4px !important;
   max-width: min(760px, 91vw);
@@ -748,4 +706,139 @@ html body .app #browseActions #browseButton::after {
 
 @media (prefers-reduced-motion: reduce) {
   .app.is-playing .ambient-ring { animation: none; }
+}
+
+/* Final Now Playing metadata geometry. Keep transport anchors stable while text changes. */
+.app .track-block .song-title {
+  width: 100%;
+  min-width: 0;
+  max-width: min(780px, 88vw);
+  max-height: 1.96em;
+  font-size: clamp(40px, 4.1vw, 47px);
+  line-height: .98;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.app .track-block.is-long-title .song-title {
+  font-size: clamp(34px, 3.35vw, 44px);
+}
+
+.app .track-block.is-very-long-title .song-title {
+  font-size: clamp(30px, 2.9vw, 38px);
+}
+
+.app .track-block .artist-row {
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+}
+
+.app .track-block .artist {
+  max-width: min(620px, 82vw);
+  color: rgba(246, 236, 215, .76);
+}
+
+@media (max-width: 700px) {
+  .app .track-block .song-title {
+    max-width: min(94vw, 560px);
+    max-height: 1.94em;
+    font-size: clamp(34px, 9vw, 40px);
+    line-height: .97;
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(31px, 8vw, 37px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(28px, 7.2vw, 34px);
+  }
+
+  .app .track-block .artist-row {
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+  }
+
+  .app .track-block .artist {
+    max-width: 74vw;
+  }
+}
+
+@media (max-width: 390px) {
+  .app .track-block .song-title {
+    font-size: clamp(31px, 8.7vw, 35px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(29px, 8vw, 33px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(27px, 7.3vw, 31px);
+  }
+}
+
+@media (max-height: 760px) and (max-width: 700px) {
+  .app .track-block {
+    grid-template-rows: 14px minmax(0, 1fr) 26px;
+  }
+
+  .app .track-block .song-title {
+    font-size: clamp(30px, 8vw, 34px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(29px, 7.6vw, 32px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(27px, 7vw, 30px);
+  }
+}
+
+@media (max-height: 660px) and (max-width: 700px) {
+  .app .track-block {
+    grid-template-rows: 12px minmax(0, 1fr) 26px;
+  }
+
+  .app .track-block .song-title {
+    font-size: clamp(28px, 7.4vw, 32px);
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(27px, 7vw, 30px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(25px, 6.5vw, 28px);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .app .track-block {
+    grid-template-rows: 12px minmax(0, 1fr) 18px;
+  }
+
+  .app .track-block .song-title {
+    max-height: 1.92em;
+    font-size: clamp(25px, 4.4vw, 30px);
+    line-height: .96;
+  }
+
+  .app .track-block.is-long-title .song-title {
+    font-size: clamp(24px, 4.1vw, 29px);
+  }
+
+  .app .track-block.is-very-long-title .song-title {
+    font-size: clamp(23px, 3.8vw, 27px);
+  }
+
+  .app .track-block .artist-row {
+    height: 18px;
+    min-height: 18px;
+    max-height: 18px;
+  }
 }

@@ -402,20 +402,6 @@ html body .app .track-block .genre-eyebrow {
   text-transform: uppercase;
 }
 
-html body .app .track-block .song-title {
-  max-width: min(780px, 88vw);
-  line-height: .98;
-  text-wrap: balance;
-}
-
-html body .app .track-block .artist-row {
-  height: 34px;
-  min-height: 34px;
-  max-height: 34px;
-}
-
-html body .app .track-block .artist { color: rgba(246, 236, 215, .76); }
-
 html body .app #browseActions {
   min-height: 34px;
   margin-top: 5px !important;
@@ -437,22 +423,6 @@ html body .app #browseActions #browseButton {
     padding-left: max(14px, var(--safe-left));
     padding-right: max(14px, var(--safe-right));
     padding-bottom: max(12px, var(--safe-bottom));
-  }
-
-  html body .app .track-block .song-title {
-    max-width: min(94vw, 560px);
-    line-height: .97;
-  }
-
-  html body .app .track-block .artist-row {
-    height: 26px;
-    min-height: 26px;
-    max-height: 26px;
-  }
-
-  html body .app .track-block .artist {
-    margin-top: 0;
-    max-width: 74vw;
   }
 
   html body .app #browseActions {
