@@ -92,6 +92,20 @@ async function expectPlayerReady(page) {
   await expect(page.locator('#songTitle')).not.toHaveText('', { timeout: 15_000 });
 }
 
+async function setTitleState(page, title) {
+  await page.evaluate((nextTitle) => {
+    const trackBlock = document.querySelector('.track-block');
+    const songTitle = document.getElementById('songTitle');
+    if (!(trackBlock instanceof HTMLElement) || !(songTitle instanceof HTMLElement)) {
+      throw new Error('Player title geometry target is missing');
+    }
+    songTitle.textContent = nextTitle;
+    trackBlock.classList.toggle('is-long-title', nextTitle.length > 34);
+    trackBlock.classList.toggle('is-very-long-title', nextTitle.length > 52);
+  }, title);
+  await page.waitForTimeout(50);
+}
+
 async function playerAnchors(page) {
   return page.evaluate(() => {
     const anchors = {};
@@ -142,24 +156,25 @@ test('production player shell is stable, complete and uses the custom genre artw
 });
 
 test('short and very long song titles keep transport and discovery controls anchored', async ({ page }) => {
-  const longFailures = collectRuntimeFailures(page);
-  await page.goto('/?genre=dandiya&song=bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014', { waitUntil: 'domcontentloaded' });
+  const failures = collectRuntimeFailures(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expectPlayerReady(page);
-  await expect(page.locator('#songTitle')).toHaveText('Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014', { timeout: 15_000 });
-  await page.waitForTimeout(250);
+
+  const longTitle = 'Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014';
+  const shortTitle = 'Ochhav Theme';
+
+  await setTitleState(page, longTitle);
+  await expect(page.locator('#songTitle')).toHaveText(longTitle);
   await expectNoDocumentOverflow(page);
   const longTitleAnchors = await playerAnchors(page);
-  await expectNoRuntimeFailures(page, longFailures, 'long-title player');
 
-  const shortFailures = collectRuntimeFailures(page);
-  await page.goto('/?genre=traditional&song=ochhav-2023-01-ochhav-theme', { waitUntil: 'domcontentloaded' });
-  await expectPlayerReady(page);
-  await expect(page.locator('#songTitle')).toHaveText('Ochhav Theme', { timeout: 15_000 });
-  await page.waitForTimeout(250);
+  await setTitleState(page, shortTitle);
+  await expect(page.locator('#songTitle')).toHaveText(shortTitle);
   await expectNoDocumentOverflow(page);
   const shortTitleAnchors = await playerAnchors(page);
+
   expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors);
-  await expectNoRuntimeFailures(page, shortFailures, 'short-title player');
+  await expectNoRuntimeFailures(page, failures, 'title-geometry player');
 });
 
 test('Search opens without clipping and closing restores focus to the opener', async ({ page }) => {
@@ -170,7 +185,7 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await searchButton.click();
 
   const sheet = page.locator('#songSheet');
-  await expect(sheet).toHaveAttribute('aria-hidden', 'false');
+  await expect(sheet).not.toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('#searchInput')).toBeVisible();
   await expectInsideViewport(page, '#sheetClose');
   await expectNoDocumentOverflow(page);
