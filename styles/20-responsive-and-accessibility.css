@@ -216,7 +216,7 @@ html body .app .transport {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: rgba(246, 236,215,.76);
+  color: rgba(246, 236, 215, .76);
   opacity: .90;
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.28));
   transition: color 150ms ease, opacity 150ms ease, filter 150ms ease;
