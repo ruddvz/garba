@@ -13,10 +13,12 @@ import {
 import { verifyAccessJwt } from './lib/crypto.js'
 import { getDailySeries, getLifetimeMetrics, getRollupHealth } from './lib/d1.js'
 import { json, withSecurityHeaders } from './lib/http.js'
+import { searchDemandSql, searchFunnelSql } from './lib/search-analytics.js'
 import { istDateKey, istDayBounds } from './lib/time.js'
 
 const EVENTS_DATASET = 'playgarba_events_v1'
 const PRESENCE_DATASET = 'playgarba_presence_v1'
+const PRIVACY_MIN = 3
 
 function numberOrZero(value) {
   const number = Number(value)
@@ -53,6 +55,14 @@ function envelope({ status, data, sources, dataThroughMs = null, window = null, 
 
 async function analyticsQuery(env, sql, options) {
   return (options.queryAnalytics || queryAnalytics)(env, sql, options.fetchImpl)
+}
+
+function maxDataThrough(rowGroups) {
+  let max = 0
+  for (const rows of rowGroups) {
+    for (const row of rows || []) max = Math.max(max, numberOrZero(row.data_through_ms))
+  }
+  return max || null
 }
 
 async function home(env, options = {}) {
@@ -96,15 +106,12 @@ async function home(env, options = {}) {
     numberOrZero(lifetime.dataThroughMs),
   ) || null
 
-  const status = todayOk && listeningOk && lifetimeOk ? 'complete' : 'partial'
   return envelope({
-    status,
+    status: todayOk && listeningOk && lifetimeOk ? 'complete' : 'partial',
     dataThroughMs,
     window: { from: new Date(startUtcMs).toISOString(), to: new Date(endUtcMs).toISOString(), timezone: 'Asia/Kolkata' },
     sources: [
-      source('analytics-engine', todayOk && listeningOk, {
-        sampled: todayPrecision.sampled || listeningPrecision.sampled,
-      }),
+      source('analytics-engine', todayOk && listeningOk, { sampled: todayPrecision.sampled || listeningPrecision.sampled }),
       source('d1-rollups', lifetimeOk),
     ],
     data: {
@@ -144,11 +151,10 @@ async function live(env, options = {}) {
 }
 
 async function audience(env, request, options = {}) {
-  const url = new URL(request.url)
-  const range = url.searchParams.get('range') || '30d'
-  safeRangeSeconds(range)
-  const dataset = env.EVENTS_DATASET_NAME || EVENTS_DATASET
+  const range = new URL(request.url).searchParams.get('range') || '30d'
   try {
+    safeRangeSeconds(range)
+    const dataset = env.EVENTS_DATASET_NAME || EVENTS_DATASET
     const [summaryRows, breakdownRows] = await Promise.all([
       analyticsQuery(env, audienceSummarySql(dataset, range), options),
       analyticsQuery(env, audienceSql(dataset, range), options),
@@ -158,10 +164,7 @@ async function audience(env, request, options = {}) {
     const returning = Math.max(0, numberOrZero(summary.unique_browsers) - numberOrZero(summary.new_browser_ids))
     return envelope({
       status: 'complete',
-      dataThroughMs: Math.max(
-        numberOrZero(summary.data_through_ms),
-        ...breakdownRows.map((row) => numberOrZero(row.data_through_ms)),
-      ) || null,
+      dataThroughMs: maxDataThrough([summaryRows, breakdownRows]),
       sources: [source('analytics-engine', true, { sampled: precision.sampled })],
       data: {
         range,
@@ -171,44 +174,58 @@ async function audience(env, request, options = {}) {
           newBrowserIds: metric(summary.new_browser_ids, precision),
           returningBrowserIds: metric(returning, precision),
         },
-        breakdowns: breakdownRows.map((row) => ({
-          client: row.client || 'unknown|unknown|unknown',
-          geography: row.geo || 'ZZ|unknown',
-          acquisition: row.acquisition || '||',
-          displayMode: row.display_mode || 'unknown',
-          sessions: metric(row.sessions, precision),
-        })),
+        breakdowns: breakdownRows.map((row) => {
+          const sessions = numberOrZero(row.sessions)
+          const [country = 'ZZ', region = 'unknown'] = String(row.geo || 'ZZ|unknown').split('|')
+          return {
+            client: row.client || 'unknown|unknown|unknown',
+            country,
+            region: sessions >= PRIVACY_MIN ? region : null,
+            acquisition: row.acquisition || '||',
+            displayMode: row.display_mode || 'unknown',
+            sessions: metric(sessions, precision),
+          }
+        }),
       },
     })
   } catch (error) {
-    const code = error instanceof Error && error.message === 'invalid_range' ? 400 : 503
-    return envelope({ status: 'unavailable', statusCode: code, data: null, sources: [source('analytics-engine', false)] })
+    const statusCode = error instanceof Error && error.message === 'invalid_range' ? 400 : 503
+    return envelope({ status: 'unavailable', statusCode, data: null, sources: [source('analytics-engine', false)] })
   }
 }
 
 async function listening(env, request, options = {}) {
-  const url = new URL(request.url)
-  const range = url.searchParams.get('range') || '30d'
-  safeRangeSeconds(range)
-  const eventsDataset = env.EVENTS_DATASET_NAME || EVENTS_DATASET
-  const presenceDataset = env.PRESENCE_DATASET_NAME || PRESENCE_DATASET
+  const range = new URL(request.url).searchParams.get('range') || '30d'
   try {
-    const [eventRows, timeRows] = await Promise.all([
+    safeRangeSeconds(range)
+    const eventsDataset = env.EVENTS_DATASET_NAME || EVENTS_DATASET
+    const presenceDataset = env.PRESENCE_DATASET_NAME || PRESENCE_DATASET
+    const [eventRows, timeRows, funnelRows, demandRows] = await Promise.all([
       analyticsQuery(env, listeningSql(eventsDataset, range), options),
       analyticsQuery(env, listeningTimeSql(presenceDataset, range), options),
+      analyticsQuery(env, searchFunnelSql(eventsDataset, range), options),
+      analyticsQuery(env, searchDemandSql(eventsDataset, range), options),
     ])
-    const precision = precisionFromRows([...eventRows, ...timeRows])
-    const dataThroughMs = Math.max(
-      ...eventRows.map((row) => numberOrZero(row.data_through_ms)),
-      ...timeRows.map((row) => numberOrZero(row.data_through_ms)),
-    ) || null
+    const precision = precisionFromRows([...eventRows, ...timeRows, ...funnelRows, ...demandRows])
+    const funnel = funnelRows[0] || {}
     return envelope({
       status: 'complete',
-      dataThroughMs,
+      dataThroughMs: maxDataThrough([eventRows, timeRows, funnelRows, demandRows]),
       sources: [source('analytics-engine', true, { sampled: precision.sampled })],
       data: {
         range,
         listeningMs: metric(timeRows[0]?.played_ms, precision),
+        search: {
+          searches: metric(funnel.searches, precision),
+          selectedSearches: metric(funnel.selected_searches, precision),
+          searchesWithConfirmedPlay: metric(funnel.searches_with_confirmed_play, precision),
+          zeroResultSearches: metric(funnel.zero_result_searches, precision),
+          unmetDemand: demandRows.map((row) => ({
+            term: row.search_term,
+            searches: metric(row.searches, precision),
+            zeroResults: metric(row.zero_results, precision),
+          })),
+        },
         rows: eventRows.map((row) => ({
           eventName: row.event_name,
           world: row.world || null,
@@ -220,8 +237,8 @@ async function listening(env, request, options = {}) {
       },
     })
   } catch (error) {
-    const code = error instanceof Error && error.message === 'invalid_range' ? 400 : 503
-    return envelope({ status: 'unavailable', statusCode: code, data: null, sources: [source('analytics-engine', false)] })
+    const statusCode = error instanceof Error && error.message === 'invalid_range' ? 400 : 503
+    return envelope({ status: 'unavailable', statusCode, data: null, sources: [source('analytics-engine', false)] })
   }
 }
 
@@ -231,7 +248,7 @@ async function health(env) {
     const runs = await getRollupHealth(env.DB)
     const latest = runs[0] || null
     return envelope({
-      status: latest?.status === 'complete' ? 'complete' : runs.length ? 'partial' : 'partial',
+      status: latest?.status === 'complete' ? 'complete' : 'partial',
       dataThroughMs: latest?.data_through_ms,
       sources: [source('d1-rollups', true)],
       data: { rollups: runs },
@@ -244,7 +261,7 @@ async function health(env) {
 export async function handleAdmin(request, env, options = {}) {
   if (request.method !== 'GET') return withSecurityHeaders(json({ error: 'method_not_allowed' }, { status: 405 }))
   const auth = await verifyAccessJwt(request, env, options)
-  if (!auth.ok) return withSecurityHeaders(json({ error: 'access_denied', reason: auth.reason }, { status: 401 }))
+  if (!auth.ok) return withSecurityHeaders(json({ error: 'access_denied' }, { status: 401 }))
 
   const path = new URL(request.url).pathname
   let response
