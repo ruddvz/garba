@@ -608,7 +608,10 @@ if (input && status && topbar && spacer) {
     showAll.hidden = !hasActiveRelease;
     setText(showAll, 'All songs');
     showAll.setAttribute('aria-label', 'Show all songs in this catalogue');
-    setText(songsEyebrow, hasActiveRelease ? 'Selected release' : 'Songs');
+    const nextEyebrow = hasActiveRelease ? 'Selected release' : 'Songs';
+    if (songsEyebrow.textContent !== nextEyebrow) {
+      songsEyebrow.textContent = hasActiveRelease ? 'Selected release' : 'Songs';
+    }
 
     cards.forEach((card) => {
       if (card === active) card.setAttribute('aria-current', 'true');
