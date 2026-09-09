@@ -6,10 +6,9 @@ export default defineConfig({
   timeout: 35_000,
   expect: { timeout: 8_000 },
   fullyParallel: false,
-  // Seven browser projects exercise the same smoke file. A single CI worker can
-  // exceed the enclosing 25-minute job budget at the per-test timeout ceiling,
-  // so run two projects concurrently while keeping each project's tests serial.
-  workers: process.env.CI ? 2 : 1,
+  // The fixture is intentionally compact, so one worker now stays comfortably
+  // inside the 25-minute job budget and avoids WebKit resource/context races.
+  workers: 1,
   forbidOnly: true,
   retries: 0,
   reporter: process.env.CI ? [['line']] : [['list']],
