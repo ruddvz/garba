@@ -4,7 +4,7 @@
 .genre-button[data-genre="traditional"] { --genre-icon-image: url("../assets/genre-icons/traditional.webp"); }
 .genre-button[data-genre="dandiya"] { --genre-icon-image: url("../assets/genre-icons/dandiya.webp"); }
 .genre-button[data-genre="devotional"] { --genre-icon-image: url("../assets/genre-icons/devotional.webp"); }
-.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk.webp"); }
+.genre-button[data-genre="folk"] { --genre-icon-image: url("../assets/genre-icons/folk-dhol.webp"); }
 .genre-button[data-genre="sanedo"] { --genre-icon-image: url("../assets/genre-icons/sanedo.webp"); }
 .genre-button[data-genre="fusion"] { --genre-icon-image: url("../assets/genre-icons/fusion.webp"); }
 #nonstopButton { --genre-icon-image: url("../assets/genre-icons/nonstop.webp"); }
@@ -65,18 +65,6 @@
   background-size: 30px 30px;
   background-position: 2px calc(50% - 4px);
   transition: color 160ms ease, filter 160ms ease;
-}
-
-/* The primary strip keeps one stable block size regardless of active state or runtime mode.
-   .app raises specificity above the late Nonstop runtime layout rules. */
-.app #genreStrip {
-  height: 62px !important;
-  min-height: 62px !important;
-  max-height: 62px !important;
-  gap: 22px !important;
-  padding-top: 5px !important;
-  padding-bottom: 3px !important;
-  align-self: end !important;
 }
 
 .app #genreStrip .genre-button[data-genre],
@@ -207,17 +195,6 @@
 @media (max-width: 700px) {
   .genre-strip { scroll-padding-inline: 22px; }
 
-  .app #genreStrip {
-    height: 60px !important;
-    min-height: 60px !important;
-    max-height: 60px !important;
-    gap: 18px !important;
-    padding-left: max(22px, var(--safe-left)) !important;
-    padding-right: max(22px, var(--safe-right)) !important;
-    padding-top: 4px !important;
-    padding-bottom: 2px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 48px;
@@ -298,17 +275,6 @@
 @media (max-width: 390px) {
   .genre-strip { scroll-padding-inline: 18px; }
 
-  .app #genreStrip {
-    height: 58px !important;
-    min-height: 58px !important;
-    max-height: 58px !important;
-    gap: 16px !important;
-    padding-left: max(18px, var(--safe-left)) !important;
-    padding-right: max(18px, var(--safe-right)) !important;
-    padding-top: 3px !important;
-    padding-bottom: 1px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 46px;
@@ -335,7 +301,6 @@
 }
 
 @media (max-width: 350px) {
-  .app #genreStrip { gap: 14px !important; }
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     padding-left: 30px;
@@ -363,14 +328,6 @@
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
-  .app #genreStrip {
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    padding-top: 1px !important;
-    padding-bottom: 1px !important;
-  }
-
   .app #genreStrip .genre-button,
   .app #genreStrip #nonstopButton {
     height: 44px;
@@ -504,6 +461,7 @@ input[type="range"]::-moz-range-thumb {
   min-height: 82px !important;
   max-height: 82px !important;
   align-items: flex-start !important;
+  align-self: end !important;
   gap: clamp(9px, 1.7vw, 18px) !important;
   padding: 6px 12px 4px !important;
   max-width: min(760px, 91vw);

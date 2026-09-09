@@ -93,7 +93,7 @@ export async function createBuildInfo({ revision, artifactDir } = {}) {
     build: {
       revision: resolvedRevision,
       shortRevision: resolvedRevision.slice(0, 12),
-      repository: 'ruddvz/garba',
+      repository: process.env.GITHUB_REPOSITORY || 'ruddvz/garba',
       workflowRunId: process.env.GITHUB_RUN_ID || null,
       workflowRunAttempt: process.env.GITHUB_RUN_ATTEMPT || null,
     },

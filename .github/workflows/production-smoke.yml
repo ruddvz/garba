@@ -7,7 +7,7 @@ on:
       - scripts/lib/verify-production-hosts.mjs
       - .github/workflows/production-smoke.yml
   workflow_run:
-    workflows: ["Deploy live player to Vercel"]
+    workflows: ["Deploy PlayGarba to GitHub Pages"]
     types: [completed]
   workflow_dispatch:
 
@@ -27,36 +27,38 @@ jobs:
         uses: actions/checkout@v6
       - name: Validate smoke verifier syntax
         run: node --check scripts/lib/verify-production-hosts.mjs
+      - name: Run production smoke parser self-tests
+        run: node scripts/lib/verify-production-hosts.mjs self-test
 
-  live-player:
+  production-search-and-player:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Checkout deployed revision
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Verify live player and PWA production contract
+      - name: Verify canonical production search, player and PWA contract
         env:
           SMOKE_ATTEMPTS: '8'
           SMOKE_RETRY_DELAY_MS: '6000'
           SMOKE_TIMEOUT_MS: '12000'
         run: node scripts/lib/verify-production-hosts.mjs live
 
-      - name: Record live verification
+      - name: Record canonical production verification
         if: success()
         run: |
           {
-            echo '## Live player verification'
+            echo '## Canonical production verification'
             echo ''
-            echo '✅ `https://playgarba.com/` passed the player, Explore, deep-link, manifest, service-worker, offline-shell, robots, sitemap and OG-card smoke checks.'
+            echo '✅ `https://playgarba.com/` passed live sitemap-route HTTP/search checks plus player deep-link, manifest, service-worker, offline-shell and OG-card smoke checks.'
           } >> "$GITHUB_STEP_SUMMARY"
 
-  public-cutover-diagnostic-nonblocking:
+  www-redirect-diagnostic:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
@@ -67,20 +69,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-
-      - name: Probe public website cutover
-        id: public
-        env:
-          SMOKE_ATTEMPTS: '3'
-          SMOKE_RETRY_DELAY_MS: '4000'
-          SMOKE_TIMEOUT_MS: '10000'
-        run: |
-          if node scripts/lib/verify-production-hosts.mjs public; then
-            echo 'ready=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo '::warning title=Public apex not ready::playgarba.com is not yet serving the complete public website contract.'
-          fi
 
       - name: Probe www permanent redirect
         id: www
@@ -93,29 +81,22 @@ jobs:
             echo 'ready=true' >> "$GITHUB_OUTPUT"
           else
             echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo '::warning title=www redirect not ready::www.playgarba.com is not yet permanently redirecting to https://playgarba.com/.'
+            echo '::warning title=www redirect not ready::www.playgarba.com is not permanently redirecting to https://playgarba.com/.'
           fi
 
-      - name: Record public cutover state
+      - name: Record www redirect state
         if: always()
         env:
-          PUBLIC_READY: ${{ steps.public.outputs.ready }}
           WWW_READY: ${{ steps.www.outputs.ready }}
         run: |
           {
-            echo '## Public cutover diagnostic (non-blocking)'
-            echo ''
-            if [ "$PUBLIC_READY" = 'true' ]; then
-              echo '✅ Apex: `https://playgarba.com/` is serving the public website contract.'
-            else
-              echo '⚠️ Apex: `https://playgarba.com/` is not ready.'
-            fi
+            echo '## WWW redirect verification'
             echo ''
             if [ "$WWW_READY" = 'true' ]; then
-              echo '✅ WWW: `https://www.playgarba.com/` permanently redirects to the apex.'
+              echo '✅ `https://www.playgarba.com/` permanently redirects to the canonical apex.'
             else
-              echo '⚠️ WWW: the permanent redirect to `https://playgarba.com/` is not ready.'
+              echo '⚠️ The permanent `www` → apex redirect is not ready.'
             fi
             echo ''
-            echo '> This job is intentionally non-blocking for supporting-page diagnostics. A green job means the diagnostics executed, not that every public route is ready.'
+            echo '> This redirect diagnostic remains explicit and non-blocking; the canonical apex production smoke above is the blocking post-deploy contract.'
           } >> "$GITHUB_STEP_SUMMARY"

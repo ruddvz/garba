@@ -69,8 +69,6 @@
 .mini-track strong { font-weight: 500; }
 .mini-track span { color: rgba(246,236,215,.48); margin-top: 3px; font-size: 12px; }
 .mini-controls { display: flex; align-items: center; gap: 1px; }
-.mini-controls .transport { width: 41px; height: 41px; }
-.mini-controls .transport svg { width: 23px; height: 23px; }
 
 .install-banner {
   position: fixed; z-index: 35; left: 50%; bottom: max(24px, calc(var(--safe-bottom) + 8px)); transform: translateX(-50%);
@@ -157,7 +155,6 @@
   .progress-wrap .progress { grid-column: 1 / -1; grid-row: 1; }
   .progress-wrap .time { grid-row: 2; font-size: 10px; }
   .progress-wrap .time:last-child { text-align: right; }
-
   .genre-strip {
     width: 100%; max-width: 100%; gap: clamp(25px, 7.2vw, 34px);
     padding: 17px max(26px, var(--safe-right)) 8px max(26px, var(--safe-left));
@@ -208,7 +205,6 @@
   .mini-player { height: 84px; min-height: 84px; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
   .mini-track strong { font-size: 15px; }
   .mini-track span { font-size: 12px; }
-  .mini-controls .transport { width: 40px; height: 40px; }
 
   .sheet[data-snap="collapsed"] .sheet-handle { position: absolute; top: 0; left: 0; right: 0; z-index: 2; }
   .sheet[data-snap="collapsed"] .sheet-inner { display: block; height: 100%; padding-top: 18px; }
