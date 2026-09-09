@@ -433,9 +433,9 @@
 
   async function startCrowd(profile, generation) {
     stopCrowd();
-    if (!profile?.crowd || state.previewActive || constrainedConnection()) return;
+    if (!profile?.crowd || constrainedConnection()) return;
     const buffer = await loadCrowdBuffer();
-    if (!buffer || generation !== state.generation || state.mode === 'off' || !state.playbackActive) return;
+    if (!buffer || generation !== state.generation || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
     const source = state.context.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
