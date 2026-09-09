@@ -1,0 +1,27 @@
+name = "playgarba-pga-ingest"
+main = "ingest-worker.js"
+compatibility_date = "2026-09-09"
+
+[vars]
+PUBLIC_ORIGIN = "https://playgarba.com"
+
+[[analytics_engine_datasets]]
+binding = "EVENTS"
+dataset = "playgarba_events_v1"
+
+[[analytics_engine_datasets]]
+binding = "PRESENCE"
+dataset = "playgarba_presence_v1"
+
+# Choose an unused positive-integer namespace ID in the Cloudflare account.
+[[ratelimits]]
+name = "BROWSER_RATE_LIMITER"
+namespace_id = "REPLACE_WITH_UNIQUE_NAMESPACE_ID"
+
+  [ratelimits.simple]
+  limit = 120
+  period = 60
+
+# Set PGA_HMAC_SECRET with `wrangler secret put PGA_HMAC_SECRET`.
+# Bind the deployed Worker to events.playgarba.com as a custom domain outside
+# this example file so a copied template cannot accidentally claim production DNS.
