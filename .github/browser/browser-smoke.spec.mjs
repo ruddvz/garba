@@ -205,7 +205,7 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await expectNoRuntimeFailures(page, failures, 'Search sheet');
 });
 
-test('Nonstop browser is reachable, populated and restores focus when closed', async ({ page }) => {
+test('Nonstop browser is reachable, keyboard-safe, populated and restores focus when closed', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await expectPlayerReady(page);
@@ -216,16 +216,31 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
   await nonstopButton.click();
 
   const panel = page.locator('#nonstopBrowser');
+  const search = page.locator('#nonstopBrowserSearch');
   await expect(panel).toHaveAttribute('aria-hidden', 'false');
-  await expect(page.locator('#nonstopBrowserSearch')).toBeVisible();
-  await expect(page.locator('#nonstopBrowserSearch')).toBeFocused();
+  await expect(panel).toBeFocused();
+  await expect(search).toBeVisible();
+  await expect(search).toHaveAttribute('aria-label', 'Search Nonstop Garba');
+  await panel.press('Tab');
+  await expect(search).toBeFocused();
   await expectInsideViewport(page, '#nonstopBrowserClose');
+
   const sets = page.locator('#nonstopBrowserList .nonstop-set');
-  await expect(sets.first()).toBeVisible();
+  const firstSet = sets.first();
+  await expect(firstSet).toBeVisible();
   expect(await sets.count()).toBeGreaterThan(0);
-  await expect(sets.first().locator('.nonstop-set-recording')).toContainText(/One (?:full )?recording/);
-  await expect(sets.first().locator('.nonstop-set-badge.recording')).toHaveText(/^(?:Chaptered|Full) recording$/);
-  await expect(page.locator('#nonstopBrowserSummary')).toContainText('one choice = one recording');
+  await expect(firstSet.locator('.nonstop-set-title')).toHaveText(/\S/);
+  await expect(firstSet.locator('.nonstop-set-meta')).toHaveText(/\S/);
+  await expect(firstSet).toHaveAttribute('aria-label', /^(?:Currently playing|Play),\s+\S/);
+
+  const duration = firstSet.locator('.nonstop-set-duration');
+  await expect(duration).toBeVisible();
+  await expect(duration).toHaveAttribute('aria-hidden', 'true');
+  const durationText = (await duration.textContent() || '').trim();
+  if (durationText) expect(durationText).toMatch(/^(?:\d+:\d{2}|\d+:\d{2}:\d{2})$/);
+
+  await expect(firstSet.locator('.nonstop-set-recording, .nonstop-set-badge')).toHaveCount(0);
+  await expect(page.locator('#nonstopBrowserSummary')).toHaveCount(0);
   await expectNoDocumentOverflow(page);
 
   await page.locator('#nonstopBrowserClose').click();
