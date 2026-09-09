@@ -1,0 +1,99 @@
+name: Issue 602 startup performance validation
+
+on:
+  push:
+    branches:
+      - perf/mobile-cold-start-602
+    paths:
+      - scripts/performance/measure-startup.mjs
+      - scripts/lib/validate-production-performance.mjs
+      - scripts/performance/README.md
+      - .github/workflows/apply-issue-602-retired-preload.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate-startup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: perf/mobile-cold-start-602
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate startup scripts
+        run: |
+          node --check scripts/performance/measure-startup.mjs
+          node --check scripts/lib/validate-production-performance.mjs
+          node scripts/lib/validate-production-performance.mjs
+
+      - name: Prepare startup fixture
+        run: |
+          set -euo pipefail
+          rm -rf _startup
+          mkdir -p _startup
+          cp index.html app.js simple-runtime.js provider-runtime.js player-continuity.js youtube-player-runtime.js nonstop-browser.js sw.js manifest.webmanifest offline.html styles.css _startup/
+          cp -R styles assets data _startup/
+
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+          test -n "$PACK"
+          rm -rf _startup/assets/backgrounds/library
+          mkdir -p _startup/assets/backgrounds/library
+          unzip -oq "$PACK" -d _startup/assets/backgrounds/library
+          test "$(find _startup/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15
+          rm -f _startup/assets/backgrounds/garba15-*.zip
+
+      - name: Install Chromium runner
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install chromium
+
+      - name: Start startup fixture
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _startup >/tmp/playgarba-startup-server.log 2>&1 &
+          echo $! > /tmp/playgarba-startup-server.pid
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/playgarba-startup-server.log
+          exit 1
+
+      - name: Measure cold mobile startup contract
+        env:
+          PLAYGARBA_TESTED_REVISION: ${{ github.sha }}
+          PLAYGARBA_PERF_FIXTURE: issue-602-production-shaped-local
+        run: |
+          node scripts/performance/measure-startup.mjs \
+            --origin=http://127.0.0.1:4173 \
+            --profile=mobile-low-end \
+            --runs=3 \
+            --output=/tmp/playgarba-startup.json
+          cat /tmp/playgarba-startup.json
+
+      - name: Remove temporary validation workflow
+        if: always()
+        run: |
+          rm -f .github/workflows/apply-issue-602-retired-preload.yml
+          git config user.name "playgarba-issue-602"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows/apply-issue-602-retired-preload.yml
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Remove temporary issue 602 validation workflow"
+          git push origin HEAD:perf/mobile-cold-start-602
