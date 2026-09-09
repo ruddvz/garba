@@ -130,8 +130,6 @@ try {
   await snapshot('after-click-50ms');
   await page.waitForTimeout(150);
   await snapshot('after-click-200ms');
-  await page.waitForTimeout(350);
-  await snapshot('after-click-550ms');
 
   const finalState = await page.evaluate(() => {
     const sheet = document.getElementById('songSheet');
