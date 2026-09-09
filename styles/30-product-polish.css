@@ -206,12 +206,12 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; }
 .search-field input { caret-color: var(--accent); }
 .search-field input::-webkit-search-cancel-button { filter: invert(1); opacity: .6; }
 
-/* Desktop WebKit can retain the closed-sheet transform after the runtime has
-   already opened and focused Search. Key desktop geometry to the reliable
-   logical open state while preserving the existing mobile snap system. */
+/* Desktop WebKit can create the correct Search-sheet transform transition but
+   leave its timeline frozen at 0. Keep size transitions, but let Search snap
+   open and closed without a transform animation. Mobile snap motion is intact. */
 @media (min-width: 701px) {
-  #songSheet[aria-hidden="false"] {
-    transform: translate(50%, 0);
+  #songSheet.mode-search {
+    transition: height 420ms var(--ease), width 320ms var(--ease);
   }
 }
 
