@@ -16,6 +16,8 @@ jobs:
         with:
           node-version: 22
       - run: npm run check
+      - name: Validate Garba Atmosphere
+        run: node scripts/lib/validate-immersive-atmosphere.mjs
       - name: Install social renderer
         run: |
           sudo apt-get update
