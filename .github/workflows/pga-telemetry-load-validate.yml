@@ -5,7 +5,6 @@ on:
     paths:
       - 'scripts/load/pga-telemetry-load.mjs'
       - 'scripts/lib/test-pga-telemetry-load.mjs'
-      - 'docs/operations/pga-telemetry-load.md'
       - '.github/workflows/pga-telemetry-load-validate.yml'
   push:
     branches:
@@ -13,7 +12,6 @@ on:
     paths:
       - 'scripts/load/pga-telemetry-load.mjs'
       - 'scripts/lib/test-pga-telemetry-load.mjs'
-      - 'docs/operations/pga-telemetry-load.md'
       - '.github/workflows/pga-telemetry-load-validate.yml'
   workflow_dispatch:
 
