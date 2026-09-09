@@ -37,13 +37,9 @@ async function snapshot(label) {
       if (!(node instanceof HTMLElement)) return null;
       const rect = node.getBoundingClientRect();
       const style = getComputedStyle(node);
-      const centerX = Math.max(0, Math.min(innerWidth - 1, rect.left + rect.width / 2));
-      const centerY = Math.max(0, Math.min(innerHeight - 1, rect.top + rect.height / 2));
       return {
         selector,
         rect: {
-          x: rect.x,
-          y: rect.y,
           top: rect.top,
           right: rect.right,
           bottom: rect.bottom,
@@ -51,10 +47,9 @@ async function snapshot(label) {
           width: rect.width,
           height: rect.height,
         },
-        client: { width: node.clientWidth, height: node.clientHeight },
-        offset: { width: node.offsetWidth, height: node.offsetHeight },
         attributes: {
           ariaHidden: node.getAttribute('aria-hidden'),
+          dataSnap: node.getAttribute('data-snap'),
           hidden: node.hidden,
           className: node.className,
         },
@@ -63,31 +58,17 @@ async function snapshot(label) {
           visibility: style.visibility,
           opacity: style.opacity,
           position: style.position,
-          zIndex: style.zIndex,
           transform: style.transform,
-          translate: style.translate,
           inset: style.inset,
-          top: style.top,
-          right: style.right,
-          bottom: style.bottom,
-          left: style.left,
           width: style.width,
           height: style.height,
-          minWidth: style.minWidth,
-          minHeight: style.minHeight,
-          overflow: style.overflow,
-          overflowX: style.overflowX,
-          overflowY: style.overflowY,
           contain: style.contain,
-          isolation: style.isolation,
-          pointerEvents: style.pointerEvents,
           backdropFilter: style.backdropFilter,
-          webkitBackdropFilter: style.getPropertyValue('-webkit-backdrop-filter'),
         },
-        centerHit: document.elementFromPoint(centerX, centerY)?.id || document.elementFromPoint(centerX, centerY)?.className || null,
       };
     };
 
+    const app = document.getElementById('app');
     const active = document.activeElement;
     return {
       label: snapshotLabel,
@@ -96,17 +77,8 @@ async function snapshot(label) {
         innerHeight,
         documentWidth: document.documentElement.scrollWidth,
         documentHeight: document.documentElement.scrollHeight,
-        bodyWidth: document.body?.scrollWidth || 0,
-        bodyHeight: document.body?.scrollHeight || 0,
-        visual: window.visualViewport ? {
-          width: window.visualViewport.width,
-          height: window.visualViewport.height,
-          offsetLeft: window.visualViewport.offsetLeft,
-          offsetTop: window.visualViewport.offsetTop,
-          scale: window.visualViewport.scale,
-        } : null,
       },
-      app: read('#app'),
+      appSheetSnap: app?.getAttribute('data-sheet-snap') || null,
       sheet: read('#songSheet'),
       header: read('#songSheet .sheet-header'),
       searchField: read('#songSheet .search-field'),
@@ -131,18 +103,11 @@ try {
 
   await snapshot('before-click');
   await page.locator('#searchButton').click();
-
-  for (const [label, delay] of [
-    ['after-click-0ms', 0],
-    ['after-click-50ms', 50],
-    ['after-click-200ms', 150],
-    ['after-click-500ms', 300],
-    ['after-click-1200ms', 700],
-    ['after-click-3000ms', 1800],
-  ]) {
-    if (delay) await page.waitForTimeout(delay);
-    await snapshot(label);
-  }
+  await snapshot('after-click-0ms');
+  await page.waitForTimeout(50);
+  await snapshot('after-click-50ms');
+  await page.waitForTimeout(150);
+  await snapshot('after-click-200ms');
 
   const finalState = await page.evaluate(() => {
     const sheet = document.getElementById('songSheet');
@@ -164,6 +129,8 @@ try {
     };
     return {
       sheetOpen: sheet?.getAttribute('aria-hidden') === 'false',
+      sheetSnap: sheet?.getAttribute('data-snap') || null,
+      appSheetSnap: document.getElementById('app')?.getAttribute('data-sheet-snap') || null,
       inputVisible: visible(input),
       closeVisible: visible(close),
       activeId: document.activeElement?.id || '',
@@ -172,6 +139,10 @@ try {
 
   print('final', finalState);
   print('runtime', runtime);
+
+  if (!finalState.sheetOpen || !finalState.inputVisible || !finalState.closeVisible) {
+    process.exitCode = 1;
+  }
 } finally {
   await context.close();
   await browser.close();
