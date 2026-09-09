@@ -1,14 +1,118 @@
 /* Mobile playback/sheet coordination. Loaded last so provider visibility wins over generic sheet sizing. */
 
+/*
+  YouTube performance stage
+  -------------------------
+  The iframe remains a real, visible YouTube surface, but its chrome belongs to the
+  PlayGarba visual system. Compact is the default listening state. The monochrome
+  YouTube control expands/collapses the stage without becoming a second Play button.
+*/
+#youtubeStage.youtube-dock {
+  border-color: rgba(246,236,215,.18);
+  border-radius: 22px 22px 16px 16px;
+  overflow: clip;
+  background:
+    linear-gradient(180deg, rgba(18,20,31,.96), rgba(7,9,17,.97));
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.46),
+    0 0 0 1px rgba(246,236,215,.025) inset,
+    0 0 32px color-mix(in srgb, var(--accent) 8%, transparent);
+  backdrop-filter: blur(18px) saturate(1.05);
+  -webkit-backdrop-filter: blur(18px) saturate(1.05);
+  isolation: isolate;
+}
+
+#youtubeStage.youtube-dock::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  left: 16%;
+  right: 16%;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 58%, var(--ivory)), transparent);
+  opacity: .7;
+}
+
+#youtubeStage .youtube-provider-media {
+  position: relative;
+  overflow: hidden;
+  background: #050609;
+}
+
+#youtubeStage .youtube-provider-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(246,236,215,.035);
+  box-shadow: inset 0 -34px 48px rgba(0,0,0,.10);
+}
+
+#youtubeStage .provider-dock-bar {
+  min-height: 40px;
+  border-top-color: rgba(246,236,215,.075);
+  background: linear-gradient(180deg, rgba(15,17,27,.96), rgba(9,11,20,.98));
+}
+
+#youtubeStage .provider-dock-bar > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(246,236,215,.58);
+}
+
+#youtubeStage .provider-dock-bar > span::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+#youtubeStage .provider-dock-open,
+#youtubeStage .provider-dock-bar button {
+  color: rgba(246,236,215,.72);
+}
+
+#youtubeStage .provider-dock-open:hover,
+#youtubeStage .provider-dock-bar button:hover {
+  background: rgba(246,236,215,.065);
+  color: var(--ivory);
+}
+
+@media (min-width: 701px) {
+  #youtubeStage.youtube-dock {
+    width: min(356px, calc(100vw - 48px));
+    right: max(24px, var(--safe-right));
+  }
+
+  #youtubeStage.youtube-dock.is-expanded {
+    width: min(520px, calc(46vw - 24px));
+  }
+
+  #youtubeStage.youtube-dock.is-expanded .provider-media,
+  #youtubeStage.youtube-dock.is-expanded .provider-media iframe {
+    width: 100%;
+    height: clamp(260px, 27vw, 292px);
+    min-width: 200px;
+    min-height: 200px;
+  }
+}
+
 @media (max-width: 700px) {
-  /* The official YouTube player must stay visibly >=200x200. Keep it in a compact,
-     predictable listening zone instead of letting a full-width video cover song rows. */
+  /* The official YouTube player must stay visibly >=200x200. Compact mode keeps it
+     present without turning the whole mobile player into a video app. */
   body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage {
-    top: max(64px, calc(var(--safe-top) + 52px));
-    right: max(12px, var(--safe-right));
+    top: max(72px, calc(var(--safe-top) + 58px));
+    right: max(16px, var(--safe-right));
     bottom: auto;
     width: 216px;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 32px);
+    border-radius: 20px 20px 14px 14px;
   }
 
   body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage .provider-media,
@@ -28,6 +132,29 @@
     display: none;
   }
 
+  /* Expanded mode becomes one centred performance stage. It is still secondary to
+     Now Playing and intentionally stops short of a full-screen video treatment. */
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded {
+    left: max(16px, var(--safe-left));
+    right: max(16px, var(--safe-right));
+    width: auto;
+    max-width: none;
+    top: max(72px, calc(var(--safe-top) + 58px));
+  }
+
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded .provider-media,
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded .provider-media iframe {
+    height: clamp(200px, 55vw, 232px);
+  }
+
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded .provider-dock-bar {
+    justify-content: space-between;
+  }
+
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded .provider-dock-bar > span {
+    display: inline-flex;
+  }
+
   /* If the listener deliberately reopens Browse/Search during YouTube playback,
      reserve a real playback zone above the sheet instead of stacking the sheet
      underneath the required visible iframe. */
@@ -40,12 +167,87 @@
   body:has(#youtubeStage.open[aria-hidden="false"]) #songSheet[data-snap="full"] .song-list {
     overscroll-behavior: contain;
   }
+
+  /* Mobile geometry guardrails. These intentionally use important because the
+     genre-art layer loads later and must never be allowed to paint outside the
+     usable iPhone viewport. */
+  html body .app .player-shell {
+    padding-left: max(22px, var(--safe-left)) !important;
+    padding-right: max(22px, var(--safe-right)) !important;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(338px, calc(100vw - 44px)) !important;
+    max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 20px) !important;
+  }
+
+  html body .app #genreStrip {
+    contain: layout !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    max-width: calc(100vw - 8px) !important;
+    padding-left: max(20px, var(--safe-left)) !important;
+    padding-right: max(20px, var(--safe-right)) !important;
+  }
+}
+
+/* Current large iPhones sit around 393-430 CSS px in portrait. The old 390px
+   breakpoint missed them, leaving four 42px utility controls squeezed beside the
+   wordmark and visibly clipping the capsule edge. */
+@media (max-width: 430px) {
+  html body .app .topbar {
+    padding-left: max(18px, var(--safe-left)) !important;
+    padding-right: max(18px, var(--safe-right)) !important;
+    gap: 10px;
+  }
+
+  html body .app .brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: clamp(25px, 7.2vw, 29px) !important;
+    white-space: nowrap;
+  }
+
+  html body .app .utilities {
+    flex: 0 0 auto;
+    min-height: 40px !important;
+    gap: 0 !important;
+    padding: 2px !important;
+    max-width: calc(100vw - 154px);
+  }
+
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart {
+    flex: 0 0 39px !important;
+    width: 39px !important;
+    min-width: 39px !important;
+    height: 39px !important;
+    min-height: 39px !important;
+    padding: 7px !important;
+  }
+
+  html body .app .utilities .icon-button svg,
+  html body .app .utilities .mobile-heart svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(332px, calc(100vw - 44px)) !important;
+  }
 }
 
 @media (max-width: 390px) {
-  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage {
-    right: max(8px, var(--safe-right));
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage:not(.is-expanded) {
+    right: max(10px, var(--safe-right));
     width: 208px;
+  }
+
+  html body .app .controls,
+  html body .app .progress-wrap {
+    width: min(320px, calc(100vw - 40px)) !important;
   }
 }
 
@@ -57,8 +259,18 @@
     width: 208px;
   }
 
+  body:has(#youtubeStage.open[aria-hidden="false"]) #youtubeStage.is-expanded {
+    left: auto;
+    right: max(8px, var(--safe-right));
+    width: min(320px, 46vw);
+  }
+
   body:has(#youtubeStage.open[aria-hidden="false"]) #songSheet[data-snap="medium"],
   body:has(#youtubeStage.open[aria-hidden="false"]) #songSheet[data-snap="full"] {
     height: min(46dvh, calc(100dvh - 250px));
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #youtubeStage.youtube-dock { transition: none; }
 }
