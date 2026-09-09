@@ -4,6 +4,7 @@
   "admittedSitemapRoutes": [
     "/",
     "/explore/",
+    "/live/",
     "/what-is-garba/",
     "/how-to-use/",
     "/about/",
@@ -22,6 +23,7 @@
   "publishedSitemapEntries": [
     { "route": "/", "changefreq": "daily", "priority": 1.0 },
     { "route": "/explore/", "changefreq": "daily", "priority": 0.8 },
+    { "route": "/live/", "changefreq": "weekly", "priority": 0.8 },
     { "route": "/navratri-2026/", "changefreq": "weekly", "priority": 0.8 },
     { "route": "/what-is-garba/", "changefreq": "monthly", "priority": 0.7 },
     { "route": "/learn/", "changefreq": "monthly", "priority": 0.6 },
