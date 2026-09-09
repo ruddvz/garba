@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151412">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="application-name" content="PlayGarba Admin">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PGA">
+  <title>PlayGarba Admin</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="app-shell" id="appShell">
+    <aside class="side-rail" aria-label="PGA navigation">
+      <a class="brand" href="#home" aria-label="PlayGarba Admin home">
+        <img src="./icons/icon.svg" width="36" height="36" alt="">
+        <span><strong>PGA</strong><small>PlayGarba Admin</small></span>
+      </a>
+      <nav class="side-nav" aria-label="Primary">
+        <button type="button" data-nav="home" aria-current="page"><span aria-hidden="true">⌂</span>Home</button>
+        <button type="button" data-nav="audience"><span aria-hidden="true">◎</span>Audience</button>
+        <button type="button" data-nav="listening"><span aria-hidden="true">♪</span>Listening</button>
+        <button type="button" data-nav="health"><span aria-hidden="true">◇</span>Health</button>
+        <button type="button" data-nav="more"><span aria-hidden="true">•••</span>More</button>
+      </nav>
+      <p class="rail-note">Private founder surface</p>
+    </aside>
+
+    <div class="content-shell">
+      <header class="topbar">
+        <div class="mobile-brand" aria-hidden="true">
+          <img src="./icons/icon.svg" width="32" height="32" alt="">
+          <strong>PGA</strong>
+        </div>
+        <div class="topbar-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="connectionLabel">Shell ready</span>
+        </div>
+        <button class="quiet-button" id="refreshButton" type="button">Refresh</button>
+      </header>
+
+      <div class="boundary" id="boundary" role="status" aria-live="polite" hidden>
+        <strong id="boundaryTitle"></strong>
+        <span id="boundaryBody"></span>
+        <button id="boundaryAction" type="button" hidden></button>
+      </div>
+
+      <main id="main" tabindex="-1">
+        <section class="view is-active" data-view="home" aria-labelledby="title-home">
+          <div class="view-heading">
+            <div><p class="eyebrow">Today · IST</p><h1 id="title-home" tabindex="-1">Home</h1></div>
+            <p class="freshness" id="homeFreshness">Protected data not connected</p>
+          </div>
+          <div class="metric-ledger" aria-label="Home metrics">
+            <article><span>Live now</span><strong aria-label="Unavailable">—</strong><small>Active sessions</small></article>
+            <article><span>Listening now</span><strong aria-label="Unavailable">—</strong><small>Confirmed playback</small></article>
+            <article><span>Unique browsers today</span><strong aria-label="Unavailable">—</strong><small>Not people</small></article>
+            <article><span>Sessions today</span><strong aria-label="Unavailable">—</strong><small>IST reporting window</small></article>
+          </div>
+          <section class="section-block" aria-labelledby="home-attention">
+            <div class="section-heading"><h2 id="home-attention">Attention</h2><span>Current operational state</span></div>
+            <div class="empty-state"><strong>No data yet</strong><p>Protected analytics will appear here after the PGA data service is connected.</p></div>
+          </section>
+        </section>
+
+        <section class="view" data-view="audience" aria-labelledby="title-audience" hidden>
+          <div class="view-heading"><div><p class="eyebrow">Recent audience</p><h1 id="title-audience" tabindex="-1">Audience</h1></div><p class="freshness">No aggregate response yet</p></div>
+          <section class="section-block"><div class="section-heading"><h2>Overview</h2><span>Privacy-preserving aggregates</span></div><div class="empty-state"><strong>No data yet</strong><p>Unique browsers, sessions, platform mix and coarse acquisition data will appear when available.</p></div></section>
+        </section>
+
+        <section class="view" data-view="listening" aria-labelledby="title-listening" hidden>
+          <div class="view-heading"><div><p class="eyebrow">Measured listening</p><h1 id="title-listening" tabindex="-1">Listening</h1></div><p class="freshness">No aggregate response yet</p></div>
+          <section class="section-block"><div class="section-heading"><h2>Playback</h2><span>Confirmed behaviour only</span></div><div class="empty-state"><strong>No data yet</strong><p>Confirmed play starts, listening time, measured top content and playback failures will appear here.</p></div></section>
+        </section>
+
+        <section class="view" data-view="health" aria-labelledby="title-health" hidden>
+          <div class="view-heading"><div><p class="eyebrow">Production</p><h1 id="title-health" tabindex="-1">Health</h1></div><p class="freshness">No health response yet</p></div>
+          <div class="health-list" role="list">
+            <div role="listitem"><span>Telemetry ingestion</span><strong>Unknown</strong></div>
+            <div role="listitem"><span>Aggregate queries</span><strong>Unknown</strong></div>
+            <div role="listitem"><span>Daily rollup</span><strong>Unknown</strong></div>
+            <div role="listitem"><span>PGA build</span><strong>Shell v1</strong></div>
+          </div>
+          <p class="truth-note">Unknown is never converted to zero or healthy.</p>
+        </section>
+
+        <section class="view" data-view="more" aria-labelledby="title-more" hidden>
+          <div class="view-heading"><div><p class="eyebrow">PGA</p><h1 id="title-more" tabindex="-1">More</h1></div></div>
+          <div class="settings-list">
+            <button type="button" id="installButton" hidden><span><strong>Install PGA</strong><small>Add the private admin app to this device</small></span><span aria-hidden="true">›</span></button>
+            <button type="button" id="accessButton"><span><strong>Refresh access</strong><small>Re-check the protected session</small></span><span aria-hidden="true">↻</span></button>
+            <div><span><strong>Reporting timezone</strong><small>Daily metrics use a fixed product timezone</small></span><span>IST</span></div>
+            <div><span><strong>Data policy</strong><small>PGA shows aggregates, not listener profiles</small></span><span>Private</span></div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Primary">
+        <button type="button" data-nav="home" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></button>
+        <button type="button" data-nav="audience"><span aria-hidden="true">◎</span><small>Audience</small></button>
+        <button type="button" data-nav="listening"><span aria-hidden="true">♪</span><small>Listening</small></button>
+        <button type="button" data-nav="health"><span aria-hidden="true">◇</span><small>Health</small></button>
+        <button type="button" data-nav="more"><span aria-hidden="true">•••</span><small>More</small></button>
+      </nav>
+    </div>
+  </div>
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
