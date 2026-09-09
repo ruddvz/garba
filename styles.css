@@ -1,5 +1,6 @@
 @import url("styles/00-foundation-and-player.css");
 @import url("styles/10-browser-and-shell.css");
+@import url("styles/15-webkit-search-compat.css");
 @import url("styles/20-responsive-and-accessibility.css");
 @import url("styles/30-product-polish.css");
 @import url("styles/40-accessibility-states.css");
