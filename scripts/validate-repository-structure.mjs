@@ -35,7 +35,7 @@ const requiredRootFiles = new Set([
   'sw.js',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
+const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (entry.name === '.git') continue;
@@ -105,6 +105,8 @@ const expectedScriptEntrypoints = [
   'generate-licensing-request.mjs',
   'match-vendor-catalogue.mjs',
   'plan-direct-ingest.mjs',
+  'raas-task.mjs',
+  'raas-task.test.mjs',
   'report-hosting-readiness.mjs',
   'report-label-acquisition.mjs',
   'report-playback-route-quality.mjs',
