@@ -37,6 +37,23 @@ async function snapshot(label) {
       if (!(node instanceof HTMLElement)) return null;
       const rect = node.getBoundingClientRect();
       const style = getComputedStyle(node);
+      const animations = node.getAnimations().map((animation) => {
+        let keyframes = [];
+        try { keyframes = animation.effect?.getKeyframes?.() || []; } catch {}
+        let timing = null;
+        try { timing = animation.effect?.getTiming?.() || null; } catch {}
+        return {
+          type: animation.constructor?.name || '',
+          playState: animation.playState,
+          currentTime: animation.currentTime,
+          startTime: animation.startTime,
+          playbackRate: animation.playbackRate,
+          id: animation.id || '',
+          transitionProperty: animation.transitionProperty || null,
+          timing,
+          keyframes,
+        };
+      });
       return {
         selector,
         rect: {
@@ -53,6 +70,10 @@ async function snapshot(label) {
           hidden: node.hidden,
           className: node.className,
         },
+        inline: {
+          transform: node.style.transform,
+          transition: node.style.transition,
+        },
         style: {
           display: style.display,
           visibility: style.visibility,
@@ -64,7 +85,12 @@ async function snapshot(label) {
           height: style.height,
           contain: style.contain,
           backdropFilter: style.backdropFilter,
+          transitionProperty: style.transitionProperty,
+          transitionDuration: style.transitionDuration,
+          transitionDelay: style.transitionDelay,
+          transitionTimingFunction: style.transitionTimingFunction,
         },
+        animations,
       };
     };
 
@@ -80,10 +106,6 @@ async function snapshot(label) {
       },
       appSheetSnap: app?.getAttribute('data-sheet-snap') || null,
       sheet: read('#songSheet'),
-      header: read('#songSheet .sheet-header'),
-      searchField: read('#songSheet .search-field'),
-      searchInput: read('#searchInput'),
-      close: read('#sheetClose'),
       activeElement: active instanceof HTMLElement ? {
         id: active.id,
         className: active.className,
@@ -108,6 +130,8 @@ try {
   await snapshot('after-click-50ms');
   await page.waitForTimeout(150);
   await snapshot('after-click-200ms');
+  await page.waitForTimeout(350);
+  await snapshot('after-click-550ms');
 
   const finalState = await page.evaluate(() => {
     const sheet = document.getElementById('songSheet');
@@ -139,10 +163,7 @@ try {
 
   print('final', finalState);
   print('runtime', runtime);
-
-  if (!finalState.sheetOpen || !finalState.inputVisible || !finalState.closeVisible) {
-    process.exitCode = 1;
-  }
+  if (!finalState.sheetOpen || !finalState.inputVisible || !finalState.closeVisible) process.exitCode = 1;
 } finally {
   await context.close();
   await browser.close();
