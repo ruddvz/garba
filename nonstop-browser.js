@@ -18,6 +18,8 @@
     browserOpen: false,
     lastFocus: null,
     startingSetId: null,
+    searchCore: null,
+    searchCorePromise: null,
   };
 
   const rank = {
@@ -183,6 +185,74 @@
     ].filter(Boolean).join(' ').toLowerCase();
   }
 
+
+  function fallbackNormalize(value = '') {
+    return String(value ?? '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ')
+      .trim();
+  }
+
+  function fallbackSearchSets(sets, query) {
+    const needle = fallbackNormalize(query);
+    if (!needle) return [...sets];
+    const terms = needle.split(/\s+/u).filter(Boolean);
+    return sets.filter((set) => {
+      const haystack = fallbackNormalize(setSearchText(set));
+      return terms.every((term) => haystack.includes(term));
+    });
+  }
+
+  function searchRecordForSet(set) {
+    return {
+      id: set.id,
+      title: set.title,
+      artist: set.artistsText,
+      taxonomyTerms: [
+        set.series,
+        set.setType,
+        ...(Array.isArray(set.categories) ? set.categories : []),
+        ...(Array.isArray(set.tags) ? set.tags : []),
+        ...(Array.isArray(set.genres) ? set.genres : []),
+        ...(Array.isArray(set.styles) ? set.styles : []),
+      ].filter(Boolean),
+      releaseTerms: [
+        set.volume,
+        ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
+      ].filter(Boolean),
+    };
+  }
+
+  async function loadSearchCore() {
+    if (state.searchCore) return state.searchCore;
+    if (!state.searchCorePromise) {
+      state.searchCorePromise = import('./assets/runtime/search-core.js')
+        .then((module) => {
+          if (typeof module.rankSearchRecords !== 'function') throw new Error('Search core is missing rankSearchRecords');
+          state.searchCore = module;
+          return module;
+        })
+        .catch((error) => {
+          console.warn('Shared Nonstop search core unavailable; using Unicode-safe fallback.', error);
+          return null;
+        });
+    }
+    return state.searchCorePromise;
+  }
+
+  function searchSets(sets, query) {
+    const needle = String(query ?? '').trim();
+    if (!needle) return [...sets];
+    const rankSearchRecords = state.searchCore?.rankSearchRecords;
+    if (typeof rankSearchRecords !== 'function') return fallbackSearchSets(sets, needle);
+
+    const byId = new Map(sets.map((set) => [set.id, set]));
+    return rankSearchRecords(sets.map(searchRecordForSet), needle)
+      .map(({ record }) => byId.get(record.id))
+      .filter(Boolean);
+  }
+
   const visualBrowseCategories = new Set(['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', 'fusion']);
   const taxonomyVisualCategory = new Map([
     ['roots-archive', 'folk'],
@@ -271,11 +341,6 @@
 
   function matchesCategory(set, category) {
     return category === 'all' || categoriesFor(set).has(category);
-  }
-
-  function matchesQuery(set, query) {
-    const needle = String(query || '').trim().toLowerCase();
-    return !needle || setSearchText(set).includes(needle);
   }
 
   function formatTime(seconds = 0) {
@@ -817,7 +882,7 @@
     }
     requestAnimationFrame(() => $('nonstopBrowserSearch')?.focus({ preventScroll: true }));
     try {
-      await loadAllSets();
+      await Promise.all([loadAllSets(), loadSearchCore()]);
       renderBrowser();
     } catch (error) {
       console.warn('PlayGarba nonstop catalogue failed to load', error);
@@ -831,8 +896,11 @@
   function renderBrowser() {
     const sets = state.allSets;
     if (!sets || !$('nonstopBrowser')) return;
-    const searched = sets.filter((set) => matchesQuery(set, state.browserQuery));
-    const filtered = sortForView(searched.filter((set) => matchesCategory(set, state.browserCategory)), state.browserCategory);
+    const searched = searchSets(sets, state.browserQuery);
+    const categoryFiltered = searched.filter((set) => matchesCategory(set, state.browserCategory));
+    const filtered = state.browserQuery.trim()
+      ? categoryFiltered
+      : sortForView(categoryFiltered, state.browserCategory);
     const summary = $('nonstopBrowserSummary');
     if (summary) {
       const partial = state.failedChunks.size ? ` · ${state.failedChunks.size} section${state.failedChunks.size === 1 ? '' : 's'} unavailable` : '';

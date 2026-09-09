@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const moduleSource = await readFile(new URL('../../src/search/search-core.js', import.meta.url), 'utf8');
+const moduleSource = await readFile(new URL('../../assets/runtime/search-core.js', import.meta.url), 'utf8');
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`;
 const {
   createSearchDocument,
