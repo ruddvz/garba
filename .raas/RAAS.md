@@ -15,10 +15,11 @@ Before implementation, read in this order:
 3. `.raas/RAAS.md`
 4. `.raas/PROJECT-CONTEXT.md`
 5. `.raas/LANGUAGE.md` when user-facing words, metadata presentation, onboarding, docs, SEO, social preview text or UI labels may change
-6. `.raas/EXECUTION.md`
-7. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
+6. `.raas/skills/product-ui-ux/SKILL.md` when visual, UI, UX, accessibility, responsive, interaction, motion, layout, or design-system work is in scope
+7. `.raas/EXECUTION.md`
+8. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
 
-Do not preload the whole repository. Load deeper docs only for the lane being implemented.
+Do not preload the whole repository. Load deeper docs only for the lane being implemented. The product UI/UX skill is a review method, not a replacement for `.raas/PROJECT-CONTEXT.md`, `docs/product/design-system.md`, or current implementation truth.
 
 ## What RAAS protects
 
