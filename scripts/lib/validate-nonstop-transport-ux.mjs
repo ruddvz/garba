@@ -20,9 +20,10 @@ for (const marker of [
   "['electronic-fusion', 'fusion']",
   'genre: visualGenreForSet(set)',
   'function syncMainTransport(active)',
-  "queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings')",
+  "queueButton.setAttribute('aria-label', 'Choose Nonstop recording')",
+  '.app[data-play-mode=\"nonstop\"] #prevButton',
   "queueBadge?.classList.remove('show')",
-  "#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext",
+  "target.closest('#queueButton')",
   'function captureNonstopKeyboard(event)',
   "document.addEventListener('keydown', captureNonstopKeyboard, { capture: true })",
   "state.metadataObserver.observe(queueBadge, { childList: true, characterData: true, subtree: true })",
@@ -83,7 +84,11 @@ const navigationEnd = source.indexOf('\n  function ', navigationStart + 1);
 const navigation = navigationStart >= 0
   ? source.slice(navigationStart, navigationEnd > navigationStart ? navigationEnd : undefined)
   : '';
-if (!navigation.includes('openBrowser();')) fail('Nonstop Queue/Previous/Next must open the Nonstop chooser');
+if (!navigation.includes('openBrowser();')) fail('Nonstop chooser action must open the Nonstop chooser');
+for (const retiredControl of ['#prevButton', '#nextButton', '#miniPrev', '#miniNext']) {
+  if (navigation.includes(retiredControl)) fail(`Nonstop previous/next control must not be repurposed as chooser navigation: ${retiredControl}`);
+}
+if (source.includes("Choose another Nonstop recording")) fail('Nonstop previous/next controls must not be relabeled as set chooser actions');
 if (navigation.includes("announce('Nonstop Garba plays continuously.")) fail('Nonstop transport must not stop at a toast instead of offering the chooser');
 
 if (/\b(?:tracks?|songs?)\s+up\s+next\b/i.test(source)) {
@@ -91,7 +96,7 @@ if (/\b(?:tracks?|songs?)\s+up\s+next\b/i.test(source)) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Nonstop sets remain one recording and Queue/Previous/Next route to the Nonstop chooser');
+console.log('✓ Nonstop keeps one truthful chooser action and hides misleading previous/next affordances');
 console.log('✓ chooser rows stay minimal: title, artist/year and duration only');
 console.log('✓ Now Playing and Media Session metadata identify the active Nonstop recording format');
 console.log('✓ chooser header, gutters, mobile two-column rows and dialog focus are regression-guarded');
