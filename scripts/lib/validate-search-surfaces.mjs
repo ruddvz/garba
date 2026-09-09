@@ -41,9 +41,13 @@ function extractPageMetadata(html) {
   const titles = [...String(html).matchAll(/<title\b[^>]*>([\s\S]*?)<\/title>/gi)].map((match) => cleanText(match[1])).filter(Boolean);
   const h1s = [...String(html).matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/gi)].map((match) => cleanText(match[1])).filter(Boolean);
   const links = collectTags(html, 'link');
+  const anchors = collectTags(html, 'a');
   const metas = collectTags(html, 'meta');
   const canonicals = links
     .filter(({ attrs }) => String(attrs.get('rel') || '').toLowerCase().split(/\s+/).includes('canonical'))
+    .map(({ attrs }) => String(attrs.get('href') || '').trim())
+    .filter(Boolean);
+  const hrefs = anchors
     .map(({ attrs }) => String(attrs.get('href') || '').trim())
     .filter(Boolean);
 
@@ -61,6 +65,7 @@ function extractPageMetadata(html) {
     titles,
     h1s,
     canonicals,
+    hrefs,
     description: metaByName.get('description') || '',
     robots: metaByName.get('robots') || '',
     ogUrl: metaByProperty.get('og:url') || '',
@@ -78,6 +83,19 @@ function normalizeRoute(route) {
 
 function canonicalUrlForRoute(route) {
   return `${CANONICAL_ORIGIN}${normalizeRoute(route)}`;
+}
+
+function crawlTargetUrl(href, sourceRoute) {
+  try {
+    const parsed = new URL(String(href || '').trim(), canonicalUrlForRoute(sourceRoute));
+    if (parsed.protocol !== 'https:' || parsed.origin !== CANONICAL_ORIGIN || parsed.search || parsed.hash) return null;
+    const pathname = parsed.pathname.endsWith('/index.html')
+      ? parsed.pathname.slice(0, -'index.html'.length)
+      : parsed.pathname;
+    return canonicalUrlForRoute(pathname);
+  } catch {
+    return null;
+  }
 }
 
 function validateCanonicalUrl(raw, label, errors) {
@@ -246,7 +264,7 @@ export function validateSearchSurfaces(rootDir = DEFAULT_ROOT, { quiet = false }
       errors.push(`${label}: canonical target is not a deployed public route: ${canonical}`);
     }
 
-    pageRecords.push({ route, source, canonical, indexable, selfCanonical });
+    pageRecords.push({ route, routeUrl, source, canonical, indexable, selfCanonical, hrefs: meta.hrefs });
   }
 
   for (const url of sitemapUrls) {
@@ -262,6 +280,24 @@ export function validateSearchSurfaces(rootDir = DEFAULT_ROOT, { quiet = false }
     }
     for (const alias of group.filter((entry) => !entry.selfCanonical)) {
       if (sitemapSet.has(alias.routeUrl)) errors.push(`${alias.route}: compatibility alias sharing ${canonical} must not be in sitemap`);
+    }
+  }
+
+  const inboundBySitemapUrl = new Map(sitemapUrls.map((url) => [url, new Set()]));
+  for (const page of pageRecords) {
+    if (!page.indexable || !page.selfCanonical) continue;
+    for (const href of page.hrefs) {
+      const targetUrl = crawlTargetUrl(href, page.route);
+      if (!targetUrl || !sitemapSet.has(targetUrl) || targetUrl === page.routeUrl) continue;
+      inboundBySitemapUrl.get(targetUrl)?.add(page.routeUrl);
+    }
+  }
+
+  for (const url of sitemapUrls) {
+    if (url === `${CANONICAL_ORIGIN}/`) continue;
+    const inbound = inboundBySitemapUrl.get(url);
+    if (!inbound?.size) {
+      errors.push(`internal links: sitemap route has no inbound crawlable HTML link from another indexable self-canonical page: ${url}`);
     }
   }
 

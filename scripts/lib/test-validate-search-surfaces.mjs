@@ -5,6 +5,14 @@ import path from 'node:path';
 import { validateSearchSurfaces } from './validate-search-surfaces.mjs';
 
 const ORIGIN = 'https://playgarba.com';
+const BASE_SITEMAP_LINKS = [
+  '/explore/',
+  '/what-is-garba/',
+  '/how-to-use/',
+  '/about/',
+  '/install/',
+  '/faq/',
+];
 
 function write(root, relativePath, content) {
   const fullPath = path.join(root, relativePath);
@@ -12,7 +20,8 @@ function write(root, relativePath, content) {
   fs.writeFileSync(fullPath, content);
 }
 
-function page({ title = 'Page · PlayGarba', description = 'Useful page description.', canonical, h1 = 'Page', robots = 'index, follow', ogUrl = canonical, ogTitle = title, ogImage = `${ORIGIN}/assets/social/card.png` } = {}) {
+function page({ title = 'Page · PlayGarba', description = 'Useful page description.', canonical, h1 = 'Page', robots = 'index, follow', ogUrl = canonical, ogTitle = title, ogImage = `${ORIGIN}/assets/social/card.png`, links = [] } = {}) {
+  const anchors = links.map((href) => `<a href="${href}">Link</a>`).join('\n');
   return `<!doctype html><html><head>
 <title>${title}</title>
 <meta name="description" content="${description}">
@@ -21,7 +30,13 @@ function page({ title = 'Page · PlayGarba', description = 'Useful page descript
 <meta property="og:title" content="${ogTitle}">
 <meta property="og:url" content="${ogUrl}">
 <meta property="og:image" content="${ogImage}">
-</head><body><main><h1>${h1}</h1></main></body></html>`;
+</head><body><main><h1>${h1}</h1>${anchors}</main></body></html>`;
+}
+
+function addSitemapUrl(root, route) {
+  const sitemapPath = path.join(root, 'sitemap.xml');
+  const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+  fs.writeFileSync(sitemapPath, sitemap.replace('</urlset>', `<url><loc>${ORIGIN}${route}</loc></url>\n</urlset>`));
 }
 
 function baseFixture() {
@@ -29,7 +44,7 @@ function baseFixture() {
   write(root, '.github/workflows/pages.yml', `name: Pages\njobs:\n  build:\n    steps:\n      - run: |\n          cp -R \\\n            public-site/about \\\n            public-site/faq \\\n            public-site/how-to-use \\\n            public-site/install \\\n            public-site/live \\\n            public-site/what-is-garba \\\n            _site/\n`);
   write(root, 'robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`);
   write(root, 'sitemap.xml', `<?xml version="1.0"?><urlset>\n<url><loc>${ORIGIN}/</loc></url>\n<url><loc>${ORIGIN}/explore/</loc></url>\n<url><loc>${ORIGIN}/what-is-garba/</loc></url>\n<url><loc>${ORIGIN}/how-to-use/</loc></url>\n<url><loc>${ORIGIN}/about/</loc></url>\n<url><loc>${ORIGIN}/install/</loc></url>\n<url><loc>${ORIGIN}/faq/</loc></url>\n</urlset>`);
-  write(root, 'index.html', page({ title: 'PlayGarba', canonical: `${ORIGIN}/`, h1: 'PlayGarba' }));
+  write(root, 'index.html', page({ title: 'PlayGarba', canonical: `${ORIGIN}/`, h1: 'PlayGarba', links: BASE_SITEMAP_LINKS }));
   write(root, 'src/catalogue/index.html', page({ title: 'Explore', canonical: `${ORIGIN}/explore/`, h1: 'Explore' }));
   write(root, 'public-site/about/index.html', page({ title: 'About', canonical: `${ORIGIN}/about/`, h1: 'About' }));
   write(root, 'public-site/faq/index.html', page({ title: 'FAQ', canonical: `${ORIGIN}/faq/`, h1: 'FAQ' }));
@@ -70,7 +85,6 @@ expectValid('valid production fixture', (root) => {
 });
 
 expectValid('compatibility alias may share Explore canonical when omitted from sitemap', (root) => {
-  // /catalogue/ is derived from the same source as /explore/ by the validator and is intentionally absent from sitemap.
   assert.ok(fs.existsSync(path.join(root, 'src/catalogue/index.html')));
 });
 
@@ -106,4 +120,59 @@ expectInvalid('indexable deployed page requires H1', (root) => {
   write(root, 'public-site/about/index.html', page({ canonical: `${ORIGIN}/about/`, h1: '' }));
 }, /missing non-empty <h1>/);
 
-console.log('✓ Search surface validator self-tests passed (9 cases).');
+expectInvalid('sitemap route may not be an internal-link orphan', (root) => {
+  addSitemapUrl(root, '/live/');
+}, /internal links: sitemap route has no inbound crawlable HTML link.*\/live\//);
+
+expectValid('real inbound HTML link connects a sitemap route', (root) => {
+  addSitemapUrl(root, '/live/');
+  write(root, 'public-site/how-to-use/index.html', page({
+    title: 'Guide',
+    canonical: `${ORIGIN}/how-to-use/`,
+    h1: 'Guide',
+    links: ['/live/'],
+  }));
+});
+
+expectInvalid('query and hash state links do not satisfy crawlability', (root) => {
+  addSitemapUrl(root, '/live/');
+  write(root, 'public-site/how-to-use/index.html', page({
+    title: 'Guide',
+    canonical: `${ORIGIN}/how-to-use/`,
+    h1: 'Guide',
+    links: ['/live/?from=guide', '/live/#listen'],
+  }));
+}, /internal links: sitemap route has no inbound crawlable HTML link.*\/live\//);
+
+expectInvalid('external links do not satisfy crawlability', (root) => {
+  addSitemapUrl(root, '/live/');
+  write(root, 'public-site/how-to-use/index.html', page({
+    title: 'Guide',
+    canonical: `${ORIGIN}/how-to-use/`,
+    h1: 'Guide',
+    links: ['https://example.com/live/'],
+  }));
+}, /internal links: sitemap route has no inbound crawlable HTML link.*\/live\//);
+
+expectInvalid('self-links do not satisfy inbound crawlability', (root) => {
+  addSitemapUrl(root, '/live/');
+  write(root, 'public-site/live/index.html', page({
+    title: 'Live',
+    canonical: `${ORIGIN}/live/`,
+    h1: 'Live',
+    links: ['/live/'],
+  }));
+}, /internal links: sitemap route has no inbound crawlable HTML link.*\/live\//);
+
+expectInvalid('links from noindex pages do not satisfy crawlability', (root) => {
+  addSitemapUrl(root, '/live/');
+  write(root, 'public-site/how-to-use/index.html', page({
+    title: 'Guide',
+    canonical: `${ORIGIN}/how-to-use/`,
+    h1: 'Guide',
+    robots: 'noindex, follow',
+    links: ['/live/'],
+  }));
+}, /internal links: sitemap route has no inbound crawlable HTML link.*\/live\//);
+
+console.log('✓ Search surface validator self-tests passed (15 cases).');
