@@ -12,9 +12,11 @@ The active owner of an implementation issue is the first valid `agent-claim` com
 
 Declared repository files are also serialized across active issues. If two different active claims overlap on a declared file/path, the earlier active claim owns that path. The later claim must narrow its scope or wait for release before editing or merging the overlapping path.
 
+An active Git branch may belong to only one active issue claim. If a later issue claims the same branch, the earlier active branch owner keeps it and the later issue receives `agent:branch-conflict`.
+
 Legacy PRs that predate coordination enforcement own the files already changed by those PRs until they merge or close.
 
-Claims do not expire automatically. This avoids a long-running agent losing ownership just because it has not posted recently.
+Claims do not expire automatically. This avoids a long-running agent losing ownership just because it has not posted recently. Claim hygiene is therefore advisory and review-based, not automatic reassignment.
 
 ## Claim an issue
 
@@ -38,7 +40,7 @@ files: data/catalogue/**; data/playback/**
 CLAIM: codex/ramzat5-batch-b owns this lane on youtube/ramzat5-batch-b.
 ```
 
-Then refresh the issue and #364. If the coordination bot reports a claim conflict, or the file-ownership workflow marks the issue with `agent:file-conflict`, do not code the blocked path.
+Then refresh the issue and #364. If the coordination bot reports a claim conflict, the file-ownership workflow marks the issue with `agent:file-conflict`, or the branch-ownership workflow marks it with `agent:branch-conflict`, do not code the blocked path/lane.
 
 `research-only` means the lane reserves no repository files. Once research turns into implementation, update the claim with the exact expected paths before editing.
 
@@ -94,13 +96,63 @@ Shared index or documentation files are still files. If two lanes both need the 
 
 Legacy PRs through the configured coordination cutoff are treated as earlier ownership for their actual changed files.
 
+## Branch ownership
+
+One active lane owns one branch. A branch must not be reused by a second active issue even if the two issues declare different files.
+
+The branch-ownership guard:
+
+- preserves first unreleased branch ownership;
+- allows same-owner claim updates on the same issue without losing priority;
+- marks a later duplicate branch claim with `agent:branch-conflict`;
+- blocks a governed PR whose claim loses branch ownership;
+- frees the branch on matching release, issue close or owner override.
+
+A branch conflict is not repaired by adding files to a claim. Use a dedicated branch or wait for the earlier lane to release.
+
 ## Updating a claim
 
-A claim may be narrowed without releasing it. Post another `agent-claim` block with the same `agent` and `branch` and the updated scope. The latest accepted claim from the current owner becomes the visible scope.
+A claim may be narrowed without releasing it. Post another `agent-claim` block with the same `agent` and `branch` and the updated scope. The latest accepted claim from the current owner becomes the visible scope while the first unreleased claim keeps ownership priority.
 
 Do not silently broaden a claim into another agent's area. If additional work is independently reviewable, create another issue and claim it separately after the first lane is released or by another agent.
 
 If a later claim gets `agent:file-conflict`, the normal repair is to post a narrower claim update that removes the overlapping paths. The file-conflict label clears automatically after reconciliation when the overlap no longer exists.
+
+## Claim hygiene and heartbeats
+
+Claims do not expire automatically, but concrete file ownership should not become an invisible permanent lock when implementation has stopped.
+
+The claim-hygiene workflow therefore performs a non-destructive review:
+
+- claims with only `research-only` reserve no files and are exempt;
+- a concrete claim with a matching open PR is treated as active regardless of claim age;
+- recent commits on the claimed branch count as activity before a PR exists;
+- a same-owner claim update refreshes activity without changing first-claim priority;
+- an explicit heartbeat can refresh a legitimate long-running no-PR lane without changing scope or ownership.
+
+Heartbeat format:
+
+```text
+<!-- agent-heartbeat
+agent: codex/ramzat5-batch-b
+branch: youtube/ramzat5-batch-b
+status: Waiting on exact provider evidence for tracks 17-20
+-->
+HEARTBEAT: lane is still active.
+```
+
+A heartbeat is valid only for the current matching agent and branch. It does not change files, scope, branch ownership, issue ownership or file-ownership priority.
+
+A concrete claim with no matching open PR and no observed claim, heartbeat or branch activity for the configured review window receives `agent:claim-review` and appears in **Claims needing review** on #364.
+
+This warning never releases ownership automatically. Another agent must not treat `agent:claim-review` as permission to take over. The current owner should do one of four things:
+
+1. open/update the matching PR or continue current branch work;
+2. post a heartbeat with a real progress/blocker status;
+3. narrow to `research-only` if no repository files need to remain reserved;
+4. release the lane if implementation has stopped.
+
+Repeated empty heartbeats are not a substitute for progress. When a lane is only waiting on evidence and does not need repository files, prefer `research-only` so unrelated implementation is not serialized.
 
 ## Releasing a claim
 
@@ -149,11 +201,13 @@ The coordination checks verify that:
 - the referenced issue exists and is open;
 - it has an active accepted claim;
 - the claim branch exactly matches the PR head branch;
+- the active branch is not already owned by an earlier different issue;
 - `Agent-ID` matches the active claim;
 - no earlier unreleased claim owns the issue;
-- the PR's active claim does not lose any declared file to an earlier active claim or legacy PR.
+- the PR's active claim does not lose any declared file to an earlier active claim or legacy PR;
+- every actual changed path in the PR is covered by the active claim's declared file patterns, including both old and new paths for renames.
 
-A later cross-issue file collision fails the file-ownership PR check until the claim is narrowed or the earlier owner releases.
+A later cross-issue file collision fails the file-ownership PR check until the claim is narrowed or the earlier owner releases. A PR that changes undeclared files fails the diff-scope guard even when its declared claim itself is conflict-free.
 
 Legacy PRs already open before rollout are exempt from claim metadata, but they remain active file owners until merged or closed.
 
@@ -170,11 +224,14 @@ If two issues unexpectedly converge on the same files, the earlier active file o
 
 ## Board semantics
 
-Issue #364 contains three kinds of coordination visibility:
+Issue #364 contains four kinds of coordination visibility:
 
 - **Legacy lanes:** open PRs that existed before the claim system. These remain reserved until merged or closed.
 - **Machine-managed active claims:** accepted issue claims maintained by the coordination workflow.
 - **Cross-issue file ownership:** later active claims currently blocked by earlier active claims or legacy PR changed files.
+- **Claims needing review:** concrete no-PR claims with no recent observed activity. These are hygiene warnings only and remain owned until a real release/close/override occurs.
+
+Branch conflicts are surfaced on the affected issue with `agent:branch-conflict` and a bot status naming the earlier branch owner.
 
 The board is for visibility. The issue comment history remains the authoritative event log for claim order.
 
@@ -191,14 +248,15 @@ fetch current main
 → split broad issue if needed
 → post claim
 → refresh target issue and #364
-→ confirm no agent:file-conflict on required files
+→ confirm no issue/file/branch conflict on required scope
 → create/use claimed branch
 → implement bounded scope
+→ keep no-PR concrete claim active with real branch work or a heartbeat when needed
 → reconcile current main
 → open PR with Agent-Claim + Agent-ID
-→ pass issue-claim and file-ownership guards
+→ pass issue-claim, branch, file-ownership and actual-diff guards
 → merge/close
 → release claim
 ```
 
-Skipping claim or file-ownership reconciliation is a coordination failure even if the code itself is correct.
+Skipping claim, conflict reconciliation, actual-diff scope or stale-claim hygiene is a coordination failure even if the code itself is correct.

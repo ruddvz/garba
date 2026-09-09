@@ -82,10 +82,19 @@ jobs:
           cp src/catalogue/listening-library.js _site/explore/listening-library.js
           cp -R \
             public-site/about \
+            public-site/dandiya-raas \
             public-site/faq \
+            public-site/garba-attire-and-craft \
+            public-site/garba-music \
+            public-site/garba-vs-dandiya \
+            public-site/garbo \
+            public-site/history-of-garba \
             public-site/how-to-use \
             public-site/install \
+            public-site/learn \
             public-site/live \
+            public-site/navratri-2026 \
+            public-site/navratri-and-garba \
             public-site/what-is-garba \
             _site/
           cp \
@@ -162,6 +171,21 @@ jobs:
           grep -q '^Sitemap: https://playgarba.com/sitemap.xml$' _site/robots.txt || { echo 'robots.txt missing apex sitemap'; exit 1; }
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing apex root'; exit 1; }
           grep -q '<loc>https://playgarba.com/explore/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical Explore route'; exit 1; }
+          grep -q '<loc>https://playgarba.com/navratri-2026/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing Navratri 2026 route'; exit 1; }
+
+          for route in \
+            dandiya-raas \
+            garba-attire-and-craft \
+            garba-music \
+            garba-vs-dandiya \
+            garbo \
+            history-of-garba \
+            learn \
+            navratri-and-garba; do
+            test -f "_site/$route/index.html" || { echo "Cultural guide route missing from Pages artifact: /$route/"; exit 1; }
+            grep -q "<link rel=\"canonical\" href=\"https://playgarba.com/$route/\"" "_site/$route/index.html" || { echo "Cultural guide canonical is invalid: /$route/"; exit 1; }
+            grep -q "<loc>https://playgarba.com/$route/</loc>" _site/sitemap.xml || { echo "Cultural guide missing from sitemap: /$route/"; exit 1; }
+          done
 
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
@@ -211,6 +235,8 @@ jobs:
           test -f _site/catalogue/catalogue.css || { echo 'Catalogue styles are missing'; exit 1; }
           test -f _site/catalogue/listening-library.js || { echo 'Return-user listening companion is missing'; exit 1; }
           grep -q 'src="listening-library.js"' _site/catalogue/index.html || { echo 'Catalogue does not load return-user listening companion'; exit 1; }
+          test -f _site/navratri-2026/index.html || { echo 'Navratri 2026 page is missing'; exit 1; }
+          grep -q '<link rel="canonical" href="https://playgarba.com/navratri-2026/"' _site/navratri-2026/index.html || { echo 'Navratri 2026 canonical is invalid'; exit 1; }
           test ! -d _site/songs || { echo 'Standalone song pages must not be deployed'; exit 1; }
           test ! -d _site/releases || { echo 'Standalone release pages must not be deployed'; exit 1; }
 
