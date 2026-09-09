@@ -82,11 +82,19 @@ jobs:
           cp src/catalogue/listening-library.js _site/explore/listening-library.js
           cp -R \
             public-site/about \
+            public-site/dandiya-raas \
             public-site/faq \
+            public-site/garba-attire-and-craft \
+            public-site/garba-music \
+            public-site/garba-vs-dandiya \
+            public-site/garbo \
+            public-site/history-of-garba \
             public-site/how-to-use \
             public-site/install \
+            public-site/learn \
             public-site/live \
             public-site/navratri-2026 \
+            public-site/navratri-and-garba \
             public-site/what-is-garba \
             _site/
           cp \
@@ -125,9 +133,9 @@ jobs:
           file _site/assets/icons/favicon-32.png | grep -q 'PNG image data, 32 x 32' || { echo 'Favicon 32 is invalid'; exit 1; }
           file _site/assets/icons/favicon-48.png | grep -q 'PNG image data, 48 x 48' || { echo 'Favicon 48 is invalid'; exit 1; }
           file _site/favicon.ico | grep -q 'MS Windows icon resource' || { echo 'favicon.ico is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon metadata is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon metadata is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon metadata is invalid'; exit 1; }
           file _site/assets/icons/icon-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'PWA 192 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
           file _site/assets/icons/mstile-150x150.png | grep -q 'PNG image data, 150 x 150' || { echo 'Windows 150 tile is invalid'; exit 1; }
@@ -164,6 +172,20 @@ jobs:
           grep -q '<loc>https://playgarba.com/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing apex root'; exit 1; }
           grep -q '<loc>https://playgarba.com/explore/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical Explore route'; exit 1; }
           grep -q '<loc>https://playgarba.com/navratri-2026/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing Navratri 2026 route'; exit 1; }
+
+          for route in \
+            dandiya-raas \
+            garba-attire-and-craft \
+            garba-music \
+            garba-vs-dandiya \
+            garbo \
+            history-of-garba \
+            learn \
+            navratri-and-garba; do
+            test -f "_site/$route/index.html" || { echo "Cultural guide route missing from Pages artifact: /$route/"; exit 1; }
+            grep -q "<link rel=\"canonical\" href=\"https://playgarba.com/$route/\"" "_site/$route/index.html" || { echo "Cultural guide canonical is invalid: /$route/"; exit 1; }
+            grep -q "<loc>https://playgarba.com/$route/</loc>" _site/sitemap.xml || { echo "Cultural guide missing from sitemap: /$route/"; exit 1; }
+          done
 
           for src in $(grep -oE '<script[^>]+src="[^"]+"' index.html | sed -E 's/.*src="([^"]+)"/\1/'); do
             src="${src%%\?*}"
