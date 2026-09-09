@@ -1,7 +1,7 @@
 {
-  "version": "0.18.0",
-  "updated": "2026-09-08",
-  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped.",
+  "version": "0.19.0",
+  "updated": "2026-09-09",
+  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 adds five independently verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release; the other five canonical Govaliyo rows remain fail-closed.",
   "songSources": {
     "ramzat-2017-36-ramzat-non-stop-garba": {
       "provider": "youtube",
@@ -1217,6 +1217,56 @@
       "releaseId": "ramzat-2017",
       "trackNumber": 34,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "atul-govaliyo-2025-02": {
+      "provider": "youtube",
+      "videoId": "EdA1Qhh5zJY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=EdA1Qhh5zJY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-04": {
+      "provider": "youtube",
+      "videoId": "pcEQGvkzmek",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=pcEQGvkzmek",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 4,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-07": {
+      "provider": "youtube",
+      "videoId": "NOJKFs2mSts",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=NOJKFs2mSts",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 7,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-09": {
+      "provider": "youtube",
+      "videoId": "tR9n6rkFfZA",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=tR9n6rkFfZA",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 9,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-10": {
+      "provider": "youtube",
+      "videoId": "BnUgRGxH2sw",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=BnUgRGxH2sw",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 10,
+      "evidenceType": "official-youtube-auto-generated-track"
     }
   }
 }
