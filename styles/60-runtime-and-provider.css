@@ -313,6 +313,9 @@ body {
   .provider-media { height: 200px; }
 }
 
-@media (display-mode: standalone) {
+@media (display-mode: standalone),
+       (display-mode: fullscreen),
+       (display-mode: minimal-ui),
+       (display-mode: window-controls-overlay) {
   .install-banner { display: none !important; }
 }
