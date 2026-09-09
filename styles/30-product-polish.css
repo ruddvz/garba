@@ -206,15 +206,34 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; }
 .search-field input { caret-color: var(--accent); }
 .search-field input::-webkit-search-cancel-button { filter: invert(1); opacity: .6; }
 
-/* Keep desktop Search controls on a stable paint layer inside the transformed,
-   backdrop-filtered sheet. This avoids a WebKit compositing dropout without
-   changing the sheet's geometry or the mobile Search presentation. */
+/* Desktop WebKit is more reliable when the fixed sheet uses the conventional
+   left anchor with a negative half-width translation. This is geometrically
+   equivalent to the base right-anchor form, while keeping header controls on
+   stable local paint layers. Mobile keeps its separate bottom-sheet geometry. */
 @media (min-width: 701px) {
-  .sheet .sheet-header { isolation: isolate; }
+  .sheet {
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, calc(100% + 14px));
+  }
+  .sheet[data-snap="medium"],
+  .sheet[data-snap="full"],
+  .sheet[data-snap="collapsed"] {
+    transform: translate(-50%, 0);
+  }
+  .sheet .sheet-header {
+    position: relative;
+    z-index: 1;
+    isolation: isolate;
+  }
   .sheet .search-field,
   .sheet .search-field input {
     position: relative;
     z-index: 1;
+  }
+  .sheet .sheet-close {
+    position: relative;
+    z-index: 2;
   }
 }
 
