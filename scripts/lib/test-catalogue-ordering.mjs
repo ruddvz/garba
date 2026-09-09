@@ -76,6 +76,33 @@ assert.deepEqual(
   ['song-b', 'song-a'],
 );
 
+const mixedChronology = [
+  { id: 'newer-year', title: 'Newer year', originalReleaseYear: 2026 },
+  { id: 'dated', title: 'Dated', releaseDate: '2025-09-01' },
+  { id: 'year-only', title: 'Year only', originalReleaseYear: 2025 },
+  { id: 'older-year', title: 'Older year', originalReleaseYear: 2024 },
+];
+assert.deepEqual(
+  ids(orderCatalogueSongs(mixedChronology, { mode: 'newest', availabilityGate: false })),
+  ['newer-year', 'dated', 'year-only', 'older-year'],
+);
+assert.deepEqual(
+  ids(orderCatalogueSongs(mixedChronology, { mode: 'oldest', availabilityGate: false })),
+  ['older-year', 'year-only', 'dated', 'newer-year'],
+);
+
+const missingReadiness = [
+  { id: 'known-playable', title: 'Known playable' },
+  { id: 'unknown-readiness', title: 'Unknown readiness' },
+];
+assert.deepEqual(
+  ids(orderCatalogueSongs(missingReadiness, {
+    mode: 'popular',
+    availabilityTierById: { 'known-playable': 0, 'unknown-readiness': null },
+  })),
+  ['known-playable', 'unknown-readiness'],
+);
+
 const sameTitle = [
   { id: 'recording-z', title: 'Maa No Garbo', artist: 'Same Artist' },
   { id: 'recording-a', title: 'Maa No Garbo', artist: 'Same Artist' },
