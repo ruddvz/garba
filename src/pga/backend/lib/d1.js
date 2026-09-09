@@ -90,7 +90,12 @@ export async function getLifetimeMetrics(db) {
   const data = {}
   let dataThroughMs = null
   for (const row of result.results || []) {
-    data[row.metric] = Number(row.value || 0)
+    const sampled = Boolean(row.sampled)
+    data[row.metric] = {
+      value: Number(row.value || 0),
+      sampled,
+      precision: sampled ? 'estimated' : 'exact',
+    }
     if (Number.isFinite(Number(row.data_through_ms))) {
       dataThroughMs = Math.max(dataThroughMs || 0, Number(row.data_through_ms))
     }
