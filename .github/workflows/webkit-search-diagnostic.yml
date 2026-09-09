@@ -1,0 +1,99 @@
+name: Desktop WebKit Search diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'styles/30-product-polish.css'
+      - '.github/browser/webkit-search-diagnostic.mjs'
+      - '.github/workflows/webkit-search-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webkit-search-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare production-equivalent Search fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _diag
+          mkdir -p _diag
+
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            provider-runtime.js \
+            player-continuity.js \
+            youtube-player-runtime.js \
+            nonstop-browser.js \
+            manifest.webmanifest \
+            offline.html \
+            _diag/
+          cp -R assets data _diag/
+
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _diag/styles.css
+
+          # Match Pages packaging for the player runtime used by browser smoke.
+          cat app.js assets/runtime/seek-state.js > _diag/app.js
+
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+          if [ -n "$PACK" ]; then
+            rm -rf _diag/assets/backgrounds/library
+            mkdir -p _diag/assets/backgrounds/library
+            unzip -oq "$PACK" -d _diag/assets/backgrounds/library
+          fi
+
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start diagnostic fixture
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _diag >/tmp/playgarba-webkit-search-diagnostic.log 2>&1 &
+          echo $! > /tmp/playgarba-webkit-search-diagnostic.pid
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/playgarba-webkit-search-diagnostic.log
+          exit 1
+
+      - name: Capture desktop WebKit Search geometry
+        run: node .github/browser/webkit-search-diagnostic.mjs
