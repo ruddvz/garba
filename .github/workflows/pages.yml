@@ -133,9 +133,9 @@ jobs:
           file _site/assets/icons/favicon-32.png | grep -q 'PNG image data, 32 x 32' || { echo 'Favicon 32 is invalid'; exit 1; }
           file _site/assets/icons/favicon-48.png | grep -q 'PNG image data, 48 x 48' || { echo 'Favicon 48 is invalid'; exit 1; }
           file _site/favicon.ico | grep -q 'MS Windows icon resource' || { echo 'favicon.ico is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon metadata is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon metadata is invalid'; exit 1; }
-          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon metadata is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-152.png | grep -q 'PNG image data, 152 x 152' || { echo 'Apple 152 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon-167.png | grep -q 'PNG image data, 167 x 167' || { echo 'Apple 167 icon is invalid'; exit 1; }
+          file _site/assets/icons/apple-touch-icon.png | grep -q 'PNG image data, 180 x 180' || { echo 'Apple 180 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-192.png | grep -q 'PNG image data, 192 x 192' || { echo 'PWA 192 icon is invalid'; exit 1; }
           file _site/assets/icons/icon-512.png | grep -q 'PNG image data, 512 x 512' || { echo 'PWA 512 icon is invalid'; exit 1; }
           file _site/assets/icons/mstile-150x150.png | grep -q 'PNG image data, 150 x 150' || { echo 'Windows 150 tile is invalid'; exit 1; }
