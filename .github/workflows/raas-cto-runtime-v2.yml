@@ -1,0 +1,28 @@
+name: RAAS CTO runtime v2
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/lib/raas-cto-runtime.mjs'
+      - 'scripts/lib/raas-cto-runtime.test.mjs'
+      - 'scripts/raas-adaptive.mjs'
+      - '.raas/adaptive-cto.json'
+      - '.github/workflows/raas-cto-runtime-v2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run RAAS CTO runtime regression suite
+        run: node scripts/lib/raas-cto-runtime.test.mjs
