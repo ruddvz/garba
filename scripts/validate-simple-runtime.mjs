@@ -50,6 +50,10 @@ for (const marker of [
   '<link rel="manifest" href="manifest.webmanifest"',
 ]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);
 
+if (/<link\s+rel="preload"[^>]+href="assets\/backgrounds\/traditional\.svg"/.test(index)) {
+  fail('Production index must not high-priority preload the retired traditional.svg world');
+}
+
 for (const forbidden of [
   'navigator.serviceWorker.register = async ()',
   'registration.unregister()',
