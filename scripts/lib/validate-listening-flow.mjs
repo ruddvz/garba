@@ -42,11 +42,13 @@ requireMarker(library, "if (card.dataset.artistIdentityDecorated === artistId) r
 requireMarker(library, "observe(sections, { childList: true, subtree: false });", 'Explore artist observer must watch top-level catalogue rerenders only');
 if (library.includes("new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: true });")) { console.error('✗ Explore artist observer must not observe mutations created by its own decorator'); failed = true; }
 requireMarker(library, "openMyGarba.href = '../?library=my-garba';", 'Explore must expose a low-clutter My Garba entry point');
-requireMarker(nonstop, "target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')", 'Nonstop queue/transport isolation must remain intact');
+requireMarker(nonstop, "target.closest('#queueButton')", 'Nonstop chooser must use one truthful queue action');
+requireMarker(nonstop, '.app[data-play-mode="nonstop"] #prevButton', 'Nonstop ordinary transport must be hidden while a set is active');
+if (nonstop.includes("target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')")) { console.error('✗ Nonstop previous/next controls must not be repurposed as chooser actions'); failed = true; }
 
 if (app.includes("storage.set('garba:my-garba'")) { console.error('✗ Existing garba:favourites storage key must not be migrated'); failed = true; }
 if (failed) process.exit(1);
 console.log('✓ manual Up next is FIFO, deduplicated and removable without replacing catalogue identity');
 console.log('✓ Previous uses actual listening history and Next returns to the catalogue context after queued songs');
 console.log('✓ My Garba reuses the existing favourites storage instead of adding playlist CRUD');
-console.log('✓ Nonstop transport remains isolated from the ordinary song queue');
+console.log('✓ Nonstop transport remains isolated from the ordinary song queue with one truthful chooser action');
