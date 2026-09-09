@@ -1,6 +1,7 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
 const CACHE_NAME = `${CACHE_PREFIX}v15`;
+const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 
 const CORE_SHELL = [
@@ -64,14 +65,31 @@ const FRESH_RUNTIME_SUFFIXES = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
+    await caches.delete(STAGING_CACHE_NAME);
+    const cache = await caches.open(STAGING_CACHE_NAME);
     await cache.addAll(CORE_SHELL);
+  })());
+});
+
+self.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'SKIP_WAITING') return;
+  event.waitUntil((async () => {
     await self.skipWaiting();
   })());
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    const staged = await caches.open(STAGING_CACHE_NAME);
+    const stagedRequests = await staged.keys();
+    await caches.delete(CACHE_NAME);
+    const live = await caches.open(CACHE_NAME);
+    for (const request of stagedRequests) {
+      const response = await staged.match(request);
+      if (response) await live.put(request, response);
+    }
+    await caches.delete(STAGING_CACHE_NAME);
+
     const keys = await caches.keys();
     await Promise.all(keys
       .filter((key) => (key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME) || key.startsWith(LEGACY_PREFIX))
