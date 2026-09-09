@@ -216,7 +216,7 @@ chapter.setCurrent(30.3);
 test.syncProgress();
 assert.equal(count('durationTime.textContent'), beforeChapterDurationWrites + 1, 'chapter/set duration renders once for a new logical source');
 assert.equal(mediaPositions.length, beforeChapterMediaWrites + 1, 'chapter/set polling is also bounded within one logical second');
-assert.equal(mediaPositions.at(-1).position, 30.1, 'chapter Media Session position stays logical rather than absolute video time');
+assert.ok(Math.abs(mediaPositions.at(-1).position - 30.1) < 1e-9, 'chapter Media Session position stays logical rather than absolute video time');
 assert.equal(mediaPositions.at(-1).duration, 600, 'chapter Media Session duration stays the logical track/set duration');
 
 assert.ok(storageWrites.length >= 1, 'existing bounded session-position persistence still executes');
