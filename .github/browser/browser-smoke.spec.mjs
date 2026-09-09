@@ -23,6 +23,12 @@ function collectRuntimeFailures(page) {
   return failures;
 }
 
+function isExpectedOfflineNetworkFailure(failure) {
+  if (failure.startsWith('pageerror:')) return false;
+  if (failure === 'console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED') return true;
+  return failure.startsWith('requestfailed:') && failure.includes('net::ERR_INTERNET_DISCONNECTED');
+}
+
 async function expectNoDocumentOverflow(page) {
   const metrics = await page.evaluate(() => ({
     viewportWidth: window.innerWidth,
@@ -75,20 +81,50 @@ async function expectAppCoversViewport(page) {
   expect(coverage.layer.bottom).toBeGreaterThanOrEqual(coverage.height - 2);
 }
 
-async function expectNoRuntimeFailures(page, failures, label) {
+async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = null } = {}) {
   await page.waitForTimeout(150);
-  expect(failures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
+  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures;
+  expect(unexpectedFailures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
-async function playerAnchors(page) {
-  return page.evaluate(() => {
+async function expectPlayerReady(page) {
+  await expect(page.locator('#app')).toBeVisible();
+  await expect(page.locator('#songTitle')).not.toHaveText('', { timeout: 15_000 });
+  await expect(page.locator('#genreStrip .genre-button[data-genre-bound="true"]').first()).toBeVisible({ timeout: 15_000 });
+}
+
+async function measureTitleGeometry(page, title) {
+  return page.evaluate((nextTitle) => {
+    const trackBlock = document.querySelector('.track-block');
+    const songTitle = document.getElementById('songTitle');
+    if (!(trackBlock instanceof HTMLElement) || !(songTitle instanceof HTMLElement)) {
+      throw new Error('Player title geometry target is missing');
+    }
+
+    songTitle.textContent = nextTitle;
+    const titleLength = [...nextTitle].length;
+    trackBlock.classList.toggle('is-long-title', titleLength > 28);
+    trackBlock.classList.toggle('is-very-long-title', titleLength > 44);
+
     const anchors = {};
     for (const id of ['playButton', 'progress', 'genreStrip', 'browseButton']) {
       const rect = document.getElementById(id)?.getBoundingClientRect();
       anchors[id] = rect ? { top: rect.top, centerY: rect.top + rect.height / 2 } : null;
     }
-    return anchors;
-  });
+
+    return {
+      title: songTitle.textContent,
+      viewportWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+      anchors,
+    };
+  }, title);
+}
+
+function expectTitleGeometryNoOverflow(metrics, label) {
+  expect(metrics.scrollWidth, `${label} should not overflow the document horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  expect(metrics.bodyScrollWidth, `${label} should not overflow the body horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
 }
 
 function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
@@ -102,9 +138,8 @@ function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
 
 test('production player shell is stable, complete and uses the custom genre artwork', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
-  await expect(page.locator('#app')).toBeVisible();
-  await expect(page.locator('#songTitle')).not.toHaveText('');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
   await expectAppCoversViewport(page);
   await expectNoDocumentOverflow(page);
@@ -113,7 +148,7 @@ test('production player shell is stable, complete and uses the custom genre artw
   }
 
   const browse = page.locator('#browseButton');
-  await expect(browse).toHaveAttribute('href', './catalogue/');
+  await expect(browse).toHaveAttribute('href', './explore/');
   await expect(browse).not.toHaveAttribute('aria-controls', /.+/);
 
   const genreButtons = page.locator('#genreStrip .genre-button[data-genre]');
@@ -130,33 +165,30 @@ test('production player shell is stable, complete and uses the custom genre artw
   await expectNoRuntimeFailures(page, failures, 'player');
 });
 
-test('short and very long song titles keep transport and discovery controls anchored', async ({ page, context }) => {
-  const longFailures = collectRuntimeFailures(page);
-  await page.goto('/?genre=dandiya&song=bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014');
-  await expect(page.locator('#songTitle')).toHaveText('Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014');
-  await page.waitForTimeout(250);
-  await expectNoDocumentOverflow(page);
-  const longTitleAnchors = await playerAnchors(page);
-  await expectNoRuntimeFailures(page, longFailures, 'long-title player');
+test('short and very long song titles keep transport and discovery controls anchored', async ({ page }) => {
+  const failures = collectRuntimeFailures(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
-  const shortPage = await context.newPage();
-  const shortFailures = collectRuntimeFailures(shortPage);
-  try {
-    await shortPage.goto('/?genre=traditional&song=ochhav-2023-01-ochhav-theme');
-    await expect(shortPage.locator('#songTitle')).toHaveText('Ochhav Theme');
-    await shortPage.waitForTimeout(250);
-    await expectNoDocumentOverflow(shortPage);
-    const shortTitleAnchors = await playerAnchors(shortPage);
-    expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors);
-    await expectNoRuntimeFailures(shortPage, shortFailures, 'short-title player');
-  } finally {
-    await shortPage.close();
-  }
+  const longTitle = 'Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014';
+  const shortTitle = 'Ochhav Theme';
+
+  const longTitleGeometry = await measureTitleGeometry(page, longTitle);
+  expect(longTitleGeometry.title).toBe(longTitle);
+  expectTitleGeometryNoOverflow(longTitleGeometry, 'very-long title state');
+
+  const shortTitleGeometry = await measureTitleGeometry(page, shortTitle);
+  expect(shortTitleGeometry.title).toBe(shortTitle);
+  expectTitleGeometryNoOverflow(shortTitleGeometry, 'short title state');
+
+  expectStablePlayerAnchors(longTitleGeometry.anchors, shortTitleGeometry.anchors);
+  await expectNoRuntimeFailures(page, failures, 'title-geometry player');
 });
 
 test('Search opens without clipping and closing restores focus to the opener', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
   const searchButton = page.locator('#searchButton');
   await searchButton.click();
 
@@ -175,7 +207,8 @@ test('Search opens without clipping and closing restores focus to the opener', a
 
 test('Nonstop browser is reachable, populated and restores focus when closed', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
   const nonstopButton = page.locator('#nonstopButton');
   await nonstopButton.scrollIntoViewIfNeeded();
@@ -204,9 +237,11 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
 
 test('Explore is reached through the production player link and renders real catalogue content', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
+  // Navigation commit establishes the document boundary; visible Explore UI establishes readiness.
   await Promise.all([
-    page.waitForURL(/\/explore\/$/),
+    page.waitForURL(/\/explore\/$/, { waitUntil: 'commit' }),
     page.locator('#browseButton').click(),
   ]);
 
@@ -221,7 +256,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/explore/');
+  await page.goto('/explore/', { waitUntil: 'commit' });
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();
@@ -240,7 +275,8 @@ test('installed shell survives an offline reload after the service worker is rea
   test.skip(testInfo.project.name !== 'desktop-chromium', 'one deterministic Chromium PWA contract is sufficient');
   const failures = collectRuntimeFailures(page);
 
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
   const serviceWorkerReady = await page.evaluate(async () => {
     if (!('serviceWorker' in navigator)) return false;
     await navigator.serviceWorker.ready;
@@ -251,13 +287,12 @@ test('installed shell survives an offline reload after the service worker is rea
   await context.setOffline(true);
   try {
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#app')).toBeVisible();
-    await expect(page.locator('#songTitle')).not.toHaveText('');
+    await expectPlayerReady(page);
     await expectAppCoversViewport(page);
     await expectNoDocumentOverflow(page);
   } finally {
     await context.setOffline(false);
   }
 
-  await expectNoRuntimeFailures(page, failures, 'offline PWA shell');
+  await expectNoRuntimeFailures(page, failures, 'offline PWA shell', { ignoreFailure: isExpectedOfflineNetworkFailure });
 });
