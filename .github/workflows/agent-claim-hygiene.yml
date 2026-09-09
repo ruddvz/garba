@@ -36,6 +36,7 @@ jobs:
             const boardIssue = Number(process.env.BOARD_ISSUE);
             const reviewAfterMs = Number(process.env.REVIEW_AFTER_HOURS) * 60 * 60 * 1000;
             const reviewLabel = 'agent:claim-review';
+            const graphBatchSize = 20;
 
             const claimRe = /<!--\s*agent-claim\s*\n([\s\S]*?)-->/i;
             const releaseRe = /<!--\s*agent-release\s*\n([\s\S]*?)-->/i;
@@ -61,25 +62,12 @@ jobs:
               const body = comment.body || '';
               const override = body.match(overrideRe);
               if (override) {
-                return {
-                  type: 'override',
-                  author: comment.user?.login || 'unknown',
-                  commentId: comment.id,
-                  timeMs: commentTime(comment),
-                };
+                return { type: 'override', author: comment.user?.login || 'unknown', commentId: comment.id, timeMs: commentTime(comment) };
               }
-
               const release = body.match(releaseRe);
               if (release) {
-                return {
-                  type: 'release',
-                  agent: field(release[1], 'agent'),
-                  branch: field(release[1], 'branch'),
-                  commentId: comment.id,
-                  timeMs: commentTime(comment),
-                };
+                return { type: 'release', agent: field(release[1], 'agent'), branch: field(release[1], 'branch'), commentId: comment.id, timeMs: commentTime(comment) };
               }
-
               const claim = body.match(claimRe);
               if (claim) {
                 return {
@@ -92,7 +80,6 @@ jobs:
                   timeMs: commentTime(comment),
                 };
               }
-
               const heartbeat = body.match(heartbeatRe);
               if (heartbeat) {
                 return {
@@ -104,7 +91,6 @@ jobs:
                   timeMs: commentTime(comment),
                 };
               }
-
               return null;
             }
 
@@ -124,11 +110,9 @@ jobs:
               let active = null;
               let activityMs = 0;
               let heartbeatStatus = '';
-
               for (const comment of [...comments].sort((a, b) => a.id - b.id)) {
                 const event = parseEvent(comment);
                 if (!event) continue;
-
                 if (event.type === 'override') {
                   if (event.author === owner) {
                     active = null;
@@ -137,7 +121,6 @@ jobs:
                   }
                   continue;
                 }
-
                 if (event.type === 'release') {
                   if (active && sameOwner(active, event)) {
                     active = null;
@@ -146,7 +129,6 @@ jobs:
                   }
                   continue;
                 }
-
                 if (validClaim(event)) {
                   if (!active) {
                     active = { ...event, ownershipCommentId: event.commentId };
@@ -159,13 +141,11 @@ jobs:
                   }
                   continue;
                 }
-
                 if (validHeartbeat(event) && active && sameOwner(active, event)) {
                   activityMs = Math.max(activityMs, event.timeMs);
                   heartbeatStatus = event.status || '';
                 }
               }
-
               return { active, activityMs, heartbeatStatus };
             }
 
@@ -217,37 +197,202 @@ jobs:
             }
 
             function claimBody(agent, branch, files) {
-              return [
-                '<!-- agent-claim',
-                `agent: ${agent}`,
-                `branch: ${branch}`,
-                'scope: test scope',
-                `files: ${files}`,
-                '-->',
-              ].join('\n');
+              return ['<!-- agent-claim', `agent: ${agent}`, `branch: ${branch}`, 'scope: test scope', `files: ${files}`, '-->'].join('\n');
             }
 
             function heartbeatBody(agent, branch, status = 'still active') {
-              return [
-                '<!-- agent-heartbeat',
-                `agent: ${agent}`,
-                `branch: ${branch}`,
-                `status: ${status}`,
-                '-->',
-              ].join('\n');
+              return ['<!-- agent-heartbeat', `agent: ${agent}`, `branch: ${branch}`, `status: ${status}`, '-->'].join('\n');
             }
 
             function releaseBody(agent, branch) {
-              return [
-                '<!-- agent-release',
-                `agent: ${agent}`,
-                `branch: ${branch}`,
-                '-->',
-              ].join('\n');
+              return ['<!-- agent-release', `agent: ${agent}`, `branch: ${branch}`, '-->'].join('\n');
             }
 
             function assert(condition, message) {
               if (!condition) throw new Error(`Agent claim hygiene self-test failed: ${message}`);
+            }
+
+            function normalizeGraphComment(node) {
+              return {
+                id: Number(node.databaseId),
+                body: node.body || '',
+                user: { login: node.author?.login || 'unknown', type: node.author?.__typename === 'Bot' ? 'Bot' : 'User' },
+                created_at: node.createdAt || null,
+                updated_at: node.updatedAt || null,
+              };
+            }
+
+            function buildGraphCommentPage(entries) {
+              const variableDefs = ['$owner: String!', '$repo: String!'];
+              const variables = { owner, repo };
+              const fields = [];
+              entries.forEach(([issueNumber, cursor], index) => {
+                const cursorName = `cursor${index}`;
+                if (cursor) {
+                  variableDefs.push(`$${cursorName}: String!`);
+                  variables[cursorName] = cursor;
+                }
+                fields.push([
+                  `i${index}: issue(number: ${issueNumber}) {`,
+                  '  number',
+                  `  comments(first: 100${cursor ? `, after: $${cursorName}` : ''}) {`,
+                  '    nodes { databaseId body createdAt updatedAt author { __typename login } }',
+                  '    pageInfo { hasNextPage endCursor }',
+                  '  }',
+                  '}',
+                ].join('\n'));
+              });
+              return {
+                query: [`query(${variableDefs.join(', ')}) {`, '  repository(owner: $owner, name: $repo) {', fields.join('\n'), '  }', '}'].join('\n'),
+                variables,
+              };
+            }
+
+            async function listCommentsByIssue(issueNumbers) {
+              const unique = [...new Set(issueNumbers.filter(Boolean))];
+              const commentsByIssue = new Map(unique.map(issueNumber => [issueNumber, []]));
+              let pending = new Map(unique.map(issueNumber => [issueNumber, null]));
+              while (pending.size) {
+                const next = new Map();
+                const pendingEntries = [...pending.entries()];
+                for (let offset = 0; offset < pendingEntries.length; offset += graphBatchSize) {
+                  const chunk = pendingEntries.slice(offset, offset + graphBatchSize);
+                  const { query, variables } = buildGraphCommentPage(chunk);
+                  const response = await github.graphql(query, variables);
+                  const repository = response.repository || {};
+                  chunk.forEach(([expectedIssueNumber], index) => {
+                    const issue = repository[`i${index}`];
+                    if (!issue) return;
+                    if (Number(issue.number) !== Number(expectedIssueNumber)) {
+                      throw new Error(`GraphQL comment batch returned issue #${issue.number} for expected #${expectedIssueNumber}.`);
+                    }
+                    const connection = issue.comments;
+                    const bucket = commentsByIssue.get(expectedIssueNumber);
+                    for (const node of connection.nodes || []) bucket.push(normalizeGraphComment(node));
+                    if (connection.pageInfo?.hasNextPage) {
+                      const cursor = connection.pageInfo.endCursor;
+                      if (!cursor) throw new Error(`Issue #${expectedIssueNumber} reports another comment page without an end cursor.`);
+                      next.set(expectedIssueNumber, cursor);
+                    }
+                  });
+                }
+                pending = next;
+              }
+              for (const comments of commentsByIssue.values()) comments.sort((a, b) => a.id - b.id);
+              return commentsByIssue;
+            }
+
+            function normalizeIssueNode(node) {
+              return {
+                number: Number(node.number),
+                state: String(node.state || '').toLowerCase(),
+                labels: (node.labels?.nodes || []).map(label => ({ name: label.name })),
+                pull_request: null,
+              };
+            }
+
+            async function listClaimIssuesGraph(extraIssueNumbers = []) {
+              const byNumber = new Map();
+              let cursor = null;
+              do {
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      issues(first: 100, after: $cursor, states: OPEN, labels: ["agent:claimed"]) {
+                        nodes { number state labels(first: 50) { nodes { name } } }
+                        pageInfo { hasNextPage endCursor }
+                      }
+                    }
+                  }
+                `, { owner, repo, cursor });
+                const connection = response.repository?.issues;
+                for (const node of connection?.nodes || []) {
+                  if (Number(node.number) === boardIssue) continue;
+                  byNumber.set(Number(node.number), normalizeIssueNode(node));
+                }
+                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                if (connection?.pageInfo?.hasNextPage && !cursor) throw new Error('Claimed issue connection reports another page without an end cursor.');
+              } while (cursor);
+
+              const missing = [...new Set(extraIssueNumbers.filter(Boolean))]
+                .filter(issueNumber => issueNumber !== boardIssue && !byNumber.has(issueNumber));
+              for (let offset = 0; offset < missing.length; offset += graphBatchSize) {
+                const chunk = missing.slice(offset, offset + graphBatchSize);
+                const fields = chunk.map((issueNumber, index) => [
+                  `i${index}: issue(number: ${issueNumber}) {`,
+                  '  number',
+                  '  state',
+                  '  labels(first: 50) { nodes { name } }',
+                  '}',
+                ].join('\n'));
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!) {
+                    repository(owner: $owner, name: $repo) { ${fields.join('\n')} }
+                  }
+                `, { owner, repo });
+                const repository = response.repository || {};
+                chunk.forEach((issueNumber, index) => {
+                  const node = repository[`i${index}`];
+                  if (!node || String(node.state).toUpperCase() !== 'OPEN') return;
+                  byNumber.set(issueNumber, normalizeIssueNode(node));
+                });
+              }
+              return byNumber;
+            }
+
+            async function listOpenPullsGraph() {
+              const pulls = [];
+              let cursor = null;
+              do {
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequests(first: 100, after: $cursor, states: OPEN) {
+                        nodes { number body headRefName }
+                        pageInfo { hasNextPage endCursor }
+                      }
+                    }
+                  }
+                `, { owner, repo, cursor });
+                const connection = response.repository?.pullRequests;
+                for (const node of connection?.nodes || []) {
+                  pulls.push({ number: Number(node.number), body: node.body || '', head: { ref: node.headRefName || '' } });
+                }
+                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                if (connection?.pageInfo?.hasNextPage && !cursor) throw new Error('Open PR connection reports another page without an end cursor.');
+              } while (cursor);
+              return pulls;
+            }
+
+            async function branchActivityByName(branches) {
+              const unique = [...new Set(branches.filter(Boolean))];
+              const activity = new Map(unique.map(branch => [branch, 0]));
+              for (let offset = 0; offset < unique.length; offset += graphBatchSize) {
+                const chunk = unique.slice(offset, offset + graphBatchSize);
+                const variableDefs = ['$owner: String!', '$repo: String!'];
+                const variables = { owner, repo };
+                const fields = [];
+                chunk.forEach((branch, index) => {
+                  const variable = `ref${index}`;
+                  variableDefs.push(`$${variable}: String!`);
+                  variables[variable] = `refs/heads/${branch}`;
+                  fields.push(`r${index}: ref(qualifiedName: $${variable}) { target { ... on Commit { committedDate authoredDate } } }`);
+                });
+                const response = await github.graphql(`
+                  query(${variableDefs.join(', ')}) {
+                    repository(owner: $owner, name: $repo) { ${fields.join('\n')} }
+                  }
+                `, variables);
+                const repository = response.repository || {};
+                chunk.forEach((branch, index) => {
+                  const target = repository[`r${index}`]?.target;
+                  const candidates = [target?.committedDate, target?.authoredDate]
+                    .map(value => Date.parse(value || ''))
+                    .filter(Number.isFinite);
+                  activity.set(branch, candidates.length ? Math.max(...candidates) : 0);
+                });
+              }
+              return activity;
             }
 
             function runSelfTests() {
@@ -256,45 +401,33 @@ jobs:
               const state = deriveState([claim, heartbeat]);
               assert(state.active?.ownershipCommentId === 10, 'heartbeat does not change ownership priority');
               assert(state.activityMs === Date.parse('2026-09-08T11:30:00Z'), 'matching heartbeat refreshes activity');
-
               const update = syntheticComment(30, claimBody('agent/a', 'work/a', 'a.js; b.js'), 'agent', '2026-09-08T11:45:00Z');
               const updated = deriveState([claim, update]);
               assert(updated.active?.ownershipCommentId === 10, 'same-owner claim update preserves ownership priority');
               assert(updated.activityMs === Date.parse('2026-09-08T11:45:00Z'), 'same-owner claim update refreshes activity');
               assert(updated.active?.files === 'a.js; b.js', 'same-owner claim update replaces visible files');
-
               assert(!hasConcreteFiles('research-only'), 'research-only reserves no files');
               assert(hasConcreteFiles('research-only until evidence; docs/a.md'), 'mixed claim with a concrete path is not exempt');
-
               const nowMs = Date.parse('2026-09-08T14:00:00Z');
               assert(reviewDecision({ concrete: true, hasOpenPr: true, lastActivityMs: Date.parse('2026-09-08T09:00:00Z'), nowMs }).review === false, 'open PR is never aged into review');
               assert(reviewDecision({ concrete: false, hasOpenPr: false, lastActivityMs: Date.parse('2026-09-08T09:00:00Z'), nowMs }).review === false, 'research-only is exempt');
               assert(reviewDecision({ concrete: true, hasOpenPr: false, lastActivityMs: Date.parse('2026-09-08T11:30:00Z'), nowMs }).review === true, 'aged concrete no-PR claim needs review');
               assert(reviewDecision({ concrete: true, hasOpenPr: false, lastActivityMs: Date.parse('2026-09-08T13:00:00Z'), nowMs }).review === false, 'recent heartbeat keeps claim fresh');
-
               const released = deriveState([claim, syntheticComment(40, releaseBody('agent/a', 'work/a'), 'agent', '2026-09-08T12:00:00Z')]);
               assert(!released.active, 'matching release clears ownership');
-
-              const overridden = deriveState([
-                claim,
-                syntheticComment(50, '<!-- agent-claim-override\nreason: abandoned\n-->\nOVERRIDE', owner, '2026-09-08T12:00:00Z'),
-              ]);
+              const overridden = deriveState([claim, syntheticComment(50, '<!-- agent-claim-override\nreason: abandoned\n-->\nOVERRIDE', owner, '2026-09-08T12:00:00Z')]);
               assert(!overridden.active, 'repository owner override clears ownership');
-            }
 
-            async function listComments(issueNumber) {
-              return github.paginate(github.rest.issues.listComments, {
-                owner,
-                repo,
-                issue_number: issueNumber,
-                per_page: 100,
-              });
+              const normalized = normalizeGraphComment({ databaseId: 42, body: 'hello', createdAt: '2026-09-08T10:00:00Z', author: { login: 'github-actions', __typename: 'Bot' } });
+              assert(normalized.id === 42 && normalized.user.type === 'Bot' && normalized.created_at, 'GraphQL mapping preserves ID, bot identity and activity time');
+              const firstPage = buildGraphCommentPage([[12, null]]);
+              const nextPage = buildGraphCommentPage([[12, 'cursor-value']]);
+              assert(firstPage.query.includes('comments(first: 100)') && !firstPage.query.includes('after:'), 'first GraphQL comment page omits cursor');
+              assert(nextPage.query.includes('after: $cursor0') && nextPage.variables.cursor0 === 'cursor-value', 'follow-up GraphQL comment page carries cursor');
             }
 
             function labelNames(issue) {
-              return new Set((issue.labels || [])
-                .map(label => typeof label === 'string' ? label : label?.name)
-                .filter(Boolean));
+              return new Set((issue.labels || []).map(label => typeof label === 'string' ? label : label?.name).filter(Boolean));
             }
 
             async function ensureReviewLabel() {
@@ -331,52 +464,15 @@ jobs:
             }
 
             async function collectRows(extraIssueNumbers = []) {
-              const claimed = await github.paginate(github.rest.issues.listForRepo, {
-                owner,
-                repo,
-                state: 'open',
-                labels: 'agent:claimed',
-                per_page: 100,
-              });
-
-              const byNumber = new Map();
-              for (const issue of claimed) {
-                if (issue.pull_request || issue.number === boardIssue) continue;
-                byNumber.set(issue.number, issue);
-              }
-
-              for (const issueNumber of extraIssueNumbers) {
-                if (!issueNumber || issueNumber === boardIssue || byNumber.has(issueNumber)) continue;
-                try {
-                  const issue = (await github.rest.issues.get({ owner, repo, issue_number: issueNumber })).data;
-                  if (!issue.pull_request && issue.state === 'open') byNumber.set(issue.number, issue);
-                } catch (error) {
-                  if (error.status !== 404) throw error;
-                }
-              }
-
+              const byNumber = await listClaimIssuesGraph(extraIssueNumbers);
+              const commentsByIssue = await listCommentsByIssue([...byNumber.keys()]);
               const rows = [];
               for (const issue of byNumber.values()) {
-                const comments = await listComments(issue.number);
+                const comments = commentsByIssue.get(issue.number) || [];
                 const state = deriveState(comments);
                 if (state.active) rows.push({ issue, comments, state });
               }
               return rows;
-            }
-
-            async function branchActivityMs(branch) {
-              try {
-                const response = await github.rest.repos.getBranch({ owner, repo, branch });
-                const commit = response.data.commit;
-                const candidates = [
-                  commit?.commit?.committer?.date,
-                  commit?.commit?.author?.date,
-                ].map(value => Date.parse(value || '')).filter(Number.isFinite);
-                return candidates.length ? Math.max(...candidates) : 0;
-              } catch (error) {
-                if (error.status === 404) return 0;
-                throw error;
-              }
             }
 
             function formatAge(ageMs) {
@@ -391,9 +487,7 @@ jobs:
                 '<!-- agent-claim-review-status -->',
                 '### Claim hygiene',
                 '',
-                row.needsReview
-                  ? '**Status:** Needs owner review'
-                  : '**Status:** Clear',
+                row.needsReview ? '**Status:** Needs owner review' : '**Status:** Clear',
                 row.needsReview ? `- No matching open PR for \`${row.state.active.branch}\`.` : '',
                 row.needsReview ? `- Last observed claim/heartbeat/branch activity: ${lastIso} (${formatAge(row.ageMs)} ago).` : '',
                 '',
@@ -419,13 +513,7 @@ jobs:
             async function clearStaleLabels(reviewRows) {
               const reviewNumbers = new Set(reviewRows.map(row => row.issue.number));
               for (const state of ['open', 'closed']) {
-                const labelled = await github.paginate(github.rest.issues.listForRepo, {
-                  owner,
-                  repo,
-                  state,
-                  labels: reviewLabel,
-                  per_page: 100,
-                });
+                const labelled = await github.paginate(github.rest.issues.listForRepo, { owner, repo, state, labels: reviewLabel, per_page: 100 });
                 for (const issue of labelled) {
                   if (issue.pull_request || reviewNumbers.has(issue.number)) continue;
                   await removeReviewLabel(issue);
@@ -444,7 +532,6 @@ jobs:
               if (body.includes(start) && body.includes(end)) {
                 return body.replace(new RegExp(`${start}[\\s\\S]*?${end}`), `${start}\n${table}\n${end}`);
               }
-
               const fileAnchor = '<!-- agent-file-conflicts:end -->';
               const managedAnchor = '<!-- agent-work-board:managed-end -->';
               const anchor = body.includes(fileAnchor) ? fileAnchor : managedAnchor;
@@ -473,7 +560,6 @@ jobs:
                     ),
                   ].join('\n')
                 : '_No concrete active claims currently need hygiene review._';
-
               const start = '<!-- agent-claim-review:start -->';
               const end = '<!-- agent-claim-review:end -->';
               const expectedBlock = `${start}\n${table}\n${end}`;
@@ -484,9 +570,7 @@ jobs:
                 const current = board.data.body || '';
                 if (current.includes(expectedBlock)) return;
                 const wanted = renderBoardBody(current, table);
-                if (wanted !== current) {
-                  await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body: wanted });
-                }
+                if (wanted !== current) await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body: wanted });
                 await new Promise(resolve => setTimeout(resolve, attempt * 400));
                 const verify = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
                 if ((verify.data.body || '').includes(expectedBlock)) return;
@@ -498,38 +582,24 @@ jobs:
             await ensureReviewLabel();
 
             const extraIssueNumbers = [];
-            if (context.eventName === 'issue_comment' || context.eventName === 'issues') {
-              extraIssueNumbers.push(context.payload.issue?.number);
-            }
-            if (context.eventName === 'pull_request') {
-              const pr = context.payload.pull_request;
-              extraIssueNumbers.push(prClaimIssue(pr));
-            }
+            if (context.eventName === 'issue_comment' || context.eventName === 'issues') extraIssueNumbers.push(context.payload.issue?.number);
+            if (context.eventName === 'pull_request') extraIssueNumbers.push(prClaimIssue(context.payload.pull_request));
 
             const rows = await collectRows(extraIssueNumbers.filter(Boolean));
-            const openPulls = await github.paginate(github.rest.pulls.list, {
-              owner,
-              repo,
-              state: 'open',
-              per_page: 100,
-            });
+            const openPulls = await listOpenPullsGraph();
+            const rowsWithoutOpenPr = rows.filter(row => hasConcreteFiles(row.state.active.files) && !matchingOpenPr(row, openPulls));
+            const branchActivity = await branchActivityByName(rowsWithoutOpenPr.map(row => row.state.active.branch));
             const nowMs = Date.now();
 
             for (const row of rows) {
               const concrete = hasConcreteFiles(row.state.active.files);
               const openPr = matchingOpenPr(row, openPulls);
-              const branchMs = openPr ? 0 : await branchActivityMs(row.state.active.branch);
+              const branchMs = openPr ? 0 : (branchActivity.get(row.state.active.branch) || 0);
               row.lastActivityMs = Math.max(row.state.activityMs || 0, branchMs || 0);
-              const decision = reviewDecision({
-                concrete,
-                hasOpenPr: Boolean(openPr),
-                lastActivityMs: row.lastActivityMs,
-                nowMs,
-              });
+              const decision = reviewDecision({ concrete, hasOpenPr: Boolean(openPr), lastActivityMs: row.lastActivityMs, nowMs });
               row.needsReview = decision.review;
               row.ageMs = decision.ageMs;
               row.openPr = openPr;
-
               if (row.needsReview) await addReviewLabel(row.issue);
               else await removeReviewLabel(row.issue);
               await upsertReviewStatus(row);
@@ -538,7 +608,6 @@ jobs:
             const reviewRows = rows
               .filter(row => row.needsReview)
               .sort((a, b) => b.ageMs - a.ageMs || a.issue.number - b.issue.number);
-
             await clearStaleLabels(reviewRows);
             await updateBoard(reviewRows);
 

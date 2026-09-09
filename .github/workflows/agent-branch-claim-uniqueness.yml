@@ -34,6 +34,7 @@ jobs:
             const boardIssue = Number(process.env.BOARD_ISSUE);
             const legacyPrMax = Number(process.env.LEGACY_PR_MAX);
             const conflictLabel = 'agent:branch-conflict';
+            const graphBatchSize = 20;
 
             const claimRe = /<!--\s*agent-claim\s*\n([\s\S]*?)-->/i;
             const releaseRe = /<!--\s*agent-release\s*\n([\s\S]*?)-->/i;
@@ -122,13 +123,172 @@ jobs:
               return { active };
             }
 
-            async function listComments(issueNumber) {
+            async function listCommentsRest(issueNumber) {
               return github.paginate(github.rest.issues.listComments, {
                 owner,
                 repo,
                 issue_number: issueNumber,
                 per_page: 100,
               });
+            }
+
+            function normalizeGraphComment(node) {
+              return {
+                id: Number(node.databaseId),
+                body: node.body || '',
+                user: {
+                  login: node.author?.login || 'unknown',
+                  type: node.author?.__typename === 'Bot' ? 'Bot' : 'User',
+                },
+              };
+            }
+
+            function buildGraphCommentPage(entries) {
+              const variableDefs = ['$owner: String!', '$repo: String!'];
+              const variables = { owner, repo };
+              const fields = [];
+
+              entries.forEach(([issueNumber, cursor], index) => {
+                const cursorName = `cursor${index}`;
+                if (cursor) {
+                  variableDefs.push(`$${cursorName}: String!`);
+                  variables[cursorName] = cursor;
+                }
+                fields.push([
+                  `i${index}: issue(number: ${issueNumber}) {`,
+                  '  number',
+                  `  comments(first: 100${cursor ? `, after: $${cursorName}` : ''}) {`,
+                  '    nodes { databaseId body author { __typename login } }',
+                  '    pageInfo { hasNextPage endCursor }',
+                  '  }',
+                  '}',
+                ].join('\n'));
+              });
+
+              return {
+                query: [
+                  `query(${variableDefs.join(', ')}) {`,
+                  '  repository(owner: $owner, name: $repo) {',
+                  fields.join('\n'),
+                  '  }',
+                  '}',
+                ].join('\n'),
+                variables,
+              };
+            }
+
+            async function listCommentsByIssue(issueNumbers) {
+              const unique = [...new Set(issueNumbers.filter(Boolean))];
+              const commentsByIssue = new Map(unique.map(issueNumber => [issueNumber, []]));
+              let pending = new Map(unique.map(issueNumber => [issueNumber, null]));
+
+              while (pending.size) {
+                const next = new Map();
+                const pendingEntries = [...pending.entries()];
+
+                for (let offset = 0; offset < pendingEntries.length; offset += graphBatchSize) {
+                  const chunk = pendingEntries.slice(offset, offset + graphBatchSize);
+                  const { query, variables } = buildGraphCommentPage(chunk);
+                  const response = await github.graphql(query, variables);
+                  const repository = response.repository || {};
+
+                  chunk.forEach(([expectedIssueNumber], index) => {
+                    const issue = repository[`i${index}`];
+                    if (!issue) return;
+                    if (Number(issue.number) !== Number(expectedIssueNumber)) {
+                      throw new Error(`GraphQL comment batch returned issue #${issue.number} for expected #${expectedIssueNumber}.`);
+                    }
+
+                    const connection = issue.comments;
+                    const bucket = commentsByIssue.get(expectedIssueNumber);
+                    for (const node of connection.nodes || []) bucket.push(normalizeGraphComment(node));
+
+                    if (connection.pageInfo?.hasNextPage) {
+                      const cursor = connection.pageInfo.endCursor;
+                      if (!cursor) throw new Error(`Issue #${expectedIssueNumber} reports another comment page without an end cursor.`);
+                      next.set(expectedIssueNumber, cursor);
+                    }
+                  });
+                }
+
+                pending = next;
+              }
+
+              for (const comments of commentsByIssue.values()) comments.sort((a, b) => a.id - b.id);
+              return commentsByIssue;
+            }
+
+            function normalizeIssueNode(node) {
+              return {
+                number: Number(node.number),
+                nodeId: node.id,
+                state: String(node.state || '').toLowerCase(),
+                labels: (node.labels?.nodes || []).map(label => ({ name: label.name })),
+                pull_request: null,
+              };
+            }
+
+            async function listClaimIssuesGraph(extraIssueNumbers = []) {
+              const byNumber = new Map();
+              let cursor = null;
+
+              do {
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!, $cursor: String) {
+                    repository(owner: $owner, name: $repo) {
+                      issues(first: 100, after: $cursor, states: OPEN, labels: ["agent:claimed"]) {
+                        nodes {
+                          id
+                          number
+                          state
+                          labels(first: 50) { nodes { name } }
+                        }
+                        pageInfo { hasNextPage endCursor }
+                      }
+                    }
+                  }
+                `, { owner, repo, cursor });
+
+                const connection = response.repository?.issues;
+                for (const node of connection?.nodes || []) {
+                  if (Number(node.number) === boardIssue) continue;
+                  byNumber.set(Number(node.number), normalizeIssueNode(node));
+                }
+                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                if (connection?.pageInfo?.hasNextPage && !cursor) {
+                  throw new Error('Claimed issue connection reports another page without an end cursor.');
+                }
+              } while (cursor);
+
+              const missing = [...new Set(extraIssueNumbers.filter(Boolean))]
+                .filter(issueNumber => issueNumber !== boardIssue && !byNumber.has(issueNumber));
+
+              for (let offset = 0; offset < missing.length; offset += graphBatchSize) {
+                const chunk = missing.slice(offset, offset + graphBatchSize);
+                const fields = chunk.map((issueNumber, index) => [
+                  `i${index}: issue(number: ${issueNumber}) {`,
+                  '  id',
+                  '  number',
+                  '  state',
+                  '  labels(first: 50) { nodes { name } }',
+                  '}',
+                ].join('\n'));
+                const response = await github.graphql(`
+                  query($owner: String!, $repo: String!) {
+                    repository(owner: $owner, name: $repo) {
+                      ${fields.join('\n')}
+                    }
+                  }
+                `, { owner, repo });
+                const repository = response.repository || {};
+                chunk.forEach((issueNumber, index) => {
+                  const node = repository[`i${index}`];
+                  if (!node || String(node.state).toUpperCase() !== 'OPEN') return;
+                  byNumber.set(issueNumber, normalizeIssueNode(node));
+                });
+              }
+
+              return byNumber;
             }
 
             function annotateBranchConflicts(rows) {
@@ -231,6 +391,18 @@ jobs:
                 syntheticComment(30, overrideBody(), owner),
               ]);
               assert(!overridden.active, 'repository owner override frees branch ownership');
+
+              const normalized = normalizeGraphComment({
+                databaseId: 42,
+                body: 'hello',
+                author: { login: 'github-actions', __typename: 'Bot' },
+              });
+              assert(normalized.id === 42 && normalized.user.type === 'Bot', 'GraphQL mapping preserves comment ID and bot identity');
+
+              const firstPage = buildGraphCommentPage([[12, null]]);
+              const nextPage = buildGraphCommentPage([[12, 'cursor-value']]);
+              assert(firstPage.query.includes('comments(first: 100)') && !firstPage.query.includes('after:'), 'first GraphQL comment page omits cursor');
+              assert(nextPage.query.includes('after: $cursor0') && nextPage.variables.cursor0 === 'cursor-value', 'follow-up GraphQL comment page carries cursor');
             }
 
             function labelNames(issue) {
@@ -282,7 +454,7 @@ jobs:
               }
             }
 
-            async function collectRows(extraIssueNumbers = []) {
+            async function collectRowsRest(extraIssueNumbers = []) {
               const claimed = await github.paginate(github.rest.issues.listForRepo, {
                 owner,
                 repo,
@@ -309,7 +481,23 @@ jobs:
 
               const rows = [];
               for (const issue of byNumber.values()) {
-                const comments = await listComments(issue.number);
+                const comments = await listCommentsRest(issue.number);
+                const state = deriveState(comments);
+                if (state.active) rows.push({ issue, comments, state, branchConflict: null });
+              }
+
+              rows.sort((a, b) =>
+                a.state.active.ownershipCommentId - b.state.active.ownershipCommentId || a.issue.number - b.issue.number
+              );
+              return annotateBranchConflicts(rows);
+            }
+
+            async function collectRowsGraph(extraIssueNumbers = []) {
+              const byNumber = await listClaimIssuesGraph(extraIssueNumbers);
+              const commentsByIssue = await listCommentsByIssue([...byNumber.keys()]);
+              const rows = [];
+              for (const issue of byNumber.values()) {
+                const comments = commentsByIssue.get(issue.number) || [];
                 const state = deriveState(comments);
                 if (state.active) rows.push({ issue, comments, state, branchConflict: null });
               }
@@ -384,7 +572,6 @@ jobs:
             }
 
             runSelfTests();
-            await ensureConflictLabel();
 
             const extraIssueNumbers = [];
             if (context.eventName === 'issue_comment' || context.eventName === 'issues') {
@@ -394,7 +581,35 @@ jobs:
               extraIssueNumbers.push(prClaimIssue(context.payload.pull_request));
             }
 
-            const rows = await collectRows(extraIssueNumbers.filter(Boolean));
+            // Required PR gate: use only GraphQL reads and return before label/status
+            // maintenance so mergeability never depends on the installation core quota.
+            if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {
+              const rows = await collectRowsGraph(extraIssueNumbers.filter(Boolean));
+              const blocked = rows.filter(row => row.branchConflict);
+              core.summary
+                .addHeading('Cross-issue branch ownership')
+                .addRaw(`${rows.length} active claim(s) checked; ${blocked.length} later claim(s) share a branch with earlier active ownership.`)
+                .write();
+
+              const pr = context.payload.pull_request;
+              if (pr.number <= legacyPrMax) return;
+
+              const issueNumber = prClaimIssue(pr);
+              if (!issueNumber) return;
+
+              const current = rows.find(row => row.issue.number === issueNumber);
+              if (!current?.branchConflict) return;
+
+              core.setFailed(
+                `Agent-Claim #${issueNumber} uses branch ${current.branchConflict.branch}, already owned by earlier issue #${current.branchConflict.blockerIssue} (${current.branchConflict.blockerAgent}). Use a dedicated branch or wait for the earlier claim to release.`
+              );
+              return;
+            }
+
+            // Non-PR claim/release/reopen/close events keep existing reconciliation
+            // behavior, including conflict labels and per-issue status maintenance.
+            await ensureConflictLabel();
+            const rows = await collectRowsRest(extraIssueNumbers.filter(Boolean));
 
             for (const row of rows) {
               if (row.branchConflict) await addConflictLabel(row.issue);
@@ -408,18 +623,3 @@ jobs:
               .addHeading('Cross-issue branch ownership')
               .addRaw(`${rows.length} active claim(s) checked; ${blocked.length} later claim(s) share a branch with earlier active ownership.`)
               .write();
-
-            if (context.eventName !== 'pull_request' || context.payload.action === 'closed') return;
-
-            const pr = context.payload.pull_request;
-            if (pr.number <= legacyPrMax) return;
-
-            const issueNumber = prClaimIssue(pr);
-            if (!issueNumber) return;
-
-            const current = rows.find(row => row.issue.number === issueNumber);
-            if (!current?.branchConflict) return;
-
-            core.setFailed(
-              `Agent-Claim #${issueNumber} uses branch ${current.branchConflict.branch}, already owned by earlier issue #${current.branchConflict.blockerIssue} (${current.branchConflict.blockerAgent}). Use a dedicated branch or wait for the earlier claim to release.`
-            );
