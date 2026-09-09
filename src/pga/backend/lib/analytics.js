@@ -1,6 +1,9 @@
 import { LIVE_EXPIRY_SECONDS, RANGE_SECONDS } from './constants.js'
 import { hmacPseudonym } from './crypto.js'
-function pack(parts) { return parts.map((part) => part || '').join('|') }
+
+function pack(parts) {
+  return parts.map((part) => part || '').join('|')
+}
 
 export async function normaliseForStorage(event, env, edge, receivedAtMs = Date.now()) {
   const [browserKey, sessionKey, tabKey, searchKey, playbackKey] = await Promise.all([
@@ -14,99 +17,204 @@ export async function normaliseForStorage(event, env, edge, receivedAtMs = Date.
     ? env.INTERNAL_BROWSER_KEYS.split(',').map((value) => value.trim()).filter(Boolean).includes(browserKey)
     : false
   return {
-    ...event, browserKey, sessionKey, tabKey, searchKey, playbackKey, receivedAtMs,
-    internal, bot: Boolean(edge.bot),
+    ...event,
+    browserKey,
+    sessionKey,
+    tabKey,
+    searchKey,
+    playbackKey,
+    receivedAtMs,
+    internal,
+    bot: Boolean(edge.bot),
     geo: pack([edge.country, edge.region]),
     client: pack([edge.device, edge.os, edge.browser]),
     acquisition: pack([event.source, event.medium, event.campaign]),
   }
 }
+
 export function eventDataPoint(event) {
   return {
     indexes: [event.browserKey],
     blobs: [
-      event.eventName,event.eventId,event.browserKey,event.sessionKey,event.tabKey,event.searchKey,event.playbackKey,
-      event.surface,event.displayMode,event.world,event.contentType,event.contentId,event.entryPoint,event.referrerHost,
-      event.acquisition,event.geo,event.client,event.buildId,event.errorCode,event.searchTerm,
+      event.eventName,
+      event.eventId,
+      event.browserKey,
+      event.sessionKey,
+      event.tabKey,
+      event.searchKey,
+      event.playbackKey,
+      event.surface,
+      event.displayMode,
+      event.world,
+      event.contentType,
+      event.contentId,
+      event.entryPoint,
+      event.referrerHost,
+      event.acquisition,
+      event.geo,
+      event.client,
+      event.buildId,
+      event.errorCode,
+      event.searchTerm,
     ],
-    doubles: [event.schemaVersion,event.occurredAtMs,event.receivedAtMs,event.eventValue || 0,event.internal ? 1 : 0,event.bot ? 1 : 0],
+    doubles: [
+      event.schemaVersion,
+      event.occurredAtMs,
+      event.receivedAtMs,
+      event.eventValue || 0,
+      event.internal ? 1 : 0,
+      event.bot ? 1 : 0,
+    ],
   }
 }
+
 export function presenceDataPoint(event) {
   return {
     indexes: [event.sessionKey],
     blobs: [
-      event.eventId,event.browserKey,event.sessionKey,event.tabKey,event.surface,event.playbackState,event.world,
-      event.contentType,event.contentId,event.displayMode,event.geo,event.client,event.buildId,
+      event.eventId,
+      event.browserKey,
+      event.sessionKey,
+      event.tabKey,
+      event.surface,
+      event.playbackState,
+      event.world,
+      event.contentType,
+      event.contentId,
+      event.displayMode,
+      event.geo,
+      event.client,
+      event.buildId,
     ],
-    doubles: [event.schemaVersion,event.occurredAtMs,event.receivedAtMs,event.playedMs || 0,event.internal ? 1 : 0,event.bot ? 1 : 0],
+    doubles: [
+      event.schemaVersion,
+      event.occurredAtMs,
+      event.receivedAtMs,
+      event.playedMs || 0,
+      event.internal ? 1 : 0,
+      event.bot ? 1 : 0,
+    ],
   }
 }
+
 export async function queryAnalytics(env, sql, fetchImpl = fetch) {
   if (!env.CF_ACCOUNT_ID || !env.ANALYTICS_API_TOKEN) throw new Error('analytics_query_config_missing')
-  const response = await fetchImpl(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`, 'content-type': 'text/plain; charset=utf-8' },
-    body: sql,
-  })
+  const response = await fetchImpl(
+    `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`,
+        'content-type': 'text/plain; charset=utf-8',
+      },
+      body: sql,
+    },
+  )
   if (!response.ok) throw new Error(`analytics_query_failed:${response.status}`)
   const body = await response.json()
   if (!body || !Array.isArray(body.data)) throw new Error('analytics_query_invalid_response')
   return body.data
 }
+
 export function safeRangeSeconds(range) {
   const seconds = RANGE_SECONDS[range]
   if (!seconds) throw new Error('invalid_range')
   return seconds
 }
+
 const productionFilter = () => 'double5 = 0 AND double6 = 0'
-export function homeWindowSql(dataset, startMs, endMs) {
-  return `SELECT
-  COUNT(DISTINCT blob3) AS unique_browsers,
-  SUM(CASE WHEN blob1 = 'session_started' THEN _sample_interval ELSE 0 END) AS sessions,
-  SUM(CASE WHEN blob1 = 'browser_created' THEN _sample_interval ELSE 0 END) AS browser_ids_created,
-  SUM(CASE WHEN blob1 = 'playback_started' THEN _sample_interval ELSE 0 END) AS confirmed_play_starts,
-  SUM(CASE WHEN blob1 = 'surface_viewed' THEN _sample_interval ELSE 0 END) AS surface_views,
-  MAX(double3) AS data_through_ms,
-  MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE ${productionFilter()} AND double2 >= ${startMs} AND double2 < ${endMs}`
+
+function dedupedEventCte(dataset, whereClause) {
+  return `WITH deduped AS (
+  SELECT
+    blob2 AS event_id,
+    argMax(blob1, double3) AS event_name,
+    argMax(blob3, double3) AS browser_key,
+    argMax(blob4, double3) AS session_key,
+    argMax(blob6, double3) AS search_key,
+    argMax(blob7, double3) AS playback_key,
+    argMax(blob9, double3) AS display_mode,
+    argMax(blob10, double3) AS world,
+    argMax(blob11, double3) AS content_type,
+    argMax(blob12, double3) AS content_id,
+    argMax(blob15, double3) AS acquisition,
+    argMax(blob16, double3) AS geo,
+    argMax(blob17, double3) AS client,
+    argMax(blob19, double3) AS detail_code,
+    MAX(double3) AS data_through_ms,
+    argMax(_sample_interval, double3) AS sample_interval
+  FROM ${dataset}
+  WHERE ${productionFilter()} AND ${whereClause}
+  GROUP BY event_id
+)`
 }
+
+export function homeWindowSql(dataset, startMs, endMs) {
+  return `${dedupedEventCte(dataset, `double2 >= ${startMs} AND double2 < ${endMs}`)}
+SELECT
+  COUNT(DISTINCT browser_key) AS unique_browsers,
+  SUM(CASE WHEN event_name = 'session_started' THEN sample_interval ELSE 0 END) AS sessions,
+  SUM(CASE WHEN event_name = 'browser_created' THEN sample_interval ELSE 0 END) AS browser_ids_created,
+  SUM(CASE WHEN event_name = 'playback_started' THEN sample_interval ELSE 0 END) AS confirmed_play_starts,
+  SUM(CASE WHEN event_name = 'surface_viewed' THEN sample_interval ELSE 0 END) AS surface_views,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM deduped`
+}
+
 export function audienceSummarySql(dataset, range = '7d') {
   const seconds = safeRangeSeconds(range)
-  return `SELECT
-  COUNT(DISTINCT blob3) AS unique_browsers,
-  SUM(CASE WHEN blob1 = 'session_started' THEN _sample_interval ELSE 0 END) AS sessions,
-  SUM(CASE WHEN blob1 = 'browser_created' THEN _sample_interval ELSE 0 END) AS new_browser_ids,
-  MAX(double3) AS data_through_ms,
-  MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE ${productionFilter()} AND timestamp > NOW() - INTERVAL '${seconds}' SECOND`
+  return `${dedupedEventCte(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)}
+SELECT
+  COUNT(DISTINCT browser_key) AS unique_browsers,
+  SUM(CASE WHEN event_name = 'session_started' THEN sample_interval ELSE 0 END) AS sessions,
+  SUM(CASE WHEN event_name = 'browser_created' THEN sample_interval ELSE 0 END) AS new_browser_ids,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM deduped`
 }
+
 export function audienceSql(dataset, range = '7d') {
   const seconds = safeRangeSeconds(range)
-  return `SELECT blob17 AS client, blob16 AS geo, blob15 AS acquisition, blob9 AS display_mode,
-  SUM(_sample_interval) AS sessions, MAX(double3) AS data_through_ms, MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE ${productionFilter()} AND blob1 = 'session_started'
-  AND timestamp > NOW() - INTERVAL '${seconds}' SECOND
-GROUP BY client, geo, acquisition, display_mode ORDER BY sessions DESC LIMIT 250`
+  return `${dedupedEventCte(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)}
+SELECT client, geo, acquisition, display_mode,
+  SUM(sample_interval) AS sessions,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM deduped
+WHERE event_name = 'session_started'
+GROUP BY client, geo, acquisition, display_mode
+ORDER BY sessions DESC
+LIMIT 250`
 }
+
 export function listeningSql(dataset, range = '7d') {
   const seconds = safeRangeSeconds(range)
-  return `SELECT blob1 AS event_name, blob10 AS world, blob11 AS content_type, blob12 AS content_id, blob19 AS detail_code,
-  SUM(_sample_interval) AS weighted_events, MAX(double3) AS data_through_ms, MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE ${productionFilter()} AND timestamp > NOW() - INTERVAL '${seconds}' SECOND
-AND blob1 IN ('play_intent','playback_started','playback_paused','next_requested','previous_requested','playback_unavailable','playback_error','search_submitted','search_zero_results')
-GROUP BY event_name, world, content_type, content_id, detail_code ORDER BY weighted_events DESC LIMIT 500`
+  return `${dedupedEventCte(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)}
+SELECT event_name, world, content_type, content_id, detail_code,
+  SUM(sample_interval) AS weighted_events,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM deduped
+WHERE event_name IN (
+  'play_intent','playback_started','playback_paused','next_requested','previous_requested','skip_requested',
+  'playback_unavailable','playback_error','search_submitted','search_zero_results','search_result_selected'
+)
+GROUP BY event_name, world, content_type, content_id, detail_code
+ORDER BY weighted_events DESC
+LIMIT 500`
 }
+
 export function liveSql(dataset) {
   return `WITH latest AS (
-  SELECT blob3 AS session_key, argMax(blob6, double3) AS playback_state, argMax(blob5, double3) AS surface,
-    argMax(blob7, double3) AS world, MAX(double3) AS data_through_ms, MAX(_sample_interval) AS max_sample_interval
+  SELECT blob3 AS session_key,
+    argMax(blob6, double3) AS playback_state,
+    argMax(blob5, double3) AS surface,
+    argMax(blob7, double3) AS world,
+    MAX(double3) AS data_through_ms,
+    MAX(_sample_interval) AS max_sample_interval
   FROM ${dataset}
-  WHERE double5 = 0 AND double6 = 0 AND timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND
+  WHERE ${productionFilter()} AND timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND
   GROUP BY session_key
 )
 SELECT COUNT() AS live_now,
@@ -116,20 +224,44 @@ SELECT COUNT() AS live_now,
   MAX(max_sample_interval) AS max_sample_interval
 FROM latest`
 }
-export function listeningTimeWindowSql(dataset, startMs, endMs) {
-  return `SELECT SUM(_sample_interval * double4) AS played_ms, MAX(double3) AS data_through_ms,
-  MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE double5 = 0 AND double6 = 0 AND blob6 = 'playing'
-  AND double2 >= ${startMs} AND double2 < ${endMs}`
+
+function listeningTimeQuery(dataset, whereClause) {
+  return `WITH deduped AS (
+  SELECT blob1 AS event_id,
+    argMax(blob3, double3) AS session_key,
+    argMax(blob6, double3) AS playback_state,
+    argMax(double4, double3) AS played_ms,
+    argMax(double2, double3) AS occurred_at_ms,
+    MAX(double3) AS data_through_ms,
+    argMax(_sample_interval, double3) AS sample_interval
+  FROM ${dataset}
+  WHERE ${productionFilter()} AND ${whereClause}
+  GROUP BY event_id
+), minute_totals AS (
+  SELECT session_key,
+    intDiv(occurred_at_ms, 60000) AS minute_bucket,
+    SUM(CASE WHEN playback_state = 'playing' THEN played_ms * sample_interval ELSE 0 END) AS raw_played_ms,
+    MAX(data_through_ms) AS data_through_ms,
+    MAX(sample_interval) AS max_sample_interval
+  FROM deduped
+  GROUP BY session_key, minute_bucket
+)
+SELECT
+  SUM(CASE WHEN raw_played_ms > 60000 THEN 60000 ELSE raw_played_ms END) AS played_ms,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(max_sample_interval) AS max_sample_interval
+FROM minute_totals`
 }
+
+export function listeningTimeWindowSql(dataset, startMs, endMs) {
+  return listeningTimeQuery(dataset, `double2 >= ${startMs} AND double2 < ${endMs}`)
+}
+
 export function listeningTimeSql(dataset, range = '24h') {
   const seconds = safeRangeSeconds(range)
-  return `SELECT SUM(_sample_interval * double4) AS played_ms, MAX(double3) AS data_through_ms,
-  MAX(_sample_interval) AS max_sample_interval
-FROM ${dataset}
-WHERE double5 = 0 AND double6 = 0 AND blob6 = 'playing' AND timestamp > NOW() - INTERVAL '${seconds}' SECOND`
+  return listeningTimeQuery(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)
 }
+
 export function precisionFromRows(rows) {
   const sampled = rows.some((row) => Number(row.max_sample_interval || 1) > 1)
   return { sampled, precision: sampled ? 'estimated' : 'exact' }
