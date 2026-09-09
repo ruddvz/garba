@@ -208,6 +208,80 @@ export function compileAdaptiveTask(text, config = loadAdaptiveConfig()) {
   }
 }
 
+export function operationFingerprint({ kind, target = '', sourceFingerprint = '', purpose = '' }) {
+  return [kind, target, sourceFingerprint, purpose]
+    .map((value) => normalize(value))
+    .join('|')
+}
+
+export function shouldReuseOperation({ seen = new Set(), key, protectedEvidence = false, stateChanged = false }) {
+  if (!key) throw new Error('operation key is required')
+  if (protectedEvidence || stateChanged) return { reuse: false, reason: protectedEvidence ? 'protected evidence requires current proof' : 'source or repository state changed' }
+  if (seen.has(key)) return { reuse: true, reason: 'identical current operation already produced reusable evidence' }
+  return { reuse: false, reason: 'no current reusable operation found' }
+}
+
+export function selectCapabilityClass({ task, deterministic = false, independentReview = false, visualAcceptance = false }) {
+  const sensitivity = task.truth_sensitivity
+  if (deterministic) return 'deterministic-local'
+  if (independentReview) return 'independent-review'
+  if (visualAcceptance) return 'visual-browser-verification'
+  if (['rights', 'playback-source'].includes(sensitivity)) return 'source-rights-evidence'
+  if (['deep', 'critical'].includes(task.tier) || task.uncertainty !== 'known') return 'architecture-high-uncertainty'
+  return 'routine-coding-reasoning'
+}
+
+export function shouldParallelize({ independent, sharedDecision = false, sharedMutation = false, duplicatedContext = false, decisiveEvidenceAlreadyFound = false }) {
+  if (decisiveEvidenceAlreadyFound) return { parallel: false, reason: 'cancel redundant lane because decisive evidence already exists' }
+  if (!independent) return { parallel: false, reason: 'work is not independently verifiable' }
+  if (sharedDecision) return { parallel: false, reason: 'lanes depend on one unresolved shared decision' }
+  if (sharedMutation) return { parallel: false, reason: 'shared mutation must remain one owned lane' }
+  if (duplicatedContext) return { parallel: false, reason: 'parallelism would duplicate context discovery rather than reduce work' }
+  return { parallel: true, reason: 'independent bounded work can converge without shared mutation' }
+}
+
+export function evaluateRunEfficiency(task, usage = {}) {
+  const budget = task.budget
+  const limits = {
+    sources: budget.maxSources ?? Infinity,
+    contextChars: budget.contextChars ?? budget.softContextChars ?? Infinity,
+    toolCalls: budget.toolCallsBeforeReevaluation ?? Infinity,
+    readOnlyAgents: budget.parallelReadOnlyAgents ?? Infinity,
+    mutationLanes: budget.parallelMutationLanes ?? 1,
+    repairRounds: budget.repairRounds ?? Infinity
+  }
+  const actual = {
+    sources: usage.sources ?? 0,
+    contextChars: usage.contextChars ?? 0,
+    toolCalls: usage.toolCalls ?? 0,
+    readOnlyAgents: usage.readOnlyAgents ?? 0,
+    mutationLanes: usage.mutationLanes ?? 0,
+    repairRounds: usage.repairRounds ?? 0,
+    duplicateOperationsSuppressed: usage.duplicateOperationsSuppressed ?? 0,
+    duplicateOperationsExecuted: usage.duplicateOperationsExecuted ?? 0
+  }
+  const exceeded = Object.entries(limits)
+    .filter(([key, limit]) => Number.isFinite(limit) && actual[key] > limit)
+    .map(([key]) => key)
+  const qualityGreen = usage.requiredVerificationPassed === true
+    && usage.unresolvedHighRiskFinding !== true
+    && usage.sourceTruthBroken !== true
+    && usage.ownershipConflict !== true
+  const duplicateWaste = actual.duplicateOperationsExecuted > 0
+  const shouldStop = qualityGreen && usage.acceptanceProven === true
+  return {
+    tier: task.tier,
+    limits,
+    actual,
+    exceeded,
+    within_budget: exceeded.length === 0,
+    quality_green: qualityGreen,
+    duplicate_waste_detected: duplicateWaste,
+    efficient: qualityGreen && exceeded.length === 0 && !duplicateWaste,
+    decision: shouldStop ? 'stop-success' : exceeded.length > 0 ? 're-evaluate-or-escalate' : qualityGreen ? 'continue-only-if-acceptance-not-yet-proven' : 'repair-or-block'
+  }
+}
+
 export function formatAdaptiveMarkdown(result) {
   const lines = [
     '# RAAS adaptive CTO brief',
