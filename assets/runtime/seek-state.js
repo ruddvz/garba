@@ -2,6 +2,7 @@
   const progress = document.getElementById('progress');
   const audio = document.getElementById('audio');
   const durationTime = document.getElementById('durationTime');
+  const youtubeStage = document.getElementById('youtubeStage');
   if (!progress || !audio) return;
 
   const defaultLabel = progress.getAttribute('aria-label') || 'Seek';
@@ -19,10 +20,9 @@
   }
 
   function youtubeSeekable() {
-    const stage = document.getElementById('youtubeStage');
-    if (!stage?.classList.contains('open')) return false;
-    if (stage.classList.contains('is-loading')) return false;
-    if (stage.getAttribute('aria-hidden') === 'true') return false;
+    if (!youtubeStage?.classList.contains('open')) return false;
+    if (youtubeStage.classList.contains('is-loading')) return false;
+    if (youtubeStage.getAttribute('aria-hidden') === 'true') return false;
     return Boolean(window.GARBA_YOUTUBE_PLAYER?.activeSongId && durationTextIsKnown());
   }
 
@@ -46,13 +46,20 @@
     audio.addEventListener(eventName, scheduleSync);
   }
 
-  new MutationObserver(scheduleSync).observe(document.body, {
-    subtree: true,
-    childList: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ['class', 'aria-hidden', 'src', 'disabled'],
-  });
+  if (youtubeStage) {
+    new MutationObserver(scheduleSync).observe(youtubeStage, {
+      attributes: true,
+      attributeFilter: ['class', 'aria-hidden'],
+    });
+  }
+
+  if (durationTime) {
+    new MutationObserver(scheduleSync).observe(durationTime, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+  }
 
   window.addEventListener('garba:catalogue-ready', scheduleSync);
   window.addEventListener('pageshow', scheduleSync);
