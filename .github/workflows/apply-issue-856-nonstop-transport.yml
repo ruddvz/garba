@@ -1,0 +1,106 @@
+name: Apply issue 856 Nonstop transport truth
+
+on:
+  push:
+    branches:
+      - ux/issue-856-nonstop-transport-truth
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply bounded Nonstop transport patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('nonstop-browser.js')
+          runtime = runtime_path.read_text()
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return text.replace(old, new, 1)
+
+          mobile_heart = '      .app[data-play-mode="nonstop"] .mobile-heart{visibility:hidden;pointer-events:none}\n'
+          hidden_transport = mobile_heart + '      .app[data-play-mode="nonstop"] #prevButton,.app[data-play-mode="nonstop"] #nextButton,.app[data-play-mode="nonstop"] #miniPrev,.app[data-play-mode="nonstop"] #miniNext{visibility:hidden;pointer-events:none}\n'
+          runtime = replace_once(runtime, mobile_heart, hidden_transport, 'nonstop transport visibility')
+
+          runtime = replace_once(
+              runtime,
+              "        queueButton.title = 'Browse Nonstop Garba';\n        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings');",
+              "        queueButton.title = 'Choose Nonstop recording';\n        queueButton.setAttribute('aria-label', 'Choose Nonstop recording');",
+              'single chooser label',
+          )
+
+          duplicate_transport = """\n    for (const id of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {\n      const control = $(id);\n      if (!control) continue;\n      const previous = id === 'prevButton' || id === 'miniPrev';\n      if (active) {\n        control.dataset.nonstopContext = 'true';\n        control.title = 'Choose another Nonstop recording';\n        control.setAttribute('aria-label', 'Choose another Nonstop recording');\n      } else if (control.dataset.nonstopContext === 'true') {\n        delete control.dataset.nonstopContext;\n        control.removeAttribute('title');\n        control.setAttribute('aria-label', previous ? 'Previous song' : 'Next song');\n      }\n    }\n"""
+          runtime = replace_once(runtime, duplicate_transport, '\n', 'duplicate previous/next chooser relabeling')
+
+          runtime = replace_once(
+              runtime,
+              "target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')",
+              "target.closest('#queueButton')",
+              'chooser click interception',
+          )
+          runtime_path.write_text(runtime)
+
+          validator_path = Path('scripts/lib/validate-nonstop-transport-ux.mjs')
+          validator = validator_path.read_text()
+          validator = replace_once(
+              validator,
+              "  \"queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings')\",",
+              "  \"queueButton.setAttribute('aria-label', 'Choose Nonstop recording')\",\n  '.app[data-play-mode=\\\"nonstop\\\"] #prevButton',",
+              'validator chooser marker',
+          )
+          validator = replace_once(
+              validator,
+              '  "#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext",',
+              '  "target.closest(\'#queueButton\')",',
+              'validator navigation marker',
+          )
+          validator = replace_once(
+              validator,
+              "if (!navigation.includes('openBrowser();')) fail('Nonstop Queue/Previous/Next must open the Nonstop chooser');\nif (navigation.includes(\"announce('Nonstop Garba plays continuously.')\")) fail('Nonstop transport must not stop at a toast instead of offering the chooser');",
+              "if (!navigation.includes('openBrowser();')) fail('Nonstop chooser action must open the Nonstop chooser');\nfor (const retiredControl of ['#prevButton', '#nextButton', '#miniPrev', '#miniNext']) {\n  if (navigation.includes(retiredControl)) fail(`Nonstop previous/next control must not be repurposed as chooser navigation: ${retiredControl}`);\n}\nif (source.includes(\"Choose another Nonstop recording\")) fail('Nonstop previous/next controls must not be relabeled as set chooser actions');\nif (navigation.includes(\"announce('Nonstop Garba plays continuously.')\")) fail('Nonstop transport must not stop at a toast instead of offering the chooser');",
+              'validator navigation assertions',
+          )
+          validator = replace_once(
+              validator,
+              "console.log('✓ Nonstop sets remain one recording and Queue/Previous/Next route to the Nonstop chooser');",
+              "console.log('✓ Nonstop keeps one truthful chooser action and hides misleading previous/next affordances');",
+              'validator success message',
+          )
+          validator_path.write_text(validator)
+          PY
+
+      - name: Validate focused change
+        run: |
+          node --check nonstop-browser.js
+          node scripts/lib/validate-nonstop-transport-ux.mjs
+
+      - name: Remove temporary patch workflow
+        run: rm .github/workflows/apply-issue-856-nonstop-transport.yml
+
+      - name: Commit bounded patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nonstop-browser.js scripts/lib/validate-nonstop-transport-ux.mjs .github/workflows/apply-issue-856-nonstop-transport.yml
+          git diff --cached --check
+          git commit -m 'Fix Nonstop transport affordance truth (#856)'
+          git push origin HEAD:ux/issue-856-nonstop-transport-truth
