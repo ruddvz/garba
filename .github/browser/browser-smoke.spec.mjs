@@ -90,31 +90,41 @@ async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = 
 async function expectPlayerReady(page) {
   await expect(page.locator('#app')).toBeVisible();
   await expect(page.locator('#songTitle')).not.toHaveText('', { timeout: 15_000 });
+  await expect(page.locator('#genreStrip .genre-button[data-genre-bound="true"]').first()).toBeVisible({ timeout: 15_000 });
 }
 
-async function setTitleState(page, title) {
-  await page.evaluate((nextTitle) => {
+async function measureTitleGeometry(page, title) {
+  return page.evaluate((nextTitle) => {
     const trackBlock = document.querySelector('.track-block');
     const songTitle = document.getElementById('songTitle');
     if (!(trackBlock instanceof HTMLElement) || !(songTitle instanceof HTMLElement)) {
       throw new Error('Player title geometry target is missing');
     }
-    songTitle.textContent = nextTitle;
-    trackBlock.classList.toggle('is-long-title', nextTitle.length > 34);
-    trackBlock.classList.toggle('is-very-long-title', nextTitle.length > 52);
-  }, title);
-  await page.waitForTimeout(50);
-}
 
-async function playerAnchors(page) {
-  return page.evaluate(() => {
+    songTitle.textContent = nextTitle;
+    const titleLength = [...nextTitle].length;
+    trackBlock.classList.toggle('is-long-title', titleLength > 28);
+    trackBlock.classList.toggle('is-very-long-title', titleLength > 44);
+
     const anchors = {};
     for (const id of ['playButton', 'progress', 'genreStrip', 'browseButton']) {
       const rect = document.getElementById(id)?.getBoundingClientRect();
       anchors[id] = rect ? { top: rect.top, centerY: rect.top + rect.height / 2 } : null;
     }
-    return anchors;
-  });
+
+    return {
+      title: songTitle.textContent,
+      viewportWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+      anchors,
+    };
+  }, title);
+}
+
+function expectTitleGeometryNoOverflow(metrics, label) {
+  expect(metrics.scrollWidth, `${label} should not overflow the document horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  expect(metrics.bodyScrollWidth, `${label} should not overflow the body horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
 }
 
 function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
@@ -163,17 +173,15 @@ test('short and very long song titles keep transport and discovery controls anch
   const longTitle = 'Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014';
   const shortTitle = 'Ochhav Theme';
 
-  await setTitleState(page, longTitle);
-  await expect(page.locator('#songTitle')).toHaveText(longTitle);
-  await expectNoDocumentOverflow(page);
-  const longTitleAnchors = await playerAnchors(page);
+  const longTitleGeometry = await measureTitleGeometry(page, longTitle);
+  expect(longTitleGeometry.title).toBe(longTitle);
+  expectTitleGeometryNoOverflow(longTitleGeometry, 'very-long title state');
 
-  await setTitleState(page, shortTitle);
-  await expect(page.locator('#songTitle')).toHaveText(shortTitle);
-  await expectNoDocumentOverflow(page);
-  const shortTitleAnchors = await playerAnchors(page);
+  const shortTitleGeometry = await measureTitleGeometry(page, shortTitle);
+  expect(shortTitleGeometry.title).toBe(shortTitle);
+  expectTitleGeometryNoOverflow(shortTitleGeometry, 'short title state');
 
-  expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors);
+  expectStablePlayerAnchors(longTitleGeometry.anchors, shortTitleGeometry.anchors);
   await expectNoRuntimeFailures(page, failures, 'title-geometry player');
 });
 
@@ -185,7 +193,7 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await searchButton.click();
 
   const sheet = page.locator('#songSheet');
-  await expect(sheet).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(sheet).toHaveAttribute('aria-hidden', 'false');
   await expect(page.locator('#searchInput')).toBeVisible();
   await expectInsideViewport(page, '#sheetClose');
   await expectNoDocumentOverflow(page);
