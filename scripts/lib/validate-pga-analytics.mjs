@@ -61,6 +61,13 @@ const listeningEnvelope = {
   },
 };
 
+const unavailableAggregate = {
+  status: 'unavailable',
+  generatedAt: null,
+  dataThrough: null,
+  data: null,
+};
+
 async function validateModels() {
   const analyticsUrl = pathToFileURL(path.join(appRoot, 'analytics.js')).href;
   const {
@@ -169,6 +176,14 @@ async function validateBrowserContract() {
           if (response.url().startsWith(baseUrl) && response.status() >= 400 && !response.url().includes('/api/')) {
             failures.push(`http ${response.status()}: ${response.url()}`);
           }
+        });
+        await page.route('**/api/home', async (route) => {
+          apiRequests.push(route.request().url());
+          await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify(unavailableAggregate) });
+        });
+        await page.route('**/api/live', async (route) => {
+          apiRequests.push(route.request().url());
+          await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify(unavailableAggregate) });
         });
         await page.route('**/api/audience?*', async (route) => {
           apiRequests.push(route.request().url());
