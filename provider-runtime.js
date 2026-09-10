@@ -198,8 +198,19 @@
     document.head.append(script);
   }
 
+  function loadLocalBackgroundRuntime() {
+    if (window.GARBA_LOCAL_BACKGROUND || document.getElementById('garbaLocalBackgroundRuntime')) return;
+    const script = document.createElement('script');
+    script.id = 'garbaLocalBackgroundRuntime';
+    script.src = 'assets/runtime/local-background.js';
+    script.async = false;
+    script.addEventListener('error', () => console.warn('Local background runtime could not load.'));
+    document.head.append(script);
+  }
+
   seedFastBoot();
   loadAtmosphereRuntime();
+  loadLocalBackgroundRuntime();
 
   // Exact mapped songs deliberately fall through to youtube-player-runtime.js so the
   // normal Play/Space controls initialise and control playback in one user action.
