@@ -1,387 +1,505 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { createRequire } from 'node:module';
-import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const {
-  VERSION,
-  INTENT_TYPES,
-  planDirectMediaCommands,
-} = require('../../src/playback/direct-media-command-planner.js');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const plannerPath = path.join(repoRoot, 'src/playback/direct-media-command-planner.js');
+const authorityPath = path.join(repoRoot, 'src/playback/direct-media-authority-state.js');
+const resolverPath = path.join(repoRoot, 'src/playback/direct-source-resolver.js');
+const lifecyclePath = path.join(repoRoot, 'src/playback/playback-lifecycle-policy.js');
+const mediaSessionPath = path.join(repoRoot, 'src/playback/media-session-policy.js');
 
-const SOURCE_A = Object.freeze({
-  kind: 'direct',
-  provider: 'direct',
-  playable: true,
-  backgroundCapable: true,
-  songId: 'song-a',
-  media: Object.freeze({
-    url: 'https://media.playgarba.com/song-a.mp3',
-    mimeType: 'audio/mpeg',
-  }),
-  provenance: Object.freeze({
-    sourceType: 'licensed-direct',
-    rightsHolder: 'Rights holder',
-    licenseName: 'Explicit licence',
-    proofUrl: 'https://rights.example/song-a',
-  }),
-});
+const planner = require(plannerPath);
+const authority = require(authorityPath);
+const resolver = require(resolverPath);
+const lifecycle = require(lifecyclePath);
+const mediaSession = require(mediaSessionPath);
 
-const SOURCE_B = Object.freeze({
-  ...SOURCE_A,
-  songId: 'song-b',
-  media: Object.freeze({
-    url: 'https://media.playgarba.com/song-b.mp3',
-    mimeType: 'audio/mpeg',
-  }),
-  provenance: SOURCE_A.provenance,
-});
+const { VERSION, planDirectMediaCommands } = planner;
+const { createInitialState, reduceDirectMediaAuthorityState } = authority;
+const { resolvePlaybackSource } = resolver;
+const { reconcilePlaybackLifecycle } = lifecycle;
+const { buildMediaSessionPolicy } = mediaSession;
 
-function state(overrides = {}) {
+function canonicalSong(id = 'song-a') {
   return {
-    version: 1,
-    generation: 7,
-    songId: 'song-a',
-    source: SOURCE_A,
-    phase: 'ready',
-    playbackState: 'none',
-    duration: 180,
-    position: 12,
-    seek: { active: false, target: null },
-    error: null,
-    ...overrides,
+    id,
+    title: id === 'song-a' ? 'Song A' : 'Song B',
+    artist: id === 'song-a' ? 'Artist A' : 'Artist B',
+    album: 'Verified album',
+    artwork: [{ src: `https://images.playgarba.example/${id}.webp`, sizes: '512x512', type: 'image/webp' }],
+    playbackProvider: 'youtube',
+    youtubeId: id === 'song-a' ? 'abcdefghijk' : 'zyxwvutsrqp',
+    playbackSourceUrl: `https://www.youtube.com/watch?v=${id === 'song-a' ? 'abcdefghijk' : 'zyxwvutsrqp'}`,
+    playbackSourceType: 'verified-track-source',
+    playbackSearchOnly: false,
   };
 }
 
-function binding(overrides = {}) {
+function directEntry(id = 'song-a') {
   return {
-    songId: 'song-a',
-    generation: 7,
-    sourceUrl: SOURCE_A.media.url,
-    ...overrides,
-  };
-}
-
-function intent(type, overrides = {}) {
-  return { type, songId: 'song-a', generation: 7, ...overrides };
-}
-
-function lifecycle(overrides = {}) {
-  return {
-    version: 1,
-    valid: true,
-    decision: 'preserve-authoritative-state',
-    reason: 'direct-background-capable',
-    songId: 'song-a',
-    generation: 7,
-    stateClaim: 'none',
-    requiresReconciliation: false,
-    allowBackgroundContinuation: true,
-    allowAutomaticResume: false,
-    preserveActiveIdentity: true,
-    ...overrides,
-  };
-}
-
-function sessionPolicy(overrides = {}) {
-  return {
-    version: 1,
-    valid: true,
-    reason: null,
-    songId: 'song-a',
-    provider: 'direct',
-    backgroundCapable: true,
-    playbackState: 'paused',
-    metadata: {
-      title: 'Song A',
-      artist: 'Artist A',
-      album: 'Album A',
-      artwork: [{ src: 'https://playgarba.com/artwork/song-a.webp', sizes: '512x512', type: 'image/webp' }],
+    audioUrl: `https://audio.playgarba.example/${id}/master.m4a`,
+    mimeType: 'audio/mp4',
+    rights: {
+      redistributionAuthorized: true,
+      rightsHolder: 'Example Rights Holder',
+      licenseName: 'Direct streaming permission',
+      proofUrl: `https://rights.playgarba.example/grants/${id}`,
     },
-    position: { duration: 180, position: 12, playbackRate: 1 },
-    seekOffsets: { backwardSeconds: 10, forwardSeconds: 10 },
-    actions: ['play', 'pause', 'seekto'],
+  };
+}
+
+function directResolution(id = 'song-a') {
+  return resolvePlaybackSource({
+    song: canonicalSong(id),
+    directEntry: directEntry(id),
+    directSongId: id,
+  });
+}
+
+function select(id = 'song-a', generation = 1, state = createInitialState()) {
+  return reduceDirectMediaAuthorityState(state, {
+    type: 'select-direct',
+    generation,
+    songId: id,
+    source: directResolution(id),
+  });
+}
+
+function media(state, type, overrides = {}) {
+  return reduceDirectMediaAuthorityState(state, {
+    type,
+    generation: state.generation,
+    songId: state.songId,
+    ...overrides,
+  });
+}
+
+function bindingFor(state, overrides = {}) {
+  return {
+    songId: state.songId,
+    generation: state.generation,
+    sourceUrl: state.source.media.url,
     ...overrides,
   };
 }
 
-function ops(plan) {
-  return plan.commands.map((command) => command.op);
+function intentFor(state, type, overrides = {}) {
+  return {
+    type,
+    songId: state.songId,
+    generation: state.generation,
+    ...overrides,
+  };
 }
 
-function deepFrozen(value) {
-  if (!value || typeof value !== 'object') return true;
-  return Object.isFrozen(value) && Object.values(value).every(deepFrozen);
+function commandTypes(plan) {
+  return plan.commands.map((command) => command.type);
 }
 
-test('exports one stable pure planner contract', () => {
-  assert.equal(VERSION, 1);
-  assert.deepEqual([...INTENT_TYPES].sort(), ['clear', 'pause', 'play', 'reconcile', 'seek', 'sync-source'].sort());
-  assert.equal(typeof planDirectMediaCommands, 'function');
-});
+function playingState(id = 'song-a', generation = 1) {
+  let state = select(id, generation);
+  state = media(state, 'loadedmetadata', { duration: 180, currentTime: 12 });
+  return media(state, 'playing', { currentTime: 12 });
+}
 
-test('selected direct source plus empty binding emits bind then load without implicit Play', () => {
-  const plan = planDirectMediaCommands({ authorityState: state(), intent: intent('sync-source') });
+function directMediaSessionPolicy(state, playbackState = 'playing') {
+  return buildMediaSessionPolicy({
+    resolution: state.source,
+    identity: canonicalSong(state.songId),
+    playback: { state: playbackState },
+    capabilities: {
+      canPlay: true,
+      canPause: true,
+      canStop: true,
+      canSeek: true,
+      canPrevious: true,
+      canNext: true,
+      seekBackwardSeconds: 10,
+      seekForwardSeconds: 10,
+    },
+    position: {
+      duration: Number.isFinite(state.duration) && state.duration > 0 ? state.duration : 180,
+      position: Number.isFinite(state.position) && state.position >= 0 ? state.position : 0,
+      playbackRate: 1,
+    },
+    environment: { foreground: true },
+  });
+}
+
+assert.equal(VERSION, 1);
+
+// 1. Selected direct A + empty binding -> bind then load, never implicit Play.
+{
+  const state = select('song-a', 1);
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: null,
+    intent: intentFor(state, 'sync-source'),
+  });
   assert.equal(plan.valid, true);
-  assert.equal(plan.intent.accepted, true);
-  assert.deepEqual(ops(plan), ['bind-source', 'load-media']);
-  assert.equal(plan.commands[0].sourceUrl, SOURCE_A.media.url);
+  assert.deepEqual(commandTypes(plan), ['bind-source', 'load-media']);
   assert.equal(plan.commands[0].songId, 'song-a');
-  assert.equal(plan.commands[0].generation, 7);
-  assert.equal(ops(plan).includes('request-play'), false);
-});
+  assert.equal(plan.commands[0].generation, 1);
+  assert.equal(plan.commands[0].sourceUrl, 'https://audio.playgarba.example/song-a/master.m4a');
+  assert.equal(plan.commands.some((command) => command.type === 'request-play'), false);
+}
 
-test('matching binding produces no redundant bind or load', () => {
-  const plan = planDirectMediaCommands({ authorityState: state(), binding: binding(), intent: intent('sync-source') });
-  assert.deepEqual(ops(plan), []);
-});
-
-test('stale A binding is paused and cleared before B is bound and loaded', () => {
-  const authority = state({ generation: 8, songId: 'song-b', source: SOURCE_B });
-  const stale = binding();
-  const plan = planDirectMediaCommands({ authorityState: authority, binding: stale, intent: { type: 'sync-source' } });
-  assert.deepEqual(ops(plan), ['request-pause', 'clear-media-source', 'bind-source', 'load-media']);
-  assert.equal(plan.commands[0].songId, 'song-b');
-  assert.equal(plan.commands[0].generation, 8);
-  assert.deepEqual(plan.commands[0].expectedBinding, stale);
-  assert.equal(plan.commands[2].sourceUrl, SOURCE_B.media.url);
-});
-
-test('explicit Play can prepare the active binding then request play but never claims Playing', () => {
-  const plan = planDirectMediaCommands({ authorityState: state(), intent: intent('play') });
-  assert.deepEqual(ops(plan), ['bind-source', 'load-media', 'request-play']);
-  assert.equal(Object.hasOwn(plan, 'playbackState'), false);
-  assert.equal(Object.hasOwn(plan.commands[2], 'stateClaim'), false);
-});
-
-test('Play while already authoritatively playing is a transport no-op', () => {
+// 2. Exact matching binding -> no redundant bind/load.
+{
+  const state = select('song-a', 2);
   const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'playing', playbackState: 'playing' }),
-    binding: binding(),
-    intent: intent('play'),
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'sync-source'),
   });
-  assert.deepEqual(ops(plan), []);
-});
+  assert.deepEqual(commandTypes(plan), []);
+}
 
-test('Pause while playing requests pause against the exact current binding', () => {
+// 3. Stale A binding after selecting B -> pause stale A, replace with B, load B.
+{
+  const a = select('song-a', 1);
+  const staleBinding = bindingFor(a);
+  const b = select('song-b', 2, a);
   const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'playing', playbackState: 'playing' }),
-    binding: binding(),
-    intent: intent('pause'),
+    authority: b,
+    binding: staleBinding,
+    intent: intentFor(b, 'sync-source'),
   });
-  assert.deepEqual(ops(plan), ['request-pause']);
-  assert.deepEqual(plan.commands[0].expectedBinding, binding());
-  assert.equal(plan.commands[0].reason, 'pause-intent');
-});
+  assert.deepEqual(commandTypes(plan), ['request-pause', 'bind-source', 'load-media']);
+  assert.equal(plan.commands[0].songId, 'song-a');
+  assert.equal(plan.commands[0].generation, 1);
+  assert.equal(plan.commands[1].songId, 'song-b');
+  assert.equal(plan.commands[1].generation, 2);
+  assert.equal(plan.commands[1].sourceUrl, b.source.media.url);
+}
 
-test('wrong generation Play intent is rejected without transport effects', () => {
+// 4. Play intent emits only the request. It never claims Playing.
+{
+  const state = select('song-a', 3);
   const plan = planDirectMediaCommands({
-    authorityState: state(),
-    binding: binding(),
-    intent: intent('play', { generation: 6 }),
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'play'),
   });
-  assert.equal(plan.intent.accepted, false);
-  assert.equal(plan.intent.reason, 'intent-identity-mismatch');
-  assert.deepEqual(ops(plan), []);
-});
+  assert.deepEqual(commandTypes(plan), ['request-play']);
+  assert.equal('playbackState' in plan.commands[0], false);
+  assert.equal('phase' in plan.commands[0], false);
+  assert.equal('stateClaim' in plan.commands[0], false);
+}
 
-test('bounded seek requests exact target only with active binding and finite authoritative duration', () => {
+// Play does not silently repair a missing source binding.
+{
+  const state = select('song-a', 4);
   const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'paused', playbackState: 'paused', duration: 180 }),
-    binding: binding(),
-    intent: intent('seek', { targetSeconds: 90.5 }),
+    authority: state,
+    binding: null,
+    intent: intentFor(state, 'play'),
   });
-  assert.deepEqual(ops(plan), ['request-seek']);
-  assert.equal(plan.commands[0].targetSeconds, 90.5);
-});
+  assert.deepEqual(commandTypes(plan), []);
+}
 
-test('malformed or out-of-range seeks fail closed instead of clamping', () => {
-  for (const targetSeconds of [-1, 181, Number.NaN, Number.POSITIVE_INFINITY, '90']) {
-    const plan = planDirectMediaCommands({
-      authorityState: state({ phase: 'paused', playbackState: 'paused', duration: 180 }),
-      binding: binding(),
-      intent: intent('seek', { targetSeconds }),
+// 5. Pause intent while authoritatively playing requests Pause only.
+{
+  const state = playingState('song-a', 5);
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'pause'),
+  });
+  assert.deepEqual(commandTypes(plan), ['request-pause']);
+  assert.equal(plan.commands[0].reason, 'listener-intent');
+}
+
+// 6. Wrong-generation and malformed intents fail closed.
+{
+  const state = select('song-a', 6);
+  const wrong = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: { type: 'play', songId: 'song-a', generation: 5 },
+  });
+  assert.equal(wrong.valid, false);
+  assert.equal(wrong.reason, 'intent-identity-mismatch');
+  assert.deepEqual(commandTypes(wrong), []);
+
+  const malformed = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: { type: 'autoplay', songId: 'song-a', generation: 6 },
+  });
+  assert.equal(malformed.valid, false);
+  assert.equal(malformed.reason, 'intent-invalid');
+  assert.deepEqual(commandTypes(malformed), []);
+}
+
+// Malformed attached-source evidence also fails closed.
+{
+  const state = select('song-a', 7);
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: { songId: 'song-a', generation: 7, sourceUrl: 'javascript:bad' },
+    intent: intentFor(state, 'play'),
+  });
+  assert.equal(plan.valid, false);
+  assert.equal(plan.reason, 'binding-invalid');
+  assert.deepEqual(commandTypes(plan), []);
+}
+
+// 7. Seek requires finite authoritative duration and rejects malformed/out-of-range targets without clamping.
+{
+  const state = playingState('song-a', 8);
+  const good = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'seek', { target: 90 }),
+  });
+  assert.deepEqual(commandTypes(good), ['request-seek']);
+  assert.equal(good.commands[0].target, 90);
+
+  for (const target of [-1, 181, Infinity, NaN, '90']) {
+    const rejected = planDirectMediaCommands({
+      authority: state,
+      binding: bindingFor(state),
+      intent: intentFor(state, 'seek', { target }),
     });
-    assert.equal(plan.intent.accepted, false);
-    assert.equal(plan.intent.reason, 'seek-target-invalid');
-    assert.deepEqual(ops(plan), []);
+    assert.deepEqual(commandTypes(rejected), [], `seek target must fail closed: ${String(target)}`);
   }
-});
 
-test('lifecycle reconciliation blocks Play and requests only an authoritative media read', () => {
-  const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'paused', playbackState: 'paused' }),
-    binding: binding(),
-    intent: intent('play'),
-    lifecycleDecision: lifecycle({
-      decision: 'reconcile-before-claim',
-      requiresReconciliation: true,
-      stateClaim: 'none',
-    }),
+  const noDuration = select('song-a', 9);
+  const noDurationSeek = planDirectMediaCommands({
+    authority: noDuration,
+    binding: bindingFor(noDuration),
+    intent: intentFor(noDuration, 'seek', { target: 10 }),
   });
-  assert.equal(plan.intent.accepted, false);
-  assert.equal(plan.intent.reason, 'reconciliation-required-before-play');
-  assert.deepEqual(ops(plan), ['read-media-state']);
-  assert.equal(ops(plan).includes('request-play'), false);
-});
+  assert.deepEqual(commandTypes(noDurationSeek), []);
+}
 
-test('preserve-authoritative-state lifecycle output never manufactures transport', () => {
-  const plan = planDirectMediaCommands({
-    authorityState: state(),
-    binding: binding(),
-    intent: intent('reconcile'),
-    lifecycleDecision: lifecycle({ decision: 'ignore-stale-evidence', requiresReconciliation: false }),
+// 8. Lifecycle reconcile-before-claim requests a media-state read only, never resume.
+{
+  const state = playingState('song-a', 10);
+  const decision = reconcilePlaybackLifecycle({
+    active: { songId: state.songId, generation: state.generation },
+    resolution: state.source,
+    playback: { state: 'unknown', evidence: 'stale', generation: state.generation },
+    lifecycle: { event: 'pageshow', generation: state.generation },
   });
-  assert.deepEqual(ops(plan), []);
-});
+  assert.equal(decision.decision, 'reconcile-before-claim');
 
-test('stale lifecycle generation cannot trigger Play and clears supplied Media Session presentation', () => {
   const plan = planDirectMediaCommands({
-    authorityState: state(),
-    binding: binding(),
-    intent: intent('play'),
-    lifecycleDecision: lifecycle({ generation: 6 }),
-    mediaSessionPolicy: sessionPolicy(),
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'reconcile'),
+    lifecycleDecision: decision,
   });
-  assert.equal(plan.intent.accepted, false);
-  assert.equal(plan.intent.reason, 'lifecycle-evidence-not-current');
-  assert.deepEqual(ops(plan), ['clear-media-session']);
-});
+  assert.deepEqual(commandTypes(plan), ['read-media-state']);
+  assert.equal(plan.commands.some((command) => command.type === 'request-play'), false);
+}
 
-test('idle authority with old binding requests guarded pause and clear only', () => {
-  const idle = {
+// 9. Preserve-authoritative-state lifecycle output creates no synthetic transport.
+{
+  const state = playingState('song-a', 11);
+  const decision = reconcilePlaybackLifecycle({
+    active: { songId: state.songId, generation: state.generation },
+    resolution: state.source,
+    playback: { state: 'playing', evidence: 'fresh', generation: state.generation },
+    lifecycle: { event: 'pageshow', generation: state.generation },
+  });
+  assert.equal(decision.decision, 'preserve-authoritative-state');
+
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'reconcile'),
+    lifecycleDecision: decision,
+  });
+  assert.deepEqual(commandTypes(plan), []);
+}
+
+// Lifecycle decisions for another generation are ignored.
+{
+  const state = playingState('song-a', 12);
+  const staleDecision = {
     version: 1,
-    generation: 9,
-    songId: null,
-    source: null,
-    phase: 'idle',
+    valid: true,
+    decision: 'reconcile-before-claim',
+    songId: 'song-a',
+    generation: 11,
+    requiresReconciliation: true,
+  };
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'reconcile'),
+    lifecycleDecision: staleDecision,
+  });
+  assert.deepEqual(commandTypes(plan), []);
+}
+
+// 10. Idle/reset authority plus an old direct binding may pause and clear that stale binding.
+{
+  const old = select('song-a', 13);
+  const oldBinding = bindingFor(old);
+  const idle = reduceDirectMediaAuthorityState(old, { type: 'reset', generation: 14 });
+  const plan = planDirectMediaCommands({
+    authority: idle,
+    binding: oldBinding,
+    intent: { type: 'clear' },
+  });
+  assert.equal(plan.valid, true);
+  assert.equal(plan.songId, null);
+  assert.equal(plan.generation, 14);
+  assert.deepEqual(commandTypes(plan), ['request-pause', 'clear-media-source']);
+  assert.equal(plan.commands[0].songId, 'song-a');
+  assert.equal(plan.commands[1].sourceUrl, oldBinding.sourceUrl);
+}
+
+// 11. Matching valid direct Media Session policy is passed through as one sync command.
+{
+  const state = playingState('song-a', 15);
+  const policy = directMediaSessionPolicy(state, 'playing');
+  assert.equal(policy.valid, true);
+  assert.equal(policy.provider, 'direct');
+
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'sync-source'),
+    mediaSessionPolicy: policy,
+  });
+  assert.deepEqual(commandTypes(plan), ['sync-media-session']);
+  assert.deepEqual(plan.commands[0].policy, policy);
+  assert.notEqual(plan.commands[0].policy, policy, 'planner must clone caller policy before freezing its output');
+}
+
+// 12. Mismatched, invalid and terminal Media Session presentation clears stale session state.
+{
+  const state = playingState('song-a', 16);
+  const valid = directMediaSessionPolicy(state, 'playing');
+  const mismatched = { ...valid, songId: 'song-b' };
+
+  const mismatchPlan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'sync-source'),
+    mediaSessionPolicy: mismatched,
+  });
+  assert.deepEqual(commandTypes(mismatchPlan), ['clear-media-session']);
+
+  const terminalPolicy = buildMediaSessionPolicy({
+    resolution: state.source,
+    identity: canonicalSong(state.songId),
+    playback: { state: 'ended' },
+    capabilities: {},
+    position: null,
+    environment: { foreground: true },
+  });
+  assert.equal(terminalPolicy.valid, false);
+  const terminalPlan = planDirectMediaCommands({
+    authority: state,
+    binding: bindingFor(state),
+    intent: intentFor(state, 'sync-source'),
+    mediaSessionPolicy: terminalPolicy,
+  });
+  assert.deepEqual(commandTypes(terminalPlan), ['clear-media-session']);
+}
+
+// Terminal authority cannot request Play even if the old media binding still matches.
+{
+  let state = playingState('song-a', 17);
+  const binding = bindingFor(state);
+  state = media(state, 'ended', { currentTime: 180 });
+  const plan = planDirectMediaCommands({
+    authority: state,
+    binding,
+    intent: intentFor(state, 'play'),
+  });
+  assert.deepEqual(commandTypes(plan), []);
+}
+
+// 13. YouTube/unavailable/non-direct authority input emits zero direct-media transport commands.
+{
+  const youtube = resolvePlaybackSource({ song: canonicalSong('song-a') });
+  assert.equal(youtube.kind, 'youtube-foreground');
+  const fakeAuthority = {
+    version: 1,
+    generation: 18,
+    songId: 'song-a',
+    source: youtube,
+    phase: 'selected',
     playbackState: 'none',
     duration: null,
-    position: null,
-    seek: { active: false, target: null },
-    error: null,
   };
-  const plan = planDirectMediaCommands({ authorityState: idle, binding: binding(), intent: { type: 'clear' } });
-  assert.deepEqual(ops(plan), ['request-pause', 'clear-media-source', 'clear-media-session']);
-  assert.equal(ops(plan).includes('bind-source'), false);
-  assert.equal(ops(plan).includes('request-play'), false);
-});
-
-test('matching valid direct Media Session policy is passed through as one immutable sync command', () => {
-  const policy = sessionPolicy();
   const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'paused', playbackState: 'paused' }),
-    binding: binding(),
-    intent: intent('sync-source'),
+    authority: fakeAuthority,
+    binding: null,
+    intent: { type: 'play', songId: 'song-a', generation: 18 },
+  });
+  assert.equal(plan.valid, false);
+  assert.equal(plan.reason, 'authority-not-direct');
+  assert.deepEqual(commandTypes(plan), []);
+
+  const unavailable = {
+    ...fakeAuthority,
+    source: { version: 1, kind: 'unavailable', playable: false, songId: 'song-a' },
+  };
+  const unavailablePlan = planDirectMediaCommands({
+    authority: unavailable,
+    binding: null,
+    intent: { type: 'play', songId: 'song-a', generation: 18 },
+  });
+  assert.deepEqual(commandTypes(unavailablePlan), []);
+}
+
+// 14. Identical inputs are deterministic, inputs stay unchanged, and the output is deeply frozen.
+{
+  const state = playingState('song-a', 19);
+  const binding = bindingFor(state);
+  const policy = directMediaSessionPolicy(state, 'playing');
+  const input = {
+    authority: state,
+    binding,
+    intent: intentFor(state, 'sync-source'),
     mediaSessionPolicy: policy,
-  });
-  assert.deepEqual(ops(plan), ['sync-media-session']);
-  assert.equal(plan.commands[0].policy.songId, 'song-a');
-  assert.deepEqual(plan.commands[0].policy.actions, ['play', 'pause', 'seekto']);
-  assert.notEqual(plan.commands[0].policy, policy);
-});
-
-test('mismatched or invalid Media Session policy clears stale presentation rather than syncing it', () => {
-  for (const policy of [
-    sessionPolicy({ songId: 'song-b' }),
-    sessionPolicy({ provider: 'youtube', backgroundCapable: false }),
-    sessionPolicy({ valid: false, reason: 'playback-error' }),
-  ]) {
-    const plan = planDirectMediaCommands({
-      authorityState: state(),
-      binding: binding(),
-      intent: intent('sync-source'),
-      mediaSessionPolicy: policy,
-    });
-    assert.deepEqual(ops(plan), ['clear-media-session']);
-  }
-});
-
-test('reconciliation-required lifecycle prevents stale Playing Media Session policy from surviving', () => {
-  const plan = planDirectMediaCommands({
-    authorityState: state({ phase: 'buffering', playbackState: 'none' }),
-    binding: binding(),
-    intent: intent('reconcile'),
-    lifecycleDecision: lifecycle({ decision: 'reconcile-before-claim', requiresReconciliation: true }),
-    mediaSessionPolicy: sessionPolicy({ playbackState: 'playing' }),
-  });
-  assert.deepEqual(ops(plan), ['read-media-state', 'clear-media-session']);
-  assert.equal(plan.commands[1].reason, 'media-session-reconciliation-required');
-});
-
-test('non-direct authority emits no direct transport commands', () => {
-  const youtube = state({
-    source: {
-      kind: 'youtube-foreground',
-      provider: 'youtube',
-      playable: true,
-      backgroundCapable: false,
-      songId: 'song-a',
-    },
-  });
-  const plan = planDirectMediaCommands({ authorityState: youtube, intent: intent('play') });
-  assert.equal(plan.intent.accepted, false);
-  assert.equal(plan.intent.reason, 'no-active-direct-source');
-  assert.deepEqual(ops(plan), []);
-});
-
-test('malformed binding fails closed instead of issuing unguarded transport', () => {
-  const plan = planDirectMediaCommands({
-    authorityState: state(),
-    binding: { songId: 'song-a', generation: 7, sourceUrl: 'javascript:bad' },
-    intent: intent('play'),
-  });
-  assert.equal(plan.intent.accepted, false);
-  assert.equal(plan.intent.reason, 'binding-invalid');
-  assert.deepEqual(ops(plan), []);
-});
-
-test('output is deterministic, deeply frozen and inputs are not mutated', () => {
-  const authorityState = state({ phase: 'paused', playbackState: 'paused' });
-  const mediaBinding = binding();
-  const requestedIntent = intent('play');
-  const life = lifecycle();
-  const policy = sessionPolicy();
-  const before = JSON.stringify({ authorityState, mediaBinding, requestedIntent, life, policy });
-
-  const first = planDirectMediaCommands({
-    authorityState,
-    binding: mediaBinding,
-    intent: requestedIntent,
-    lifecycleDecision: life,
-    mediaSessionPolicy: policy,
-  });
-  const second = planDirectMediaCommands({
-    authorityState,
-    binding: mediaBinding,
-    intent: requestedIntent,
-    lifecycleDecision: life,
-    mediaSessionPolicy: policy,
-  });
+  };
+  const snapshot = JSON.stringify(input);
+  const first = planDirectMediaCommands(input);
+  const second = planDirectMediaCommands(input);
 
   assert.deepEqual(first, second);
-  assert.equal(deepFrozen(first), true);
-  assert.equal(JSON.stringify({ authorityState, mediaBinding, requestedIntent, life, policy }), before);
-});
+  assert.equal(JSON.stringify(input), snapshot, 'planner must not mutate caller inputs');
+  assert.equal(Object.isFrozen(first), true);
+  assert.equal(Object.isFrozen(first.commands), true);
+  assert.equal(Object.isFrozen(first.commands[0]), true);
+  assert.equal(Object.isFrozen(first.commands[0].policy), true);
+  assert.equal(Object.isFrozen(first.commands[0].policy.metadata), true);
+  assert.equal(Object.isFrozen(first.commands[0].policy.metadata.artwork), true);
+}
 
-test('planner source contains no browser/media/network/storage/timer execution', () => {
-  const source = fs.readFileSync(new URL('../../src/playback/direct-media-command-planner.js', import.meta.url), 'utf8');
+// The planner is an authority-to-command transformation only. It performs no browser/media/network side effects.
+{
+  const source = await fs.readFile(plannerPath, 'utf8');
   for (const forbidden of [
-    'navigator.mediaSession',
-    'document.',
-    'window.',
-    '.play()',
-    '.pause()',
-    '.load()',
     'fetch(',
     'XMLHttpRequest',
+    'sendBeacon',
+    'document.',
+    'navigator.mediaSession',
     'localStorage',
     'sessionStorage',
     'indexedDB',
     'setTimeout(',
     'setInterval(',
+    'HTMLMediaElement',
+    'new Audio(',
+    '.play()',
+    '.pause()',
   ]) {
-    assert.equal(source.includes(forbidden), false, `planner must not execute ${forbidden}`);
+    assert.equal(source.includes(forbidden), false, `command planner must stay side-effect free: ${forbidden}`);
   }
-});
+}
+
+console.log('Direct-media command planner tests passed.');

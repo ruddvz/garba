@@ -1,4 +1,4 @@
-name: Validate direct-media command planner
+name: Direct media command planner validate
 
 on:
   pull_request:
@@ -6,36 +6,38 @@ on:
       - 'src/playback/direct-media-command-planner.js'
       - 'scripts/lib/test-direct-media-command-planner.mjs'
       - '.github/workflows/direct-media-command-planner-validate.yml'
+      - 'src/playback/direct-media-authority-state.js'
+      - 'src/playback/media-session-policy.js'
+      - 'src/playback/playback-lifecycle-policy.js'
+      - 'src/playback/direct-source-resolver.js'
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'src/playback/direct-media-command-planner.js'
       - 'scripts/lib/test-direct-media-command-planner.mjs'
       - '.github/workflows/direct-media-command-planner-validate.yml'
+      - 'src/playback/direct-media-authority-state.js'
+      - 'src/playback/media-session-policy.js'
+      - 'src/playback/playback-lifecycle-policy.js'
+      - 'src/playback/direct-source-resolver.js'
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: direct-media-command-planner-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Check out repository
         uses: actions/checkout@v6
-
-      - name: Use Node.js
+      - name: Use Node.js 22
         uses: actions/setup-node@v5
         with:
-          node-version: '22'
-
-      - name: Syntax-check planner
+          node-version: 22
+      - name: Check command planner syntax
         run: node --check src/playback/direct-media-command-planner.js
-
-      - name: Run deterministic planner fixtures
+      - name: Test direct-media command planner
         run: node scripts/lib/test-direct-media-command-planner.mjs

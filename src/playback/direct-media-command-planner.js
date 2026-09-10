@@ -1,521 +1,318 @@
-'use strict';
+(function attachDirectMediaCommandPlanner(root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root) root.GARBA_DIRECT_MEDIA_COMMAND_PLANNER = Object.freeze(api);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createDirectMediaCommandPlanner() {
+  'use strict';
 
-const VERSION = 1;
-const AUTHORITY_VERSION = 1;
-const LIFECYCLE_VERSION = 1;
-const MEDIA_SESSION_VERSION = 1;
-const INTENT_TYPES = new Set(['sync-source', 'play', 'pause', 'seek', 'reconcile', 'clear']);
-const PLAYABLE_PHASES = new Set(['selected', 'loading', 'ready', 'paused', 'buffering']);
-const SEEKABLE_PHASES = new Set(['ready', 'playing', 'paused', 'buffering']);
+  const VERSION = 1;
+  const INTENTS = new Set(['sync-source', 'play', 'pause', 'seek', 'reconcile', 'clear']);
+  const BINDABLE_PHASES = new Set(['selected', 'loading', 'ready', 'playing', 'paused', 'buffering']);
+  const TERMINAL_PHASES = new Set(['ended', 'error', 'unavailable']);
 
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function nonEmptyString(value) {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function validGeneration(value) {
-  return Number.isSafeInteger(value) && value >= 0;
-}
-
-function parseHttpsUrl(value) {
-  if (!nonEmptyString(value)) return null;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'https:' ? parsed.href : null;
-  } catch {
-    return null;
+  function isPlainObject(value) {
+    return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
   }
-}
 
-function deepFreeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  for (const child of Object.values(value)) deepFreeze(child);
-  return Object.freeze(value);
-}
+  function nonEmptyString(value) {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
 
-function cloneJsonValue(value) {
-  if (Array.isArray(value)) return value.map(cloneJsonValue);
-  if (isPlainObject(value)) {
+  function validGeneration(value) {
+    return Number.isSafeInteger(value) && value >= 0;
+  }
+
+  function finitePositive(value) {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  function finiteNonNegative(value) {
+    return Number.isFinite(value) && value >= 0;
+  }
+
+  function normaliseHttpsUrl(value) {
+    if (!nonEmptyString(value)) return null;
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'https:' ? parsed.href : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function cloneValue(value) {
+    if (Array.isArray(value)) return value.map(cloneValue);
+    if (!isPlainObject(value)) return value;
     const copy = {};
-    for (const [key, child] of Object.entries(value)) copy[key] = cloneJsonValue(child);
+    for (const [key, entry] of Object.entries(value)) copy[key] = cloneValue(entry);
     return copy;
   }
-  return value;
-}
 
-function authorityView(state) {
-  if (!isPlainObject(state) || state.version !== AUTHORITY_VERSION || !validGeneration(state.generation)) {
-    return { kind: 'invalid', reason: 'authority-invalid' };
+  function deepFreeze(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+    for (const entry of Object.values(value)) deepFreeze(entry);
+    return Object.freeze(value);
   }
 
-  const idle = state.songId === null
-    && state.source === null
-    && state.phase === 'idle'
-    && state.playbackState === 'none';
-  if (idle) {
-    return {
-      kind: 'idle',
-      songId: null,
-      generation: state.generation,
-      phase: 'idle',
-      playbackState: 'none',
-      duration: null,
-    };
+  function makeCommand(type, fields = {}) {
+    return { type, ...fields };
   }
 
-  if (!nonEmptyString(state.songId) || !isPlainObject(state.source)) {
-    return { kind: 'invalid', reason: 'authority-identity-invalid' };
-  }
-
-  const songId = state.songId.trim();
-  const source = state.source;
-  const mediaUrl = isPlainObject(source.media) ? parseHttpsUrl(source.media.url) : null;
-  const mimeType = isPlainObject(source.media) && nonEmptyString(source.media.mimeType)
-    ? source.media.mimeType.trim().toLowerCase()
-    : '';
-  const direct = source.kind === 'direct'
-    && source.provider === 'direct'
-    && source.playable === true
-    && source.backgroundCapable === true
-    && source.songId === songId
-    && mediaUrl
-    && mimeType;
-
-  if (!direct) {
-    return {
-      kind: 'non-direct',
-      reason: 'authority-source-not-direct',
+  function makePlan({ valid, reason = null, intent = null, songId = null, generation = null, commands = [] }) {
+    return deepFreeze({
+      version: VERSION,
+      valid,
+      reason,
+      intent,
       songId,
-      generation: state.generation,
-      phase: nonEmptyString(state.phase) ? state.phase.trim() : 'unknown',
-      playbackState: nonEmptyString(state.playbackState) ? state.playbackState.trim() : 'none',
+      generation,
+      commands,
+    });
+  }
+
+  function directAuthority(authority) {
+    if (!isPlainObject(authority) || authority.version !== 1) return null;
+    if (!nonEmptyString(authority.songId) || !validGeneration(authority.generation)) return null;
+    if (!isPlainObject(authority.source)) return null;
+
+    const source = authority.source;
+    if (source.kind !== 'direct'
+      || source.provider !== 'direct'
+      || source.playable !== true
+      || source.backgroundCapable !== true
+      || String(source.songId || '').trim() !== authority.songId.trim()) return null;
+
+    const sourceUrl = normaliseHttpsUrl(source.media && source.media.url);
+    const mimeType = String(source.media && source.media.mimeType || '').trim().toLowerCase();
+    if (!sourceUrl || !mimeType) return null;
+
+    return {
+      songId: authority.songId.trim(),
+      generation: authority.generation,
+      sourceUrl,
+      mimeType,
+      phase: String(authority.phase || '').trim(),
+      playbackState: String(authority.playbackState || '').trim(),
+      duration: authority.duration,
     };
   }
 
-  const duration = Number.isFinite(state.duration) && state.duration > 0 ? state.duration : null;
-  return {
-    kind: 'direct',
-    songId,
-    generation: state.generation,
-    phase: nonEmptyString(state.phase) ? state.phase.trim() : 'unknown',
-    playbackState: nonEmptyString(state.playbackState) ? state.playbackState.trim() : 'none',
-    duration,
-    media: { url: mediaUrl, mimeType },
-  };
-}
-
-function bindingView(binding) {
-  if (binding === null || binding === undefined) return { kind: 'empty' };
-  if (!isPlainObject(binding)) return { kind: 'invalid' };
-
-  const hasIdentity = binding.songId !== undefined
-    || binding.generation !== undefined
-    || binding.sourceUrl !== undefined;
-  if (!hasIdentity) return { kind: 'empty' };
-
-  const sourceUrl = parseHttpsUrl(binding.sourceUrl);
-  if (!nonEmptyString(binding.songId) || !validGeneration(binding.generation) || !sourceUrl) {
-    return { kind: 'invalid' };
+  function idleAuthority(authority) {
+    return Boolean(
+      isPlainObject(authority)
+      && authority.version === 1
+      && validGeneration(authority.generation)
+      && authority.songId === null
+      && authority.source === null
+      && authority.phase === 'idle'
+    );
   }
-  return {
-    kind: 'bound',
-    songId: binding.songId.trim(),
-    generation: binding.generation,
-    sourceUrl,
-  };
-}
 
-function sameBinding(authority, binding) {
-  return authority.kind === 'direct'
-    && binding.kind === 'bound'
-    && binding.songId === authority.songId
-    && binding.generation === authority.generation
-    && binding.sourceUrl === authority.media.url;
-}
+  function normaliseBinding(binding) {
+    if (binding === null || binding === undefined) return { empty: true, valid: true };
+    if (!isPlainObject(binding)) return { empty: false, valid: false };
 
-function intentView(intent) {
-  if (!isPlainObject(intent) || !nonEmptyString(intent.type)) {
-    return { valid: false, type: null, reason: 'intent-invalid' };
-  }
-  const type = intent.type.trim().toLowerCase();
-  if (!INTENT_TYPES.has(type)) return { valid: false, type, reason: 'intent-unsupported' };
-  return { valid: true, type, raw: intent };
-}
-
-function intentMatchesAuthority(intent, authority) {
-  if (authority.kind !== 'direct') return false;
-  return nonEmptyString(intent.songId)
-    && intent.songId.trim() === authority.songId
-    && intent.generation === authority.generation;
-}
-
-function lifecycleView(decision, authority) {
-  if (decision === null || decision === undefined) return { kind: 'absent' };
-  if (!isPlainObject(decision) || decision.version !== LIFECYCLE_VERSION || decision.valid !== true) {
-    return { kind: 'invalid' };
-  }
-  if (authority.kind !== 'direct') return { kind: 'mismatch' };
-  if (decision.songId !== authority.songId || decision.generation !== authority.generation) {
-    return { kind: 'mismatch' };
-  }
-  return {
-    kind: 'current',
-    decision: nonEmptyString(decision.decision) ? decision.decision.trim() : '',
-    requiresReconciliation: decision.requiresReconciliation === true,
-    stateClaim: decision.stateClaim === 'playing' || decision.stateClaim === 'paused'
-      ? decision.stateClaim
-      : 'none',
-  };
-}
-
-function cloneMediaSessionPolicy(policy) {
-  const copy = {
-    version: policy.version,
-    valid: true,
-    reason: policy.reason ?? null,
-    songId: policy.songId,
-    provider: policy.provider,
-    backgroundCapable: policy.backgroundCapable === true,
-    playbackState: policy.playbackState,
-    metadata: policy.metadata ? cloneJsonValue(policy.metadata) : null,
-    position: policy.position ? cloneJsonValue(policy.position) : null,
-    seekOffsets: policy.seekOffsets ? cloneJsonValue(policy.seekOffsets) : null,
-    actions: Array.isArray(policy.actions) ? policy.actions.map((action) => String(action)) : [],
-  };
-  return deepFreeze(copy);
-}
-
-function mediaSessionView(policy, authority, lifecycle) {
-  if (policy === null || policy === undefined) return { kind: 'absent' };
-  if (!isPlainObject(policy) || policy.version !== MEDIA_SESSION_VERSION || policy.valid !== true) {
-    return { kind: 'clear', reason: 'media-session-policy-invalid' };
-  }
-  if (authority.kind !== 'direct'
-    || policy.songId !== authority.songId
-    || policy.provider !== 'direct'
-    || policy.backgroundCapable !== true) {
-    return { kind: 'clear', reason: 'media-session-policy-mismatch' };
-  }
-  if (lifecycle.kind === 'current' && lifecycle.requiresReconciliation) {
-    return { kind: 'clear', reason: 'media-session-reconciliation-required' };
-  }
-  return { kind: 'sync', policy: cloneMediaSessionPolicy(policy) };
-}
-
-function expectedBinding(binding) {
-  if (binding.kind !== 'bound') return null;
-  return deepFreeze({
-    songId: binding.songId,
-    generation: binding.generation,
-    sourceUrl: binding.sourceUrl,
-  });
-}
-
-function command(op, authority, extra = {}) {
-  const base = {
-    op,
-    songId: authority && nonEmptyString(authority.songId) ? authority.songId : null,
-    generation: authority && validGeneration(authority.generation) ? authority.generation : null,
-    ...extra,
-  };
-  return deepFreeze(base);
-}
-
-function clearBoundMedia(commands, authority, binding) {
-  if (binding.kind !== 'bound') return;
-  const guard = expectedBinding(binding);
-  commands.push(command('request-pause', authority, { expectedBinding: guard, reason: 'replace-stale-binding' }));
-  commands.push(command('clear-media-source', authority, { expectedBinding: guard }));
-}
-
-function bindActiveSource(commands, authority) {
-  commands.push(command('bind-source', authority, {
-    sourceUrl: authority.media.url,
-    mimeType: authority.media.mimeType,
-  }));
-  commands.push(command('load-media', authority));
-}
-
-function ensureActiveBinding(commands, authority, binding) {
-  if (sameBinding(authority, binding)) return;
-  clearBoundMedia(commands, authority, binding);
-  bindActiveSource(commands, authority);
-}
-
-function pushMediaSession(commands, authority, mediaSession, clearReason = null) {
-  if (clearReason) {
-    commands.push(command('clear-media-session', authority, { reason: clearReason }));
-    return;
-  }
-  if (mediaSession.kind === 'sync') {
-    commands.push(command('sync-media-session', authority, { policy: mediaSession.policy }));
-  } else if (mediaSession.kind === 'clear') {
-    commands.push(command('clear-media-session', authority, { reason: mediaSession.reason }));
-  }
-}
-
-function result({ valid, reason = null, authority, intent, intentAccepted, intentReason = null, commands }) {
-  return deepFreeze({
-    version: VERSION,
-    valid,
-    reason,
-    songId: authority && nonEmptyString(authority.songId) ? authority.songId : null,
-    generation: authority && validGeneration(authority.generation) ? authority.generation : null,
-    intent: deepFreeze({
-      type: intent && intent.type ? intent.type : null,
-      accepted: intentAccepted === true,
-      reason: intentReason,
-    }),
-    commands,
-  });
-}
-
-function planDirectMediaCommands({
-  authorityState,
-  binding = null,
-  intent,
-  lifecycleDecision = null,
-  mediaSessionPolicy = null,
-} = {}) {
-  const authority = authorityView(authorityState);
-  const bindingState = bindingView(binding);
-  const requested = intentView(intent);
-  const commands = [];
-
-  if (authority.kind === 'invalid') {
-    if (mediaSessionPolicy !== null && mediaSessionPolicy !== undefined) {
-      commands.push(command('clear-media-session', null, { reason: 'authority-invalid' }));
+    const songId = nonEmptyString(binding.songId) ? binding.songId.trim() : '';
+    const generation = binding.generation;
+    const sourceUrl = normaliseHttpsUrl(binding.sourceUrl);
+    if (!songId || !validGeneration(generation) || !sourceUrl) {
+      return { empty: false, valid: false };
     }
-    return result({
-      valid: false,
-      reason: authority.reason,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: requested.reason || 'authority-invalid',
-      commands,
-    });
+    return { empty: false, valid: true, songId, generation, sourceUrl };
   }
 
-  if (!requested.valid) {
-    const lifecycle = lifecycleView(lifecycleDecision, authority);
-    const mediaSession = mediaSessionView(mediaSessionPolicy, authority, lifecycle);
-    pushMediaSession(commands, authority, mediaSession);
-    return result({
-      valid: true,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: requested.reason,
-      commands,
-    });
+  function bindingMatches(active, binding) {
+    return Boolean(
+      binding.valid
+      && !binding.empty
+      && binding.songId === active.songId
+      && binding.generation === active.generation
+      && binding.sourceUrl === active.sourceUrl
+    );
   }
 
-  if (bindingState.kind === 'invalid' && requested.type !== 'clear') {
-    const lifecycle = lifecycleView(lifecycleDecision, authority);
-    const mediaSession = mediaSessionView(mediaSessionPolicy, authority, lifecycle);
-    pushMediaSession(commands, authority, mediaSession);
-    return result({
-      valid: true,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: 'binding-invalid',
-      commands,
-    });
+  function normaliseIntent(intent) {
+    if (!isPlainObject(intent) || !INTENTS.has(intent.type)) return null;
+    const normalised = { type: intent.type };
+    if (intent.songId !== undefined) normalised.songId = String(intent.songId || '').trim();
+    if (intent.generation !== undefined) normalised.generation = intent.generation;
+    if (intent.target !== undefined) normalised.target = intent.target;
+    return normalised;
   }
 
-  const lifecycle = lifecycleView(lifecycleDecision, authority);
-  const mediaSession = mediaSessionView(mediaSessionPolicy, authority, lifecycle);
-
-  if (authority.kind !== 'direct') {
-    if (requested.type === 'clear' || requested.type === 'sync-source') {
-      clearBoundMedia(commands, authority, bindingState);
-      if (requested.type === 'clear' || mediaSessionPolicy !== null) {
-        pushMediaSession(commands, authority, mediaSession, 'no-active-direct-source');
-      }
-      return result({
-        valid: true,
-        authority,
-        intent: requested,
-        intentAccepted: true,
-        commands,
-      });
-    }
-    pushMediaSession(commands, authority, mediaSession);
-    return result({
-      valid: true,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: 'no-active-direct-source',
-      commands,
-    });
+  function intentMatchesActive(intent, active) {
+    return nonEmptyString(intent.songId)
+      && validGeneration(intent.generation)
+      && intent.songId === active.songId
+      && intent.generation === active.generation;
   }
 
-  if (requested.type !== 'sync-source' && requested.type !== 'clear' && !intentMatchesAuthority(requested.raw, authority)) {
-    pushMediaSession(commands, authority, mediaSession);
-    return result({
-      valid: true,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: 'intent-identity-mismatch',
-      commands,
-    });
+  function activeIdentity(active) {
+    return { songId: active.songId, generation: active.generation };
   }
 
-  if (lifecycle.kind === 'mismatch' || lifecycle.kind === 'invalid') {
-    pushMediaSession(commands, authority, mediaSession, 'lifecycle-evidence-not-current');
-    return result({
-      valid: true,
-      authority,
-      intent: requested,
-      intentAccepted: false,
-      intentReason: 'lifecycle-evidence-not-current',
-      commands,
-    });
+  function bindingIdentity(binding) {
+    return { songId: binding.songId, generation: binding.generation };
   }
 
-  switch (requested.type) {
-    case 'sync-source':
-      ensureActiveBinding(commands, authority, bindingState);
-      break;
+  function sourceSyncCommands(active, binding) {
+    if (!BINDABLE_PHASES.has(active.phase)) return [];
+    const identity = activeIdentity(active);
+    if (bindingMatches(active, binding)) return [];
 
-    case 'play':
-      if (lifecycle.kind === 'current' && lifecycle.requiresReconciliation) {
-        commands.push(command('read-media-state', authority));
-        pushMediaSession(commands, authority, mediaSession);
-        return result({
-          valid: true,
-          authority,
-          intent: requested,
-          intentAccepted: false,
-          intentReason: 'reconciliation-required-before-play',
-          commands,
-        });
-      }
-      if (authority.playbackState === 'playing' || authority.phase === 'playing') break;
-      if (!PLAYABLE_PHASES.has(authority.phase)) {
-        pushMediaSession(commands, authority, mediaSession);
-        return result({
-          valid: true,
-          authority,
-          intent: requested,
-          intentAccepted: false,
-          intentReason: 'authority-not-playable',
-          commands,
-        });
-      }
-      ensureActiveBinding(commands, authority, bindingState);
-      commands.push(command('request-play', authority, { expectedBinding: expectedBinding({
-        kind: 'bound', songId: authority.songId, generation: authority.generation, sourceUrl: authority.media.url,
-      }) }));
-      break;
-
-    case 'pause':
-      if (bindingState.kind === 'bound') {
-        const meaningful = authority.playbackState === 'playing' || authority.phase === 'playing' || authority.phase === 'buffering';
-        if (meaningful || !sameBinding(authority, bindingState)) {
-          commands.push(command('request-pause', authority, {
-            expectedBinding: expectedBinding(bindingState),
-            reason: sameBinding(authority, bindingState) ? 'pause-intent' : 'stale-binding',
-          }));
-        }
-      }
-      break;
-
-    case 'seek': {
-      if (lifecycle.kind === 'current' && lifecycle.requiresReconciliation) {
-        commands.push(command('read-media-state', authority));
-        pushMediaSession(commands, authority, mediaSession);
-        return result({
-          valid: true,
-          authority,
-          intent: requested,
-          intentAccepted: false,
-          intentReason: 'reconciliation-required-before-seek',
-          commands,
-        });
-      }
-      const target = requested.raw.targetSeconds;
-      if (!sameBinding(authority, bindingState)) {
-        pushMediaSession(commands, authority, mediaSession);
-        return result({
-          valid: true,
-          authority,
-          intent: requested,
-          intentAccepted: false,
-          intentReason: 'binding-not-active',
-          commands,
-        });
-      }
-      if (!SEEKABLE_PHASES.has(authority.phase)
-        || authority.duration === null
-        || !Number.isFinite(target)
-        || target < 0
-        || target > authority.duration) {
-        pushMediaSession(commands, authority, mediaSession);
-        return result({
-          valid: true,
-          authority,
-          intent: requested,
-          intentAccepted: false,
-          intentReason: 'seek-target-invalid',
-          commands,
-        });
-      }
-      commands.push(command('request-seek', authority, {
-        expectedBinding: expectedBinding(bindingState),
-        targetSeconds: target,
+    const commands = [];
+    if (!binding.empty) {
+      commands.push(makeCommand('request-pause', {
+        ...bindingIdentity(binding),
+        reason: 'replace-stale-binding',
       }));
-      break;
     }
-
-    case 'reconcile':
-      if (lifecycle.kind === 'current' && lifecycle.decision === 'ignore-stale-evidence') break;
-      commands.push(command('read-media-state', authority));
-      break;
-
-    case 'clear':
-      clearBoundMedia(commands, authority, bindingState);
-      pushMediaSession(commands, authority, mediaSession, 'explicit-clear');
-      return result({
-        valid: true,
-        authority,
-        intent: requested,
-        intentAccepted: true,
-        commands,
-      });
-
-    default:
-      return result({
-        valid: true,
-        authority,
-        intent: requested,
-        intentAccepted: false,
-        intentReason: 'intent-unsupported',
-        commands,
-      });
+    commands.push(makeCommand('bind-source', {
+      ...identity,
+      sourceUrl: active.sourceUrl,
+      mimeType: active.mimeType,
+    }));
+    commands.push(makeCommand('load-media', identity));
+    return commands;
   }
 
-  pushMediaSession(commands, authority, mediaSession);
-  return result({
-    valid: true,
+  function clearBindingCommands(binding) {
+    if (binding.empty || !binding.valid) return [];
+    const identity = bindingIdentity(binding);
+    return [
+      makeCommand('request-pause', { ...identity, reason: 'clear-bound-source' }),
+      makeCommand('clear-media-source', { ...identity, sourceUrl: binding.sourceUrl }),
+    ];
+  }
+
+  function lifecycleMatches(lifecycleDecision, active) {
+    return Boolean(
+      isPlainObject(lifecycleDecision)
+      && lifecycleDecision.version === 1
+      && lifecycleDecision.valid === true
+      && lifecycleDecision.songId === active.songId
+      && lifecycleDecision.generation === active.generation
+    );
+  }
+
+  function mediaSessionPolicyMatches(policy, active) {
+    if (!isPlainObject(policy) || policy.version !== 1 || policy.valid !== true) return false;
+    if (policy.songId !== active.songId || policy.provider !== 'direct' || policy.backgroundCapable !== true) return false;
+    if (!isPlainObject(policy.metadata)
+      || !nonEmptyString(policy.metadata.title)
+      || !nonEmptyString(policy.metadata.artist)
+      || !Array.isArray(policy.actions)) return false;
+    return ['playing', 'paused', 'none'].includes(policy.playbackState);
+  }
+
+  function mediaSessionCommand(policy, active, intentType) {
+    if (policy === null || policy === undefined) return null;
+    const identity = activeIdentity(active);
+    if (intentType === 'clear' || TERMINAL_PHASES.has(active.phase) || !mediaSessionPolicyMatches(policy, active)) {
+      return makeCommand('clear-media-session', identity);
+    }
+    return makeCommand('sync-media-session', {
+      ...identity,
+      policy: cloneValue(policy),
+    });
+  }
+
+  function transportCommands(active, binding, intent, lifecycleDecision) {
+    const identity = activeIdentity(active);
+
+    switch (intent.type) {
+      case 'sync-source':
+        return sourceSyncCommands(active, binding);
+
+      case 'play':
+        if (!bindingMatches(active, binding) || TERMINAL_PHASES.has(active.phase)) return [];
+        return [makeCommand('request-play', identity)];
+
+      case 'pause':
+        if (!bindingMatches(active, binding) || active.playbackState !== 'playing') return [];
+        return [makeCommand('request-pause', { ...identity, reason: 'listener-intent' })];
+
+      case 'seek':
+        if (!bindingMatches(active, binding)) return [];
+        if (!finitePositive(active.duration) || !finiteNonNegative(intent.target) || intent.target > active.duration) return [];
+        return [makeCommand('request-seek', { ...identity, target: intent.target })];
+
+      case 'reconcile':
+        if (!lifecycleMatches(lifecycleDecision, active)) return [];
+        if (lifecycleDecision.decision === 'reconcile-before-claim'
+          && lifecycleDecision.requiresReconciliation === true) {
+          return [makeCommand('read-media-state', identity)];
+        }
+        return [];
+
+      case 'clear':
+        return clearBindingCommands(binding);
+
+      default:
+        return [];
+    }
+  }
+
+  function planDirectMediaCommands({
     authority,
-    intent: requested,
-    intentAccepted: true,
-    commands,
-  });
-}
+    binding = null,
+    intent,
+    lifecycleDecision = null,
+    mediaSessionPolicy = null,
+  } = {}) {
+    const normalisedIntent = normaliseIntent(intent);
+    if (!normalisedIntent) {
+      return makePlan({ valid: false, reason: 'intent-invalid' });
+    }
 
-const api = deepFreeze({
-  VERSION,
-  INTENT_TYPES: [...INTENT_TYPES],
-  planDirectMediaCommands,
+    const normalisedBinding = normaliseBinding(binding);
+    if (!normalisedBinding.valid) {
+      return makePlan({ valid: false, reason: 'binding-invalid', intent: normalisedIntent.type });
+    }
+
+    const active = directAuthority(authority);
+    if (!active) {
+      if (idleAuthority(authority)
+        && (normalisedIntent.type === 'clear' || normalisedIntent.type === 'sync-source')) {
+        return makePlan({
+          valid: true,
+          intent: normalisedIntent.type,
+          generation: authority.generation,
+          commands: clearBindingCommands(normalisedBinding),
+        });
+      }
+      return makePlan({
+        valid: false,
+        reason: 'authority-not-direct',
+        intent: normalisedIntent.type,
+      });
+    }
+
+    if (!intentMatchesActive(normalisedIntent, active)) {
+      return makePlan({
+        valid: false,
+        reason: 'intent-identity-mismatch',
+        intent: normalisedIntent.type,
+        songId: active.songId,
+        generation: active.generation,
+      });
+    }
+
+    const commands = transportCommands(active, normalisedBinding, normalisedIntent, lifecycleDecision);
+    const sessionCommand = mediaSessionCommand(mediaSessionPolicy, active, normalisedIntent.type);
+    if (sessionCommand) commands.push(sessionCommand);
+
+    return makePlan({
+      valid: true,
+      intent: normalisedIntent.type,
+      songId: active.songId,
+      generation: active.generation,
+      commands,
+    });
+  }
+
+  return {
+    VERSION,
+    planDirectMediaCommands,
+  };
 });
-
-if (typeof module === 'object' && module.exports) module.exports = api;
