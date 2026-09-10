@@ -648,13 +648,14 @@ jobs:
               const claimBRetry = syntheticComment(3, '<!-- agent-claim\nagent: agent/b\nbranch: fix/b\nscope: scope b retry\nfiles: file-b\n-->');
               const claimC = syntheticComment(4, '<!-- agent-claim\nagent: agent/c\nbranch: fix/c\nscope: scope c\nfiles: file-c\n-->');
               const releaseB = syntheticComment(5, '<!-- agent-release\nagent: agent/b\nbranch: fix/b\n-->');
-              const releaseC = syntheticComment(6, '<!-- agent-release\nagent: agent/c\nbranch: fix/c\nscope: scope c\nfiles: file-c\n-->');
+              const releaseC = syntheticComment(6, '<!-- agent-release\nagent: agent/c\nbranch: fix/c\n-->');
               const releaseA = syntheticComment(7, '<!-- agent-release\nagent: agent/a\nbranch: fix/a\n-->');
               const updateA = syntheticComment(8, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: narrowed\nfiles: file-a; file-c\n-->');
               const override = syntheticComment(9, '<!-- agent-claim-override\nreason: owner reassignment\n-->', owner);
               const botStatus = syntheticComment(10, `${statusMarker}\n**Status:** Claimed`, 'github-actions', 'Bot');
               const closedClaim = syntheticComment(11, '<!-- agent-claim\nagent: agent/closed\nbranch: fix/closed\nscope: closed scope\nfiles: file-closed\n-->');
               const closedAutoRelease = syntheticComment(12, '<!-- agent-release\nagent: agent/closed\nbranch: fix/closed\n-->', 'github-actions', 'Bot');
+              const reopenedClaim = syntheticComment(13, '<!-- agent-claim\nagent: agent/reopened\nbranch: fix/reopened\nscope: reopened scope\nfiles: file-reopened\n-->');
 
               assert(issueAcceptsClaims({ state: 'open' }), 'open issues accept claims');
               assert(!issueAcceptsClaims({ state: 'closed' }), 'closed issues reject claims');
@@ -676,6 +677,8 @@ jobs:
               assert(!state.active, 'repository-owner override clears ownership');
               state = deriveState([closedClaim, closedAutoRelease]);
               assert(!state.active && state.conflicts.length === 0, 'closed-issue auto-release neutralises a rejected claim before reopen');
+              state = deriveState([closedClaim, closedAutoRelease, reopenedClaim]);
+              assert(state.active?.agent === 'agent/reopened', 'a fresh post-reopen claim can own the available lane');
               assert(parseEvent(botStatus) === null, 'bot status comments never become ownership events');
 
               const normalized = normalizeGraphComment({
