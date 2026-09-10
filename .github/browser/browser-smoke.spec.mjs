@@ -62,17 +62,45 @@ async function expectNoDocumentOverflow(page) {
 }
 
 async function expectInsideViewport(page, selector) {
-  const locator = page.locator(selector);
-  await expect(locator).toBeVisible();
-  await expect.poll(async () => {
-    const box = await locator.boundingBox();
-    if (!box) return false;
-    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-    return box.x >= -2
-      && box.x + box.width <= viewport.width + 2
-      && box.y >= -2
-      && box.y + box.height <= viewport.height + 2;
-  }, {
+  await expect.poll(async () => page.evaluate((targetSelector) => {
+    const element = document.querySelector(targetSelector);
+    if (!(element instanceof Element) || !element.isConnected) return false;
+
+    const style = getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+    if (element.getClientRects().length === 0) return false;
+
+    const rect = element.getBoundingClientRect();
+    const visualViewport = window.visualViewport;
+    const viewport = visualViewport
+      ? {
+          left: visualViewport.offsetLeft,
+          top: visualViewport.offsetTop,
+          width: visualViewport.width,
+          height: visualViewport.height,
+        }
+      : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+
+    const geometry = [
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rect.width,
+      rect.height,
+      viewport.left,
+      viewport.top,
+      viewport.width,
+      viewport.height,
+    ];
+    if (!geometry.every(Number.isFinite)) return false;
+    if (rect.width <= 0 || rect.height <= 0 || viewport.width <= 0 || viewport.height <= 0) return false;
+
+    return rect.left >= viewport.left - 2
+      && rect.right <= viewport.left + viewport.width + 2
+      && rect.top >= viewport.top - 2
+      && rect.bottom <= viewport.top + viewport.height + 2;
+  }, selector), {
     message: `${selector} should settle fully inside the visual viewport`,
     timeout: 2_500,
     intervals: [50, 100, 150, 250],
