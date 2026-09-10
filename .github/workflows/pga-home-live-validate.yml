@@ -36,6 +36,16 @@ jobs:
         with:
           node-version: 22
       - name: Run Home + Live snapshot fixtures
-        run: node src/pga/home/tests/live-snapshot.test.mjs
+        shell: bash
+        run: |
+          set -o pipefail
+          node src/pga/home/tests/live-snapshot.test.mjs 2>&1 | tee /tmp/pga-home-live-fixtures.log
       - name: Validate composition purity and delegation
         run: node scripts/lib/validate-pga-home-live.mjs
+      - name: Upload fixture diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pga-home-live-fixture-diagnostics
+          path: /tmp/pga-home-live-fixtures.log
+          if-no-files-found: ignore
