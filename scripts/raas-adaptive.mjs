@@ -45,7 +45,7 @@ function detectDeliveryStop(text) {
 
 function detectMode(text, deliveryStop, task) {
   if (includesAny(text, ['outage', 'incident', 'production broken', 'site is down', 'emergency fix'])) return 'incident'
-  if (deliveryStop === 'production-verification' || includesAny(text, ['deploy', 'release'])) return 'release'
+  if (deliveryStop === 'production-verification' || routeIds(task).includes('deployment') || includesAny(text, ['deploy it', 'deploy this', 'go live', 'ship it live'])) return 'release'
   if (deliveryStop === 'plan') return 'plan'
   if (deliveryStop === 'answer') return 'answer'
   if (includesAny(text, ['audit', 'review', 'inspect', 'critique', 'check all'])) return 'audit'
