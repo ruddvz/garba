@@ -13,8 +13,7 @@ const HOME_STATE_SET = new Set(HOME_STATES)
 const VALUE_STATES = new Set(['available', 'partial', 'stale'])
 
 function finiteNumber(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 function nonNegativeNumber(value) {
@@ -93,9 +92,10 @@ export function evaluateKpi(input = {}, { nowMs = Date.now() } = {}) {
   const freshnessAt = normaliseTimestamp(
     evidence.freshnessAt ?? evidence.freshness_at ?? dataThroughAt ?? checkedAt,
   )
-  const freshnessBudgetMs = nonNegativeNumber(
-    evidence.freshnessBudgetMs ?? evidence.freshness_budget_ms,
-  )
+  const hasFreshnessBudget = Object.prototype.hasOwnProperty.call(evidence, 'freshnessBudgetMs')
+    || Object.prototype.hasOwnProperty.call(evidence, 'freshness_budget_ms')
+  const rawFreshnessBudget = evidence.freshnessBudgetMs ?? evidence.freshness_budget_ms
+  const freshnessBudgetMs = hasFreshnessBudget ? nonNegativeNumber(rawFreshnessBudget) : null
 
   let status = observedState
   let reason = safeText(evidence.reason)
@@ -105,6 +105,9 @@ export function evaluateKpi(input = {}, { nowMs = Date.now() } = {}) {
     reason = suppliedValue != null && suppliedValue < 0
       ? 'Metric value cannot be negative.'
       : 'Metric value must be a finite non-negative number.'
+  } else if (VALUE_STATES.has(status) && hasFreshnessBudget && freshnessBudgetMs == null) {
+    status = 'error'
+    reason = 'Freshness budget must be a finite non-negative number.'
   } else if (status === 'available' && !hasValue) {
     status = 'unavailable'
     reason ||= 'Metric value is unavailable.'
@@ -262,6 +265,8 @@ export function summarizeTrend(points, {
 }
 
 export function buildHomeSnapshot(input = {}, { nowMs = Date.now() } = {}) {
+  const now = finiteNumber(nowMs)
+  if (now == null) throw new TypeError('nowMs must be a finite number')
   const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {}
   const status = normaliseState(source.status, 'unavailable')
   const metricEntries = source.metrics && typeof source.metrics === 'object' && !Array.isArray(source.metrics)
@@ -278,7 +283,7 @@ export function buildHomeSnapshot(input = {}, { nowMs = Date.now() } = {}) {
     metrics[name] = evaluateKpi({
       ...(metric && typeof metric === 'object' ? metric : {}),
       status: inheritedStatus,
-    }, { nowMs })
+    }, { nowMs: now })
   }
 
   const availableCount = Object.values(metrics).filter((metric) => metric.value != null).length
@@ -286,7 +291,7 @@ export function buildHomeSnapshot(input = {}, { nowMs = Date.now() } = {}) {
 
   return Object.freeze({
     schemaVersion: 'pga-home/v1',
-    evaluatedAt: Number(nowMs),
+    evaluatedAt: now,
     status,
     metrics: Object.freeze(metrics),
     availableMetricCount: availableCount,
