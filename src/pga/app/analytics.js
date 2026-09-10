@@ -2,8 +2,8 @@ export const PGA_RANGES = Object.freeze(['7d', '30d', '90d']);
 const PWA_DISPLAY_MODES = new Set(['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay']);
 
 export function metricValue(metric) {
-  const value = Number(metric?.value);
-  return Number.isFinite(value) ? value : null;
+  const value = metric?.value;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 export function formatMetric(metric) {
@@ -46,8 +46,9 @@ export function formatFreshness(dataThrough) {
 }
 
 function metricFromNumber(value, source = {}) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return {
-    value: Number.isFinite(Number(value)) ? Number(value) : 0,
+    value,
     precision: source.precision || 'unknown',
     sampled: source.sampled ?? 'unknown',
   };
@@ -55,11 +56,11 @@ function metricFromNumber(value, source = {}) {
 
 function addMetric(target, metric) {
   const value = metricValue(metric);
-  if (value === null) return target;
+  if (value === null) return false;
   target.value += value;
   if (metric?.precision === 'estimated') target.precision = 'estimated';
   if (metric?.sampled === true) target.sampled = true;
-  return target;
+  return true;
 }
 
 export function aggregateBreakdowns(rows = [], selector) {
@@ -68,8 +69,7 @@ export function aggregateBreakdowns(rows = [], selector) {
     const key = selector(row);
     if (!key) continue;
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    addMetric(current, row.sessions);
-    totals.set(key, current);
+    if (addMetric(current, row.sessions)) totals.set(key, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -121,8 +121,7 @@ function eventTotals(rows = []) {
   for (const row of rows) {
     const key = row.eventName || 'unknown';
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    addMetric(current, row.events);
-    totals.set(key, current);
+    if (addMetric(current, row.events)) totals.set(key, current);
   }
   return totals;
 }
@@ -148,8 +147,7 @@ function topContent(rows = []) {
     if (!current.artist && row.artist) current.artist = row.artist;
     if (!current.releaseTitle && row.releaseTitle) current.releaseTitle = row.releaseTitle;
     if (row.identityStatus === 'resolved') current.identityStatus = 'resolved';
-    addMetric(current.metric, row.events);
-    totals.set(key, current);
+    if (addMetric(current.metric, row.events)) totals.set(key, current);
   }
   return [...totals.values()]
     .sort((a, b) => b.metric.value - a.metric.value || a.contentId.localeCompare(b.contentId));
@@ -162,8 +160,7 @@ function dimensionTotals(rows = [], keySelector, eventName = 'playback_started')
     const key = keySelector(row);
     if (!key) continue;
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    addMetric(current, row.events);
-    totals.set(key, current);
+    if (addMetric(current, row.events)) totals.set(key, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -177,8 +174,7 @@ function playbackDimensionTotals(rows = [], selector) {
     const label = selector(row);
     if (!label) continue;
     const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
-    addMetric(current, row.events);
-    totals.set(label, current);
+    if (addMetric(current, row.events)) totals.set(label, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -191,8 +187,7 @@ function errorTotals(rows = []) {
     if (!['playback_error', 'playback_unavailable'].includes(row.eventName)) continue;
     const label = row.errorCode || (row.eventName === 'playback_unavailable' ? 'unavailable' : 'unknown');
     const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
-    addMetric(current, row.events);
-    totals.set(label, current);
+    if (addMetric(current, row.events)) totals.set(label, current);
   }
   return [...totals.entries()].map(([label, metric]) => ({ label, metric })).sort((a, b) => b.metric.value - a.metric.value);
 }
@@ -206,6 +201,7 @@ export function normaliseListening(envelope) {
   const playIntents = totals.get('play_intent') || metricFromNumber(0);
   const confirmedStarts = totals.get('playback_started') || metricFromNumber(0);
   const search = envelope.data.search || {};
+  const content = topContent(rows);
   return {
     state: envelope.status || 'complete',
     range: envelope.data.range || null,
@@ -230,11 +226,11 @@ export function normaliseListening(envelope) {
       playRate: ratio(search.searchesWithConfirmedPlay, search.searches),
       zeroResultRate: ratio(search.zeroResultSearches, search.searches),
     },
-    topContent: topContent(rows),
-    topSongs: topContent(rows).filter((row) => row.contentType === 'song' || row.contentType === 'chapter'),
+    topContent: content,
+    topSongs: content.filter((row) => row.contentType === 'song' || row.contentType === 'chapter'),
     topArtists: playbackDimensionTotals(rows, (row) => row.artist),
     topReleases: playbackDimensionTotals(rows, (row) => row.contentType === 'release' ? row.contentLabel : row.releaseTitle),
-    nonstopSets: topContent(rows).filter((row) => row.contentType === 'nonstop_set'),
+    nonstopSets: content.filter((row) => row.contentType === 'nonstop_set'),
     worlds: dimensionTotals(rows, (row) => row.world),
     surfaces: dimensionTotals(rows, (row) => row.surface),
     errors: errorTotals(rows),
