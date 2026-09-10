@@ -480,15 +480,36 @@ assert.deepEqual([...MEDIA_EVENTS], [
 }
 
 {
-  const { controller, mediaElement, mediaSession } = setup();
+  const { controller, mediaElement, mediaSession, plannerCalls } = setup();
   controller.select({ resolution: resolution('song-a'), identity: identity('song-a'), generation: 1, capabilities: fullCapabilities });
   mediaElement.emit('playing', { currentSrc: mediaElement.src, currentTime: 3 });
+  const oldUrl = mediaElement.src;
+  mediaElement.operations.length = 0;
+
   assert.equal(controller.markUnavailable('rights-revoked'), true);
+  assert.equal(plannerCalls.at(-1).intent.type, 'clear');
+  assert.equal(plannerCalls.at(-1).intent.songId, 'song-a');
+  assert.equal(plannerCalls.at(-1).intent.generation, 1);
   assert.equal(controller.getState().phase, 'unavailable');
   assert.equal(controller.getState().error.code, 'rights-revoked');
+  assert.equal(mediaElement.src, '');
+  assert.equal(mediaElement.pauseCalls, 1);
+  assert.deepEqual(mediaElement.operations.slice(0, 3), ['pause', 'clear-source', 'load']);
+  assert.equal(mediaElement.operations.includes(`bind:${oldUrl}`), false, 'unavailable cleanup must not rebind the revoked source');
+  assert.equal(mediaSession.playbackState, 'none');
   assert.equal(mediaSession.metadata, null);
   assert.equal(mediaSession.handlers.size, 0);
   assert.equal(controller.play(), false);
+
+  const clearedOperationCount = mediaElement.operations.length;
+  assert.equal(controller.markUnavailable('rights-revoked'), false, 'repeated unavailable evidence must not replay cleanup');
+  assert.equal(mediaElement.operations.length, clearedOperationCount);
+  assert.equal(mediaElement.src, '');
+
+  assert.equal(controller.select({ resolution: resolution('song-b'), identity: identity('song-b'), generation: 2, capabilities: fullCapabilities }), true);
+  assert.equal(controller.getState().songId, 'song-b');
+  assert.equal(controller.getState().phase, 'selected');
+  assert.equal(mediaElement.src, 'https://audio.playgarba.example/song-b/master.m4a');
 }
 
 {
@@ -551,14 +572,19 @@ assert.deepEqual([...MEDIA_EVENTS], [
   const pauseBody = source.match(/function pause\(\) \{([\s\S]*?)\n    \}\n\n    function seekTo/);
   const seekBody = source.match(/function seekTo\(target\) \{([\s\S]*?)\n    \}\n\n    function stop/);
   const selectBody = source.match(/function select\([^]*?\) \{([\s\S]*?)\n    \}\n\n    function play/);
+  const unavailableBody = source.match(/function markUnavailable\([^]*?\) \{([\s\S]*?)\n    \}\n\n    function reset/);
   assert.ok(playBody && playBody[1].includes('planAndExecute'), 'play must delegate to planner');
   assert.ok(pauseBody && pauseBody[1].includes('planAndExecute'), 'pause must delegate to planner');
   assert.ok(seekBody && seekBody[1].includes('planAndExecute'), 'seek must delegate to planner');
   assert.ok(selectBody && selectBody[1].includes("planAndExecute({ type: 'sync-source', songId: state.songId, generation: state.generation })"), 'selection must delegate generation-scoped source sync to planner');
+  assert.ok(unavailableBody && unavailableBody[1].includes("{ type: 'clear', songId: state.songId, generation: state.generation }"), 'unavailable transition must delegate exact-identity clear to planner');
+  assert.equal(unavailableBody[1].includes('syncMediaSessionThroughPlanner'), false, 'unavailable transition must not retain the bound source through source sync');
   assert.equal(playBody[1].includes('mediaElement.play'), false, 'play method must not execute media directly');
   assert.equal(pauseBody[1].includes('mediaElement.pause'), false, 'pause method must not execute media directly');
   assert.equal(seekBody[1].includes('mediaElement.currentTime'), false, 'seek method must not execute media directly');
   assert.equal(selectBody[1].includes('mediaElement.src'), false, 'selection must not bind source directly');
+  assert.equal(unavailableBody[1].includes('mediaElement.pause'), false, 'unavailable transition must not pause media outside planner execution');
+  assert.equal(unavailableBody[1].includes('mediaElement.src'), false, 'unavailable transition must not clear media outside planner execution');
 
   for (const forbidden of [
     'new Audio(',
