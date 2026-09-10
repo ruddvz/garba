@@ -97,6 +97,8 @@ node scripts/lib/validate-pga-analytics.mjs
 
 The dedicated GitHub Actions workflows run the same backend and PGA analytics checks. The repository-wide `npm run check` remains the final integration gate.
 
+The generic PGA shell browser validator serves `src/pga/app` from localhost without a real Admin Worker. In that test-only origin it supplies explicit unavailable responses for `/api/audience` and `/api/listening`, so the shell can exercise navigation and boundary states without converting missing backend infrastructure into false runtime failures. That localhost fixture does not weaken production API or error handling, and every other unexpected same-origin HTTP failure remains blocking.
+
 ## Deployment evidence
 
 Repository code alone does not prove Cloudflare resources exist. Issue #839 is production-complete only after the external D1 database, Analytics Engine bindings, rate limiter, Access application, custom domain and secrets are configured and the protected endpoints are exercised against deployed Workers.
