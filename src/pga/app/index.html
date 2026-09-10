@@ -16,6 +16,7 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./app.css">
   <link rel="stylesheet" href="./home-live.css">
+  <link rel="stylesheet" href="./health.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -177,14 +178,36 @@
         </section>
 
         <section class="view" data-view="health" aria-labelledby="title-health" hidden>
-          <div class="view-heading"><div><p class="eyebrow">Production</p><h1 id="title-health" tabindex="-1">Health</h1></div><p class="freshness">No health response yet</p></div>
-          <div class="health-list" role="list">
-            <div role="listitem"><span>Telemetry ingestion</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>Aggregate queries</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>Daily rollup</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>PGA build</span><strong>Shell v1</strong></div>
+          <div class="view-heading">
+            <div><p class="eyebrow">Production</p><h1 id="title-health" tabindex="-1">Health</h1></div>
+            <p class="freshness" id="healthFreshness">No health response yet</p>
           </div>
-          <p class="truth-note">Unknown is never converted to zero or healthy.</p>
+          <div class="view-state" id="healthState" role="status" aria-live="polite" data-state="loading">
+            <strong>Health not checked yet</strong><p>Open Health to refresh protected operational evidence.</p>
+          </div>
+          <div id="healthContent" hidden>
+            <section class="health-overview" aria-labelledby="health-overall-label">
+              <div class="health-overview-copy">
+                <p class="health-overview-label" id="health-overall-label">Overall health</p>
+                <strong id="healthOverallStatus" data-status="unknown">Unknown</strong>
+                <p class="health-overview-summary" id="healthOverallSummary">Current health has not been evaluated.</p>
+              </div>
+              <div class="health-overview-meta"><span>8 canonical checks</span><span>No fake green status</span></div>
+            </section>
+
+            <section class="health-section" id="healthProblemsSection" aria-labelledby="health-problems-title" hidden>
+              <div class="section-heading"><h2 id="health-problems-title">Needs attention</h2><span>Highest-priority evidence first</span></div>
+              <div class="health-problems" id="healthProblems"></div>
+            </section>
+
+            <section class="health-section" aria-labelledby="health-systems-title">
+              <div class="section-heading"><h2 id="health-systems-title">System checks</h2><span>Healthy · degraded · stale · unknown · failed</span></div>
+              <div class="health-grid" id="healthSubsystems" role="list"></div>
+            </section>
+
+            <p class="truth-note">Missing or stale evidence stays explicit. A broken subsystem never converts unrelated metrics to zero or healthy.</p>
+            <p class="sr-only" id="healthAccessibilitySummary" aria-live="polite"></p>
+          </div>
         </section>
 
         <section class="view" data-view="more" aria-labelledby="title-more" hidden>
@@ -210,5 +233,6 @@
   <div class="sr-only" id="announcer" aria-live="polite"></div>
   <script type="module" src="./app.js"></script>
   <script type="module" src="./home-live.js"></script>
+  <script type="module" src="./health.js"></script>
 </body>
 </html>
