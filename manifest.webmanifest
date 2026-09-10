@@ -62,13 +62,13 @@
     {
       "name": "Traditional Garba",
       "short_name": "Traditional",
-      "description": "Open the Traditional Garba world.",
+      "description": "Open Traditional Garba in the player.",
       "url": "./?genre=traditional"
     },
     {
       "name": "Dandiya Raas",
       "short_name": "Dandiya",
-      "description": "Open the Dandiya Raas world.",
+      "description": "Open Dandiya Raas in the player.",
       "url": "./?genre=dandiya"
     },
     {
