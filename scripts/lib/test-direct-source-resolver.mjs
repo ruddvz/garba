@@ -53,12 +53,16 @@ function resolveDirect(entry = directEntry(), directSongId = 'garba-song-001') {
   return resolvePlaybackSource({ song: song(), directEntry: entry, directSongId });
 }
 
-{
-  const entry = directEntry();
-  const manifestErrors = validateDirectAudioManifest(
+function manifestErrorsFor(entry) {
+  return validateDirectAudioManifest(
     { version: '1.0.0', tracks: { 'garba-song-001': entry } },
     new Set(['garba-song-001'])
   );
+}
+
+{
+  const entry = directEntry();
+  const manifestErrors = manifestErrorsFor(entry);
   assert.deepEqual(manifestErrors, [], 'resolver valid fixture must also satisfy the #984 manifest gate');
 
   const result = resolveDirect(entry);
@@ -184,10 +188,7 @@ for (const blockedUrl of [
 ]) {
   assert.equal(isBlockedConsumerProviderUrl(blockedUrl), true, blockedUrl);
   const entry = directEntry({ audioUrl: blockedUrl });
-  const manifestErrors = validateDirectAudioManifest(
-    { version: '1.0.0', tracks: { 'garba-song-001': entry } },
-    new Set(['garba-song-001'])
-  );
+  const manifestErrors = manifestErrorsFor(entry);
   assert.ok(manifestErrors.some((error) => error.includes('consumer/provider stream URLs')), blockedUrl);
 
   const result = resolveDirect(entry);
@@ -202,10 +203,7 @@ for (const allowedLookalikeUrl of [
 ]) {
   assert.equal(isBlockedConsumerProviderUrl(allowedLookalikeUrl), false, allowedLookalikeUrl);
   const entry = directEntry({ audioUrl: allowedLookalikeUrl });
-  const manifestErrors = validateDirectAudioManifest(
-    { version: '1.0.0', tracks: { 'garba-song-001': entry } },
-    new Set(['garba-song-001'])
-  );
+  const manifestErrors = manifestErrorsFor(entry);
   assert.equal(
     manifestErrors.some((error) => error.includes('consumer/provider stream URLs')),
     false,
@@ -236,14 +234,45 @@ for (const allowedLookalikeUrl of [
   assert.match(result.errors.join('\n'), /MIME type is not allowed/);
 }
 
+for (const sameResourceProof of [
+  (audioUrl) => audioUrl,
+  (audioUrl) => `${audioUrl}#rights`,
+  (audioUrl) => `${audioUrl.replace(/#.*$/, '')}#different-proof-fragment`,
+]) {
+  const base = directEntry({ audioUrl: 'https://audio.playgarba.example/garba-song-001/stream.m4a#stream' });
+  const proofUrl = sameResourceProof(base.audioUrl.replace(/#.*$/, ''));
+  const entry = {
+    ...base,
+    rights: { ...base.rights, proofUrl },
+  };
+  const manifestErrors = manifestErrorsFor(entry);
+  assert.ok(
+    manifestErrors.some((error) => error.includes('must be rights evidence, not the media URL itself')),
+    `same HTTP resource must fail rights validation: ${proofUrl}`,
+  );
+  const result = resolveDirect(entry);
+  assert.equal(result.kind, 'direct-invalid', proofUrl);
+  assert.match(result.errors.join('\n'), /proof URL cannot be the media URL/);
+}
+
 {
   const base = directEntry();
-  const result = resolveDirect({
+  const entry = {
     ...base,
-    rights: { ...base.rights, proofUrl: base.audioUrl },
-  });
-  assert.equal(result.kind, 'direct-invalid');
-  assert.match(result.errors.join('\n'), /proof URL cannot be the media URL/);
+    rights: { ...base.rights, proofUrl: `${base.audioUrl}?evidence=1` },
+  };
+  assert.deepEqual(manifestErrorsFor(entry), [], 'query-distinct rights evidence must remain a distinct HTTP resource');
+  assert.equal(resolveDirect(entry).kind, 'direct');
+}
+
+{
+  const base = directEntry();
+  const entry = {
+    ...base,
+    rights: { ...base.rights, proofUrl: 'https://audio.playgarba.example/garba-song-001/rights.html' },
+  };
+  assert.deepEqual(manifestErrorsFor(entry), [], 'distinct rights-evidence path must remain valid');
+  assert.equal(resolveDirect(entry).kind, 'direct');
 }
 
 {
