@@ -6,6 +6,7 @@ on:
       - fix/issue-405-explore-truth-current-main-v2
     paths:
       - .github/workflows/apply-issue-405-explore-truth-v2.yml
+      - scripts/tmp-apply-issue-405.py
 
 permissions:
   contents: write
@@ -22,119 +23,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Apply source-truth recovery with exact anchors
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          catalogue_path = Path('src/catalogue/catalogue.js')
-          validator_path = Path('scripts/lib/validate-explore-detail-refinement.mjs')
-          catalogue = catalogue_path.read_text()
-          validator = validator_path.read_text()
-
-          def replace_once(text, old, new, label):
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
-              return text.replace(old, new, 1)
-
-          catalogue = replace_once(
-              catalogue,
-              "function fixedCollection({ id, title, kicker, description, visual, test }) {\n  return { id, title, kicker, description, visual, test };\n}",
-              "function artistCreditMatches(creditValue, names) {\n  const credit = normalise(creditValue);\n  if (!credit) return false;\n  const paddedCredit = ` ${credit} `;\n  return names.some((name) => name && paddedCredit.includes(` ${name} `));\n}\n\nfunction trustedTrackNumber(song) {\n  const value = Number(song?.trackNumber);\n  return Number.isInteger(value) && value > 0 ? value : null;\n}\n\nfunction trustedReleaseSequence(songs) {\n  if (!Array.isArray(songs) || !songs.length) return null;\n  const pairs = songs.map((song) => ({ song, trackNumber: trustedTrackNumber(song) }));\n  if (pairs.some(({ trackNumber }) => trackNumber == null)) return null;\n  const unique = new Set(pairs.map(({ trackNumber }) => trackNumber));\n  if (unique.size !== pairs.length) return null;\n  return pairs.sort((a, b) => a.trackNumber - b.trackNumber);\n}\n\nfunction orderedReleaseSongs(songs) {\n  const sequence = trustedReleaseSequence(songs);\n  return sequence ? sequence.map(({ song }) => song) : songs;\n}\n\nfunction fixedCollection({ id, title, kicker, description, visual, test }) {\n  return { id, title, kicker, description, visual, test };\n}",
-              'helper insertion',
-          )
-
-          catalogue = replace_once(
-              catalogue,
-              "      test:(song)=>{\n        const credit = normalise(song.artist);\n        return names.some((name)=>credit.includes(name));\n      },",
-              "      test:(song)=>artistCreditMatches(song.artist, names),",
-              'artist matching',
-          )
-
-          catalogue = replace_once(
-              catalogue,
-              "function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {\n  els.songList.replaceChildren();\n  els.songSectionTitle.textContent = title;\n  const visible = songs.slice(0, limit);",
-              "function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {\n  els.songList.replaceChildren();\n  els.songSectionTitle.textContent = title;\n  const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(songs) : null;\n  const trackNumberBySongId = releaseSequence\n    ? new Map(releaseSequence.map(({ song, trackNumber }) => [song.id, trackNumber]))\n    : null;\n  const visible = songs.slice(0, limit);",
-              'release sequence map',
-          )
-
-          catalogue = replace_once(
-              catalogue,
-              "    empty.className = 'empty';\n    empty.textContent = 'No songs match this catalogue yet.';\n    els.songList.append(empty);",
-              "    empty.className = 'empty';\n    const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';\n    empty.textContent = emptyQuery\n      ? `No songs found for “${emptyQuery}”. Try another artist, song or release.`\n      : 'No songs match this catalogue yet.';\n    els.songList.append(empty);",
-              'empty search copy',
-          )
-
-          catalogue = replace_once(
-              catalogue,
-              "    row.setAttribute('role','listitem');\n    row.dataset.songId = song.id;\n    row.append(songArtwork(song));",
-              "    row.setAttribute('role','listitem');\n    row.dataset.songId = song.id;\n    const trackNumber = trackNumberBySongId?.get(song.id);\n    if (trackNumber != null) {\n      const sequence = document.createElement('span');\n      sequence.className = 'song-art fallback song-track-number';\n      sequence.textContent = String(trackNumber).padStart(2, '0');\n      sequence.setAttribute('aria-hidden', 'true');\n      row.dataset.trackNumber = String(trackNumber);\n      row.append(sequence);\n    } else {\n      row.append(songArtwork(song));\n    }",
-              'track number rendering',
-          )
-
-          catalogue = replace_once(
-              catalogue,
-              "  const songs = state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId);",
-              "  const songs = orderedReleaseSongs(state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId));",
-              'release ordering',
-          )
-
-          validator_marker = "const inlineModules = [...explore.matchAll(/<script type=\"module\">([\\s\\S]*?)<\\/script>/g)].map((match) => match[1]);"
-          guard = """for (const marker of [
-  'function artistCreditMatches(creditValue, names)',
-  'paddedCredit.includes(` ${name} `)',
-  'test:(song)=>artistCreditMatches(song.artist, names)',
-  'function trustedTrackNumber(song)',
-  'Number.isInteger(value) && value > 0',
-  'function trustedReleaseSequence(songs)',
-  'pairs.some(({ trackNumber }) => trackNumber == null)',
-  'unique.size !== pairs.length',
-  'function orderedReleaseSongs(songs)',
-  "sequence.className = 'song-art fallback song-track-number';",
-  "row.dataset.trackNumber = String(trackNumber);",
-  'const songs = orderedReleaseSongs(state.activeSongs.filter',
-  "const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';",
-  '? `No songs found for “${emptyQuery}”. Try another artist, song or release.`',
-]) {
-  if (!catalogue.includes(marker)) fail(`Explore truthful discovery is missing: ${marker}`);
-}
-
-if (catalogue.includes('return names.some((name)=>credit.includes(name));')) {
-  fail('Artist Essentials must not use loose substring credit matching');
-}
-if (catalogue.includes("sequence.textContent = String(index + 1)")) {
-  fail('Selected release track numbers must never be fabricated from render position');
-}
-if (catalogue.includes("row.dataset.trackNumber = String(index + 1)")) {
-  fail('Selected release data-track-number must never be fabricated from render position');
-}
-
-"""
-          if validator.count(validator_marker) != 1:
-              raise SystemExit(f'validator insertion anchor count={validator.count(validator_marker)}')
-          validator = validator.replace(validator_marker, guard + validator_marker, 1)
-          validator = replace_once(
-              validator,
-              "console.log('✓ Explore detail hierarchy, verified release and artist artwork, full artist discovery, clean tracklists, rich metadata, taxonomy browsing, album semantics and keyboard navigation are protected');",
-              "console.log('✓ Explore detail hierarchy, verified release and artist artwork, full artist discovery, truthful tracklists, rich metadata, taxonomy browsing, album semantics and keyboard navigation are protected');",
-              'validator summary',
-          )
-
-          catalogue_path.write_text(catalogue)
-          validator_path.write_text(validator)
-          PY
+      - name: Apply exact source patch
+        run: python scripts/tmp-apply-issue-405.py
       - name: Validate recovered Explore truth contract
         run: |
           node --check src/catalogue/catalogue.js
           node scripts/lib/validate-explore-detail-refinement.mjs
           npm run check
-      - name: Remove temporary patch workflow and commit only claimed product files
+      - name: Remove temporary tooling and commit product files only
         run: |
-          rm .github/workflows/apply-issue-405-explore-truth-v2.yml
-          test "$(git status --short | awk '{print $2}' | sort | tr '\n' ' ')" = "scripts/lib/validate-explore-detail-refinement.mjs src/catalogue/catalogue.js "
+          rm .github/workflows/apply-issue-405-explore-truth-v2.yml scripts/tmp-apply-issue-405.py
+          changed="$(git status --short | awk '{print $2}' | sort | tr '\n' ' ')"
+          test "$changed" = ".github/workflows/apply-issue-405-explore-truth-v2.yml scripts/lib/validate-explore-detail-refinement.mjs scripts/tmp-apply-issue-405.py src/catalogue/catalogue.js "
           git config user.name "PlayGarba recovery bot"
           git config user.email "actions@users.noreply.github.com"
-          git add src/catalogue/catalogue.js scripts/lib/validate-explore-detail-refinement.mjs .github/workflows/apply-issue-405-explore-truth-v2.yml
+          git add -A .github/workflows/apply-issue-405-explore-truth-v2.yml scripts/tmp-apply-issue-405.py src/catalogue/catalogue.js scripts/lib/validate-explore-detail-refinement.mjs
           git commit -m "Fix Explore truthful tracklists and artist matching"
           git push origin HEAD:fix/issue-405-explore-truth-current-main-v2
