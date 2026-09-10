@@ -135,6 +135,7 @@ assert.match(clientSource, /token !== generation \|\| signal\.aborted/, 'late re
 assert.match(clientSource, /Promise\.all\(\[wrap\('\/api\/home'\), wrap\('\/api\/live'\)\]\)/, 'Home must request protected sources independently');
 assert.match(clientSource, /mountHomeLive\(\{ autoLoad: !fixtureAllowed \}\)/, 'static localhost shell fixtures must not make unavailable backend requests');
 assert.match(clientSource, /if \(autoLoad && isActive\(\)\) load/, 'non-Home deep links must not eagerly request Home analytics');
+assert.match(clientSource, /for \(const button of document\.querySelectorAll\('\[data-nav="home"\]'\)\) \{\s*button\.addEventListener\('click', loadWhenHomeActivates\);\s*}/s, 'Home must observe the existing in-app Home navigation control without changing the shared router');
 assert.doesNotMatch(clientSource, /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write\s*\(/, 'Home must avoid raw HTML injection');
 assert.doesNotMatch(clientSource, /localStorage|sessionStorage|document\.cookie|eval\s*\(/, 'Home must not add storage, cookie or eval behaviour');
 
@@ -176,6 +177,7 @@ try {
       if (!nodes.has(selector)) nodes.set(selector, createFakeNode());
       return nodes.get(selector);
     },
+    querySelectorAll() { return []; },
     createElement() { return createFakeNode(); },
   };
   globalThis.window = { addEventListener(type, listener) { listeners.set(type, listener); } };
@@ -227,6 +229,59 @@ try {
   if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator); else delete globalThis.navigator;
 }
 
+try {
+  const nodes = new Map();
+  const homeSection = createFakeNode();
+  homeSection.hidden = true;
+  nodes.set('[data-view="home"]', homeSection);
+  const homeNavListeners = new Map();
+  const homeNav = createFakeNode();
+  homeNav.addEventListener = (type, listener) => { homeNavListeners.set(type, listener); };
+  const onlineState = { onLine: true };
+
+  globalThis.document = {
+    querySelector(selector) {
+      if (!nodes.has(selector)) nodes.set(selector, createFakeNode());
+      return nodes.get(selector);
+    },
+    querySelectorAll(selector) { return selector === '[data-nav="home"]' ? [homeNav] : []; },
+    createElement() { return createFakeNode(); },
+  };
+  globalThis.window = { addEventListener() {} };
+  globalThis.location = { hash: '#audience', hostname: 'validator.local' };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: onlineState });
+
+  const pending = [];
+  const fetchEnvelope = (requestPath, { signal }) => new Promise((resolve) => pending.push({ requestPath, signal, resolve }));
+  const mounted = mountHomeLive({ fetchEnvelope, autoLoad: true });
+  assert.ok(mounted, 'hidden Home test mount must initialise');
+  await Promise.resolve();
+  assert.equal(pending.length, 0, 'Home mounted behind another PGA view must stay lazy');
+  assert.equal(typeof homeNavListeners.get('click'), 'function', 'Home must register an in-app activation listener');
+
+  homeSection.hidden = false;
+  globalThis.location.hash = '#home';
+  const activationLoad = homeNavListeners.get('click')();
+  await Promise.resolve();
+  assert.equal(pending.length, 2, 'in-app Home activation must start exactly one Home and Live request pair');
+  pending[0].resolve(homeReady);
+  pending[1].resolve(liveReady);
+  await activationLoad;
+  assert.equal(nodes.get('#homeState').dataset.state, 'complete', 'activated Home may render the fresh protected result');
+  assert.equal(nodes.get('#homeContent').hidden, false);
+
+  const requestCount = pending.length;
+  const duplicateLoad = homeNavListeners.get('click')();
+  await Promise.resolve();
+  assert.equal(duplicateLoad, undefined, 'already-rendered Home activation must stay a no-op');
+  assert.equal(pending.length, requestCount, 'returning to an already-rendered Home view must not refetch');
+} finally {
+  if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+  if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
+  if (originalLocation === undefined) delete globalThis.location; else globalThis.location = originalLocation;
+  if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator); else delete globalThis.navigator;
+}
+
 assert.match(indexHtml, /Active sessions, not people/);
 assert.match(indexHtml, /Anonymous browser IDs, not people/);
 assert.equal((indexHtml.match(/home-live\.css/g) || []).length, 1);
@@ -243,4 +298,5 @@ assert.doesNotMatch(css, /(?:^|\n)\s*width:\s*(?:[4-9]\d{2,}|\d{4,})px\b/m, 'Hom
 console.log('✓ PGA Home + Live preserves real zero, missing-data truth and partial-source visibility');
 console.log('✓ Current and richer Live breakdown/trend contracts normalise deterministically');
 console.log('✓ Offline transition aborts and invalidates stale Home/Live requests before recovery');
+console.log('✓ Hidden Home activates through in-app navigation without duplicate loaded fetches');
 console.log('✓ Refresh cancellation, lazy active-view loading, fixture safety and no-raw-HTML guards pass');
