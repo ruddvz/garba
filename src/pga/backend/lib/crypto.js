@@ -54,6 +54,7 @@ export async function verifyAccessJwt(request, env, options = {}) {
   const expectedIssuer = env.TEAM_DOMAIN.replace(/\/$/, '')
   if (payload.iss !== expectedIssuer) return { ok: false, reason: 'invalid_issuer' }
   if (!audienceMatches(payload.aud, env.POLICY_AUD)) return { ok: false, reason: 'invalid_audience' }
+  if (payload.type !== 'app') return { ok: false, reason: 'invalid_token_type' }
   if (typeof payload.exp !== 'number' || payload.exp <= nowSec) return { ok: false, reason: 'expired' }
   if (typeof payload.nbf === 'number' && payload.nbf > nowSec + 30) return { ok: false, reason: 'not_yet_valid' }
   try {
