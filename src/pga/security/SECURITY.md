@@ -6,13 +6,16 @@ PGA is a private founder-facing product. It must be private by architecture, not
 
 ## Repository-verified controls
 
-The `scripts/lib/validate-pga-security.mjs` gate verifies these properties against the current source tree:
+The `scripts/lib/validate-pga-security.mjs` gate plus the focused `scripts/lib/validate-pga-ingest-abuse.mjs` gate verify these properties against the current source tree:
 
 - Admin API requests fail closed without a valid Cloudflare Access JWT assertion.
 - Access assertions are checked for RS256 signature, issuer, audience, expiry and not-before time through the Worker-side verifier.
 - Protected Admin API responses use `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a restrictive Permissions Policy.
 - Public telemetry ingestion accepts only the configured PlayGarba origin, JSON payloads within the body limit, known schema fields and a bounded batch shape.
 - Foreign origins, malformed JSON, wrong content type, oversized payloads, unknown event fields and rate-limited browsers fail closed.
+- Production-required ingestion adds an independent high-ceiling edge-source flood backstop. The edge address is HMAC-pseudonymised before it becomes a rate-limit key and is never written to PGA analytics storage.
+- Rotating a client-supplied browser ID does not rotate the edge-source flood key for requests from the same Cloudflare-observed source.
+- Missing required edge limiter configuration, missing required edge identity and limiter failures fail closed before analytics writes.
 - The PGA shell declares `noindex,nofollow,noarchive` and contains no inline secret/config payload.
 - PGA browser scripts do not use unreviewed HTML injection primitives such as `innerHTML`, `insertAdjacentHTML` or `document.write`.
 - PGA browser assets do not contain server secret identifiers or source-map references.
@@ -42,7 +45,7 @@ Rules:
 
 - Never embed secrets in `src/pga/app`, public PlayGarba JavaScript, HTML, manifests, sitemap, robots files or generated public assets.
 - Never commit real secret values to example Wrangler configuration.
-- Rotate `PGA_HMAC_SECRET` if disclosure is suspected. Rotation changes future pseudonyms and should be treated as an analytics continuity event, not silently hidden.
+- Rotate `PGA_HMAC_SECRET` if disclosure is suspected. Rotation changes future analytics pseudonyms and edge-rate pseudonyms. Treat that as an analytics continuity and abuse-counter reset event, not something to hide.
 - Rotate/revoke Access credentials or policies immediately if an authorised identity or device should lose access.
 
 ## Private response and browser security
@@ -63,11 +66,16 @@ The public event endpoint is intentionally unauthenticated because listeners do 
 - bounded request and batch size;
 - strict versioned event keys/enums;
 - server-side HMAC pseudonymisation;
-- per-browser rate limiting;
+- primary per-browser rate limiting;
+- a separate high-ceiling edge-source flood backstop when `EDGE_RATE_LIMIT_REQUIRED=true`;
 - no arbitrary SQL, query expression or admin operation in event payloads;
 - fail-closed handling for malformed or unknown fields.
 
-Rate limiting is an abuse-control layer, not proof that a browser identifier is a human identity. Operational limits must be tuned from real traffic without weakening the privacy contract.
+The browser-ID limiter remains the normal per-client control. Cloudflare warns that IP addresses can represent many legitimate users, especially on mobile and shared networks, so the edge-source limiter is intentionally not used as a normal user quota. It is a coarse flood circuit breaker with a much higher threshold. The repository example currently sets the browser limiter to 120 calls per 60 seconds and the edge-source backstop to 6,000 calls per 60 seconds. Production tuning must use observed traffic and must preserve enough headroom for legitimate shared networks.
+
+`CF-Connecting-IP` is used only inside the ingestion Worker to derive an HMAC pseudonym with `PGA_HMAC_SECRET`. The raw address is not logged, emitted to Analytics Engine, persisted in D1 or sent as the rate-limit key. Production configuration sets `EDGE_RATE_LIMIT_REQUIRED=true`; in that mode the Worker rejects ingestion if the edge limiter binding or Cloudflare edge identity is unavailable. Local/unit fixtures may leave that flag unset so they do not need to simulate Cloudflare infrastructure.
+
+The edge limiter is additional defence, not a complete anti-abuse system. Cloudflare Worker rate-limit counters are location-scoped and intentionally permissive/eventually consistent, so they must not be treated as billing, identity or exact accounting truth.
 
 ## XSS and content rendering
 
@@ -100,6 +108,8 @@ The following items require production evidence and remain **external / blocked*
 - Production Admin API responses retain `no-store` and private security headers.
 - PGA shell responses have the approved CSP/HSTS and are not cached publicly.
 - No alternate Worker hostname bypasses Access.
+- `events.playgarba.com` has both the browser and edge-source rate-limit bindings configured, with `EDGE_RATE_LIMIT_REQUIRED=true`.
+- Telemetry requests observed through the deployed Worker include the expected Cloudflare edge identity without exposing raw IP in product analytics/log payloads.
 - Emergency revocation has been exercised or otherwise verified without exposing private data.
 
 Record exact host, date, tested revision and observed response status/headers when these checks are performed.
@@ -116,6 +126,7 @@ Run:
 
 ```sh
 node scripts/lib/validate-pga-security.mjs
+node scripts/lib/validate-pga-ingest-abuse.mjs
 ```
 
-The dedicated `PGA security validate` workflow runs the same contract in CI. A failure should be repaired in the owning production lane. The validator must not be weakened merely to make an unsafe source change green.
+The dedicated `PGA security validate` workflow runs both contracts in CI. A failure should be repaired in the owning production lane. The validators must not be weakened merely to make an unsafe source change green.
