@@ -4,29 +4,42 @@ function asIso(ms = Date.now()) {
   return new Date(ms).toISOString()
 }
 
-function metricRow(dayIst, metric, value, meta, dimensionType = '', dimensionValue = '') {
-  if (!Number.isFinite(Number(value))) return null
+function finiteMetricValue(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error('invalid_metric_value')
+  }
+  return value
+}
+
+function optionalDataThroughMs(value) {
+  if (value == null) return null
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error('invalid_data_through_ms')
+  }
+  return value
+}
+
+function metricRow(dayIst, metric, value, meta, dataThroughMs, dimensionType = '', dimensionValue = '') {
   return {
     dayIst,
     metric,
     dimensionType,
     dimensionValue,
-    value: Number(value),
+    value: finiteMetricValue(value),
     precision: meta.precision || 'unknown',
     sampled: meta.sampled ? 1 : 0,
-    dataThroughMs: Number.isFinite(Number(meta.dataThroughMs)) ? Number(meta.dataThroughMs) : null,
+    dataThroughMs,
     schemaVersion: meta.schemaVersion || SCHEMA_VERSION,
     updatedAt: meta.updatedAt || asIso(),
   }
 }
 
 export async function replaceDailyMetrics(db, dayIst, metrics, meta = {}) {
-  const rows = []
-  for (const [metric, value] of Object.entries(metrics)) {
-    const row = metricRow(dayIst, metric, value, meta)
-    if (row) rows.push(row)
-  }
-  if (!rows.length) throw new Error('rollup_has_no_metrics')
+  const entries = Object.entries(metrics)
+  if (!entries.length) throw new Error('rollup_has_no_metrics')
+
+  const dataThroughMs = optionalDataThroughMs(meta.dataThroughMs)
+  const rows = entries.map(([metric, value]) => metricRow(dayIst, metric, value, meta, dataThroughMs))
 
   const deleteStatement = db.prepare('DELETE FROM daily_metrics WHERE day_ist = ?').bind(dayIst)
   const insert = db.prepare(`INSERT INTO daily_metrics (
@@ -53,6 +66,7 @@ export async function replaceDailyMetrics(db, dayIst, metrics, meta = {}) {
 }
 
 export async function setRollupRun(db, dayIst, state, options = {}) {
+  const dataThroughMs = optionalDataThroughMs(options.dataThroughMs)
   const now = asIso(options.nowMs)
   const completedAt = state === 'complete' || state === 'failed' ? now : null
   const startedAt = options.startedAt || now
@@ -72,7 +86,7 @@ export async function setRollupRun(db, dayIst, state, options = {}) {
     startedAt,
     completedAt,
     options.errorCode || null,
-    Number.isFinite(Number(options.dataThroughMs)) ? Number(options.dataThroughMs) : null,
+    dataThroughMs,
     options.schemaVersion || SCHEMA_VERSION,
     now,
   ).run()
