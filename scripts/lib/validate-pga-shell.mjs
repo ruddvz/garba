@@ -100,6 +100,14 @@ function validateStaticContract() {
 async function validateBrowserContract() {
   const { chromium, webkit } = await import('@playwright/test');
   const baseUrl = process.env.PGA_BASE_URL || 'http://127.0.0.1:4174';
+  const fixtureOrigin = new URL(baseUrl).origin;
+  const protectedAggregatePaths = new Set(['/api/audience', '/api/listening']);
+  const unavailableAggregate = JSON.stringify({
+    status: 'unavailable',
+    generatedAt: null,
+    dataThrough: null,
+    data: null,
+  });
   const engines = [
     ['chromium', chromium],
     ['webkit', webkit],
@@ -118,6 +126,21 @@ async function validateBrowserContract() {
         const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
         const page = await context.newPage();
         const failures = [];
+
+        await page.route('**/api/**', async (route) => {
+          const url = new URL(route.request().url());
+          if (url.origin !== fixtureOrigin || !protectedAggregatePaths.has(url.pathname)) {
+            await route.continue();
+            return;
+          }
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            headers: { 'cache-control': 'no-store' },
+            body: unavailableAggregate,
+          });
+        });
+
         page.on('pageerror', (error) => failures.push(`pageerror: ${error.message}`));
         page.on('response', (response) => {
           if (response.url().startsWith(baseUrl) && response.status() >= 400) failures.push(`http ${response.status()}: ${response.url()}`);
