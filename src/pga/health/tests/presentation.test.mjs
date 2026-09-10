@@ -234,6 +234,28 @@ test('unknown extra subsystem cannot displace or rename canonical rows', () => {
   assert.equal(model.subsystems.some((item) => item.name === 'secret-internal-system'), false)
 })
 
-test('invalid presentation clock is rejected rather than generating misleading freshness', () => {
-  assert.throws(() => buildHealthPresentation(snapshot(), { nowMs: Number.NaN }), /invalid_health_presentation_time/)
+test('numeric zero remains a valid presentation evaluation clock', () => {
+  const input = snapshot('healthy')
+  input.subsystems = input.subsystems.map((item) => ({
+    ...item,
+    checkedAt: 0,
+    dataThroughAt: 0,
+    freshnessAt: 0,
+  }))
+
+  const model = buildHealthPresentation(input, { nowMs: 0 })
+
+  assert.equal(model.status, 'healthy')
+  assert.equal(byName(model, 'production').freshness.ageMs, 0)
+  assert.match(byName(model, 'production').freshness.text, /checked 0s ago/)
+})
+
+test('coercible non-number and non-finite presentation clocks fail closed', () => {
+  for (const nowMs of ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => buildHealthPresentation(snapshot(), { nowMs }),
+      /invalid_health_presentation_time/,
+      `expected ${String(nowMs)} (${typeof nowMs}) to be rejected`,
+    )
+  }
 })

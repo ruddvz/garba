@@ -339,7 +339,17 @@ export function listeningTimeSql(dataset, range = '24h') {
   return listeningTimeQuery(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)
 }
 
+function sampleIntervalFromRow(row) {
+  const value = row?.max_sample_interval
+  if (value == null) return 1
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) {
+    throw new Error('analytics_precision_invalid_sample_interval')
+  }
+  return value
+}
+
 export function precisionFromRows(rows) {
-  const sampled = rows.some((row) => Number(row.max_sample_interval || 1) > 1)
+  const sampleIntervals = rows.map(sampleIntervalFromRow)
+  const sampled = sampleIntervals.some((value) => value > 1)
   return { sampled, precision: sampled ? 'estimated' : 'exact' }
 }
