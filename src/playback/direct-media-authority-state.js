@@ -22,6 +22,7 @@
     'error',
     'unavailable',
   ]);
+  const TERMINAL_EVENT_TYPES = new Set(['ended', 'error', 'unavailable']);
 
   function isPlainObject(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -155,6 +156,13 @@
     return event.generation === state.generation && String(event.songId || '').trim() === state.songId;
   }
 
+  function terminalTransitionAllowed(state, event) {
+    if (state.phase === 'unavailable') return event.type === 'unavailable';
+    if (state.phase === 'error') return event.type === 'error' || event.type === 'unavailable';
+    if (state.phase === 'ended') return TERMINAL_EVENT_TYPES.has(event.type);
+    return true;
+  }
+
   function normaliseMeasurements(state, event) {
     let duration = state.duration;
     let position = state.position;
@@ -200,6 +208,7 @@
 
   function reduceAuthoritativeEvent(state, event) {
     if (!isAuthoritativeMediaEvent(state, event)) return state;
+    if (!terminalTransitionAllowed(state, event)) return state;
 
     const measured = normaliseMeasurements(state, event);
 
