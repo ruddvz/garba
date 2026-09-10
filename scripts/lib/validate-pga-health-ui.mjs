@@ -134,7 +134,7 @@ assert.equal((html.match(/health\.css/g) || []).length, 1, 'Health stylesheet mu
 assert.equal((html.match(/health\.js/g) || []).length, 1, 'Health module must load once');
 assert.match(html, /id="healthOverallStatus"/);
 assert.match(html, /id="healthSubsystems"/);
-assert.match(html, /Unknown is never converted to healthy/);
+assert.match(html, /Unknown is never converted to zero or healthy\./);
 
 assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
 assert.match(css, /min-height:\s*44px/, 'evidence links need touch-friendly minimum height');
