@@ -25,6 +25,22 @@ function optionalDataThroughMs(value) {
   return value
 }
 
+function readDataThroughMs(row) {
+  if (!Object.prototype.hasOwnProperty.call(row, 'data_through_ms') || row.data_through_ms === null) {
+    return null
+  }
+  if (typeof row.data_through_ms !== 'number' || !Number.isFinite(row.data_through_ms) || row.data_through_ms < 0) {
+    throw new Error('invalid_data_through_ms')
+  }
+  return row.data_through_ms
+}
+
+function sampledFromD1(value) {
+  if (value === 0) return false
+  if (value === 1) return true
+  throw new Error('invalid_sampled_value')
+}
+
 function metricRow(dayIst, metric, value, meta, dataThroughMs, dimensionType = '', dimensionValue = '') {
   return {
     dayIst,
@@ -110,14 +126,16 @@ export async function getLifetimeMetrics(db) {
   const data = {}
   let dataThroughMs = null
   for (const row of result.results || []) {
-    const sampled = Boolean(row.sampled)
+    const sampled = sampledFromD1(row.sampled)
+    const value = finiteMetricValue(row.value)
+    const rowDataThroughMs = readDataThroughMs(row)
     data[row.metric] = {
-      value: Number(row.value || 0),
+      value,
       sampled,
       precision: sampled ? 'estimated' : 'exact',
     }
-    if (Number.isFinite(Number(row.data_through_ms))) {
-      dataThroughMs = Math.max(dataThroughMs || 0, Number(row.data_through_ms))
+    if (rowDataThroughMs !== null) {
+      dataThroughMs = dataThroughMs === null ? rowDataThroughMs : Math.max(dataThroughMs, rowDataThroughMs)
     }
   }
   return { data, dataThroughMs }
@@ -132,10 +150,10 @@ export async function getDailySeries(db, metric, days = 30) {
     LIMIT ?`).bind(metric, boundedDays).all()
   return (result.results || []).reverse().map((row) => ({
     day: row.day_ist,
-    value: Number(row.value),
+    value: finiteMetricValue(row.value),
     precision: row.precision,
-    sampled: Boolean(row.sampled),
-    dataThroughMs: row.data_through_ms == null ? null : Number(row.data_through_ms),
+    sampled: sampledFromD1(row.sampled),
+    dataThroughMs: readDataThroughMs(row),
   }))
 }
 
