@@ -13,11 +13,12 @@ export const CONSTRAINED_PROFILE = Object.freeze({
   }),
   cpuThrottleRate: 4,
   network: Object.freeze({
-    offline: false,
-    latency: 150,
-    downloadThroughput: 200_000,
-    uploadThroughput: 93_750,
+    latencyMs: 150,
+    aggregateDownloadBytesPerSecond: 200_000,
+    uploadBytesPerSecond: 93_750,
     connectionType: 'cellular3g',
+    enforcement: 'shared-fixture-origin',
+    note: 'Latency and aggregate download throughput are enforced by the local origin for every request, including service-worker cache.addAll traffic. Upload is metadata only because the experiment performs GET/HEAD requests.',
   }),
 });
 
@@ -32,6 +33,10 @@ const MIME_TYPES = new Map([
   ['.webmanifest', 'application/manifest+json; charset=utf-8'],
   ['.webp', 'image/webp'],
 ]);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+}
 
 function round(value, digits = 1) {
   if (!Number.isFinite(value)) return null;
@@ -117,7 +122,7 @@ export function parseArgs(argv) {
 }
 
 export function usageText() {
-  return `Usage: node scripts/performance/measure-sw-install-contention.mjs --root=<fixture> [options]\n\nOptions:\n  --root=<path>       Production-equivalent fixture root (required)\n  --host=<host>       Local host (default 127.0.0.1)\n  --port=<n>          Local port (default 4174)\n  --runs=<n>          Alternating A/B pairs, 2-10 (default ${DEFAULT_RUNS})\n  --output=<path>     Write JSON report as well as stdout\n  --help              Show help\n\nThe blocked-service-worker scenario is an upper-bound comparison against zero install work, not a claim about the benefit of any particular production deferral.`;
+  return `Usage: node scripts/performance/measure-sw-install-contention.mjs --root=<fixture> [options]\n\nOptions:\n  --root=<path>       Production-equivalent fixture root (required)\n  --host=<host>       Local host (default 127.0.0.1)\n  --port=<n>          Local port (default 4174)\n  --runs=<n>          Alternating A/B pairs, 2-10 (default ${DEFAULT_RUNS})\n  --output=<path>     Write JSON report as well as stdout\n  --help              Show help\n\nThe constrained network is enforced at the shared fixture origin so page and service-worker requests receive the same latency and aggregate download limit. The blocked-service-worker scenario is an upper-bound comparison against zero install work, not a claim about the benefit of any particular production deferral.`;
 }
 
 function normalizeCoreShellPath(value) {
@@ -164,13 +169,36 @@ function compactRequest(record) {
     status: record.status,
     bytes: record.bytes,
     startEpochMs: record.startEpochMs,
+    responseStartEpochMs: record.responseStartEpochMs,
     endEpochMs: record.endEpochMs,
     durationMs: Number.isFinite(record.endEpochMs) ? round(record.endEpochMs - record.startEpochMs) : null,
     activeAtStart: record.activeAtStart,
   };
 }
 
-export async function startFixtureServer(root, host, port) {
+function createAggregateDownloadGate(bytesPerSecond) {
+  let tail = Promise.resolve();
+  return async function consume(bytes) {
+    if (!Number.isFinite(bytes) || bytes <= 0) return;
+    let release;
+    const previous = tail;
+    tail = new Promise((resolve) => { release = resolve; });
+    await previous;
+    try {
+      await sleep((bytes / bytesPerSecond) * 1000);
+    } finally {
+      release();
+    }
+  };
+}
+
+export async function startFixtureServer(root, host, port, network = CONSTRAINED_PROFILE.network) {
+  const latencyMs = Number(network?.latencyMs) || 0;
+  const aggregateDownloadBytesPerSecond = Number(network?.aggregateDownloadBytesPerSecond) || Number.POSITIVE_INFINITY;
+  const consumeDownload = Number.isFinite(aggregateDownloadBytesPerSecond)
+    ? createAggregateDownloadGate(aggregateDownloadBytesPerSecond)
+    : async () => {};
+
   const state = {
     sampleId: null,
     requests: [],
@@ -178,12 +206,27 @@ export async function startFixtureServer(root, host, port) {
     peak: 0,
   };
 
+  async function beginResponse(record, response, status, headers, body = null, method = 'GET') {
+    record.status = status;
+    record.bytes = body?.byteLength || 0;
+    await sleep(latencyMs);
+    record.responseStartEpochMs = Date.now();
+    response.writeHead(status, headers);
+    if (method === 'HEAD' || !body?.byteLength) {
+      response.end();
+      return;
+    }
+    await consumeDownload(body.byteLength);
+    response.end(body);
+  }
+
   const server = http.createServer(async (request, response) => {
     const parsed = new URL(request.url || '/', `http://${host}:${port}`);
     const record = {
       sampleId: state.sampleId,
       path: parsed.pathname,
       startEpochMs: Date.now(),
+      responseStartEpochMs: null,
       endEpochMs: null,
       status: null,
       bytes: 0,
@@ -205,17 +248,21 @@ export async function startFixtureServer(root, host, port) {
 
     try {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
-        record.status = 405;
-        response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8' });
-        response.end('Method Not Allowed');
+        const body = Buffer.from('Method Not Allowed');
+        await beginResponse(record, response, 405, {
+          'content-type': 'text/plain; charset=utf-8',
+          'content-length': body.byteLength,
+        }, body, request.method);
         return;
       }
 
       const filePath = safeRequestPath(root, parsed.pathname);
       if (!filePath) {
-        record.status = 400;
-        response.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' });
-        response.end('Bad Request');
+        const body = Buffer.from('Bad Request');
+        await beginResponse(record, response, 400, {
+          'content-type': 'text/plain; charset=utf-8',
+          'content-length': body.byteLength,
+        }, body, request.method);
         return;
       }
 
@@ -226,9 +273,11 @@ export async function startFixtureServer(root, host, port) {
         if (!fileStat.isFile()) throw new Error('not-file');
         body = await readFile(filePath);
       } catch {
-        record.status = 404;
-        response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
-        response.end('Not Found');
+        const missing = Buffer.from('Not Found');
+        await beginResponse(record, response, 404, {
+          'content-type': 'text/plain; charset=utf-8',
+          'content-length': missing.byteLength,
+        }, missing, request.method);
         return;
       }
 
@@ -240,21 +289,21 @@ export async function startFixtureServer(root, host, port) {
         'last-modified': fileStat.mtime.toUTCString(),
       };
       if (request.headers['if-none-match'] === etag) {
-        record.status = 304;
-        response.writeHead(304, headers);
-        response.end();
+        await beginResponse(record, response, 304, headers, null, request.method);
         return;
       }
 
-      record.status = 200;
-      record.bytes = body.byteLength;
-      response.writeHead(200, { ...headers, 'content-length': body.byteLength });
-      if (request.method === 'HEAD') response.end();
-      else response.end(body);
+      await beginResponse(record, response, 200, { ...headers, 'content-length': body.byteLength }, body, request.method);
     } catch (error) {
-      record.status = 500;
-      response.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
-      response.end(`Fixture server error: ${error.message}`);
+      if (response.headersSent || response.destroyed) {
+        response.destroy(error);
+        return;
+      }
+      const body = Buffer.from(`Fixture server error: ${error.message}`);
+      await beginResponse(record, response, 500, {
+        'content-type': 'text/plain; charset=utf-8',
+        'content-length': body.byteLength,
+      }, body, request.method);
     }
   });
 
@@ -265,13 +314,19 @@ export async function startFixtureServer(root, host, port) {
 
   return {
     origin: `http://${host}:${port}/`,
+    networkEnforcement: {
+      location: 'shared-fixture-origin',
+      latencyMs,
+      aggregateDownloadBytesPerSecond: Number.isFinite(aggregateDownloadBytesPerSecond) ? aggregateDownloadBytesPerSecond : null,
+      appliesToServiceWorkerRequests: true,
+    },
     beginSample(sampleId) {
       if (state.active !== 0) throw new Error(`Cannot begin ${sampleId} while ${state.active} request(s) are active`);
       state.sampleId = sampleId;
       state.requests = [];
       state.peak = 0;
     },
-    async waitForIdle(timeoutMs = 8_000) {
+    async waitForIdle(timeoutMs = 12_000) {
       const started = Date.now();
       let stableSince = null;
       while (Date.now() - started < timeoutMs) {
@@ -281,7 +336,7 @@ export async function startFixtureServer(root, host, port) {
         } else {
           stableSince = null;
         }
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await sleep(25);
       }
       return state.active === 0;
     },
