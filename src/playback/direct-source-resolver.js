@@ -148,38 +148,45 @@
     return errors;
   }
 
-  function youtubeVideoId(song) {
-    const explicit = String(song && song.youtubeId || '').trim();
-    if (explicit) return explicit;
-    const raw = String(song && song.playbackSourceUrl || '').trim();
-    if (!raw) return '';
+  function youtubeSourceIdentity(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return { isYoutube: false, videoId: '', href: '' };
     try {
       const parsed = new URL(raw);
       const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-      if (host === 'youtu.be') return parsed.pathname.split('/').filter(Boolean)[0] || '';
+      if (host === 'youtu.be') {
+        return {
+          isYoutube: true,
+          videoId: parsed.pathname.split('/').filter(Boolean)[0] || '',
+          href: parsed.href,
+        };
+      }
       if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
-        if (parsed.searchParams.get('v')) return parsed.searchParams.get('v').trim();
+        const queryId = String(parsed.searchParams.get('v') || '').trim();
+        if (queryId) return { isYoutube: true, videoId: queryId, href: parsed.href };
         const parts = parsed.pathname.split('/').filter(Boolean);
         const marker = parts.findIndex((part) => part === 'embed' || part === 'shorts');
-        return marker >= 0 ? String(parts[marker + 1] || '').trim() : '';
+        return {
+          isYoutube: true,
+          videoId: marker >= 0 ? String(parts[marker + 1] || '').trim() : '',
+          href: parsed.href,
+        };
       }
+      return { isYoutube: false, videoId: '', href: parsed.href };
     } catch {
-      return '';
+      return { isYoutube: false, videoId: '', href: '' };
     }
-    return '';
+  }
+
+  function youtubeVideoId(song) {
+    const explicit = String(song && song.youtubeId || '').trim();
+    if (explicit) return explicit;
+    return youtubeSourceIdentity(song && song.playbackSourceUrl).videoId;
   }
 
   function youtubeSourceUrl(song, videoId) {
-    const raw = String(song && song.playbackSourceUrl || '').trim();
-    if (raw) {
-      try {
-        const parsed = new URL(raw);
-        const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-        if (host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')) return parsed.href;
-      } catch {
-        // Fall through to the canonical visible YouTube URL.
-      }
-    }
+    const source = youtubeSourceIdentity(song && song.playbackSourceUrl);
+    if (source.isYoutube && source.videoId === videoId) return source.href;
     return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
   }
 
@@ -188,14 +195,13 @@
     if (song.playbackSearchOnly === true) return false;
     if (song.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
 
-    const provider = String(song.playbackProvider || '').trim().toLowerCase();
-    const source = String(song.playbackSourceUrl || '').trim();
-    const youtubeCandidate = Boolean(
-      String(song.youtubeId || '').trim()
-      || provider === 'youtube'
-      || /(?:youtube\.com|youtu\.be)/i.test(source)
-    );
-    return youtubeCandidate && Boolean(youtubeVideoId(song));
+    const explicit = String(song.youtubeId || '').trim();
+    const source = youtubeSourceIdentity(song.playbackSourceUrl);
+    if (explicit) {
+      if (source.isYoutube && (!source.videoId || source.videoId !== explicit)) return false;
+      return true;
+    }
+    return Boolean(source.videoId);
   }
 
   function directDecision(songId, entry) {
