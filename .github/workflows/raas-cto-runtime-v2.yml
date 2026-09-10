@@ -6,46 +6,32 @@ on:
       - 'scripts/lib/raas-cto-runtime.mjs'
       - 'scripts/lib/raas-cto-runtime.test.mjs'
       - 'scripts/raas-adaptive.mjs'
+      - 'scripts/raas-adaptive.test.mjs'
       - '.raas/adaptive-cto.json'
       - '.github/workflows/raas-cto-runtime-v2.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   runtime-regression:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - name: Check out v2 head
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Merge current v1 dependency
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin codex/raas-adaptive-cto-v1
-          git merge --no-edit origin/codex/raas-adaptive-cto-v1
-
-      - name: Verify both adaptive layers
+      - name: Check adaptive runtime modules
         run: |
           node --check scripts/raas-adaptive.mjs
           node --check scripts/lib/raas-cto-runtime.mjs
+          node --check scripts/lib/raas-cto-runtime.test.mjs
+
+      - name: Run v1 and v2 adaptive regression suites
+        run: |
           node scripts/raas-adaptive.test.mjs
           node scripts/lib/raas-cto-runtime.test.mjs
-
-      - name: Push dependency reconciliation
-        shell: bash
-        run: |
-          set -euo pipefail
-          git push origin HEAD:${{ github.head_ref }}
