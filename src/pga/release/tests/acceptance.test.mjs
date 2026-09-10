@@ -350,3 +350,93 @@ test('invalid state, missing target revision and implausibly future evidence nev
 test('invalid evaluation time is rejected instead of producing an invalid acceptance timestamp', () => {
   assert.throws(() => createAcceptanceLedger({}, { nowMs: Number.NaN, targetRevision: SHA }), /invalid_acceptance_time/)
 })
+
+test('evaluation clock accepts numeric zero and rejects explicit coercible or non-finite values', () => {
+  const zeroClock = createAcceptanceLedger({}, { nowMs: 0, targetRevision: SHA })
+  assert.equal(zeroClock.evaluatedAt, '1970-01-01T00:00:00.000Z')
+
+  for (const invalid of [null, '0', '', true, false, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => createAcceptanceLedger({}, { nowMs: invalid, targetRevision: SHA }),
+      /invalid_acceptance_time/,
+    )
+  }
+})
+
+test('freshness budgets accept numeric zero and reject coercible, non-finite or negative values for verified and failed evidence', () => {
+  const zeroBudget = createAcceptanceLedger({
+    'quality.protected-production-build': {
+      state: 'verified',
+      evidence: evidence('production_probe', {
+        observedAt: NOW,
+        freshnessBudgetMs: 0,
+        sourceUrl: 'https://pga.playgarba.com/health',
+      }),
+    },
+  }, { nowMs: NOW, targetRevision: SHA })
+
+  const accepted = entry(zeroBudget, 'quality.protected-production-build')
+  assert.equal(accepted.state, 'verified')
+  assert.equal(accepted.evidence.freshnessBudgetMs, 0)
+
+  const invalidBudgets = [
+    null,
+    '3600000',
+    '',
+    true,
+    false,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    -1,
+  ]
+
+  for (const freshnessBudgetMs of invalidBudgets) {
+    for (const state of ['verified', 'failed']) {
+      const ledger = createAcceptanceLedger({
+        'quality.no-critical-console-error': {
+          state,
+          evidence: evidence('browser_automation', { freshnessBudgetMs }),
+        },
+      }, { nowMs: NOW, targetRevision: SHA })
+
+      const result = entry(ledger, 'quality.no-critical-console-error')
+      assert.equal(result.state, 'not_inspected')
+      assert.equal(result.reason, 'invalid_freshness_budget')
+    }
+  }
+})
+
+test('blocker issue identity accepts only positive integer numbers without coercion', () => {
+  for (const issue of ['843', true, false, null, 0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    const ledger = createAcceptanceLedger({
+      'journey.inspect-audience': {
+        state: 'blocked',
+        blocker: { issue },
+      },
+    }, { nowMs: NOW, targetRevision: SHA })
+
+    const result = entry(ledger, 'journey.inspect-audience')
+    assert.equal(result.state, 'not_inspected')
+    assert.equal(result.reason, 'blocker_evidence_required')
+  }
+
+  const withCode = createAcceptanceLedger({
+    'journey.inspect-audience': {
+      state: 'blocked',
+      blocker: { issue: '843', code: 'dependency_active' },
+    },
+  }, { nowMs: NOW, targetRevision: SHA })
+  assert.equal(entry(withCode, 'journey.inspect-audience').state, 'blocked')
+  assert.equal(entry(withCode, 'journey.inspect-audience').blocker.issue, null)
+  assert.equal(entry(withCode, 'journey.inspect-audience').blocker.code, 'dependency_active')
+
+  const validIssue = createAcceptanceLedger({
+    'journey.inspect-audience': {
+      state: 'blocked',
+      blocker: { issue: 843 },
+    },
+  }, { nowMs: NOW, targetRevision: SHA })
+  assert.equal(entry(validIssue, 'journey.inspect-audience').state, 'blocked')
+  assert.equal(entry(validIssue, 'journey.inspect-audience').blocker.issue, 843)
+})
