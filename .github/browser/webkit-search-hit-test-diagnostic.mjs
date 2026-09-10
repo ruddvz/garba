@@ -8,13 +8,19 @@ const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const OUTPUT_PATH = process.env.DIAGNOSTIC_OUTPUT || 'webkit-search-hit-test-diagnostic.json';
 const SAMPLE_DIR = process.env.DIAGNOSTIC_SAMPLE_DIR || 'webkit-search-hit-test-samples';
 const PINNED_857_SHA = process.env.PINNED_857_SHA || null;
-const SAMPLE_TIMEOUT_MS = 25_000;
+const SAMPLE_TIMEOUT_MS = 24_000;
 const VIEWPORT = Object.freeze({ width: 1440, height: 900 });
 const VARIANTS = Object.freeze({
   'main-control': process.env.MAIN_BASE_URL || 'http://127.0.0.1:4175',
   '857-candidate': process.env.CANDIDATE_BASE_URL || 'http://127.0.0.1:4176',
 });
-const MODES = Object.freeze(['dom-click', 'keyboard-enter', 'keyboard-space', 'playwright-click']);
+const MODES = Object.freeze([
+  'dom-click',
+  'keyboard-enter',
+  'keyboard-space',
+  'mouse-click',
+  'playwright-click',
+]);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +33,15 @@ function writeJson(filePath, value) {
 
 function errorText(error) {
   return String(error?.stack || error?.message || error || 'unknown error');
+}
+
+function compactError(error) {
+  return error ? String(error).split('\n').slice(0, 4).join(' | ').slice(0, 700) : null;
+}
+
+function checkpoint(result, outputPath, stage) {
+  result.setupStage = stage;
+  writeJson(outputPath, result);
 }
 
 async function captureState(page) {
@@ -176,12 +191,10 @@ async function captureState(page) {
 
 async function childSample(variant, mode, outputPath) {
   const baseUrl = VARIANTS[variant];
-  if (!baseUrl || !MODES.includes(mode)) {
-    throw new Error(`invalid sample: ${variant}/${mode}`);
-  }
+  if (!baseUrl || !MODES.includes(mode)) throw new Error(`invalid sample: ${variant}/${mode}`);
 
   const result = {
-    schema: 'playgarba-webkit-search-hit-test-sample/v2',
+    schema: 'playgarba-webkit-search-hit-test-sample/v3',
     variant,
     mode,
     baseUrl,
@@ -189,12 +202,14 @@ async function childSample(variant, mode, outputPath) {
     browser: 'webkit',
     viewport: VIEWPORT,
     status: 'starting',
+    setupStage: 'starting',
     setupError: null,
     actionError: null,
     crashed: false,
     crashEvents: [],
     runtimeFailures: [],
     consoleErrors: [],
+    httpErrors: [],
     preAction: null,
     afterAction: null,
     actionElapsedMs: null,
@@ -212,26 +227,59 @@ async function childSample(variant, mode, outputPath) {
       serviceWorkers: 'block',
     });
     const page = await context.newPage();
-    page.setDefaultTimeout(8_000);
+    page.setDefaultTimeout(6_000);
 
     page.on('crash', () => {
       result.crashed = true;
-      result.crashEvents.push({ at: Date.now(), kind: 'page-crash' });
+      result.crashEvents.push({ at: Date.now(), stage: result.setupStage, kind: 'page-crash' });
       writeJson(outputPath, result);
     });
-    page.on('pageerror', (error) => {
-      result.runtimeFailures.push(errorText(error));
-    });
+    page.on('pageerror', (error) => result.runtimeFailures.push(errorText(error)));
     page.on('console', (message) => {
       if (message.type() === 'error') result.consoleErrors.push(message.text());
     });
+    page.on('response', (response) => {
+      if (response.url().startsWith(baseUrl) && response.status() >= 400) {
+        result.httpErrors.push(`${response.status()} ${response.url()}`);
+      }
+    });
 
     try {
-      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
-      await page.locator('#searchButton').waitFor({ state: 'visible', timeout: 12_000 });
-      await page.locator('#searchButton').click({ timeout: 8_000 });
-      await page.waitForFunction(() => document.querySelector('#songSheet')?.getAttribute('aria-hidden') === 'false', null, { timeout: 8_000 });
-      await sleep(600);
+      checkpoint(result, outputPath, 'navigating');
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 10_000 });
+      checkpoint(result, outputPath, 'dom-loaded');
+
+      // Match the shared browser gate's readiness boundary before touching Search.
+      await page.waitForFunction(() => {
+        const title = document.querySelector('#songTitle')?.textContent?.trim();
+        const genre = document.querySelector('#genreStrip .genre-button[data-genre-bound="true"]');
+        return Boolean(title && genre);
+      }, null, { timeout: 10_000 });
+      checkpoint(result, outputPath, 'player-ready');
+
+      // Setup must not use Playwright actionability. This diagnostic is specifically
+      // classifying the close control after Search is already open.
+      const openedFromDom = await page.evaluate(() => {
+        const button = document.querySelector('#searchButton');
+        if (!(button instanceof HTMLElement)) return false;
+        button.click();
+        return true;
+      });
+      if (!openedFromDom) throw new Error('search_opener_missing');
+      checkpoint(result, outputPath, 'search-dom-click-dispatched');
+
+      await page.waitForFunction(() => {
+        const sheet = document.querySelector('#songSheet');
+        const input = document.querySelector('#searchInput');
+        if (!(sheet instanceof HTMLElement) || !(input instanceof HTMLElement)) return false;
+        const style = getComputedStyle(input);
+        return sheet.getAttribute('aria-hidden') === 'false'
+          && style.display !== 'none'
+          && style.visibility !== 'hidden';
+      }, null, { timeout: 5_000 });
+      checkpoint(result, outputPath, 'search-open');
+
+      await sleep(500);
       await page.evaluate(() => {
         const close = document.querySelector('#sheetClose');
         window.__webkitHitTestDiagnostic = { closeClicks: 0, keys: [] };
@@ -246,7 +294,7 @@ async function childSample(variant, mode, outputPath) {
       });
       result.preAction = await captureState(page);
       result.status = 'pre-action-captured';
-      writeJson(outputPath, result);
+      checkpoint(result, outputPath, 'pre-action-captured');
     } catch (error) {
       result.setupError = errorText(error);
       result.status = 'setup-failed';
@@ -270,6 +318,11 @@ async function childSample(variant, mode, outputPath) {
         });
         await page.keyboard.press(mode === 'keyboard-enter' ? 'Enter' : 'Space');
         result.actionReturned = true;
+      } else if (mode === 'mouse-click') {
+        const rect = result.preAction?.close?.rect;
+        if (!rect || !(rect.width > 0) || !(rect.height > 0)) throw new Error('close_geometry_missing');
+        await page.mouse.click(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        result.actionReturned = true;
       } else if (mode === 'playwright-click') {
         await page.locator('#sheetClose').click({ timeout: 5_000 });
         result.actionReturned = true;
@@ -278,7 +331,7 @@ async function childSample(variant, mode, outputPath) {
       result.actionError = errorText(error);
     }
     result.actionElapsedMs = Date.now() - startedAt;
-    await sleep(300);
+    await sleep(250);
 
     try {
       result.afterAction = await captureState(page);
@@ -314,20 +367,19 @@ async function runIsolatedSample(variant, mode) {
     child.kill('SIGKILL');
   }, SAMPLE_TIMEOUT_MS);
 
-  const exit = await new Promise((resolve) => {
-    child.once('exit', (code, signal) => resolve({ code, signal }));
-  });
+  const exit = await new Promise((resolve) => child.once('exit', (code, signal) => resolve({ code, signal })));
   clearTimeout(timer);
 
-  let sample = null;
+  let sample;
   try {
     sample = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
   } catch {
     sample = {
-      schema: 'playgarba-webkit-search-hit-test-sample/v2',
+      schema: 'playgarba-webkit-search-hit-test-sample/v3',
       variant,
       mode,
       status: 'no-sample-output',
+      setupStage: 'unknown',
     };
   }
 
@@ -338,8 +390,8 @@ async function runIsolatedSample(variant, mode) {
       timeoutMs: SAMPLE_TIMEOUT_MS,
       exitCode: exit.code,
       signal: exit.signal,
-      stdout: stdout.slice(-4_000),
-      stderr: stderr.slice(-8_000),
+      stdout: stdout.slice(-2_000),
+      stderr: stderr.slice(-4_000),
     },
   };
 }
@@ -351,10 +403,9 @@ function closes(sample) {
 function classifyVariant(samples) {
   const byMode = Object.fromEntries(samples.map((sample) => [sample.mode, sample]));
   const representative = samples.find((sample) => sample.preAction)?.preAction || null;
-  const setupFailures = samples.filter((sample) => sample.setupError || !sample.preAction);
+  const setupCrashes = samples.filter((sample) => sample.crashed && !sample.preAction);
 
-  if (!representative) return 'setup_failure';
-  if (samples.some((sample) => sample.crashed)) return 'renderer_crash';
+  if (!representative) return setupCrashes.length ? 'renderer_crash_during_search_open' : 'setup_failure';
   if (!representative.rendered) return 'visibility_or_rendering_failure';
   if (!representative.innerContained || !representative.visualContained) return 'geometry_or_compositor_containment';
 
@@ -364,19 +415,43 @@ function classifyVariant(samples) {
   const domCloses = closes(byMode['dom-click']);
   const enterCloses = closes(byMode['keyboard-enter']);
   const spaceCloses = closes(byMode['keyboard-space']);
+  const mouseCloses = closes(byMode['mouse-click']);
   const playwrightCloses = closes(byMode['playwright-click']);
   const playwrightTimedOut = Boolean(byMode['playwright-click']?.process?.timedOut);
 
-  if (domCloses && (enterCloses || spaceCloses) && playwrightTimedOut) {
+  if (setupCrashes.length) return 'mixed_search_open_renderer_instability';
+  if (domCloses && (enterCloses || spaceCloses) && mouseCloses && playwrightTimedOut) {
     return 'playwright_webkit_protocol_or_actionability_stall';
   }
-  if (domCloses && (enterCloses || spaceCloses) && !playwrightCloses) {
-    return 'playwright_actionability_only_failure';
+  if (domCloses && (enterCloses || spaceCloses) && mouseCloses && !playwrightCloses) {
+    return 'playwright_locator_actionability_only_failure';
   }
   if (!domCloses) return 'product_close_handler_or_dom_state_failure';
   if (!enterCloses && !spaceCloses) return 'keyboard_activation_failure';
-  if (playwrightCloses && setupFailures.length === 0) return 'no_reproduction';
+  if (!mouseCloses) return 'pointer_hit_test_or_protocol_failure';
+  if (playwrightCloses) return 'no_reproduction';
   return 'mixed_or_inconclusive';
+}
+
+function sampleSummary(sample) {
+  const center = sample.preAction?.hitTests?.center;
+  return {
+    mode: sample.mode,
+    status: sample.status,
+    setupStage: sample.setupStage,
+    setupError: compactError(sample.setupError),
+    actionError: compactError(sample.actionError),
+    timedOut: Boolean(sample.process?.timedOut),
+    crashed: Boolean(sample.crashed),
+    preAction: Boolean(sample.preAction),
+    rendered: sample.preAction?.rendered ?? null,
+    contained: sample.preAction ? Boolean(sample.preAction.innerContained && sample.preAction.visualContained) : null,
+    centerTop: center?.top ? `${center.top.tag}#${center.top.id || ''}.${center.top.className || ''}` : null,
+    closeInCenterStack: center?.closeInStack ?? null,
+    closeIsCenterTop: center?.closeIsTop ?? null,
+    closed: closes(sample),
+    actionElapsedMs: sample.actionElapsedMs,
+  };
 }
 
 async function parentRun() {
@@ -384,12 +459,13 @@ async function parentRun() {
   fs.mkdirSync(SAMPLE_DIR, { recursive: true });
 
   const result = {
-    schema: 'playgarba-webkit-search-hit-test/v2',
+    schema: 'playgarba-webkit-search-hit-test/v3',
     generatedAt: new Date().toISOString(),
     pinned857Sha: PINNED_857_SHA,
     viewport: VIEWPORT,
     browser: 'webkit',
     forcedReducedMotion: false,
+    searchSetupActivation: 'page-side HTMLElement.click()',
     sampleIsolation: 'fresh browser/context/page per variant and activation mode',
     variants: {},
   };
@@ -399,6 +475,7 @@ async function parentRun() {
     for (const mode of MODES) {
       const sample = await runIsolatedSample(variant, mode);
       samples.push(sample);
+      console.log(JSON.stringify({ variant, ...sampleSummary(sample) }));
     }
     result.variants[variant] = {
       baseUrl,
@@ -412,13 +489,14 @@ async function parentRun() {
   result.summary = {
     mainControl: result.variants['main-control']?.classification || null,
     candidate857: candidate?.classification || null,
-    candidatePreActionCaptured: Boolean(candidate?.samples?.some((sample) => sample.preAction)),
+    mainPreActionSamples: result.variants['main-control']?.samples?.filter((sample) => sample.preAction).length || 0,
+    candidatePreActionSamples: candidate?.samples?.filter((sample) => sample.preAction).length || 0,
   };
   writeJson(OUTPUT_PATH, result);
   console.log(JSON.stringify(result.summary, null, 2));
 
-  if (!result.summary.candidatePreActionCaptured) {
-    console.error('Diagnostic could not reach a pre-action Search state for the pinned #857 candidate.');
+  if (result.summary.mainPreActionSamples === 0 || result.summary.candidatePreActionSamples === 0) {
+    console.error('Diagnostic did not reach a pre-action Search state for both variants. Inspect setupStage evidence.');
     process.exitCode = 1;
   }
 }
@@ -428,14 +506,14 @@ if (process.argv[2] === '--sample') {
   try {
     await childSample(variant, mode, outputPath);
   } catch (error) {
-    const failed = {
-      schema: 'playgarba-webkit-search-hit-test-sample/v2',
+    writeJson(outputPath, {
+      schema: 'playgarba-webkit-search-hit-test-sample/v3',
       variant,
       mode,
       status: 'fatal-error',
+      setupStage: 'fatal-error',
       fatalError: errorText(error),
-    };
-    writeJson(outputPath, failed);
+    });
     process.exitCode = 1;
   }
 } else {
