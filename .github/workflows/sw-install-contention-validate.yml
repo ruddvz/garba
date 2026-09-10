@@ -170,7 +170,7 @@ jobs:
 
       - name: Upload A/B report
         if: always() && hashFiles('sw-install-contention-report.json') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sw-install-contention-report-${{ github.run_id }}
           path: sw-install-contention-report.json
