@@ -187,6 +187,12 @@ for (const nonMediaYoutubeUrl of [
 
 for (const unavailableSong of [
   song({ playbackSearchOnly: true }),
+  song({ playbackSourceType: 'verified-release-track-reference' }),
+  song({
+    playbackSourceType: 'verified-release-track-reference',
+    youtubeId: null,
+    playbackSourceUrl: 'https://youtu.be/abcdefghijk',
+  }),
   song({ playbackSourceType: 'verified-unchaptered-youtube-release' }),
   song({ youtubeId: null, playbackProvider: 'youtube', playbackSourceUrl: '' }),
   song({ youtubeId: null, playbackProvider: 'spotify', playbackSourceUrl: 'https://open.spotify.com/track/example' }),
@@ -364,6 +370,12 @@ assert.throws(
 
 assert.equal(isExecutableYoutube(song()), true);
 assert.equal(isExecutableYoutube(song({ playbackSearchOnly: true })), false);
+assert.equal(isExecutableYoutube(song({ playbackSourceType: 'verified-release-track-reference' })), false);
+assert.equal(isExecutableYoutube(song({
+  playbackSourceType: 'verified-release-track-reference',
+  youtubeId: null,
+  playbackSourceUrl: 'https://youtu.be/abcdefghijk',
+})), false);
 assert.equal(isExecutableYoutube(song({ playbackSourceType: 'verified-unchaptered-youtube-release' })), false);
 
 {
