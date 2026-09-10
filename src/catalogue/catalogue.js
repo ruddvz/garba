@@ -328,6 +328,32 @@ function includesTerm(song, release, terms) {
   return terms.some((term) => text.includes(normalise(term)));
 }
 
+function artistCreditMatches(creditValue, names) {
+  const credit = normalise(creditValue);
+  if (!credit) return false;
+  const paddedCredit = ` ${credit} `;
+  return names.some((name) => name && paddedCredit.includes(` ${name} `));
+}
+
+function trustedTrackNumber(song) {
+  const value = Number(song?.trackNumber);
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function trustedReleaseSequence(songs) {
+  if (!Array.isArray(songs) || !songs.length) return null;
+  const pairs = songs.map((song) => ({ song, trackNumber: trustedTrackNumber(song) }));
+  if (pairs.some(({ trackNumber }) => trackNumber == null)) return null;
+  const unique = new Set(pairs.map(({ trackNumber }) => trackNumber));
+  if (unique.size !== pairs.length) return null;
+  return pairs.sort((a, b) => a.trackNumber - b.trackNumber);
+}
+
+function orderedReleaseSongs(songs) {
+  const sequence = trustedReleaseSequence(songs);
+  return sequence ? sequence.map(({ song }) => song) : songs;
+}
+
 function fixedCollection({ id, title, kicker, description, visual, test }) {
   return { id, title, kicker, description, visual, test };
 }
@@ -411,10 +437,7 @@ function buildCollections() {
       kicker:'Artist',
       description:`Songs in PlayGarba credited to ${artist.name}, including catalogue aliases where available.`,
       visual:[art.traditional,art.folk,art.dandiya,art.fusion,art.devotional][index % 5],
-      test:(song)=>{
-        const credit = normalise(song.artist);
-        return names.some((name)=>credit.includes(name));
-      },
+      test:(song)=>artistCreditMatches(song.artist, names),
     }));
   });
 
@@ -641,6 +664,10 @@ function makeSongContext(song, release) {
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
+  const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(songs) : null;
+  const trackNumberBySongId = releaseSequence
+    ? new Map(releaseSequence.map(({ song, trackNumber }) => [song.id, trackNumber]))
+    : null;
   const visible = songs.slice(0, limit);
   els.songCount.textContent = visible.length < songs.length
     ? `Showing ${visible.length.toLocaleString()} of ${songs.length.toLocaleString()} songs`
@@ -648,7 +675,10 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   if (!songs.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'No songs match this catalogue yet.';
+    const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';
+    empty.textContent = emptyQuery
+      ? `No songs found for “${emptyQuery}”. Try another artist, song or release.`
+      : 'No songs match this catalogue yet.';
     els.songList.append(empty);
     return;
   }
@@ -660,7 +690,17 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
     row.className = 'song-row';
     row.setAttribute('role','listitem');
     row.dataset.songId = song.id;
-    row.append(songArtwork(song));
+    const trackNumber = trackNumberBySongId?.get(song.id);
+    if (trackNumber != null) {
+      const sequence = document.createElement('span');
+      sequence.className = 'song-art fallback song-track-number';
+      sequence.textContent = String(trackNumber).padStart(2, '0');
+      sequence.setAttribute('aria-hidden', 'true');
+      row.dataset.trackNumber = String(trackNumber);
+      row.append(sequence);
+    } else {
+      row.append(songArtwork(song));
+    }
     const copy = document.createElement('div');
     copy.className = 'song-copy';
     const titleEl = document.createElement('strong');
@@ -731,7 +771,7 @@ function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}
   const requestedRelease = state.releaseById.get(releaseId);
   const resolvedReleaseId = requestedRelease?.canonicalReleaseId || releaseId;
   const release = state.releaseById.get(resolvedReleaseId);
-  const songs = state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId);
+  const songs = orderedReleaseSongs(state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId));
   if (!release || !songs.length) return false;
   state.activeReleaseId = resolvedReleaseId;
   syncBackLabel();
