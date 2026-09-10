@@ -31,6 +31,17 @@ async function loadChromium() {
 }
 
 function attachRuntimeFailureCapture(page, originValue, failures, requestAborts) {
+  let documentGeneration = 0;
+  const requestGenerations = new WeakMap();
+
+  const onRequest = (request) => {
+    try {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentGeneration += 1;
+    } catch {
+      // If frame identity is unavailable, keep the current generation.
+    }
+    requestGenerations.set(request, documentGeneration);
+  };
   const onPageError = (error) => failures.push(`pageerror: ${error.message}`);
   const onConsole = (message) => {
     if (message.type() !== 'error') return;
@@ -52,8 +63,14 @@ function attachRuntimeFailureCapture(page, originValue, failures, requestAborts)
       const errorText = request.failure()?.errorText || '';
       const detail = `${request.method()} ${url.pathname}${url.search} ${errorText}`.trim();
       if (errorText.includes('ERR_ABORTED')) {
-        requestAborts.push(detail);
-        return;
+        const startedGeneration = requestGenerations.get(request);
+        let detached = false;
+        try { detached = request.frame().isDetached(); } catch { detached = false; }
+        const supersededDocument = Number.isInteger(startedGeneration) && startedGeneration < documentGeneration;
+        if (supersededDocument || detached) {
+          requestAborts.push(`${detail} [superseded-document]`);
+          return;
+        }
       }
       failures.push(`requestfailed: ${detail}`);
     } catch {
@@ -71,11 +88,13 @@ function attachRuntimeFailureCapture(page, originValue, failures, requestAborts)
     }
   };
 
+  page.on('request', onRequest);
   page.on('pageerror', onPageError);
   page.on('console', onConsole);
   page.on('requestfailed', onRequestFailed);
   page.on('response', onResponse);
   return () => {
+    page.off('request', onRequest);
     page.off('pageerror', onPageError);
     page.off('console', onConsole);
     page.off('requestfailed', onRequestFailed);
@@ -238,7 +257,7 @@ async function main() {
       objectUrlsInstrumented: true,
       longTasksObservedWhereSupported: true,
       sameOriginTransferBytes: 'Resource Timing transferSize, not Content-Length',
-      requestAborts: 'same-origin net::ERR_ABORTED cancellations are recorded separately and are not treated as hard failures; all other same-origin request failures remain blocking',
+      requestAborts: 'same-origin net::ERR_ABORTED is non-blocking only when request generation proves a superseded or detached document; active-document aborts remain hard failures',
       serviceWorkers: 'allowed',
       providerPlaybackMayBeRequestedByJourney: true,
       thirdPartyTransferBytesIncluded: false,
