@@ -133,10 +133,12 @@ function dedupedEventCte(dataset, whereClause) {
     argMax(blob4, double3) AS session_key,
     argMax(blob6, double3) AS search_key,
     argMax(blob7, double3) AS playback_key,
+    argMax(blob8, double3) AS surface,
     argMax(blob9, double3) AS display_mode,
     argMax(blob10, double3) AS world,
     argMax(blob11, double3) AS content_type,
     argMax(blob12, double3) AS content_id,
+    argMax(blob14, double3) AS referrer_host,
     argMax(blob15, double3) AS acquisition,
     argMax(blob16, double3) AS geo,
     argMax(blob17, double3) AS client,
@@ -177,13 +179,13 @@ FROM deduped`
 export function audienceSql(dataset, range = '7d') {
   const seconds = safeRangeSeconds(range)
   return `${dedupedEventCte(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)}
-SELECT client, geo, acquisition, display_mode,
+SELECT client, geo, referrer_host, acquisition, display_mode,
   SUM(sample_interval) AS sessions,
   MAX(data_through_ms) AS data_through_ms,
   MAX(sample_interval) AS max_sample_interval
 FROM deduped
 WHERE event_name = 'session_started'
-GROUP BY client, geo, acquisition, display_mode
+GROUP BY client, geo, referrer_host, acquisition, display_mode
 ORDER BY sessions DESC
 LIMIT 250`
 }
@@ -191,7 +193,7 @@ LIMIT 250`
 export function listeningSql(dataset, range = '7d') {
   const seconds = safeRangeSeconds(range)
   return `${dedupedEventCte(dataset, `timestamp > NOW() - INTERVAL '${seconds}' SECOND`)}
-SELECT event_name, world, content_type, content_id, detail_code,
+SELECT event_name, surface, world, content_type, content_id, detail_code,
   SUM(sample_interval) AS weighted_events,
   MAX(data_through_ms) AS data_through_ms,
   MAX(sample_interval) AS max_sample_interval
@@ -200,7 +202,7 @@ WHERE event_name IN (
   'play_intent','playback_started','playback_paused','next_requested','previous_requested','skip_requested',
   'playback_unavailable','playback_error','search_submitted','search_zero_results','search_result_selected'
 )
-GROUP BY event_name, world, content_type, content_id, detail_code
+GROUP BY event_name, surface, world, content_type, content_id, detail_code
 ORDER BY weighted_events DESC
 LIMIT 500`
 }
