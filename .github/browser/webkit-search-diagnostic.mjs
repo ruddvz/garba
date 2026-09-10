@@ -26,6 +26,12 @@ page.on('requestfailed', (request) => {
   } catch {}
 });
 
+/* app.js receives the fast boot catalogue through simple-runtime's fetch shim.
+   The only network request for data/songs.json on this fixture is deferred full
+   catalogue hydration. Abort that request so this probe can tell whether the
+   post-Search WebKit stall belongs to hydration rather than Search geometry. */
+await page.route('**/data/songs.json*', (route) => route.abort('failed'));
+
 function print(label, value) {
   console.log(`WEBKIT_SEARCH_DIAGNOSTIC ${label} ${JSON.stringify(value)}`);
 }
@@ -106,6 +112,9 @@ async function snapshot(label) {
       },
       appSheetSnap: app?.getAttribute('data-sheet-snap') || null,
       sheet: read('#songSheet'),
+      searchInput: read('#searchInput'),
+      sheetClose: read('#sheetClose'),
+      catalogueReady: window.GARBA_CATALOGUE_READY === true,
       activeElement: active instanceof HTMLElement ? {
         id: active.id,
         className: active.className,
@@ -130,6 +139,8 @@ try {
   await snapshot('after-click-50ms');
   await page.waitForTimeout(150);
   await snapshot('after-click-200ms');
+  await page.waitForTimeout(300);
+  await snapshot('after-click-500ms');
 
   const finalState = await page.evaluate(() => {
     const sheet = document.getElementById('songSheet');
@@ -155,6 +166,7 @@ try {
       appSheetSnap: document.getElementById('app')?.getAttribute('data-sheet-snap') || null,
       inputVisible: visible(input),
       closeVisible: visible(close),
+      catalogueReady: window.GARBA_CATALOGUE_READY === true,
       activeId: document.activeElement?.id || '',
     };
   });
