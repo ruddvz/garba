@@ -207,54 +207,58 @@ ORDER BY weighted_events DESC
 LIMIT 500`
 }
 
+function liveReceivedWindow() {
+  return `toDateTime(double3 / 1000) >= NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND
+    AND toDateTime(double3 / 1000) <= NOW()`
+}
+
 function livePresenceCtes(dataset, whereClause) {
-  return `WITH latest_tabs AS (
+  return `WITH same_time_sessions AS (
   SELECT
     blob3 AS session_key,
-    blob4 AS tab_key,
-    argMax(blob6, double3) AS playback_state,
-    argMax(blob5, double3) AS surface,
-    argMax(blob7, double3) AS world,
-    argMax(blob10, double3) AS display_mode,
-    MAX(double3) AS data_through_ms,
-    argMax(_sample_interval, double3) AS sample_interval
+    double3 AS received_at_ms,
+    argMax(blob6, blob1) AS playback_state,
+    argMax(blob5, blob1) AS surface,
+    argMax(blob7, blob1) AS world,
+    argMax(blob10, blob1) AS display_mode,
+    argMax(_sample_interval, blob1) AS sample_interval
   FROM ${dataset}
   WHERE ${productionFilter()} AND ${whereClause}
-  GROUP BY session_key, tab_key
+  GROUP BY session_key, received_at_ms
 ), latest_sessions AS (
   SELECT
     session_key,
-    MAX(if(playback_state = 'playing', 1, 0)) AS is_listening,
-    argMax(surface, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS surface,
-    argMax(world, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS world,
-    argMax(display_mode, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS display_mode,
-    MAX(data_through_ms) AS data_through_ms,
-    MAX(sample_interval) AS sample_interval
-  FROM latest_tabs
+    argMax(playback_state, received_at_ms) AS playback_state,
+    argMax(surface, received_at_ms) AS surface,
+    argMax(world, received_at_ms) AS world,
+    argMax(display_mode, received_at_ms) AS display_mode,
+    MAX(received_at_ms) AS data_through_ms,
+    argMax(sample_interval, received_at_ms) AS sample_interval
+  FROM same_time_sessions
   GROUP BY session_key
 )`
 }
 
 export function liveSql(dataset) {
-  return `${livePresenceCtes(dataset, `timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND`)}
+  return `${livePresenceCtes(dataset, liveReceivedWindow())}
 SELECT
   SUM(sample_interval) AS live_now,
-  SUM(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END) AS listening_now,
-  SUM(CASE WHEN is_listening = 0 THEN sample_interval ELSE 0 END) AS browsing_now,
+  SUM(CASE WHEN playback_state = 'playing' THEN sample_interval ELSE 0 END) AS listening_now,
+  SUM(CASE WHEN playback_state != 'playing' THEN sample_interval ELSE 0 END) AS browsing_now,
   MAX(data_through_ms) AS data_through_ms,
   MAX(sample_interval) AS max_sample_interval
 FROM latest_sessions`
 }
 
 export function liveBreakdownSql(dataset) {
-  return `${livePresenceCtes(dataset, `timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND`)}
+  return `${livePresenceCtes(dataset, liveReceivedWindow())}
 SELECT
   surface,
   world,
   display_mode,
   SUM(sample_interval) AS sessions,
-  SUM(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END) AS listening_sessions,
-  SUM(CASE WHEN is_listening = 0 THEN sample_interval ELSE 0 END) AS browsing_sessions,
+  SUM(CASE WHEN playback_state = 'playing' THEN sample_interval ELSE 0 END) AS listening_sessions,
+  SUM(CASE WHEN playback_state != 'playing' THEN sample_interval ELSE 0 END) AS browsing_sessions,
   MAX(data_through_ms) AS data_through_ms,
   MAX(sample_interval) AS max_sample_interval
 FROM latest_sessions
