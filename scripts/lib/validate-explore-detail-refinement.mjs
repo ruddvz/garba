@@ -161,6 +161,35 @@ for (const [artistId, entry] of Object.entries(artistArtwork)) {
   }
 }
 
+for (const marker of [
+  'function artistCreditMatches(creditValue, names)',
+  'paddedCredit.includes(` ${name} `)',
+  'test:(song)=>artistCreditMatches(song.artist, names)',
+  'function trustedTrackNumber(song)',
+  'Number.isInteger(value) && value > 0',
+  'function trustedReleaseSequence(songs)',
+  'pairs.some(({ trackNumber }) => trackNumber == null)',
+  'unique.size !== pairs.length',
+  'function orderedReleaseSongs(songs)',
+  "sequence.className = 'song-art fallback song-track-number';",
+  "row.dataset.trackNumber = String(trackNumber);",
+  'const songs = orderedReleaseSongs(state.activeSongs.filter',
+  "const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';",
+  '? `No songs found for “${emptyQuery}”. Try another artist, song or release.`',
+]) {
+  if (!catalogue.includes(marker)) fail(`Explore truthful discovery is missing: ${marker}`);
+}
+
+if (catalogue.includes('return names.some((name)=>credit.includes(name));')) {
+  fail('Artist Essentials must not use loose substring credit matching');
+}
+if (catalogue.includes("sequence.textContent = String(index + 1)")) {
+  fail('Selected release track numbers must never be fabricated from render position');
+}
+if (catalogue.includes("row.dataset.trackNumber = String(index + 1)")) {
+  fail('Selected release data-track-number must never be fabricated from render position');
+}
+
 const inlineModules = [...explore.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)].map((match) => match[1]);
 if (!inlineModules.length) fail('Explore must retain its inline interaction/atmosphere modules');
 inlineModules.forEach((source, index) => {
@@ -197,4 +226,4 @@ if (listening.includes('release-hero-art fallback')) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Explore detail hierarchy, verified release and artist artwork, full artist discovery, clean tracklists, rich metadata, taxonomy browsing, album semantics and keyboard navigation are protected');
+console.log('✓ Explore detail hierarchy, verified release and artist artwork, full artist discovery, truthful tracklists, rich metadata, taxonomy browsing, album semantics and keyboard navigation are protected');
