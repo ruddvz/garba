@@ -8,7 +8,6 @@ on:
       - 'data/catalogue/songs/**'
       - 'scripts/lib/validate-direct-audio-rights.mjs'
       - 'scripts/lib/validate-direct-audio-rights.test.mjs'
-      - 'docs/product/direct-audio-rights.md'
       - '.github/workflows/direct-audio-rights-validate.yml'
   push:
     branches:
@@ -19,7 +18,6 @@ on:
       - 'data/catalogue/songs/**'
       - 'scripts/lib/validate-direct-audio-rights.mjs'
       - 'scripts/lib/validate-direct-audio-rights.test.mjs'
-      - 'docs/product/direct-audio-rights.md'
       - '.github/workflows/direct-audio-rights-validate.yml'
   workflow_dispatch:
 
