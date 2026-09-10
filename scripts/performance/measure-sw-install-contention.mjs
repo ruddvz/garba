@@ -13,6 +13,75 @@ import {
   usageText,
 } from './sw-install-contention-lib.mjs';
 
+const LIFECYCLE_METRICS = [
+  'serviceWorkerRegisterCallMs',
+  'serviceWorkerRegistrationResolvedMs',
+  'serviceWorkerInstalledMs',
+  'serviceWorkerActivatingMs',
+  'serviceWorkerActivatedMs',
+  'serviceWorkerReadyResolvedMs',
+  'serviceWorkerControllerChangeMs',
+  'serviceWorkerRegisterToInstalledMs',
+  'serviceWorkerInstalledToActivatingMs',
+  'serviceWorkerActivationDurationMs',
+  'serviceWorkerRegisterToReadyMs',
+];
+
+function round(value, digits = 1) {
+  if (!Number.isFinite(value)) return null;
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
+function percentile(values, fraction) {
+  const finite = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!finite.length) return null;
+  const index = Math.min(finite.length - 1, Math.max(0, Math.ceil(finite.length * fraction) - 1));
+  return finite[index];
+}
+
+function summariseLifecycle(samples) {
+  return Object.fromEntries(LIFECYCLE_METRICS.map((key) => {
+    const values = samples.map((sample) => sample[key]).filter(Number.isFinite);
+    return [key, {
+      samples: values.length,
+      median: round(percentile(values, 0.5)),
+      p75: round(percentile(values, 0.75)),
+      min: values.length ? round(Math.min(...values)) : null,
+      max: values.length ? round(Math.max(...values)) : null,
+    }];
+  }));
+}
+
+function durationBetween(end, start) {
+  return Number.isFinite(end) && Number.isFinite(start) && end >= start ? round(end - start) : null;
+}
+
+function deriveLifecycleMetrics(lifecycle) {
+  const value = lifecycle || {};
+  const registerCallMs = Number.isFinite(value.registerCallMs) ? value.registerCallMs : null;
+  const registrationResolvedMs = Number.isFinite(value.registrationResolvedMs) ? value.registrationResolvedMs : null;
+  const installedMs = Number.isFinite(value.installedMs) ? value.installedMs : null;
+  const activatingMs = Number.isFinite(value.activatingMs) ? value.activatingMs : null;
+  const activatedMs = Number.isFinite(value.activatedMs) ? value.activatedMs : null;
+  const readyResolvedMs = Number.isFinite(value.readyResolvedMs) ? value.readyResolvedMs : null;
+  const controllerChangeMs = Number.isFinite(value.controllerChangeMs) ? value.controllerChangeMs : null;
+
+  return {
+    serviceWorkerRegisterCallMs: round(registerCallMs),
+    serviceWorkerRegistrationResolvedMs: round(registrationResolvedMs),
+    serviceWorkerInstalledMs: round(installedMs),
+    serviceWorkerActivatingMs: round(activatingMs),
+    serviceWorkerActivatedMs: round(activatedMs),
+    serviceWorkerReadyResolvedMs: round(readyResolvedMs),
+    serviceWorkerControllerChangeMs: round(controllerChangeMs),
+    serviceWorkerRegisterToInstalledMs: durationBetween(installedMs, registerCallMs),
+    serviceWorkerInstalledToActivatingMs: durationBetween(activatingMs, installedMs),
+    serviceWorkerActivationDurationMs: durationBetween(activatedMs, activatingMs),
+    serviceWorkerRegisterToReadyMs: durationBetween(readyResolvedMs, registerCallMs),
+  };
+}
+
 async function loadChromium() {
   try {
     const { chromium } = await import('@playwright/test');
@@ -32,6 +101,116 @@ async function configureCpuProfile(page) {
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: false });
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: CONSTRAINED_PROFILE.cpuThrottleRate });
   return cdp;
+}
+
+async function installServiceWorkerLifecycleProbe(context) {
+  await context.addInitScript(() => {
+    const exposed = 'serviceWorker' in navigator;
+    const state = {
+      supported: exposed,
+      registerWrapped: false,
+      registerWrapError: null,
+      controllerPresentAtInit: exposed ? Boolean(navigator.serviceWorker.controller) : false,
+      registerCallMs: null,
+      registerRejectedMs: null,
+      registrationResolvedMs: null,
+      updateFoundMs: null,
+      installingMs: null,
+      installedMs: null,
+      activatingMs: null,
+      activatedMs: null,
+      redundantMs: null,
+      readyResolvedMs: null,
+      controllerChangeMs: null,
+      controllerStateAtChange: null,
+      events: [],
+    };
+    Object.defineProperty(window, '__PLAYGARBA_SW_LIFECYCLE__', {
+      configurable: false,
+      enumerable: false,
+      writable: false,
+      value: state,
+    });
+    if (!exposed) return;
+
+    const container = navigator.serviceWorker;
+    const observedWorkers = new WeakSet();
+    const observedRegistrations = new WeakSet();
+    const stamp = (key, detail = null) => {
+      const now = performance.now();
+      if (!Number.isFinite(state[key])) state[key] = now;
+      state.events.push({ type: key, atMs: now, detail });
+    };
+    const observeWorker = (worker, source) => {
+      if (!worker) return;
+      const capture = () => {
+        const workerState = worker.state;
+        const key = `${workerState}Ms`;
+        if (Object.prototype.hasOwnProperty.call(state, key) && !Number.isFinite(state[key])) {
+          stamp(key, source);
+        } else {
+          state.events.push({ type: 'workerStateObserved', atMs: performance.now(), detail: `${workerState}:${source}` });
+        }
+      };
+      capture();
+      if (observedWorkers.has(worker)) return;
+      observedWorkers.add(worker);
+      worker.addEventListener('statechange', capture);
+    };
+    const observeRegistration = (registration, source) => {
+      if (!registration) return;
+      observeWorker(registration.installing, `${source}:installing`);
+      observeWorker(registration.waiting, `${source}:waiting`);
+      observeWorker(registration.active, `${source}:active`);
+      if (observedRegistrations.has(registration)) return;
+      observedRegistrations.add(registration);
+      registration.addEventListener('updatefound', () => {
+        if (!Number.isFinite(state.updateFoundMs)) stamp('updateFoundMs', source);
+        observeWorker(registration.installing, 'updatefound:installing');
+      });
+    };
+
+    container.addEventListener('controllerchange', () => {
+      if (!Number.isFinite(state.controllerChangeMs)) stamp('controllerChangeMs');
+      state.controllerStateAtChange = container.controller?.state ?? null;
+    });
+
+    container.ready.then((registration) => {
+      if (!Number.isFinite(state.readyResolvedMs)) stamp('readyResolvedMs');
+      observeRegistration(registration, 'ready');
+    }).catch(() => {});
+
+    const originalRegister = container.register.bind(container);
+    const instrumentedRegister = (...args) => {
+      if (!Number.isFinite(state.registerCallMs)) stamp('registerCallMs', String(args[0] ?? ''));
+      let promise;
+      try {
+        promise = originalRegister(...args);
+      } catch (error) {
+        if (!Number.isFinite(state.registerRejectedMs)) stamp('registerRejectedMs', String(error?.message || error));
+        throw error;
+      }
+      promise.then((registration) => {
+        if (!Number.isFinite(state.registrationResolvedMs)) stamp('registrationResolvedMs', registration?.scope ?? null);
+        observeRegistration(registration, 'register-resolved');
+      }, (error) => {
+        if (!Number.isFinite(state.registerRejectedMs)) stamp('registerRejectedMs', String(error?.message || error));
+      });
+      return promise;
+    };
+
+    try {
+      Object.defineProperty(container, 'register', {
+        configurable: true,
+        enumerable: false,
+        writable: true,
+        value: instrumentedRegister,
+      });
+      state.registerWrapped = container.register === instrumentedRegister;
+    } catch (error) {
+      state.registerWrapError = String(error?.message || error);
+    }
+  });
 }
 
 async function waitForPlayer(page) {
@@ -71,6 +250,7 @@ async function collectServiceWorkerState(page, scenario) {
         controller: false,
         states: [],
         cacheKeys: [],
+        lifecycle: window.__PLAYGARBA_SW_LIFECYCLE__ || null,
       };
     }
 
@@ -93,11 +273,15 @@ async function collectServiceWorkerState(page, scenario) {
     try { cacheKeys = await caches.keys(); }
     catch { cacheKeys = []; }
 
+    const lifecycle = window.__PLAYGARBA_SW_LIFECYCLE__
+      ? JSON.parse(JSON.stringify(window.__PLAYGARBA_SW_LIFECYCLE__))
+      : null;
+
     return {
       supported: true,
       registrationCount: registrations.length,
       ready,
-      readyMs: ready ? performance.now() : null,
+      readyMs: lifecycle?.readyResolvedMs ?? (ready ? performance.now() : null),
       controller: Boolean(navigator.serviceWorker.controller),
       states: registrations.map((registration) => ({
         scope: registration.scope,
@@ -106,6 +290,7 @@ async function collectServiceWorkerState(page, scenario) {
         active: registration.active?.state ?? null,
       })),
       cacheKeys,
+      lifecycle,
     };
   });
 }
@@ -140,6 +325,24 @@ async function collectBrowserTiming(page, playerReadyMs, catalogueReadyMs) {
   }, { playerReady: playerReadyMs, catalogueReady: catalogueReadyMs });
 }
 
+function lifecycleOrderFailures(lifecycle) {
+  const failures = [];
+  const ordered = [
+    ['registerCallMs', lifecycle?.registerCallMs],
+    ['registrationResolvedMs', lifecycle?.registrationResolvedMs],
+    ['installedMs', lifecycle?.installedMs],
+    ['activatingMs', lifecycle?.activatingMs],
+    ['activatedMs', lifecycle?.activatedMs],
+    ['readyResolvedMs', lifecycle?.readyResolvedMs],
+  ].filter(([, value]) => Number.isFinite(value));
+  for (let index = 1; index < ordered.length; index += 1) {
+    if (ordered[index][1] < ordered[index - 1][1]) {
+      failures.push(`service-worker lifecycle order invalid: ${ordered[index][0]} < ${ordered[index - 1][0]}`);
+    }
+  }
+  return failures;
+}
+
 function sampleValidity(sample, swMetadata) {
   const failures = [...sample.failures];
   for (const statusFailure of sample.server.statusFailures) {
@@ -153,6 +356,15 @@ function sampleValidity(sample, swMetadata) {
     if (!sample.serviceWorker.ready) failures.push('allowed sample did not reach an active service worker');
     if (swMetadata.cacheName && !sample.serviceWorker.cacheKeys.includes(swMetadata.cacheName)) {
       failures.push(`allowed sample did not activate expected cache ${swMetadata.cacheName}`);
+    }
+    const lifecycle = sample.serviceWorker.lifecycle;
+    if (!lifecycle?.registerWrapped) failures.push(`service-worker lifecycle register probe unavailable${lifecycle?.registerWrapError ? `: ${lifecycle.registerWrapError}` : ''}`);
+    for (const key of ['registerCallMs', 'registrationResolvedMs', 'installedMs', 'activatingMs', 'activatedMs', 'readyResolvedMs']) {
+      if (!Number.isFinite(lifecycle?.[key])) failures.push(`service-worker lifecycle milestone missing: ${key}`);
+    }
+    failures.push(...lifecycleOrderFailures(lifecycle));
+    if (sample.serviceWorker.controller && !lifecycle?.controllerPresentAtInit && !Number.isFinite(lifecycle?.controllerChangeMs)) {
+      failures.push('service-worker controller is present but controller acquisition was not observed');
     }
   } else if (sample.serviceWorker.registrationCount !== 0) {
     failures.push(`blocked sample unexpectedly has ${sample.serviceWorker.registrationCount} service-worker registration(s)`);
@@ -168,6 +380,7 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
     ...CONSTRAINED_PROFILE.context,
     serviceWorkers: scenario === 'allowed' ? 'allow' : 'block',
   });
+  await installServiceWorkerLifecycleProbe(context);
   const page = await context.newPage();
   const cdp = await configureCpuProfile(page);
   const failures = [];
@@ -206,6 +419,7 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
     controller: false,
     states: [],
     cacheKeys: [],
+    lifecycle: null,
   };
 
   try {
@@ -226,6 +440,7 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
 
   const rawServer = fixture.endSample(sampleId);
   const server = deriveServerMetrics(rawServer, swMetadata, browserTiming);
+  const lifecycleMetrics = deriveLifecycleMetrics(serviceWorker.lifecycle);
   const sample = {
     sampleId,
     pair,
@@ -243,6 +458,7 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
     resourceTimingCount: browserTiming.resourceTimingCount,
     resourceTimingTransferBytes: browserTiming.resourceTimingTransferBytes,
     serviceWorkerReadyMs: serviceWorker.readyMs,
+    ...lifecycleMetrics,
     serviceWorker,
     serverRequestCount: server.serverRequestCount,
     serverResponseBytes: server.serverResponseBytes,
@@ -297,7 +513,7 @@ async function main() {
   if (blocked.length !== options.runs) validityFailures.push(`valid blocked samples ${blocked.length}/${options.runs}`);
 
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     generatedAt: new Date().toISOString(),
     testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
     browser: {
@@ -321,6 +537,7 @@ async function main() {
       browserCpuThrottleAppliedToPageTarget: true,
       networkThrottleAppliedAtSharedOrigin: true,
       networkThrottleAppliesToServiceWorkerRequests: true,
+      lifecycleProbe: 'page-init wrapper returns the original navigator.serviceWorker.register promise unchanged and observes exposed registration/worker/controller state transitions only',
       providerPlaybackInitiated: false,
       blockedScenarioMeaning: 'upper-bound comparison against zero service-worker registration/install work; not the expected benefit of any specific production deferral',
       performanceBudgetApplied: false,
@@ -331,6 +548,10 @@ async function main() {
       validityFailures: [...new Set(validityFailures)],
       allowedSummary,
       blockedSummary,
+      lifecycleSummary: {
+        allowed: summariseLifecycle(allowed),
+        blocked: summariseLifecycle(blocked),
+      },
       medianDeltaAllowedMinusBlocked: medianDeltas(allowedSummary, blockedSummary),
       materialityDetermined: false,
     },
