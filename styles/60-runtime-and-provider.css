@@ -36,7 +36,9 @@ body {
   background: #111323;
 }
 
-.world {
+/* The app owns the fixed viewport. Artwork stays absolute inside that rectangle so
+   iOS/WebKit cannot give nested background layers a smaller independent fixed viewport. */
+.app > .world {
   position: absolute !important;
   inset: -3px !important;
   width: auto !important;
@@ -48,7 +50,7 @@ body {
   overflow: hidden !important;
 }
 
-.world-layer {
+.app > .world > .world-layer {
   position: absolute !important;
   inset: -3px !important;
   width: auto !important;
@@ -311,6 +313,9 @@ body {
   .provider-media { height: 200px; }
 }
 
-@media (display-mode: standalone) {
+@media (display-mode: standalone),
+       (display-mode: fullscreen),
+       (display-mode: minimal-ui),
+       (display-mode: window-controls-overlay) {
   .install-banner { display: none !important; }
 }

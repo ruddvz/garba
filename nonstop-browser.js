@@ -18,6 +18,10 @@
     browserOpen: false,
     lastFocus: null,
     startingSetId: null,
+    searchCore: null,
+    searchCorePromise: null,
+    chapterObserver: null,
+    currentChapterIndex: -1,
   };
 
   const rank = {
@@ -183,6 +187,74 @@
     ].filter(Boolean).join(' ').toLowerCase();
   }
 
+
+  function fallbackNormalize(value = '') {
+    return String(value ?? '')
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\p{M}]+/gu, ' ')
+      .trim();
+  }
+
+  function fallbackSearchSets(sets, query) {
+    const needle = fallbackNormalize(query);
+    if (!needle) return [...sets];
+    const terms = needle.split(/\s+/u).filter(Boolean);
+    return sets.filter((set) => {
+      const haystack = fallbackNormalize(setSearchText(set));
+      return terms.every((term) => haystack.includes(term));
+    });
+  }
+
+  function searchRecordForSet(set) {
+    return {
+      id: set.id,
+      title: set.title,
+      artist: set.artistsText,
+      taxonomyTerms: [
+        set.series,
+        set.setType,
+        ...(Array.isArray(set.categories) ? set.categories : []),
+        ...(Array.isArray(set.tags) ? set.tags : []),
+        ...(Array.isArray(set.genres) ? set.genres : []),
+        ...(Array.isArray(set.styles) ? set.styles : []),
+      ].filter(Boolean),
+      releaseTerms: [
+        set.volume,
+        ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
+      ].filter(Boolean),
+    };
+  }
+
+  async function loadSearchCore() {
+    if (state.searchCore) return state.searchCore;
+    if (!state.searchCorePromise) {
+      state.searchCorePromise = import('./assets/runtime/search-core.js')
+        .then((module) => {
+          if (typeof module.rankSearchRecords !== 'function') throw new Error('Search core is missing rankSearchRecords');
+          state.searchCore = module;
+          return module;
+        })
+        .catch((error) => {
+          console.warn('Shared Nonstop search core unavailable; using Unicode-safe fallback.', error);
+          return null;
+        });
+    }
+    return state.searchCorePromise;
+  }
+
+  function searchSets(sets, query) {
+    const needle = String(query ?? '').trim();
+    if (!needle) return [...sets];
+    const rankSearchRecords = state.searchCore?.rankSearchRecords;
+    if (typeof rankSearchRecords !== 'function') return fallbackSearchSets(sets, needle);
+
+    const byId = new Map(sets.map((set) => [set.id, set]));
+    return rankSearchRecords(sets.map(searchRecordForSet), needle)
+      .map(({ record }) => byId.get(record.id))
+      .filter(Boolean);
+  }
+
   const visualBrowseCategories = new Set(['traditional', 'dandiya', 'devotional', 'folk', 'sanedo', 'fusion']);
   const taxonomyVisualCategory = new Map([
     ['roots-archive', 'folk'],
@@ -273,11 +345,6 @@
     return category === 'all' || categoriesFor(set).has(category);
   }
 
-  function matchesQuery(set, query) {
-    const needle = String(query || '').trim().toLowerCase();
-    return !needle || setSearchText(set).includes(needle);
-  }
-
   function formatTime(seconds = 0) {
     const safe = Math.max(0, Math.round(Number(seconds) || 0));
     if (!safe) return '';
@@ -289,14 +356,40 @@
       : `${minutes}:${String(secs).padStart(2, '0')}`;
   }
 
-  function sourceLabel(set) {
-    if (set.sourceType === 'official-artist-channel') return 'Official artist';
-    if (set.sourceType === 'artist-channel') return 'Artist channel';
-    if (set.sourceType === 'verified-label-channel') return 'Verified label';
-    if (set.sourceType === 'label-channel') return 'Label channel';
-    if (set.sourceType === 'verified-distributor-channel') return 'Verified distributor';
-    if (set.sourceType === 'community-upload') return 'Community source';
-    return 'YouTube';
+  function elapsedSecondsFromText(value) {
+    const parts = String(value || '').trim().split(':').map((part) => Number(part));
+    if ((parts.length !== 2 && parts.length !== 3) || parts.some((part) => !Number.isFinite(part) || part < 0)) return null;
+    if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    return (parts[0] * 60) + parts[1];
+  }
+
+  function verifiedChaptersForSet(set) {
+    const segments = Array.isArray(set?.segments) ? set.segments : [];
+    if (!segments.length) return [];
+    const chapters = segments.map((segment, sourceIndex) => ({
+      title: String(segment?.title || '').trim(),
+      startSeconds: Number(segment?.startSeconds),
+      sourceIndex,
+    }));
+    const invalid = chapters.some((chapter, index) => !chapter.title
+      || !Number.isFinite(chapter.startSeconds)
+      || chapter.startSeconds < 0
+      || (index > 0 && chapter.startSeconds <= chapters[index - 1].startSeconds));
+    return invalid ? [] : chapters;
+  }
+
+  function currentChapterIndexFor(chapters, elapsedSeconds) {
+    if (!Array.isArray(chapters) || !chapters.length || !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) return -1;
+    let current = -1;
+    for (let index = 0; index < chapters.length; index += 1) {
+      if (elapsedSeconds < chapters[index].startSeconds) break;
+      current = index;
+    }
+    return current;
+  }
+
+  function chapterTimeLabel(seconds) {
+    return formatTime(seconds) || '0:00';
   }
 
   function recordingPresentation(set) {
@@ -333,6 +426,7 @@
       .app[data-play-mode="nonstop"] #nonstopButton::after{background:color-mix(in srgb,var(--accent) 70%,var(--ivory))}
       .app[data-play-mode="nonstop"] #nonstopButton::before{background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 48%,transparent)}
       .app[data-play-mode="nonstop"] .mobile-heart{visibility:hidden;pointer-events:none}
+      .app[data-play-mode="nonstop"] #prevButton,.app[data-play-mode="nonstop"] #nextButton,.app[data-play-mode="nonstop"] #miniPrev,.app[data-play-mode="nonstop"] #miniNext{visibility:hidden;pointer-events:none}
       .player-shell{grid-template-rows:minmax(0,1fr) auto auto auto minmax(22px,5vh) auto auto minmax(8px,.42fr)!important}
       #genreStrip{grid-row:6!important;align-self:end;margin-top:0!important;padding-top:8px!important}
       #browseActions{grid-row:7!important;align-self:start!important;margin-top:clamp(2px,.7vh,9px)!important}
@@ -341,32 +435,40 @@
       .nonstop-browser-backdrop.open{opacity:1;pointer-events:auto}
       .nonstop-browser{position:fixed;z-index:121;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,24px);width:min(900px,calc(100vw - 32px));max-height:min(82dvh,780px);overflow:hidden;border:1px solid rgba(246,236,215,.14);border-radius:28px;background:rgba(8,10,18,.96);box-shadow:0 30px 90px rgba(0,0,0,.48);color:var(--ivory);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .24s ease;display:grid;grid-template-rows:auto auto auto minmax(0,1fr)}
       .nonstop-browser.open{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
-      .nonstop-browser-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:22px 24px 12px}
-      .nonstop-browser-kicker{margin:0 0 5px;font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:rgba(246,236,215,.55)}
-      .nonstop-browser-title{margin:0;font-size:clamp(23px,3vw,34px);line-height:1.05;font-weight:600;letter-spacing:-.025em}
-      .nonstop-browser-summary{display:block;margin-top:7px;font-size:13px;line-height:1.35;color:rgba(246,236,215,.62)}
-      .nonstop-browser-close{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border:1px solid rgba(246,236,215,.13);border-radius:50%;background:rgba(255,255,255,.04);color:inherit;font-size:25px;line-height:1;cursor:pointer}
-      .nonstop-browser-search-wrap{padding:0 24px 12px}
-      .nonstop-browser-search{width:100%;min-height:44px;border:1px solid rgba(246,236,215,.13);border-radius:14px;background:rgba(255,255,255,.045);color:var(--ivory);padding:0 14px;font:inherit;font-size:14px;outline:none}
+      .nonstop-browser-header{display:grid;grid-template-columns:max-content minmax(0,1fr) 44px;align-items:center;column-gap:12px;padding:20px 24px 12px}
+      .nonstop-browser-title{margin:0 4px 0 0;font-size:clamp(24px,2.6vw,30px);line-height:1.05;font-weight:600;letter-spacing:-.025em;white-space:nowrap}
+      .nonstop-browser-search{width:min(100%,380px);min-width:0;min-height:44px;justify-self:end;border:1px solid rgba(246,236,215,.13);border-radius:14px;background:rgba(255,255,255,.045);color:var(--ivory);padding:0 14px;font:inherit;font-size:14px;outline:none}
+      .nonstop-browser-close{display:grid;place-items:center;width:44px;height:44px;min-width:44px;border:1px solid rgba(246,236,215,.13);border-radius:50%;background:rgba(255,255,255,.04);color:inherit;font-size:25px;line-height:1;cursor:pointer}
       .nonstop-browser-search::placeholder{color:rgba(246,236,215,.42)}
       .nonstop-browser-search:focus{border-color:color-mix(in srgb,var(--accent) 68%,rgba(246,236,215,.25));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
-      .nonstop-browser-categories{display:flex;gap:8px;overflow-x:auto;padding:0 24px 14px;scrollbar-width:none;scroll-padding-inline:24px}
+      .nonstop-browser-categories{display:flex;gap:8px;overflow-x:auto;padding:0 24px 12px;scrollbar-width:none;scroll-padding-inline:24px}
       .nonstop-browser-categories::-webkit-scrollbar{display:none}
       .nonstop-category{flex:0 0 auto;min-height:38px;border:1px solid rgba(246,236,215,.12);border-radius:999px;background:rgba(255,255,255,.035);color:rgba(246,236,215,.72);padding:8px 12px;font:inherit;font-size:12px;cursor:pointer}
       .nonstop-category.active{background:var(--ivory);color:#101018;border-color:var(--ivory)}
-      .nonstop-browser-list{overflow:auto;padding:0 12px 16px 24px;display:grid;gap:8px;overscroll-behavior:contain;scrollbar-gutter:stable}
-      .nonstop-set{width:100%;min-height:68px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;text-align:left;border:1px solid rgba(246,236,215,.09);border-radius:18px;background:rgba(255,255,255,.025);color:inherit;padding:14px 15px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+      .nonstop-chapters{padding:0 24px 12px;border-bottom:1px solid rgba(246,236,215,.08)}
+      .nonstop-chapters[hidden]{display:none}
+      .nonstop-chapters-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 8px}
+      .nonstop-chapters-title{margin:0;font-size:12px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:rgba(246,236,215,.76)}
+      .nonstop-chapters-status{font-size:11px;line-height:1.2;color:rgba(246,236,215,.5);font-variant-numeric:tabular-nums}
+      .nonstop-chapters-list{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-padding-inline:2px;overscroll-behavior-inline:contain}
+      .nonstop-chapters-list::-webkit-scrollbar{display:none}
+      .nonstop-chapter{flex:0 0 min(250px,70vw);min-height:54px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;text-align:left;border:1px solid rgba(246,236,215,.09);border-radius:15px;background:rgba(255,255,255,.025);color:inherit;padding:9px 11px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+      .nonstop-chapter:hover{background:rgba(255,255,255,.06);border-color:rgba(246,236,215,.18)}
+      .nonstop-chapter:active{transform:scale(.995)}
+      .nonstop-chapter.active{border-color:color-mix(in srgb,var(--accent) 68%,rgba(246,236,215,.18));background:color-mix(in srgb,var(--accent) 11%,rgba(255,255,255,.025))}
+      .nonstop-chapter-index,.nonstop-chapter-time{font-size:11px;line-height:1;color:rgba(246,236,215,.58);font-variant-numeric:tabular-nums}
+      .nonstop-chapter-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;line-height:1.25}
+      .nonstop-browser-list{overflow:auto;padding:0 24px 18px;display:grid;gap:8px;overscroll-behavior:contain;scrollbar-gutter:stable}
+      .nonstop-set{width:100%;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;text-align:left;border:1px solid rgba(246,236,215,.09);border-radius:18px;background:rgba(255,255,255,.025);color:inherit;padding:12px 15px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
       .nonstop-set:hover{background:rgba(255,255,255,.06);border-color:rgba(246,236,215,.18)}
       .nonstop-set:active{transform:scale(.995)}
       .nonstop-set:disabled{opacity:.62;cursor:wait}
       .nonstop-set.active{border-color:color-mix(in srgb,var(--accent) 65%,rgba(246,236,215,.16));background:color-mix(in srgb,var(--accent) 9%,rgba(255,255,255,.025))}
-      .nonstop-set-title{display:block;font-size:15px;font-weight:600;line-height:1.3}
-      .nonstop-set-meta{display:block;margin-top:4px;font-size:12px;line-height:1.4;color:rgba(246,236,215,.57)}
-      .nonstop-set-recording{display:block;margin-top:4px;font-size:11px;line-height:1.4;color:rgba(246,236,215,.78)}
-      .nonstop-set-badges{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;max-width:300px}
-      .nonstop-set-badge{display:inline-flex;align-items:center;min-height:26px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.055);font-size:10px;letter-spacing:.04em;color:rgba(246,236,215,.68);white-space:nowrap}
-      .nonstop-set-badge.youtube{color:rgba(246,236,215,.92)}
-      .nonstop-set-badge.recording{background:color-mix(in srgb,var(--accent) 13%,rgba(255,255,255,.055));color:rgba(246,236,215,.92)}
+      .nonstop-set-copy{min-width:0}
+      .nonstop-set-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:15px;font-weight:600;line-height:1.3}
+      .nonstop-set-meta{display:block;min-width:0;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:1.4;color:rgba(246,236,215,.57)}
+      .nonstop-set-duration{min-width:6.5ch;text-align:right;align-self:center;white-space:nowrap;font-size:12px;line-height:1;color:rgba(246,236,215,.68);font-variant-numeric:tabular-nums}
+      .nonstop-browser-status{padding:8px 2px 4px;color:rgba(246,236,215,.62);font-size:12px;line-height:1.4}
       .nonstop-browser-empty{padding:38px 12px 52px;color:rgba(246,236,215,.58);font-size:14px;line-height:1.5;text-align:center}
       body.nonstop-browser-open{overflow:hidden}
       .nonstop-browser :focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
@@ -379,12 +481,13 @@
         .app #browseActions .browse-button svg{width:15px!important;height:15px!important}
         .nonstop-browser{left:0;bottom:0;transform:translateY(28px);width:100%;max-height:88dvh;border-radius:26px 26px 0 0;border-left:0;border-right:0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom)}
         .nonstop-browser.open{transform:translateY(0)}
-        .nonstop-browser-header{padding:20px 18px 11px}
-        .nonstop-browser-search-wrap{padding:0 18px 11px}
-        .nonstop-browser-categories{padding:0 18px 13px;scroll-padding-inline:18px}
-        .nonstop-browser-list{padding:0 10px 18px 18px}
-        .nonstop-set{grid-template-columns:minmax(0,1fr);gap:9px;padding:13px 14px}
-        .nonstop-set-badges{justify-content:flex-start;max-width:none}
+        .nonstop-browser-header{grid-template-columns:max-content minmax(0,1fr) 44px;column-gap:8px;padding:16px 18px 10px}
+        .nonstop-browser-title{margin-right:2px;font-size:clamp(20px,5.4vw,22px)}
+        .nonstop-browser-search{width:100%}
+        .nonstop-browser-categories{padding:0 18px 12px;scroll-padding-inline:18px}
+        .nonstop-chapters{padding:0 18px 12px}
+        .nonstop-browser-list{padding:0 18px 18px}
+        .nonstop-set{grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px 14px}
       }
       @media(max-width:390px){
         .player-shell{grid-template-rows:minmax(86px,.86fr) auto auto auto 8px auto auto 2px!important}
@@ -398,7 +501,7 @@
         .nonstop-browser{max-height:94dvh;bottom:3dvh}
       }
       @media(prefers-reduced-motion:reduce){
-        .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set{transition:none!important}
+        .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set,.nonstop-chapter{transition:none!important}
       }
     `;
     document.head.append(style);
@@ -410,8 +513,8 @@
     if (queueButton) {
       if (active) {
         queueButton.dataset.nonstopContext = 'true';
-        queueButton.title = 'Browse Nonstop Garba';
-        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings');
+        queueButton.title = 'Choose Nonstop recording';
+        queueButton.setAttribute('aria-label', 'Choose Nonstop recording');
       } else if (queueButton.dataset.nonstopContext === 'true') {
         delete queueButton.dataset.nonstopContext;
         queueButton.title = 'Up next';
@@ -420,20 +523,6 @@
     }
     if (active) queueBadge?.classList.remove('show');
 
-    for (const id of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
-      const control = $(id);
-      if (!control) continue;
-      const previous = id === 'prevButton' || id === 'miniPrev';
-      if (active) {
-        control.dataset.nonstopContext = 'true';
-        control.title = 'Choose another Nonstop recording';
-        control.setAttribute('aria-label', 'Choose another Nonstop recording');
-      } else if (control.dataset.nonstopContext === 'true') {
-        delete control.dataset.nonstopContext;
-        control.removeAttribute('title');
-        control.setAttribute('aria-label', previous ? 'Previous song' : 'Next song');
-      }
-    }
   }
 
   function syncButton() {
@@ -679,6 +768,7 @@
       stopNativeAudio();
       state.activeSet = set;
       state.activeTrack = track;
+      state.currentChapterIndex = -1;
       setMetadata(set);
       syncButton();
 
@@ -710,6 +800,7 @@
     state.activeSet = null;
     state.activeTrack = null;
     state.previousSession = null;
+    state.currentChapterIndex = -1;
     $('app')?.removeAttribute('data-play-mode');
     if (closePlayer) {
       try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* player may already be closed */ }
@@ -749,19 +840,15 @@
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-hidden', 'true');
     panel.setAttribute('aria-labelledby', 'nonstopBrowserTitle');
+    panel.setAttribute('tabindex', '-1');
     panel.innerHTML = `
       <header class="nonstop-browser-header">
-        <div>
-          <p class="nonstop-browser-kicker">Continuous YouTube listening</p>
-          <h2 class="nonstop-browser-title" id="nonstopBrowserTitle">Nonstop Garba</h2>
-          <span class="nonstop-browser-summary" id="nonstopBrowserSummary" aria-live="polite">Loading verified recordings…</span>
-        </div>
+        <h2 class="nonstop-browser-title" id="nonstopBrowserTitle">Nonstop Garba</h2>
+        <input class="nonstop-browser-search" id="nonstopBrowserSearch" type="search" inputmode="search" autocomplete="off" enterkeyhint="search" aria-label="Search Nonstop Garba" placeholder="Search" />
         <button class="nonstop-browser-close" id="nonstopBrowserClose" type="button" aria-label="Close Nonstop Garba">×</button>
       </header>
-      <div class="nonstop-browser-search-wrap">
-        <input class="nonstop-browser-search" id="nonstopBrowserSearch" type="search" inputmode="search" autocomplete="off" enterkeyhint="search" aria-label="Search nonstop sets and artists" placeholder="Search recordings, artists or songs" />
-      </div>
       <nav class="nonstop-browser-categories" id="nonstopBrowserCategories" aria-label="Nonstop Garba categories"></nav>
+      <section class="nonstop-chapters" id="nonstopBrowserChapters" hidden aria-labelledby="nonstopBrowserChaptersTitle"></section>
       <div class="nonstop-browser-list" id="nonstopBrowserList" aria-live="polite"></div>`;
     document.body.append(backdrop, panel);
     $('nonstopBrowserClose')?.addEventListener('click', closeBrowser);
@@ -770,6 +857,104 @@
       renderBrowser();
     });
     return panel;
+  }
+
+  function seekNonstopChapter(chapter, chapterIndex) {
+    if (!state.activeSet || !chapter || !Number.isFinite(chapter.startSeconds)) return false;
+    const chapters = verifiedChaptersForSet(state.activeSet);
+    const current = chapters[chapterIndex];
+    if (!current || current.startSeconds !== chapter.startSeconds || current.title !== chapter.title) return false;
+    const sought = window.GARBA_YOUTUBE_PLAYER?.seekTo?.(current.startSeconds);
+    if (!sought) {
+      announce('This chapter could not be opened right now.');
+      return false;
+    }
+    syncChapterState(current.startSeconds);
+    announce(`Chapter ${chapterIndex + 1}: ${current.title}`);
+    return true;
+  }
+
+  function syncChapterState(elapsedOverride = null) {
+    const section = $('nonstopBrowserChapters');
+    if (!section || section.hidden || !state.activeSet) return;
+    const chapters = verifiedChaptersForSet(state.activeSet);
+    if (!chapters.length) return;
+    const observed = Number.isFinite(elapsedOverride)
+      ? elapsedOverride
+      : elapsedSecondsFromText($('elapsedTime')?.textContent);
+    if (!Number.isFinite(observed)) return;
+    const nextIndex = currentChapterIndexFor(chapters, observed);
+    const alreadyCurrent = state.currentChapterIndex === nextIndex
+      && section.querySelector(`[data-nonstop-chapter-index="${nextIndex}"][aria-current="true"]`);
+    if (alreadyCurrent) return;
+    state.currentChapterIndex = nextIndex;
+    let activeButton = null;
+    section.querySelectorAll('[data-nonstop-chapter-index]').forEach((button) => {
+      const active = Number(button.dataset.nonstopChapterIndex) === nextIndex;
+      button.classList.toggle('active', active);
+      if (active) {
+        button.setAttribute('aria-current', 'true');
+        activeButton = button;
+      } else {
+        button.removeAttribute('aria-current');
+      }
+    });
+    const status = $('nonstopBrowserChaptersStatus');
+    if (status) status.textContent = nextIndex >= 0 ? `Chapter ${nextIndex + 1} of ${chapters.length}` : `${chapters.length} chapters`;
+    activeButton?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function renderChapterNavigation() {
+    const section = $('nonstopBrowserChapters');
+    if (!section) return;
+    const chapters = state.activeSet ? verifiedChaptersForSet(state.activeSet) : [];
+    state.currentChapterIndex = -1;
+    if (!chapters.length) {
+      section.hidden = true;
+      section.replaceChildren();
+      return;
+    }
+
+    const head = document.createElement('div');
+    head.className = 'nonstop-chapters-head';
+    const title = document.createElement('h3');
+    title.id = 'nonstopBrowserChaptersTitle';
+    title.className = 'nonstop-chapters-title';
+    title.textContent = 'Chapters';
+    const status = document.createElement('span');
+    status.id = 'nonstopBrowserChaptersStatus';
+    status.className = 'nonstop-chapters-status';
+    status.textContent = `${chapters.length} chapters`;
+    head.append(title, status);
+
+    const list = document.createElement('div');
+    list.className = 'nonstop-chapters-list';
+    chapters.forEach((chapter, chapterIndex) => {
+      const button = document.createElement('button');
+      const time = chapterTimeLabel(chapter.startSeconds);
+      button.type = 'button';
+      button.className = 'nonstop-chapter';
+      button.dataset.nonstopChapterIndex = String(chapterIndex);
+      button.setAttribute('aria-label', `Jump to chapter ${chapterIndex + 1}, ${chapter.title}, at ${time}`);
+      button.innerHTML = '<span class="nonstop-chapter-index"></span><span class="nonstop-chapter-title"></span><span class="nonstop-chapter-time"></span>';
+      button.querySelector('.nonstop-chapter-index').textContent = String(chapterIndex + 1).padStart(2, '0');
+      button.querySelector('.nonstop-chapter-title').textContent = chapter.title;
+      button.querySelector('.nonstop-chapter-time').textContent = time;
+      button.addEventListener('click', () => seekNonstopChapter(chapter, chapterIndex));
+      list.append(button);
+    });
+    section.replaceChildren(head, list);
+    section.hidden = false;
+    syncChapterState();
+  }
+
+  function watchChapterTime() {
+    const elapsed = $('elapsedTime');
+    if (!elapsed || state.chapterObserver) return;
+    state.chapterObserver = new MutationObserver(() => {
+      if (state.activeSet && state.browserOpen) syncChapterState();
+    });
+    state.chapterObserver.observe(elapsed, { childList: true, characterData: true, subtree: true });
   }
 
   function setBackgroundInert(inert) {
@@ -813,17 +998,17 @@
     const list = $('nonstopBrowserList');
     if (list && !state.allSets) {
       list.setAttribute('aria-busy', 'true');
-      list.innerHTML = '<div class="nonstop-browser-empty">Loading verified YouTube recordings…</div>';
+      list.innerHTML = '<div class="nonstop-browser-empty">Loading Nonstop Garba…</div>';
     }
-    requestAnimationFrame(() => $('nonstopBrowserSearch')?.focus({ preventScroll: true }));
+    requestAnimationFrame(() => panel?.focus({ preventScroll: true }));
     try {
-      await loadAllSets();
+      await Promise.all([loadAllSets(), loadSearchCore()]);
       renderBrowser();
     } catch (error) {
       console.warn('PlayGarba nonstop catalogue failed to load', error);
       if (list) {
         list.removeAttribute('aria-busy');
-        list.innerHTML = '<div class="nonstop-browser-empty">The YouTube Nonstop recordings could not load. Check your connection and try again.</div>';
+        list.innerHTML = '<div class="nonstop-browser-empty">Nonstop Garba couldn\'t load. Check your connection and try again.</div>';
       }
     }
   }
@@ -831,14 +1016,11 @@
   function renderBrowser() {
     const sets = state.allSets;
     if (!sets || !$('nonstopBrowser')) return;
-    const searched = sets.filter((set) => matchesQuery(set, state.browserQuery));
-    const filtered = sortForView(searched.filter((set) => matchesCategory(set, state.browserCategory)), state.browserCategory);
-    const summary = $('nonstopBrowserSummary');
-    if (summary) {
-      const partial = state.failedChunks.size ? ` · ${state.failedChunks.size} section${state.failedChunks.size === 1 ? '' : 's'} unavailable` : '';
-      const shown = filtered.length === sets.length ? `${sets.length} playable YouTube recordings` : `${filtered.length} of ${sets.length} playable YouTube recordings`;
-      summary.textContent = `${shown} · one choice = one recording · chapters stay inside the recording${partial}`;
-    }
+    const searched = searchSets(sets, state.browserQuery);
+    const categoryFiltered = searched.filter((set) => matchesCategory(set, state.browserCategory));
+    const filtered = state.browserQuery.trim()
+      ? categoryFiltered
+      : sortForView(categoryFiltered, state.browserCategory);
 
     const categoryNav = $('nonstopBrowserCategories');
     if (categoryNav) {
@@ -858,53 +1040,64 @@
       }));
     }
 
+    renderChapterNavigation();
+
     const list = $('nonstopBrowserList');
     if (!list) return;
     list.removeAttribute('aria-busy');
+
+    const partialFailureCount = state.failedChunks.size;
+    const makePartialStatus = () => {
+      const status = document.createElement('div');
+      status.className = 'nonstop-browser-status';
+      status.setAttribute('role', 'status');
+      status.textContent = `${partialFailureCount} Nonstop section${partialFailureCount === 1 ? '' : 's'} couldn't load.`;
+      return status;
+    };
+
     if (!filtered.length) {
-      const action = state.browserQuery ? 'Try a different search or category.' : 'Choose another category.';
-      list.innerHTML = `<div class="nonstop-browser-empty">No playable YouTube recordings match this view.<br>${action}</div>`;
+      const empty = document.createElement('div');
+      empty.className = 'nonstop-browser-empty';
+      empty.innerHTML = state.browserQuery
+        ? 'No Nonstop Garba matches this search.<br>Try another search or category.'
+        : 'No Nonstop Garba matches this category.<br>Choose another category.';
+      if (partialFailureCount) list.replaceChildren(makePartialStatus(), empty);
+      else list.replaceChildren(empty);
       return;
     }
 
-    list.replaceChildren(...filtered.map((set) => {
+    const rows = filtered.map((set) => {
       const button = document.createElement('button');
       const active = state.activeSet?.id === set.id;
       const starting = state.startingSetId === set.id;
-      const recording = recordingPresentation(set);
+      const meta = [set.artistsText, set.year || null].filter(Boolean).join(' · ');
+      const duration = formatTime(set.durationSeconds);
       button.type = 'button';
       button.className = `nonstop-set${active ? ' active' : ''}`;
-      button.setAttribute('aria-label', `${active ? 'Currently playing' : 'Play'} ${set.title} by ${set.artistsText}. ${recording.detail}`);
+      button.setAttribute('aria-label', [active ? 'Currently playing' : 'Play', set.title, meta || null, duration || null].filter(Boolean).join(', '));
       button.setAttribute('aria-pressed', String(active));
       if (starting) {
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
       }
-      const duration = formatTime(set.durationSeconds);
       button.innerHTML = `
-        <span>
+        <span class="nonstop-set-copy">
           <span class="nonstop-set-title"></span>
           <span class="nonstop-set-meta"></span>
-          <span class="nonstop-set-recording"></span>
         </span>
-        <span class="nonstop-set-badges">
-          <span class="nonstop-set-badge recording"></span>
-          <span class="nonstop-set-badge youtube">YouTube</span>
-          <span class="nonstop-set-badge source"></span>
-          ${duration ? '<span class="nonstop-set-badge duration"></span>' : ''}
-        </span>`;
+        <span class="nonstop-set-duration" aria-hidden="true"></span>`;
       button.querySelector('.nonstop-set-title').textContent = set.title;
-      button.querySelector('.nonstop-set-meta').textContent = [set.artistsText, set.year || null].filter(Boolean).join(' · ');
-      button.querySelector('.nonstop-set-recording').textContent = recording.detail;
-      button.querySelector('.nonstop-set-badge.recording').textContent = recording.label;
-      button.querySelector('.nonstop-set-badge.source').textContent = sourceLabel(set);
-      if (duration) button.querySelector('.nonstop-set-badge.duration').textContent = duration;
+      button.querySelector('.nonstop-set-meta').textContent = meta;
+      button.querySelector('.nonstop-set-duration').textContent = duration;
       button.addEventListener('click', async () => {
         const played = await startNonstop(set.id);
         if (played) closeBrowser();
       });
       return button;
-    }));
+    });
+
+    if (partialFailureCount) list.replaceChildren(makePartialStatus(), ...rows);
+    else list.replaceChildren(...rows);
   }
 
   function focusableElements() {
@@ -945,7 +1138,7 @@
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
     if (target.closest('#nonstopButton, #nonstopBrowser')) return;
-    if (target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')) {
+    if (target.closest('#queueButton')) {
       event.preventDefault();
       event.stopImmediatePropagation();
       openBrowser();
@@ -970,11 +1163,6 @@
     if (id) startNonstop(id, { quiet: true });
   }
 
-  function warmNonstop() {
-    const warm = () => loadAllSets().catch(() => null);
-    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
-    else setTimeout(warm, 1800);
-  }
 
   function captureNonstopKeyboard(event) {
     if (!state.activeSet) return;
@@ -991,6 +1179,7 @@
     ensureButton();
     watchGenreStrip();
     watchMetadata();
+    watchChapterTime();
     document.addEventListener('click', captureMainNavigation, { capture: true });
     document.addEventListener('keydown', captureNonstopKeyboard, { capture: true });
     $('progress')?.addEventListener('input', captureSeek, { capture: true });
@@ -1009,7 +1198,6 @@
       else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: true, updateHistory: false });
     });
     document.addEventListener('keydown', trapBrowserFocus, { capture: true });
-    warmNonstop();
     restoreFromUrl();
   }
 

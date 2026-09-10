@@ -30,6 +30,8 @@
     ]),
   });
 
+  // Inventory metadata only. Artwork is fetched by syncNow() when it becomes the
+  // selected visual world; enumerating this list must never imply preloading it.
   const allAssets = Object.freeze(
     Object.values(library).flat().map((filename) => `${base}${filename}`)
   );
@@ -37,7 +39,6 @@
   const loading = new Map();
   let syncToken = 0;
   let syncScheduled = false;
-  let warmScheduled = false;
 
   function hash(value = '') {
     let result = 2166136261;
@@ -74,12 +75,6 @@
 
   function fallbackFor(genreId) {
     return `assets/backgrounds/${genreId}.svg`;
-  }
-
-  function connectionConstrained() {
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (!connection) return false;
-    return Boolean(connection.saveData || /(^|-)2g$/.test(String(connection.effectiveType || '')));
   }
 
   function loadImage(url, { highPriority = false } = {}) {
@@ -119,6 +114,9 @@
     const candidate = candidateFor(genreId);
     if (!candidate) return;
 
+    // Only the artwork selected for the current state is fetched eagerly. A new
+    // candidate is requested after a real genre/song/navigation change, so the
+    // 15-image 2K library is never warmed speculatively in the background.
     const ready = await loadImage(candidate, { highPriority: true });
     if (!ready || token !== syncToken) return;
 
@@ -192,27 +190,6 @@
     }
   }
 
-  function warmRemainingArtwork() {
-    if (warmScheduled || connectionConstrained()) return;
-    warmScheduled = true;
-
-    const run = async () => {
-      const active = candidateFor();
-      for (const url of allAssets) {
-        if (url === active || loaded.has(url)) continue;
-        await loadImage(url);
-      }
-    };
-
-    const afterLoad = () => {
-      if ('requestIdleCallback' in window) requestIdleCallback(() => run(), { timeout: 5000 });
-      else setTimeout(run, 2200);
-    };
-
-    if (document.readyState === 'complete') afterLoad();
-    else window.addEventListener('load', afterLoad, { once: true });
-  }
-
   window.GARBA_VISUAL_WORLDS = Object.freeze({
     base,
     library,
@@ -231,5 +208,4 @@
   });
 
   scheduleSync();
-  warmRemainingArtwork();
 })();

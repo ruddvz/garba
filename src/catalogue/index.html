@@ -19,6 +19,11 @@
   <meta property="og:image" content="https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="stylesheet" href="catalogue.css" />
+  <style>
+    @media (max-width: 560px) {
+      body::before { transform: none; }
+    }
+  </style>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"CollectionPage","name":"Explore Gujarati Garba · PlayGarba","url":"https://playgarba.com/explore/","isPartOf":{"@type":"WebSite","name":"PlayGarba","url":"https://playgarba.com/"}}
   </script>
@@ -94,37 +99,35 @@
 
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="listening-library.js"></script>
-  <script type="module" src="../assets/runtime/explore-search.js"></script>
+  <script type="module">
+    // The repository browser fixture intentionally serves only the source-native
+    // Explore shell. Keep production analytics out of loopback fixtures/local dev,
+    // while preserving the same UI and interaction code under test.
+    if (!['localhost', '127.0.0.1', '::1'].includes(location.hostname)) {
+      import('./explore-telemetry.js').catch(() => {});
+    }
+  </script>
+  <script src="../assets/runtime/explore-search.js" defer></script>
   <script type="module">
     (() => {
-      const sectionRoot = document.getElementById('catalogueSections');
       const releaseRail = document.getElementById('releaseRail');
-      if (!sectionRoot || !releaseRail) return;
+      if (!(releaseRail instanceof HTMLElement)) return;
 
       const railStyle = document.createElement('style');
       railStyle.dataset.playgarbaExploreRailInteraction = '';
       railStyle.textContent = `
-        .release-rail,.essential-release-rail{transition:-webkit-mask-image .16s ease,mask-image .16s ease}
-        .release-rail[data-scroll-left="true"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 calc(100% - 24px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 calc(100% - 24px),transparent 100%)}
-        .release-rail[data-scroll-left="true"][data-scroll-right="false"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="false"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 100%);mask-image:linear-gradient(to right,transparent 0,#000 24px,#000 100%)}
-        .release-rail[data-scroll-left="false"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="false"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%)}
-        .release-rail:focus-within,.essential-release-rail:focus-within{scroll-behavior:smooth}
-        @media(max-width:640px){
-          .release-rail[data-scroll-left="true"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 calc(100% - 17px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 calc(100% - 17px),transparent 100%)}
-          .release-rail[data-scroll-left="true"][data-scroll-right="false"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="false"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 100%);mask-image:linear-gradient(to right,transparent 0,#000 17px,#000 100%)}
-          .release-rail[data-scroll-left="false"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="false"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 17px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 17px),transparent 100%)}
-        }
-        @media(prefers-reduced-motion:reduce){.release-rail,.essential-release-rail{transition:none!important;scroll-behavior:auto!important}}
+        .release-rail[data-scroll-left="true"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%)}
+        .release-rail[data-scroll-left="true"][data-scroll-right="false"],.essential-release-rail[data-scroll-left="true"][data-scroll-right="false"]{-webkit-mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 100%);mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 100%)}
+        .release-rail[data-scroll-left="false"][data-scroll-right="true"],.essential-release-rail[data-scroll-left="false"][data-scroll-right="true"]{-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 18px),transparent 100%)}
       `;
       document.head.append(railStyle);
 
       const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-      const resizeObservers = new WeakMap();
       let pendingReleaseFocusId = '';
-      let refreshQueued = false;
 
       function cardsFor(rail) {
-        return [...rail.querySelectorAll(':scope > .release-card:not([disabled])')];
+        return [...rail.querySelectorAll(':scope > .release-card:not([disabled])')]
+          .filter((card) => card instanceof HTMLElement);
       }
 
       function revealHorizontally(rail, target) {
@@ -148,24 +151,12 @@
         rail.dataset.scrollRight = rail.scrollLeft < max - 4 ? 'true' : 'false';
       }
 
-      function normalizeRail(rail, label) {
+      function bindRail(rail, label) {
+        if (!(rail instanceof HTMLElement)) return;
         rail.setAttribute('role', 'group');
         rail.setAttribute('aria-label', label);
         cardsFor(rail).forEach((card) => card.removeAttribute('role'));
         updateOverflow(rail);
-      }
-
-      function restorePendingFocus() {
-        if (!pendingReleaseFocusId) return;
-        const target = releaseRail.querySelector(`.release-card[data-release-id="${CSS.escape(pendingReleaseFocusId)}"]`);
-        if (!(target instanceof HTMLElement)) return;
-        pendingReleaseFocusId = '';
-        target.focus({ preventScroll: true });
-        revealHorizontally(releaseRail, target);
-      }
-
-      function bindRail(rail, label) {
-        normalizeRail(rail, label);
         if (rail.dataset.keyboardRailBound === 'true') return;
         rail.dataset.keyboardRailBound = 'true';
 
@@ -175,337 +166,53 @@
           const current = event.target instanceof Element ? event.target.closest('.release-card') : null;
           if (!(current instanceof HTMLElement) || current.parentElement !== rail) return;
           const cards = cardsFor(rail);
-          const currentIndex = cards.indexOf(current);
-          if (currentIndex < 0 || !cards.length) return;
-          let nextIndex = currentIndex;
-          if (event.key === 'ArrowLeft') nextIndex = Math.max(0, currentIndex - 1);
-          if (event.key === 'ArrowRight') nextIndex = Math.min(cards.length - 1, currentIndex + 1);
+          const index = cards.indexOf(current);
+          if (index < 0 || !cards.length) return;
+          let nextIndex = index;
+          if (event.key === 'ArrowLeft') nextIndex = Math.max(0, index - 1);
+          if (event.key === 'ArrowRight') nextIndex = Math.min(cards.length - 1, index + 1);
           if (event.key === 'Home') nextIndex = 0;
           if (event.key === 'End') nextIndex = cards.length - 1;
-          if (nextIndex === currentIndex && !['Home', 'End'].includes(event.key)) return;
-          event.preventDefault();
           const next = cards[nextIndex];
-          next?.focus({ preventScroll: true });
-          if (next) revealHorizontally(rail, next);
+          if (!next) return;
+          event.preventDefault();
+          next.focus({ preventScroll: true });
+          revealHorizontally(rail, next);
         });
-
-        rail.addEventListener('click', (event) => {
-          if (rail !== releaseRail) return;
-          const card = event.target instanceof Element ? event.target.closest('.release-card[data-release-id]') : null;
-          if (!(card instanceof HTMLElement) || document.activeElement !== card) return;
-          pendingReleaseFocusId = card.dataset.releaseId || '';
-        }, { capture: true });
 
         rail.addEventListener('scroll', () => requestAnimationFrame(() => updateOverflow(rail)), { passive: true });
-        if ('ResizeObserver' in window) {
-          const observer = new ResizeObserver(() => updateOverflow(rail));
-          observer.observe(rail);
-          resizeObservers.set(rail, observer);
-        }
       }
 
-      function refreshRails() {
-        refreshQueued = false;
+      function bindAllRails() {
         bindRail(releaseRail, 'Albums and releases');
         document.querySelectorAll('.essential-release-rail').forEach((rail) => {
-          if (rail instanceof HTMLElement) bindRail(rail, 'Essential Garba releases');
+          bindRail(rail, 'Essential Garba releases');
         });
-        requestAnimationFrame(restorePendingFocus);
+        if (!pendingReleaseFocusId) return;
+        const target = releaseRail.querySelector(`.release-card[data-release-id="${CSS.escape(pendingReleaseFocusId)}"]`);
+        if (!(target instanceof HTMLElement)) return;
+        pendingReleaseFocusId = '';
+        target.focus({ preventScroll: true });
+        revealHorizontally(releaseRail, target);
       }
 
-      function queueRefreshRails() {
-        if (refreshQueued) return;
-        refreshQueued = true;
-        queueMicrotask(refreshRails);
-      }
-
-      new MutationObserver(queueRefreshRails).observe(sectionRoot, { childList: true, subtree: true });
-      new MutationObserver(queueRefreshRails).observe(releaseRail, { childList: true, subtree: true });
-      window.addEventListener('resize', queueRefreshRails, { passive: true });
-      window.addEventListener('pageshow', queueRefreshRails);
-      queueRefreshRails();
-    })();
-  </script>
-  <script type="module">
-    const VISUALS = [
-      '../assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
-      '../assets/backgrounds/library/02-rhythmic-drums-courtyard-a.webp',
-      '../assets/backgrounds/library/03-devotional-garba-courtyard.webp',
-      '../assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
-      '../assets/backgrounds/library/05-fusion-gujarati-neon.webp',
-      '../assets/backgrounds/library/06-fusion-abstract-neon.webp',
-      '../assets/backgrounds/library/07-dandiya-purple-courtyard.webp',
-      '../assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
-      '../assets/backgrounds/library/09-warm-stage-courtyard.webp',
-      '../assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
-      '../assets/backgrounds/library/11-master-dark-courtyard.webp',
-      '../assets/backgrounds/library/12-rhythmic-drums-courtyard-b.webp',
-      '../assets/backgrounds/library/13-traditional-marigold-courtyard.webp',
-      '../assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
-      '../assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
-    ];
-    const HOME_VISUAL = VISUALS[10];
-    const root = document.documentElement;
-    const body = document.body;
-    const sections = document.getElementById('catalogueSections');
-    const detail = document.getElementById('collectionDetail');
-    const detailHead = document.querySelector('.detail-head');
-    const backButton = document.getElementById('backToCollections');
-    const closeExplore = document.querySelector('.close-explore');
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-    const collectionVisuals = new Map();
-    let currentAmbient = HOME_VISUAL;
-    let fadeTimer = 0;
-    let renderQueued = false;
-    let replayingTransitionClick = false;
-
-    const atmosphereStyle = document.createElement('style');
-    atmosphereStyle.dataset.playgarbaExploreAtmosphere = '';
-    atmosphereStyle.textContent = `
-      @view-transition{navigation:auto}
-      .explore-title{view-transition-name:playgarba-explore-entry}
-      .collection-card[data-view-origin="true"]{view-transition-name:playgarba-catalogue-card}
-      .detail-head[data-view-target="true"]{view-transition-name:playgarba-catalogue-card}
-      .song-row[data-song-handoff="true"]{position:relative;z-index:2}
-      .song-row[data-song-handoff="true"] .song-copy strong{view-transition-name:playgarba-song-title}
-      .song-row[data-song-handoff="true"] .song-copy span{view-transition-name:playgarba-song-artist}
-      .song-row[data-song-handoff="true"] .play-link{view-transition-name:playgarba-song-control}
-      ::view-transition-group(playgarba-explore-entry),::view-transition-group(playgarba-catalogue-card),::view-transition-group(playgarba-song-title),::view-transition-group(playgarba-song-artist),::view-transition-group(playgarba-song-control){animation-duration:420ms;animation-timing-function:cubic-bezier(.2,.72,.18,1)}
-      ::view-transition-group(playgarba-song-artist){animation-duration:460ms}
-      ::view-transition-group(playgarba-song-control){animation-duration:390ms}
-      ::view-transition-old(playgarba-song-title),::view-transition-new(playgarba-song-title),::view-transition-old(playgarba-song-artist),::view-transition-new(playgarba-song-artist),::view-transition-old(playgarba-song-control),::view-transition-new(playgarba-song-control){mix-blend-mode:normal}
-      ::view-transition-old(root){animation:playgarbaExploreRouteOut 220ms cubic-bezier(.4,0,1,1) both}
-      ::view-transition-new(root){animation:playgarbaExploreRouteIn 380ms cubic-bezier(.16,.78,.18,1) both}
-      @keyframes playgarbaExploreRouteOut{to{opacity:.18;transform:scale(1.006);filter:blur(1.5px)}}
-      @keyframes playgarbaExploreRouteIn{from{opacity:.14;transform:scale(.994);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
-      body::before{transition:opacity .32s ease,filter .45s ease!important}
-      body.explore-ambient-fading::before{opacity:.18}
-      body[data-catalogue-open="true"]::after{background:radial-gradient(circle at 50% 7%,rgba(255,225,171,.08),transparent 25%),linear-gradient(to bottom,rgba(7,7,10,.38) 0,rgba(7,7,10,.60) 42%,rgba(7,7,10,.84) 100%)}
-      body.route-leaving{opacity:0;transform:scale(.997);transition:opacity .15s ease,transform .15s ease}
-      .collection-card::after{background:radial-gradient(circle at var(--gleam-x,17%) var(--gleam-y,12%),rgba(255,255,255,.30),transparent 13%),radial-gradient(circle at 74% 19%,rgba(255,226,177,.15),transparent 15%),linear-gradient(118deg,transparent 24%,rgba(255,255,255,.09) 45%,transparent 64%)!important}
-      .collection-card[data-atmosphere-bound="true"] .collection-image{will-change:transform,filter}
-      .collection-detail:not([hidden]){animation:exploreDetailReveal .34s cubic-bezier(.2,.7,.2,1) both}
-      @keyframes exploreDetailReveal{from{opacity:.55;transform:translateY(10px)}to{opacity:1;transform:none}}
-      @media(prefers-reduced-motion:reduce){.explore-title,.collection-card[data-view-origin="true"],.detail-head[data-view-target="true"],.song-row[data-song-handoff="true"] .song-copy strong,.song-row[data-song-handoff="true"] .song-copy span,.song-row[data-song-handoff="true"] .play-link{view-transition-name:none!important}body::before{transition:none!important}.collection-detail:not([hidden]){animation:none!important}::view-transition-old(root),::view-transition-new(root),::view-transition-group(playgarba-explore-entry),::view-transition-group(playgarba-catalogue-card),::view-transition-group(playgarba-song-title),::view-transition-group(playgarba-song-artist),::view-transition-group(playgarba-song-control){animation-duration:1ms!important}}
-    `;
-    document.head.append(atmosphereStyle);
-
-    function fallbackVisual(id = '') {
-      let hash = 2166136261;
-      for (const char of String(id)) {
-        hash ^= char.codePointAt(0);
-        hash = Math.imul(hash, 16777619);
-      }
-      return VISUALS[Math.abs(hash >>> 0) % VISUALS.length];
-    }
-
-    function activeCollectionId() {
-      return new URLSearchParams(location.hash.replace(/^#/, '')).get('collection');
-    }
-
-    function commitAmbient(url) {
-      currentAmbient = url;
-      root.style.setProperty('--explore-bg', `url("${url}")`);
-      requestAnimationFrame(() => body.classList.remove('explore-ambient-fading'));
-    }
-
-    function setAmbient(url) {
-      if (!url || url === currentAmbient) return;
-      clearTimeout(fadeTimer);
-      if (reduceMotion.matches) {
-        commitAmbient(url);
-        return;
-      }
-      body.classList.add('explore-ambient-fading');
-      const preload = new Image();
-      const finish = () => {
-        clearTimeout(fadeTimer);
-        fadeTimer = window.setTimeout(() => commitAmbient(url), 90);
-      };
-      preload.addEventListener('load', finish, { once: true });
-      preload.addEventListener('error', finish, { once: true });
-      preload.src = url;
-      fadeTimer = window.setTimeout(() => commitAmbient(url), 260);
-    }
-
-    function syncAmbient() {
-      const id = activeCollectionId();
-      const detailOpen = Boolean(detail && !detail.hidden && id);
-      body.dataset.catalogueOpen = detailOpen ? 'true' : 'false';
-      setAmbient(detailOpen ? (collectionVisuals.get(id) || fallbackVisual(id)) : HOME_VISUAL);
-    }
-
-    function bindGleam(card) {
-      if (card.dataset.atmosphereBound === 'true') return;
-      card.dataset.atmosphereBound = 'true';
-      card.addEventListener('click', () => queueMicrotask(syncAmbient));
-      card.addEventListener('pointermove', (event) => {
-        if (reduceMotion.matches || !finePointer.matches) return;
-        const rect = card.getBoundingClientRect();
-        const x = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
-        const y = Math.max(0, Math.min(100, ((event.clientY - rect.top) / rect.height) * 100));
-        card.style.setProperty('--gleam-x', `${x.toFixed(1)}%`);
-        card.style.setProperty('--gleam-y', `${y.toFixed(1)}%`);
-      });
-      card.addEventListener('pointerleave', () => {
-        card.style.removeProperty('--gleam-x');
-        card.style.removeProperty('--gleam-y');
-      });
-    }
-
-    function applyCardVisuals() {
-      renderQueued = false;
-      if (!sections) return;
-      const cards = [...sections.querySelectorAll('.collection-card[data-collection-id]')];
-      cards.forEach((card, index) => {
-        const id = card.dataset.collectionId;
-        const visual = VISUALS[index % VISUALS.length];
-        collectionVisuals.set(id, visual);
-        const image = card.querySelector('.collection-image');
-        if (image) image.style.backgroundImage = `url("${visual}")`;
-        bindGleam(card);
-      });
-      syncAmbient();
-    }
-
-    function queueVisualRefresh() {
-      if (renderQueued) return;
-      renderQueued = true;
-      queueMicrotask(applyCardVisuals);
-    }
-
-    function clearViewTransitionNames() {
-      sections?.querySelectorAll('[data-view-origin="true"]').forEach((element) => {
-        element.removeAttribute('data-view-origin');
-      });
-      detailHead?.removeAttribute('data-view-target');
-    }
-
-    function clearSongHandoffNames() {
-      document.querySelectorAll('.song-row[data-song-handoff="true"]').forEach((row) => row.removeAttribute('data-song-handoff'));
-    }
-
-    function primeSongHandoff(link) {
-      const row = link?.closest('.song-row');
-      if (!row) return;
-      const destination = new URL(link.href, location.href);
-      const songId = destination.searchParams.get('song');
-      if (!songId) return;
-      const title = row.querySelector('.song-copy strong')?.textContent?.trim() || '';
-      const rawArtist = row.querySelector('.song-copy span')?.textContent?.trim() || '';
-      const artist = rawArtist.replace(/\s*·\s*\d+:\d{2}\s*$/, '').trim();
-      const genre = destination.searchParams.get('genre') || 'traditional';
-      row.dataset.songHandoff = 'true';
-      try {
-        sessionStorage.setItem('playgarba:route-handoff', JSON.stringify({
-          v: 1,
-          at: Date.now(),
-          songId,
-          genre,
-          title,
-          artist,
-          from: 'explore',
-        }));
-      } catch { /* transition still degrades to the normal deep link */ }
-    }
-
-    function transitionIntoCatalogue(card) {
-      if (!card || reduceMotion.matches || typeof document.startViewTransition !== 'function') return false;
-      card.dataset.viewOrigin = 'true';
-      const transition = document.startViewTransition(() => {
-        replayingTransitionClick = true;
-        card.click();
-        replayingTransitionClick = false;
-        if (detailHead && !detail?.hidden) detailHead.dataset.viewTarget = 'true';
-      });
-      transition.finished.finally(clearViewTransitionNames);
-      return true;
-    }
-
-    function transitionBackToCard(button) {
-      if (!button || reduceMotion.matches || typeof document.startViewTransition !== 'function') return false;
-      const collectionId = activeCollectionId();
-      if (detailHead) detailHead.dataset.viewTarget = 'true';
-      const transition = document.startViewTransition(async () => {
-        const usesHistory = Boolean(history.state?.release || history.state?.collection || history.state?.search);
-        let settled = null;
-        if (usesHistory) {
-          settled = new Promise((resolve) => {
-            const timeout = window.setTimeout(resolve, 260);
-            window.addEventListener('popstate', () => {
-              clearTimeout(timeout);
-              queueMicrotask(resolve);
-            }, { once: true });
-          });
+      document.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const releaseCard = target?.closest('.release-card[data-release-id]');
+        if (releaseCard instanceof HTMLElement && releaseCard.parentElement === releaseRail && document.activeElement === releaseCard) {
+          pendingReleaseFocusId = releaseCard.dataset.releaseId || '';
         }
-        replayingTransitionClick = true;
-        button.click();
-        replayingTransitionClick = false;
-        if (settled) await settled;
-        const selector = collectionId ? `.collection-card[data-collection-id="${CSS.escape(collectionId)}"]` : '';
-        const target = selector ? sections?.querySelector(selector) : null;
-        if (target && detail?.hidden) target.dataset.viewOrigin = 'true';
-      });
-      transition.finished.finally(clearViewTransitionNames);
-      return true;
-    }
+        if (target?.closest('.collection-card, .back-button, .release-card, .quiet-button')) {
+          requestAnimationFrame(bindAllRails);
+        }
+      }, { capture: true });
 
-    function isPlainPrimaryClick(event) {
-      return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-    }
-
-    document.addEventListener('click', (event) => {
-      if (replayingTransitionClick || !isPlainPrimaryClick(event)) return;
-      const playLink = event.target.closest('a.play-link[href]');
-      if (playLink) {
-        primeSongHandoff(playLink);
-        return;
-      }
-      const card = event.target.closest('.collection-card[data-collection-id]');
-      if (card && transitionIntoCatalogue(card)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        return;
-      }
-      const back = event.target.closest('#backToCollections');
-      if (back && transitionBackToCard(back)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    }, true);
-
-    document.addEventListener('click', (event) => {
-      if (replayingTransitionClick || typeof document.startViewTransition === 'function' || reduceMotion.matches || !isPlainPrimaryClick(event)) return;
-      const link = event.target.closest('a[href]');
-      if (!link || link.target || link.hasAttribute('download')) return;
-      const destination = new URL(link.href, location.href);
-      if (destination.origin !== location.origin) return;
-      event.preventDefault();
-      body.classList.add('route-leaving');
-      window.setTimeout(() => location.assign(destination.href), 150);
-    }, true);
-
-    if (sections) {
-      new MutationObserver(queueVisualRefresh).observe(sections, { childList: true, subtree: true });
-    }
-    if (detail) {
-      new MutationObserver(syncAmbient).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
-    }
-    window.addEventListener('popstate', () => queueMicrotask(syncAmbient));
-    window.addEventListener('hashchange', () => queueMicrotask(syncAmbient));
-    window.addEventListener('pageshow', () => {
-      body.classList.remove('route-leaving');
-      clearSongHandoffNames();
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || !detail?.hidden || event.defaultPrevented || !closeExplore) return;
-      event.preventDefault();
-      location.assign(closeExplore.href);
-    });
-
-    queueVisualRefresh();
-    syncAmbient();
+      window.addEventListener('hashchange', () => requestAnimationFrame(bindAllRails), { passive: true });
+      window.addEventListener('pageshow', () => requestAnimationFrame(bindAllRails), { passive: true });
+      window.addEventListener('resize', () => requestAnimationFrame(bindAllRails), { passive: true });
+      requestAnimationFrame(bindAllRails);
+      window.setTimeout(bindAllRails, 250);
+    })();
   </script>
 </body>
 </html>

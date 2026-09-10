@@ -16,8 +16,11 @@ permissions:
 
 # Keep this workflow independent from the ordinary claim registry. GitHub may
 # replace a pending run when separate workflows share one concurrency group.
+# Non-closed PR checks are read-only and use a PR-specific pending slot, so
+# unrelated PRs cannot replace one another. All mutating reconciliation
+# stays in the single `global` slot.
 concurrency:
-  group: agent-file-claim-conflicts
+  group: agent-file-claim-conflicts-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}
   cancel-in-progress: false
 
 jobs:
