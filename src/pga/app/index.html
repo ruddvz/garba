@@ -16,6 +16,7 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./app.css">
   <link rel="stylesheet" href="./home-live.css">
+  <link rel="stylesheet" href="./health.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -177,14 +178,37 @@
         </section>
 
         <section class="view" data-view="health" aria-labelledby="title-health" hidden>
-          <div class="view-heading"><div><p class="eyebrow">Production</p><h1 id="title-health" tabindex="-1">Health</h1></div><p class="freshness">No health response yet</p></div>
-          <div class="health-list" role="list">
-            <div role="listitem"><span>Telemetry ingestion</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>Aggregate queries</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>Daily rollup</span><strong>Unknown</strong></div>
-            <div role="listitem"><span>PGA build</span><strong>Shell v1</strong></div>
+          <div class="view-heading">
+            <div><p class="eyebrow">Production</p><h1 id="title-health" tabindex="-1">Health</h1></div>
+            <p class="freshness" id="healthFreshness">No health response yet</p>
           </div>
-          <p class="truth-note">Unknown is never converted to zero or healthy.</p>
+          <div class="view-state" id="healthState" role="status" aria-live="polite">
+            <strong>No data yet</strong><p>Open Health to load protected operational evidence.</p>
+          </div>
+          <div id="healthContent" hidden>
+            <section class="health-overview" aria-labelledby="health-overview-title">
+              <div class="health-overview-top">
+                <div>
+                  <span class="sr-only" id="health-overview-title">Overall system health</span>
+                  <strong id="healthOverallStatus" data-status="unknown">Unknown</strong>
+                </div>
+                <p class="health-coverage" id="healthCoverage">Evidence coverage unavailable</p>
+              </div>
+              <p id="healthOverallSummary">Current system health cannot be confirmed from the available evidence.</p>
+            </section>
+
+            <section class="health-section" id="healthProblemsSection" aria-labelledby="health-problems-title" hidden>
+              <div class="section-heading"><h2 id="health-problems-title">Needs attention</h2><span>Highest-priority evidence first</span></div>
+              <div class="health-stack" id="healthProblems"></div>
+            </section>
+
+            <section class="health-section" aria-labelledby="health-subsystems-title">
+              <div class="section-heading"><h2 id="health-subsystems-title">Subsystems</h2><span>Canonical evidence when connected</span></div>
+              <div class="health-stack" id="healthSubsystems"></div>
+            </section>
+
+            <p class="health-truth-note">Unknown is never converted to healthy. Missing, stale or partial evidence stays visible as uncertainty.</p>
+          </div>
         </section>
 
         <section class="view" data-view="more" aria-labelledby="title-more" hidden>
@@ -210,5 +234,6 @@
   <div class="sr-only" id="announcer" aria-live="polite"></div>
   <script type="module" src="./app.js"></script>
   <script type="module" src="./home-live.js"></script>
+  <script type="module" src="./health.js"></script>
 </body>
 </html>
