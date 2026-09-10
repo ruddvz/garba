@@ -23,6 +23,15 @@ function finiteNumber(value) {
   return Number.isFinite(number) ? number : null
 }
 
+function httpStatusCode(value) {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= 100
+    && value <= 599
+    ? value
+    : null
+}
+
 function canonicalSha(value) {
   const sha = safeText(value)
   return sha && FULL_SHA.test(sha) ? sha.toLowerCase() : null
@@ -91,7 +100,9 @@ export function productionProbeEvidence({
   freshnessBudgetMs,
   sourceUrl = `${CANONICAL_ORIGIN}/`,
 } = {}) {
-  const code = finiteNumber(statusCode)
+  const statusCodeSupplied = statusCode !== undefined && statusCode !== null
+  const code = httpStatusCode(statusCode)
+  const invalidStatusCode = statusCodeSupplied && code == null
   const errorText = safeText(error)
   const source = {
     kind: 'production-probe',
@@ -116,7 +127,21 @@ export function productionProbeEvidence({
     }
   }
 
-  const successfulStatus = code == null || (code >= 200 && code < 400)
+  if (invalidStatusCode && ok !== false && !errorText) {
+    return {
+      status: 'unknown',
+      criticality: 'critical',
+      checkedAt,
+      freshnessBudgetMs,
+      source,
+      summary: 'Production probe supplied malformed HTTP status evidence.',
+      reason: 'An explicit production status code must be an integer from 100 to 599.',
+      action: 'Repeat the production reachability probe with a valid HTTP status code.',
+      details,
+    }
+  }
+
+  const successfulStatus = !statusCodeSupplied || (code != null && code >= 200 && code < 400)
   if (ok === true && successfulStatus && !errorText) {
     return {
       status: 'healthy',
