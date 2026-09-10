@@ -8,7 +8,7 @@ on:
       - 'src/pga/release/acceptance.js'
       - 'src/pga/release/automated-evidence.js'
       - 'src/pga/release/tests/automated-evidence.test.mjs'
-      - 'scripts/pga-release-automated-evidence.mjs'
+      - 'scripts/lib/pga-release-automated-evidence.mjs'
       - 'scripts/lib/validate-pga-shell.mjs'
       - 'scripts/lib/validate-pga-analytics.mjs'
       - 'scripts/lib/validate-pga-home-live-ui.mjs'
@@ -24,7 +24,7 @@ on:
       - 'src/pga/release/acceptance.js'
       - 'src/pga/release/automated-evidence.js'
       - 'src/pga/release/tests/automated-evidence.test.mjs'
-      - 'scripts/pga-release-automated-evidence.mjs'
+      - 'scripts/lib/pga-release-automated-evidence.mjs'
       - 'scripts/lib/validate-pga-shell.mjs'
       - 'scripts/lib/validate-pga-analytics.mjs'
       - 'scripts/lib/validate-pga-home-live-ui.mjs'
@@ -72,7 +72,7 @@ jobs:
           python3 -m http.server 4174 --directory src/pga/app >/tmp/pga-release-fixture.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          node scripts/pga-release-automated-evidence.mjs
+          node scripts/lib/pga-release-automated-evidence.mjs
 
       - name: Upload automated evidence ledger
         if: always() && hashFiles('artifacts/pga-release-automated-evidence.json') != ''
