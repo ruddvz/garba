@@ -249,11 +249,12 @@ export function formatMarkdown(task) {
 }
 
 function parseArgs(argv) {
-  const args = { json: false, text: null, file: null }
+  const args = { json: false, base: false, text: null, file: null }
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--json') args.json = true
+    else if (arg === '--base') args.base = true
     else if (arg === '--text') args.text = argv[++i] ?? ''
     else if (arg === '--file') args.file = argv[++i] ?? ''
     else if (arg === '--help' || arg === '-h') args.help = true
@@ -264,7 +265,7 @@ function parseArgs(argv) {
 }
 
 function usage() {
-  return `RAAS task compiler\n\nUsage:\n  node scripts/raas-task.mjs --text "<request or issue text>"\n  node scripts/raas-task.mjs --file path/to/issue.txt\n  printf '%s' "<request>" | node scripts/raas-task.mjs\n  node scripts/raas-task.mjs --json --text "<request>"\n`
+  return `RAAS task compiler\n\nDirect CLI output uses the adaptive CTO compiler by default. Use --base only when the legacy/base task brief is explicitly required.\n\nUsage:\n  node scripts/raas-task.mjs --text "<request or issue text>"\n  node scripts/raas-task.mjs --file path/to/issue.txt\n  printf '%s' "<request>" | node scripts/raas-task.mjs\n  node scripts/raas-task.mjs --json --text "<request>"\n  node scripts/raas-task.mjs --base --json --text "<request>"\n`
 }
 
 async function readInput(args) {
@@ -292,8 +293,15 @@ async function main() {
     return
   }
 
-  const task = compileTask(input)
-  process.stdout.write(args.json ? `${JSON.stringify(task, null, 2)}\n` : formatMarkdown(task))
+  if (args.base) {
+    const task = compileTask(input)
+    process.stdout.write(args.json ? `${JSON.stringify(task, null, 2)}\n` : formatMarkdown(task))
+    return
+  }
+
+  const { compileAdaptiveTask, formatAdaptiveMarkdown } = await import('./raas-adaptive.mjs')
+  const task = compileAdaptiveTask(input)
+  process.stdout.write(args.json ? `${JSON.stringify(task, null, 2)}\n` : formatAdaptiveMarkdown(task))
 }
 
 const invokedDirectly = process.argv[1]

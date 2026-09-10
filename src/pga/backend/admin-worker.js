@@ -10,6 +10,7 @@ import {
   queryAnalytics,
   safeRangeSeconds,
 } from './lib/analytics.js'
+import { enrichListeningRows, loadCatalogueIdentityIndex } from './lib/catalogue.js'
 import { verifyAccessJwt } from './lib/crypto.js'
 import { getDailySeries, getLifetimeMetrics, getRollupHealth } from './lib/d1.js'
 import { json, withSecurityHeaders } from './lib/http.js'
@@ -181,6 +182,7 @@ async function audience(env, request, options = {}) {
             client: row.client || 'unknown|unknown|unknown',
             country,
             region: sessions >= PRIVACY_MIN ? region : null,
+            referrerHost: row.referrer_host || null,
             acquisition: row.acquisition || '||',
             displayMode: row.display_mode || 'unknown',
             sessions: metric(sessions, precision),
@@ -208,10 +210,24 @@ async function listening(env, request, options = {}) {
     ])
     const precision = precisionFromRows([...eventRows, ...timeRows, ...funnelRows, ...demandRows])
     const funnel = funnelRows[0] || {}
+    let catalogueOk = true
+    let enrichedRows = eventRows
+    if (eventRows.some((row) => row.content_id)) {
+      try {
+        const catalogue = await loadCatalogueIdentityIndex(env, options)
+        enrichedRows = enrichListeningRows(eventRows, catalogue)
+      } catch {
+        catalogueOk = false
+        enrichedRows = enrichListeningRows(eventRows, null)
+      }
+    }
     return envelope({
-      status: 'complete',
+      status: catalogueOk ? 'complete' : 'partial',
       dataThroughMs: maxDataThrough([eventRows, timeRows, funnelRows, demandRows]),
-      sources: [source('analytics-engine', true, { sampled: precision.sampled })],
+      sources: [
+        source('analytics-engine', true, { sampled: precision.sampled }),
+        source('catalogue-identity', catalogueOk),
+      ],
       data: {
         range,
         listeningMs: metric(timeRows[0]?.played_ms, precision),
@@ -226,11 +242,17 @@ async function listening(env, request, options = {}) {
             zeroResults: metric(row.zero_results, precision),
           })),
         },
-        rows: eventRows.map((row) => ({
+        rows: enrichedRows.map((row) => ({
           eventName: row.event_name,
+          surface: row.surface || null,
           world: row.world || null,
           contentType: row.content_type || null,
           contentId: row.content_id || null,
+          canonicalId: row.canonical_id || row.content_id || null,
+          contentLabel: row.content_label || null,
+          artist: row.artist || null,
+          releaseTitle: row.release_title || null,
+          identityStatus: row.identity_status || (row.content_id ? 'unresolved' : 'not-applicable'),
           errorCode: row.detail_code || null,
           events: metric(row.weighted_events, precision),
         })),
