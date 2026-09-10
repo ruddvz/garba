@@ -32,6 +32,13 @@ const selectedRanges = { audience: '30d', listening: '30d' };
 const loadedRanges = { audience: null, listening: null };
 const requestControllers = new Map();
 
+function abortAnalyticsRequests() {
+  for (const [view, controller] of requestControllers) {
+    controller.abort();
+    requestControllers.delete(view);
+  }
+}
+
 function normaliseView(value) {
   return VIEWS.includes(value) ? value : 'home';
 }
@@ -350,6 +357,7 @@ function renderListening(model) {
 async function loadAnalyticsView(view, { force = false } = {}) {
   if (!ANALYTICS_VIEWS.has(view)) return;
   if (!navigator.onLine) {
+    abortAnalyticsRequests();
     setBoundary('offline');
     setViewState(view, 'offline', 'Offline', 'Private aggregates cannot refresh while this device is offline.');
     return;
@@ -393,6 +401,7 @@ async function loadAnalyticsView(view, { force = false } = {}) {
 
 function refreshProtectedState() {
   if (!navigator.onLine) {
+    abortAnalyticsRequests();
     setBoundary('offline');
     return;
   }
@@ -406,6 +415,7 @@ function refreshProtectedState() {
 
 function syncNetworkState() {
   if (!navigator.onLine) {
+    abortAnalyticsRequests();
     setBoundary('offline');
     if (ANALYTICS_VIEWS.has(activeView)) setViewState(activeView, 'offline', 'Offline', 'Private aggregates cannot refresh while this device is offline.');
   } else if (activeBoundary === 'offline') {
