@@ -39,6 +39,11 @@ function normaliseState(value, fallback = 'unavailable') {
   return HOME_STATE_SET.has(state) ? state : fallback
 }
 
+function optionalBooleanFlag(source, key) {
+  if (!Object.prototype.hasOwnProperty.call(source, key)) return false
+  return typeof source[key] === 'boolean' ? source[key] : null
+}
+
 function sourceValue(source) {
   if (!source || typeof source !== 'object') return null
   const normalised = {
@@ -122,8 +127,8 @@ export function evaluateKpi(input = {}, { nowMs = Date.now() } = {}) {
   }
 
   const value = VALUE_STATES.has(status) && validValue != null ? validValue : null
-  const sampled = Boolean(evidence.sampled)
-  const precision = safeText(evidence.precision, 40) || (sampled ? 'estimated' : null)
+  const sampled = optionalBooleanFlag(evidence, 'sampled')
+  const precision = safeText(evidence.precision, 40) || (sampled === true ? 'estimated' : null)
 
   return Object.freeze({
     status,
@@ -299,7 +304,7 @@ export function buildHomeSnapshot(input = {}, { nowMs = Date.now() } = {}) {
     checkedAt: normaliseTimestamp(source.checkedAt ?? source.checked_at),
     dataThroughAt: normaliseTimestamp(source.dataThroughAt ?? source.data_through_at),
     precision: safeText(source.precision, 40),
-    sampled: Boolean(source.sampled),
+    sampled: optionalBooleanFlag(source, 'sampled'),
     source: sourceValue(source.source),
     action: safeText(source.action),
     reason: safeText(source.reason),
