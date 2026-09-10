@@ -35,30 +35,14 @@ jobs:
             local err="/tmp/${id}.err"
             echo "=== ${issue} :: ${label} :: ${id} :: expected_duration=${expected}s ==="
             if python -m yt_dlp --skip-download --dump-single-json --no-warnings --no-playlist "https://www.youtube.com/watch?v=${id}" >"${out}" 2>"${err}"; then
-              python - "${out}" "${expected}" <<'PY'
-import json, pathlib, sys
-path = pathlib.Path(sys.argv[1])
-expected = int(sys.argv[2])
-data = json.loads(path.read_text())
-result = {
-    "id": data.get("id"),
-    "title": data.get("title"),
-    "channel": data.get("channel") or data.get("uploader"),
-    "channel_id": data.get("channel_id") or data.get("uploader_id"),
-    "duration": data.get("duration"),
-    "duration_string": data.get("duration_string"),
-    "availability": data.get("availability"),
-    "webpage_url": data.get("webpage_url"),
-    "extractor": data.get("extractor"),
-}
-print(json.dumps(result, ensure_ascii=False, sort_keys=True))
-if result["duration"] != expected:
-    print(f"DURATION_MISMATCH expected={expected} actual={result['duration']}", file=sys.stderr)
-    raise SystemExit(3)
-print(f"DURATION_MATCH {expected}s")
-PY
-              status=$?
-              if [ "$status" -ne 0 ]; then failures=$((failures + 1)); fi
+              jq '{id,title,channel:(.channel // .uploader),channel_id:(.channel_id // .uploader_id),duration,duration_string,availability,webpage_url,extractor}' "${out}"
+              actual="$(jq -r '.duration // ""' "${out}")"
+              if [ "${actual}" = "${expected}" ]; then
+                echo "DURATION_MATCH ${expected}s"
+              else
+                echo "DURATION_MISMATCH expected=${expected} actual=${actual:-missing}"
+                failures=$((failures + 1))
+              fi
             else
               status=$?
               echo "PROBE_BLOCKED_OR_UNAVAILABLE exit=${status}"
@@ -69,7 +53,7 @@ PY
           }
           probe '#892' 'Mahisagar (Gujarati Folk) (Instrumental)' 'Hq5VhXVlE0o' '219'
           probe '#899' 'Jai Aadhya Shakti (Aarti) (Instrumental)' 'ir_yjC3vTHg' '213'
-          if [ "$failures" -ne 0 ]; then
+          if [ "${failures}" -ne 0 ]; then
             echo "One or more exact-duration probes were blocked, unavailable, or mismatched. Fail closed."
             exit 1
           fi
