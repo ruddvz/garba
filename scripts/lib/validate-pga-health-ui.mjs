@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildHealthPresentation } from '../../src/pga/health/presentation.js';
-import { normaliseHealthResult } from '../../src/pga/app/health.js';
+import { mountHealth, normaliseHealthResult } from '../../src/pga/app/health.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const nowMs = Date.parse('2026-09-10T07:20:00.000Z');
@@ -121,15 +121,101 @@ const [client, css, html] = await Promise.all([
 ]);
 
 assert.match(client, /fetchEnvelope\('\/api\/health'/, 'Health client must use protected Health endpoint');
-assert.match(client, /controller\?\.abort\(\)/, 'Health refresh must cancel prior request');
-assert.match(client, /const token = \+\+generation/, 'Health refresh must guard request generations');
-assert.match(client, /token !== generation \|\| controller\.signal\.aborted/, 'late Health responses must not render');
+assert.match(client, /const token = \+\+generation;\s*controller\?\.abort\(\);\s*controller = null;\s*if \(!navigator\.onLine\)/s, 'Health refresh must invalidate and abort before the offline early return');
+assert.match(client, /if \(!navigator\.onLine\)[\s\S]*?return;\s*}\s*controller = new AbortController\(\)/, 'offline refresh must not allocate a replacement controller');
+assert.match(client, /token !== generation \|\| signal\.aborted/, 'late Health responses must not render');
 assert.match(client, /mountHealth\(\{ autoLoad: !fixtureAllowed, fixtureMode: fixtureAllowed \}\)/, 'localhost shell fixture must enter explicit network-inert fixture mode');
 assert.match(client, /if \(!fixtureMode\) \{[\s\S]*data-nav="health"[\s\S]*hashchange[\s\S]*online[\s\S]*offline[\s\S]*\}/, 'fixture mode must suppress automatic navigation and connectivity fetch triggers');
 assert.doesNotMatch(client, /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write\s*\(/, 'Health UI must avoid raw HTML injection');
 assert.doesNotMatch(client, /localStorage|sessionStorage|document\.cookie|eval\s*\(/, 'Health UI must not add sensitive browser storage or eval');
 assert.match(client, /url\.search = ''/);
 assert.match(client, /url\.hash = ''/);
+
+function fakeNode() {
+  const childQueries = new Map();
+  return {
+    hidden: false,
+    dataset: {},
+    textContent: '',
+    className: '',
+    href: '',
+    target: '',
+    rel: '',
+    addEventListener() {},
+    setAttribute() {},
+    removeAttribute(name) { if (name === 'hidden') this.hidden = false; },
+    toggleAttribute(name, force) { if (name === 'hidden') this.hidden = Boolean(force); },
+    replaceChildren() {},
+    append() {},
+    querySelector(selector) {
+      if (!childQueries.has(selector)) childQueries.set(selector, fakeNode());
+      return childQueries.get(selector);
+    },
+  };
+}
+
+const originalDocument = globalThis.document;
+const originalWindow = globalThis.window;
+const originalLocation = globalThis.location;
+const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+try {
+  const nodes = new Map();
+  const section = fakeNode();
+  section.hidden = false;
+  nodes.set('[data-view="health"]', section);
+  const listeners = new Map();
+  const network = { onLine: true };
+
+  globalThis.document = {
+    querySelector(selector) {
+      if (!nodes.has(selector)) nodes.set(selector, fakeNode());
+      return nodes.get(selector);
+    },
+    querySelectorAll() { return []; },
+    createElement() { return fakeNode(); },
+  };
+  globalThis.window = { addEventListener(type, listener) { listeners.set(type, listener); } };
+  globalThis.location = { hash: '#health', hostname: 'validator.local' };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: network });
+
+  const pending = [];
+  const fetchEnvelope = (requestPath, { signal }) => new Promise((resolve) => pending.push({ requestPath, signal, resolve }));
+  const mounted = mountHealth({ fetchEnvelope, autoLoad: false, fixtureMode: false });
+  assert.ok(mounted, 'Health test mount must initialise');
+
+  const firstLoad = mounted.reload();
+  await Promise.resolve();
+  assert.equal(pending.length, 1, 'online Health refresh must start exactly one protected request');
+  const firstSignal = pending[0].signal;
+  assert.equal(firstSignal.aborted, false);
+
+  network.onLine = false;
+  listeners.get('offline')?.();
+  await Promise.resolve();
+  assert.equal(firstSignal.aborted, true, 'offline transition must abort the previous protected request');
+  assert.equal(pending.length, 1, 'offline transition must not start a replacement Health request');
+  assert.equal(nodes.get('#healthState').dataset.state, 'offline');
+
+  pending[0].resolve({ transport: 'ready', envelope: { status: 'complete', data: { presentation: healthyPresentation } } });
+  await firstLoad;
+  assert.equal(nodes.get('#healthState').dataset.state, 'offline', 'late pre-offline Health evidence must not overwrite Offline state');
+
+  network.onLine = true;
+  const recoveryLoad = mounted.reload();
+  await Promise.resolve();
+  assert.equal(pending.length, 2, 'online recovery must start a fresh Health request');
+  assert.notEqual(pending[1].signal, firstSignal, 'online recovery must use a fresh AbortController');
+  assert.equal(pending[1].signal.aborted, false);
+  pending[1].resolve({ transport: 'ready', envelope: { status: 'complete', data: { presentation: healthyPresentation } } });
+  await recoveryLoad;
+  assert.equal(nodes.get('#healthOverallStatus').textContent, 'Healthy', 'fresh online Health evidence may render after recovery');
+  assert.equal(nodes.get('#healthContent').hidden, false);
+} finally {
+  if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+  if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
+  if (originalLocation === undefined) delete globalThis.location; else globalThis.location = originalLocation;
+  if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator); else delete globalThis.navigator;
+}
 
 assert.equal((html.match(/health\.css/g) || []).length, 1, 'Health stylesheet must load once');
 assert.equal((html.match(/health\.js/g) || []).length, 1, 'Health module must load once');
@@ -144,4 +230,5 @@ assert.doesNotMatch(css, /100vw/, 'Health UI must not introduce viewport-width o
 
 console.log('✓ PGA Health UI preserves canonical complete/incomplete truth and rollup-only uncertainty');
 console.log('✓ Failed/degraded/stale evidence stays prioritised and safe evidence URLs are sanitised');
+console.log('✓ Offline transition aborts stale Health requests and online recovery uses a fresh controller');
 console.log('✓ Protected loading, cancellation, network-inert fixture mode and no-raw-HTML contracts pass');
