@@ -3,45 +3,30 @@ import { fetchPgaEnvelope } from './analytics.js';
 const VALID_ENVELOPE_STATES = new Set(['complete', 'partial', 'stale']);
 const EMPTY_TRANSPORT = Object.freeze({ transport: 'unavailable', envelope: null });
 
-function isObject(value) {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function finiteNonNegative(value) {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
-}
-
-function safeText(value, max = 160) {
+const isObject = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const safeText = (value, max = 160) => {
   if (value == null) return null;
   const text = String(value).trim();
   return text ? text.slice(0, max) : null;
-}
-
-function safeTimestamp(value) {
+};
+const finiteNonNegative = (value) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+const safeTimestamp = (value) => {
   if (value == null || value === '') return null;
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    try { return new Date(value).toISOString(); } catch { return null; }
-  }
-  const timestamp = Date.parse(String(value));
-  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
-}
+  const timestamp = typeof value === 'number' && Number.isFinite(value) ? value : Date.parse(String(value));
+  if (!Number.isFinite(timestamp)) return null;
+  try { return new Date(timestamp).toISOString(); } catch { return null; }
+};
 
 export function normaliseHomeMetric(metric) {
   if (!isObject(metric) || !Object.prototype.hasOwnProperty.call(metric, 'value')) return null;
   const value = finiteNonNegative(metric.value);
   if (value == null) return null;
-  return Object.freeze({
-    value,
-    precision: safeText(metric.precision, 32) || 'unknown',
-    sampled: metric.sampled === true,
-  });
+  return Object.freeze({ value, precision: safeText(metric.precision, 32) || 'unknown', sampled: metric.sampled === true });
 }
 
 function transportState(result) {
   const transport = safeText(result?.transport, 32) || 'unavailable';
-  if (transport === 'auth-expired') return 'auth-expired';
-  if (transport === 'error') return 'error';
-  if (transport === 'unavailable') return 'unavailable';
+  if (['auth-expired', 'error', 'unavailable'].includes(transport)) return transport;
   return 'ready';
 }
 
@@ -58,8 +43,7 @@ function normaliseSources(sources) {
     if (!isObject(source)) return [];
     const name = safeText(source.name, 80);
     const status = safeText(source.status, 32);
-    if (!name || !status) return [];
-    return [Object.freeze({ name, status, sampled: source.sampled === true })];
+    return name && status ? [Object.freeze({ name, status, sampled: source.sampled === true })] : [];
   }));
 }
 
@@ -75,7 +59,7 @@ function normaliseLifetime(value) {
 
 function normaliseSeries(rows) {
   if (!Array.isArray(rows)) return null;
-  const result = rows.flatMap((row) => {
+  return Object.freeze(rows.flatMap((row) => {
     if (!isObject(row)) return [];
     const value = finiteNonNegative(row.value);
     const day = /^\d{4}-\d{2}-\d{2}$/.test(String(row.day || '')) ? String(row.day) : null;
@@ -87,12 +71,10 @@ function normaliseSeries(rows) {
       sampled: row.sampled === true,
       dataThroughMs: finiteNonNegative(row.dataThroughMs),
     })];
-  });
-  return Object.freeze(result);
+  }));
 }
 
 export function normaliseHomeResult(result = EMPTY_TRANSPORT) {
-  const state = normaliseEnvelopeState(result);
   const envelope = isObject(result?.envelope) ? result.envelope : null;
   const data = isObject(envelope?.data) ? envelope.data : null;
   const todaySource = isObject(data?.today) ? data.today : null;
@@ -105,16 +87,9 @@ export function normaliseHomeResult(result = EMPTY_TRANSPORT) {
   const listeningTodayMs = normaliseHomeMetric(data?.listeningTodayMs);
   const lifetime = normaliseLifetime(data?.lifetime);
   const sessionsDaily = normaliseSeries(data?.sessionsDaily);
-  const usable = Boolean(
-    Object.values(today || {}).some(Boolean)
-    || listeningTodayMs
-    || lifetime
-    || sessionsDaily?.length,
-  );
-
   return Object.freeze({
-    state,
-    usable,
+    state: normaliseEnvelopeState(result),
+    usable: Boolean(Object.values(today || {}).some(Boolean) || listeningTodayMs || lifetime || sessionsDaily?.length),
     generatedAt: safeTimestamp(envelope?.generatedAt),
     dataThrough: safeTimestamp(envelope?.dataThrough),
     window: isObject(envelope?.window) ? Object.freeze({
@@ -130,10 +105,10 @@ export function normaliseHomeResult(result = EMPTY_TRANSPORT) {
   });
 }
 
-function metricFromCount(value, precision = 'unknown', sampled = false) {
+const metricFromCount = (value, precision = 'unknown', sampled = false) => {
   const count = finiteNonNegative(value);
   return count == null ? null : Object.freeze({ value: count, precision, sampled });
-}
+};
 
 function normaliseLiveRows(value) {
   if (!Array.isArray(value)) return null;
@@ -141,8 +116,7 @@ function normaliseLiveRows(value) {
     if (!isObject(row)) return [];
     const label = safeText(row.label ?? row.key ?? row.name, 100);
     const metric = normaliseHomeMetric(row.metric) || metricFromCount(row.count, 'exact', false);
-    if (!label || !metric) return [];
-    return [Object.freeze({ label, metric })];
+    return label && metric ? [Object.freeze({ label, metric })] : [];
   }));
 }
 
@@ -157,12 +131,12 @@ function aggregateFlatBreakdown(rows, key) {
     current.value += metric.value;
     if (metric.precision === 'estimated') current.precision = 'estimated';
     else if (current.precision !== 'estimated' && metric.precision !== 'exact') current.precision = metric.precision;
-    if (metric.sampled) current.sampled = true;
+    current.sampled ||= metric.sampled;
     totals.set(label, current);
   }
   return Object.freeze([...totals.entries()]
     .map(([label, metric]) => Object.freeze({ label, metric: Object.freeze({ ...metric }) }))
-    .sort((left, right) => right.metric.value - left.metric.value || left.label.localeCompare(right.label)));
+    .sort((a, b) => b.metric.value - a.metric.value || a.label.localeCompare(b.label)));
 }
 
 function normaliseBreakdowns(value) {
@@ -189,29 +163,21 @@ function normaliseTrend(value) {
   return Object.freeze(source.flatMap((point) => {
     if (!isObject(point)) return [];
     const at = safeTimestamp(point.minute ?? point.at ?? point.time ?? point.timestamp);
-    const liveNow = normaliseHomeMetric(point.activeSessions ?? point.liveNow)
-      || metricFromCount(point.activeSessions ?? point.liveNow);
-    const listeningNow = normaliseHomeMetric(point.listeningSessions ?? point.listeningNow)
-      || metricFromCount(point.listeningSessions ?? point.listeningNow);
-    const browsingNow = normaliseHomeMetric(point.browsingSessions ?? point.browsingNow)
-      || metricFromCount(point.browsingSessions ?? point.browsingNow);
-    if (!at || (!liveNow && !listeningNow && !browsingNow)) return [];
-    return [Object.freeze({ at, liveNow, listeningNow, browsingNow })];
+    const liveNow = normaliseHomeMetric(point.activeSessions ?? point.liveNow) || metricFromCount(point.activeSessions ?? point.liveNow);
+    const listeningNow = normaliseHomeMetric(point.listeningSessions ?? point.listeningNow) || metricFromCount(point.listeningSessions ?? point.listeningNow);
+    const browsingNow = normaliseHomeMetric(point.browsingSessions ?? point.browsingNow) || metricFromCount(point.browsingSessions ?? point.browsingNow);
+    return at && (liveNow || listeningNow || browsingNow) ? [Object.freeze({ at, liveNow, listeningNow, browsingNow })] : [];
   }));
 }
 
 export function normaliseLiveResult(result = EMPTY_TRANSPORT) {
-  const state = normaliseEnvelopeState(result);
   const envelope = isObject(result?.envelope) ? result.envelope : null;
   const data = isObject(envelope?.data) ? envelope.data : null;
   const liveNow = normaliseHomeMetric(data?.liveNow);
   const listeningNow = normaliseHomeMetric(data?.listeningNow);
   const browsingNow = normaliseHomeMetric(data?.browsingNow);
-  const expirySeconds = finiteNonNegative(data?.expirySeconds);
-  const trendMinutes = finiteNonNegative(data?.trendMinutes);
-
   return Object.freeze({
-    state,
+    state: normaliseEnvelopeState(result),
     usable: Boolean(liveNow || listeningNow || browsingNow),
     generatedAt: safeTimestamp(envelope?.generatedAt),
     dataThrough: safeTimestamp(envelope?.dataThrough),
@@ -219,8 +185,8 @@ export function normaliseLiveResult(result = EMPTY_TRANSPORT) {
     liveNow,
     listeningNow,
     browsingNow,
-    expirySeconds,
-    trendMinutes,
+    expirySeconds: finiteNonNegative(data?.expirySeconds),
+    trendMinutes: finiteNonNegative(data?.trendMinutes),
     breakdowns: normaliseBreakdowns(data?.breakdowns),
     trend: normaliseTrend(data?.trend ?? data?.recentTrend),
   });
@@ -229,9 +195,7 @@ export function normaliseLiveResult(result = EMPTY_TRANSPORT) {
 function overallState(home, live) {
   if (home.state === 'auth-expired' || live.state === 'auth-expired') return 'auth-expired';
   if (home.state === 'stale' || live.state === 'stale') return home.usable || live.usable ? 'stale' : 'unavailable';
-  if (home.usable && live.usable) {
-    return home.state === 'complete' && live.state === 'complete' ? 'complete' : 'partial';
-  }
+  if (home.usable && live.usable) return home.state === 'complete' && live.state === 'complete' ? 'complete' : 'partial';
   if (home.usable || live.usable) return 'partial';
   if (home.state === 'error' || live.state === 'error') return 'error';
   return 'unavailable';
@@ -243,10 +207,7 @@ export function composeHomeLiveResults(homeResult, liveResult) {
   return Object.freeze({ schemaVersion: 'pga-home-live-ui/v1', state: overallState(home, live), home, live });
 }
 
-function formatCount(metric) {
-  return metric ? new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(metric.value) : '—';
-}
-
+const formatCount = (metric) => metric ? new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(metric.value) : '—';
 function formatDuration(metric) {
   if (!metric) return '—';
   const minutes = Math.max(0, Math.round(metric.value / 60_000));
@@ -255,18 +216,12 @@ function formatDuration(metric) {
   const remainder = minutes % 60;
   return remainder ? `${hours} h ${remainder} min` : `${hours} h`;
 }
-
 function formatIstTimestamp(value) {
   if (!value) return 'Freshness unavailable';
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return 'Freshness unavailable';
-  return `${new Intl.DateTimeFormat('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Kolkata',
-  }).format(timestamp)} IST`;
+  return `${new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }).format(timestamp)} IST`;
 }
-
 function statusCopy(state) {
   if (state === 'complete') return ['Current', 'Home and Live sources returned usable protected aggregates.'];
   if (state === 'partial') return ['Partial data', 'Some protected aggregates are unavailable. Available values stay visible and missing values stay blank.'];
@@ -290,10 +245,7 @@ function renderSeries(model) {
   const list = document.querySelector('#homeTrend');
   const summary = document.querySelector('#homeTrendSummary');
   const rows = model.home.sessionsDaily;
-  if (!section || !list || !summary || !rows?.length) {
-    if (section) section.hidden = true;
-    return;
-  }
+  if (!section || !list || !summary || !rows?.length) { if (section) section.hidden = true; return; }
   section.hidden = false;
   list.replaceChildren();
   const recent = rows.slice(-7);
@@ -321,10 +273,7 @@ function renderLiveTrend(model) {
   const section = document.querySelector('#homeLiveTrendSection');
   const summary = document.querySelector('#homeLiveTrendSummary');
   const rows = model.live.trend;
-  if (!section || !summary || !rows?.length) {
-    if (section) section.hidden = true;
-    return;
-  }
+  if (!section || !summary || !rows?.length) { if (section) section.hidden = true; return; }
   section.hidden = false;
   const active = rows.map((row) => row.liveNow?.value).filter((value) => value != null);
   const listening = rows.map((row) => row.listeningNow?.value).filter((value) => value != null);
@@ -333,11 +282,7 @@ function renderLiveTrend(model) {
   const activeRange = active.length ? `${Math.min(...active)}–${Math.max(...active)}` : 'unavailable';
   const listeningRange = listening.length ? `${Math.min(...listening)}–${Math.max(...listening)}` : 'unavailable';
   const windowText = model.live.trendMinutes != null ? `${model.live.trendMinutes}-minute` : `${rows.length}-point`;
-  const movement = first == null || last == null
-    ? 'Active-session movement is unavailable.'
-    : first === last
-      ? `Active sessions started and ended at ${last}.`
-      : `Active sessions moved from ${first} to ${last}.`;
+  const movement = first == null || last == null ? 'Active-session movement is unavailable.' : first === last ? `Active sessions started and ended at ${last}.` : `Active sessions moved from ${first} to ${last}.`;
   summary.textContent = `${windowText} live window. ${movement} Active range ${activeRange}; listening range ${listeningRange}.`;
 }
 
@@ -375,20 +320,14 @@ function renderLifetime(model) {
   const section = document.querySelector('#homeLifetimeSection');
   const target = document.querySelector('#homeLifetime');
   const lifetime = model.home.lifetime;
-  if (!section || !target || !lifetime) {
-    if (section) section.hidden = true;
-    return;
-  }
+  if (!section || !target || !lifetime) { if (section) section.hidden = true; return; }
   const rows = [
     ['Sessions', lifetime.sessions, formatCount],
     ['Confirmed play starts', lifetime.confirmed_play_starts, formatCount],
     ['Listening time', lifetime.listening_ms, formatDuration],
     ['Surface views', lifetime.surface_views, formatCount],
   ].filter(([, metric]) => metric);
-  if (!rows.length) {
-    section.hidden = true;
-    return;
-  }
+  if (!rows.length) { section.hidden = true; return; }
   section.hidden = false;
   target.replaceChildren();
   for (const [labelText, metric, formatter] of rows) {
@@ -414,7 +353,6 @@ function renderModel(model) {
   const freshest = [model.home.dataThrough, model.live.dataThrough].filter(Boolean).sort().at(-1) || null;
   const freshness = document.querySelector('#homeFreshness');
   if (freshness) freshness.textContent = freshest ? `Data through ${formatIstTimestamp(freshest)}` : 'Freshness unavailable';
-
   const liveMeta = document.querySelector('#homeLiveMeta');
   if (liveMeta) {
     const parts = [];
@@ -422,7 +360,6 @@ function renderModel(model) {
     if (model.live.dataThrough) parts.push(`Live evidence through ${formatIstTimestamp(model.live.dataThrough)}.`);
     liveMeta.textContent = parts.join(' ') || 'Live freshness metadata is unavailable.';
   }
-
   const state = document.querySelector('#homeState');
   const [title, body] = statusCopy(model.state);
   if (state) {
@@ -431,8 +368,7 @@ function renderModel(model) {
     state.querySelector('strong').textContent = title;
     state.querySelector('p').textContent = body;
   }
-  const content = document.querySelector('#homeContent');
-  if (content) content.hidden = false;
+  document.querySelector('#homeContent')?.removeAttribute('hidden');
   renderSeries(model);
   renderLiveTrend(model);
   renderLiveDetails(model);
@@ -441,19 +377,19 @@ function renderModel(model) {
 
 function renderBlockingState(state, title, body) {
   const status = document.querySelector('#homeState');
-  const content = document.querySelector('#homeContent');
   if (status) {
     status.hidden = false;
     status.dataset.state = state;
     status.querySelector('strong').textContent = title;
     status.querySelector('p').textContent = body;
   }
+  const content = document.querySelector('#homeContent');
   if (content) content.hidden = true;
   const freshness = document.querySelector('#homeFreshness');
   if (freshness) freshness.textContent = state === 'loading' ? 'Refreshing protected aggregates' : 'No current protected snapshot';
 }
 
-export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope } = {}) {
+export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true } = {}) {
   if (typeof document === 'undefined') return null;
   const section = document.querySelector('[data-view="home"]');
   if (!section) return null;
@@ -466,9 +402,8 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope } = {}) {
   async function load({ force = false } = {}) {
     if (!force && hasRenderedSnapshot) return;
     if (!navigator.onLine) {
-      if (!hasRenderedSnapshot) {
-        renderBlockingState('offline', 'Offline', 'The PGA shell is available, but private Home and Live aggregates cannot refresh while this device is offline.');
-      } else {
+      if (!hasRenderedSnapshot) renderBlockingState('offline', 'Offline', 'The PGA shell is available, but private Home and Live aggregates cannot refresh while this device is offline.');
+      else {
         const state = document.querySelector('#homeState');
         if (state) {
           state.hidden = false;
@@ -484,26 +419,23 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope } = {}) {
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
-    if (!hasRenderedSnapshot) {
-      renderBlockingState('loading', 'Loading protected data', 'PGA is fetching Home and Live aggregates without showing placeholder zeros.');
-    } else {
+    if (!hasRenderedSnapshot) renderBlockingState('loading', 'Loading protected data', 'PGA is fetching Home and Live aggregates without showing placeholder zeros.');
+    else {
       const freshness = document.querySelector('#homeFreshness');
       if (freshness) freshness.textContent = 'Refreshing protected aggregates';
     }
 
     const wrap = async (path) => {
-      try {
-        return await fetchEnvelope(path, { signal });
-      } catch (error) {
+      try { return await fetchEnvelope(path, { signal }); }
+      catch (error) {
         if (error?.name === 'AbortError') throw error;
         return { transport: 'error', envelope: null };
       }
     };
 
     let results;
-    try {
-      results = await Promise.all([wrap('/api/home'), wrap('/api/live')]);
-    } catch (error) {
+    try { results = await Promise.all([wrap('/api/home'), wrap('/api/live')]); }
+    catch (error) {
       if (error?.name === 'AbortError') return;
       results = [EMPTY_TRANSPORT, EMPTY_TRANSPORT];
     }
@@ -521,30 +453,21 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope } = {}) {
       renderBlockingState(model.state, title, body);
       return;
     }
-
     hasRenderedSnapshot = true;
     renderModel(model);
   }
 
-  document.querySelector('#refreshButton')?.addEventListener('click', () => {
-    if (isActive()) load({ force: true });
-  });
-  window.addEventListener('online', () => {
-    if (isActive()) load({ force: true });
-  });
-  window.addEventListener('offline', () => {
-    if (isActive()) load({ force: true });
-  });
-  window.addEventListener('hashchange', () => {
-    if (location.hash === '#home' && !hasRenderedSnapshot) load({ force: true });
-  });
+  document.querySelector('#refreshButton')?.addEventListener('click', () => { if (isActive()) load({ force: true }); });
+  window.addEventListener('online', () => { if (isActive()) load({ force: true }); });
+  window.addEventListener('offline', () => { if (isActive()) load({ force: true }); });
+  window.addEventListener('hashchange', () => { if (location.hash === '#home' && !hasRenderedSnapshot) load({ force: true }); });
 
-  load({ force: true });
+  if (autoLoad && isActive()) load({ force: true });
   return Object.freeze({ reload: () => load({ force: true }) });
 }
 
 if (typeof document !== 'undefined') {
-  const controller = mountHomeLive();
   const fixtureAllowed = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const controller = mountHomeLive({ autoLoad: !fixtureAllowed });
   if (fixtureAllowed && controller) window.PGA_HOME_LIVE_TEST = controller;
 }
