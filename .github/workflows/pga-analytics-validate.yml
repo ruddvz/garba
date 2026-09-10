@@ -1,3 +1,4 @@
+# Path-scoped push validation is kept dispatchable so reconciled heads can be re-proven exactly.
 name: PGA analytics validation
 
 on:
