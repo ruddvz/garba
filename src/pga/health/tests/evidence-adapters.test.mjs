@@ -80,6 +80,65 @@ test('production probe distinguishes success, failure and absent evidence', () =
   assert.equal(Object.hasOwn(unknown.details, 'statusCode'), false)
 })
 
+test('production probe accepts only explicit integer HTTP status evidence', () => {
+  for (const statusCode of [undefined, null]) {
+    const evidence = productionProbeEvidence({
+      completed: true,
+      ok: true,
+      statusCode,
+      checkedAt: NOW,
+    })
+    assert.equal(evidence.status, 'healthy')
+    assert.equal(Object.hasOwn(evidence.details, 'statusCode'), false)
+    assert.equal(evidence.source.id, null)
+  }
+
+  for (const [statusCode, expectedStatus] of [
+    [100, 'failed'],
+    [200, 'healthy'],
+    [302, 'healthy'],
+    [503, 'failed'],
+    [599, 'failed'],
+  ]) {
+    const evidence = productionProbeEvidence({
+      completed: true,
+      ok: true,
+      statusCode,
+      checkedAt: NOW,
+    })
+    assert.equal(evidence.status, expectedStatus, `unexpected status for HTTP ${statusCode}`)
+    assert.equal(evidence.details.statusCode, statusCode)
+    assert.equal(evidence.source.id, `http-${statusCode}`)
+  }
+
+  for (const statusCode of [
+    '200',
+    '',
+    false,
+    true,
+    200.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    -1,
+    0,
+    99,
+    600,
+    700,
+  ]) {
+    const evidence = productionProbeEvidence({
+      completed: true,
+      ok: true,
+      statusCode,
+      checkedAt: NOW,
+    })
+    assert.equal(evidence.status, 'unknown', `malformed ${String(statusCode)} must not become healthy`)
+    assert.equal(Object.hasOwn(evidence.details, 'statusCode'), false)
+    assert.equal(evidence.source.id, null)
+    assert.match(evidence.reason, /integer from 100 to 599/)
+  }
+})
+
 test('matching deployment build evidence preserves supplied diagnostic details', () => {
   const evidence = deploymentBuildEvidence({
     buildInfo: buildInfo(),
