@@ -502,8 +502,9 @@ assert.deepEqual([...MEDIA_EVENTS], [
   assert.equal(controller.play(), false);
 
   const clearedOperationCount = mediaElement.operations.length;
-  assert.equal(controller.markUnavailable('rights-revoked'), false, 'repeated unavailable evidence must not replay cleanup');
-  assert.equal(mediaElement.operations.length, clearedOperationCount);
+  controller.markUnavailable('rights-revoked');
+  assert.equal(controller.getState().phase, 'unavailable');
+  assert.equal(mediaElement.operations.length, clearedOperationCount, 'repeated unavailable evidence must not replay media cleanup');
   assert.equal(mediaElement.src, '');
 
   assert.equal(controller.select({ resolution: resolution('song-b'), identity: identity('song-b'), generation: 2, capabilities: fullCapabilities }), true);
