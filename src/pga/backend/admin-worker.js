@@ -18,12 +18,26 @@ import { getDailySeries, getLifetimeMetrics, getRollupHealth } from './lib/d1.js
 import { json, withSecurityHeaders } from './lib/http.js'
 import { searchDemandSql, searchFunnelSql } from './lib/search-analytics.js'
 import { istDateKey, istDayBounds } from './lib/time.js'
+import { collectHealthSnapshot } from '../health/collector.js'
+import { buildHealthPresentation } from '../health/presentation.js'
 
 const EVENTS_DATASET = 'playgarba_events_v1'
 const PRESENCE_DATASET = 'playgarba_presence_v1'
 const PRIVACY_MIN = 3
 const LIVE_EXPIRY_SECONDS = 120
 const LIVE_TREND_MINUTES = 30
+const HEALTH_REPOSITORY = 'ruddvz/garba'
+const HEALTH_SOURCE_ORIGIN = 'https://pga.playgarba.com'
+const HEALTH_FRESHNESS_BUDGETS = Object.freeze({
+  production: 5 * 60 * 1000,
+  playback: 30 * 60 * 1000,
+  deployment: 30 * 60 * 1000,
+  ci: 2 * 60 * 60 * 1000,
+  catalogue: 6 * 60 * 60 * 1000,
+  telemetry: 10 * 60 * 1000,
+  rollups: 36 * 60 * 60 * 1000,
+  pwa: 24 * 60 * 60 * 1000,
+})
 
 function numberOrZero(value) {
   const number = Number(value)
@@ -101,6 +115,70 @@ function liveTrendRows(rows, precision) {
     listeningSessions: metric(row.listening_sessions, precision),
     browsingSessions: metric(row.browsing_sessions, precision),
   })).filter((row) => row.minute)
+}
+
+function requiredHealthChecks(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean).slice(0, 50)
+  const text = String(value || '').trim()
+  if (!text) return []
+  if (text.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text)
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean).slice(0, 50)
+    } catch {}
+  }
+  return text.split(/[\n,]/).map((item) => item.trim()).filter(Boolean).slice(0, 50)
+}
+
+function healthRevision(env) {
+  return env.PGA_EXPECTED_REVISION || env.CF_PAGES_COMMIT_SHA || env.GITHUB_SHA || null
+}
+
+function healthPayload({ status, data, sources, dataThroughMs = null, nowMs = Date.now() }) {
+  return {
+    status,
+    generatedAt: new Date(nowMs).toISOString(),
+    dataThrough: dateOrNull(dataThroughMs),
+    sources,
+    data,
+  }
+}
+
+async function rollupHealthPayload(env, nowMs) {
+  if (!env.DB) {
+    return healthPayload({
+      status: 'unavailable',
+      data: null,
+      sources: [source('d1-rollups', false)],
+      nowMs,
+    })
+  }
+  try {
+    const runs = await getRollupHealth(env.DB)
+    const latest = runs[0] || null
+    return healthPayload({
+      status: latest?.status === 'complete' ? 'complete' : 'partial',
+      dataThroughMs: latest?.data_through_ms,
+      sources: [source('d1-rollups', true)],
+      data: { rollups: runs },
+      nowMs,
+    })
+  } catch {
+    return healthPayload({
+      status: 'unavailable',
+      data: null,
+      sources: [source('d1-rollups', false)],
+      nowMs,
+    })
+  }
+}
+
+async function responsePayload(response) {
+  try {
+    return await response.clone().json()
+  } catch {
+    return null
+  }
 }
 
 async function home(env, options = {}) {
@@ -332,20 +410,46 @@ async function listening(env, request, options = {}) {
   }
 }
 
-async function health(env) {
-  if (!env.DB) return envelope({ status: 'unavailable', statusCode: 503, data: null, sources: [source('d1-rollups', false)] })
-  try {
-    const runs = await getRollupHealth(env.DB)
-    const latest = runs[0] || null
-    return envelope({
-      status: latest?.status === 'complete' ? 'complete' : 'partial',
-      dataThroughMs: latest?.data_through_ms,
-      sources: [source('d1-rollups', true)],
-      data: { rollups: runs },
-    })
-  } catch {
-    return envelope({ status: 'unavailable', statusCode: 503, data: null, sources: [source('d1-rollups', false)] })
+async function health(env, options = {}) {
+  const nowMs = options.nowMs ?? Date.now()
+  const supplied = options.healthObservations && typeof options.healthObservations === 'object'
+    ? options.healthObservations
+    : {}
+
+  const telemetryPromise = Object.prototype.hasOwnProperty.call(supplied, 'telemetry')
+    ? Promise.resolve(supplied.telemetry)
+    : live(env, options).then((response) => responsePayload(response)).then((payload) => ({
+        payload,
+        checkedAt: nowMs,
+        sourceUrl: `${HEALTH_SOURCE_ORIGIN}/api/live`,
+      }))
+
+  const rollupPromise = Object.prototype.hasOwnProperty.call(supplied, 'rollups')
+    ? Promise.resolve(supplied.rollups)
+    : rollupHealthPayload(env, nowMs).then((payload) => ({
+        payload,
+        checkedAt: nowMs,
+        sourceUrl: `${HEALTH_SOURCE_ORIGIN}/api/health`,
+      }))
+
+  const [telemetry, rollups] = await Promise.all([telemetryPromise, rollupPromise])
+  const observations = {
+    ...supplied,
+    telemetry,
+    rollups,
   }
+
+  const snapshot = await collectHealthSnapshot({
+    fetchImpl: options.healthFetchImpl || globalThis.fetch,
+    nowMs,
+    expectedRevision: healthRevision(env),
+    githubRepository: env.PGA_GITHUB_REPOSITORY || HEALTH_REPOSITORY,
+    githubToken: env.PGA_GITHUB_TOKEN || null,
+    requiredChecks: requiredHealthChecks(env.PGA_REQUIRED_CHECKS),
+    freshnessBudgets: HEALTH_FRESHNESS_BUDGETS,
+    observations,
+  })
+  return json(buildHealthPresentation(snapshot, { nowMs }))
 }
 
 export async function handleAdmin(request, env, options = {}) {
@@ -360,7 +464,7 @@ export async function handleAdmin(request, env, options = {}) {
     else if (path === '/api/live') response = await live(env, options)
     else if (path === '/api/audience') response = await audience(env, request, options)
     else if (path === '/api/listening') response = await listening(env, request, options)
-    else if (path === '/api/health') response = await health(env)
+    else if (path === '/api/health') response = await health(env, options)
     else response = json({ error: 'not_found' }, { status: 404 })
   } catch (error) {
     console.error('pga_admin_query_failed', { reason: error instanceof Error ? error.message : 'unknown' })
