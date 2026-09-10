@@ -84,6 +84,7 @@ async function accessFixture({ payload = {}, signingPair = null, trustedPair = n
     exp: Math.floor(NOW / 1000) + 600,
     iat: Math.floor(NOW / 1000),
     sub: 'founder',
+    type: 'app',
     ...payload,
   }))
   const signingInput = `${headerPart}.${payloadPart}`
