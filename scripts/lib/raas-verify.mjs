@@ -10,6 +10,8 @@ export const REQUIRED_RAAS_FILES = Object.freeze([
   '.raas/EXECUTION.md',
   '.raas/LANGUAGE.md',
   '.raas/CLIENTS.md',
+  '.raas/AUTONOMY.md',
+  '.raas/autonomy.json',
   '.raas/clients/chatgpt.md',
   '.raas/clients/codex.md',
   '.raas/clients/cursor.md',
@@ -19,6 +21,25 @@ export const REQUIRED_RAAS_FILES = Object.freeze([
 
 const REFERENCE_DOCS = Object.freeze(REQUIRED_RAAS_FILES.filter((file) => file.endsWith('.md')));
 const ROOT_REFERENCES = new Set(['AGENTS.md', 'README.md', 'package.json']);
+const REQUIRED_LOCAL_AUTHORITIES = Object.freeze([
+  'productTruth',
+  'issueOwnership',
+  'branchOwnership',
+  'fileOwnership',
+  'graphVocabulary',
+  'contextCompiler',
+  'uiUxRules',
+  'validation',
+  'release',
+]);
+const REQUIRED_FORBIDDEN_FEDERATION = Object.freeze([
+  'active-claims',
+  'locks',
+  'project-truth',
+  'private-data',
+  'secrets',
+  'release-authority',
+]);
 
 const exists = async (root, target) => {
   try {
@@ -43,6 +64,39 @@ export function extractRepositoryReferences(markdown) {
     if (target) refs.add(target);
   }
   return [...refs].sort();
+}
+
+export function validateAutonomy(autonomy) {
+  const errors = [];
+  if (autonomy?.protocol !== 'harness-autonomy/v1') errors.push('autonomy: protocol must be harness-autonomy/v1');
+  if (autonomy?.harness !== 'RAAS') errors.push('autonomy: harness must be RAAS');
+  if (autonomy?.project !== 'PlayGarba') errors.push('autonomy: project must be PlayGarba');
+  if (autonomy?.repository !== 'ruddvz/garba') errors.push('autonomy: repository must be ruddvz/garba');
+  if (autonomy?.runtimeDependenciesOnPeers !== false) {
+    errors.push('autonomy: runtimeDependenciesOnPeers must remain false');
+  }
+  if (autonomy?.sharedMutableState !== false) {
+    errors.push('autonomy: sharedMutableState must remain false');
+  }
+  if (autonomy?.federation?.mode !== 'reviewed-knowledge-only') {
+    errors.push('autonomy: federation mode must remain reviewed-knowledge-only');
+  }
+  for (const key of REQUIRED_LOCAL_AUTHORITIES) {
+    if (autonomy?.localAuthority?.[key] !== true) {
+      errors.push(`autonomy: localAuthority.${key} must remain true`);
+    }
+  }
+  const forbidden = new Set(autonomy?.federation?.forbidden ?? []);
+  for (const value of REQUIRED_FORBIDDEN_FEDERATION) {
+    if (!forbidden.has(value)) errors.push(`autonomy: federation must forbid ${value}`);
+  }
+  if (autonomy?.graph?.inferredEdgesAreAdvisory !== true) {
+    errors.push('autonomy: inferred graph edges must remain advisory');
+  }
+  if (autonomy?.fallback !== 'local-raas-canonical-workflow') {
+    errors.push('autonomy: fallback must remain local-raas-canonical-workflow');
+  }
+  return errors;
 }
 
 export async function validateRaas({ root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..') } = {}) {
@@ -85,6 +139,13 @@ export async function validateRaas({ root = path.resolve(path.dirname(fileURLToP
     if (!await exists(root, target)) errors.push(`.raas/config.json references missing repository path: ${target}`);
   }
 
+  try {
+    const autonomy = JSON.parse(await read('.raas/autonomy.json'));
+    errors.push(...validateAutonomy(autonomy));
+  } catch (error) {
+    errors.push(`.raas/autonomy.json is not valid JSON: ${error.message}`);
+  }
+
   return errors;
 }
 
@@ -95,7 +156,7 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  console.log(`✓ RAAS harness verified: ${REQUIRED_RAAS_FILES.length} required files, AGENTS preflight, config and repository-local references are intact`);
+  console.log(`✓ RAAS harness verified: ${REQUIRED_RAAS_FILES.length} required files, local-autonomy invariants, AGENTS preflight, config and repository-local references are intact`);
 }
 
 const entry = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : '';
