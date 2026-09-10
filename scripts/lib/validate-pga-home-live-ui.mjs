@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   composeHomeLiveResults,
+  mountHomeLive,
   normaliseHomeMetric,
   normaliseHomeResult,
   normaliseLiveResult,
@@ -128,14 +129,103 @@ const [clientSource, indexHtml, css] = await Promise.all([
   readFile(path.join(root, 'src/pga/app/home-live.css'), 'utf8'),
 ]);
 
-assert.match(clientSource, /controller\?\.abort\(\)/, 'refresh must abort the previous Home request');
-assert.match(clientSource, /const token = \+\+generation/, 'refresh must create a newer request generation');
+assert.match(clientSource, /const token = \+\+generation;\s*controller\?\.abort\(\);\s*controller = null;\s*if \(!navigator\.onLine\)/s, 'refresh must invalidate and abort before the offline early return');
+assert.match(clientSource, /if \(!navigator\.onLine\)[\s\S]*?return;\s*}\s*controller = new AbortController\(\)/, 'offline refresh must not allocate a new request controller');
 assert.match(clientSource, /token !== generation \|\| signal\.aborted/, 'late responses must not render');
 assert.match(clientSource, /Promise\.all\(\[wrap\('\/api\/home'\), wrap\('\/api\/live'\)\]\)/, 'Home must request protected sources independently');
 assert.match(clientSource, /mountHomeLive\(\{ autoLoad: !fixtureAllowed \}\)/, 'static localhost shell fixtures must not make unavailable backend requests');
 assert.match(clientSource, /if \(autoLoad && isActive\(\)\) load/, 'non-Home deep links must not eagerly request Home analytics');
 assert.doesNotMatch(clientSource, /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write\s*\(/, 'Home must avoid raw HTML injection');
 assert.doesNotMatch(clientSource, /localStorage|sessionStorage|document\.cookie|eval\s*\(/, 'Home must not add storage, cookie or eval behaviour');
+
+const createFakeNode = () => {
+  const children = new Map();
+  return {
+    hidden: false,
+    dataset: {},
+    textContent: '',
+    className: '',
+    style: { setProperty() {} },
+    setAttribute() {},
+    removeAttribute(name) { if (name === 'hidden') this.hidden = false; },
+    toggleAttribute(name, force) { if (name === 'hidden') this.hidden = Boolean(force); },
+    closest() { return null; },
+    replaceChildren() {},
+    append() {},
+    addEventListener() {},
+    querySelector(selector) {
+      if (!children.has(selector)) children.set(selector, createFakeNode());
+      return children.get(selector);
+    },
+  };
+};
+
+const originalDocument = globalThis.document;
+const originalWindow = globalThis.window;
+const originalLocation = globalThis.location;
+const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+try {
+  const nodes = new Map();
+  const homeSection = createFakeNode();
+  homeSection.hidden = false;
+  nodes.set('[data-view="home"]', homeSection);
+  const listeners = new Map();
+  const onlineState = { onLine: true };
+  globalThis.document = {
+    querySelector(selector) {
+      if (!nodes.has(selector)) nodes.set(selector, createFakeNode());
+      return nodes.get(selector);
+    },
+    createElement() { return createFakeNode(); },
+  };
+  globalThis.window = { addEventListener(type, listener) { listeners.set(type, listener); } };
+  globalThis.location = { hash: '#home', hostname: 'validator.local' };
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: onlineState });
+
+  const pending = [];
+  const fetchEnvelope = (requestPath, { signal }) => new Promise((resolve) => pending.push({ requestPath, signal, resolve }));
+  const mounted = mountHomeLive({ fetchEnvelope, autoLoad: false });
+  assert.ok(mounted, 'Home + Live test mount must initialise');
+
+  const firstLoad = mounted.reload();
+  await Promise.resolve();
+  assert.equal(pending.length, 2, 'online refresh must start Home and Live requests');
+  const firstSignal = pending[0].signal;
+  assert.equal(firstSignal, pending[1].signal, 'one generation must share one abort signal');
+  assert.equal(firstSignal.aborted, false);
+
+  onlineState.onLine = false;
+  listeners.get('offline')?.();
+  await Promise.resolve();
+  assert.equal(firstSignal.aborted, true, 'offline transition must abort the prior online generation');
+  assert.equal(pending.length, 2, 'offline transition must not allocate a new request controller or fetch');
+  assert.equal(nodes.get('#homeState').dataset.state, 'offline');
+  assert.equal(nodes.get('#homeContent').hidden, true);
+
+  pending[0].resolve(homeReady);
+  pending[1].resolve(liveReady);
+  await firstLoad;
+  assert.equal(nodes.get('#homeState').dataset.state, 'offline', 'late pre-offline response must not overwrite Offline state');
+  assert.equal(nodes.get('#homeContent').hidden, true, 'late pre-offline response must not reveal stale content');
+
+  onlineState.onLine = true;
+  const recoveryLoad = mounted.reload();
+  await Promise.resolve();
+  assert.equal(pending.length, 4, 'online recovery must start a fresh Home and Live generation');
+  const recoverySignal = pending[2].signal;
+  assert.notEqual(recoverySignal, firstSignal, 'online recovery must use a fresh controller');
+  assert.equal(recoverySignal.aborted, false);
+  pending[2].resolve(homeReady);
+  pending[3].resolve(liveReady);
+  await recoveryLoad;
+  assert.equal(nodes.get('#homeState').dataset.state, 'complete', 'fresh online generation may render normally after recovery');
+  assert.equal(nodes.get('#homeContent').hidden, false);
+} finally {
+  if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
+  if (originalWindow === undefined) delete globalThis.window; else globalThis.window = originalWindow;
+  if (originalLocation === undefined) delete globalThis.location; else globalThis.location = originalLocation;
+  if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator); else delete globalThis.navigator;
+}
 
 assert.match(indexHtml, /Active sessions, not people/);
 assert.match(indexHtml, /Anonymous browser IDs, not people/);
@@ -152,4 +242,5 @@ assert.doesNotMatch(css, /(?:^|\n)\s*width:\s*(?:[4-9]\d{2,}|\d{4,})px\b/m, 'Hom
 
 console.log('✓ PGA Home + Live preserves real zero, missing-data truth and partial-source visibility');
 console.log('✓ Current and richer Live breakdown/trend contracts normalise deterministically');
+console.log('✓ Offline transition aborts and invalidates stale Home/Live requests before recovery');
 console.log('✓ Refresh cancellation, lazy active-view loading, fixture safety and no-raw-HTML guards pass');
