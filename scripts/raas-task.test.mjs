@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { compileTask } from './raas-task.mjs'
+
+const cliPath = fileURLToPath(new URL('./raas-task.mjs', import.meta.url))
 
 function routeIds(task) {
   return task.routes.map((route) => route.id)
+}
+
+function runCli(args, input) {
+  const result = spawnSync(process.execPath, [cliPath, ...args], {
+    encoding: 'utf8',
+    input
+  })
+  assert.equal(result.status, 0, result.stderr || `RAAS task CLI exited ${result.status}`)
+  return result.stdout
+}
+
+function runJsonCli(args, input) {
+  return JSON.parse(runCli(['--json', ...args], input))
 }
 
 {
@@ -52,6 +69,65 @@ function routeIds(task) {
   assert.equal(task.client_contract, '.raas/BOOTSTRAP.md')
   assert.ok(task.truth_sources.includes('AGENTS.md'))
   assert.ok(task.completion.some((item) => item.includes('claim is released')))
+}
+
+{
+  const task = runJsonCli([
+    '--text',
+    'Add a concise description to the Ochhav release.'
+  ])
+  assert.equal(task.tier, 'fast')
+  assert.equal(task.mode, 'metadata-content-change')
+  assert.equal(task.delivery_stop, 'local-change')
+  assert.equal(task.mutation_allowed, true)
+  assert.ok(Array.isArray(task.verification_frontier))
+  assert.equal(task.base_task.input, 'Add a concise description to the Ochhav release.')
+}
+
+{
+  const task = runJsonCli([
+    '--base',
+    '--text',
+    'Add a concise description to the Ochhav release.'
+  ])
+  assert.equal(task.input, 'Add a concise description to the Ochhav release.')
+  assert.ok(Array.isArray(task.routes))
+  assert.equal('tier' in task, false)
+  assert.equal('delivery_stop' in task, false)
+  assert.equal('verification_frontier' in task, false)
+}
+
+{
+  const task = runJsonCli([
+    '--text',
+    'Create a plan for improving the player controls, but do not implement it.'
+  ])
+  assert.equal(task.mode, 'plan')
+  assert.equal(task.delivery_stop, 'plan')
+  assert.equal(task.mutation_allowed, false)
+}
+
+{
+  const task = runJsonCli([
+    '--text',
+    'Fix everything across the player, Explore, PWA and catalogue.'
+  ])
+  assert.equal(task.needs_split, true)
+  assert.equal(task.mutation_allowed, true)
+  assert.ok(task.stop_conditions.some((item) => /split/i.test(item)))
+  assert.equal(task.base_task.needs_split, true)
+}
+
+{
+  const task = runJsonCli([], 'Add a concise description to the Ochhav release.')
+  assert.equal(task.tier, 'fast')
+  assert.equal(task.mode, 'metadata-content-change')
+}
+
+{
+  const help = runCli(['--help'])
+  assert.match(help, /adaptive CTO compiler by default/i)
+  assert.match(help, /--base/)
 }
 
 console.log('RAAS task compiler tests passed')

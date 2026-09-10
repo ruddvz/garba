@@ -6,7 +6,7 @@ on:
   issues:
     types: [closed, reopened]
   pull_request:
-    types: [opened, closed, reopened]
+    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -124,6 +124,8 @@ jobs:
                   if (active && sameOwner(active, event)) {
                     active = null;
                     conflicts = [];
+                  } else {
+                    conflicts = conflicts.filter(conflict => !sameOwner(conflict, event));
                   }
                   continue;
                 }
@@ -588,9 +590,14 @@ jobs:
                   body = `✅ **Claim accepted:** \`${event.agent}\` owns this lane on \`${event.branch}\`.`;
                 }
               } else if (event.type === 'release') {
-                body = beforeState.active && sameOwner(beforeState.active, event)
-                  ? `✅ **Release accepted:** \`${event.agent}\` / \`${event.branch}\` no longer owns this lane.`
-                  : '⚠️ **Release ignored:** it does not match the active agent and branch.';
+                const rejectedClaimant = beforeState.conflicts.some(conflict => sameOwner(conflict, event));
+                if (beforeState.active && sameOwner(beforeState.active, event)) {
+                  body = `✅ **Release accepted:** \`${event.agent}\` / \`${event.branch}\` no longer owns this lane.`;
+                } else if (rejectedClaimant) {
+                  body = `✅ **Conflict withdrawal accepted:** rejected claim for \`${event.agent}\` / \`${event.branch}\` is cleared; active ownership is unchanged.`;
+                } else {
+                  body = '⚠️ **Release ignored:** it matches neither the active owner nor a rejected claimant.';
+                }
               } else {
                 body = event.author === owner
                   ? '✅ **Owner override accepted:** the previous claim is cleared. A new agent may claim the lane.'
@@ -622,26 +629,36 @@ jobs:
               if (eventName === 'issue_comment') return true;
               if (eventName === 'workflow_dispatch') return true;
               if (eventName === 'issues') return ['closed', 'reopened'].includes(action);
-              if (eventName === 'pull_request') return ['opened', 'closed', 'reopened'].includes(action);
+              if (eventName === 'pull_request') return action === 'closed';
               return false;
             }
 
             function runSelfTests() {
               const claimA = syntheticComment(1, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: scope a\nfiles: file-a\n-->');
               const claimB = syntheticComment(2, '<!-- agent-claim\nagent: agent/b\nbranch: fix/b\nscope: scope b\nfiles: file-b\n-->');
-              const releaseA = syntheticComment(3, '<!-- agent-release\nagent: agent/a\nbranch: fix/a\n-->');
-              const updateA = syntheticComment(4, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: narrowed\nfiles: file-a; file-c\n-->');
-              const override = syntheticComment(5, '<!-- agent-claim-override\nreason: owner reassignment\n-->', owner);
-              const botStatus = syntheticComment(6, `${statusMarker}\n**Status:** Claimed`, 'github-actions', 'Bot');
+              const claimBRetry = syntheticComment(3, '<!-- agent-claim\nagent: agent/b\nbranch: fix/b\nscope: scope b retry\nfiles: file-b\n-->');
+              const claimC = syntheticComment(4, '<!-- agent-claim\nagent: agent/c\nbranch: fix/c\nscope: scope c\nfiles: file-c\n-->');
+              const releaseB = syntheticComment(5, '<!-- agent-release\nagent: agent/b\nbranch: fix/b\n-->');
+              const releaseC = syntheticComment(6, '<!-- agent-release\nagent: agent/c\nbranch: fix/c\n-->');
+              const releaseA = syntheticComment(7, '<!-- agent-release\nagent: agent/a\nbranch: fix/a\n-->');
+              const updateA = syntheticComment(8, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: narrowed\nfiles: file-a; file-c\n-->');
+              const override = syntheticComment(9, '<!-- agent-claim-override\nreason: owner reassignment\n-->', owner);
+              const botStatus = syntheticComment(10, `${statusMarker}\n**Status:** Claimed`, 'github-actions', 'Bot');
 
               let state = deriveState([claimA]);
               assert(state.active?.agent === 'agent/a', 'first valid claim wins');
               state = deriveState([claimA, claimB]);
               assert(state.active?.agent === 'agent/a' && state.conflicts.length === 1, 'later different owner conflicts');
+              state = deriveState([claimA, claimB, releaseB]);
+              assert(state.active?.agent === 'agent/a' && state.conflicts.length === 0, 'rejected claimant release clears only its conflict');
+              state = deriveState([claimA, claimB, releaseC]);
+              assert(state.active?.agent === 'agent/a' && state.conflicts.length === 1 && state.conflicts[0]?.agent === 'agent/b', 'unrelated release leaves the rejected conflict intact');
+              state = deriveState([claimA, claimB, claimBRetry, claimC, releaseB]);
+              assert(state.active?.agent === 'agent/a' && state.conflicts.length === 1 && state.conflicts[0]?.agent === 'agent/c', 'rejected claimant release removes all matching retries without disturbing distinct conflicts');
               state = deriveState([claimA, updateA]);
               assert(state.active?.scope === 'narrowed' && state.active.files === 'file-a; file-c', 'same-owner update remains valid');
               state = deriveState([claimA, claimB, releaseA]);
-              assert(!state.active && state.conflicts.length === 0, 'matching release clears ownership');
+              assert(!state.active && state.conflicts.length === 0, 'matching active-owner release clears ownership and conflicts');
               state = deriveState([claimA, override]);
               assert(!state.active, 'repository-owner override clears ownership');
               assert(parseEvent(botStatus) === null, 'bot status comments never become ownership events');
@@ -669,7 +686,7 @@ jobs:
               assert(runStartedAt && recoveryOverlapMs > 0, 'surviving runs use a bounded overlap window');
               assert(eventNeedsRecovery('issue_comment', 'created'), 'every surviving issue-comment run performs recovery, including bot/non-marker comments');
               assert(eventNeedsRecovery('issues', 'closed') && eventNeedsRecovery('issues', 'reopened'), 'issue lifecycle runs perform recovery');
-              assert(eventNeedsRecovery('pull_request', 'opened') && eventNeedsRecovery('pull_request', 'closed'), 'PR lifecycle runs perform recovery');
+              assert(!eventNeedsRecovery('pull_request', 'opened') && !eventNeedsRecovery('pull_request', 'reopened') && eventNeedsRecovery('pull_request', 'closed'), 'only PR close runs global recovery');
               assert(eventNeedsRecovery('workflow_dispatch', ''), 'manual runs perform recovery');
               assert(!eventNeedsRecovery('push', ''), 'unsupported events do not mutate registry state');
             }
@@ -724,7 +741,7 @@ jobs:
                 return;
               }
 
-              if (eventName === 'pull_request' && ['opened', 'closed', 'reopened'].includes(action)) {
+              if (eventName === 'pull_request' && action === 'closed') {
                 await reconcileUniverse(null, null);
                 return;
               }
