@@ -9,10 +9,12 @@ import {
   collectSessionSnapshot,
   compactSnapshot,
   evaluateSessionBudgets,
-  exerciseSessionCycle,
+  exerciseExploreRoundTrip,
+  exercisePlayerCycle,
   installSessionInstrumentation,
   makeNetworkState,
   parseSessionArgs,
+  resetSessionTransientMetrics,
   usageText,
 } from './session-stability-lib.mjs';
 
@@ -31,15 +33,23 @@ async function loadChromium() {
 function attachRuntimeFailureCapture(page, originValue, failures) {
   const onPageError = (error) => failures.push(`pageerror: ${error.message}`);
   const onConsole = (message) => {
-    if (message.type() === 'error') failures.push(`console: ${message.text()}`);
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    if (text.includes('ERR_INTERNET_DISCONNECTED')) return;
+    try {
+      const sourceUrl = message.location()?.url;
+      if (sourceUrl && new URL(sourceUrl).origin !== originValue) return;
+    } catch {
+      // Keep an unparseable same-document console error rather than hiding it.
+    }
+    failures.push(`console: ${text}`);
   };
   const onRequestFailed = (request) => {
     try {
       const url = new URL(request.url());
       if (url.origin !== originValue) return;
-      const failure = request.failure()?.errorText || '';
       if (url.searchParams.get('session-soak') === 'offline') return;
-      failures.push(`requestfailed: ${request.method()} ${url.pathname}${url.search} ${failure}`);
+      failures.push(`requestfailed: ${request.method()} ${url.pathname}${url.search} ${request.failure()?.errorText || ''}`);
     } catch {
       // Ignore malformed/non-URL request values.
     }
@@ -92,6 +102,36 @@ function uniqueFailures(failures) {
   return [...new Set(failures)];
 }
 
+function coverageFailures(boot, journeys, exploreJourneys) {
+  const failures = [];
+  if (!boot?.catalogueReady) {
+    failures.push({ code: 'catalogue-not-ready', message: 'Full catalogue did not become ready before the warm-session soak.' });
+  }
+  if (!journeys.some((journey) => journey.genres?.clicks > 0)) {
+    failures.push({ code: 'genre-coverage-missing', message: 'No genre switch completed during the player soak.' });
+  }
+  if (!journeys.some((journey) => journey.search?.status === 'exercised')) {
+    failures.push({ code: 'search-coverage-missing', message: 'Search was not exercised during the player soak.' });
+  }
+  if (!journeys.some((journey) => journey.queueAndFavourites?.queue === 'opened')) {
+    failures.push({ code: 'queue-coverage-missing', message: 'Queue was not opened during the player soak.' });
+  }
+  if (!journeys.some((journey) => journey.nonstop?.status === 'exercised')) {
+    failures.push({ code: 'nonstop-coverage-missing', message: 'Nonstop chooser was not exercised during the player soak.' });
+  }
+  if (!journeys.some((journey) => journey.atmosphere?.status === 'exercised')) {
+    failures.push({ code: 'atmosphere-coverage-missing', message: 'Garba Atmosphere was not exercised during the player soak.' });
+  }
+  const finalJourney = journeys.at(-1);
+  if (finalJourney?.offlineRecovery !== 'recovered') {
+    failures.push({ code: 'offline-recovery-missing', message: `Offline recovery result was ${finalJourney?.offlineRecovery || 'missing'}.` });
+  }
+  if (!exploreJourneys.length || exploreJourneys.some((journey) => !journey.entered || !journey.returnedToPlayer)) {
+    failures.push({ code: 'explore-roundtrip-failed', message: 'Explore did not complete a post-soak enter-and-return round trip.' });
+  }
+  return failures;
+}
+
 async function main() {
   const options = parseSessionArgs(process.argv.slice(2));
   if (options.help) {
@@ -105,6 +145,7 @@ async function main() {
   const browserVersion = browser.version();
   const runtimeFailures = [];
   const journeys = [];
+  const exploreJourneys = [];
   const snapshots = [];
 
   const context = await browser.newContext({
@@ -122,21 +163,28 @@ async function main() {
   const detachNetworkAccounting = attachNetworkAccounting(page, networkState);
   const detachRuntimeFailures = attachRuntimeFailureCapture(page, options.originValue, runtimeFailures);
 
-  let boot;
+  let boot = null;
   try {
     boot = await waitForPlayer(page, options.origin);
     await page.waitForTimeout(profile.settleMs);
     snapshots.push(await collectSessionSnapshot(page, cdp, 'baseline-warm', networkState));
+    await resetSessionTransientMetrics(page);
 
     for (let cycle = 0; cycle < options.cycles; cycle += 1) {
-      const journey = await exerciseSessionCycle(page, cdp, options, cycle);
-      journeys.push(journey);
+      journeys.push(await exercisePlayerCycle(page, cdp, options, cycle));
       await page.waitForTimeout(profile.settleMs);
       snapshots.push(await collectSessionSnapshot(page, cdp, `cycle-${cycle + 1}`, networkState));
     }
 
     await page.waitForTimeout(profile.postGcSettleMs);
-    snapshots.push(await collectSessionSnapshot(page, cdp, 'final-settled', networkState));
+    snapshots.push(await collectSessionSnapshot(page, cdp, 'final-player-settled', networkState));
+
+    // Navigation intentionally runs after the memory-growth budget phase. A full route
+    // navigation creates a new document and would otherwise reset the very listener,
+    // observer and object-URL state this soak is designed to measure.
+    for (let round = 0; round < profile.exploreRounds; round += 1) {
+      exploreJourneys.push(await exerciseExploreRoundTrip(page, options.origin, round));
+    }
   } finally {
     detachRuntimeFailures();
     detachNetworkAccounting();
@@ -146,12 +194,14 @@ async function main() {
   }
 
   const dedupedRuntimeFailures = uniqueFailures(runtimeFailures);
-  const budgetFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, DEFAULT_BUDGETS);
+  const growthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, DEFAULT_BUDGETS);
+  const journeyFailures = coverageFailures(boot, journeys, exploreJourneys);
+  const budgetFailures = [...growthFailures, ...journeyFailures];
   const baseline = snapshots[0] || null;
   const final = snapshots.at(-1) || null;
 
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
     target: options.origin,
@@ -165,16 +215,20 @@ async function main() {
     },
     measurementBoundary: {
       productionInstrumentationChanged: false,
-      harnessInstrumentation: 'addInitScript test-only counters plus Chromium CDP Memory/Performance metrics',
+      productionEquivalentFixtureRequired: true,
+      harnessInstrumentation: 'context.addInitScript test-only counters plus Chromium CDP Memory/Performance metrics',
+      budgetPhaseNavigation: 'none; one player document remains alive for every measured cycle',
+      exploreNavigation: 'exercised only after the final player snapshot and excluded from player memory-growth deltas',
       detachedDomNodesDirectlyMeasured: false,
-      detachedDomBoundary: 'Chromium CDP exposes aggregate document/node/listener counters here; detached-node claims require a heap-snapshot diagnostic and are not fabricated.',
+      detachedDomBoundary: 'Chromium aggregate document/node/listener counters are recorded; detached-node claims require a heap-snapshot diagnostic and are not fabricated.',
       browserWideTimerCountClaimed: false,
       browserWideListenerCountClaimed: false,
       playGarbaOwnedIntervalsInstrumented: true,
       playGarbaConstructedObserversInstrumented: true,
+      playGarbaConstructedAudioContextsInstrumented: true,
       objectUrlsInstrumented: true,
       longTasksObservedWhereSupported: true,
-      sameOriginNetworkAccounted: true,
+      sameOriginTransferBytes: 'Resource Timing transferSize, not Content-Length',
       serviceWorkers: 'allowed',
       providerPlaybackMayBeRequestedByJourney: true,
       thirdPartyTransferBytesIncluded: false,
@@ -192,6 +246,7 @@ async function main() {
     final: final ? compactSnapshot(final) : null,
     trend: snapshots.map(compactSnapshot),
     journeys,
+    exploreJourneys,
     snapshots,
   };
 
