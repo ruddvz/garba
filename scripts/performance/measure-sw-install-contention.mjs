@@ -25,13 +25,12 @@ async function loadChromium() {
   }
 }
 
-async function configureConstrainedProfile(page) {
+async function configureCpuProfile(page) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.enable');
   await cdp.send('Network.clearBrowserCache');
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: false });
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: CONSTRAINED_PROFILE.cpuThrottleRate });
-  await cdp.send('Network.emulateNetworkConditions', CONSTRAINED_PROFILE.network);
   return cdp;
 }
 
@@ -40,12 +39,12 @@ async function waitForPlayer(page) {
     const title = document.getElementById('songTitle');
     const play = document.getElementById('playButton');
     return Boolean(title?.textContent?.trim() && play?.getBoundingClientRect().width > 0);
-  }, null, { timeout: 20_000 });
+  }, null, { timeout: 30_000 });
   return page.evaluate(() => performance.now());
 }
 
 async function waitForCatalogue(page) {
-  await page.waitForFunction(() => window.GARBA_CATALOGUE_READY === true, null, { timeout: 45_000 });
+  await page.waitForFunction(() => window.GARBA_CATALOGUE_READY === true, null, { timeout: 60_000 });
   return page.evaluate(() => performance.now());
 }
 
@@ -55,7 +54,7 @@ async function collectServiceWorkerState(page, scenario) {
       if (!('serviceWorker' in navigator)) return;
       await Promise.race([
         navigator.serviceWorker.ready.catch(() => null),
-        new Promise((resolve) => setTimeout(resolve, 45_000)),
+        new Promise((resolve) => setTimeout(resolve, 60_000)),
       ]);
     });
   } else {
@@ -170,7 +169,7 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
     serviceWorkers: scenario === 'allowed' ? 'allow' : 'block',
   });
   const page = await context.newPage();
-  const cdp = await configureConstrainedProfile(page);
+  const cdp = await configureCpuProfile(page);
   const failures = [];
   const consoleErrors = [];
 
@@ -210,19 +209,19 @@ async function measureSample(browser, fixture, origin, scenario, pair, order, sw
   };
 
   try {
-    await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     try { playerReadyMs = await waitForPlayer(page); }
     catch (error) { failures.push(`player-ready: ${error.message}`); }
     try { catalogueReadyMs = await waitForCatalogue(page); }
     catch (error) { failures.push(`catalogue-ready: ${error.message}`); }
-    await page.waitForLoadState('load', { timeout: 15_000 }).catch(() => {});
+    await page.waitForLoadState('load', { timeout: 20_000 }).catch(() => {});
     serviceWorker = await collectServiceWorkerState(page, scenario);
-    await fixture.waitForIdle(10_000);
+    await fixture.waitForIdle(20_000);
     browserTiming = await collectBrowserTiming(page, playerReadyMs, catalogueReadyMs);
   } finally {
     await cdp.detach().catch(() => {});
     await context.close().catch(() => {});
-    await fixture.waitForIdle(5_000);
+    await fixture.waitForIdle(20_000);
   }
 
   const rawServer = fixture.endSample(sampleId);
@@ -270,8 +269,9 @@ async function main() {
 
   const chromium = await loadChromium();
   const swMetadata = await readServiceWorkerMetadata(options.root);
-  const fixture = await startFixtureServer(options.root, options.host, options.port);
+  const fixture = await startFixtureServer(options.root, options.host, options.port, CONSTRAINED_PROFILE.network);
   const browser = await chromium.launch({ headless: true });
+  const browserVersion = browser.version();
   const samples = [];
 
   try {
@@ -297,12 +297,12 @@ async function main() {
   if (blocked.length !== options.runs) validityFailures.push(`valid blocked samples ${blocked.length}/${options.runs}`);
 
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
     browser: {
       name: 'chromium',
-      version: browser.version(),
+      version: browserVersion,
       playwright: '1.55.0 expected',
     },
     fixture: {
@@ -311,12 +311,16 @@ async function main() {
       serviceWorkerCacheName: swMetadata.cacheName,
       coreShellEntryCount: swMetadata.coreShellEntryCount,
       serviceWorkerScript: '/sw.js',
+      networkEnforcement: fixture.networkEnforcement,
     },
     profile: CONSTRAINED_PROFILE,
     experiment: {
       pairs: options.runs,
       sampleCount: samples.length,
       order: samples.map((sample) => ({ sampleId: sample.sampleId, scenario: sample.scenario, pair: sample.pair, order: sample.order })),
+      browserCpuThrottleAppliedToPageTarget: true,
+      networkThrottleAppliedAtSharedOrigin: true,
+      networkThrottleAppliesToServiceWorkerRequests: true,
       providerPlaybackInitiated: false,
       blockedScenarioMeaning: 'upper-bound comparison against zero service-worker registration/install work; not the expected benefit of any specific production deferral',
       performanceBudgetApplied: false,
