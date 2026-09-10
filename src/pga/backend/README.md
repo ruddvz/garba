@@ -78,6 +78,8 @@ All admin routes require a valid Access JWT:
 
 Responses preserve `complete`, `partial` or `unavailable` state, freshness and sampled/precision metadata. Query failure is never converted to a numeric zero.
 
+`GET /api/live` uses the 120-second presence expiry from the architecture contract. It returns active, confirmed-listening and browsing session estimates plus a 30-minute minute-bucket trend and privacy-safe `surface` / `world` / `displayMode` breakdowns. Breakdown rows below three active sessions are suppressed. The summary, breakdown and trend queries are independent: a missing breakdown or trend produces a `partial` response with that field set to `null`, while a failed headline live query produces `503 unavailable` rather than a fabricated zero. Each source and metric preserves exact-versus-estimated sampling metadata and `dataThrough` reflects the freshest successful live source.
+
 Audience region values are suppressed below three measured sessions. Audience acquisition uses bounded UTM source/medium/campaign plus the already-sanitised referrer hostname fallback; no full referrer path or arbitrary query string is returned. Recent free-text search demand is returned only after the query reaches at least three accepted searches; obvious email-, phone- and URL-like input is discarded at ingestion.
 
 Listening keeps `play_intent` separate from provider-confirmed `playback_started`, carries the product surface (`player`, `explore`, `nonstop`) through the aggregate, and resolves content names only from canonical catalogue truth. Nonstop remains a `nonstop_set` content type, never a genre.
@@ -92,6 +94,7 @@ node --check src/pga/backend/admin-worker.js
 node --check src/pga/backend/rollup-worker.js
 node --test src/pga/backend/tests/backend.test.mjs
 node --test src/pga/backend/tests/catalogue.test.mjs
+node --test src/pga/backend/tests/live-api.test.mjs
 node scripts/lib/validate-pga-analytics.mjs
 ```
 
