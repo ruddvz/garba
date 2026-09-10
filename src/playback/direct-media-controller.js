@@ -324,11 +324,15 @@
     }
 
     function buildMediaSessionPolicy() {
-      if (!resolution || !identity) return null;
+      if (!resolution || !identity || !state.songId || !Number.isSafeInteger(state.generation)) return null;
       return mediaSessionPolicyApi.buildMediaSessionPolicy({
         resolution,
         identity,
-        playback: { state: projectedPlaybackState() },
+        playback: {
+          state: projectedPlaybackState(),
+          songId: state.songId,
+          generation: state.generation,
+        },
         capabilities,
         position: mediaPosition(),
         environment: { foreground },
@@ -481,7 +485,7 @@
     }
 
     function syncMediaSessionThroughPlanner() {
-      return planAndExecute({ type: 'sync-source' });
+      return planAndExecute({ type: 'sync-source', songId: state.songId, generation: state.generation });
     }
 
     function mediaEventPayload(type) {
@@ -545,7 +549,7 @@
       lastLifecycleDecision = null;
       foreground = true;
 
-      const execution = planAndExecute({ type: 'sync-source' });
+      const execution = planAndExecute({ type: 'sync-source', songId: state.songId, generation: state.generation });
       if (!execution.ok || !execution.accepted) {
         state = authorityStateApi.reduceDirectMediaAuthorityState(state, {
           type: 'unavailable',
@@ -553,7 +557,7 @@
           songId: state.songId,
           reason: 'media-source-assignment-failed',
         });
-        planAndExecute({ type: 'clear' }, { lifecycleDecision: null, mediaSessionPolicy: null });
+        planAndExecute({ type: 'clear', songId: state.songId, generation: state.generation }, { lifecycleDecision: null, mediaSessionPolicy: null });
         notify('source-assignment-failed');
         return false;
       }
