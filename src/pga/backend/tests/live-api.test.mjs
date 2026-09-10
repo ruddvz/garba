@@ -10,6 +10,29 @@ import { resetJwksCacheForTests } from '../lib/crypto.js'
 const NOW = Date.parse('2026-09-10T06:30:00Z')
 const MINUTE_BUCKET = Math.floor(NOW / 60_000) * 60
 
+const DEFAULT_BREAKDOWN_ROWS = [
+  {
+    surface: 'player',
+    world: 'traditional',
+    display_mode: 'standalone',
+    sessions: 5,
+    listening_sessions: 4,
+    browsing_sessions: 1,
+    data_through_ms: NOW - 1_000,
+    max_sample_interval: 1,
+  },
+  {
+    surface: 'explore',
+    world: 'folk',
+    display_mode: 'browser',
+    sessions: 2,
+    listening_sessions: 1,
+    browsing_sessions: 1,
+    data_through_ms: NOW - 2_000,
+    max_sample_interval: 1,
+  },
+]
+
 function base64url(value) {
   return Buffer.from(value).toString('base64url')
 }
@@ -47,32 +70,11 @@ async function accessFixture(path = '/api/live') {
   }
 }
 
-function queryFixture({ fail = null } = {}) {
+function queryFixture({ fail = null, breakdownRows = null } = {}) {
   return async (_env, sql) => {
     if (sql.includes('GROUP BY surface, world, display_mode')) {
       if (fail === 'breakdown') throw new Error('breakdown_failed')
-      return [
-        {
-          surface: 'player',
-          world: 'traditional',
-          display_mode: 'standalone',
-          sessions: 5,
-          listening_sessions: 4,
-          browsing_sessions: 1,
-          data_through_ms: NOW - 1_000,
-          max_sample_interval: 1,
-        },
-        {
-          surface: 'explore',
-          world: 'folk',
-          display_mode: 'browser',
-          sessions: 2,
-          listening_sessions: 1,
-          browsing_sessions: 1,
-          data_through_ms: NOW - 2_000,
-          max_sample_interval: 1,
-        },
-      ]
+      return breakdownRows ?? DEFAULT_BREAKDOWN_ROWS
     }
 
     if (sql.includes('GROUP BY minute_bucket')) {
@@ -140,6 +142,64 @@ test('protected Live API exposes truthful totals, privacy-safe breakdowns and bo
     { name: 'analytics-engine-live-breakdown', status: 'complete', sampled: false },
     { name: 'analytics-engine-live-trend', status: 'complete', sampled: true },
   ])
+})
+
+test('Live API privacy threshold uses a conservative observed-session floor under sampling', async () => {
+  const fixture = await accessFixture()
+  const breakdownRows = [
+    {
+      surface: 'sampled-one', world: 'traditional', display_mode: 'standalone',
+      sessions: 4, listening_sessions: 4, browsing_sessions: 0,
+      data_through_ms: NOW - 1_000, max_sample_interval: 4,
+    },
+    {
+      surface: 'sampled-two', world: 'folk', display_mode: 'browser',
+      sessions: 8, listening_sessions: 4, browsing_sessions: 4,
+      data_through_ms: NOW - 1_000, max_sample_interval: 4,
+    },
+    {
+      surface: 'sampled-three', world: 'dandiya', display_mode: 'standalone',
+      sessions: 9, listening_sessions: 5, browsing_sessions: 4,
+      data_through_ms: NOW - 1_000, max_sample_interval: 4,
+    },
+    {
+      surface: 'unsampled-two', world: 'sanedo', display_mode: 'browser',
+      sessions: 2, listening_sessions: 1, browsing_sessions: 1,
+      data_through_ms: NOW - 1_000, max_sample_interval: 1,
+    },
+    {
+      surface: 'unsampled-three', world: 'fusion', display_mode: 'browser',
+      sessions: 3, listening_sessions: 2, browsing_sessions: 1,
+      data_through_ms: NOW - 1_000, max_sample_interval: 1,
+    },
+    {
+      surface: 'missing-sampling-metadata', world: 'devotional', display_mode: 'browser',
+      sessions: 50, listening_sessions: 25, browsing_sessions: 25,
+      data_through_ms: NOW - 1_000,
+    },
+  ]
+
+  const response = await handleAdmin(fixture.request, fixture.env, {
+    nowMs: NOW,
+    fetchImpl: fixture.fetchImpl,
+    queryAnalytics: queryFixture({ breakdownRows }),
+  })
+
+  assert.equal(response.status, 200)
+  const body = await response.json()
+  assert.deepEqual(body.data.breakdowns.map((row) => row.surface), ['sampled-three', 'unsampled-three'])
+  assert.deepEqual(body.data.breakdowns[0], {
+    surface: 'sampled-three',
+    world: 'dandiya',
+    displayMode: 'standalone',
+    sessions: { value: 9, precision: 'estimated', sampled: true },
+    listeningSessions: { value: 5, precision: 'estimated', sampled: true },
+    browsingSessions: { value: 4, precision: 'estimated', sampled: true },
+  })
+  assert.deepEqual(Object.keys(body.data.breakdowns[1]).sort(), [
+    'browsingSessions', 'displayMode', 'listeningSessions', 'sessions', 'surface', 'world',
+  ])
+  assert.equal(JSON.stringify(body.data.breakdowns).includes('session_key'), false)
 })
 
 test('Live API preserves valid headline data and reports partial when the trend source fails', async () => {

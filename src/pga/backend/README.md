@@ -8,7 +8,7 @@ The canonical metric, privacy and retention contract is `../ARCHITECTURE.md`.
 | Worker | Exposure | Job |
 | --- | --- | --- |
 | `ingest-worker.js` | Public at the future `events.playgarba.com` host | Validate and pseudonymise bounded first-party events, then write product events and presence into separate Analytics Engine datasets |
-| `admin-worker.js` | Private behind Cloudflare Access at the future PGA host | Verify the Access JWT and return aggregate Home, Live, Audience, Listening and backend-health data only |
+| `admin-worker.js` | Private behind Cloudflare Access at the future PGA host | Verify the Access JWT and return aggregate Home, Live, Audience, Listening and bounded canonical Health presentation data only |
 | `rollup-worker.js` | Scheduled only, no public route | Rebuild the seven most recent closed IST days and replace durable D1 daily aggregates idempotently |
 
 PGA intentionally has no raw-event endpoint, listener/session explorer, arbitrary SQL endpoint or stored IP analytics.
@@ -55,6 +55,21 @@ Cloudflare Access must protect the PGA application/hostname, and `admin-worker.j
 
 Listening analytics resolve canonical song/release/Nonstop labels from the public generated PlayGarba catalogue. `PUBLIC_ORIGIN` may override the default `https://playgarba.com` catalogue origin for deployment/testing. Historical or renamed IDs that are no longer present in generated catalogue files can be mapped explicitly with `CATALOGUE_ID_ALIASES_JSON`, shaped as `{"song":{"old-id":"current-id"},"release":{"old-id":"current-id"}}`. Invalid or unavailable identity data never changes measured event counts: the API returns the count with an unresolved canonical ID and downgrades the Listening envelope to `partial` when the catalogue source itself is unavailable.
 
+#### Health configuration
+
+`GET /api/health` reuses the canonical server-side Health collector and presentation contracts under `../health/`. The browser receives only the bounded `pga-health-presentation/v1` object at `data.presentation`; the raw Health snapshot, GitHub response bodies, tokens and arbitrary infrastructure errors are not returned.
+
+Optional Health configuration is explicit and fail-closed:
+
+- `PGA_EXPECTED_REVISION`: expected full 40-character production revision. If absent or invalid, deployment comparison remains unknown rather than guessed.
+- `PGA_GITHUB_REPOSITORY`: repository used for required-check evidence; defaults to `ruddvz/garba` and is validated by the collector.
+- `PGA_GITHUB_TOKEN`: optional server-only GitHub token used only in the outbound check-runs request. It is never copied into Health output.
+- `PGA_HEALTH_REQUIRED_CHECKS_JSON`: JSON array of required GitHub check names. There is deliberately no invented default required-check list; absent/invalid configuration keeps CI evidence unresolved.
+- `PGA_HEALTH_FRESHNESS_BUDGETS_JSON`: optional JSON object of per-subsystem freshness budgets in milliseconds, for example `{"production":60000,"ci":3600000,"rollups":86400000}`.
+- `PGA_HEALTH_TIMEOUT_MS`: optional collector timeout. The collector bounds it to its documented maximum.
+
+The Health collector directly acquires canonical production reachability, `build-info.json`, and configured GitHub check-runs. The protected route additionally supplies D1 rollup evidence. A missing D1 binding is presented as unknown; a configured D1 query failure is supplied as failed rollup evidence. Playback, catalogue, telemetry and installed-PWA health stay unknown until their bounded canonical observations are supplied—missing evidence is never converted to healthy.
+
 ### Rollup Worker
 
 Required bindings/secrets:
@@ -76,9 +91,11 @@ All admin routes require a valid Access JWT:
 - `GET /api/listening?range=24h|7d|30d|90d`
 - `GET /api/health`
 
-Responses preserve `complete`, `partial` or `unavailable` state, freshness and sampled/precision metadata. Query failure is never converted to a numeric zero.
+Responses preserve `complete`, `partial` or `unavailable` transport state, freshness and sampled/precision metadata where applicable. Query failure is never converted to a numeric zero.
 
 `GET /api/live` uses the 120-second presence expiry from the architecture contract. It returns active, confirmed-listening and browsing session estimates plus a 30-minute minute-bucket trend and privacy-safe `surface` / `world` / `displayMode` breakdowns. Breakdown rows below three active sessions are suppressed. The summary, breakdown and trend queries are independent: a missing breakdown or trend produces a `partial` response with that field set to `null`, while a failed headline live query produces `503 unavailable` rather than a fabricated zero. Each source and metric preserves exact-versus-estimated sampling metadata and `dataThrough` reflects the freshest successful live source.
+
+`GET /api/health` separates endpoint availability from system-health severity. A successful collector returns HTTP 200 with `data.presentation`; the presentation itself carries `healthy`, `degraded`, `stale`, `unknown` or `failed`. The envelope is `partial` when the protected D1 rollup source is unavailable or the presentation is structurally incomplete. A collector/presentation failure returns `503 unavailable` and never falls back to a misleading rollup-only green response. Server-side Access verification and `no-store` security headers apply before and after Health collection exactly as they do to the other private routes.
 
 Audience region values are suppressed below three measured sessions. Audience acquisition uses bounded UTM source/medium/campaign plus the already-sanitised referrer hostname fallback; no full referrer path or arbitrary query string is returned. Recent free-text search demand is returned only after the query reaches at least three accepted searches; obvious email-, phone- and URL-like input is discarded at ingestion.
 
@@ -95,10 +112,11 @@ node --check src/pga/backend/rollup-worker.js
 node --test src/pga/backend/tests/backend.test.mjs
 node --test src/pga/backend/tests/catalogue.test.mjs
 node --test src/pga/backend/tests/live-api.test.mjs
+node --test src/pga/backend/tests/health-route.test.mjs
 node scripts/lib/validate-pga-analytics.mjs
 ```
 
-The dedicated GitHub Actions workflows run the same backend and PGA analytics checks. The repository-wide `npm run check` remains the final integration gate.
+The dedicated Health-route workflow also re-runs the canonical Health collector, adapters, snapshot and presentation tests so route changes cannot silently diverge from the Health truth model. The repository-wide `npm run check` remains the final integration gate.
 
 ## Deployment evidence
 

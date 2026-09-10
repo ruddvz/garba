@@ -18,12 +18,15 @@ import { getDailySeries, getLifetimeMetrics, getRollupHealth } from './lib/d1.js
 import { json, withSecurityHeaders } from './lib/http.js'
 import { searchDemandSql, searchFunnelSql } from './lib/search-analytics.js'
 import { istDateKey, istDayBounds } from './lib/time.js'
+import { collectHealthSnapshot } from '../health/collector.js'
+import { buildHealthPresentation } from '../health/presentation.js'
 
 const EVENTS_DATASET = 'playgarba_events_v1'
 const PRESENCE_DATASET = 'playgarba_presence_v1'
 const PRIVACY_MIN = 3
 const LIVE_EXPIRY_SECONDS = 120
 const LIVE_TREND_MINUTES = 30
+const PGA_HEALTH_URL = 'https://pga.playgarba.com/api/health'
 
 function numberOrZero(value) {
   const number = Number(value)
@@ -58,6 +61,26 @@ function envelope({ status, data, sources, dataThroughMs = null, window = null, 
   }, { status: statusCode })
 }
 
+function jsonArrayOrEmpty(value) {
+  if (value == null || value === '') return []
+  try {
+    const parsed = JSON.parse(String(value))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function jsonObjectOrEmpty(value) {
+  if (value == null || value === '') return {}
+  try {
+    const parsed = JSON.parse(String(value))
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
 async function analyticsQuery(env, sql, options) {
   return (options.queryAnalytics || queryAnalytics)(env, sql, options.fetchImpl)
 }
@@ -68,6 +91,13 @@ function maxDataThrough(rowGroups) {
     for (const row of rows || []) max = Math.max(max, numberOrZero(row.data_through_ms))
   }
   return max || null
+}
+
+function minimumObservedSessions(row) {
+  const sessions = numberOrZero(row.sessions)
+  const maxSampleInterval = Number(row.max_sample_interval)
+  if (!Number.isFinite(maxSampleInterval) || maxSampleInterval < 1) return 0
+  return Math.ceil(sessions / maxSampleInterval)
 }
 
 function liveBreakdownRows(rows, precision) {
@@ -82,7 +112,7 @@ function liveBreakdownRows(rows, precision) {
       sessions: metric(sessions, precision),
       listeningSessions: metric(listeningSessions, precision),
       browsingSessions: metric(browsingSessions, precision),
-      visible: sessions >= PRIVACY_MIN,
+      visible: minimumObservedSessions(row) >= PRIVACY_MIN,
     }
   }).filter((row) => row.visible).map(({ visible: _visible, ...row }) => row)
 }
@@ -325,19 +355,82 @@ async function listening(env, request, options = {}) {
   }
 }
 
-async function health(env) {
-  if (!env.DB) return envelope({ status: 'unavailable', statusCode: 503, data: null, sources: [source('d1-rollups', false)] })
+function rollupPayload(runs, nowMs) {
+  const latest = runs[0] || null
+  return {
+    status: latest?.status === 'complete' ? 'complete' : 'partial',
+    generatedAt: new Date(nowMs).toISOString(),
+    dataThrough: dateOrNull(latest?.data_through_ms),
+    sources: [source('d1-rollups', true)],
+    data: { rollups: runs },
+  }
+}
+
+function failedRollupPayload(nowMs) {
+  return {
+    status: 'unavailable',
+    generatedAt: new Date(nowMs).toISOString(),
+    dataThrough: null,
+    sources: [source('d1-rollups', false)],
+    data: null,
+  }
+}
+
+async function health(env, options = {}) {
+  const nowMs = options.nowMs ?? Date.now()
+  const rollupReader = options.getRollupHealth || getRollupHealth
+  let rollupOk = false
+  let rollupObservation = {
+    payload: null,
+    checkedAt: nowMs,
+    sourceUrl: PGA_HEALTH_URL,
+  }
+
+  if (env.DB) {
+    try {
+      const runs = await rollupReader(env.DB)
+      rollupOk = true
+      rollupObservation = {
+        payload: rollupPayload(runs, nowMs),
+        checkedAt: nowMs,
+        sourceUrl: PGA_HEALTH_URL,
+      }
+    } catch {
+      rollupObservation = {
+        payload: failedRollupPayload(nowMs),
+        checkedAt: nowMs,
+        sourceUrl: PGA_HEALTH_URL,
+      }
+    }
+  }
+
+  const collector = options.collectHealthSnapshot || collectHealthSnapshot
+  const presenter = options.buildHealthPresentation || buildHealthPresentation
   try {
-    const runs = await getRollupHealth(env.DB)
-    const latest = runs[0] || null
+    const snapshot = await collector({
+      fetchImpl: options.healthFetchImpl || globalThis.fetch,
+      nowMs,
+      timeoutMs: env.PGA_HEALTH_TIMEOUT_MS,
+      expectedRevision: env.PGA_EXPECTED_REVISION,
+      githubRepository: env.PGA_GITHUB_REPOSITORY || 'ruddvz/garba',
+      githubToken: env.PGA_GITHUB_TOKEN,
+      requiredChecks: jsonArrayOrEmpty(env.PGA_HEALTH_REQUIRED_CHECKS_JSON),
+      freshnessBudgets: jsonObjectOrEmpty(env.PGA_HEALTH_FRESHNESS_BUDGETS_JSON),
+      observations: { rollups: rollupObservation },
+    })
+    const presentation = presenter(snapshot, { nowMs })
     return envelope({
-      status: latest?.status === 'complete' ? 'complete' : 'partial',
-      dataThroughMs: latest?.data_through_ms,
-      sources: [source('d1-rollups', true)],
-      data: { rollups: runs },
+      status: presentation?.complete === true && rollupOk ? 'complete' : 'partial',
+      data: { presentation },
+      sources: [source('health-collector', true), source('d1-rollups', rollupOk)],
     })
   } catch {
-    return envelope({ status: 'unavailable', statusCode: 503, data: null, sources: [source('d1-rollups', false)] })
+    return envelope({
+      status: 'unavailable',
+      statusCode: 503,
+      data: null,
+      sources: [source('health-collector', false), source('d1-rollups', rollupOk)],
+    })
   }
 }
 
@@ -353,7 +446,7 @@ export async function handleAdmin(request, env, options = {}) {
     else if (path === '/api/live') response = await live(env, options)
     else if (path === '/api/audience') response = await audience(env, request, options)
     else if (path === '/api/listening') response = await listening(env, request, options)
-    else if (path === '/api/health') response = await health(env)
+    else if (path === '/api/health') response = await health(env, options)
     else response = json({ error: 'not_found' }, { status: 404 })
   } catch (error) {
     console.error('pga_admin_query_failed', { reason: error instanceof Error ? error.message : 'unknown' })
