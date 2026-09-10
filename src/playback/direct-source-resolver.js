@@ -157,6 +157,20 @@
     return '';
   }
 
+  function youtubeSourceUrl(song, videoId) {
+    const raw = String(song && song.playbackSourceUrl || '').trim();
+    if (raw) {
+      try {
+        const parsed = new URL(raw);
+        const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+        if (host === 'youtu.be' || host === 'youtube.com' || host.endsWith('.youtube.com')) return parsed.href;
+      } catch {
+        // Fall through to the canonical visible YouTube URL.
+      }
+    }
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  }
+
   function isExecutableYoutube(song) {
     if (!isPlainObject(song)) return false;
     if (song.playbackSearchOnly === true) return false;
@@ -210,7 +224,7 @@
       media: null,
       provenance: {
         sourceType: String(song.playbackSourceType || 'youtube').trim() || 'youtube',
-        sourceUrl: String(song.playbackSourceUrl || `https://www.youtube.com/watch?v=${videoId}`).trim(),
+        sourceUrl: youtubeSourceUrl(song, videoId),
         videoId,
         startSeconds: Number.isFinite(startSeconds) && startSeconds >= 0 ? startSeconds : 0,
       },
