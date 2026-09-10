@@ -127,6 +127,15 @@ function uniqueFailures(failures) {
   return [...new Set(failures)];
 }
 
+async function settleReturnedPlayer(page) {
+  // Explore's explicit route changes can otherwise tear down the just-returned player
+  // while its normal post-load catalogue/idle work is still in flight. Let that work
+  // finish instead of teaching the error collector to ignore active-document aborts.
+  await page.waitForFunction(() => window.GARBA_CATALOGUE_READY === true, null, { timeout: 10_000 }).catch(() => {});
+  await page.waitForTimeout(250);
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+}
+
 async function retryExploreDetailCoverage(page, origin, journey) {
   if (!journey?.entered || (journey.detailOpened && journey.detailClosed)) return journey;
   const exploreUrl = new URL('./explore/', origin).href;
@@ -137,6 +146,7 @@ async function retryExploreDetailCoverage(page, origin, journey) {
     detailClosed: false,
   };
 
+  await settleReturnedPlayer(page);
   const response = await page.goto(exploreUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch(() => null);
   retry.entered = Boolean(response) && await page.locator('#catalogueTitle').isVisible().catch(() => false);
   if (retry.entered) {
@@ -175,6 +185,7 @@ async function retryExploreDetailCoverage(page, origin, journey) {
   const returned = await page.waitForFunction(() => Boolean(document.getElementById('playButton')), null, { timeout: 10_000 })
     .then(() => true)
     .catch(() => false);
+  if (returned) await settleReturnedPlayer(page);
 
   return {
     ...journey,
@@ -316,7 +327,7 @@ async function main() {
       objectUrlsInstrumented: true,
       longTasksObservedWhereSupported: true,
       sameOriginTransferBytes: 'Resource Timing transferSize, not Content-Length',
-      requestAborts: 'same-origin net::ERR_ABORTED is non-blocking only when request generation proves a superseded or detached document; active-document aborts remain hard failures',
+      requestAborts: 'same-origin net::ERR_ABORTED is non-blocking only when request generation proves a superseded or detached document; active-document aborts remain hard failures; deliberate post-Explore return settles normal player work before the next route/teardown',
       serviceWorkers: 'allowed',
       providerPlaybackMayBeRequestedByJourney: true,
       thirdPartyTransferBytesIncluded: false,
