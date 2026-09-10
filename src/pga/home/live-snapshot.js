@@ -10,8 +10,7 @@ const BLOCKING_HOME_STATES = new Set(['auth-expired', 'offline'])
 const LIVE_METRIC_NAMES = Object.freeze(['liveNow', 'listeningNow', 'browsingNow'])
 
 function finiteNonNegative(value) {
-  const number = Number(value)
-  return Number.isFinite(number) && number >= 0 ? number : null
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
 }
 
 function liveMetricEvidence(presence, name) {
