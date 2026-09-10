@@ -1,5 +1,6 @@
 name: PGA rollup numeric truth validate
 
+# Protect durable founder-facing rollups from implicit JavaScript numeric coercion.
 on:
   pull_request:
     paths:
