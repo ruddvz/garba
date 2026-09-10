@@ -500,8 +500,8 @@
       if (finiteNumber(currentTime)) payload.currentTime = currentTime;
       if (type === 'error') {
         const mediaError = mediaElement.error;
-        const code = isPlainObject(mediaError) && mediaElement.error.code !== undefined
-          ? `media-error-${String(mediaElement.error.code)}`
+        const code = isPlainObject(mediaError) && mediaError.code !== undefined
+          ? `media-error-${String(mediaError.code)}`
           : 'media-error';
         payload.code = code;
       }
