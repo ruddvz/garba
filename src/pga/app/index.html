@@ -15,6 +15,7 @@
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./app.css">
+  <link rel="stylesheet" href="./home-live.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -55,20 +56,56 @@
 
       <main id="main" tabindex="-1">
         <section class="view is-active" data-view="home" aria-labelledby="title-home">
-          <div class="view-heading">
+          <div class="view-heading home-heading">
             <div><p class="eyebrow">Today · IST</p><h1 id="title-home" tabindex="-1">Home</h1></div>
-            <p class="freshness" id="homeFreshness">Protected data not connected</p>
+            <p class="freshness" id="homeFreshness">Refreshing protected aggregates</p>
           </div>
-          <div class="metric-ledger" aria-label="Home metrics">
-            <article><span>Live now</span><strong aria-label="Unavailable">—</strong><small>Active sessions</small></article>
-            <article><span>Listening now</span><strong aria-label="Unavailable">—</strong><small>Confirmed playback</small></article>
-            <article><span>Unique browsers today</span><strong aria-label="Unavailable">—</strong><small>Not people</small></article>
-            <article><span>Sessions today</span><strong aria-label="Unavailable">—</strong><small>IST reporting window</small></article>
+          <div class="view-state home-view-state" id="homeState" role="status" aria-live="polite" data-state="loading">
+            <strong>Loading protected data</strong><p>PGA is fetching Home and Live aggregates without showing placeholder zeros.</p>
           </div>
-          <section class="section-block" aria-labelledby="home-attention">
-            <div class="section-heading"><h2 id="home-attention">Attention</h2><span>Current operational state</span></div>
-            <div class="empty-state"><strong>No data yet</strong><p>Protected analytics will appear here after the PGA data service is connected.</p></div>
-          </section>
+          <div id="homeContent" hidden>
+            <div class="metric-ledger home-primary-ledger" aria-label="Current and today summary">
+              <article><span>Live now</span><strong id="homeLiveNow" aria-label="Live now unavailable">—</strong><small>Active sessions, not people</small></article>
+              <article><span>Listening now</span><strong id="homeListeningNow" aria-label="Listening now unavailable">—</strong><small>Sessions with confirmed playback</small></article>
+              <article><span>Unique browsers today</span><strong id="homeUniqueToday" aria-label="Unique browsers today unavailable">—</strong><small>Anonymous browser IDs, not people</small></article>
+              <article><span>Sessions today</span><strong id="homeSessionsToday" aria-label="Sessions today unavailable">—</strong><small>Current IST calendar day</small></article>
+            </div>
+
+            <section class="home-section" aria-labelledby="home-today-title">
+              <div class="section-heading"><h2 id="home-today-title">Today</h2><span>Measured activity</span></div>
+              <div class="home-secondary-ledger">
+                <article><span>Browsing now</span><strong id="homeBrowsingNow" aria-label="Browsing now unavailable">—</strong><small>Live sessions without confirmed playback</small></article>
+                <article><span>Confirmed play starts</span><strong id="homeStartsToday" aria-label="Confirmed play starts today unavailable">—</strong><small>Provider/runtime confirmed</small></article>
+                <article><span>Listening time</span><strong id="homeListeningToday" aria-label="Listening time today unavailable">—</strong><small>Heartbeat-derived, deduplicated</small></article>
+              </div>
+              <p class="home-source-note" id="homeLiveMeta">Live freshness metadata is unavailable.</p>
+            </section>
+
+            <section class="home-section" id="homeLiveTrendSection" aria-labelledby="home-live-trend-title" hidden>
+              <div class="section-heading"><h2 id="home-live-trend-title">Live activity</h2><span>Recent protected trend</span></div>
+              <p class="home-source-note home-live-trend-summary" id="homeLiveTrendSummary"></p>
+            </section>
+
+            <section class="home-section" id="homeTrendSection" aria-labelledby="home-trend-title" hidden>
+              <div class="section-heading"><h2 id="home-trend-title">Recent sessions</h2><span>Last 7 daily points</span></div>
+              <ol class="home-trend" id="homeTrend"></ol>
+              <p class="home-source-note" id="homeTrendSummary"></p>
+            </section>
+
+            <section class="home-section" id="homeLiveDetails" aria-labelledby="home-live-detail-title" hidden>
+              <div class="section-heading"><h2 id="home-live-detail-title">Live context</h2><span>Privacy-safe active sessions</span></div>
+              <div class="home-detail-grid">
+                <div id="homeLiveSurfacePanel"><h3>Surface</h3><ul class="home-simple-list" id="homeLiveSurfaces"></ul></div>
+                <div id="homeLiveWorldPanel"><h3>Presentation world</h3><ul class="home-simple-list" id="homeLiveWorlds"></ul></div>
+                <div id="homeLiveModePanel"><h3>App surface</h3><ul class="home-simple-list" id="homeLiveModes"></ul></div>
+              </div>
+            </section>
+
+            <section class="home-section" id="homeLifetimeSection" aria-labelledby="home-lifetime-title" hidden>
+              <div class="section-heading"><h2 id="home-lifetime-title">All measured time</h2><span>Available rollups only</span></div>
+              <div class="home-lifetime" id="homeLifetime"></div>
+            </section>
+          </div>
         </section>
 
         <section class="view analytics-view" data-view="audience" aria-labelledby="title-audience" hidden>
@@ -172,5 +209,6 @@
   </div>
   <div class="sr-only" id="announcer" aria-live="polite"></div>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./home-live.js"></script>
 </body>
 </html>
