@@ -14,8 +14,11 @@ permissions:
   issues: write
   pull-requests: read
 
+# Non-closed PR checks are read-only and use a PR-specific pending slot, so
+# unrelated PRs cannot replace one another. All mutating reconciliation
+# stays in the single `global` slot.
 concurrency:
-  group: agent-branch-claim-uniqueness
+  group: agent-branch-claim-uniqueness-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}
   cancel-in-progress: false
 
 jobs:

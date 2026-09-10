@@ -16,8 +16,11 @@ permissions:
   issues: write
   pull-requests: read
 
+# Non-closed PR checks are read-only and use a PR-specific pending slot, so
+# unrelated PRs cannot replace one another. All mutating reconciliation
+# stays in the single `global` slot.
 concurrency:
-  group: agent-claim-hygiene
+  group: agent-claim-hygiene-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}
   cancel-in-progress: false
 
 jobs:
@@ -579,6 +582,19 @@ jobs:
             }
 
             runSelfTests();
+
+            // Non-closed PR runs are terminal read-only checks with their own
+            // per-PR pending slot. Global labels/status/#364 maintenance remains
+            // serialized on claim/release/close/schedule/manual events.
+            if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {
+              const pr = context.payload.pull_request;
+              core.summary
+                .addHeading('Agent claim hygiene')
+                .addRaw(`PR #${pr.number} completed its PR-scoped coordination check. Repository-wide stale no-PR claim maintenance remains serialized in the global lane.`)
+                .write();
+              return;
+            }
+
             await ensureReviewLabel();
 
             const extraIssueNumbers = [];
