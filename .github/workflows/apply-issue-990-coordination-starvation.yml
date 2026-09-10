@@ -45,7 +45,7 @@ jobs:
                   "# unrelated PRs cannot replace one another. All mutating reconciliation\n"
                   "# stays in the single `global` slot.\n"
                   "concurrency:\n"
-                  f"  group: {group}-${{{{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}}}\n"
+                  "  group: " + group + "-" + "$" + "{{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}\n"
                   "  cancel-in-progress: false"
               )
               if text.count(old) != 1:
@@ -119,7 +119,7 @@ jobs:
 
           for (const [path, prefix] of mixed) {
             const source = fs.readFileSync(path, 'utf8');
-            const expectedGroup = "group: " + prefix + "-${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}";
+            const expectedGroup = "group: " + prefix + "-" + "$" + "{{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.number || 'global' }}";
             assert.ok(source.includes(expectedGroup), `${path} must use PR-specific concurrency with a global fallback`);
             assert.match(source, /cancel-in-progress:\s*false/, `${path} must not cancel a running check`);
           }
