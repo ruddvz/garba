@@ -182,10 +182,11 @@ assert.match(clientSource, /controller\?\.abort\(\)/, 'refresh must abort the pr
 assert.match(clientSource, /const token = \+\+generation/, 'refresh must create a monotonically newer request generation');
 assert.match(clientSource, /token !== generation \|\| signal\.aborted/, 'late or aborted responses must not render');
 assert.match(clientSource, /Promise\.all\(\[wrap\('\/api\/home'\), wrap\('\/api\/live'\)\]\)/, 'Home must request the two protected sources independently');
-assert.match(clientSource, /Active sessions, not people/, 'Live now must be labelled as sessions, not people');
-assert.match(clientSource, /Anonymous browser IDs, not people/, 'unique browser copy must not claim unique humans');
+assert.doesNotMatch(clientSource, /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write\s*\(/, 'Home must not use raw HTML injection primitives');
 assert.doesNotMatch(clientSource, /localStorage|sessionStorage|document\.cookie|eval\s*\(/, 'Home module must not add storage, cookie or eval behaviour');
 
+assert.match(indexHtml, /Active sessions, not people/, 'Live now must be labelled as sessions, not people');
+assert.match(indexHtml, /Anonymous browser IDs, not people/, 'unique browser copy must not claim unique humans');
 assert.equal((indexHtml.match(/home-live\.css/g) || []).length, 1, 'Home stylesheet must be loaded exactly once');
 assert.equal((indexHtml.match(/home-live\.js/g) || []).length, 1, 'Home module must be loaded exactly once');
 assert.ok(indexHtml.indexOf('./app.js') < indexHtml.indexOf('./home-live.js'), 'existing PGA controller must load before the isolated Home module');
@@ -198,4 +199,4 @@ assert.doesNotMatch(css, /100vw|width:\s*[4-9][0-9]{2,}px/, 'Home styles must no
 
 console.log('✓ PGA Home + Live normalisation preserves real zero and missing-data truth');
 console.log('✓ Home keeps usable partial sources, privacy-safe Live context and optional trend compatibility');
-console.log('✓ Refresh generation/abort guards and responsive accessibility contracts are present');
+console.log('✓ Refresh generation/abort guards, no-raw-HTML security and responsive accessibility contracts are present');
