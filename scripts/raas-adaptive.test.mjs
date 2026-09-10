@@ -2,14 +2,32 @@ import assert from 'node:assert/strict'
 import {
   compileAdaptiveTask,
   evaluateRunEfficiency,
+  loadKernel,
   operationFingerprint,
   selectCapabilityClass,
   shouldParallelize,
-  shouldReuseOperation
+  shouldReuseOperation,
+  validateKernel
 } from './raas-adaptive.mjs'
 
 function routeIds(result) {
   return result.routes.map((route) => route.id)
+}
+
+function queryKinds(result) {
+  return result.context_queries.map((query) => query.kind)
+}
+
+function assertQueriesDeduplicated(result) {
+  const keys = result.context_queries.map((query) => `${query.kind}|${query.target}|${query.purpose}`.toLowerCase())
+  assert.equal(new Set(keys).size, keys.length, 'context queries must be deduplicated')
+}
+
+{
+  const kernel = validateKernel()
+  assert.equal(kernel.schemaVersion, 'raas-kernel/v1')
+  assert.equal(kernel.humanContract, '.raas/KERNEL.md')
+  assert.equal(kernel.invariants.length, 7)
 }
 
 {
@@ -21,6 +39,13 @@ function routeIds(result) {
   assert.deepEqual(routeIds(result), ['catalogue'])
   assert.equal(result.budget.maxSources, 4)
   assert.equal(result.verification_frontier.includes('browser-manual-when-acceptance-is-visual'), false)
+  assert.equal(result.compact_kernel.path, '.raas/kernel.json')
+  assert.equal(result.compact_kernel.invariant_ids.includes('claim-before-code'), true)
+  assert.equal(queryKinds(result).includes('github'), true)
+  assert.equal(queryKinds(result).includes('browser-evidence'), false)
+  assert.equal(result.context_queries.some((query) => query.target === 'data/catalogue/index.json'), true)
+  assert.equal(result.context_queries.some((query) => query.id === 'exact-catalogue-identity'), true)
+  assertQueriesDeduplicated(result)
 }
 
 {
@@ -29,6 +54,9 @@ function routeIds(result) {
   assert.equal(result.risk, 'high')
   assert.equal(result.truth_sensitivity, 'playback-source')
   assert.equal(result.verification_frontier.includes('exact-source-runtime-route-check'), true)
+  assert.equal(result.context_queries.some((query) => query.id === 'exact-playback-identity'), true)
+  assert.equal(result.context_queries.some((query) => query.target === 'docs/product/playback-runtime-coverage.md'), true)
+  assertQueriesDeduplicated(result)
 }
 
 {
@@ -37,6 +65,8 @@ function routeIds(result) {
   assert.equal(result.risk, 'high')
   assert.equal(result.verification_frontier.includes('browser-manual-when-acceptance-is-visual'), true)
   assert.equal(result.parallelism_policy.mutation_lanes_max, 1)
+  assert.equal(result.context_queries.some((query) => query.id === 'visual-browser-evidence'), true)
+  assertQueriesDeduplicated(result)
 }
 
 {
@@ -60,14 +90,21 @@ function routeIds(result) {
   assert.equal(result.needs_split, true)
   assert.equal(result.tier, 'deep')
   assert.equal(result.stop_conditions[0].includes('split'), true)
+  assert.deepEqual(queryKinds(result), ['kernel', 'github'])
+  assert.equal(result.context_queries[1].id, 'split-preflight')
+  assert.equal(result.context_queries.some((query) => query.kind === 'source'), false)
+  assert.equal(result.context_queries.some((query) => query.kind === 'evidence'), false)
+  assertQueriesDeduplicated(result)
 }
 
 {
-  const result = compileAdaptiveTask('Create a plan to improve player and PWA behaviour.')
+  const result = compileAdaptiveTask('Create a plan to improve the player.')
   assert.equal(result.mode, 'plan')
   assert.equal(result.delivery_stop, 'plan')
   assert.equal(result.mutation_allowed, false)
-  assert.equal(result.tier, 'deep')
+  assert.equal(result.context_queries.some((query) => query.id === 'ownership-preflight'), false)
+  assert.equal(result.context_queries.some((query) => query.id === 'exact-playback-identity'), true)
+  assertQueriesDeduplicated(result)
 }
 
 {
@@ -82,11 +119,18 @@ function routeIds(result) {
   assert.equal(result.tier, 'critical')
   assert.equal(result.truth_sensitivity, 'rights')
   assert.equal(result.verification_frontier.includes('rights-provenance-check'), true)
+  assert.equal(result.context_queries.some((query) => query.id === 'exact-rights-evidence'), true)
 }
 
 {
   const result = compileAdaptiveTask('Fix the mobile button layout.')
   assert.equal(result.verification_frontier.includes('browser-manual-when-acceptance-is-visual'), true)
+  assert.equal(result.context_queries.some((query) => query.kind === 'browser-evidence'), true)
+}
+
+{
+  const result = compileAdaptiveTask('Update `src/catalogue/catalogue.js` search behavior.')
+  assert.equal(result.context_queries.some((query) => query.id === 'explicit-targets' && query.target === 'src/catalogue/catalogue.js'), true)
 }
 
 {
@@ -166,6 +210,20 @@ function routeIds(result) {
   assert.equal(efficiency.within_budget, false)
   assert.equal(efficiency.exceeded.includes('sources'), true)
   assert.equal(efficiency.decision, 're-evaluate-or-escalate')
+}
+
+{
+  const missingInvariant = structuredClone(loadKernel())
+  missingInvariant.invariants = missingInvariant.invariants.filter((item) => item.id !== 'claim-before-code')
+  assert.throws(() => validateKernel(missingInvariant), /missing required invariant: claim-before-code/)
+
+  const missingSource = structuredClone(loadKernel())
+  missingSource.invariants[0].source = '.raas/DOES-NOT-EXIST.md'
+  assert.throws(() => validateKernel(missingSource), /source is missing/)
+
+  const driftedAnchor = structuredClone(loadKernel())
+  driftedAnchor.invariants[0].anchor = 'this anchor must never exist in the canonical source'
+  assert.throws(() => validateKernel(driftedAnchor), /anchor drifted/)
 }
 
 console.log('RAAS adaptive CTO tests: PASS')
