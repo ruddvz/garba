@@ -62,49 +62,85 @@ async function expectNoDocumentOverflow(page) {
 }
 
 async function expectInsideViewport(page, selector) {
-  await expect.poll(async () => page.evaluate((targetSelector) => {
-    const element = document.querySelector(targetSelector);
-    if (!(element instanceof Element) || !element.isConnected) return false;
+  const result = await page.evaluate(async ({ targetSelector, timeoutMs, tolerance }) => {
+    const readState = () => {
+      const element = document.querySelector(targetSelector);
+      if (!(element instanceof Element) || !element.isConnected) {
+        return { inside: false, reason: 'missing-or-disconnected' };
+      }
 
-    const style = getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
-    if (element.getClientRects().length === 0) return false;
+      const style = getComputedStyle(element);
+      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
+        return { inside: false, reason: 'not-visible' };
+      }
+      if (element.getClientRects().length === 0) {
+        return { inside: false, reason: 'no-layout-box' };
+      }
 
-    const rect = element.getBoundingClientRect();
-    const visualViewport = window.visualViewport;
-    const viewport = visualViewport
-      ? {
-          left: visualViewport.offsetLeft,
-          top: visualViewport.offsetTop,
-          width: visualViewport.width,
-          height: visualViewport.height,
-        }
-      : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+      const rect = element.getBoundingClientRect();
+      const visualViewport = window.visualViewport;
+      const viewport = visualViewport
+        ? {
+            left: visualViewport.offsetLeft,
+            top: visualViewport.offsetTop,
+            width: visualViewport.width,
+            height: visualViewport.height,
+          }
+        : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+      const geometry = [
+        rect.left,
+        rect.top,
+        rect.right,
+        rect.bottom,
+        rect.width,
+        rect.height,
+        viewport.left,
+        viewport.top,
+        viewport.width,
+        viewport.height,
+      ];
+      const snapshot = {
+        rect: {
+          left: rect.left,
+          top: rect.top,
+          right: rect.right,
+          bottom: rect.bottom,
+          width: rect.width,
+          height: rect.height,
+        },
+        viewport,
+      };
 
-    const geometry = [
-      rect.left,
-      rect.top,
-      rect.right,
-      rect.bottom,
-      rect.width,
-      rect.height,
-      viewport.left,
-      viewport.top,
-      viewport.width,
-      viewport.height,
-    ];
-    if (!geometry.every(Number.isFinite)) return false;
-    if (rect.width <= 0 || rect.height <= 0 || viewport.width <= 0 || viewport.height <= 0) return false;
+      if (!geometry.every(Number.isFinite)) {
+        return { inside: false, reason: 'non-finite-geometry', ...snapshot };
+      }
+      if (rect.width <= 0 || rect.height <= 0 || viewport.width <= 0 || viewport.height <= 0) {
+        return { inside: false, reason: 'zero-size-geometry', ...snapshot };
+      }
 
-    return rect.left >= viewport.left - 2
-      && rect.right <= viewport.left + viewport.width + 2
-      && rect.top >= viewport.top - 2
-      && rect.bottom <= viewport.top + viewport.height + 2;
-  }, selector), {
-    message: `${selector} should settle fully inside the visual viewport`,
-    timeout: 2_500,
-    intervals: [50, 100, 150, 250],
-  }).toBe(true);
+      return {
+        inside: rect.left >= viewport.left - tolerance
+          && rect.right <= viewport.left + viewport.width + tolerance
+          && rect.top >= viewport.top - tolerance
+          && rect.bottom <= viewport.top + viewport.height + tolerance,
+        reason: 'geometry',
+        ...snapshot,
+      };
+    };
+
+    const deadline = performance.now() + timeoutMs;
+    let state = readState();
+    while (!state.inside && performance.now() < deadline) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      state = readState();
+    }
+    return state;
+  }, { targetSelector: selector, timeoutMs: 2_500, tolerance: 2 });
+
+  expect(
+    result.inside,
+    `${selector} should settle fully inside the visual viewport (${result.reason || 'unknown state'}: ${JSON.stringify(result)})`,
+  ).toBe(true);
 }
 
 async function expectAppCoversViewport(page) {
@@ -321,7 +357,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/explore/', { waitUntil: 'commit' });
+  await page.goto('/explore/', { waitUntil: 'domcontentloaded' });
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();
