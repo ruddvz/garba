@@ -31,7 +31,6 @@
   ]);
   const FOREGROUND_EVENTS = new Set(['visible', 'pageshow', 'resume']);
   const BACKGROUND_EVENTS = new Set(['hidden', 'pagehide', 'freeze']);
-  const BLOCKED_PHASES = new Set(['idle', 'error', 'unavailable', 'ended']);
 
   function isPlainObject(value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -135,6 +134,7 @@
     mediaSessionPolicyApi,
     lifecyclePolicyApi,
     sourceResolverApi,
+    commandPlannerApi,
     onPrevious = null,
     onNext = null,
     onStateChange = null,
@@ -160,6 +160,9 @@
     if (!sourceResolverApi || typeof sourceResolverApi.isBlockedConsumerProviderUrl !== 'function') {
       throw new TypeError('direct-source resolver API is required');
     }
+    if (!commandPlannerApi || typeof commandPlannerApi.planDirectMediaCommands !== 'function') {
+      throw new TypeError('direct-media command planner API is required');
+    }
     if (typeof metadataFactory !== 'function') throw new TypeError('metadataFactory must be a function');
 
     let state = authorityStateApi.createInitialState();
@@ -167,6 +170,9 @@
     let identity = null;
     let capabilities = cloneCapabilities(null);
     let activeUrl = null;
+    let boundSongId = null;
+    let boundGeneration = null;
+    let boundUrl = null;
     let destroyed = false;
     let foreground = true;
     let lifecycleStateClaim = null;
@@ -180,8 +186,41 @@
       safeCall(() => onStateChange(Object.freeze({ state, policy: lastPolicy, reason })));
     }
 
+    function bindingFact() {
+      if (!nonEmptyString(boundSongId) || !Number.isSafeInteger(boundGeneration) || !boundUrl) return null;
+      const assigned = canonicalHttpsUrl(String(mediaElement.src || '').trim());
+      if (assigned !== boundUrl) return null;
+      return Object.freeze({
+        songId: boundSongId,
+        generation: boundGeneration,
+        sourceUrl: boundUrl,
+      });
+    }
+
+    function bindingMatches(expected) {
+      if (!isPlainObject(expected)) return false;
+      const current = bindingFact();
+      if (!current) return false;
+      return current.songId === expected.songId
+        && current.generation === expected.generation
+        && current.sourceUrl === canonicalHttpsUrl(expected.sourceUrl);
+    }
+
+    function commandTargetsAuthority(command) {
+      if (!isPlainObject(command)) return false;
+      if (command.songId === null) {
+        return state.songId === null && command.generation === state.generation;
+      }
+      return command.songId === state.songId && command.generation === state.generation;
+    }
+
     function sourceMatchesActive() {
-      if (!activeUrl) return false;
+      if (!activeUrl || !state.songId) return false;
+      const currentBinding = bindingFact();
+      if (!currentBinding
+        || currentBinding.songId !== state.songId
+        || currentBinding.generation !== state.generation
+        || currentBinding.sourceUrl !== activeUrl) return false;
       return sourceObserved(mediaElement) === activeUrl;
     }
 
@@ -210,73 +249,6 @@
 
     function clearAllActions() {
       for (const action of MEDIA_SESSION_ACTIONS) clearAction(action);
-    }
-
-    function commandAllowed() {
-      return !destroyed
-        && resolution
-        && resolution.kind === 'direct'
-        && state.songId === resolution.songId
-        && !BLOCKED_PHASES.has(state.phase);
-    }
-
-    function play() {
-      if (!commandAllowed() || capabilities.canPlay !== true) return false;
-      const result = safeCall(() => mediaElement.play(), false);
-      return result === false ? false : result;
-    }
-
-    function pause() {
-      if (!commandAllowed() || capabilities.canPause !== true) return false;
-      const result = safeCall(() => mediaElement.pause(), false);
-      return result === false ? false : true;
-    }
-
-    function seekTo(target) {
-      if (!commandAllowed() || capabilities.canSeek !== true) return false;
-      if (!finiteNumber(target) || target < 0) return false;
-      if (finiteNumber(state.duration) && state.duration > 0 && target > state.duration + 0.25) return false;
-      const next = authorityStateApi.reduceDirectMediaAuthorityState(state, {
-        type: 'seek-start',
-        generation: state.generation,
-        songId: state.songId,
-        target,
-      });
-      if (next === state || next.seek?.active !== true) return false;
-      state = next;
-      lifecycleStateClaim = null;
-      const written = safeCall(() => {
-        mediaElement.currentTime = next.seek.target;
-        return true;
-      }, false);
-      if (!written) return false;
-      syncMediaSession('seek-start');
-      notify('seek-start');
-      return true;
-    }
-
-    function stop() {
-      if (!commandAllowed() || capabilities.canStop !== true) return false;
-      const paused = safeCall(() => {
-        mediaElement.pause();
-        return true;
-      }, false);
-      if (!paused) return false;
-      if (capabilities.canSeek === true && finiteNumber(state.duration) && state.duration > 0) {
-        safeCall(() => { mediaElement.currentTime = 0; });
-      }
-      return true;
-    }
-
-    function seekRelative(delta) {
-      if (!finiteNumber(delta) || delta === 0) return false;
-      const origin = finiteNumber(state.position) ? state.position : Number(mediaElement.currentTime);
-      if (!finiteNumber(origin)) return false;
-      const duration = finiteNumber(state.duration) && state.duration > 0 ? state.duration : null;
-      const target = duration === null
-        ? Math.max(0, origin + delta)
-        : Math.min(duration, Math.max(0, origin + delta));
-      return seekTo(target);
     }
 
     function actionHandler(action) {
@@ -325,14 +297,14 @@
 
     function applyPolicy(policy) {
       lastPolicy = policy;
-      if (!mediaSession) return;
+      if (!mediaSession) return true;
 
       if (!policy || policy.valid !== true) {
         clearAllActions();
         safeCall(() => { mediaSession.metadata = null; });
         safeCall(() => { mediaSession.playbackState = 'none'; });
         safeCall(() => mediaSession.setPositionState());
-        return;
+        return true;
       }
 
       if (policy.metadata) {
@@ -348,14 +320,12 @@
         safeCall(() => mediaSession.setPositionState());
       }
       applyActions(policy.actions);
+      return true;
     }
 
-    function syncMediaSession() {
-      if (!resolution || !identity) {
-        applyPolicy(null);
-        return null;
-      }
-      const policy = mediaSessionPolicyApi.buildMediaSessionPolicy({
+    function buildMediaSessionPolicy() {
+      if (!resolution || !identity) return null;
+      return mediaSessionPolicyApi.buildMediaSessionPolicy({
         resolution,
         identity,
         playback: { state: projectedPlaybackState() },
@@ -363,8 +333,155 @@
         position: mediaPosition(),
         environment: { foreground },
       });
-      applyPolicy(policy);
-      return policy;
+    }
+
+    function executeCommand(command) {
+      if (!isPlainObject(command) || !nonEmptyString(command.op)) return { ok: false, value: false };
+
+      if (command.op === 'clear-media-session') {
+        return { ok: applyPolicy(null), value: true };
+      }
+      if (command.op === 'sync-media-session') {
+        if (!commandTargetsAuthority(command) || !isPlainObject(command.policy)) return { ok: false, value: false };
+        return { ok: applyPolicy(command.policy), value: true };
+      }
+      if (!commandTargetsAuthority(command)) return { ok: false, value: false };
+
+      if (command.op === 'bind-source') {
+        const sourceUrl = canonicalHttpsUrl(command.sourceUrl);
+        if (!sourceUrl
+          || sourceUrl !== activeUrl
+          || !resolution
+          || resolution.kind !== 'direct'
+          || resolution.songId !== state.songId
+          || sourceResolverApi.isBlockedConsumerProviderUrl(sourceUrl)) {
+          return { ok: false, value: false };
+        }
+        const assigned = safeCall(() => {
+          mediaElement.src = sourceUrl;
+          return canonicalHttpsUrl(String(mediaElement.src || '').trim()) === sourceUrl;
+        }, false);
+        if (!assigned) return { ok: false, value: false };
+        boundSongId = state.songId;
+        boundGeneration = state.generation;
+        boundUrl = sourceUrl;
+        return { ok: true, value: true };
+      }
+
+      if (command.op === 'load-media') {
+        const current = bindingFact();
+        if (!current
+          || current.songId !== state.songId
+          || current.generation !== state.generation
+          || current.sourceUrl !== activeUrl) return { ok: false, value: false };
+        const loaded = safeCall(() => {
+          if (typeof mediaElement.load === 'function') mediaElement.load();
+          return true;
+        }, false);
+        return { ok: loaded, value: loaded };
+      }
+
+      if (command.op === 'request-play') {
+        if (!bindingMatches(command.expectedBinding)) return { ok: false, value: false };
+        const value = safeCall(() => mediaElement.play(), false);
+        return { ok: value !== false, value };
+      }
+
+      if (command.op === 'request-pause') {
+        if (!bindingMatches(command.expectedBinding)) return { ok: false, value: false };
+        const paused = safeCall(() => {
+          mediaElement.pause();
+          return true;
+        }, false);
+        return { ok: paused, value: paused };
+      }
+
+      if (command.op === 'request-seek') {
+        if (!bindingMatches(command.expectedBinding) || !finiteNumber(command.targetSeconds)) {
+          return { ok: false, value: false };
+        }
+        const next = authorityStateApi.reduceDirectMediaAuthorityState(state, {
+          type: 'seek-start',
+          generation: state.generation,
+          songId: state.songId,
+          target: command.targetSeconds,
+        });
+        if (next === state || next.seek?.active !== true) return { ok: false, value: false };
+        state = next;
+        lifecycleStateClaim = null;
+        const written = safeCall(() => {
+          mediaElement.currentTime = next.seek.target;
+          return true;
+        }, false);
+        if (!written) return { ok: false, value: false };
+        notify('seek-start');
+        return { ok: true, value: true };
+      }
+
+      if (command.op === 'read-media-state') {
+        return { ok: true, value: Object.freeze({
+          sourceMatchesActive: sourceMatchesActive(),
+          duration: finiteNumber(mediaElement.duration) ? Number(mediaElement.duration) : null,
+          currentTime: finiteNumber(mediaElement.currentTime) ? Number(mediaElement.currentTime) : null,
+        }) };
+      }
+
+      if (command.op === 'clear-media-source') {
+        if (!bindingMatches(command.expectedBinding)) return { ok: false, value: false };
+        const cleared = safeCall(() => {
+          if (typeof mediaElement.removeAttribute === 'function') mediaElement.removeAttribute('src');
+          else mediaElement.src = '';
+          if (typeof mediaElement.load === 'function') mediaElement.load();
+          return true;
+        }, false);
+        if (!cleared) return { ok: false, value: false };
+        boundSongId = null;
+        boundGeneration = null;
+        boundUrl = null;
+        return { ok: true, value: true };
+      }
+
+      return { ok: false, value: false };
+    }
+
+    function executePlan(plan) {
+      if (!isPlainObject(plan) || !Array.isArray(plan.commands)) {
+        return { ok: false, accepted: false, value: false };
+      }
+      let value = true;
+      for (const command of plan.commands) {
+        const execution = executeCommand(command);
+        if (!execution.ok) return { ok: false, accepted: false, value: false };
+        if (command.op === 'request-play'
+          || command.op === 'request-pause'
+          || command.op === 'request-seek') {
+          value = execution.value;
+        }
+      }
+      return {
+        ok: true,
+        accepted: plan.valid === true && plan.intent?.accepted === true,
+        value,
+      };
+    }
+
+    function planAndExecute(intent, {
+      lifecycleDecision = lastLifecycleDecision,
+      mediaSessionPolicy = buildMediaSessionPolicy(),
+    } = {}) {
+      const plan = safeCall(() => commandPlannerApi.planDirectMediaCommands({
+        authorityState: state,
+        binding: bindingFact(),
+        intent,
+        lifecycleDecision,
+        mediaSessionPolicy,
+      }), null);
+      if (!plan) return { plan: null, ok: false, accepted: false, value: false };
+      return { plan, ...executePlan(plan) };
+    }
+
+    function syncMediaSessionThroughPlanner() {
+      return planAndExecute({ type: 'sync-source' });
     }
 
     function mediaEventPayload(type) {
@@ -394,7 +511,8 @@
       if (next === previous) return false;
       state = next;
       lifecycleStateClaim = null;
-      syncMediaSession(type);
+      lastLifecycleDecision = null;
+      syncMediaSessionThroughPlanner();
       notify(type);
       return true;
     }
@@ -427,26 +545,71 @@
       lastLifecycleDecision = null;
       foreground = true;
 
-      const assigned = safeCall(() => {
-        mediaElement.src = activeUrl;
-        return true;
-      }, false);
-      if (!assigned) {
+      const execution = planAndExecute({ type: 'sync-source' });
+      if (!execution.ok || !execution.accepted) {
         state = authorityStateApi.reduceDirectMediaAuthorityState(state, {
           type: 'unavailable',
           generation: state.generation,
           songId: state.songId,
           reason: 'media-source-assignment-failed',
         });
-        syncMediaSession('source-assignment-failed');
+        planAndExecute({ type: 'clear' }, { lifecycleDecision: null, mediaSessionPolicy: null });
         notify('source-assignment-failed');
         return false;
       }
 
-      safeCall(() => typeof mediaElement.load === 'function' && mediaElement.load());
-      syncMediaSession('select-direct');
       notify('select-direct');
       return true;
+    }
+
+    function play() {
+      if (destroyed || capabilities.canPlay !== true || !state.songId) return false;
+      const execution = planAndExecute({ type: 'play', songId: state.songId, generation: state.generation });
+      return execution.ok && execution.accepted ? execution.value : false;
+    }
+
+    function pause() {
+      if (destroyed || capabilities.canPause !== true || !state.songId) return false;
+      const execution = planAndExecute({ type: 'pause', songId: state.songId, generation: state.generation });
+      return execution.ok && execution.accepted ? execution.value : false;
+    }
+
+    function seekTo(target) {
+      if (destroyed || capabilities.canSeek !== true || !state.songId) return false;
+      const execution = planAndExecute({
+        type: 'seek',
+        songId: state.songId,
+        generation: state.generation,
+        targetSeconds: target,
+      });
+      return execution.ok && execution.accepted ? execution.value : false;
+    }
+
+    function stop() {
+      if (destroyed || capabilities.canStop !== true || !state.songId) return false;
+      const paused = planAndExecute({ type: 'pause', songId: state.songId, generation: state.generation });
+      if (!paused.ok || !paused.accepted) return false;
+      if (capabilities.canSeek === true && finiteNumber(state.duration) && state.duration > 0) {
+        const seeked = planAndExecute({
+          type: 'seek',
+          songId: state.songId,
+          generation: state.generation,
+          targetSeconds: 0,
+        });
+        if (!seeked.ok || !seeked.accepted) return false;
+      }
+      return paused.value === false ? false : true;
+    }
+
+    function seekRelative(delta) {
+      if (!finiteNumber(delta) || delta === 0 || capabilities.canSeek !== true) return false;
+      const origin = finiteNumber(state.position) ? state.position : Number(mediaElement.currentTime);
+      if (!finiteNumber(origin)) return false;
+      const duration = finiteNumber(state.duration) && state.duration > 0 ? state.duration : null;
+      const target = duration === null
+        ? Math.max(0, origin + delta)
+        : Math.min(duration, Math.max(0, origin + delta));
+      return seekTo(target);
     }
 
     function reconcileLifecycle(eventName, evidence = 'fresh') {
@@ -466,7 +629,10 @@
       });
       lastLifecycleDecision = decision;
       lifecycleStateClaim = decision && decision.valid === true ? decision.stateClaim : 'none';
-      syncMediaSession(`lifecycle:${eventName}`);
+      planAndExecute(
+        { type: 'reconcile', songId: state.songId, generation: state.generation },
+        { lifecycleDecision: decision, mediaSessionPolicy: buildMediaSessionPolicy() },
+      );
       notify(`lifecycle:${eventName}`);
       return decision;
     }
@@ -482,7 +648,8 @@
       });
       if (state === previous) return false;
       lifecycleStateClaim = null;
-      syncMediaSession('unavailable');
+      lastLifecycleDecision = null;
+      syncMediaSessionThroughPlanner();
       notify('unavailable');
       return true;
     }
@@ -492,22 +659,22 @@
       const previous = state;
       const next = authorityStateApi.reduceDirectMediaAuthorityState(state, { type: 'reset', generation });
       if (next === previous) return false;
-      safeCall(() => mediaElement.pause());
-      safeCall(() => {
-        if (typeof mediaElement.removeAttribute === 'function') mediaElement.removeAttribute('src');
-        else mediaElement.src = '';
-      });
-      safeCall(() => typeof mediaElement.load === 'function' && mediaElement.load());
       state = next;
+      lifecycleStateClaim = null;
+      lastLifecycleDecision = null;
+      const execution = planAndExecute(
+        { type: 'clear' },
+        { lifecycleDecision: null, mediaSessionPolicy: null },
+      );
       resolution = null;
       identity = null;
       capabilities = cloneCapabilities(null);
       activeUrl = null;
-      lifecycleStateClaim = null;
-      lastLifecycleDecision = null;
-      applyPolicy(null);
+      boundSongId = null;
+      boundGeneration = null;
+      boundUrl = null;
       notify('reset');
-      return true;
+      return execution.ok && execution.accepted;
     }
 
     for (const type of MEDIA_EVENTS) {
@@ -521,10 +688,12 @@
       destroyed = true;
       for (const [type, handler] of listeners) mediaElement.removeEventListener(type, handler);
       listeners.clear();
-      clearAllActions();
-      safeCall(() => { if (mediaSession) mediaSession.metadata = null; });
-      safeCall(() => { if (mediaSession) mediaSession.playbackState = 'none'; });
-      safeCall(() => mediaSession && typeof mediaSession.setPositionState === 'function' && mediaSession.setPositionState());
+      executeCommand({
+        op: 'clear-media-session',
+        songId: state.songId,
+        generation: state.generation,
+        reason: 'controller-destroyed',
+      });
       return true;
     }
 
