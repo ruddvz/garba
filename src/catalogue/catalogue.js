@@ -319,12 +319,20 @@ function createExplorePageDataStore() {
 
   const loadCore = () => {
     if (!corePromise) {
-      corePromise = Promise.all([
+      const request = Promise.all([
         fetchJsonOnce(paths.songs, []),
         fetchJsonOnce(paths.releases, []),
         fetchJsonOnce(paths.catalogueIndex, {}),
         fetchJsonOnce(paths.artwork, { releases: {} }),
-      ]).then(([songs, releases, index, artwork]) => ({ songs, releases, index, artwork }));
+      ]).then(([songs, releases, index, artwork]) => {
+        const result = { songs, releases, index, artwork };
+        if ([...coreKeys].some((key) => !resolved.has(String(key))) && corePromise === request) corePromise = null;
+        return result;
+      }, (error) => {
+        if (corePromise === request) corePromise = null;
+        throw error;
+      });
+      corePromise = request;
     }
     return corePromise;
   };
