@@ -101,7 +101,7 @@ async function validateBrowserContract() {
   const { chromium, webkit } = await import('@playwright/test');
   const baseUrl = process.env.PGA_BASE_URL || 'http://127.0.0.1:4174';
   const fixtureOrigin = new URL(baseUrl).origin;
-  const protectedAggregatePaths = new Set(['/api/audience', '/api/listening']);
+  const protectedAggregatePaths = new Set(['/api/home', '/api/live', '/api/audience', '/api/listening']);
   const unavailableAggregate = JSON.stringify({
     status: 'unavailable',
     generatedAt: null,
