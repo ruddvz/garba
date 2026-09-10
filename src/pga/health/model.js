@@ -46,8 +46,13 @@ const CHECK_STATES = Object.freeze({
 })
 
 function finiteNumber(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function evaluationClock(value) {
+  const now = finiteNumber(value)
+  if (now == null) throw new TypeError('nowMs must be a finite number')
+  return now
 }
 
 function normaliseTimestamp(value) {
@@ -121,13 +126,14 @@ function sortSubsystems(entries) {
 }
 
 export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {}) {
+  const now = evaluationClock(nowMs)
   const canonicalName = safeText(name) || 'unknown'
   const defaults = DEFAULT_SUBSYSTEMS[canonicalName] || {}
   const criticality = normaliseCriticality(input.criticality, defaults.criticality)
   const explicitStatus = normaliseStatus(input.status)
   const observedAt = freshnessTimestamp(input)
   const budgetMs = freshnessBudget(input)
-  const ageMs = observedAt == null ? null : Math.max(0, Number(nowMs) - observedAt)
+  const ageMs = observedAt == null ? null : Math.max(0, now - observedAt)
 
   let status = explicitStatus
   let stale = false
@@ -139,8 +145,7 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
     explicitStatus !== 'failed'
     && observedAt != null
     && budgetMs != null
-    && Number.isFinite(Number(nowMs))
-    && Number(nowMs) - observedAt > budgetMs
+    && now - observedAt > budgetMs
   ) {
     status = 'stale'
     stale = true
@@ -193,18 +198,19 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
 }
 
 export function evaluateHealth(evidence = {}, { nowMs = Date.now() } = {}) {
+  const now = evaluationClock(nowMs)
   const entries = evidence && typeof evidence === 'object' && !Array.isArray(evidence)
     ? Object.entries(evidence)
     : []
 
   const subsystems = sortSubsystems(entries.map(([name, input]) => (
-    evaluateSubsystem(name, input, { nowMs })
+    evaluateSubsystem(name, input, { nowMs: now })
   )))
 
   if (subsystems.length === 0) {
     return {
       schemaVersion: 'pga-health/v1',
-      evaluatedAt: Number(nowMs),
+      evaluatedAt: now,
       status: 'unknown',
       reasons: ['No health evidence was supplied.'],
       actionable: [],
@@ -246,7 +252,7 @@ export function evaluateHealth(evidence = {}, { nowMs = Date.now() } = {}) {
 
   return {
     schemaVersion: 'pga-health/v1',
-    evaluatedAt: Number(nowMs),
+    evaluatedAt: now,
     status: winner.overall,
     leadingSubsystem: winner.subsystem,
     reasons,
