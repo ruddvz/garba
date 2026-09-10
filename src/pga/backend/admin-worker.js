@@ -117,6 +117,7 @@ function maxDataThrough(rowGroups) {
 
 function minimumObservedSessions(row) {
   const sessions = numberOrZero(row.sessions)
+  if (!Object.prototype.hasOwnProperty.call(row, 'max_sample_interval')) return 0
   const maxSampleInterval = finiteNumber(row.max_sample_interval, 'invalid_analytics_sample_interval')
   if (maxSampleInterval < 1) throw new Error('invalid_analytics_sample_interval')
   return Math.ceil(sessions / maxSampleInterval)
