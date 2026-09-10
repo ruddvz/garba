@@ -19,6 +19,11 @@
   <meta property="og:image" content="https://playgarba.com/assets/backgrounds/library/11-master-dark-courtyard.webp" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="stylesheet" href="catalogue.css" />
+  <style>
+    @media (max-width: 560px) {
+      body::before { transform: none; }
+    }
+  </style>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"CollectionPage","name":"Explore Gujarati Garba · PlayGarba","url":"https://playgarba.com/explore/","isPartOf":{"@type":"WebSite","name":"PlayGarba","url":"https://playgarba.com/"}}
   </script>
@@ -92,10 +97,9 @@
     </button>
   </template>
 
-  <!-- Core Explore paints first. Search stays out of the bootstrap until #390's
-       self-observing runtime is repaired and cross-browser liveness-tested. -->
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="listening-library.js"></script>
+  <script src="../assets/runtime/explore-search.js" defer></script>
   <script type="module">
     (() => {
       const releaseRail = document.getElementById('releaseRail');
