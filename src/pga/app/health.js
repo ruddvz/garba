@@ -327,23 +327,28 @@ export function mountHealth({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true,
 
   async function load({ force = false } = {}) {
     if (!force && hasSnapshot) return;
+
+    const token = ++generation;
+    controller?.abort();
+    controller = null;
+
     if (!navigator.onLine) {
       setHealthState('offline', 'Offline', hasSnapshot ? 'Showing the last loaded Health snapshot. Fresh evidence cannot refresh offline.' : 'Health evidence cannot refresh while this device is offline.', { hideContent: !hasSnapshot });
       return;
     }
-    const token = ++generation;
-    controller?.abort();
+
     controller = new AbortController();
+    const signal = controller.signal;
     setHealthState('loading', 'Loading Health evidence', 'Fetching the protected Health response without assuming missing checks are healthy.', { hideContent: !hasSnapshot });
 
     let result;
     try {
-      result = await fetchEnvelope('/api/health', { signal: controller.signal });
+      result = await fetchEnvelope('/api/health', { signal });
     } catch (error) {
       if (error?.name === 'AbortError') return;
       result = { transport: 'error', envelope: null };
     }
-    if (token !== generation || controller.signal.aborted) return;
+    if (token !== generation || signal.aborted) return;
 
     const normalised = normaliseHealthResult(result);
     if (normalised.transport === 'auth-expired') {
