@@ -65,11 +65,17 @@ function addMetric(target, metric) {
 
 export function aggregateBreakdowns(rows = [], selector) {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     const key = selector(row);
     if (!key) continue;
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    if (addMetric(current, row.sessions)) totals.set(key, current);
+    if (!addMetric(current, row.sessions)) {
+      invalidKeys.add(key);
+      totals.delete(key);
+      continue;
+    }
+    if (!invalidKeys.has(key)) totals.set(key, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -118,16 +124,23 @@ export function normaliseAudience(envelope) {
 
 function eventTotals(rows = []) {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     const key = row.eventName || 'unknown';
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    if (addMetric(current, row.events)) totals.set(key, current);
+    if (!addMetric(current, row.events)) {
+      invalidKeys.add(key);
+      totals.delete(key);
+      continue;
+    }
+    if (!invalidKeys.has(key)) totals.set(key, current);
   }
-  return totals;
+  return { totals, invalidKeys };
 }
 
 function topContent(rows = []) {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     if (row.eventName !== 'playback_started' || !row.contentId) continue;
     const canonicalId = row.canonicalId || row.contentId;
@@ -147,7 +160,12 @@ function topContent(rows = []) {
     if (!current.artist && row.artist) current.artist = row.artist;
     if (!current.releaseTitle && row.releaseTitle) current.releaseTitle = row.releaseTitle;
     if (row.identityStatus === 'resolved') current.identityStatus = 'resolved';
-    if (addMetric(current.metric, row.events)) totals.set(key, current);
+    if (!addMetric(current.metric, row.events)) {
+      invalidKeys.add(key);
+      totals.delete(key);
+      continue;
+    }
+    if (!invalidKeys.has(key)) totals.set(key, current);
   }
   return [...totals.values()]
     .sort((a, b) => b.metric.value - a.metric.value || a.contentId.localeCompare(b.contentId));
@@ -155,12 +173,18 @@ function topContent(rows = []) {
 
 function dimensionTotals(rows = [], keySelector, eventName = 'playback_started') {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     if (row.eventName !== eventName) continue;
     const key = keySelector(row);
     if (!key) continue;
     const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
-    if (addMetric(current, row.events)) totals.set(key, current);
+    if (!addMetric(current, row.events)) {
+      invalidKeys.add(key);
+      totals.delete(key);
+      continue;
+    }
+    if (!invalidKeys.has(key)) totals.set(key, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -169,12 +193,18 @@ function dimensionTotals(rows = [], keySelector, eventName = 'playback_started')
 
 function playbackDimensionTotals(rows = [], selector) {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     if (row.eventName !== 'playback_started') continue;
     const label = selector(row);
     if (!label) continue;
     const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
-    if (addMetric(current, row.events)) totals.set(label, current);
+    if (!addMetric(current, row.events)) {
+      invalidKeys.add(label);
+      totals.delete(label);
+      continue;
+    }
+    if (!invalidKeys.has(label)) totals.set(label, current);
   }
   return [...totals.entries()]
     .map(([label, metric]) => ({ label, metric }))
@@ -183,11 +213,17 @@ function playbackDimensionTotals(rows = [], selector) {
 
 function errorTotals(rows = []) {
   const totals = new Map();
+  const invalidKeys = new Set();
   for (const row of rows) {
     if (!['playback_error', 'playback_unavailable'].includes(row.eventName)) continue;
     const label = row.errorCode || (row.eventName === 'playback_unavailable' ? 'unavailable' : 'unknown');
     const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
-    if (addMetric(current, row.events)) totals.set(label, current);
+    if (!addMetric(current, row.events)) {
+      invalidKeys.add(label);
+      totals.delete(label);
+      continue;
+    }
+    if (!invalidKeys.has(label)) totals.set(label, current);
   }
   return [...totals.entries()].map(([label, metric]) => ({ label, metric })).sort((a, b) => b.metric.value - a.metric.value);
 }
@@ -197,9 +233,10 @@ export function normaliseListening(envelope) {
     return { state: 'unavailable', range: null, metrics: {}, topContent: [], worlds: [], surfaces: [], errors: [], unmetDemand: [] };
   }
   const rows = Array.isArray(envelope.data.rows) ? envelope.data.rows : [];
-  const totals = eventTotals(rows);
-  const playIntents = totals.get('play_intent') || metricFromNumber(0);
-  const confirmedStarts = totals.get('playback_started') || metricFromNumber(0);
+  const { totals, invalidKeys } = eventTotals(rows);
+  const metricOrZero = (eventName) => invalidKeys.has(eventName) ? null : (totals.get(eventName) || metricFromNumber(0));
+  const playIntents = metricOrZero('play_intent');
+  const confirmedStarts = metricOrZero('playback_started');
   const search = envelope.data.search || {};
   const content = topContent(rows);
   return {
@@ -211,10 +248,10 @@ export function normaliseListening(envelope) {
       playIntents,
       confirmedStarts,
       listeningMs: envelope.data.listeningMs || null,
-      pauses: totals.get('playback_paused') || metricFromNumber(0),
-      next: totals.get('next_requested') || metricFromNumber(0),
-      previous: totals.get('previous_requested') || metricFromNumber(0),
-      skips: totals.get('skip_requested') || metricFromNumber(0),
+      pauses: metricOrZero('playback_paused'),
+      next: metricOrZero('next_requested'),
+      previous: metricOrZero('previous_requested'),
+      skips: metricOrZero('skip_requested'),
     },
     playSuccess: ratio(confirmedStarts, playIntents),
     search: {
