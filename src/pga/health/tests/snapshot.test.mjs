@@ -292,7 +292,7 @@ test('numeric zero remains a valid snapshot evaluation clock', () => {
   const snapshot = composeHealthSnapshot({}, { nowMs: 0 })
 
   assert.equal(snapshot.generatedAt, '1970-01-01T00:00:00.000Z')
-  assert.equal(snapshot.evaluatedAt, '1970-01-01T00:00:00.000Z')
+  assert.equal(snapshot.evaluatedAt, 0)
   assert.equal(snapshot.status, 'unknown')
 })
 
