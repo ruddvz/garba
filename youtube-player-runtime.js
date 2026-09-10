@@ -25,6 +25,7 @@
   let openToken = 0;
   let continueAfterNavigation = false;
   let lastPersistedSecond = -1;
+  let lastMediaSessionPositionKey = '';
   let advanceLock = false;
   let bypassNextPlay = false;
 
@@ -183,23 +184,40 @@
     const current = elapsed();
     const total = duration();
     const ratio = total > 0 ? Math.min(1, Math.max(0, current / total)) : 0;
+    const progressValue = Math.round(ratio * 1000);
+    const progressPercent = `${progressValue / 10}%`;
 
     if (progress) {
-      progress.value = String(Math.round(ratio * 1000));
-      progress.style.setProperty('--progress', `${ratio * 100}%`);
+      if (String(progress.value) !== String(progressValue)) progress.value = String(progressValue);
+      if (progress.style.getPropertyValue('--progress') !== progressPercent) {
+        progress.style.setProperty('--progress', progressPercent);
+      }
     }
-    if (elapsedTime) elapsedTime.textContent = formatTime(current);
-    if (durationTime && total > 0) durationTime.textContent = formatTime(total);
-    if (miniProgress) miniProgress.style.width = `${ratio * 100}%`;
+
+    const elapsedLabel = formatTime(current);
+    if (elapsedTime && elapsedTime.textContent !== elapsedLabel) elapsedTime.textContent = elapsedLabel;
+
+    if (durationTime && total > 0) {
+      const durationLabel = formatTime(total);
+      if (durationTime.textContent !== durationLabel) durationTime.textContent = durationLabel;
+    }
+
+    if (miniProgress && miniProgress.style.width !== progressPercent) miniProgress.style.width = progressPercent;
     persistPosition(current);
 
     if ('mediaSession' in navigator && total > 0) {
       try {
-        navigator.mediaSession.setPositionState({
-          duration: Math.max(1, total),
-          playbackRate: Number(player.getPlaybackRate?.() || 1),
-          position: Math.min(Math.max(0, current), total),
-        });
+        const playbackRate = Number(player.getPlaybackRate?.() || 1);
+        const position = Math.min(Math.max(0, current), total);
+        const positionKey = `${Math.max(1, total)}:${playbackRate}:${Math.floor(position)}`;
+        if (positionKey !== lastMediaSessionPositionKey) {
+          navigator.mediaSession.setPositionState({
+            duration: Math.max(1, total),
+            playbackRate,
+            position,
+          });
+          lastMediaSessionPositionKey = positionKey;
+        }
       } catch {
         // Position state is optional.
       }
@@ -328,6 +346,7 @@
     playerReadyPromise = null;
     playerReadyReject = null;
     playerState = -1;
+    lastMediaSessionPositionKey = '';
     try { currentPlayer?.destroy?.(); } catch { /* already detached */ }
     try { rejectReady?.(new Error('YouTube player initialisation cancelled')); } catch { /* already settled */ }
   }
@@ -413,6 +432,7 @@
     baseStart = 0;
     trackDuration = 0;
     lastPersistedSecond = -1;
+    lastMediaSessionPositionKey = '';
     advanceLock = false;
     continueAfterNavigation = false;
     const stage = $('youtubeStage');
@@ -447,6 +467,7 @@
     trackDuration = Math.max(0, Number(song.durationSeconds || 0));
     playerState = -1;
     lastPersistedSecond = -1;
+    lastMediaSessionPositionKey = '';
     advanceLock = false;
     setPlaying(false);
 
@@ -506,6 +527,7 @@
     const safe = Math.max(0, total > 0 ? Math.min(Number(logicalSeconds || 0), total) : Number(logicalSeconds || 0));
     try {
       player.seekTo(baseStart + safe, true);
+      lastMediaSessionPositionKey = '';
       syncProgress();
       return true;
     } catch {
