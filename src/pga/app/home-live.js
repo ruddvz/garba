@@ -401,6 +401,11 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope, autoLoad = tru
 
   async function load({ force = false } = {}) {
     if (!force && hasRenderedSnapshot) return;
+
+    const token = ++generation;
+    controller?.abort();
+    controller = null;
+
     if (!navigator.onLine) {
       if (!hasRenderedSnapshot) renderBlockingState('offline', 'Offline', 'The PGA shell is available, but private Home and Live aggregates cannot refresh while this device is offline.');
       else {
@@ -415,8 +420,6 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope, autoLoad = tru
       return;
     }
 
-    const token = ++generation;
-    controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
     if (!hasRenderedSnapshot) renderBlockingState('loading', 'Loading protected data', 'PGA is fetching Home and Live aggregates without showing placeholder zeros.');
