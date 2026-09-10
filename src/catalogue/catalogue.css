@@ -716,3 +716,235 @@ main[aria-busy="true"] #catalogueSections:empty::before {
   html { scroll-behavior:auto; }
   *,*::before,*::after { transition:none !important;animation:none !important;scroll-behavior:auto !important; }
 }
+
+/* Distinct Explore content primitives. */
+.release-title {
+  display:-webkit-box;
+  min-height:2.55em;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+
+.collection-grid--destination {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.collection-card--destination {
+  min-height:190px;
+  aspect-ratio:1.55/1;
+  border-radius:22px;
+}
+.collection-card--destination .collection-copy strong { max-width:18ch; }
+
+.collection-grid--taxonomy {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.collection-card--taxonomy,
+.collection-card--artist {
+  min-height:0;
+  aspect-ratio:auto;
+  display:grid;
+  align-items:center;
+  overflow:hidden;
+  border-color:rgba(255,255,255,.075);
+  background:rgba(16,15,20,.5);
+  box-shadow:none;
+}
+.collection-card--taxonomy {
+  grid-template-columns:56px minmax(0,1fr);
+  gap:12px;
+  min-height:78px;
+  padding:10px 38px 10px 10px;
+  border-radius:16px;
+}
+.collection-card--taxonomy::before,
+.collection-card--artist::before { display:none; }
+.collection-card--taxonomy::after,
+.collection-card--artist::after {
+  top:50%;
+  right:13px;
+  width:18px;
+  height:18px;
+  opacity:.48;
+  background-size:15px;
+  transform:translateY(-50%);
+}
+.collection-card--taxonomy:hover,
+.collection-card--artist:hover {
+  transform:translateY(-1px);
+  border-color:rgba(255,255,255,.14);
+  background:rgba(25,23,30,.64);
+  box-shadow:none;
+}
+.collection-card--taxonomy:hover::after,
+.collection-card--artist:hover::after { transform:translate(1px,calc(-50% - 1px));opacity:.82; }
+.collection-card--taxonomy .collection-image,
+.collection-card--artist .collection-image {
+  position:relative;
+  inset:auto;
+  z-index:auto;
+  transform:none;
+  filter:none;
+}
+.collection-card--taxonomy .collection-image {
+  width:56px;
+  height:56px;
+  border-radius:12px;
+  background-size:cover;
+  background-position:center;
+}
+.collection-card--taxonomy .collection-shade,
+.collection-card--artist .collection-shade { display:none; }
+.collection-card--taxonomy .collection-copy,
+.collection-card--artist .collection-copy {
+  position:static;
+  inset:auto;
+  z-index:auto;
+  min-width:0;
+  display:block;
+  text-align:left;
+}
+.collection-card--taxonomy .collection-copy small,
+.collection-card--artist .collection-copy small {
+  margin-bottom:3px;
+  color:rgba(255,231,190,.62);
+  font-size:.54rem;
+  letter-spacing:.12em;
+  text-shadow:none;
+}
+.collection-card--taxonomy .collection-copy strong,
+.collection-card--artist .collection-copy strong {
+  max-width:none;
+  color:rgba(255,250,242,.95);
+  font-size:.94rem;
+  line-height:1.14;
+  letter-spacing:-.028em;
+  text-wrap:pretty;
+  text-shadow:none;
+}
+.collection-card--taxonomy .collection-copy span,
+.collection-card--artist .collection-copy span {
+  margin-top:4px;
+  overflow:hidden;
+  color:rgba(255,248,236,.48);
+  font-size:.62rem;
+  line-height:1.3;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-shadow:none;
+}
+.collection-card--taxonomy:hover .collection-image,
+.collection-card--artist:hover .collection-image { transform:none;filter:none; }
+
+.collection-grid--artist {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.collection-card--artist {
+  grid-template-columns:66px minmax(0,1fr);
+  gap:13px;
+  min-height:92px;
+  padding:12px 38px 12px 12px;
+  border-radius:18px;
+}
+.collection-card--artist .collection-image--monogram {
+  display:grid;
+  place-items:center;
+  width:66px;
+  height:66px;
+  border:1px solid rgba(231,201,143,.16);
+  border-radius:18px;
+  color:rgba(255,235,202,.86);
+  background:
+    radial-gradient(circle at 34% 28%,rgba(231,201,143,.16),transparent 38%),
+    linear-gradient(145deg,rgba(60,51,45,.72),rgba(25,22,28,.96));
+  font-size:1.12rem;
+  font-weight:720;
+  letter-spacing:-.04em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+@media (max-width:1080px) {
+  .collection-grid--taxonomy,
+  .collection-grid--artist { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+
+@media (max-width:900px) {
+  .collection-grid--destination { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .collection-grid--taxonomy { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .collection-grid--artist { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .collection-card--destination { min-height:180px;aspect-ratio:1.48/1; }
+  .collection-card--taxonomy,
+  .collection-card--artist { aspect-ratio:auto; }
+}
+
+@media (max-width:560px) {
+  .collection-section--destination { margin-bottom:44px; }
+  .collection-section--taxonomy,
+  .collection-section--artist { margin-bottom:36px; }
+  .collection-grid--destination,
+  .collection-grid--taxonomy,
+  .collection-grid--artist {
+    grid-auto-columns:auto;
+    margin-inline:0;
+    padding:0;
+  }
+  .collection-grid--destination {
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .collection-card--destination {
+    min-height:0;
+    aspect-ratio:1.58/1;
+    border-radius:20px;
+  }
+  .collection-card--destination .collection-copy { inset:auto 17px 16px; }
+  .collection-card--destination .collection-copy strong { max-width:18ch;font-size:clamp(1.28rem,6vw,1.55rem); }
+  .collection-grid--taxonomy {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .collection-card--taxonomy {
+    grid-template-columns:44px minmax(0,1fr);
+    gap:9px;
+    min-height:68px;
+    padding:9px 29px 9px 9px;
+    border-radius:14px;
+  }
+  .collection-card--taxonomy .collection-image {
+    width:44px;
+    height:44px;
+    border-radius:10px;
+  }
+  .collection-card--taxonomy::after,
+  .collection-card--artist::after { right:9px;width:15px;height:15px;background-size:13px; }
+  .collection-card--taxonomy .collection-copy small { margin-bottom:2px;font-size:.5rem;letter-spacing:.09em; }
+  .collection-card--taxonomy .collection-copy strong { font-size:.83rem;line-height:1.12; }
+  .collection-card--taxonomy .collection-copy span { margin-top:3px;font-size:.56rem; }
+  .collection-grid--artist {
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .collection-card--artist {
+    grid-template-columns:54px minmax(0,1fr);
+    gap:11px;
+    min-height:72px;
+    padding:9px 32px 9px 9px;
+    border-radius:15px;
+  }
+  .collection-card--artist .collection-image--monogram {
+    width:54px;
+    height:54px;
+    border-radius:14px;
+    font-size:.98rem;
+  }
+  .collection-card--artist .collection-copy strong { font-size:.9rem; }
+  .collection-card--artist .collection-copy span { font-size:.59rem; }
+  .essential-release-card .release-title { min-height:2.55em; }
+}
+
+@media (max-width:350px) {
+  .collection-card--taxonomy .collection-copy span { display:none; }
+}
