@@ -65,13 +65,38 @@ async function expectInsideViewport(page, selector) {
   const locator = page.locator(selector);
   await expect(locator).toBeVisible();
   await expect.poll(async () => {
-    const box = await locator.boundingBox();
-    if (!box) return false;
-    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
-    return box.x >= -2
-      && box.x + box.width <= viewport.width + 2
-      && box.y >= -2
-      && box.y + box.height <= viewport.height + 2;
+    const geometry = await page.evaluate((targetSelector) => {
+      const element = document.querySelector(targetSelector);
+      if (!(element instanceof Element) || !element.isConnected) return null;
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        viewportWidth: innerWidth,
+        viewportHeight: innerHeight,
+      };
+    }, selector).catch(() => null);
+    if (!geometry) return false;
+    const values = [
+      geometry.left,
+      geometry.top,
+      geometry.right,
+      geometry.bottom,
+      geometry.width,
+      geometry.height,
+      geometry.viewportWidth,
+      geometry.viewportHeight,
+    ];
+    if (!values.every(Number.isFinite)) return false;
+    if (geometry.width <= 0 || geometry.height <= 0 || geometry.viewportWidth <= 0 || geometry.viewportHeight <= 0) return false;
+    return geometry.left >= -2
+      && geometry.right <= geometry.viewportWidth + 2
+      && geometry.top >= -2
+      && geometry.bottom <= geometry.viewportHeight + 2;
   }, {
     message: `${selector} should settle fully inside the visual viewport`,
     timeout: 2_500,
