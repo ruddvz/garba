@@ -18,7 +18,10 @@ function safeText(value, max = 160) {
 }
 
 function safeTimestamp(value) {
-  if (!value) return null;
+  if (value == null || value === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    try { return new Date(value).toISOString(); } catch { return null; }
+  }
   const timestamp = Date.parse(String(value));
   return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 }
@@ -127,19 +130,50 @@ export function normaliseHomeResult(result = EMPTY_TRANSPORT) {
   });
 }
 
+function metricFromCount(value, precision = 'unknown', sampled = false) {
+  const count = finiteNonNegative(value);
+  return count == null ? null : Object.freeze({ value: count, precision, sampled });
+}
+
 function normaliseLiveRows(value) {
   if (!Array.isArray(value)) return null;
   return Object.freeze(value.flatMap((row) => {
     if (!isObject(row)) return [];
     const label = safeText(row.label ?? row.key ?? row.name, 100);
-    const metric = normaliseHomeMetric(row.metric)
-      || (finiteNonNegative(row.count) != null ? Object.freeze({ value: row.count, precision: 'exact', sampled: false }) : null);
+    const metric = normaliseHomeMetric(row.metric) || metricFromCount(row.count, 'exact', false);
     if (!label || !metric) return [];
     return [Object.freeze({ label, metric })];
   }));
 }
 
+function aggregateFlatBreakdown(rows, key) {
+  const totals = new Map();
+  for (const row of rows) {
+    if (!isObject(row)) continue;
+    const label = safeText(row[key], 100);
+    const metric = normaliseHomeMetric(row.sessions);
+    if (!label || !metric) continue;
+    const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
+    current.value += metric.value;
+    if (metric.precision === 'estimated') current.precision = 'estimated';
+    else if (current.precision !== 'estimated' && metric.precision !== 'exact') current.precision = metric.precision;
+    if (metric.sampled) current.sampled = true;
+    totals.set(label, current);
+  }
+  return Object.freeze([...totals.entries()]
+    .map(([label, metric]) => Object.freeze({ label, metric: Object.freeze({ ...metric }) }))
+    .sort((left, right) => right.metric.value - left.metric.value || left.label.localeCompare(right.label)));
+}
+
 function normaliseBreakdowns(value) {
+  if (Array.isArray(value)) {
+    const result = {
+      surface: aggregateFlatBreakdown(value, 'surface'),
+      world: aggregateFlatBreakdown(value, 'world'),
+      displayMode: aggregateFlatBreakdown(value, 'displayMode'),
+    };
+    return Object.freeze(result);
+  }
   if (!isObject(value)) return null;
   const result = {};
   for (const [key, rows] of Object.entries(value)) {
@@ -155,13 +189,15 @@ function normaliseTrend(value) {
   if (!source) return null;
   const rows = source.flatMap((point) => {
     if (!isObject(point)) return [];
-    const at = safeTimestamp(point.at ?? point.time ?? point.timestamp);
-    const liveNow = normaliseHomeMetric(point.liveNow)
-      || (finiteNonNegative(point.liveNow) != null ? Object.freeze({ value: point.liveNow, precision: 'unknown', sampled: false }) : null);
-    const listeningNow = normaliseHomeMetric(point.listeningNow)
-      || (finiteNonNegative(point.listeningNow) != null ? Object.freeze({ value: point.listeningNow, precision: 'unknown', sampled: false }) : null);
-    if (!at || (!liveNow && !listeningNow)) return [];
-    return [Object.freeze({ at, liveNow, listeningNow })];
+    const at = safeTimestamp(point.minute ?? point.at ?? point.time ?? point.timestamp);
+    const liveNow = normaliseHomeMetric(point.activeSessions ?? point.liveNow)
+      || metricFromCount(point.activeSessions ?? point.liveNow);
+    const listeningNow = normaliseHomeMetric(point.listeningSessions ?? point.listeningNow)
+      || metricFromCount(point.listeningSessions ?? point.listeningNow);
+    const browsingNow = normaliseHomeMetric(point.browsingSessions ?? point.browsingNow)
+      || metricFromCount(point.browsingSessions ?? point.browsingNow);
+    if (!at || (!liveNow && !listeningNow && !browsingNow)) return [];
+    return [Object.freeze({ at, liveNow, listeningNow, browsingNow })];
   });
   return Object.freeze(rows);
 }
@@ -174,6 +210,7 @@ export function normaliseLiveResult(result = EMPTY_TRANSPORT) {
   const listeningNow = normaliseHomeMetric(data?.listeningNow);
   const browsingNow = normaliseHomeMetric(data?.browsingNow);
   const expirySeconds = finiteNonNegative(data?.expirySeconds);
+  const trendMinutes = finiteNonNegative(data?.trendMinutes);
   const breakdowns = normaliseBreakdowns(data?.breakdowns);
   const trend = normaliseTrend(data?.trend ?? data?.recentTrend);
 
@@ -187,6 +224,7 @@ export function normaliseLiveResult(result = EMPTY_TRANSPORT) {
     listeningNow,
     browsingNow,
     expirySeconds,
+    trendMinutes,
     breakdowns,
     trend,
   });
@@ -272,7 +310,7 @@ function renderSeries(model) {
   }
   section.hidden = false;
   list.replaceChildren();
-  const recent = rows.slice(-14);
+  const recent = rows.slice(-7);
   const max = Math.max(...recent.map((row) => row.value), 1);
   for (const row of recent) {
     const item = document.createElement('li');
@@ -291,6 +329,31 @@ function renderSeries(model) {
   const last = recent[recent.length - 1]?.value ?? 0;
   const direction = last > first ? 'increased' : last < first ? 'decreased' : 'was unchanged';
   summary.textContent = `Sessions ${direction} from ${new Intl.NumberFormat('en-IN').format(first)} to ${new Intl.NumberFormat('en-IN').format(last)} across the displayed ${recent.length} daily points.`;
+}
+
+function renderLiveTrend(model) {
+  const section = document.querySelector('#homeLiveTrendSection');
+  const summary = document.querySelector('#homeLiveTrendSummary');
+  if (!section || !summary) return;
+  const rows = model.live.trend;
+  if (!rows?.length) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  const active = rows.map((row) => row.liveNow?.value).filter((value) => value != null);
+  const listening = rows.map((row) => row.listeningNow?.value).filter((value) => value != null);
+  const first = active[0] ?? null;
+  const last = active.at(-1) ?? null;
+  const activeRange = active.length ? `${Math.min(...active)}–${Math.max(...active)}` : 'unavailable';
+  const listeningRange = listening.length ? `${Math.min(...listening)}–${Math.max(...listening)}` : 'unavailable';
+  const windowText = model.live.trendMinutes != null ? `${model.live.trendMinutes}-minute` : `${rows.length}-point`;
+  const movement = first == null || last == null
+    ? 'Active-session movement is unavailable.'
+    : first === last
+      ? `Active sessions started and ended at ${last}.`
+      : `Active sessions moved from ${first} to ${last}.`;
+  summary.textContent = `${windowText} live window. ${movement} Active range ${activeRange}; listening range ${listeningRange}.`;
 }
 
 function renderBreakdownList(id, rows) {
@@ -394,6 +457,7 @@ function renderModel(model) {
   const content = document.querySelector('#homeContent');
   if (content) content.hidden = false;
   renderSeries(model);
+  renderLiveTrend(model);
   renderLiveDetails(model);
   renderLifetime(model);
 }
@@ -439,8 +503,13 @@ function installHomeMarkup(section) {
         <p class="home-source-note" id="homeLiveMeta">Live freshness metadata is unavailable.</p>
       </section>
 
+      <section class="home-section" id="homeLiveTrendSection" aria-labelledby="home-live-trend-title" hidden>
+        <div class="section-heading"><h2 id="home-live-trend-title">Live activity</h2><span>Recent protected trend</span></div>
+        <p class="home-source-note home-live-trend-summary" id="homeLiveTrendSummary"></p>
+      </section>
+
       <section class="home-section" id="homeTrendSection" aria-labelledby="home-trend-title" hidden>
-        <div class="section-heading"><h2 id="home-trend-title">Recent sessions</h2><span>Up to 14 daily points</span></div>
+        <div class="section-heading"><h2 id="home-trend-title">Recent sessions</h2><span>Last 7 daily points</span></div>
         <ol class="home-trend" id="homeTrend"></ol>
         <p class="home-source-note" id="homeTrendSummary"></p>
       </section>
