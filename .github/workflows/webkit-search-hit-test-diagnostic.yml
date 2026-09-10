@@ -40,15 +40,20 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install fixture renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+
       - name: Build catalogue data
         run: npm run catalogue
 
-      - name: Prepare main and pinned candidate fixtures
+      - name: Prepare browser-smoke-equivalent fixtures
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf _webkit_hit_test
-          mkdir -p _webkit_hit_test/main _webkit_hit_test/candidate
+          rm -rf _webkit_hit_test webkit-search-hit-test-samples webkit-search-hit-test-logs
+          mkdir -p _webkit_hit_test/main _webkit_hit_test/candidate webkit-search-hit-test-logs
 
           git fetch --no-tags --depth=1 origin refs/pull/857/head
           actual_857_sha="$(git rev-parse FETCH_HEAD)"
@@ -59,49 +64,124 @@ jobs:
           git show "${PINNED_857_SHA}:styles/30-product-polish.css" > /tmp/webkit-857-product-polish.css
           test -s /tmp/webkit-857-product-polish.css
 
-          prepare_fixture() {
-            local target="$1"
-            local product_polish="$2"
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            provider-runtime.js \
+            player-continuity.js \
+            youtube-player-runtime.js \
+            nonstop-browser.js \
+            sw.js \
+            manifest.webmanifest \
+            offline.html \
+            _webkit_hit_test/main/
+          cp -R assets data _webkit_hit_test/main/
 
-            cp \
-              index.html \
-              app.js \
-              simple-runtime.js \
-              provider-runtime.js \
-              player-continuity.js \
-              youtube-player-runtime.js \
-              nonstop-browser.js \
-              sw.js \
-              manifest.webmanifest \
-              offline.html \
-              "$target/"
-            cp -R assets data "$target/"
+          # Match the shared browser gate's deterministic real-data sample so this
+          # diagnostic measures Search, not the known hidden full-catalogue startup cost.
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
 
-            # Match the player payload and stylesheet order used by production packaging.
-            cat app.js assets/runtime/seek-state.js > "$target/app.js"
-            cat \
-              styles/00-foundation-and-player.css \
-              styles/10-browser-and-shell.css \
-              styles/20-responsive-and-accessibility.css \
-              "$product_polish" \
-              styles/40-accessibility-states.css \
-              styles/50-discovery-and-performance.css \
-              styles/60-runtime-and-provider.css \
-              styles/70-mobile-playback-coordination.css \
-              styles/80-genre-icon-images.css \
-              > "$target/styles.css"
+          const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
+          const writeJson = (file, value) => writeFileSync(file, `${JSON.stringify(value)}\n`);
+          const songsPath = '_webkit_hit_test/main/data/songs.json';
+          const indexPath = '_webkit_hit_test/main/data/catalogue/index.json';
+          const allSongs = readJson(songsPath);
+          const requiredIds = new Set([
+            'bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014',
+            'ochhav-2023-01-ochhav-theme',
+          ]);
+          const perGenreLimit = 24;
+          const genreCounts = new Map();
+          const selected = [];
+          const selectedIds = new Set();
+          const keep = (song) => {
+            if (!song?.id || selectedIds.has(song.id)) return;
+            selected.push(song);
+            selectedIds.add(song.id);
+          };
 
-            test -s "$target/index.html"
-            test -s "$target/app.js"
-            test -s "$target/styles.css"
-            test -s "$target/data/songs.json"
-            grep -q 'id="searchButton"' "$target/index.html"
-            grep -q 'id="sheetClose"' "$target/index.html"
-            grep -q 'id="searchInput"' "$target/index.html"
+          for (const song of allSongs) {
+            if (requiredIds.has(song?.id)) keep(song);
+            const genre = String(song?.genre || 'traditional');
+            const count = genreCounts.get(genre) || 0;
+            if (count >= perGenreLimit) continue;
+            keep(song);
+            genreCounts.set(genre, count + 1);
+          }
+          for (const id of requiredIds) {
+            if (!selectedIds.has(id)) throw new Error(`Required diagnostic song missing: ${id}`);
           }
 
-          prepare_fixture _webkit_hit_test/main styles/30-product-polish.css
-          prepare_fixture _webkit_hit_test/candidate /tmp/webkit-857-product-polish.css
+          const index = readJson(indexPath);
+          writeJson(songsPath, selected);
+          writeJson(indexPath, {
+            ...index,
+            discovery: { ...(index.discovery || {}), artists: [] },
+          });
+          console.log(`WebKit diagnostic catalogue: ${allSongs.length} -> ${selected.length} songs across ${genreCounts.size} genres`);
+          NODE
+
+          # Match Pages/browser-smoke app packaging.
+          cat app.js assets/runtime/seek-state.js > _webkit_hit_test/main/app.js
+          grep -q 'GARBA_SEEK_STATE_RUNTIME' _webkit_hit_test/main/app.js
+
+          # Match the browser gate's runtime stylesheet order.
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _webkit_hit_test/main/styles.css
+          ! grep -q '@import' _webkit_hit_test/main/styles.css
+
+          # Match production-generated icon/background assets used by the shared gate.
+          mkdir -p _webkit_hit_test/main/assets/icons
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _webkit_hit_test/main/assets/icons/icon-512.png
+
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+          test -n "$PACK" || { echo 'Required 15-image WebP pack is missing'; exit 1; }
+          rm -rf _webkit_hit_test/main/assets/backgrounds/library
+          mkdir -p _webkit_hit_test/main/assets/backgrounds/library
+          unzip -oq "$PACK" -d _webkit_hit_test/main/assets/backgrounds/library
+          test "$(find _webkit_hit_test/main/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15
+          rm -f _webkit_hit_test/main/assets/backgrounds/garba15-*.zip
+
+          # Candidate is byte-for-byte the same fixture except for the exact #857
+          # product-polish stylesheet under investigation.
+          cp -R _webkit_hit_test/main/. _webkit_hit_test/candidate/
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            /tmp/webkit-857-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _webkit_hit_test/candidate/styles.css
+
+          test -s _webkit_hit_test/main/index.html
+          test -s _webkit_hit_test/main/data/songs.json
+          test -s _webkit_hit_test/main/assets/icons/icon-512.png
+          test -s _webkit_hit_test/main/assets/backgrounds/library/09-warm-stage-courtyard.webp
+          grep -q 'id="searchButton"' _webkit_hit_test/main/index.html
+          grep -q 'id="sheetClose"' _webkit_hit_test/main/index.html
+          grep -q 'id="searchInput"' _webkit_hit_test/main/index.html
 
           main_hash="$(sha256sum styles/30-product-polish.css | awk '{print $1}')"
           candidate_hash="$(sha256sum /tmp/webkit-857-product-polish.css | awk '{print $1}')"
@@ -118,9 +198,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 4175 --bind 127.0.0.1 --directory _webkit_hit_test/main >/tmp/playgarba-webkit-main.log 2>&1 &
+          python3 -m http.server 4175 --bind 127.0.0.1 --directory _webkit_hit_test/main >webkit-search-hit-test-logs/main.log 2>&1 &
           echo $! > /tmp/playgarba-webkit-main.pid
-          python3 -m http.server 4176 --bind 127.0.0.1 --directory _webkit_hit_test/candidate >/tmp/playgarba-webkit-candidate.log 2>&1 &
+          python3 -m http.server 4176 --bind 127.0.0.1 --directory _webkit_hit_test/candidate >webkit-search-hit-test-logs/candidate.log 2>&1 &
           echo $! > /tmp/playgarba-webkit-candidate.pid
 
           for port in 4175 4176; do
@@ -132,11 +212,7 @@ jobs:
               fi
               sleep 1
             done
-            if [[ "$ready" != 1 ]]; then
-              cat /tmp/playgarba-webkit-main.log || true
-              cat /tmp/playgarba-webkit-candidate.log || true
-              exit 1
-            fi
+            test "$ready" = 1 || { cat webkit-search-hit-test-logs/*.log; exit 1; }
           done
 
       - name: Capture isolated hit-test and activation evidence
@@ -161,7 +237,6 @@ jobs:
             webkit-search-hit-test-diagnostic.json
             webkit-search-hit-test-fixture.txt
             webkit-search-hit-test-samples/*.json
-            /tmp/playgarba-webkit-main.log
-            /tmp/playgarba-webkit-candidate.log
+            webkit-search-hit-test-logs/*.log
           if-no-files-found: warn
           retention-days: 7
