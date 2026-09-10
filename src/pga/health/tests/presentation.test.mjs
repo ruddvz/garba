@@ -152,8 +152,29 @@ test('future canonical freshness stays unknown instead of rendering as zero-age 
   assert.equal(telemetry.status, 'unknown')
   assert.equal(telemetry.freshness.ageMs, null)
   assert.equal(telemetry.freshness.observedAt, new Date(NOW + 60_000).toISOString())
+  assert.match(telemetry.freshness.text, /checked 10s ago/i)
+  assert.match(telemetry.freshness.text, /data through 12s ago/i)
   assert.match(telemetry.freshness.text, /freshness time is ahead of evaluation clock/i)
-  assert.doesNotMatch(telemetry.freshness.text, /\b0s ago\b/)
+})
+
+test('future canonical freshness can coexist with truthful exact-now checked recency', () => {
+  const input = snapshot('unknown')
+  input.subsystems[5] = row('telemetry', 'unknown', {
+    checkedAt: NOW,
+    dataThroughAt: NOW - 12_000,
+    freshnessAt: NOW + 60_000,
+    reasons: ['Evidence freshness timestamp is later than the evaluation clock.'],
+  })
+
+  const model = buildHealthPresentation(input, { nowMs: NOW })
+  const telemetry = byName(model, 'telemetry')
+
+  assert.equal(telemetry.status, 'unknown')
+  assert.equal(telemetry.freshness.ageMs, null)
+  assert.equal(telemetry.freshness.observedAt, new Date(NOW + 60_000).toISOString())
+  assert.match(telemetry.freshness.text, /checked 0s ago/i)
+  assert.match(telemetry.freshness.text, /data through 12s ago/i)
+  assert.match(telemetry.freshness.text, /freshness time is ahead of evaluation clock/i)
 })
 
 test('future checked and data-through timestamps use explicit ahead-of-clock copy', () => {
