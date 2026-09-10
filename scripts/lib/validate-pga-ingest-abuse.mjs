@@ -58,6 +58,7 @@ function envFixture({ edgeSuccess = true, browserSuccess = true, edgeThrows = fa
   const writes = []
   const env = {
     PGA_HMAC_SECRET: 'test-only-ingest-secret',
+    EDGE_RATE_LIMIT_REQUIRED: 'true',
     EVENTS: { writeDataPoint(point) { writes.push(point) } },
     PRESENCE: { writeDataPoint(point) { writes.push(point) } },
     BROWSER_RATE_LIMITER: {
