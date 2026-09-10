@@ -123,7 +123,10 @@ async function validateBrowserContract() {
     const browser = await engine.launch({ headless: true });
     try {
       for (const [viewportName, viewport] of viewports) {
-        const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+        // This shell-only fixture mocks protected aggregates at the page layer.
+        // Block service workers so WebKit cannot bypass those deterministic mocks;
+        // real PGA service-worker behavior remains covered by the PWA contract checks.
+        const context = await browser.newContext({ viewport, reducedMotion: 'reduce', serviceWorkers: 'block' });
         const page = await context.newPage();
         const failures = [];
 
