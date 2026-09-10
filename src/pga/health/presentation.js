@@ -121,18 +121,29 @@ function ageText(ageMs) {
   return `${days}d ago`
 }
 
+function relativeTimestampText(label, timestamp, nowMs) {
+  if (timestamp == null) return null
+  if (timestamp > nowMs) return `${label} time is ahead of evaluation clock`
+  return `${label} ${ageText(nowMs - timestamp)}`
+}
+
 function freshnessFor(subsystem, nowMs) {
   const checkedAt = normaliseTimestamp(subsystem?.checkedAt)
   const dataThroughAt = normaliseTimestamp(subsystem?.dataThroughAt)
   const freshnessAt = normaliseTimestamp(subsystem?.freshnessAt)
   const observedAt = freshnessAt ?? dataThroughAt ?? checkedAt
-  const ageMs = observedAt == null ? null : Math.max(0, nowMs - observedAt)
+  const futureObserved = observedAt != null && observedAt > nowMs
+  const ageMs = observedAt == null || futureObserved ? null : nowMs - observedAt
   const parts = []
 
   if (canonicalStatus(subsystem?.status) === 'stale') parts.push('Stale')
-  if (checkedAt != null) parts.push(`checked ${ageText(Math.max(0, nowMs - checkedAt))}`)
-  if (dataThroughAt != null) parts.push(`data through ${ageText(Math.max(0, nowMs - dataThroughAt))}`)
-  if (checkedAt == null && dataThroughAt == null && observedAt != null) parts.push(`observed ${ageText(ageMs)}`)
+  if (checkedAt != null) parts.push(relativeTimestampText('checked', checkedAt, nowMs))
+  if (dataThroughAt != null) parts.push(relativeTimestampText('data through', dataThroughAt, nowMs))
+  if (checkedAt == null && dataThroughAt == null && observedAt != null) {
+    parts.push(relativeTimestampText('observed', observedAt, nowMs))
+  } else if (futureObserved && observedAt !== checkedAt && observedAt !== dataThroughAt) {
+    parts.push('freshness time is ahead of evaluation clock')
+  }
 
   return {
     checkedAt: checkedAt == null ? null : new Date(checkedAt).toISOString(),
