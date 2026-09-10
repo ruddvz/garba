@@ -564,7 +564,7 @@ export async function exerciseExploreRoundTrip(page, origin, roundIndex = 0) {
       if (await input.isVisible().catch(() => false)) {
         await input.fill('Garba').catch(() => {});
         await page.waitForTimeout(80);
-        result.searched = input.isVisible().then(() => true).catch(() => false);
+        result.searched = true;
         await input.fill('').catch(() => {});
         await page.keyboard.press('Escape').catch(() => {});
       }
