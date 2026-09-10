@@ -316,7 +316,7 @@ function renderHealth(presentation) {
   if (announcer) announcer.textContent = presentation.accessibilitySummary || `PlayGarba Health: ${presentation.statusLabel}. ${presentation.summary}`;
 }
 
-export function mountHealth({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true } = {}) {
+export function mountHealth({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true, fixtureMode = false } = {}) {
   if (typeof document === 'undefined') return null;
   const section = document.querySelector('[data-view="health"]');
   if (!section) return null;
@@ -360,13 +360,15 @@ export function mountHealth({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true 
     renderHealth(normalised.presentation);
   }
 
-  for (const button of document.querySelectorAll('[data-nav="health"]')) {
-    button.addEventListener('click', () => load());
+  if (!fixtureMode) {
+    for (const button of document.querySelectorAll('[data-nav="health"]')) {
+      button.addEventListener('click', () => load());
+    }
+    document.querySelector('#refreshButton')?.addEventListener('click', () => { if (isActive()) load({ force: true }); });
+    window.addEventListener('hashchange', () => { if (location.hash === '#health') load(); });
+    window.addEventListener('online', () => { if (isActive()) load({ force: true }); });
+    window.addEventListener('offline', () => { if (isActive()) load({ force: true }); });
   }
-  document.querySelector('#refreshButton')?.addEventListener('click', () => { if (isActive()) load({ force: true }); });
-  window.addEventListener('hashchange', () => { if (location.hash === '#health') load(); });
-  window.addEventListener('online', () => { if (isActive()) load({ force: true }); });
-  window.addEventListener('offline', () => { if (isActive()) load({ force: true }); });
 
   if (autoLoad && isActive()) load({ force: true });
   return Object.freeze({ reload: () => load({ force: true }), render: renderHealth });
@@ -374,6 +376,6 @@ export function mountHealth({ fetchEnvelope = fetchPgaEnvelope, autoLoad = true 
 
 if (typeof document !== 'undefined') {
   const fixtureAllowed = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  const controller = mountHealth({ autoLoad: !fixtureAllowed });
+  const controller = mountHealth({ autoLoad: !fixtureAllowed, fixtureMode: fixtureAllowed });
   if (fixtureAllowed && controller) window.PGA_HEALTH_TEST = controller;
 }
