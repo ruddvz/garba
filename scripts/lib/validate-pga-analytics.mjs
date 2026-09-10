@@ -160,7 +160,7 @@ async function validateBrowserContract() {
     const browser = await engine.launch({ headless: true });
     try {
       for (const [viewportName, viewport] of viewports) {
-        const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+        const context = await browser.newContext({ viewport, reducedMotion: 'reduce', serviceWorkers: 'block' });
         const page = await context.newPage();
         const apiRequests = [];
         const failures = [];
