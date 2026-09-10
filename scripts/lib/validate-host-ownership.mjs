@@ -4,6 +4,8 @@ import process from 'node:process';
 import { validateSearchSurfacePolicy } from './validate-search-surface-policy.mjs';
 import { runSearchSurfacePolicySelfTests } from './test-validate-search-surface-policy.mjs';
 import { validateSearchSurfaces } from './validate-search-surfaces.mjs';
+import { validateStructuredSearchData } from './validate-structured-search-data.mjs';
+import { runStructuredSearchDataSelfTests } from './test-validate-structured-search-data.mjs';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const exists = async (file) => {
@@ -51,6 +53,22 @@ try {
   if (result.ok) console.log(`✓ search surfaces valid: ${result.routes.length} deployed route(s), ${result.sitemapUrls.length} sitemap URL(s)`);
 } catch (error) {
   fail(`search-surface validation could not run: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const count = runStructuredSearchDataSelfTests();
+  console.log(`✓ structured search-data regression tests passed (${count} cases)`);
+} catch (error) {
+  fail(`structured search-data self-test failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const result = validateStructuredSearchData(root, { quiet: true });
+  for (const error of result.errors) fail(`structured search data: ${error}`);
+  for (const warning of result.warnings) console.warn(`! structured search data: ${warning}`);
+  if (result.ok) console.log(`✓ structured search data valid: ${result.pagesWithStructuredData}/${result.pageCount} deployed route(s), ${result.structuredObjects} typed object(s)`);
+} catch (error) {
+  fail(`structured search-data validation could not run: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 if (failed) process.exit(1);

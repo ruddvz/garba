@@ -1,0 +1,49 @@
+name: PGA security validate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pga/**'
+      - 'scripts/lib/validate-pga-security.mjs'
+      - '.github/workflows/pga-security-validate.yml'
+      - 'index.html'
+      - '*.js'
+      - 'manifest.webmanifest'
+      - 'robots.txt'
+      - 'sitemap.xml'
+      - 'public-site/**'
+      - 'assets/runtime/**'
+      - 'src/catalogue/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/pga/**'
+      - 'scripts/lib/validate-pga-security.mjs'
+      - '.github/workflows/pga-security-validate.yml'
+      - 'index.html'
+      - '*.js'
+      - 'manifest.webmanifest'
+      - 'robots.txt'
+      - 'sitemap.xml'
+      - 'public-site/**'
+      - 'assets/runtime/**'
+      - 'src/catalogue/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate PGA security contract
+        run: node scripts/lib/validate-pga-security.mjs
