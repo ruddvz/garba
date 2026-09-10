@@ -243,9 +243,13 @@ assert.deepEqual([...MEDIA_EVENTS], [
   });
   assert.equal(accepted, true);
   assert.equal(plannerCalls[0].intent.type, 'sync-source');
+  assert.equal(plannerCalls[0].intent.songId, 'song-a');
+  assert.equal(plannerCalls[0].intent.generation, 1);
   assert.equal(controller.getState().songId, 'song-a');
   assert.equal(controller.getState().phase, 'selected');
   assert.equal(controller.getState().playbackState, 'none');
+  assert.equal(controller.getPolicy().songId, 'song-a');
+  assert.equal(controller.getPolicy().generation, 1);
   assert.equal(mediaElement.src, 'https://audio.playgarba.example/song-a/master.m4a');
   assert.equal(mediaElement.loadCalls, 1);
   assert.equal(mediaElement.playCalls, 0, 'selection must never autoplay');
@@ -282,6 +286,7 @@ assert.deepEqual([...MEDIA_EVENTS], [
   mediaElement.emit('playing', { currentTime: 2.5 });
   assert.equal(controller.getState().phase, 'playing');
   assert.equal(controller.getState().playbackState, 'playing');
+  assert.equal(controller.getPolicy().generation, 1);
   assert.equal(mediaSession.playbackState, 'playing');
   assert.equal(mediaSession.handlers.has('play'), true);
   assert.equal(mediaSession.handlers.has('pause'), true);
@@ -347,11 +352,13 @@ assert.deepEqual([...MEDIA_EVENTS], [
 }
 
 {
-  const { controller, mediaElement, mediaSession } = setup();
+  const { controller, mediaElement, mediaSession, plannerCalls } = setup();
   controller.select({ resolution: resolution('song-a'), identity: identity('song-a'), generation: 1, capabilities: fullCapabilities });
   mediaElement.emit('loadedmetadata', { currentSrc: mediaElement.src, duration: 120, currentTime: 10 });
   mediaElement.emit('playing', { currentTime: 10 });
   const oldUrl = mediaElement.src;
+  const oldPolicy = controller.getPolicy();
+  assert.equal(oldPolicy.generation, 1);
 
   mediaElement.operations.length = 0;
   controller.select({ resolution: resolution('song-b'), identity: identity('song-b'), generation: 2, capabilities: fullCapabilities });
@@ -362,14 +369,20 @@ assert.deepEqual([...MEDIA_EVENTS], [
     ['pause', 'clear-source', 'load', `bind:${newUrl}`, 'load'],
     'replacement must execute planner pause/clear/bind/load order',
   );
+  assert.equal(plannerCalls.at(-1).intent.songId, 'song-b');
+  assert.equal(plannerCalls.at(-1).intent.generation, 2);
   assert.equal(controller.getState().songId, 'song-b');
   assert.equal(controller.getState().phase, 'selected');
+  assert.equal(controller.getPolicy().songId, 'song-b');
+  assert.equal(controller.getPolicy().generation, 2);
+  assert.notEqual(controller.getPolicy(), oldPolicy);
   assert.equal(mediaSession.metadata.title, 'Song B');
 
   mediaElement.emit('playing', { currentSrc: oldUrl, duration: 120, currentTime: 99 });
   assert.equal(controller.getState().songId, 'song-b');
   assert.equal(controller.getState().phase, 'selected');
   assert.equal(controller.getState().position, null);
+  assert.equal(controller.getPolicy().generation, 2);
   assert.equal(mediaSession.metadata.title, 'Song B', 'late A event must not overwrite B metadata');
   mediaElement.emit('error', { currentSrc: oldUrl, error: { code: 3 } });
   assert.equal(controller.getState().phase, 'selected', 'late A error must not poison B');
@@ -379,6 +392,7 @@ assert.deepEqual([...MEDIA_EVENTS], [
   mediaElement.emit('playing', { currentTime: 1 });
   assert.equal(controller.getState().songId, 'song-b');
   assert.equal(controller.getState().phase, 'playing');
+  assert.equal(controller.getPolicy().generation, 2);
   assert.equal(mediaSession.playbackState, 'playing');
 }
 
@@ -540,7 +554,7 @@ assert.deepEqual([...MEDIA_EVENTS], [
   assert.ok(playBody && playBody[1].includes('planAndExecute'), 'play must delegate to planner');
   assert.ok(pauseBody && pauseBody[1].includes('planAndExecute'), 'pause must delegate to planner');
   assert.ok(seekBody && seekBody[1].includes('planAndExecute'), 'seek must delegate to planner');
-  assert.ok(selectBody && selectBody[1].includes("planAndExecute({ type: 'sync-source' })"), 'selection must delegate source sync to planner');
+  assert.ok(selectBody && selectBody[1].includes("planAndExecute({ type: 'sync-source', songId: state.songId, generation: state.generation })"), 'selection must delegate generation-scoped source sync to planner');
   assert.equal(playBody[1].includes('mediaElement.play'), false, 'play method must not execute media directly');
   assert.equal(pauseBody[1].includes('mediaElement.pause'), false, 'pause method must not execute media directly');
   assert.equal(seekBody[1].includes('mediaElement.currentTime'), false, 'seek method must not execute media directly');
