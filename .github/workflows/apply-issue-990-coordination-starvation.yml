@@ -24,6 +24,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           files = {
               ".github/workflows/agent-file-claim-conflicts.yml": "agent-file-claim-conflicts",
@@ -52,53 +53,49 @@ jobs:
                   raise SystemExit(f"{path}: expected exactly one static concurrency block, found {text.count(old)}")
               p.write_text(text.replace(old, new, 1))
 
-          p = Path(".github/workflows/agent-branch-drift.yml")
-          text = p.read_text()
-          old = """            runSelfTests();
-            await ensureDriftLabel();"""
-          new = """            runSelfTests();
+          def insert_readonly_guard(path, ensure_call, heading, summary):
+              p = Path(path)
+              text = p.read_text()
+              pattern = re.compile(
+                  r"(?m)^(?P<indent>[ \t]*)runSelfTests\(\);\n(?P=indent)" + re.escape(ensure_call)
+              )
+              matches = list(pattern.finditer(text))
+              if len(matches) != 1:
+                  raise SystemExit(f"{path}: expected one self-test/mutation boundary, found {len(matches)}")
+              indent = matches[0].group("indent")
+              i1 = indent + "  "
+              i2 = indent + "    "
+              replacement = "\n".join([
+                  indent + "runSelfTests();",
+                  "",
+                  indent + "// Non-closed PR runs are terminal read-only checks with their own",
+                  indent + "// per-PR pending slot. Global labels/status/#364 maintenance remains",
+                  indent + "// serialized on claim/release/close/schedule/manual events.",
+                  indent + "if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {",
+                  i1 + "const pr = context.payload.pull_request;",
+                  i1 + "core.summary",
+                  i2 + ".addHeading(" + repr(heading) + ")",
+                  i2 + ".addRaw(`PR #${pr.number} " + summary + "`)",
+                  i2 + ".write();",
+                  i1 + "return;",
+                  indent + "}",
+                  "",
+                  indent + ensure_call,
+              ])
+              p.write_text(pattern.sub(replacement, text, count=1))
 
-            // A non-closed PR run is a required, read-only terminal check. Do not
-            // mutate drift labels/status/#364 from a PR-specific concurrency slot.
-            // Pre-PR drift only describes claimed branches without an open PR, so
-            // global reconciliation remains on claim/release/close/schedule/manual events.
-            if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {
-              const pr = context.payload.pull_request;
-              core.summary
-                .addHeading('Pre-PR branch drift')
-                .addRaw(`PR #${pr.number} completed its PR-scoped coordination check. Repository-wide no-PR drift reconciliation remains serialized in the global lane.`)
-                .write();
-              return;
-            }
-
-            await ensureDriftLabel();"""
-          if text.count(old) != 1:
-              raise SystemExit(f"agent-branch-drift.yml: expected one mutation boundary, found {text.count(old)}")
-          p.write_text(text.replace(old, new, 1))
-
-          p = Path(".github/workflows/agent-claim-hygiene.yml")
-          text = p.read_text()
-          old = """            runSelfTests();
-            await ensureReviewLabel();"""
-          new = """            runSelfTests();
-
-            // A non-closed PR proves the claimed branch has an open review surface,
-            // so hygiene's stale no-PR maintenance is not a PR merge assertion.
-            // Return before labels/status/#364 writes; those stay globally serialized
-            // on claim/release/close/schedule/manual reconciliation events.
-            if (context.eventName === 'pull_request' && context.payload.action !== 'closed') {
-              const pr = context.payload.pull_request;
-              core.summary
-                .addHeading('Agent claim hygiene')
-                .addRaw(`PR #${pr.number} completed its PR-scoped coordination check. Repository-wide stale no-PR claim maintenance remains serialized in the global lane.`)
-                .write();
-              return;
-            }
-
-            await ensureReviewLabel();"""
-          if text.count(old) != 1:
-              raise SystemExit(f"agent-claim-hygiene.yml: expected one mutation boundary, found {text.count(old)}")
-          p.write_text(text.replace(old, new, 1))
+          insert_readonly_guard(
+              ".github/workflows/agent-branch-drift.yml",
+              "await ensureDriftLabel();",
+              "Pre-PR branch drift",
+              "completed its PR-scoped coordination check. Repository-wide no-PR drift reconciliation remains serialized in the global lane.",
+          )
+          insert_readonly_guard(
+              ".github/workflows/agent-claim-hygiene.yml",
+              "await ensureReviewLabel();",
+              "Agent claim hygiene",
+              "completed its PR-scoped coordination check. Repository-wide stale no-PR claim maintenance remains serialized in the global lane.",
+          )
           PY
 
           cat > scripts/lib/test-agent-coordination-concurrency.mjs <<'EOF'
@@ -124,19 +121,22 @@ jobs:
             assert.match(source, /cancel-in-progress:\s*false/, `${path} must not cancel a running check`);
           }
 
-          for (const pr of Array.from({ length: 10 }, (_, index) => index + 101)) {
+          const interleavedPrs = Array.from({ length: 10 }, (_, index) => index + 101);
+          for (const pr of interleavedPrs) {
             for (const [, prefix] of mixed) {
               assert.equal(groupFor(prefix, 'pull_request', 'opened', pr), `${prefix}-${pr}`);
               assert.equal(groupFor(prefix, 'pull_request', 'synchronize', pr), `${prefix}-${pr}`);
+              assert.equal(groupFor(prefix, 'pull_request', 'edited', pr), `${prefix}-${pr}`);
             }
           }
 
           for (const [, prefix] of mixed) {
-            const groups = new Set(Array.from({ length: 10 }, (_, index) => groupFor(prefix, 'pull_request', 'opened', index + 101)));
+            const groups = new Set(interleavedPrs.map(pr => groupFor(prefix, 'pull_request', 'opened', pr)));
             assert.equal(groups.size, 10, `${prefix}: unrelated PRs must have independent pending slots`);
             assert.equal(groupFor(prefix, 'pull_request', 'closed', 101), `${prefix}-global`);
             assert.equal(groupFor(prefix, 'issue_comment', 'created', null), `${prefix}-global`);
             assert.equal(groupFor(prefix, 'issues', 'closed', null), `${prefix}-global`);
+            assert.equal(groupFor(prefix, 'schedule', null, null), `${prefix}-global`);
             assert.equal(groupFor(prefix, 'workflow_dispatch', null, null), `${prefix}-global`);
           }
 
