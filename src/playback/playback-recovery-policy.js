@@ -130,13 +130,26 @@
   }
 
   function retryBudget(retry) {
-    const input = isPlainObject(retry) ? retry : {};
-    const attempts = Number.isSafeInteger(input.attempts) && input.attempts >= 0
-      ? input.attempts
-      : 0;
-    const requestedMax = Number.isSafeInteger(input.maxAttempts) && input.maxAttempts >= 0
-      ? input.maxAttempts
-      : MAX_RETRY_ATTEMPTS;
+    if (retry === undefined || retry === null) {
+      return { attempts: 0, maxAttempts: MAX_RETRY_ATTEMPTS };
+    }
+    if (!isPlainObject(retry)) {
+      return { attempts: MAX_RETRY_ATTEMPTS, maxAttempts: MAX_RETRY_ATTEMPTS };
+    }
+
+    const hasAttempts = Object.prototype.hasOwnProperty.call(retry, 'attempts');
+    const hasMaxAttempts = Object.prototype.hasOwnProperty.call(retry, 'maxAttempts');
+    const attempts = hasAttempts ? retry.attempts : 0;
+    const requestedMax = hasMaxAttempts ? retry.maxAttempts : MAX_RETRY_ATTEMPTS;
+    if (
+      !Number.isSafeInteger(attempts)
+      || attempts < 0
+      || !Number.isSafeInteger(requestedMax)
+      || requestedMax < 0
+    ) {
+      return { attempts: MAX_RETRY_ATTEMPTS, maxAttempts: MAX_RETRY_ATTEMPTS };
+    }
+
     return {
       attempts,
       maxAttempts: Math.min(requestedMax, MAX_RETRY_ATTEMPTS),
@@ -161,7 +174,13 @@
     const youtubeUrl = exactYoutubeWatchUrl(rawSource);
     const budget = retryBudget(retry);
 
-    if (kind === 'autoplay-blocked' && context) {
+    if (
+      kind === 'autoplay-blocked'
+      && context
+      && context.source.executable === true
+      && context.source.provider
+      && context.source.kind
+    ) {
       actions.push(action('play', 'Play', context, { requiresUserGesture: true }));
     }
 
@@ -169,6 +188,8 @@
       RETRYABLE_FAILURES.has(kind)
       && context
       && context.source.executable === true
+      && context.source.provider
+      && context.source.kind
       && budget.attempts < budget.maxAttempts
     ) {
       actions.push(action('retry', 'Try again', context, {
@@ -179,6 +200,7 @@
 
     if (
       youtubeUrl
+      && context
       && kind !== 'removed-or-private'
       && kind !== 'offline'
       && kind !== 'autoplay-blocked'
