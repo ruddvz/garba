@@ -153,8 +153,10 @@ export function composeHealthEvidence(observations = {}) {
 }
 
 export function composeHealthSnapshot(observations = {}, { nowMs = Date.now() } = {}) {
-  const evaluatedAt = Number(nowMs)
-  if (!Number.isFinite(evaluatedAt)) throw new Error('invalid_health_snapshot_time')
+  if (typeof nowMs !== 'number' || !Number.isFinite(nowMs)) {
+    throw new Error('invalid_health_snapshot_time')
+  }
+  const evaluatedAt = nowMs
 
   const evidence = composeHealthEvidence(observations)
   const evaluation = evaluateHealth(evidence, { nowMs: evaluatedAt })
