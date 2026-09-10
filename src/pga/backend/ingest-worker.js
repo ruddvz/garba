@@ -33,8 +33,33 @@ function requiredBindings(env) {
 async function readJsonBody(request) {
   const declaredLength = Number(request.headers.get('content-length') || 0)
   if (declaredLength > MAX_BODY_BYTES) throw new Error('body_too_large')
-  const text = await request.text()
-  if (encoder.encode(text).byteLength > MAX_BODY_BYTES) throw new Error('body_too_large')
+
+  let text = ''
+  if (request.body && typeof request.body.getReader === 'function') {
+    const reader = request.body.getReader()
+    const decoder = new TextDecoder()
+    let received = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const bytes = value instanceof Uint8Array ? value : new Uint8Array(value || 0)
+        received += bytes.byteLength
+        if (received > MAX_BODY_BYTES) {
+          try { await reader.cancel('body_too_large') } catch { /* best-effort upstream cancellation */ }
+          throw new Error('body_too_large')
+        }
+        text += decoder.decode(bytes, { stream: true })
+      }
+      text += decoder.decode()
+    } finally {
+      try { reader.releaseLock?.() } catch { /* already released or cancelled */ }
+    }
+  } else {
+    text = await request.text()
+    if (encoder.encode(text).byteLength > MAX_BODY_BYTES) throw new Error('body_too_large')
+  }
+
   try {
     return JSON.parse(text)
   } catch {
@@ -61,18 +86,6 @@ export async function handleIngest(request, env, options = {}) {
   }
   if (!requiredBindings(env)) return errorResponse('ingestion_config_missing', 503, origin, allowedOrigin)
 
-  let body
-  let events
-  try {
-    body = await readJsonBody(request)
-    events = validateBatch(body, { nowMs: options.nowMs ?? Date.now() })
-  } catch (error) {
-    const code = error instanceof Error ? error.message : 'invalid_request'
-    const status = code === 'body_too_large' ? 413 : 400
-    console.warn('pga_ingest_rejected', { reason: code })
-    return errorResponse(code, status, origin, allowedOrigin)
-  }
-
   const edgeLimiter = env.EDGE_RATE_LIMITER
   const edgeRequired = edgeRateLimitRequired(env)
   const edgeAddress = request.headers.get('cf-connecting-ip')?.trim() || ''
@@ -90,7 +103,24 @@ export async function handleIngest(request, env, options = {}) {
         return errorResponse('rate_limited', 429, origin, allowedOrigin)
       }
     }
+  } catch {
+    console.error('pga_ingest_rate_limit_failed')
+    return errorResponse('rate_limit_unavailable', 503, origin, allowedOrigin)
+  }
 
+  let body
+  let events
+  try {
+    body = await readJsonBody(request)
+    events = validateBatch(body, { nowMs: options.nowMs ?? Date.now() })
+  } catch (error) {
+    const code = error instanceof Error ? error.message : 'invalid_request'
+    const status = code === 'body_too_large' ? 413 : 400
+    console.warn('pga_ingest_rejected', { reason: code })
+    return errorResponse(code, status, origin, allowedOrigin)
+  }
+
+  try {
     const browserRate = await env.BROWSER_RATE_LIMITER.limit({ key: events[0].browserId })
     if (!browserRate?.success) {
       console.warn('pga_ingest_rate_limited', { scope: 'browser' })
