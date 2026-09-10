@@ -6,7 +6,7 @@ on:
   issues:
     types: [closed, reopened]
   pull_request:
-    types: [opened, closed, reopened]
+    types: [closed]
   workflow_dispatch:
 
 permissions:
@@ -629,7 +629,7 @@ jobs:
               if (eventName === 'issue_comment') return true;
               if (eventName === 'workflow_dispatch') return true;
               if (eventName === 'issues') return ['closed', 'reopened'].includes(action);
-              if (eventName === 'pull_request') return ['opened', 'closed', 'reopened'].includes(action);
+              if (eventName === 'pull_request') return action === 'closed';
               return false;
             }
 
@@ -686,7 +686,7 @@ jobs:
               assert(runStartedAt && recoveryOverlapMs > 0, 'surviving runs use a bounded overlap window');
               assert(eventNeedsRecovery('issue_comment', 'created'), 'every surviving issue-comment run performs recovery, including bot/non-marker comments');
               assert(eventNeedsRecovery('issues', 'closed') && eventNeedsRecovery('issues', 'reopened'), 'issue lifecycle runs perform recovery');
-              assert(eventNeedsRecovery('pull_request', 'opened') && eventNeedsRecovery('pull_request', 'closed'), 'PR lifecycle runs perform recovery');
+              assert(!eventNeedsRecovery('pull_request', 'opened') && !eventNeedsRecovery('pull_request', 'reopened') && eventNeedsRecovery('pull_request', 'closed'), 'only PR close runs global recovery');
               assert(eventNeedsRecovery('workflow_dispatch', ''), 'manual runs perform recovery');
               assert(!eventNeedsRecovery('push', ''), 'unsupported events do not mutate registry state');
             }
@@ -741,7 +741,7 @@ jobs:
                 return;
               }
 
-              if (eventName === 'pull_request' && ['opened', 'closed', 'reopened'].includes(action)) {
+              if (eventName === 'pull_request' && action === 'closed') {
                 await reconcileUniverse(null, null);
                 return;
               }

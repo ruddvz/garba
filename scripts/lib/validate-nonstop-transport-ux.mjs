@@ -35,6 +35,18 @@ for (const marker of [
   'One full recording · ${tracklistCount} songs listed · no timestamps',
   'const eyebrowText = `Nonstop · ${recording.label}`',
   'album: recording.mediaAlbum',
+  'function verifiedChaptersForSet(set)',
+  'segment?.startSeconds',
+  'function currentChapterIndexFor(chapters, elapsedSeconds)',
+  'function seekNonstopChapter(chapter, chapterIndex)',
+  'window.GARBA_YOUTUBE_PLAYER?.seekTo?.(current.startSeconds)',
+  'function renderChapterNavigation()',
+  'id="nonstopBrowserChapters" hidden',
+  'data-nonstop-chapter-index',
+  "button.setAttribute('aria-current', 'true')",
+  'function watchChapterTime()',
+  'state.chapterObserver.observe(elapsed, { childList: true, characterData: true, subtree: true })',
+  'watchChapterTime();',
 ]) {
   if (!source.includes(marker)) fail(`Nonstop UX contract is missing: ${marker}`);
 }
@@ -71,6 +83,29 @@ for (const removed of [
   if (chooser.includes(removed)) fail(`Normal Nonstop chooser must not render removed presentation: ${removed}`);
 }
 
+const chapterBuilderStart = source.indexOf('function verifiedChaptersForSet(set)');
+const chapterBuilderEnd = source.indexOf('\n  function ', chapterBuilderStart + 1);
+const chapterBuilder = chapterBuilderStart >= 0
+  ? source.slice(chapterBuilderStart, chapterBuilderEnd > chapterBuilderStart ? chapterBuilderEnd : undefined)
+  : '';
+if (!chapterBuilder) fail('Verified Nonstop chapter builder is missing');
+if (!chapterBuilder.includes('segment?.startSeconds')) fail('Nonstop chapters must use published segment startSeconds');
+if (!chapterBuilder.includes('segment?.title')) fail('Nonstop chapters must preserve published segment titles');
+if (!chapterBuilder.includes('return invalid ? [] : chapters')) fail('Incomplete or non-monotonic chapter maps must fail closed');
+for (const inferredBoundary of ['endSeconds', 'durationSeconds', 'tracklist']) {
+  if (chapterBuilder.includes(inferredBoundary)) fail(`Nonstop chapter navigation must not infer boundaries from ${inferredBoundary}`);
+}
+
+const chapterSeekStart = source.indexOf('function seekNonstopChapter(chapter, chapterIndex)');
+const chapterSeekEnd = source.indexOf('\n  function ', chapterSeekStart + 1);
+const chapterSeek = chapterSeekStart >= 0
+  ? source.slice(chapterSeekStart, chapterSeekEnd > chapterSeekStart ? chapterSeekEnd : undefined)
+  : '';
+if (!chapterSeek.includes('GARBA_YOUTUBE_PLAYER?.seekTo?.(current.startSeconds)')) fail('Chapter jumps must use the existing public YouTube seek contract');
+for (const transport of ['#prevButton', '#nextButton', '#miniPrev', '#miniNext']) {
+  if (chapterSeek.includes(transport)) fail(`Chapter jumps must not repurpose ordinary transport: ${transport}`);
+}
+
 const trackForSetStart = source.indexOf('function trackForSet(set)');
 const trackForSetEnd = source.indexOf('\n  function ', trackForSetStart + 1);
 const trackForSet = trackForSetStart >= 0
@@ -102,3 +137,4 @@ console.log('✓ Now Playing and Media Session metadata identify the active Nons
 console.log('✓ chooser header, gutters, mobile two-column rows and dialog focus are regression-guarded');
 console.log('✓ Nonstop synthetic tracks derive their visual genre from verified set categories');
 console.log('✓ Nonstop queue accessibility state is reasserted when ordinary queue metadata changes');
+console.log('✓ verified Nonstop chapters fail closed on incomplete timestamps, track elapsed playback, and jump through the existing seek contract');
