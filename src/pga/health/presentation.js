@@ -48,9 +48,7 @@ function safeText(value, max = 160) {
 }
 
 function finiteNumber(value) {
-  if (value == null || value === '') return null
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 function normaliseTimestamp(value) {
