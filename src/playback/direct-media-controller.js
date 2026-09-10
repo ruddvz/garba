@@ -653,9 +653,12 @@
       if (state === previous) return false;
       lifecycleStateClaim = null;
       lastLifecycleDecision = null;
-      syncMediaSessionThroughPlanner();
+      const execution = planAndExecute(
+        { type: 'clear', songId: state.songId, generation: state.generation },
+        { lifecycleDecision: null, mediaSessionPolicy: null },
+      );
       notify('unavailable');
-      return true;
+      return execution.ok && execution.accepted;
     }
 
     function reset(generation) {
