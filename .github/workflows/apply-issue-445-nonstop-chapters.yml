@@ -1,0 +1,41 @@
+name: Apply issue 445 Nonstop chapters
+
+on:
+  push:
+    branches:
+      - ux/issue-445-nonstop-chapters-v5
+    paths:
+      - .github/scripts/apply-issue-445-nonstop-chapters.py
+      - .github/workflows/apply-issue-445-nonstop-chapters.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux/issue-445-nonstop-chapters-v5
+          fetch-depth: 1
+      - name: Apply anchored product patch
+        run: python .github/scripts/apply-issue-445-nonstop-chapters.py
+      - name: Validate bounded product patch
+        run: |
+          node --check nonstop-browser.js
+          node --check scripts/lib/validate-nonstop-transport-ux.mjs
+          node scripts/lib/validate-nonstop-transport-ux.mjs
+      - name: Remove temporary applicators and commit product diff
+        shell: bash
+        run: |
+          rm .github/scripts/apply-issue-445-nonstop-chapters.py
+          rm .github/workflows/apply-issue-445-nonstop-chapters.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git diff --cached --name-only
+          git commit -m "Add verified Nonstop chapter navigation (#445)"
+          git push origin HEAD:ux/issue-445-nonstop-chapters-v5
