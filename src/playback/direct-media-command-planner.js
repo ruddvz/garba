@@ -177,6 +177,7 @@ function cloneMediaSessionPolicy(policy) {
     valid: true,
     reason: policy.reason ?? null,
     songId: policy.songId,
+    generation: policy.generation,
     provider: policy.provider,
     backgroundCapable: policy.backgroundCapable === true,
     playbackState: policy.playbackState,
@@ -195,6 +196,8 @@ function mediaSessionView(policy, authority, lifecycle) {
   }
   if (authority.kind !== 'direct'
     || policy.songId !== authority.songId
+    || !validGeneration(policy.generation)
+    || policy.generation !== authority.generation
     || policy.provider !== 'direct'
     || policy.backgroundCapable !== true) {
     return { kind: 'clear', reason: 'media-session-policy-mismatch' };

@@ -90,6 +90,7 @@ function sessionPolicy(overrides = {}) {
     valid: true,
     reason: null,
     songId: 'song-a',
+    generation: 7,
     provider: 'direct',
     backgroundCapable: true,
     playbackState: 'paused',
@@ -320,13 +321,31 @@ test('matching valid direct Media Session policy is passed through as one immuta
   });
   assert.deepEqual(ops(plan), ['sync-media-session']);
   assert.equal(plan.commands[0].policy.songId, 'song-a');
+  assert.equal(plan.commands[0].policy.generation, 7);
   assert.deepEqual(plan.commands[0].policy.actions, ['play', 'pause', 'seekto']);
   assert.notEqual(plan.commands[0].policy, policy);
 });
 
-test('mismatched or invalid Media Session policy clears stale presentation rather than syncing it', () => {
+test('same-song stale Media Session generation clears presentation instead of syncing it', () => {
+  const authority = state({ generation: 8 });
+  const currentBinding = binding({ generation: 8 });
+  const plan = planDirectMediaCommands({
+    authorityState: authority,
+    binding: currentBinding,
+    intent: intent('sync-source', { generation: 8 }),
+    mediaSessionPolicy: sessionPolicy({ generation: 7 }),
+  });
+  assert.deepEqual(ops(plan), ['clear-media-session']);
+  assert.equal(plan.commands[0].reason, 'media-session-policy-mismatch');
+});
+
+test('mismatched, malformed-generation or invalid Media Session policy clears stale presentation rather than syncing it', () => {
   for (const policy of [
     sessionPolicy({ songId: 'song-b' }),
+    sessionPolicy({ generation: 6 }),
+    sessionPolicy({ generation: '7' }),
+    sessionPolicy({ generation: -1 }),
+    sessionPolicy({ generation: undefined }),
     sessionPolicy({ provider: 'youtube', backgroundCapable: false }),
     sessionPolicy({ valid: false, reason: 'playback-error' }),
   ]) {

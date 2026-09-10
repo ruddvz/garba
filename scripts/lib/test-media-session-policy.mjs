@@ -25,6 +25,15 @@ function identity(overrides = {}) {
   };
 }
 
+function playback(state = 'playing', overrides = {}) {
+  return {
+    state,
+    songId: 'garba-song-001',
+    generation: 7,
+    ...overrides,
+  };
+}
+
 function song(overrides = {}) {
   return {
     id: 'garba-song-001',
@@ -86,7 +95,7 @@ function buildDirect(overrides = {}) {
   return buildMediaSessionPolicy({
     resolution: directResolution(),
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback(),
     capabilities: fullCapabilities(),
     position: validPosition(),
     environment: { foreground: false },
@@ -98,6 +107,7 @@ function buildDirect(overrides = {}) {
   const result = buildDirect();
   assert.equal(result.valid, true);
   assert.equal(result.songId, 'garba-song-001');
+  assert.equal(result.generation, 7);
   assert.equal(result.provider, 'direct');
   assert.equal(result.backgroundCapable, true);
   assert.equal(result.playbackState, 'playing');
@@ -118,8 +128,9 @@ function buildDirect(overrides = {}) {
 }
 
 {
-  const paused = buildDirect({ playback: { state: 'paused' } });
+  const paused = buildDirect({ playback: playback('paused') });
   assert.equal(paused.valid, true);
+  assert.equal(paused.generation, 7);
   assert.equal(paused.playbackState, 'paused');
   assert.equal(paused.backgroundCapable, true);
   assert.ok(paused.actions.includes('play'));
@@ -127,16 +138,18 @@ function buildDirect(overrides = {}) {
 }
 
 {
-  const buffering = buildDirect({ playback: { state: 'buffering' } });
+  const buffering = buildDirect({ playback: playback('buffering') });
   assert.equal(buffering.valid, true);
+  assert.equal(buffering.generation, 7);
   assert.equal(buffering.playbackState, 'none');
   assert.equal(buffering.metadata.songId, undefined);
   assert.ok(buffering.actions.includes('pause'));
 }
 
 for (const state of ['ended', 'error', 'unavailable']) {
-  const result = buildDirect({ playback: { state } });
+  const result = buildDirect({ playback: playback(state) });
   assert.equal(result.valid, false, state);
+  assert.equal(result.generation, 7, state);
   assert.equal(result.playbackState, 'none', state);
   assert.equal(result.metadata, null, state);
   assert.equal(result.position, null, state);
@@ -145,9 +158,10 @@ for (const state of ['ended', 'error', 'unavailable']) {
 }
 
 for (const state of ['selected', 'loading', 'cued', 'unknown']) {
-  const result = buildDirect({ playback: { state } });
+  const result = buildDirect({ playback: playback(state) });
   assert.equal(result.valid, true, state);
   assert.equal(result.reason, 'playback-inactive', state);
+  assert.equal(result.generation, 7, state);
   assert.equal(result.playbackState, 'none', state);
   assert.equal(result.metadata.title, 'Garba Song', state);
   assert.equal(result.position, null, state);
@@ -158,12 +172,13 @@ for (const state of ['selected', 'loading', 'cued', 'unknown']) {
   const result = buildMediaSessionPolicy({
     resolution: youtubeResolution(),
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback('playing'),
     capabilities: fullCapabilities(),
     position: validPosition(),
     environment: { foreground: true },
   });
   assert.equal(result.valid, true);
+  assert.equal(result.generation, 7);
   assert.equal(result.provider, 'youtube');
   assert.equal(result.backgroundCapable, false);
   assert.equal(result.playbackState, 'playing');
@@ -174,13 +189,14 @@ for (const state of ['selected', 'loading', 'cued', 'unknown']) {
   const hiddenYoutube = buildMediaSessionPolicy({
     resolution: youtubeResolution(),
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback('playing'),
     capabilities: fullCapabilities(),
     position: validPosition(),
     environment: { foreground: false },
   });
   assert.equal(hiddenYoutube.valid, false);
   assert.equal(hiddenYoutube.reason, 'foreground-required');
+  assert.equal(hiddenYoutube.generation, 7);
   assert.equal(hiddenYoutube.backgroundCapable, false);
   assert.equal(hiddenYoutube.playbackState, 'none');
   assert.equal(hiddenYoutube.metadata, null);
@@ -192,7 +208,7 @@ for (const state of ['selected', 'loading', 'cued', 'unknown']) {
   const missingEnvironment = buildMediaSessionPolicy({
     resolution: youtubeResolution(),
     identity: identity(),
-    playback: { state: 'paused' },
+    playback: playback('paused'),
     capabilities: fullCapabilities(),
     position: validPosition(),
   });
@@ -207,13 +223,14 @@ for (const state of ['selected', 'loading', 'cued', 'unknown']) {
   const result = buildMediaSessionPolicy({
     resolution: unavailable,
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback('playing'),
     capabilities: fullCapabilities(),
     position: validPosition(),
     environment: { foreground: true },
   });
   assert.equal(result.valid, false);
   assert.equal(result.reason, 'source-not-usable');
+  assert.equal(result.generation, null);
   assert.equal(result.metadata, null);
   assert.deepEqual(result.actions, []);
 }
@@ -223,7 +240,7 @@ for (const state of ['selected', 'loading', 'cued', 'unknown']) {
   const result = buildMediaSessionPolicy({
     resolution: failed,
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback('playing'),
     capabilities: fullCapabilities(),
     position: validPosition(),
     environment: { foreground: false },
@@ -253,6 +270,33 @@ for (const brokenIdentity of [
   const result = buildDirect({ identity: brokenIdentity });
   assert.equal(result.valid, false);
   assert.equal(result.reason, 'identity-mismatch');
+}
+
+for (const brokenPlayback of [
+  playback('playing', { songId: 'different-song' }),
+  playback('playing', { songId: '' }),
+  { state: 'playing', songId: 'garba-song-001' },
+  playback('playing', { generation: '7' }),
+  playback('playing', { generation: -1 }),
+  playback('playing', { generation: 1.5 }),
+  playback('playing', { generation: Number.NaN }),
+  playback('playing', { generation: Number.POSITIVE_INFINITY }),
+  null,
+]) {
+  const result = buildDirect({ playback: brokenPlayback });
+  assert.equal(result.valid, false);
+  assert.equal(result.reason, 'playback-identity-invalid');
+  assert.equal(result.songId, 'garba-song-001');
+  assert.equal(result.generation, null);
+  assert.equal(result.metadata, null);
+  assert.deepEqual(result.actions, []);
+}
+
+{
+  const nextGeneration = buildDirect({ playback: playback('paused', { generation: 8 }) });
+  assert.equal(nextGeneration.valid, true);
+  assert.equal(nextGeneration.generation, 8);
+  assert.equal(nextGeneration.playbackState, 'paused');
 }
 
 for (const brokenPosition of [
@@ -316,11 +360,12 @@ for (const brokenPosition of [
   const malformedResolution = buildMediaSessionPolicy({
     resolution: null,
     identity: identity(),
-    playback: { state: 'playing' },
+    playback: playback('playing'),
   });
   assert.equal(malformedResolution.valid, false);
   assert.equal(malformedResolution.reason, 'resolution-invalid');
   assert.equal(malformedResolution.songId, '');
+  assert.equal(malformedResolution.generation, null);
 }
 
 {
