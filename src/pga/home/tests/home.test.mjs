@@ -153,6 +153,46 @@ test('precision, sampling and evidence metadata are preserved', () => {
   assert.equal(metric.action, 'Inspect telemetry freshness.')
 })
 
+test('sampling metadata preserves absent and explicit boolean truth', () => {
+  const absent = evaluateKpi({ status: 'available', value: 1 }, { nowMs: NOW })
+  assert.equal(absent.sampled, false)
+  assert.equal(absent.precision, null)
+
+  const exact = evaluateKpi({ status: 'available', value: 1, sampled: false }, { nowMs: NOW })
+  assert.equal(exact.sampled, false)
+  assert.equal(exact.precision, null)
+
+  const estimated = evaluateKpi({ status: 'available', value: 1, sampled: true }, { nowMs: NOW })
+  assert.equal(estimated.sampled, true)
+  assert.equal(estimated.precision, 'estimated')
+
+  assert.equal(buildHomeSnapshot({ status: 'available', sampled: false }, { nowMs: NOW }).sampled, false)
+  assert.equal(buildHomeSnapshot({ status: 'available', sampled: true }, { nowMs: NOW }).sampled, true)
+  assert.equal(buildHomeSnapshot({ status: 'available' }, { nowMs: NOW }).sampled, false)
+})
+
+test('malformed sampling metadata stays unknown and cannot infer estimated precision', () => {
+  const malformed = ['false', '0', 0, 1, null, {}, [], Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+
+  for (const sampled of malformed) {
+    const metric = evaluateKpi({ status: 'available', value: 1, sampled }, { nowMs: NOW })
+    assert.equal(metric.sampled, null, `sampled ${String(sampled)} must remain unknown`)
+    assert.equal(metric.precision, null, `sampled ${String(sampled)} must not infer precision`)
+
+    const explicitPrecision = evaluateKpi({
+      status: 'available',
+      value: 1,
+      sampled,
+      precision: 'source-estimate',
+    }, { nowMs: NOW })
+    assert.equal(explicitPrecision.sampled, null)
+    assert.equal(explicitPrecision.precision, 'source-estimate')
+
+    const snapshot = buildHomeSnapshot({ status: 'available', sampled }, { nowMs: NOW })
+    assert.equal(snapshot.sampled, null, `snapshot sampled ${String(sampled)} must remain unknown`)
+  }
+})
+
 test('normal comparisons calculate positive, negative and flat percentage deltas', () => {
   const up = compareKpis(
     { status: 'available', value: 15 },

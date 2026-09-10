@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { replaceDailyMetrics, setRollupRun } from '../lib/d1.js'
+import { getDailySeries, getLifetimeMetrics, replaceDailyMetrics, setRollupRun } from '../lib/d1.js'
 
 class FakeStatement {
   constructor(db, sql, args = []) {
@@ -18,12 +18,19 @@ class FakeStatement {
     this.db.runs.push({ sql: this.sql, args: this.args })
     return { success: true }
   }
+
+  async all() {
+    this.db.alls.push({ sql: this.sql, args: this.args })
+    return { results: this.db.results }
+  }
 }
 
 class FakeDb {
-  constructor() {
+  constructor(results = []) {
     this.batches = []
     this.runs = []
+    this.alls = []
+    this.results = results
   }
 
   prepare(sql) {
@@ -184,5 +191,89 @@ test('setRollupRun rejects malformed explicit evaluation clocks before mutation'
     )
     assert.equal(db.runs.length, 0, `unexpected D1 run for ${String(value)}`)
     assert.equal(db.batches.length, 0, `unexpected D1 batch for ${String(value)}`)
+  }
+})
+
+test('getLifetimeMetrics preserves explicit numeric zero, sampling flags and max freshness', async () => {
+  const db = new FakeDb([
+    { metric: 'sessions', value: 0, sampled: 0, data_through_ms: null },
+    { metric: 'listening_ms', value: 125.5, sampled: 1, data_through_ms: 1_789_034_000_000 },
+  ])
+
+  const result = await getLifetimeMetrics(db)
+
+  assert.deepEqual(result, {
+    data: {
+      sessions: { value: 0, sampled: false, precision: 'exact' },
+      listening_ms: { value: 125.5, sampled: true, precision: 'estimated' },
+    },
+    dataThroughMs: 1_789_034_000_000,
+  })
+  assert.equal(db.alls.length, 1)
+})
+
+test('getDailySeries preserves valid numeric rows and chronological presentation', async () => {
+  const db = new FakeDb([
+    { day_ist: '2026-09-10', value: 12.5, precision: 'estimated', sampled: 1, data_through_ms: 1_789_034_000_000 },
+    { day_ist: '2026-09-09', value: 0, precision: 'exact', sampled: 0, data_through_ms: null },
+  ])
+
+  const result = await getDailySeries(db, 'sessions', 2)
+
+  assert.deepEqual(result, [
+    { day: '2026-09-09', value: 0, precision: 'exact', sampled: false, dataThroughMs: null },
+    { day: '2026-09-10', value: 12.5, precision: 'estimated', sampled: true, dataThroughMs: 1_789_034_000_000 },
+  ])
+  assert.deepEqual(db.alls[0].args, ['sessions', 2])
+})
+
+test('D1 read helpers reject coercible, null and non-finite metric values', async () => {
+  const invalidValues = ['0', '', true, false, null, undefined, NaN, Infinity, -Infinity]
+
+  for (const value of invalidValues) {
+    const lifetimeDb = new FakeDb([{ metric: 'sessions', value, sampled: 0, data_through_ms: null }])
+    await assert.rejects(getLifetimeMetrics(lifetimeDb), /invalid_metric_value/)
+
+    const dailyDb = new FakeDb([{ day_ist: '2026-09-10', value, precision: 'exact', sampled: 0, data_through_ms: null }])
+    await assert.rejects(getDailySeries(dailyDb, 'sessions', 1), /invalid_metric_value/)
+  }
+})
+
+test('D1 read helpers accept only explicit sampled integers 0 or 1', async () => {
+  for (const sampled of [0, 1]) {
+    const lifetime = await getLifetimeMetrics(new FakeDb([
+      { metric: 'sessions', value: 1, sampled, data_through_ms: null },
+    ]))
+    assert.equal(lifetime.data.sessions.sampled, sampled === 1)
+  }
+
+  const invalidValues = ['0', '1', '', true, false, null, undefined, NaN, Infinity, -1, 2]
+  for (const sampled of invalidValues) {
+    const lifetimeDb = new FakeDb([{ metric: 'sessions', value: 1, sampled, data_through_ms: null }])
+    await assert.rejects(getLifetimeMetrics(lifetimeDb), /invalid_sampled_value/)
+
+    const dailyDb = new FakeDb([{ day_ist: '2026-09-10', value: 1, precision: 'exact', sampled, data_through_ms: null }])
+    await assert.rejects(getDailySeries(dailyDb, 'sessions', 1), /invalid_sampled_value/)
+  }
+})
+
+test('D1 read helpers reject malformed explicit freshness while preserving absent or null freshness', async () => {
+  const absentLifetime = await getLifetimeMetrics(new FakeDb([
+    { metric: 'sessions', value: 1, sampled: 0 },
+  ]))
+  assert.equal(absentLifetime.dataThroughMs, null)
+
+  const nullDaily = await getDailySeries(new FakeDb([
+    { day_ist: '2026-09-10', value: 1, precision: 'exact', sampled: 0, data_through_ms: null },
+  ]), 'sessions', 1)
+  assert.equal(nullDaily[0].dataThroughMs, null)
+
+  const invalidValues = ['0', '', true, false, undefined, NaN, Infinity, -Infinity, -1]
+  for (const dataThroughMs of invalidValues) {
+    const lifetimeDb = new FakeDb([{ metric: 'sessions', value: 1, sampled: 0, data_through_ms: dataThroughMs }])
+    await assert.rejects(getLifetimeMetrics(lifetimeDb), /invalid_data_through_ms/)
+
+    const dailyDb = new FakeDb([{ day_ist: '2026-09-10', value: 1, precision: 'exact', sampled: 0, data_through_ms: dataThroughMs }])
+    await assert.rejects(getDailySeries(dailyDb, 'sessions', 1), /invalid_data_through_ms/)
   }
 })
