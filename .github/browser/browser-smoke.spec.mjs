@@ -269,17 +269,86 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await expectPlayerReady(page);
   const searchButton = page.locator('#searchButton');
   await searchButton.click();
+  await page.waitForTimeout(500);
 
-  const sheet = page.locator('#songSheet');
-  await expect(sheet).toHaveAttribute('aria-hidden', 'false');
-  await expect(page.locator('#searchInput')).toBeVisible();
-  await expectInsideViewport(page, '#sheetClose', { settleMs: 500 });
-  await expectNoDocumentOverflow(page);
+  const openedSearch = await page.evaluate(() => {
+    const sheet = document.getElementById('songSheet');
+    const input = document.getElementById('searchInput');
+    const close = document.getElementById('sheetClose');
+    const inputStyle = input ? getComputedStyle(input) : null;
+    const rect = close?.getBoundingClientRect();
+    const visualViewport = window.visualViewport;
+    const viewport = visualViewport
+      ? {
+          left: visualViewport.offsetLeft,
+          top: visualViewport.offsetTop,
+          width: visualViewport.width,
+          height: visualViewport.height,
+        }
+      : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+    const geometry = rect ? [
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rect.width,
+      rect.height,
+      viewport.left,
+      viewport.top,
+      viewport.width,
+      viewport.height,
+    ] : [];
+    return {
+      ariaHidden: sheet?.getAttribute('aria-hidden') ?? null,
+      snap: sheet?.dataset.snap ?? null,
+      inputVisible: Boolean(
+        input
+        && input.isConnected
+        && inputStyle
+        && inputStyle.display !== 'none'
+        && inputStyle.visibility !== 'hidden'
+        && inputStyle.visibility !== 'collapse'
+        && input.getClientRects().length > 0
+      ),
+      closeInside: Boolean(
+        rect
+        && geometry.every(Number.isFinite)
+        && rect.width > 0
+        && rect.height > 0
+        && viewport.width > 0
+        && viewport.height > 0
+        && rect.left >= viewport.left - 2
+        && rect.right <= viewport.left + viewport.width + 2
+        && rect.top >= viewport.top - 2
+        && rect.bottom <= viewport.top + viewport.height + 2
+      ),
+      viewportWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+    };
+  });
+  expect(openedSearch.ariaHidden, 'Search sheet should be exposed after Search activation').toBe('false');
+  expect(openedSearch.snap, 'Search sheet should reach its full snap state').toBe('full');
+  expect(openedSearch.inputVisible, 'Search input should be rendered').toBe(true);
+  expect(openedSearch.closeInside, 'Search close control should be fully inside the visual viewport').toBe(true);
+  expect(openedSearch.scrollWidth, 'Search state should not overflow the document horizontally').toBeLessThanOrEqual(openedSearch.viewportWidth + 2);
+  expect(openedSearch.bodyScrollWidth, 'Search state should not overflow the body horizontally').toBeLessThanOrEqual(openedSearch.viewportWidth + 2);
 
   await page.locator('#sheetClose').click();
-  await expect(sheet).toHaveAttribute('aria-hidden', 'true');
-  await expect(searchButton).toBeFocused();
-  await expectNoDocumentOverflow(page);
+  await page.waitForTimeout(500);
+  const closedSearch = await page.evaluate(() => ({
+    ariaHidden: document.getElementById('songSheet')?.getAttribute('aria-hidden') ?? null,
+    snap: document.getElementById('songSheet')?.dataset.snap ?? null,
+    activeElementId: document.activeElement?.id || null,
+    viewportWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    bodyScrollWidth: document.body?.scrollWidth || 0,
+  }));
+  expect(closedSearch.ariaHidden, 'Search sheet should be hidden after closing').toBe('true');
+  expect(closedSearch.snap, 'Search sheet should return to its closed snap state').toBe('closed');
+  expect(closedSearch.activeElementId, 'Search opener should regain focus after closing').toBe('searchButton');
+  expect(closedSearch.scrollWidth, 'Closed Search state should not overflow the document horizontally').toBeLessThanOrEqual(closedSearch.viewportWidth + 2);
+  expect(closedSearch.bodyScrollWidth, 'Closed Search state should not overflow the body horizontally').toBeLessThanOrEqual(closedSearch.viewportWidth + 2);
   await expectNoRuntimeFailures(page, failures, 'Search sheet');
 });
 
