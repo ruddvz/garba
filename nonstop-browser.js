@@ -1163,11 +1163,6 @@
     if (id) startNonstop(id, { quiet: true });
   }
 
-  function warmNonstop() {
-    const warm = () => loadAllSets().catch(() => null);
-    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
-    else setTimeout(warm, 1800);
-  }
 
   function captureNonstopKeyboard(event) {
     if (!state.activeSet) return;
@@ -1203,7 +1198,6 @@
       else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: true, updateHistory: false });
     });
     document.addEventListener('keydown', trapBrowserFocus, { capture: true });
-    warmNonstop();
     restoreFromUrl();
   }
 
