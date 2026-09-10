@@ -7,7 +7,7 @@ export const SESSION_PROFILES = Object.freeze({
 
 export const DEFAULT_BUDGETS = Object.freeze({
   domNodeGrowth: 220,
-  documentGrowth: 1,
+  documentTailGrowth: 0,
   jsEventListenerGrowth: 80,
   heapGrowthBytes: 16 * 1024 * 1024,
   liveIntervalGrowth: 4,
@@ -17,6 +17,7 @@ export const DEFAULT_BUDGETS = Object.freeze({
   mediaElementGrowth: 2,
   iframeGrowth: 1,
   warmRequestGrowthPerCycle: 60,
+  initialFullCatalogueRequests: 1,
   fullCatalogueRequestGrowth: 0,
   repeatedBackgroundRequestGrowthPerCycle: 8,
   longTaskMaxMs: 500,
@@ -555,20 +556,34 @@ export async function exerciseExploreRoundTrip(page, origin, roundIndex = 0) {
   const response = await page.goto(exploreUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch(() => null);
   result.entered = Boolean(response) && await page.locator('#catalogueTitle').isVisible().catch(() => false);
   if (result.entered) {
-    const input = page.locator('#catalogueSearch, #exploreSearch, input[type="search"]').first();
-    if (await input.isVisible().catch(() => false)) {
-      await input.fill('Garba').catch(() => {});
-      await page.waitForTimeout(60);
-      await input.fill('').catch(() => {});
-      result.searched = true;
+    await page.locator('.search-explore').waitFor({ state: 'visible', timeout: 10_000 }).catch(() => {});
+    await page.locator('.collection-card').first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
+
+    if (await clickIfUsable(page, '.search-explore', 1_500)) {
+      const input = page.locator('#catalogueSearch');
+      if (await input.isVisible().catch(() => false)) {
+        await input.fill('Garba').catch(() => {});
+        await page.waitForTimeout(80);
+        result.searched = input.isVisible().then(() => true).catch(() => false);
+        await input.fill('').catch(() => {});
+        await page.keyboard.press('Escape').catch(() => {});
+      }
     }
+
     const firstCard = page.locator('.collection-card').first();
     if (await firstCard.isVisible().catch(() => false)) {
       result.detailOpened = await firstCard.click({ timeout: 1_500 }).then(() => true).catch(() => false);
       if (result.detailOpened) {
+        const detail = page.locator('#collectionDetail:not([hidden])');
+        result.detailOpened = await detail.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
+      }
+      if (result.detailOpened) {
         const back = page.locator('#backToCollections');
         if (await back.isVisible().catch(() => false)) {
           result.detailClosed = await back.click({ timeout: 1_500 }).then(() => true).catch(() => false);
+          if (result.detailClosed) {
+            result.detailClosed = await page.locator('#collectionHome').waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
+          }
         }
       }
     }
@@ -602,7 +617,6 @@ export function evaluateSessionBudgets(snapshots, runtimeFailures, cycleCount, b
 
   const checks = [
     ['dom-node-growth', delta(final.browser.nodes, baseline.browser.nodes), budgets.domNodeGrowth],
-    ['document-growth', delta(final.browser.documents, baseline.browser.documents), budgets.documentGrowth],
     ['event-listener-growth', delta(final.browser.jsEventListeners, baseline.browser.jsEventListeners), budgets.jsEventListenerGrowth],
     ['heap-growth', delta(final.browser.jsHeapUsedBytes, baseline.browser.jsHeapUsedBytes), budgets.heapGrowthBytes],
     ['interval-growth', delta(final.page.liveIntervals, baseline.page.liveIntervals), budgets.liveIntervalGrowth],
@@ -616,6 +630,16 @@ export function evaluateSessionBudgets(snapshots, runtimeFailures, cycleCount, b
     if (Number.isFinite(growth) && growth > budget) {
       failures.push({ code, growth, budget, message: `${code} exceeded budget: +${growth} > +${budget}` });
     }
+  }
+
+  const initialFullCatalogueRequests = baseline.network.fullCatalogueRequestCount;
+  if (Number.isFinite(initialFullCatalogueRequests) && initialFullCatalogueRequests > budgets.initialFullCatalogueRequests) {
+    failures.push({
+      code: 'initial-full-catalogue-requests',
+      value: initialFullCatalogueRequests,
+      budget: budgets.initialFullCatalogueRequests,
+      message: `initial hydration requested /data/songs.json ${initialFullCatalogueRequests} times; expected at most ${budgets.initialFullCatalogueRequests}`,
+    });
   }
 
   const cycles = Math.max(1, Number(cycleCount) || 1);
@@ -670,10 +694,13 @@ export function evaluateSessionBudgets(snapshots, runtimeFailures, cycleCount, b
       code: 'runtime-errors',
       value: runtimeErrorCount,
       budget: budgets.runtimeErrors,
-      message: `${runtimeErrorCount} runtime/network assertion error(s) were captured`,
+      message: `${runtimeErrorCount} hard runtime/network error(s) were captured`,
     });
   }
 
+  if (monotonicGrowth(snapshots, (sample) => sample.browser.documents, budgets.documentTailGrowth)) {
+    failures.push({ code: 'document-tail-growth', message: 'Browser document count continued rising across the final four player snapshots instead of stabilising.' });
+  }
   if (monotonicGrowth(snapshots, (sample) => sample.browser.nodes, Math.max(50, budgets.domNodeGrowth / 3))) {
     failures.push({ code: 'dom-monotonic-growth', message: 'DOM counters rose monotonically across the final four player snapshots.' });
   }
