@@ -10,6 +10,7 @@ on:
       - 'src/pga/backend/lib/catalogue.js'
       - 'src/pga/backend/tests/catalogue.test.mjs'
       - 'scripts/lib/validate-pga-analytics.mjs'
+      - 'scripts/lib/test-pga-analytics-metric-truth.mjs'
       - '.github/workflows/pga-analytics-validate.yml'
   push:
     branches:
@@ -21,6 +22,7 @@ on:
       - 'src/pga/backend/lib/catalogue.js'
       - 'src/pga/backend/tests/catalogue.test.mjs'
       - 'scripts/lib/validate-pga-analytics.mjs'
+      - 'scripts/lib/test-pga-analytics-metric-truth.mjs'
       - '.github/workflows/pga-analytics-validate.yml'
   workflow_dispatch:
 
@@ -46,6 +48,9 @@ jobs:
 
       - name: Validate analytics models and static contract
         run: node scripts/lib/validate-pga-analytics.mjs
+
+      - name: Validate analytics metric truth
+        run: node scripts/lib/test-pga-analytics-metric-truth.mjs
 
       - name: Validate catalogue identity contract
         run: node --test src/pga/backend/tests/catalogue.test.mjs
