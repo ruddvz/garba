@@ -18,7 +18,7 @@ dataset = "playgarba_presence_v1"
 # in the Cloudflare account.
 [[ratelimits]]
 name = "BROWSER_RATE_LIMITER"
-namespace_id = "REPLACE_WITH_BROWSER_NAMESPACE_ID"
+namespace_id = "REPLACE_WITH_UNIQUE_NAMESPACE_ID"
 
   [ratelimits.simple]
   limit = 120
