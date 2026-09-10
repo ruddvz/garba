@@ -264,11 +264,22 @@ await check('comparison and trend keys are emitted deterministically', () => {
   assert.equal(first.schemaVersion, 'pga-home-live/v1')
 })
 
-await check('invalid nowMs is rejected rather than creating stale/age nonsense', () => {
-  assert.throws(
-    () => composeHomeLiveSnapshot({}, { nowMs: Number.NaN }),
-    /nowMs must be a finite number/,
-  )
+await check('real numeric zero is accepted as a finite snapshot clock', () => {
+  const snapshot = composeHomeLiveSnapshot({
+    home: { status: 'available', metrics: {} },
+    presence: { status: 'available', heartbeats: [] },
+  }, { nowMs: 0 })
+  assert.equal(snapshot.evaluatedAt, 0)
+})
+
+await check('coercible and non-finite snapshot clocks fail closed', () => {
+  for (const nowMs of ['123', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => composeHomeLiveSnapshot({}, { nowMs }),
+      /nowMs must be a finite number/,
+      `nowMs ${String(nowMs)} must fail closed`,
+    )
+  }
 })
 
 if (failed) process.exitCode = 1

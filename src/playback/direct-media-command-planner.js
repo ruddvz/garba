@@ -356,7 +356,7 @@ function planDirectMediaCommands({
     });
   }
 
-  if (requested.type !== 'sync-source' && requested.type !== 'clear' && !intentMatchesAuthority(requested.raw, authority)) {
+  if (!intentMatchesAuthority(requested.raw, authority)) {
     pushMediaSession(commands, authority, mediaSession);
     return result({
       valid: true,

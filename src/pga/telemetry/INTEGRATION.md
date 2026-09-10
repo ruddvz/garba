@@ -2,7 +2,11 @@
 
 `product-bridge.js` is the semantic boundary between PlayGarba product actions and the isolated PGA telemetry runtime.
 
-It is intentionally **not** wired into the public player yet. Current player, Explore and Nonstop files have active repository owners. Parent issue #838 should add thin calls to this bridge only after those owners release or explicitly split their files.
+Explore is now wired to this bridge in source through the merged #1147 / PR #1176 integration. That hook is deliberately limited to truthful Explore surface, search, zero-result and canonical-selection events; Explore navigation does not infer playback intent or successful playback.
+
+The public Player/provider-confirmed playback and Nonstop hooks are still not wired. Parent issue #838 should add those remaining thin calls only after the current runtime owners release or explicitly split their files.
+
+Production delivery of the Explore adapter/module graph is tracked separately by #1193. Until that Pages packaging fix is merged and verified, the merged source integration must not be described as proof that production Explore telemetry is live.
 
 ## Why the bridge exists
 
@@ -10,7 +14,7 @@ The telemetry runtime knows how to create schema-valid events, queue them safely
 
 The bridge owns that meaning. In particular, it prevents a Play button click from being recorded as successful playback before the media provider confirms playback.
 
-Future production hooks should therefore call semantic bridge methods instead of scattering `telemetry.track(...)` calls across product files.
+Remaining production hooks should therefore call semantic bridge methods instead of scattering `telemetry.track(...)` calls across product files.
 
 ## Minimal setup
 
@@ -176,7 +180,7 @@ It keeps only small in-memory correlation/context state.
 
 ## Production hook checklist
 
-Before parent #838 wires a public file, verify all of the following for that hook:
+Before parent #838 wires any remaining public Player/provider-confirmed playback or Nonstop hook, verify all of the following for that hook:
 
 1. the current file owner has released or explicitly split the path;
 2. the hook is after the product truth boundary, not before it;
@@ -187,4 +191,4 @@ Before parent #838 wires a public file, verify all of the following for that hoo
 7. endpoint failure is tested as a listener no-op;
 8. the public build contains no PGA/admin secret.
 
-This document and bridge do not claim those production hooks are currently live.
+The Explore bridge integration is merged in source, subject to the separate #1193 production-packaging and deployment verification. Player/provider-confirmed playback and Nonstop hooks remain pending and are not claimed live by this document.

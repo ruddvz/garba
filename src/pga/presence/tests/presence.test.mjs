@@ -12,6 +12,7 @@ import {
   aggregatePresence,
   buildPresenceTrend,
   isHeartbeatLive,
+  normalizeHeartbeat,
 } from '../model.js';
 
 const NOW = 1_800_000_000_000;
@@ -69,6 +70,21 @@ test('future accepted heartbeat does not make a session live', () => {
   const future = { ...heartbeat('future'), acceptedAt: NOW + 1 };
   assert.equal(isHeartbeatLive(future, NOW), false);
   assert.equal(aggregatePresence([future], { nowMs: NOW }).liveNow, 0);
+});
+
+test('heartbeat timestamps require finite JavaScript numbers without coercion', () => {
+  assert.equal(normalizeHeartbeat({ sessionKey: 'epoch', acceptedAt: 0 })?.acceptedAt, 0);
+
+  for (const acceptedAt of [String(NOW), '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const candidate = { ...heartbeat('invalid-time'), acceptedAt };
+    assert.equal(normalizeHeartbeat(candidate), null, `acceptedAt ${String(acceptedAt)} must fail closed`);
+  }
+
+  assert.equal(
+    aggregatePresence([{ ...heartbeat('string-live'), acceptedAt: String(NOW) }], { nowMs: NOW }).liveNow,
+    0,
+    'numeric-string acceptedAt must not make a session live',
+  );
 });
 
 test('duplicate and multi-tab heartbeats deduplicate by session key', () => {
@@ -185,6 +201,17 @@ test('unavailable/stale/error source evidence returns null metrics, never fake z
   }
 });
 
+test('source timing metadata rejects coercible non-number values', () => {
+  const result = aggregatePresence({
+    status: 'unavailable',
+    heartbeats: [],
+    checkedAt: '123',
+    dataThroughAt: false,
+  }, { nowMs: NOW });
+  assert.equal(result.checkedAt, null);
+  assert.equal(result.dataThroughAt, null);
+});
+
 test('available empty evidence is a truthful zero', () => {
   const result = aggregatePresence({ status: 'available', heartbeats: [], checkedAt: NOW }, { nowMs: NOW });
   assert.equal(result.liveNow, 0);
@@ -196,6 +223,16 @@ test('missing evidence is unavailable rather than zero', () => {
   const result = aggregatePresence(undefined, { nowMs: NOW });
   assert.equal(result.status, 'unavailable');
   assert.equal(result.liveNow, null);
+});
+
+test('aggregate clock rejects coercible non-number values', () => {
+  for (const nowMs of ['123', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => aggregatePresence([], { nowMs }),
+      /nowMs must be a finite number/,
+      `nowMs ${String(nowMs)} must fail closed`,
+    );
+  }
 });
 
 test('same-session same-minute listening contribution is capped at 60 seconds', () => {
@@ -214,6 +251,18 @@ test('duplicate heartbeat evidence does not double listening time', () => {
   const row = heartbeat('s1', 0, { eventId: 'one-event', playedMsSincePreviousHeartbeat: 15_000 });
   const result = aggregateListeningTime([row, { ...row }]);
   assert.equal(result.totalMs, 15_000);
+});
+
+test('coercible played-millisecond evidence cannot fabricate listening time', () => {
+  const malformed = ['15000', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+    .map((playedMsSincePreviousHeartbeat, index) => ({
+      ...heartbeat(`bad-played-${index}`, 0, { eventId: `bad-played-${index}` }),
+      playedMsSincePreviousHeartbeat,
+    }));
+  const result = aggregateListeningTime(malformed);
+  assert.equal(result.totalMs, 0);
+  assert.deepEqual(result.bySession, []);
+  assert.equal(result.bucketCount, 0);
 });
 
 test('listening time can accumulate across minute buckets while each bucket remains capped', () => {
@@ -253,4 +302,15 @@ test('short trend uses the same deterministic live/listening semantics', () => {
     { at: base + 120_000, liveNow: 2, listeningNow: 1, browsingNow: 1 },
     { at: base + 180_000, liveNow: 1, listeningNow: 1, browsingNow: 0 },
   ]);
+});
+
+test('trend boundaries reject coercible non-number values', () => {
+  for (const [field, value] of [['startMs', '0'], ['endMs', '1'], ['stepMs', '1']]) {
+    const options = { startMs: 0, endMs: 1, stepMs: 1, [field]: value };
+    assert.throws(
+      () => buildPresenceTrend([], options),
+      /Presence trend requires finite startMs\/endMs and positive stepMs/,
+      `${field} must reject numeric strings`,
+    );
+  }
 });
