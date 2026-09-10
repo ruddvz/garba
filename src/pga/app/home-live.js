@@ -460,7 +460,15 @@ export function mountHomeLive({ fetchEnvelope = fetchPgaEnvelope, autoLoad = tru
     renderModel(model);
   }
 
+  const loadWhenHomeActivates = () => {
+    if (isActive() && !hasRenderedSnapshot) return load();
+    return undefined;
+  };
+
   document.querySelector('#refreshButton')?.addEventListener('click', () => { if (isActive()) load({ force: true }); });
+  for (const button of document.querySelectorAll('[data-nav="home"]')) {
+    button.addEventListener('click', loadWhenHomeActivates);
+  }
   window.addEventListener('online', () => { if (isActive()) load({ force: true }); });
   window.addEventListener('offline', () => { if (isActive()) load({ force: true }); });
   window.addEventListener('hashchange', () => { if (location.hash === '#home' && !hasRenderedSnapshot) load({ force: true }); });
