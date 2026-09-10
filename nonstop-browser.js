@@ -388,6 +388,7 @@
       .app[data-play-mode="nonstop"] #nonstopButton::after{background:color-mix(in srgb,var(--accent) 70%,var(--ivory))}
       .app[data-play-mode="nonstop"] #nonstopButton::before{background:var(--accent);box-shadow:0 0 10px color-mix(in srgb,var(--accent) 48%,transparent)}
       .app[data-play-mode="nonstop"] .mobile-heart{visibility:hidden;pointer-events:none}
+      .app[data-play-mode="nonstop"] #prevButton,.app[data-play-mode="nonstop"] #nextButton,.app[data-play-mode="nonstop"] #miniPrev,.app[data-play-mode="nonstop"] #miniNext{visibility:hidden;pointer-events:none}
       .player-shell{grid-template-rows:minmax(0,1fr) auto auto auto minmax(22px,5vh) auto auto minmax(8px,.42fr)!important}
       #genreStrip{grid-row:6!important;align-self:end;margin-top:0!important;padding-top:8px!important}
       #browseActions{grid-row:7!important;align-self:start!important;margin-top:clamp(2px,.7vh,9px)!important}
@@ -460,8 +461,8 @@
     if (queueButton) {
       if (active) {
         queueButton.dataset.nonstopContext = 'true';
-        queueButton.title = 'Browse Nonstop Garba';
-        queueButton.setAttribute('aria-label', 'Browse Nonstop Garba recordings');
+        queueButton.title = 'Choose Nonstop recording';
+        queueButton.setAttribute('aria-label', 'Choose Nonstop recording');
       } else if (queueButton.dataset.nonstopContext === 'true') {
         delete queueButton.dataset.nonstopContext;
         queueButton.title = 'Up next';
@@ -470,20 +471,6 @@
     }
     if (active) queueBadge?.classList.remove('show');
 
-    for (const id of ['prevButton', 'nextButton', 'miniPrev', 'miniNext']) {
-      const control = $(id);
-      if (!control) continue;
-      const previous = id === 'prevButton' || id === 'miniPrev';
-      if (active) {
-        control.dataset.nonstopContext = 'true';
-        control.title = 'Choose another Nonstop recording';
-        control.setAttribute('aria-label', 'Choose another Nonstop recording');
-      } else if (control.dataset.nonstopContext === 'true') {
-        delete control.dataset.nonstopContext;
-        control.removeAttribute('title');
-        control.setAttribute('aria-label', previous ? 'Previous song' : 'Next song');
-      }
-    }
   }
 
   function syncButton() {
@@ -996,7 +983,7 @@
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
     if (target.closest('#nonstopButton, #nonstopBrowser')) return;
-    if (target.closest('#queueButton, #prevButton, #nextButton, #miniPrev, #miniNext')) {
+    if (target.closest('#queueButton')) {
       event.preventDefault();
       event.stopImmediatePropagation();
       openBrowser();
