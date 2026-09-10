@@ -46,8 +46,13 @@ const CHECK_STATES = Object.freeze({
 })
 
 function finiteNumber(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function evaluationClock(value) {
+  const now = finiteNumber(value)
+  if (now == null) throw new TypeError('nowMs must be a finite number')
+  return now
 }
 
 function normaliseTimestamp(value) {
@@ -121,26 +126,30 @@ function sortSubsystems(entries) {
 }
 
 export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {}) {
+  const now = evaluationClock(nowMs)
   const canonicalName = safeText(name) || 'unknown'
   const defaults = DEFAULT_SUBSYSTEMS[canonicalName] || {}
   const criticality = normaliseCriticality(input.criticality, defaults.criticality)
   const explicitStatus = normaliseStatus(input.status)
   const observedAt = freshnessTimestamp(input)
   const budgetMs = freshnessBudget(input)
-  const ageMs = observedAt == null ? null : Math.max(0, Number(nowMs) - observedAt)
+  const futureDated = observedAt != null && observedAt > now
+  const ageMs = observedAt == null || futureDated ? null : now - observedAt
 
-  let status = explicitStatus
+  let status = futureDated && explicitStatus !== 'failed' ? 'unknown' : explicitStatus
   let stale = false
 
-  // A hard failure remains a failure even when its last observation is old. Healthy,
-  // degraded and unknown evidence may become stale only when its producer supplied a
-  // concrete freshness budget. PGA never invents a universal timeout here.
+  // A hard failure remains a failure even when its last observation is old or its
+  // timestamp is invalidly in the future. Non-failure evidence from the future is
+  // never certified current; otherwise evidence may become stale only when its
+  // producer supplied a concrete freshness budget. PGA never invents a universal
+  // timeout or clock-skew tolerance here.
   if (
     explicitStatus !== 'failed'
+    && !futureDated
     && observedAt != null
     && budgetMs != null
-    && Number.isFinite(Number(nowMs))
-    && Number(nowMs) - observedAt > budgetMs
+    && now - observedAt > budgetMs
   ) {
     status = 'stale'
     stale = true
@@ -155,6 +164,7 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
   }
   const reason = safeText(input.reason)
   if (reason && !reasons.includes(reason)) reasons.push(reason)
+  if (futureDated) reasons.push('Evidence freshness timestamp is later than the evaluation clock.')
   if (stale) reasons.push(`Evidence is older than its ${budgetMs} ms freshness budget.`)
   if (explicitStatus === 'unknown' && reasons.length === 0) reasons.push('Current evidence is unavailable or unresolved.')
 
@@ -193,18 +203,19 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
 }
 
 export function evaluateHealth(evidence = {}, { nowMs = Date.now() } = {}) {
+  const now = evaluationClock(nowMs)
   const entries = evidence && typeof evidence === 'object' && !Array.isArray(evidence)
     ? Object.entries(evidence)
     : []
 
   const subsystems = sortSubsystems(entries.map(([name, input]) => (
-    evaluateSubsystem(name, input, { nowMs })
+    evaluateSubsystem(name, input, { nowMs: now })
   )))
 
   if (subsystems.length === 0) {
     return {
       schemaVersion: 'pga-health/v1',
-      evaluatedAt: Number(nowMs),
+      evaluatedAt: now,
       status: 'unknown',
       reasons: ['No health evidence was supplied.'],
       actionable: [],
@@ -246,7 +257,7 @@ export function evaluateHealth(evidence = {}, { nowMs = Date.now() } = {}) {
 
   return {
     schemaVersion: 'pga-health/v1',
-    evaluatedAt: Number(nowMs),
+    evaluatedAt: now,
     status: winner.overall,
     leadingSubsystem: winner.subsystem,
     reasons,

@@ -219,6 +219,24 @@
     pollTimer = null;
   }
 
+  function constrainedConnection() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!connection) return false;
+    if (connection.saveData) return true;
+    const effectiveType = String(connection.effectiveType || '').toLowerCase();
+    return effectiveType === 'slow-2g' || effectiveType === '2g';
+  }
+
+  function prepareApiFromPlaybackIntent(event) {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target?.closest('#playButton, #miniPlay')) return;
+    if (navigator.onLine === false || constrainedConnection()) return;
+    if (audio?.getAttribute('src')) return;
+    const song = currentSafeSong() || currentBootSong();
+    if (!canControl(song)) return;
+    loadApi().catch(() => null);
+  }
+
   function loadApi() {
     if (window.YT?.Player) return Promise.resolve(window.YT);
     if (apiPromise) return apiPromise;
@@ -621,6 +639,7 @@
     }); } catch { /* unsupported */ }
   }
 
+  document.addEventListener('pointerdown', prepareApiFromPlaybackIntent, { capture: true, passive: true });
   document.addEventListener('click', captureClick, { capture: true });
   document.addEventListener('keydown', captureKeys, { capture: true });
   progress?.addEventListener('input', captureSeek, { capture: true });
@@ -634,9 +653,6 @@
   window.addEventListener('offline', () => { if (activeSong) close(); });
   window.addEventListener('load', () => {
     loadSafeSongs({ refresh: true });
-    const warm = () => loadApi().catch(() => null);
-    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3000 });
-    else setTimeout(warm, 1000);
     setTimeout(setupMediaSession, 0);
   }, { once: true });
 

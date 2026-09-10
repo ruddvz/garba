@@ -13,21 +13,15 @@ const MINUTE = 60 * SECOND
 const NOW = Date.parse('2026-09-10T04:00:00.000Z')
 
 function liveRows(rows, nowMs = NOW, expiryMs = LIVE_EXPIRY_SECONDS * SECOND) {
-  const latestTabs = new Map()
+  const sessions = new Map()
   for (const row of rows) {
     if (row.internal || row.bot) continue
     if (!Number.isFinite(row.receivedAtMs)) continue
-    if (row.receivedAtMs > nowMs || nowMs - row.receivedAtMs >= expiryMs) continue
-    const key = `${row.sessionKey}|${row.tabKey}`
-    const prior = latestTabs.get(key)
-    if (!prior || row.receivedAtMs > prior.receivedAtMs) latestTabs.set(key, row)
-  }
+    if (row.receivedAtMs > nowMs || nowMs - row.receivedAtMs > expiryMs) continue
 
-  const sessions = new Map()
-  for (const row of latestTabs.values()) {
-    const prior = sessions.get(row.sessionKey)
     const candidate = {
       sessionKey: row.sessionKey,
+      eventId: String(row.eventId || ''),
       isListening: row.playbackState === 'playing',
       surface: row.surface || '',
       world: row.world || '',
@@ -35,21 +29,14 @@ function liveRows(rows, nowMs = NOW, expiryMs = LIVE_EXPIRY_SECONDS * SECOND) {
       receivedAtMs: row.receivedAtMs,
       sampleInterval: Math.max(1, Number(row.sampleInterval) || 1),
     }
-    if (!prior) {
+    const prior = sessions.get(row.sessionKey)
+    if (
+      !prior
+      || candidate.receivedAtMs > prior.receivedAtMs
+      || (candidate.receivedAtMs === prior.receivedAtMs && candidate.eventId > prior.eventId)
+    ) {
       sessions.set(row.sessionKey, candidate)
-      continue
     }
-
-    const isListening = prior.isListening || candidate.isListening
-    const contextCandidateWins = candidate.isListening !== prior.isListening
-      ? candidate.isListening
-      : candidate.receivedAtMs > prior.receivedAtMs
-    sessions.set(row.sessionKey, {
-      ...(contextCandidateWins ? candidate : prior),
-      isListening,
-      sampleInterval: Math.max(prior.sampleInterval, candidate.sampleInterval),
-      receivedAtMs: Math.max(prior.receivedAtMs, candidate.receivedAtMs),
-    })
   }
 
   let liveNow = 0
@@ -103,6 +90,7 @@ function heartbeat(overrides = {}) {
   return {
     sessionKey: 'session-a',
     tabKey: 'tab-a',
+    eventId: 'event-a',
     playbackState: 'none',
     surface: 'player',
     world: '',
@@ -115,57 +103,74 @@ function heartbeat(overrides = {}) {
   }
 }
 
-test('Live SQL collapses tabs before sessions and sample-weights active-session estimates', () => {
+test('Live SQL resolves same-time rows before one latest session state and sample-weights estimates', () => {
   const sql = liveSql('playgarba_presence_v1')
-  assert.match(sql, /GROUP BY session_key, tab_key/)
+  assert.match(sql, /GROUP BY session_key, received_at_ms/)
+  assert.match(sql, /argMax\(playback_state, received_at_ms\)/)
+  assert.match(sql, /argMax\(blob6, blob1\) AS playback_state/)
   assert.match(sql, /GROUP BY session_key/)
-  assert.match(sql, /MAX\(if\(playback_state = 'playing', 1, 0\)\) AS is_listening/)
   assert.match(sql, /SUM\(sample_interval\) AS live_now/)
-  assert.match(sql, /SUM\(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END\) AS listening_now/)
+  assert.match(sql, /SUM\(CASE WHEN playback_state = 'playing' THEN sample_interval ELSE 0 END\) AS listening_now/)
   assert.match(sql, /INTERVAL '120' SECOND/)
+  assert.match(sql, /toDateTime\(double3 \/ 1000\) <= NOW\(\)/)
   assert.match(sql, /double5 = 0 AND double6 = 0/)
   assert.doesNotMatch(sql, /COUNT\(\) AS live_now/)
 })
 
-test('A newer browsing sibling tab cannot overwrite a still-live playing tab', () => {
+test('A newer browsing sibling heartbeat replaces an older playing session state', () => {
   const result = liveRows([
-    heartbeat({ tabKey: 'playing-tab', playbackState: 'playing', world: 'traditional', receivedAtMs: NOW - 40 * SECOND }),
-    heartbeat({ tabKey: 'browse-tab', playbackState: 'none', surface: 'explore', receivedAtMs: NOW - 5 * SECOND }),
+    heartbeat({ tabKey: 'playing-tab', eventId: 'event-playing', playbackState: 'playing', world: 'traditional', receivedAtMs: NOW - 40 * SECOND }),
+    heartbeat({ tabKey: 'browse-tab', eventId: 'event-browse', playbackState: 'none', surface: 'explore', receivedAtMs: NOW - 5 * SECOND }),
   ])
   assert.deepEqual(
     { liveNow: result.liveNow, listeningNow: result.listeningNow, browsingNow: result.browsingNow },
-    { liveNow: 1, listeningNow: 1, browsingNow: 0 },
+    { liveNow: 1, listeningNow: 0, browsingNow: 1 },
   )
-  assert.equal(result.sessions[0].world, 'traditional')
-  assert.equal(result.sessions[0].surface, 'player')
+  assert.equal(result.sessions[0].world, '')
+  assert.equal(result.sessions[0].surface, 'explore')
 })
 
-test('Multiple tabs count one shared session and latest state wins within each tab', () => {
+test('Multiple tabs count one shared session and the latest accepted heartbeat wins across tabs', () => {
   const result = liveRows([
-    heartbeat({ tabKey: 'tab-a', playbackState: 'playing', receivedAtMs: NOW - 70 * SECOND }),
-    heartbeat({ tabKey: 'tab-a', playbackState: 'paused', receivedAtMs: NOW - 20 * SECOND }),
-    heartbeat({ tabKey: 'tab-b', playbackState: 'none', receivedAtMs: NOW - 10 * SECOND }),
+    heartbeat({ tabKey: 'tab-a', eventId: 'event-1', playbackState: 'playing', receivedAtMs: NOW - 70 * SECOND }),
+    heartbeat({ tabKey: 'tab-a', eventId: 'event-2', playbackState: 'paused', receivedAtMs: NOW - 20 * SECOND }),
+    heartbeat({ tabKey: 'tab-b', eventId: 'event-3', playbackState: 'none', receivedAtMs: NOW - 10 * SECOND }),
   ])
   assert.equal(result.liveNow, 1)
   assert.equal(result.listeningNow, 0)
   assert.equal(result.browsingNow, 1)
 })
 
-test('Expired, internal and bot heartbeats do not create ghost live sessions', () => {
+test('Same-time session heartbeats resolve deterministically by event ID', () => {
   const result = liveRows([
-    heartbeat({ sessionKey: 'expired', receivedAtMs: NOW - 120 * SECOND }),
-    heartbeat({ sessionKey: 'internal', internal: true }),
-    heartbeat({ sessionKey: 'bot', bot: true }),
-    heartbeat({ sessionKey: 'real', playbackState: 'playing' }),
+    heartbeat({ tabKey: 'tab-a', eventId: 'event-a', playbackState: 'playing', receivedAtMs: NOW - 10 * SECOND }),
+    heartbeat({ tabKey: 'tab-b', eventId: 'event-z', playbackState: 'none', surface: 'explore', receivedAtMs: NOW - 10 * SECOND }),
   ])
   assert.equal(result.liveNow, 1)
-  assert.equal(result.listeningNow, 1)
+  assert.equal(result.listeningNow, 0)
+  assert.equal(result.browsingNow, 1)
+  assert.equal(result.sessions[0].eventId, 'event-z')
+  assert.equal(result.sessions[0].surface, 'explore')
 })
 
-test('If the playing tab expires but a browsing sibling remains fresh, the session becomes browsing', () => {
+test('Exact expiry boundary remains live while older, future, internal and bot heartbeats do not', () => {
   const result = liveRows([
-    heartbeat({ tabKey: 'old-playing', playbackState: 'playing', receivedAtMs: NOW - 121 * SECOND }),
-    heartbeat({ tabKey: 'fresh-browse', playbackState: 'none', receivedAtMs: NOW - 3 * SECOND }),
+    heartbeat({ sessionKey: 'boundary', eventId: 'boundary', receivedAtMs: NOW - 120 * SECOND }),
+    heartbeat({ sessionKey: 'expired', eventId: 'expired', receivedAtMs: NOW - 121 * SECOND }),
+    heartbeat({ sessionKey: 'future', eventId: 'future', receivedAtMs: NOW + SECOND }),
+    heartbeat({ sessionKey: 'internal', eventId: 'internal', internal: true }),
+    heartbeat({ sessionKey: 'bot', eventId: 'bot', bot: true }),
+    heartbeat({ sessionKey: 'real', eventId: 'real', playbackState: 'playing' }),
+  ])
+  assert.equal(result.liveNow, 2)
+  assert.equal(result.listeningNow, 1)
+  assert.equal(result.browsingNow, 1)
+})
+
+test('If the playing heartbeat expires but a browsing sibling remains fresh, the session becomes browsing', () => {
+  const result = liveRows([
+    heartbeat({ tabKey: 'old-playing', eventId: 'old-playing', playbackState: 'playing', receivedAtMs: NOW - 121 * SECOND }),
+    heartbeat({ tabKey: 'fresh-browse', eventId: 'fresh-browse', playbackState: 'none', receivedAtMs: NOW - 3 * SECOND }),
   ])
   assert.deepEqual(
     { liveNow: result.liveNow, listeningNow: result.listeningNow, browsingNow: result.browsingNow },
@@ -173,11 +178,11 @@ test('If the playing tab expires but a browsing sibling remains fresh, the sessi
   )
 })
 
-test('Sampled sessions use the surviving session sample interval instead of raw row count', () => {
+test('Sampled sessions use the surviving latest session sample interval instead of raw row count', () => {
   const result = liveRows([
-    heartbeat({ sessionKey: 'sampled', tabKey: 'one', playbackState: 'playing', sampleInterval: 8 }),
-    heartbeat({ sessionKey: 'sampled', tabKey: 'two', playbackState: 'none', sampleInterval: 8 }),
-    heartbeat({ sessionKey: 'exact', tabKey: 'one', playbackState: 'none', sampleInterval: 1 }),
+    heartbeat({ sessionKey: 'sampled', tabKey: 'one', eventId: 'sampled-old', playbackState: 'none', sampleInterval: 8, receivedAtMs: NOW - 20 * SECOND }),
+    heartbeat({ sessionKey: 'sampled', tabKey: 'two', eventId: 'sampled-new', playbackState: 'playing', sampleInterval: 8, receivedAtMs: NOW - 5 * SECOND }),
+    heartbeat({ sessionKey: 'exact', tabKey: 'one', eventId: 'exact', playbackState: 'none', sampleInterval: 1 }),
   ])
   assert.equal(result.liveNow, 9)
   assert.equal(result.listeningNow, 8)

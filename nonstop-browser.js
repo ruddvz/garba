@@ -20,6 +20,8 @@
     startingSetId: null,
     searchCore: null,
     searchCorePromise: null,
+    chapterObserver: null,
+    currentChapterIndex: -1,
   };
 
   const rank = {
@@ -354,6 +356,42 @@
       : `${minutes}:${String(secs).padStart(2, '0')}`;
   }
 
+  function elapsedSecondsFromText(value) {
+    const parts = String(value || '').trim().split(':').map((part) => Number(part));
+    if ((parts.length !== 2 && parts.length !== 3) || parts.some((part) => !Number.isFinite(part) || part < 0)) return null;
+    if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    return (parts[0] * 60) + parts[1];
+  }
+
+  function verifiedChaptersForSet(set) {
+    const segments = Array.isArray(set?.segments) ? set.segments : [];
+    if (!segments.length) return [];
+    const chapters = segments.map((segment, sourceIndex) => ({
+      title: String(segment?.title || '').trim(),
+      startSeconds: Number(segment?.startSeconds),
+      sourceIndex,
+    }));
+    const invalid = chapters.some((chapter, index) => !chapter.title
+      || !Number.isFinite(chapter.startSeconds)
+      || chapter.startSeconds < 0
+      || (index > 0 && chapter.startSeconds <= chapters[index - 1].startSeconds));
+    return invalid ? [] : chapters;
+  }
+
+  function currentChapterIndexFor(chapters, elapsedSeconds) {
+    if (!Array.isArray(chapters) || !chapters.length || !Number.isFinite(elapsedSeconds) || elapsedSeconds < 0) return -1;
+    let current = -1;
+    for (let index = 0; index < chapters.length; index += 1) {
+      if (elapsedSeconds < chapters[index].startSeconds) break;
+      current = index;
+    }
+    return current;
+  }
+
+  function chapterTimeLabel(seconds) {
+    return formatTime(seconds) || '0:00';
+  }
+
   function recordingPresentation(set) {
     const chapterCount = Array.isArray(set?.segments) ? set.segments.length : 0;
     const tracklistCount = Array.isArray(set?.tracklist) ? set.tracklist.length : 0;
@@ -395,7 +433,7 @@
       #browseActions .browse-button{margin-top:0!important}
       .nonstop-browser-backdrop{position:fixed;inset:0;z-index:120;background:rgba(3,5,10,.62);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .2s ease}
       .nonstop-browser-backdrop.open{opacity:1;pointer-events:auto}
-      .nonstop-browser{position:fixed;z-index:121;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,24px);width:min(900px,calc(100vw - 32px));max-height:min(82dvh,780px);overflow:hidden;border:1px solid rgba(246,236,215,.14);border-radius:28px;background:rgba(8,10,18,.96);box-shadow:0 30px 90px rgba(0,0,0,.48);color:var(--ivory);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .24s ease;display:grid;grid-template-rows:auto auto minmax(0,1fr)}
+      .nonstop-browser{position:fixed;z-index:121;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translate(-50%,24px);width:min(900px,calc(100vw - 32px));max-height:min(82dvh,780px);overflow:hidden;border:1px solid rgba(246,236,215,.14);border-radius:28px;background:rgba(8,10,18,.96);box-shadow:0 30px 90px rgba(0,0,0,.48);color:var(--ivory);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .24s ease;display:grid;grid-template-rows:auto auto auto minmax(0,1fr)}
       .nonstop-browser.open{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
       .nonstop-browser-header{display:grid;grid-template-columns:max-content minmax(0,1fr) 44px;align-items:center;column-gap:12px;padding:20px 24px 12px}
       .nonstop-browser-title{margin:0 4px 0 0;font-size:clamp(24px,2.6vw,30px);line-height:1.05;font-weight:600;letter-spacing:-.025em;white-space:nowrap}
@@ -407,6 +445,19 @@
       .nonstop-browser-categories::-webkit-scrollbar{display:none}
       .nonstop-category{flex:0 0 auto;min-height:38px;border:1px solid rgba(246,236,215,.12);border-radius:999px;background:rgba(255,255,255,.035);color:rgba(246,236,215,.72);padding:8px 12px;font:inherit;font-size:12px;cursor:pointer}
       .nonstop-category.active{background:var(--ivory);color:#101018;border-color:var(--ivory)}
+      .nonstop-chapters{padding:0 24px 12px;border-bottom:1px solid rgba(246,236,215,.08)}
+      .nonstop-chapters[hidden]{display:none}
+      .nonstop-chapters-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 8px}
+      .nonstop-chapters-title{margin:0;font-size:12px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:rgba(246,236,215,.76)}
+      .nonstop-chapters-status{font-size:11px;line-height:1.2;color:rgba(246,236,215,.5);font-variant-numeric:tabular-nums}
+      .nonstop-chapters-list{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-padding-inline:2px;overscroll-behavior-inline:contain}
+      .nonstop-chapters-list::-webkit-scrollbar{display:none}
+      .nonstop-chapter{flex:0 0 min(250px,70vw);min-height:54px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:9px;align-items:center;text-align:left;border:1px solid rgba(246,236,215,.09);border-radius:15px;background:rgba(255,255,255,.025);color:inherit;padding:9px 11px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+      .nonstop-chapter:hover{background:rgba(255,255,255,.06);border-color:rgba(246,236,215,.18)}
+      .nonstop-chapter:active{transform:scale(.995)}
+      .nonstop-chapter.active{border-color:color-mix(in srgb,var(--accent) 68%,rgba(246,236,215,.18));background:color-mix(in srgb,var(--accent) 11%,rgba(255,255,255,.025))}
+      .nonstop-chapter-index,.nonstop-chapter-time{font-size:11px;line-height:1;color:rgba(246,236,215,.58);font-variant-numeric:tabular-nums}
+      .nonstop-chapter-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600;line-height:1.25}
       .nonstop-browser-list{overflow:auto;padding:0 24px 18px;display:grid;gap:8px;overscroll-behavior:contain;scrollbar-gutter:stable}
       .nonstop-set{width:100%;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;text-align:left;border:1px solid rgba(246,236,215,.09);border-radius:18px;background:rgba(255,255,255,.025);color:inherit;padding:12px 15px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
       .nonstop-set:hover{background:rgba(255,255,255,.06);border-color:rgba(246,236,215,.18)}
@@ -434,6 +485,7 @@
         .nonstop-browser-title{margin-right:2px;font-size:clamp(20px,5.4vw,22px)}
         .nonstop-browser-search{width:100%}
         .nonstop-browser-categories{padding:0 18px 12px;scroll-padding-inline:18px}
+        .nonstop-chapters{padding:0 18px 12px}
         .nonstop-browser-list{padding:0 18px 18px}
         .nonstop-set{grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px 14px}
       }
@@ -449,7 +501,7 @@
         .nonstop-browser{max-height:94dvh;bottom:3dvh}
       }
       @media(prefers-reduced-motion:reduce){
-        .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set{transition:none!important}
+        .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set,.nonstop-chapter{transition:none!important}
       }
     `;
     document.head.append(style);
@@ -716,6 +768,7 @@
       stopNativeAudio();
       state.activeSet = set;
       state.activeTrack = track;
+      state.currentChapterIndex = -1;
       setMetadata(set);
       syncButton();
 
@@ -747,6 +800,7 @@
     state.activeSet = null;
     state.activeTrack = null;
     state.previousSession = null;
+    state.currentChapterIndex = -1;
     $('app')?.removeAttribute('data-play-mode');
     if (closePlayer) {
       try { window.GARBA_YOUTUBE_PLAYER?.close?.(); } catch { /* player may already be closed */ }
@@ -794,6 +848,7 @@
         <button class="nonstop-browser-close" id="nonstopBrowserClose" type="button" aria-label="Close Nonstop Garba">×</button>
       </header>
       <nav class="nonstop-browser-categories" id="nonstopBrowserCategories" aria-label="Nonstop Garba categories"></nav>
+      <section class="nonstop-chapters" id="nonstopBrowserChapters" hidden aria-labelledby="nonstopBrowserChaptersTitle"></section>
       <div class="nonstop-browser-list" id="nonstopBrowserList" aria-live="polite"></div>`;
     document.body.append(backdrop, panel);
     $('nonstopBrowserClose')?.addEventListener('click', closeBrowser);
@@ -802,6 +857,104 @@
       renderBrowser();
     });
     return panel;
+  }
+
+  function seekNonstopChapter(chapter, chapterIndex) {
+    if (!state.activeSet || !chapter || !Number.isFinite(chapter.startSeconds)) return false;
+    const chapters = verifiedChaptersForSet(state.activeSet);
+    const current = chapters[chapterIndex];
+    if (!current || current.startSeconds !== chapter.startSeconds || current.title !== chapter.title) return false;
+    const sought = window.GARBA_YOUTUBE_PLAYER?.seekTo?.(current.startSeconds);
+    if (!sought) {
+      announce('This chapter could not be opened right now.');
+      return false;
+    }
+    syncChapterState(current.startSeconds);
+    announce(`Chapter ${chapterIndex + 1}: ${current.title}`);
+    return true;
+  }
+
+  function syncChapterState(elapsedOverride = null) {
+    const section = $('nonstopBrowserChapters');
+    if (!section || section.hidden || !state.activeSet) return;
+    const chapters = verifiedChaptersForSet(state.activeSet);
+    if (!chapters.length) return;
+    const observed = Number.isFinite(elapsedOverride)
+      ? elapsedOverride
+      : elapsedSecondsFromText($('elapsedTime')?.textContent);
+    if (!Number.isFinite(observed)) return;
+    const nextIndex = currentChapterIndexFor(chapters, observed);
+    const alreadyCurrent = state.currentChapterIndex === nextIndex
+      && section.querySelector(`[data-nonstop-chapter-index="${nextIndex}"][aria-current="true"]`);
+    if (alreadyCurrent) return;
+    state.currentChapterIndex = nextIndex;
+    let activeButton = null;
+    section.querySelectorAll('[data-nonstop-chapter-index]').forEach((button) => {
+      const active = Number(button.dataset.nonstopChapterIndex) === nextIndex;
+      button.classList.toggle('active', active);
+      if (active) {
+        button.setAttribute('aria-current', 'true');
+        activeButton = button;
+      } else {
+        button.removeAttribute('aria-current');
+      }
+    });
+    const status = $('nonstopBrowserChaptersStatus');
+    if (status) status.textContent = nextIndex >= 0 ? `Chapter ${nextIndex + 1} of ${chapters.length}` : `${chapters.length} chapters`;
+    activeButton?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function renderChapterNavigation() {
+    const section = $('nonstopBrowserChapters');
+    if (!section) return;
+    const chapters = state.activeSet ? verifiedChaptersForSet(state.activeSet) : [];
+    state.currentChapterIndex = -1;
+    if (!chapters.length) {
+      section.hidden = true;
+      section.replaceChildren();
+      return;
+    }
+
+    const head = document.createElement('div');
+    head.className = 'nonstop-chapters-head';
+    const title = document.createElement('h3');
+    title.id = 'nonstopBrowserChaptersTitle';
+    title.className = 'nonstop-chapters-title';
+    title.textContent = 'Chapters';
+    const status = document.createElement('span');
+    status.id = 'nonstopBrowserChaptersStatus';
+    status.className = 'nonstop-chapters-status';
+    status.textContent = `${chapters.length} chapters`;
+    head.append(title, status);
+
+    const list = document.createElement('div');
+    list.className = 'nonstop-chapters-list';
+    chapters.forEach((chapter, chapterIndex) => {
+      const button = document.createElement('button');
+      const time = chapterTimeLabel(chapter.startSeconds);
+      button.type = 'button';
+      button.className = 'nonstop-chapter';
+      button.dataset.nonstopChapterIndex = String(chapterIndex);
+      button.setAttribute('aria-label', `Jump to chapter ${chapterIndex + 1}, ${chapter.title}, at ${time}`);
+      button.innerHTML = '<span class="nonstop-chapter-index"></span><span class="nonstop-chapter-title"></span><span class="nonstop-chapter-time"></span>';
+      button.querySelector('.nonstop-chapter-index').textContent = String(chapterIndex + 1).padStart(2, '0');
+      button.querySelector('.nonstop-chapter-title').textContent = chapter.title;
+      button.querySelector('.nonstop-chapter-time').textContent = time;
+      button.addEventListener('click', () => seekNonstopChapter(chapter, chapterIndex));
+      list.append(button);
+    });
+    section.replaceChildren(head, list);
+    section.hidden = false;
+    syncChapterState();
+  }
+
+  function watchChapterTime() {
+    const elapsed = $('elapsedTime');
+    if (!elapsed || state.chapterObserver) return;
+    state.chapterObserver = new MutationObserver(() => {
+      if (state.activeSet && state.browserOpen) syncChapterState();
+    });
+    state.chapterObserver.observe(elapsed, { childList: true, characterData: true, subtree: true });
   }
 
   function setBackgroundInert(inert) {
@@ -886,6 +1039,8 @@
         return button;
       }));
     }
+
+    renderChapterNavigation();
 
     const list = $('nonstopBrowserList');
     if (!list) return;
@@ -1008,11 +1163,6 @@
     if (id) startNonstop(id, { quiet: true });
   }
 
-  function warmNonstop() {
-    const warm = () => loadAllSets().catch(() => null);
-    if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
-    else setTimeout(warm, 1800);
-  }
 
   function captureNonstopKeyboard(event) {
     if (!state.activeSet) return;
@@ -1029,6 +1179,7 @@
     ensureButton();
     watchGenreStrip();
     watchMetadata();
+    watchChapterTime();
     document.addEventListener('click', captureMainNavigation, { capture: true });
     document.addEventListener('keydown', captureNonstopKeyboard, { capture: true });
     $('progress')?.addEventListener('input', captureSeek, { capture: true });
@@ -1047,7 +1198,6 @@
       else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: true, updateHistory: false });
     });
     document.addEventListener('keydown', trapBrowserFocus, { capture: true });
-    warmNonstop();
     restoreFromUrl();
   }
 

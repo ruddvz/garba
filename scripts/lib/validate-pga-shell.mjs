@@ -97,9 +97,61 @@ function validateStaticContract() {
   console.log('✓ PGA static shell contract');
 }
 
-async function validateBrowserContract() {
-  const { chromium, webkit } = await import('@playwright/test');
-  const baseUrl = process.env.PGA_BASE_URL || 'http://127.0.0.1:4174';
+function unavailableAggregate() {
+  return JSON.stringify({
+    status: 'unavailable',
+    generatedAt: null,
+    dataThrough: null,
+    data: null,
+  });
+}
+
+function audienceAggregate() {
+  const metric = (value) => ({ value, precision: 'exact', sampled: false });
+  return JSON.stringify({
+    status: 'complete',
+    generatedAt: '2026-09-10T18:00:00.000Z',
+    dataThrough: '2026-09-10T17:59:00.000Z',
+    data: {
+      range: '30d',
+      summary: {
+        uniqueBrowsers: metric(5),
+        sessions: metric(7),
+        newBrowserIds: metric(3),
+        returningBrowserIds: metric(2),
+      },
+      breakdowns: [
+        {
+          client: 'mobile|iOS|Safari',
+          country: 'IN',
+          region: 'GJ',
+          referrerHost: null,
+          acquisition: 'direct||',
+          displayMode: 'browser',
+          sessions: metric(7),
+        },
+      ],
+    },
+  });
+}
+
+async function installUnavailableRoutes(page, fixtureOrigin, protectedAggregatePaths) {
+  await page.route('**/api/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin !== fixtureOrigin || !protectedAggregatePaths.has(url.pathname)) {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'cache-control': 'no-store' },
+      body: unavailableAggregate(),
+    });
+  });
+}
+
+async function validateResponsiveMatrix({ chromium, webkit, baseUrl, fixtureOrigin, protectedAggregatePaths }) {
   const engines = [
     ['chromium', chromium],
     ['webkit', webkit],
@@ -115,9 +167,11 @@ async function validateBrowserContract() {
     const browser = await engine.launch({ headless: true });
     try {
       for (const [viewportName, viewport] of viewports) {
-        const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+        const context = await browser.newContext({ viewport, reducedMotion: 'reduce', serviceWorkers: 'block' });
         const page = await context.newPage();
         const failures = [];
+        await installUnavailableRoutes(page, fixtureOrigin, protectedAggregatePaths);
+
         page.on('pageerror', (error) => failures.push(`pageerror: ${error.message}`));
         page.on('response', (response) => {
           if (response.url().startsWith(baseUrl) && response.status() >= 400) failures.push(`http ${response.status()}: ${response.url()}`);
@@ -154,8 +208,185 @@ async function validateBrowserContract() {
       await browser.close();
     }
   }
+}
+
+async function validateKeyboardAndReducedMotion({ chromium, webkit, baseUrl, fixtureOrigin, protectedAggregatePaths }) {
+  for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]]) {
+    const browser = await engine.launch({ headless: true });
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    try {
+      const page = await context.newPage();
+      await installUnavailableRoutes(page, fixtureOrigin, protectedAggregatePaths);
+      await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+
+      const motion = await page.evaluate(() => {
+        const maxDurationMs = (value) => Math.max(0, ...String(value).split(',').map((token) => {
+          const trimmed = token.trim();
+          if (!trimmed) return 0;
+          if (trimmed.endsWith('ms')) return Number.parseFloat(trimmed) || 0;
+          if (trimmed.endsWith('s')) return (Number.parseFloat(trimmed) || 0) * 1000;
+          return Number.parseFloat(trimmed) || 0;
+        }));
+        const style = getComputedStyle(document.querySelector('[data-view="home"]'));
+        return {
+          reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          animationMs: maxDurationMs(style.animationDuration),
+          transitionMs: maxDurationMs(style.transitionDuration),
+        };
+      });
+      assert.equal(motion.reduced, true, `${engineName} reduced-motion media query must be active`);
+      assert.ok(motion.animationMs <= 0.01, `${engineName} reduced-motion animation remains ${motion.animationMs}ms`);
+      assert.ok(motion.transitionMs <= 0.01, `${engineName} reduced-motion transition remains ${motion.transitionMs}ms`);
+
+      await page.evaluate(() => document.activeElement?.blur());
+      let reachedAudience = false;
+      for (let index = 0; index < 24; index += 1) {
+        await page.keyboard.press('Tab');
+        const activeNav = await page.evaluate(() => document.activeElement?.dataset?.nav || null);
+        if (activeNav === 'audience') {
+          reachedAudience = true;
+          break;
+        }
+      }
+      assert.equal(reachedAudience, true, `${engineName} keyboard tab order did not reach Audience navigation`);
+      await page.keyboard.press('Enter');
+      await page.locator('[data-view="audience"]').waitFor({ state: 'visible' });
+      assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'H1', `${engineName} keyboard navigation did not move focus to the view heading`);
+      assert.match(await page.evaluate(() => document.activeElement?.textContent || ''), /Audience/);
+    } finally {
+      await context.close();
+      await browser.close();
+    }
+  }
+}
+
+async function validateForcedColors({ chromium, baseUrl, fixtureOrigin, protectedAggregatePaths }) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    forcedColors: 'active',
+    serviceWorkers: 'block',
+  });
+  try {
+    const page = await context.newPage();
+    await installUnavailableRoutes(page, fixtureOrigin, protectedAggregatePaths);
+    await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+    assert.equal(await page.evaluate(() => matchMedia('(forced-colors: active)').matches), true, 'Chromium forced-colors media query must be active');
+
+    const audienceNav = page.locator('.side-nav [data-nav="audience"]');
+    await audienceNav.focus();
+    const focusStyle = await audienceNav.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return { outlineStyle: style.outlineStyle, outlineWidth: Number.parseFloat(style.outlineWidth) || 0 };
+    });
+    assert.notEqual(focusStyle.outlineStyle, 'none', 'forced-colors keyboard focus must stay visibly outlined');
+    assert.ok(focusStyle.outlineWidth >= 2, `forced-colors focus outline is only ${focusStyle.outlineWidth}px`);
+
+    await page.keyboard.press('Enter');
+    await page.locator('[data-view="audience"]').waitFor({ state: 'visible' });
+    assert.equal(await page.evaluate(() => document.activeElement?.tagName), 'H1', 'forced-colors navigation must remain operable');
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+}
+
+async function validateProtectedResilience({ chromium, baseUrl, fixtureOrigin, protectedAggregatePaths }) {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+  try {
+    const page = await context.newPage();
+    const pageErrors = [];
+    let audienceMode = 'ready';
+    let audienceRequests = 0;
+
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    await page.route('**/api/**', async (route) => {
+      const url = new URL(route.request().url());
+      if (url.origin !== fixtureOrigin || !protectedAggregatePaths.has(url.pathname)) {
+        await route.continue();
+        return;
+      }
+      if (url.pathname !== '/api/audience') {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: unavailableAggregate() });
+        return;
+      }
+
+      audienceRequests += 1;
+      if (audienceMode === 'auth-expired') {
+        await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'access_expired' }) });
+        return;
+      }
+      if (audienceMode === 'backend-unavailable') {
+        await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ status: 'unavailable', error: 'query_unavailable' }) });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: { 'cache-control': 'no-store' },
+        body: audienceAggregate(),
+      });
+    });
+
+    await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+    await page.locator('.bottom-nav [data-nav="audience"]').click();
+    await page.locator('#audienceContent').waitFor({ state: 'visible' });
+    assert.equal((await page.locator('#audienceSessions').textContent()).trim(), '7', 'valid private Audience data must render before resilience transitions');
+
+    audienceMode = 'auth-expired';
+    await page.locator('#refreshButton').click();
+    await page.waitForFunction(() => document.querySelector('#audienceState')?.dataset?.state === 'auth-expired');
+    assert.match(await page.locator('#boundaryTitle').textContent(), /Access expired/);
+    assert.equal(await page.locator('#audienceContent').isHidden(), true, 'expired access must hide previously rendered private data');
+
+    audienceMode = 'backend-unavailable';
+    await page.locator('#refreshButton').click();
+    await page.waitForFunction(() => document.querySelector('#audienceState')?.dataset?.state === 'error');
+    assert.match(await page.locator('#audienceState strong').textContent(), /Analytics unavailable/);
+    assert.equal(await page.locator('#audienceContent').isHidden(), true, 'backend failure must not expose stale data as current');
+
+    audienceMode = 'ready';
+    await page.locator('#refreshButton').click();
+    await page.locator('#audienceContent').waitFor({ state: 'visible' });
+    assert.equal((await page.locator('#audienceSessions').textContent()).trim(), '7', 'backend recovery must restore fresh trustworthy data');
+
+    const beforeOffline = audienceRequests;
+    await context.setOffline(true);
+    await page.evaluate(() => window.dispatchEvent(new Event('offline')));
+    await page.waitForFunction(() => document.querySelector('#audienceState')?.dataset?.state === 'offline');
+    assert.match(await page.locator('#boundaryTitle').textContent(), /Offline/);
+    assert.equal(await page.locator('#audienceContent').isHidden(), true, 'offline transition must hide analytics content from current-state presentation');
+
+    audienceMode = 'ready';
+    await context.setOffline(false);
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await page.locator('#audienceContent').waitFor({ state: 'visible' });
+    assert.ok(audienceRequests > beforeOffline, 'online recovery must start a fresh protected Audience request');
+    assert.equal((await page.locator('#audienceSessions').textContent()).trim(), '7', 'online recovery must restore fresh Audience data');
+    assert.deepEqual(pageErrors, [], 'resilience flow emitted page errors');
+  } finally {
+    await context.close();
+    await browser.close();
+  }
+}
+
+async function validateBrowserContract() {
+  const { chromium, webkit } = await import('@playwright/test');
+  const baseUrl = process.env.PGA_BASE_URL || 'http://127.0.0.1:4174';
+  const fixtureOrigin = new URL(baseUrl).origin;
+  const protectedAggregatePaths = new Set(['/api/home', '/api/live', '/api/audience', '/api/listening']);
+  const options = { chromium, webkit, baseUrl, fixtureOrigin, protectedAggregatePaths };
+
+  await validateResponsiveMatrix(options);
+  await validateKeyboardAndReducedMotion(options);
+  await validateForcedColors(options);
+  await validateProtectedResilience(options);
 
   console.log('✓ PGA Chromium/WebKit responsive shell contract');
+  console.log('✓ PGA keyboard-only and reduced-motion browser evidence contract');
+  console.log('✓ PGA Chromium forced-colors focus/navigation evidence contract');
+  console.log('✓ PGA protected 401/503/offline failure and recovery evidence contract');
 }
 
 validateStaticContract();

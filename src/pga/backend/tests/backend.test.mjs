@@ -8,6 +8,8 @@ import {
   audienceSql,
   eventDataPoint,
   homeWindowSql,
+  liveBreakdownSql,
+  liveSql,
   listeningTimeSql,
   normaliseForStorage,
   presenceDataPoint,
@@ -62,6 +64,7 @@ async function accessFixture(path = '/api/live', payloadOverrides = {}) {
     exp: Math.floor(NOW / 1000) + 600,
     iat: Math.floor(NOW / 1000),
     sub: 'founder',
+    type: 'app',
     ...payloadOverrides,
   }))
   const data = new TextEncoder().encode(`${header}.${payload}`)
@@ -221,6 +224,23 @@ test('listening-time SQL caps a session minute at 60 seconds', () => {
   assert.match(sql, /GROUP BY event_id/)
 })
 
+test('live SQL uses received-time liveness and deterministic same-time session selection', () => {
+  for (const sql of [liveSql('playgarba_presence_v1'), liveBreakdownSql('playgarba_presence_v1')]) {
+    assert.match(sql, /WITH same_time_sessions AS/)
+    assert.match(sql, /argMax\(blob6, blob1\) AS playback_state/)
+    assert.match(sql, /GROUP BY session_key, received_at_ms/)
+    assert.match(sql, /argMax\(playback_state, received_at_ms\) AS playback_state/)
+    assert.match(sql, /GROUP BY session_key/)
+    assert.match(sql, /toDateTime\(double3 \/ 1000\) >= NOW\(\) - INTERVAL '120' SECOND/)
+    assert.match(sql, /toDateTime\(double3 \/ 1000\) <= NOW\(\)/)
+    assert.doesNotMatch(sql, /timestamp > NOW\(\) - INTERVAL '120' SECOND/)
+    assert.doesNotMatch(sql, /GROUP BY session_key, tab_key/)
+  }
+  const sql = liveSql('playgarba_presence_v1')
+  assert.match(sql, /playback_state = 'playing'/)
+  assert.match(sql, /playback_state != 'playing'/)
+})
+
 test('search demand SQL enforces the minimum-volume privacy threshold', () => {
   const sql = searchDemandSql('playgarba_events_v1', '30d')
   assert.match(sql, /HAVING searches >= 3/)
@@ -290,11 +310,44 @@ test('Access verifier denies missing JWT assertions', async () => {
   assert.deepEqual(result, { ok: false, reason: 'missing_access_jwt' })
 })
 
-test('Access verifier validates a signed RS256 assertion against the Access JWKS', async () => {
+test('Access verifier validates a signed RS256 application assertion against the Access JWKS', async () => {
   const fixture = await accessFixture()
   const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
   assert.equal(result.ok, true)
   assert.equal(result.payload.sub, 'founder')
+  assert.equal(result.payload.type, 'app')
+})
+
+test('Access verifier rejects signed non-application token classes', async () => {
+  for (const [label, type] of [
+    ['global session token', 'org'],
+    ['missing token type', undefined],
+    ['non-string token type', true],
+  ]) {
+    const fixture = await accessFixture('/api/live', { type })
+    const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+    assert.deepEqual(result, { ok: false, reason: 'invalid_token_type' }, label)
+  }
+})
+
+test('Access verifier preserves issuer, audience and expiry rejection precedence', async () => {
+  const wrongIssuer = await accessFixture('/api/live', { iss: 'https://other.cloudflareaccess.com', type: 'org' })
+  assert.deepEqual(
+    await verifyAccessJwt(wrongIssuer.request, wrongIssuer.env, { nowMs: NOW, fetchImpl: wrongIssuer.fetchImpl }),
+    { ok: false, reason: 'invalid_issuer' },
+  )
+
+  const wrongAudience = await accessFixture('/api/live', { aud: ['other-aud'], type: 'org' })
+  assert.deepEqual(
+    await verifyAccessJwt(wrongAudience.request, wrongAudience.env, { nowMs: NOW, fetchImpl: wrongAudience.fetchImpl }),
+    { ok: false, reason: 'invalid_audience' },
+  )
+
+  const expired = await accessFixture('/api/live', { exp: Math.floor(NOW / 1000) - 1 })
+  assert.deepEqual(
+    await verifyAccessJwt(expired.request, expired.env, { nowMs: NOW, fetchImpl: expired.fetchImpl }),
+    { ok: false, reason: 'expired' },
+  )
 })
 
 test('protected Live API returns aggregate data with no-store caching', async () => {

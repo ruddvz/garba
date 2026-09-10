@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/pga/**'
       - 'scripts/lib/validate-pga-security.mjs'
+      - 'scripts/lib/validate-pga-ingest-abuse.mjs'
       - '.github/workflows/pga-security-validate.yml'
       - 'index.html'
       - '*.js'
@@ -20,6 +21,7 @@ on:
     paths:
       - 'src/pga/**'
       - 'scripts/lib/validate-pga-security.mjs'
+      - 'scripts/lib/validate-pga-ingest-abuse.mjs'
       - '.github/workflows/pga-security-validate.yml'
       - 'index.html'
       - '*.js'
@@ -40,10 +42,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Validate PGA security contract
         run: node scripts/lib/validate-pga-security.mjs
+      - name: Validate PGA ingestion abuse controls
+        run: node scripts/lib/validate-pga-ingest-abuse.mjs
