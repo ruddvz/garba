@@ -62,6 +62,15 @@
     }
   }
 
+  function sameHttpResourceIgnoringFragment(left, right) {
+    if (!left || !right) return false;
+    const leftUrl = new URL(left.href);
+    const rightUrl = new URL(right.href);
+    leftUrl.hash = '';
+    rightUrl.hash = '';
+    return leftUrl.href === rightUrl.href;
+  }
+
   function hostMatches(hostname, suffix) {
     const host = String(hostname || '').toLowerCase().replace(/^www\./, '');
     const target = suffix.toLowerCase();
@@ -134,7 +143,7 @@
 
     const proof = parseHttpsUrl(rights.proofUrl);
     if (!proof) add('rights proof URL must be absolute HTTPS');
-    else if (audio && proof.href === audio.href) add('rights proof URL cannot be the media URL');
+    else if (audio && sameHttpResourceIgnoringFragment(proof, audio)) add('rights proof URL cannot be the media URL');
 
     return errors;
   }
