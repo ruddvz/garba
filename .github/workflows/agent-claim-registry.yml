@@ -107,6 +107,10 @@ jobs:
               return Boolean(a && b && a.agent === b.agent && a.branch === b.branch);
             }
 
+            function issueAcceptsClaims(issue) {
+              return String(issue?.state || '').toLowerCase() === 'open';
+            }
+
             function deriveState(comments) {
               let active = null;
               let conflicts = [];
@@ -454,9 +458,10 @@ jobs:
 
             async function reconcileIssue(issue, comments, suppressRecoveryNotice = false) {
               if (!issue || issue.pull_request || Number(issue.number) === boardIssue) return null;
-              const state = deriveState(comments || []);
+              const derivedState = deriveState(comments || []);
+              const state = issueAcceptsClaims(issue) ? derivedState : { active: null, conflicts: [] };
               const beforeLabels = issueLabelNames(issue);
-              const shouldClaim = issue.state === 'open' && Boolean(state.active);
+              const shouldClaim = Boolean(state.active);
               const shouldConflict = shouldClaim && state.conflicts.length > 0;
 
               if (shouldClaim) await addLabelIfNeeded(issue, 'agent:claimed');
@@ -576,14 +581,17 @@ jobs:
               });
             }
 
-            async function acknowledgeOwnershipEvent(issueNumber, current, comments) {
+            async function acknowledgeOwnershipEvent(issue, current, comments) {
               const event = parseEvent(current);
               if (!event) return false;
+              const issueNumber = Number(issue?.number || 0);
               const beforeState = deriveState(comments.filter(comment => Number(comment.id) < Number(current.id)));
               let body;
               if (event.type === 'claim') {
                 if (!validClaim(event)) {
                   body = '❌ **Claim rejected:** include non-empty `agent`, `branch`, `scope` and `files` fields.';
+                } else if (!issueAcceptsClaims(issue)) {
+                  body = '❌ **Claim rejected:** this issue is closed. Reopen it first, then post a fresh claim; closed issues cannot reserve ownership.';
                 } else if (beforeState.active && !sameOwner(beforeState.active, event)) {
                   body = `❌ **Claim conflict:** this lane is already owned by \`${beforeState.active.agent}\` on \`${beforeState.active.branch}\`. Do not begin overlapping implementation.`;
                 } else {
@@ -608,6 +616,7 @@ jobs:
             }
 
             async function autoReleaseClosedIssue(issue) {
+              if (issueAcceptsClaims(issue)) return;
               const comments = await listComments(issue.number);
               const state = deriveState(comments);
               if (!state.active) return;
@@ -639,12 +648,16 @@ jobs:
               const claimBRetry = syntheticComment(3, '<!-- agent-claim\nagent: agent/b\nbranch: fix/b\nscope: scope b retry\nfiles: file-b\n-->');
               const claimC = syntheticComment(4, '<!-- agent-claim\nagent: agent/c\nbranch: fix/c\nscope: scope c\nfiles: file-c\n-->');
               const releaseB = syntheticComment(5, '<!-- agent-release\nagent: agent/b\nbranch: fix/b\n-->');
-              const releaseC = syntheticComment(6, '<!-- agent-release\nagent: agent/c\nbranch: fix/c\n-->');
+              const releaseC = syntheticComment(6, '<!-- agent-release\nagent: agent/c\nbranch: fix/c\nscope: scope c\nfiles: file-c\n-->');
               const releaseA = syntheticComment(7, '<!-- agent-release\nagent: agent/a\nbranch: fix/a\n-->');
               const updateA = syntheticComment(8, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: narrowed\nfiles: file-a; file-c\n-->');
               const override = syntheticComment(9, '<!-- agent-claim-override\nreason: owner reassignment\n-->', owner);
               const botStatus = syntheticComment(10, `${statusMarker}\n**Status:** Claimed`, 'github-actions', 'Bot');
+              const closedClaim = syntheticComment(11, '<!-- agent-claim\nagent: agent/closed\nbranch: fix/closed\nscope: closed scope\nfiles: file-closed\n-->');
+              const closedAutoRelease = syntheticComment(12, '<!-- agent-release\nagent: agent/closed\nbranch: fix/closed\n-->', 'github-actions', 'Bot');
 
+              assert(issueAcceptsClaims({ state: 'open' }), 'open issues accept claims');
+              assert(!issueAcceptsClaims({ state: 'closed' }), 'closed issues reject claims');
               let state = deriveState([claimA]);
               assert(state.active?.agent === 'agent/a', 'first valid claim wins');
               state = deriveState([claimA, claimB]);
@@ -661,6 +674,8 @@ jobs:
               assert(!state.active && state.conflicts.length === 0, 'matching active-owner release clears ownership and conflicts');
               state = deriveState([claimA, override]);
               assert(!state.active, 'repository-owner override clears ownership');
+              state = deriveState([closedClaim, closedAutoRelease]);
+              assert(!state.active && state.conflicts.length === 0, 'closed-issue auto-release neutralises a rejected claim before reopen');
               assert(parseEvent(botStatus) === null, 'bot status comments never become ownership events');
 
               const normalized = normalizeGraphComment({
@@ -721,8 +736,9 @@ jobs:
                 extraIssueNumber = issue?.pull_request ? null : Number(issue?.number || 0) || null;
                 const current = context.payload.comment;
                 if (issue && !issue.pull_request && Number(issue.number) !== boardIssue) {
+                  if (!issueAcceptsClaims(issue)) await autoReleaseClosedIssue(issue);
                   const comments = await listComments(issue.number);
-                  const acknowledged = await acknowledgeOwnershipEvent(issue.number, current, comments);
+                  const acknowledged = await acknowledgeOwnershipEvent(issue, current, comments);
                   if (acknowledged) suppressIssueNumber = Number(issue.number);
                 }
                 // Even a bot/PR/non-ownership comment must recover the universe. Such a
