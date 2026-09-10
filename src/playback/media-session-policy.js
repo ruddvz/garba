@@ -6,7 +6,6 @@
   'use strict';
 
   const VERSION = 1;
-  const LIVE_SOURCE_KINDS = new Set(['direct', 'youtube-foreground']);
   const ACTIVE_PLAYBACK_STATES = new Set(['playing', 'paused', 'buffering']);
   const TERMINAL_PLAYBACK_STATES = new Set(['ended', 'error', 'unavailable']);
   const ACTION_ORDER = [
@@ -89,12 +88,15 @@
   }
 
   function sourceUsable(resolution) {
-    return Boolean(
-      isPlainObject(resolution)
-      && LIVE_SOURCE_KINDS.has(resolution.kind)
-      && resolution.playable === true
-      && nonEmptyString(resolution.songId)
-    );
+    if (!isPlainObject(resolution) || resolution.playable !== true || !nonEmptyString(resolution.songId)) return false;
+    const provider = String(resolution.provider || '').trim().toLowerCase();
+    if (resolution.kind === 'direct') {
+      return provider === 'direct' && resolution.backgroundCapable === true;
+    }
+    if (resolution.kind === 'youtube-foreground') {
+      return provider === 'youtube' && resolution.backgroundCapable !== true;
+    }
+    return false;
   }
 
   function sourceForegroundEligible(resolution, environment) {
@@ -192,7 +194,7 @@
         reason: 'playback-inactive',
         songId,
         provider: String(resolution.provider || '').trim() || null,
-        backgroundCapable: resolution.kind === 'direct' && resolution.backgroundCapable === true,
+        backgroundCapable: resolution.kind === 'direct',
         playbackState: 'none',
         metadata,
         position: null,
@@ -201,8 +203,6 @@
       });
     }
 
-    const direct = resolution.kind === 'direct';
-    const backgroundCapable = direct && resolution.backgroundCapable === true;
     const actionPolicy = buildActions(capabilities, position, state);
     const truthfulPosition = actionPolicy.actions.includes('seekto')
       ? positionState(position, true)
@@ -214,7 +214,7 @@
       reason: null,
       songId,
       provider: String(resolution.provider || '').trim() || null,
-      backgroundCapable,
+      backgroundCapable: resolution.kind === 'direct',
       playbackState: playbackPresentationState(state),
       metadata,
       position: truthfulPosition,
