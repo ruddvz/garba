@@ -31,6 +31,10 @@
     return typeof value === 'number' && Number.isFinite(value);
   }
 
+  function validGeneration(value) {
+    return Number.isSafeInteger(value) && value >= 0;
+  }
+
   function cloneArtwork(artwork) {
     if (!Array.isArray(artwork)) return Object.freeze([]);
     const safe = artwork
@@ -55,12 +59,13 @@
     return Object.freeze(policy);
   }
 
-  function emptyPolicy(reason, songId = '') {
+  function emptyPolicy(reason, songId = '', generation = null) {
     return freezePolicy({
       version: VERSION,
       valid: false,
       reason,
       songId,
+      generation,
       provider: null,
       backgroundCapable: false,
       playbackState: 'none',
@@ -177,13 +182,20 @@
     const metadata = canonicalIdentity(identity, resolution);
     if (!metadata) return emptyPolicy('identity-mismatch', songId);
 
-    const state = isPlainObject(playback) && nonEmptyString(playback.state)
+    if (!isPlainObject(playback)
+      || !nonEmptyString(playback.songId)
+      || playback.songId.trim() !== songId
+      || !validGeneration(playback.generation)) {
+      return emptyPolicy('playback-identity-invalid', songId);
+    }
+    const generation = playback.generation;
+    const state = nonEmptyString(playback.state)
       ? playback.state.trim().toLowerCase()
       : 'unknown';
 
-    if (TERMINAL_PLAYBACK_STATES.has(state)) return emptyPolicy(`playback-${state}`, songId);
+    if (TERMINAL_PLAYBACK_STATES.has(state)) return emptyPolicy(`playback-${state}`, songId, generation);
     if (!sourceForegroundEligible(resolution, environment)) {
-      return emptyPolicy('foreground-required', songId);
+      return emptyPolicy('foreground-required', songId, generation);
     }
 
     const active = ACTIVE_PLAYBACK_STATES.has(state);
@@ -193,6 +205,7 @@
         valid: true,
         reason: 'playback-inactive',
         songId,
+        generation,
         provider: String(resolution.provider || '').trim() || null,
         backgroundCapable: resolution.kind === 'direct',
         playbackState: 'none',
@@ -213,6 +226,7 @@
       valid: true,
       reason: null,
       songId,
+      generation,
       provider: String(resolution.provider || '').trim() || null,
       backgroundCapable: resolution.kind === 'direct',
       playbackState: playbackPresentationState(state),

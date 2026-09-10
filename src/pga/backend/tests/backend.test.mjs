@@ -64,6 +64,7 @@ async function accessFixture(path = '/api/live', payloadOverrides = {}) {
     exp: Math.floor(NOW / 1000) + 600,
     iat: Math.floor(NOW / 1000),
     sub: 'founder',
+    type: 'app',
     ...payloadOverrides,
   }))
   const data = new TextEncoder().encode(`${header}.${payload}`)
@@ -309,11 +310,44 @@ test('Access verifier denies missing JWT assertions', async () => {
   assert.deepEqual(result, { ok: false, reason: 'missing_access_jwt' })
 })
 
-test('Access verifier validates a signed RS256 assertion against the Access JWKS', async () => {
+test('Access verifier validates a signed RS256 application assertion against the Access JWKS', async () => {
   const fixture = await accessFixture()
   const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
   assert.equal(result.ok, true)
   assert.equal(result.payload.sub, 'founder')
+  assert.equal(result.payload.type, 'app')
+})
+
+test('Access verifier rejects signed non-application token classes', async () => {
+  for (const [label, type] of [
+    ['global session token', 'org'],
+    ['missing token type', undefined],
+    ['non-string token type', true],
+  ]) {
+    const fixture = await accessFixture('/api/live', { type })
+    const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+    assert.deepEqual(result, { ok: false, reason: 'invalid_token_type' }, label)
+  }
+})
+
+test('Access verifier preserves issuer, audience and expiry rejection precedence', async () => {
+  const wrongIssuer = await accessFixture('/api/live', { iss: 'https://other.cloudflareaccess.com', type: 'org' })
+  assert.deepEqual(
+    await verifyAccessJwt(wrongIssuer.request, wrongIssuer.env, { nowMs: NOW, fetchImpl: wrongIssuer.fetchImpl }),
+    { ok: false, reason: 'invalid_issuer' },
+  )
+
+  const wrongAudience = await accessFixture('/api/live', { aud: ['other-aud'], type: 'org' })
+  assert.deepEqual(
+    await verifyAccessJwt(wrongAudience.request, wrongAudience.env, { nowMs: NOW, fetchImpl: wrongAudience.fetchImpl }),
+    { ok: false, reason: 'invalid_audience' },
+  )
+
+  const expired = await accessFixture('/api/live', { exp: Math.floor(NOW / 1000) - 1 })
+  assert.deepEqual(
+    await verifyAccessJwt(expired.request, expired.env, { nowMs: NOW, fetchImpl: expired.fetchImpl }),
+    { ok: false, reason: 'expired' },
+  )
 })
 
 test('protected Live API returns aggregate data with no-store caching', async () => {

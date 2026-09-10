@@ -35,6 +35,10 @@ function fullSha(value) {
   return sha && FULL_SHA.test(sha) ? sha.toLowerCase() : null
 }
 
+function finiteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
 function boundedTimeout(value) {
   const number = Number(value)
   if (!Number.isFinite(number) || number <= 0) return DEFAULT_TIMEOUT_MS
@@ -44,9 +48,8 @@ function boundedTimeout(value) {
 function freshnessBudget(budgets, name) {
   if (!budgets || typeof budgets !== 'object' || Array.isArray(budgets)) return undefined
   const value = budgets[name]
-  if (value == null || value === '') return undefined
-  const number = Number(value)
-  return Number.isFinite(number) && number >= 0 ? number : undefined
+  const number = finiteNumber(value)
+  return number != null && number >= 0 ? number : undefined
 }
 
 function isPlainObject(value) {
@@ -302,8 +305,8 @@ export async function collectHealthSnapshot({
   observations = {},
 } = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('health_collector_fetch_required')
-  const now = Number(nowMs)
-  if (!Number.isFinite(now)) throw new Error('invalid_health_collector_time')
+  const now = finiteNumber(nowMs)
+  if (now == null) throw new Error('invalid_health_collector_time')
 
   const revision = fullSha(expectedRevision)
   const repository = repositoryName(githubRepository)

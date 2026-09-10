@@ -251,6 +251,94 @@ assert.equal(POSITION_TOLERANCE_SECONDS, 0.25);
 
 {
   let state = select(createInitialState(), 'song-a', 1);
+  state = media(state, 'loadedmetadata', { duration: 90, currentTime: 89 });
+  state = media(state, 'playing');
+  state = media(state, 'ended', { currentTime: 90 });
+  const terminal = state;
+
+  for (const [type, overrides] of [
+    ['playing', { currentTime: 1 }],
+    ['canplay', {}],
+    ['pause', { currentTime: 90 }],
+    ['loadstart', {}],
+    ['waiting', {}],
+    ['timeupdate', { currentTime: 5 }],
+    ['seek-start', { target: 10 }],
+    ['seek-commit', { currentTime: 10 }],
+  ]) {
+    assert.equal(media(state, type, overrides), terminal, `late ${type} must not resurrect ended authority`);
+  }
+  assert.equal(Object.isFrozen(terminal), true);
+}
+
+{
+  let state = select(createInitialState(), 'song-a', 1);
+  state = media(state, 'playing', { currentTime: 5 });
+  state = media(state, 'error', { code: 'decode-error' });
+  const terminal = state;
+
+  for (const [type, overrides] of [
+    ['playing', { currentTime: 6 }],
+    ['canplay', {}],
+    ['pause', { currentTime: 6 }],
+    ['loadstart', {}],
+    ['waiting', {}],
+    ['timeupdate', { currentTime: 6 }],
+    ['seek-start', { target: 10 }],
+    ['seek-commit', { currentTime: 10 }],
+  ]) {
+    assert.equal(media(state, type, overrides), terminal, `late ${type} must not resurrect error authority`);
+  }
+
+  state = media(state, 'unavailable', { reason: 'rights-revoked' });
+  assert.equal(state.phase, 'unavailable', 'error may escalate to stronger unavailable evidence');
+  assert.deepEqual(state.error, { code: 'rights-revoked' });
+}
+
+{
+  let state = select(createInitialState(), 'song-a', 1);
+  state = media(state, 'playing', { currentTime: 5 });
+  state = media(state, 'unavailable', { reason: 'rights-revoked' });
+  const terminal = state;
+
+  for (const [type, overrides] of [
+    ['playing', { currentTime: 6 }],
+    ['canplay', {}],
+    ['pause', { currentTime: 6 }],
+    ['loadstart', {}],
+    ['waiting', {}],
+    ['timeupdate', { currentTime: 6 }],
+    ['seek-start', { target: 10 }],
+    ['seek-commit', { currentTime: 10 }],
+    ['error', { code: 'late-media-error' }],
+  ]) {
+    assert.equal(media(state, type, overrides), terminal, `late ${type} must not resurrect or weaken unavailable authority`);
+  }
+}
+
+{
+  for (const terminalType of ['ended', 'error', 'unavailable']) {
+    let state = select(createInitialState(), 'song-a', 1);
+    state = media(state, 'playing', { currentTime: 5 });
+    if (terminalType === 'ended') state = media(state, 'ended', { currentTime: 5 });
+    if (terminalType === 'error') state = media(state, 'error', { code: 'decode-error' });
+    if (terminalType === 'unavailable') state = media(state, 'unavailable', { reason: 'rights-revoked' });
+
+    const nextGeneration = select(state, 'song-b', 2);
+    assert.equal(nextGeneration.phase, 'selected', `${terminalType} must allow newer-generation selection`);
+    assert.equal(nextGeneration.songId, 'song-b');
+    assert.equal(nextGeneration.generation, 2);
+    assert.equal(nextGeneration.error, null);
+
+    const reset = reduceDirectMediaAuthorityState(state, { type: 'reset', generation: 2 });
+    assert.equal(reset.phase, 'idle', `${terminalType} must allow newer-generation reset`);
+    assert.equal(reset.generation, 2);
+    assert.equal(reset.songId, null);
+  }
+}
+
+{
+  let state = select(createInitialState(), 'song-a', 1);
   state = media(state, 'playing', { currentTime: 20 });
   const aPlaying = state;
 

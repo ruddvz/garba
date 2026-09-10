@@ -14,8 +14,7 @@ export const PRESENCE_STATUSES = Object.freeze({
 const PLAYBACK_STATES = new Set(['playing', 'paused', 'none', 'unknown']);
 
 function finiteNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function boundedString(value, max = 160) {

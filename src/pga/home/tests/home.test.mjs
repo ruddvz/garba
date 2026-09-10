@@ -52,6 +52,21 @@ test('available state without a value becomes unavailable rather than zero', () 
   assert.match(metric.reason, /unavailable/i)
 })
 
+test('coercible non-number KPI values fail closed instead of becoming zero', () => {
+  for (const value of [null, '', '0', '12', false, true, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const metric = evaluateKpi({ status: 'available', value }, { nowMs: NOW })
+    assert.equal(metric.status, 'error', `value ${String(value)} must fail closed`)
+    assert.equal(metric.value, null)
+    assert.equal(metric.exactValue, null)
+    assert.equal(metric.displayValue, '—')
+    assert.equal(metric.zeroData, false)
+  }
+
+  assert.equal(formatCompactNumber(null), '—')
+  assert.equal(formatCompactNumber('0'), '—')
+  assert.equal(formatCompactNumber(false), '—')
+})
+
 test('partial Home evidence preserves valid subset without filling missing metrics', () => {
   const snapshot = buildHomeSnapshot({
     status: 'partial',
@@ -94,6 +109,21 @@ test('no freshness budget means the model never invents a stale timeout', () => 
   assert.equal(metric.value, 4)
 })
 
+test('supplied malformed freshness budgets fail closed instead of disabling stale checks', () => {
+  for (const freshnessBudgetMs of [null, '', '120000', false, Number.NaN, Number.POSITIVE_INFINITY, -1]) {
+    const metric = evaluateKpi({
+      status: 'available',
+      value: 4,
+      dataThroughAt: NOW - 121_000,
+      freshnessBudgetMs,
+    }, { nowMs: NOW })
+    assert.equal(metric.status, 'error', `budget ${String(freshnessBudgetMs)} must fail closed`)
+    assert.equal(metric.value, null)
+    assert.equal(metric.zeroData, false)
+    assert.match(metric.reason, /freshness budget/i)
+  }
+})
+
 test('negative and non-finite values fail closed instead of being coerced', () => {
   for (const value of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
     const metric = evaluateKpi({ status: 'available', value }, { nowMs: NOW })
@@ -121,6 +151,46 @@ test('precision, sampling and evidence metadata are preserved', () => {
   assert.equal(metric.dataThroughAt, NOW - 200)
   assert.equal(metric.source.id, 'presence-v1')
   assert.equal(metric.action, 'Inspect telemetry freshness.')
+})
+
+test('sampling metadata preserves absent and explicit boolean truth', () => {
+  const absent = evaluateKpi({ status: 'available', value: 1 }, { nowMs: NOW })
+  assert.equal(absent.sampled, false)
+  assert.equal(absent.precision, null)
+
+  const exact = evaluateKpi({ status: 'available', value: 1, sampled: false }, { nowMs: NOW })
+  assert.equal(exact.sampled, false)
+  assert.equal(exact.precision, null)
+
+  const estimated = evaluateKpi({ status: 'available', value: 1, sampled: true }, { nowMs: NOW })
+  assert.equal(estimated.sampled, true)
+  assert.equal(estimated.precision, 'estimated')
+
+  assert.equal(buildHomeSnapshot({ status: 'available', sampled: false }, { nowMs: NOW }).sampled, false)
+  assert.equal(buildHomeSnapshot({ status: 'available', sampled: true }, { nowMs: NOW }).sampled, true)
+  assert.equal(buildHomeSnapshot({ status: 'available' }, { nowMs: NOW }).sampled, false)
+})
+
+test('malformed sampling metadata stays unknown and cannot infer estimated precision', () => {
+  const malformed = ['false', '0', 0, 1, null, {}, [], Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+
+  for (const sampled of malformed) {
+    const metric = evaluateKpi({ status: 'available', value: 1, sampled }, { nowMs: NOW })
+    assert.equal(metric.sampled, null, `sampled ${String(sampled)} must remain unknown`)
+    assert.equal(metric.precision, null, `sampled ${String(sampled)} must not infer precision`)
+
+    const explicitPrecision = evaluateKpi({
+      status: 'available',
+      value: 1,
+      sampled,
+      precision: 'source-estimate',
+    }, { nowMs: NOW })
+    assert.equal(explicitPrecision.sampled, null)
+    assert.equal(explicitPrecision.precision, 'source-estimate')
+
+    const snapshot = buildHomeSnapshot({ status: 'available', sampled }, { nowMs: NOW })
+    assert.equal(snapshot.sampled, null, `snapshot sampled ${String(sampled)} must remain unknown`)
+  }
 })
 
 test('normal comparisons calculate positive, negative and flat percentage deltas', () => {
@@ -222,4 +292,9 @@ test('trend summary reports insufficient evidence instead of inventing direction
   assert.equal(summary.status, 'insufficient')
   assert.equal(summary.direction, 'unknown')
   assert.match(summary.text, /at least two valid points/)
+})
+
+test('Home snapshot evaluation time must be a finite number', () => {
+  assert.throws(() => buildHomeSnapshot({ status: 'available', metrics: {} }, { nowMs: '123' }), /finite number/)
+  assert.throws(() => buildHomeSnapshot({ status: 'available', metrics: {} }, { nowMs: Number.NaN }), /finite number/)
 })
