@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { validateDirectAudioManifest } from './validate-direct-audio-rights.mjs';
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -53,7 +54,14 @@ function resolveDirect(entry = directEntry(), directSongId = 'garba-song-001') {
 }
 
 {
-  const result = resolveDirect();
+  const entry = directEntry();
+  const manifestErrors = validateDirectAudioManifest(
+    { version: '1.0.0', tracks: { 'garba-song-001': entry } },
+    new Set(['garba-song-001'])
+  );
+  assert.deepEqual(manifestErrors, [], 'resolver valid fixture must also satisfy the #984 manifest gate');
+
+  const result = resolveDirect(entry);
   assert.equal(result.kind, 'direct');
   assert.equal(result.playable, true);
   assert.equal(result.backgroundCapable, true);
@@ -80,6 +88,7 @@ function resolveDirect(entry = directEntry(), directSongId = 'garba-song-001') {
   assert.equal(result.provider, 'youtube');
   assert.equal(result.provenance.videoId, input.youtubeId);
   assert.equal(result.provenance.startSeconds, 0);
+  assert.equal(result.provenance.sourceUrl, input.playbackSourceUrl);
 }
 
 {
@@ -94,6 +103,20 @@ function resolveDirect(entry = directEntry(), directSongId = 'garba-song-001') {
   const result = resolvePlaybackSource({ song: fromUrl });
   assert.equal(result.kind, 'youtube-foreground');
   assert.equal(result.provenance.videoId, 'ZYX987abcde');
+  assert.equal(result.provenance.sourceUrl, 'https://youtu.be/ZYX987abcde');
+}
+
+{
+  const staleProviderUrl = song({
+    playbackProvider: 'spotify',
+    playbackSourceUrl: 'https://open.spotify.com/track/stale-evidence',
+    youtubeId: 'abcdefghijk',
+  });
+  const result = resolvePlaybackSource({ song: staleProviderUrl });
+  assert.equal(result.kind, 'youtube-foreground');
+  assert.equal(result.provenance.videoId, 'abcdefghijk');
+  assert.equal(result.provenance.sourceUrl, 'https://www.youtube.com/watch?v=abcdefghijk');
+  assert.equal(result.provenance.sourceUrl.includes('spotify.com'), false);
 }
 
 for (const unavailableSong of [
@@ -157,7 +180,14 @@ for (const blockedUrl of [
   'https://music.amazon.in/albums/example',
 ]) {
   assert.equal(isBlockedConsumerProviderUrl(blockedUrl), true, blockedUrl);
-  const result = resolveDirect(directEntry({ audioUrl: blockedUrl }));
+  const entry = directEntry({ audioUrl: blockedUrl });
+  const manifestErrors = validateDirectAudioManifest(
+    { version: '1.0.0', tracks: { 'garba-song-001': entry } },
+    new Set(['garba-song-001'])
+  );
+  assert.ok(manifestErrors.some((error) => error.includes('consumer/provider stream URLs')), blockedUrl);
+
+  const result = resolveDirect(entry);
   assert.equal(result.kind, 'direct-invalid', blockedUrl);
   assert.match(result.errors.join('\n'), /consumer\/provider URL/);
 }
