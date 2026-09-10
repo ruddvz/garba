@@ -50,8 +50,19 @@ function composeLive(presence, nowMs) {
   })
 }
 
+function sourceMetrics(source) {
+  return Object.values(source.metrics || {})
+}
+
 function sourceHasUsableValues(source) {
-  return Object.values(source.metrics || {}).some((metric) => metric?.value != null)
+  return sourceMetrics(source).some((metric) => metric?.value != null)
+}
+
+function sourceIsComplete(source) {
+  const metrics = sourceMetrics(source)
+  return source.status === 'available'
+    && metrics.length > 0
+    && metrics.every((metric) => metric?.status === 'available' && metric.value != null)
 }
 
 function deriveOverallStatus(home, live) {
@@ -66,10 +77,7 @@ function deriveOverallStatus(home, live) {
   if (live.status === 'error') return homeUsable ? 'partial' : 'error'
   if (home.status === 'partial') return 'partial'
 
-  if (home.status === 'available' && live.status === 'available') {
-    return homeUsable ? 'available' : 'partial'
-  }
-
+  if (sourceIsComplete(home) && sourceIsComplete(live)) return 'available'
   if (homeUsable || liveUsable) return 'partial'
   return 'unavailable'
 }
