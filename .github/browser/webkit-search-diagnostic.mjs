@@ -2,179 +2,100 @@ import { webkit } from '@playwright/test';
 
 const ORIGIN = 'http://127.0.0.1:4173';
 
-function serializeError(error) {
-  return error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+const variants = [
+  { name: 'control-no-search', search: false, css: '' },
+  { name: 'search-baseline', search: true, css: '' },
+  { name: 'search-no-backdrop', search: true, css: '#songSheet{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}' },
+  { name: 'search-no-contain', search: true, css: '#songSheet{contain:none!important}' },
+  { name: 'search-no-content-visibility', search: true, css: '#songSheet .song-row{content-visibility:visible!important;contain-intrinsic-size:auto!important}' },
+  { name: 'search-no-backdrop-no-contain', search: true, css: '#songSheet{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;contain:none!important}' },
+];
+
+const results = [];
+
+function visibleState() {
+  const read = (selector) => {
+    const node = document.querySelector(selector);
+    if (!(node instanceof HTMLElement)) return null;
+    const rect = node.getBoundingClientRect();
+    const style = getComputedStyle(node);
+    return {
+      rect: { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: rect.width, height: rect.height },
+      display: style.display,
+      visibility: style.visibility,
+      opacity: style.opacity,
+      transform: style.transform,
+      contain: style.contain,
+      backdropFilter: style.backdropFilter,
+      transitionProperty: style.transitionProperty,
+      ariaHidden: node.getAttribute('aria-hidden'),
+      dataSnap: node.getAttribute('data-snap'),
+      className: node.className,
+    };
+  };
+  return {
+    sheet: read('#songSheet'),
+    input: read('#searchInput'),
+    close: read('#sheetClose'),
+    activeId: document.activeElement?.id || '',
+    catalogueReady: window.GARBA_CATALOGUE_READY === true,
+  };
 }
 
-const browser = await webkit.launch();
-const context = await browser.newContext({
-  viewport: { width: 1440, height: 900 },
-  deviceScaleFactor: 1,
-});
-const page = await context.newPage();
-const runtime = [];
-
-page.on('pageerror', (error) => runtime.push(`pageerror: ${serializeError(error)}`));
-page.on('console', (message) => {
-  if (message.type() === 'error') runtime.push(`console: ${message.text()}`);
-});
-page.on('requestfailed', (request) => {
+for (const variant of variants) {
+  const started = Date.now();
+  let browser;
+  let context;
+  let page;
+  let disconnected = false;
+  let pageClosed = false;
+  const runtime = [];
   try {
-    if (new URL(request.url()).origin === ORIGIN) {
-      runtime.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText || ''}`);
-    }
-  } catch {}
-});
+    browser = await webkit.launch();
+    browser.on('disconnected', () => { disconnected = true; });
+    context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
+    page = await context.newPage();
+    page.on('close', () => { pageClosed = true; });
+    page.on('pageerror', (error) => runtime.push(`pageerror:${error?.message || error}`));
+    page.on('console', (message) => { if (message.type() === 'error') runtime.push(`console:${message.text()}`); });
+    page.on('requestfailed', (request) => {
+      try {
+        if (new URL(request.url()).origin === ORIGIN) runtime.push(`requestfailed:${request.url()}:${request.failure()?.errorText || ''}`);
+      } catch {}
+    });
 
-/* app.js receives the fast boot catalogue through simple-runtime's fetch shim.
-   The only network request for data/songs.json on this fixture is deferred full
-   catalogue hydration. Abort that request so this probe can tell whether the
-   post-Search WebKit stall belongs to hydration rather than Search geometry. */
-await page.route('**/data/songs.json*', (route) => route.abort('failed'));
+    // Preserve simple-runtime's fast in-memory boot catalogue, but prevent the
+    // later real full-catalogue request from completing during this diagnostic.
+    await page.route('**/data/songs.json*', (route) => route.abort('failed'));
+    await page.goto(`${ORIGIN}/`, { waitUntil: 'domcontentloaded' });
+    await page.locator('#app').waitFor({ state: 'visible', timeout: 15_000 });
+    await page.waitForFunction(() => document.getElementById('songTitle')?.textContent?.trim(), null, { timeout: 15_000 });
+    await page.locator('#genreStrip .genre-button[data-genre-bound="true"]').first().waitFor({ state: 'visible', timeout: 15_000 });
+    if (variant.css) await page.addStyleTag({ content: variant.css });
 
-function print(label, value) {
-  console.log(`WEBKIT_SEARCH_DIAGNOSTIC ${label} ${JSON.stringify(value)}`);
+    const before = await page.evaluate(visibleState);
+    if (variant.search) await page.locator('#searchButton').click();
+    const after0 = await page.evaluate(visibleState);
+    await page.waitForTimeout(200);
+    const after200 = await page.evaluate(visibleState);
+    await page.waitForTimeout(800);
+    const after1000 = await page.evaluate(visibleState);
+    results.push({ name: variant.name, outcome: 'responsive', elapsedMs: Date.now() - started, before, after0, after200, after1000, runtime });
+  } catch (error) {
+    results.push({
+      name: variant.name,
+      outcome: 'failed-or-stalled',
+      elapsedMs: Date.now() - started,
+      error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      disconnected,
+      pageClosed,
+      runtime,
+    });
+  } finally {
+    try { await context?.close(); } catch {}
+    try { await browser?.close(); } catch {}
+  }
+  console.log(`WEBKIT_SEARCH_VARIANT ${JSON.stringify(results.at(-1))}`);
 }
 
-async function snapshot(label) {
-  const value = await page.evaluate((snapshotLabel) => {
-    const read = (selector) => {
-      const node = document.querySelector(selector);
-      if (!(node instanceof HTMLElement)) return null;
-      const rect = node.getBoundingClientRect();
-      const style = getComputedStyle(node);
-      const animations = node.getAnimations().map((animation) => {
-        let keyframes = [];
-        try { keyframes = animation.effect?.getKeyframes?.() || []; } catch {}
-        let timing = null;
-        try { timing = animation.effect?.getTiming?.() || null; } catch {}
-        return {
-          type: animation.constructor?.name || '',
-          playState: animation.playState,
-          currentTime: animation.currentTime,
-          startTime: animation.startTime,
-          playbackRate: animation.playbackRate,
-          id: animation.id || '',
-          transitionProperty: animation.transitionProperty || null,
-          timing,
-          keyframes,
-        };
-      });
-      return {
-        selector,
-        rect: {
-          top: rect.top,
-          right: rect.right,
-          bottom: rect.bottom,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height,
-        },
-        attributes: {
-          ariaHidden: node.getAttribute('aria-hidden'),
-          dataSnap: node.getAttribute('data-snap'),
-          hidden: node.hidden,
-          className: node.className,
-        },
-        inline: {
-          transform: node.style.transform,
-          transition: node.style.transition,
-        },
-        style: {
-          display: style.display,
-          visibility: style.visibility,
-          opacity: style.opacity,
-          position: style.position,
-          transform: style.transform,
-          inset: style.inset,
-          width: style.width,
-          height: style.height,
-          contain: style.contain,
-          backdropFilter: style.backdropFilter,
-          transitionProperty: style.transitionProperty,
-          transitionDuration: style.transitionDuration,
-          transitionDelay: style.transitionDelay,
-          transitionTimingFunction: style.transitionTimingFunction,
-        },
-        animations,
-      };
-    };
-
-    const app = document.getElementById('app');
-    const active = document.activeElement;
-    return {
-      label: snapshotLabel,
-      viewport: {
-        innerWidth,
-        innerHeight,
-        documentWidth: document.documentElement.scrollWidth,
-        documentHeight: document.documentElement.scrollHeight,
-      },
-      appSheetSnap: app?.getAttribute('data-sheet-snap') || null,
-      sheet: read('#songSheet'),
-      searchInput: read('#searchInput'),
-      sheetClose: read('#sheetClose'),
-      catalogueReady: window.GARBA_CATALOGUE_READY === true,
-      activeElement: active instanceof HTMLElement ? {
-        id: active.id,
-        className: active.className,
-        tagName: active.tagName,
-      } : null,
-    };
-  }, label);
-  print(label, value);
-  return value;
-}
-
-try {
-  await page.goto(`${ORIGIN}/`, { waitUntil: 'domcontentloaded' });
-  await page.locator('#app').waitFor({ state: 'visible', timeout: 15_000 });
-  await page.waitForFunction(() => document.getElementById('songTitle')?.textContent?.trim(), null, { timeout: 15_000 });
-  await page.locator('#genreStrip .genre-button[data-genre-bound="true"]').first().waitFor({ state: 'visible', timeout: 15_000 });
-
-  await snapshot('before-click');
-  await page.locator('#searchButton').click();
-  await snapshot('after-click-0ms');
-  await page.waitForTimeout(50);
-  await snapshot('after-click-50ms');
-  await page.waitForTimeout(150);
-  await snapshot('after-click-200ms');
-  await page.waitForTimeout(300);
-  await snapshot('after-click-500ms');
-
-  const finalState = await page.evaluate(() => {
-    const sheet = document.getElementById('songSheet');
-    const input = document.getElementById('searchInput');
-    const close = document.getElementById('sheetClose');
-    const visible = (node) => {
-      if (!(node instanceof HTMLElement)) return false;
-      const style = getComputedStyle(node);
-      const rect = node.getBoundingClientRect();
-      return style.display !== 'none'
-        && style.visibility !== 'hidden'
-        && Number.parseFloat(style.opacity || '1') > 0
-        && rect.width > 0
-        && rect.height > 0
-        && rect.right > 0
-        && rect.bottom > 0
-        && rect.left < innerWidth
-        && rect.top < innerHeight;
-    };
-    return {
-      sheetOpen: sheet?.getAttribute('aria-hidden') === 'false',
-      sheetSnap: sheet?.getAttribute('data-snap') || null,
-      appSheetSnap: document.getElementById('app')?.getAttribute('data-sheet-snap') || null,
-      inputVisible: visible(input),
-      closeVisible: visible(close),
-      catalogueReady: window.GARBA_CATALOGUE_READY === true,
-      activeId: document.activeElement?.id || '',
-    };
-  });
-
-  print('final', finalState);
-  print('runtime', runtime);
-  if (!finalState.sheetOpen || !finalState.inputVisible || !finalState.closeVisible) process.exitCode = 1;
-} finally {
-  await context.close();
-  await browser.close();
-}
+console.log(`WEBKIT_SEARCH_VARIANTS_FINAL ${JSON.stringify(results.map(({ name, outcome, elapsedMs, error, disconnected, pageClosed }) => ({ name, outcome, elapsedMs, error, disconnected, pageClosed })))}`);
