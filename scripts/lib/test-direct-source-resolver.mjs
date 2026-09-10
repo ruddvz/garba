@@ -96,6 +96,17 @@ function manifestErrorsFor(entry) {
 }
 
 {
+  const matchingShortUrl = song({
+    playbackSourceUrl: 'https://youtu.be/abcdefghijk?si=source-evidence',
+  });
+  const result = resolvePlaybackSource({ song: matchingShortUrl });
+  assert.equal(isExecutableYoutube(matchingShortUrl), true);
+  assert.equal(result.kind, 'youtube-foreground');
+  assert.equal(result.provenance.videoId, 'abcdefghijk');
+  assert.equal(result.provenance.sourceUrl, 'https://youtu.be/abcdefghijk?si=source-evidence');
+}
+
+{
   const timestamped = song({ youtubeStartSeconds: 73 });
   const result = resolvePlaybackSource({ song: timestamped });
   assert.equal(result.kind, 'youtube-foreground');
@@ -108,6 +119,37 @@ function manifestErrorsFor(entry) {
   assert.equal(result.kind, 'youtube-foreground');
   assert.equal(result.provenance.videoId, 'ZYX987abcde');
   assert.equal(result.provenance.sourceUrl, 'https://youtu.be/ZYX987abcde');
+}
+
+for (const conflictingSourceUrl of [
+  'https://www.youtube.com/watch?v=ZYX987abcde',
+  'https://www.youtube.com/embed/ZYX987abcde',
+  'https://www.youtube.com/shorts/ZYX987abcde',
+]) {
+  const conflictingSong = song({
+    youtubeId: 'abcdefghijk',
+    playbackSourceUrl: conflictingSourceUrl,
+  });
+  assert.equal(
+    isExecutableYoutube(conflictingSong),
+    false,
+    `conflicting explicit/source YouTube identities must fail closed: ${conflictingSourceUrl}`,
+  );
+  const result = resolvePlaybackSource({ song: conflictingSong });
+  assert.equal(result.kind, 'unavailable', conflictingSourceUrl);
+  assert.equal(result.playable, false, conflictingSourceUrl);
+  assert.equal(result.reason, 'no-executable-source', conflictingSourceUrl);
+}
+
+{
+  const nonMediaYoutubeSource = song({
+    youtubeId: 'abcdefghijk',
+    playbackSourceUrl: 'https://www.youtube.com/@playgarba-example',
+  });
+  assert.equal(isExecutableYoutube(nonMediaYoutubeSource), false);
+  const result = resolvePlaybackSource({ song: nonMediaYoutubeSource });
+  assert.equal(result.kind, 'unavailable');
+  assert.equal(result.reason, 'no-executable-source');
 }
 
 {
