@@ -174,6 +174,72 @@ test('freshness budgets accept only finite JavaScript numbers while preserving n
   }
 })
 
+test('future freshness evidence fails closed instead of being clamped to age zero', () => {
+  const subsystem = evaluateSubsystem('production', {
+    status: 'healthy',
+    checkedAt: NOW + MINUTE,
+    freshnessBudgetMs: 5 * MINUTE,
+  }, { nowMs: NOW })
+
+  assert.equal(subsystem.status, 'unknown')
+  assert.equal(subsystem.observedStatus, 'healthy')
+  assert.equal(subsystem.ageMs, null)
+  assert.equal(subsystem.freshnessAt, NOW + MINUTE)
+  assert.equal(subsystem.stale, false)
+  assert.match(subsystem.reasons.join(' '), /later than the evaluation clock/i)
+})
+
+test('future data-through and explicit freshness timestamps use canonical precedence and fail closed', () => {
+  const dataThrough = evaluateSubsystem('rollups', {
+    status: 'healthy',
+    checkedAt: NOW - MINUTE,
+    dataThroughAt: NOW + MINUTE,
+    freshnessBudgetMs: 15 * MINUTE,
+  }, { nowMs: NOW })
+  assert.equal(dataThrough.status, 'unknown')
+  assert.equal(dataThrough.freshnessAt, NOW + MINUTE)
+  assert.equal(dataThrough.ageMs, null)
+
+  const explicitFreshness = evaluateSubsystem('telemetry', {
+    status: 'healthy',
+    checkedAt: NOW - MINUTE,
+    dataThroughAt: NOW - 2 * MINUTE,
+    freshnessAt: NOW + 2 * MINUTE,
+    freshnessBudgetMs: 5 * MINUTE,
+  }, { nowMs: NOW })
+  assert.equal(explicitFreshness.status, 'unknown')
+  assert.equal(explicitFreshness.freshnessAt, NOW + 2 * MINUTE)
+  assert.equal(explicitFreshness.ageMs, null)
+})
+
+test('future timestamp cannot hide an explicit hard failure', () => {
+  const subsystem = evaluateSubsystem('playback', {
+    status: 'failed',
+    checkedAt: NOW + MINUTE,
+    freshnessBudgetMs: 5 * MINUTE,
+    reason: 'Playback probe failed.',
+  }, { nowMs: NOW })
+
+  assert.equal(subsystem.status, 'failed')
+  assert.equal(subsystem.ageMs, null)
+  assert.equal(subsystem.stale, false)
+  assert.match(subsystem.reasons.join(' '), /Playback probe failed/)
+  assert.match(subsystem.reasons.join(' '), /later than the evaluation clock/i)
+})
+
+test('evidence exactly at the evaluation clock remains current with age zero', () => {
+  const subsystem = evaluateSubsystem('production', {
+    status: 'healthy',
+    checkedAt: NOW,
+    freshnessBudgetMs: 0,
+  }, { nowMs: NOW })
+
+  assert.equal(subsystem.status, 'healthy')
+  assert.equal(subsystem.ageMs, 0)
+  assert.equal(subsystem.stale, false)
+  assert.equal(subsystem.reasons.length, 0)
+})
+
 test('evaluation clocks reject coercible non-number values in subsystem and aggregate paths', () => {
   const invalidClocks = ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
   for (const nowMs of invalidClocks) {
