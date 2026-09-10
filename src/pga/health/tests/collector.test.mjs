@@ -282,6 +282,19 @@ test('production timeout is reported as timeout without raw exception disclosure
   assert.doesNotMatch(serialized, /RAW_TIMEOUT_SECRET/)
 })
 
+test('environment-string timeout normalization remains supported and bounded', async () => {
+  const targets = healthCollectorTargets({ githubRepository: REPOSITORY, revision: SHA })
+  const fetchImpl = mockFetch({
+    [targets.production]: response(targets.production),
+    [targets.buildInfo]: jsonResponse(targets.buildInfo, buildInfo()),
+    [targets.githubChecksApi]: jsonResponse(targets.githubChecksApi, checksPayload()),
+  })
+
+  const snapshot = await collect(fetchImpl, { timeoutMs: '50' })
+  assert.equal(snapshot.status, 'healthy')
+  assert.equal(fetchImpl.calls.length, 3)
+})
+
 test('a response that stalls after headers is still bounded by the acquisition timeout', async () => {
   const targets = healthCollectorTargets({ githubRepository: REPOSITORY, revision: SHA })
   const fetchImpl = mockFetch({
@@ -433,6 +446,25 @@ test('one failed acquisition does not suppress healthy evidence from other subsy
   assert.equal(subsystem(snapshot, 'catalogue').status, 'healthy')
 })
 
+test('collector freshness budgets accept only finite numbers while preserving numeric zero', async () => {
+  const { fetchImpl: zeroFetch } = successfulFetch()
+  const zeroSnapshot = await collect(zeroFetch, {
+    freshnessBudgets: { playback: 0 },
+  })
+  assert.equal(subsystem(zeroSnapshot, 'playback').freshnessBudgetMs, 0)
+  assert.equal(subsystem(zeroSnapshot, 'playback').status, 'stale')
+
+  for (const value of ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const { fetchImpl } = successfulFetch()
+    const snapshot = await collect(fetchImpl, {
+      freshnessBudgets: { playback: value },
+    })
+    const playback = subsystem(snapshot, 'playback')
+    assert.equal(playback.freshnessBudgetMs, null, `freshness budget must reject ${String(value)}`)
+    assert.equal(playback.status, 'healthy', `invalid budget must not manufacture stale status for ${String(value)}`)
+  }
+})
+
 test('collector targets are fixed to canonical production and validated GitHub hosts', () => {
   const targets = healthCollectorTargets({ githubRepository: REPOSITORY, revision: SHA })
 
@@ -443,13 +475,29 @@ test('collector targets are fixed to canonical production and validated GitHub h
   assert.equal(healthCollectorTargets({ githubRepository: REPOSITORY, revision: 'short' }).githubChecksApi, null)
 })
 
-test('invalid fetch dependency and invalid clock fail before evidence is fabricated', async () => {
+test('invalid fetch dependency and coercible or non-finite clocks fail before evidence is fabricated', async () => {
   await assert.rejects(
     collectHealthSnapshot({ fetchImpl: null, nowMs: NOW }),
     /health_collector_fetch_required/,
   )
-  await assert.rejects(
-    collectHealthSnapshot({ fetchImpl: async () => {}, nowMs: Number.NaN }),
-    /invalid_health_collector_time/,
-  )
+
+  const fetchImpl = mockFetch({})
+  for (const nowMs of ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    await assert.rejects(
+      collectHealthSnapshot({ fetchImpl, nowMs }),
+      /invalid_health_collector_time/,
+      `nowMs ${String(nowMs)} must fail closed`,
+    )
+  }
+  assert.equal(fetchImpl.calls.length, 0, 'invalid clocks must fail before any network request')
+})
+
+test('numeric epoch zero remains a valid collector evaluation clock', async () => {
+  const { fetchImpl } = successfulFetch()
+  const snapshot = await collect(fetchImpl, {
+    nowMs: 0,
+    freshnessBudgets: {},
+    observations: {},
+  })
+  assert.equal(snapshot.evaluatedAt, 0)
 })
