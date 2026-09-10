@@ -140,12 +140,54 @@ test('matching binding produces no redundant bind or load', () => {
 test('stale A binding is paused and cleared before B is bound and loaded', () => {
   const authority = state({ generation: 8, songId: 'song-b', source: SOURCE_B });
   const stale = binding();
-  const plan = planDirectMediaCommands({ authorityState: authority, binding: stale, intent: { type: 'sync-source' } });
+  const plan = planDirectMediaCommands({
+    authorityState: authority,
+    binding: stale,
+    intent: { type: 'sync-source', songId: 'song-b', generation: 8 },
+  });
   assert.deepEqual(ops(plan), ['request-pause', 'clear-media-source', 'bind-source', 'load-media']);
   assert.equal(plan.commands[0].songId, 'song-b');
   assert.equal(plan.commands[0].generation, 8);
   assert.deepEqual(plan.commands[0].expectedBinding, stale);
   assert.equal(plan.commands[2].sourceUrl, SOURCE_B.media.url);
+});
+
+test('stale or wrong-song sync-source and clear intents cannot mutate the current direct authority', () => {
+  const authority = state({ generation: 8, songId: 'song-b', source: SOURCE_B });
+  const currentBinding = {
+    songId: 'song-b',
+    generation: 8,
+    sourceUrl: SOURCE_B.media.url,
+  };
+  for (const type of ['sync-source', 'clear']) {
+    for (const requestedIntent of [
+      { type, songId: 'song-b', generation: 7 },
+      { type, songId: 'song-a', generation: 8 },
+      { type },
+    ]) {
+      const plan = planDirectMediaCommands({
+        authorityState: authority,
+        binding: currentBinding,
+        intent: requestedIntent,
+      });
+      assert.equal(plan.intent.accepted, false, `${type} should reject stale/missing identity`);
+      assert.equal(plan.intent.reason, 'intent-identity-mismatch');
+      assert.deepEqual(ops(plan), []);
+    }
+  }
+});
+
+test('current clear still pauses and clears the exact active binding and Media Session', () => {
+  const plan = planDirectMediaCommands({
+    authorityState: state({ phase: 'playing', playbackState: 'playing' }),
+    binding: binding(),
+    intent: intent('clear'),
+  });
+  assert.equal(plan.intent.accepted, true);
+  assert.deepEqual(ops(plan), ['request-pause', 'clear-media-source', 'clear-media-session']);
+  assert.deepEqual(plan.commands[0].expectedBinding, binding());
+  assert.deepEqual(plan.commands[1].expectedBinding, binding());
+  assert.equal(plan.commands[2].reason, 'explicit-clear');
 });
 
 test('explicit Play can prepare the active binding then request play but never claims Playing', () => {
