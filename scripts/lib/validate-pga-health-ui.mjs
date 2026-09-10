@@ -124,7 +124,8 @@ assert.match(client, /fetchEnvelope\('\/api\/health'/, 'Health client must use p
 assert.match(client, /controller\?\.abort\(\)/, 'Health refresh must cancel prior request');
 assert.match(client, /const token = \+\+generation/, 'Health refresh must guard request generations');
 assert.match(client, /token !== generation \|\| controller\.signal\.aborted/, 'late Health responses must not render');
-assert.match(client, /mountHealth\(\{ autoLoad: !fixtureAllowed \}\)/, 'localhost shell fixture must not auto-fetch Health');
+assert.match(client, /mountHealth\(\{ autoLoad: !fixtureAllowed, fixtureMode: fixtureAllowed \}\)/, 'localhost shell fixture must enter explicit network-inert fixture mode');
+assert.match(client, /if \(!fixtureMode\) \{[\s\S]*data-nav="health"[\s\S]*hashchange[\s\S]*online[\s\S]*offline[\s\S]*\}/, 'fixture mode must suppress automatic navigation and connectivity fetch triggers');
 assert.doesNotMatch(client, /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML|document\.write\s*\(/, 'Health UI must avoid raw HTML injection');
 assert.doesNotMatch(client, /localStorage|sessionStorage|document\.cookie|eval\s*\(/, 'Health UI must not add sensitive browser storage or eval');
 assert.match(client, /url\.search = ''/);
@@ -143,4 +144,4 @@ assert.doesNotMatch(css, /100vw/, 'Health UI must not introduce viewport-width o
 
 console.log('✓ PGA Health UI preserves canonical complete/incomplete truth and rollup-only uncertainty');
 console.log('✓ Failed/degraded/stale evidence stays prioritised and safe evidence URLs are sanitised');
-console.log('✓ Protected loading, cancellation, fixture safety and no-raw-HTML contracts pass');
+console.log('✓ Protected loading, cancellation, network-inert fixture mode and no-raw-HTML contracts pass');
