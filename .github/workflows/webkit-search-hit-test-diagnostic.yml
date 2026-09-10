@@ -1,0 +1,167 @@
+name: Desktop WebKit Search hit-test diagnostic
+
+on:
+  push:
+    branches:
+      - diagnostic/issue-1188-webkit-hit-test-v2
+    paths:
+      - '.github/browser/webkit-search-hit-test-diagnostic.mjs'
+      - '.github/workflows/webkit-search-hit-test-diagnostic.yml'
+  pull_request:
+    paths:
+      - '.github/browser/webkit-search-hit-test-diagnostic.mjs'
+      - '.github/workflows/webkit-search-hit-test-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webkit-search-hit-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PINNED_857_SHA: 99782cce2fb1c2519553526740443373d345dfb7
+      MAIN_BASE_URL: http://127.0.0.1:4175
+      CANDIDATE_BASE_URL: http://127.0.0.1:4176
+      DIAGNOSTIC_OUTPUT: webkit-search-hit-test-diagnostic.json
+      DIAGNOSTIC_SAMPLE_DIR: webkit-search-hit-test-samples
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Build catalogue data
+        run: npm run catalogue
+
+      - name: Prepare main and pinned candidate fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _webkit_hit_test
+          mkdir -p _webkit_hit_test/main _webkit_hit_test/candidate
+
+          git fetch --no-tags --depth=1 origin refs/pull/857/head
+          actual_857_sha="$(git rev-parse FETCH_HEAD)"
+          if [[ "$actual_857_sha" != "$PINNED_857_SHA" ]]; then
+            echo "Pinned #857 SHA drifted: expected $PINNED_857_SHA, fetched $actual_857_sha" >&2
+            exit 1
+          fi
+          git show "${PINNED_857_SHA}:styles/30-product-polish.css" > /tmp/webkit-857-product-polish.css
+          test -s /tmp/webkit-857-product-polish.css
+
+          prepare_fixture() {
+            local target="$1"
+            local product_polish="$2"
+
+            cp \
+              index.html \
+              app.js \
+              simple-runtime.js \
+              provider-runtime.js \
+              player-continuity.js \
+              youtube-player-runtime.js \
+              nonstop-browser.js \
+              sw.js \
+              manifest.webmanifest \
+              offline.html \
+              "$target/"
+            cp -R assets data "$target/"
+
+            # Match the player payload and stylesheet order used by production packaging.
+            cat app.js assets/runtime/seek-state.js > "$target/app.js"
+            cat \
+              styles/00-foundation-and-player.css \
+              styles/10-browser-and-shell.css \
+              styles/20-responsive-and-accessibility.css \
+              "$product_polish" \
+              styles/40-accessibility-states.css \
+              styles/50-discovery-and-performance.css \
+              styles/60-runtime-and-provider.css \
+              styles/70-mobile-playback-coordination.css \
+              styles/80-genre-icon-images.css \
+              > "$target/styles.css"
+
+            test -s "$target/index.html"
+            test -s "$target/app.js"
+            test -s "$target/styles.css"
+            test -s "$target/data/songs.json"
+            grep -q 'id="searchButton"' "$target/index.html"
+            grep -q 'id="sheetClose"' "$target/index.html"
+            grep -q 'id="searchInput"' "$target/index.html"
+          }
+
+          prepare_fixture _webkit_hit_test/main styles/30-product-polish.css
+          prepare_fixture _webkit_hit_test/candidate /tmp/webkit-857-product-polish.css
+
+          main_hash="$(sha256sum styles/30-product-polish.css | awk '{print $1}')"
+          candidate_hash="$(sha256sum /tmp/webkit-857-product-polish.css | awk '{print $1}')"
+          printf 'main_product_polish_sha256=%s\n857_candidate_sha=%s\n857_product_polish_sha256=%s\n' \
+            "$main_hash" "$PINNED_857_SHA" "$candidate_hash" \
+            > webkit-search-hit-test-fixture.txt
+
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start isolated fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4175 --bind 127.0.0.1 --directory _webkit_hit_test/main >/tmp/playgarba-webkit-main.log 2>&1 &
+          echo $! > /tmp/playgarba-webkit-main.pid
+          python3 -m http.server 4176 --bind 127.0.0.1 --directory _webkit_hit_test/candidate >/tmp/playgarba-webkit-candidate.log 2>&1 &
+          echo $! > /tmp/playgarba-webkit-candidate.pid
+
+          for port in 4175 4176; do
+            ready=0
+            for attempt in {1..20}; do
+              if curl -fsS "http://127.0.0.1:${port}/" >/dev/null; then
+                ready=1
+                break
+              fi
+              sleep 1
+            done
+            if [[ "$ready" != 1 ]]; then
+              cat /tmp/playgarba-webkit-main.log || true
+              cat /tmp/playgarba-webkit-candidate.log || true
+              exit 1
+            fi
+          done
+
+      - name: Capture isolated hit-test and activation evidence
+        run: node .github/browser/webkit-search-hit-test-diagnostic.mjs
+
+      - name: Stop isolated fixtures
+        if: always()
+        shell: bash
+        run: |
+          for pidfile in /tmp/playgarba-webkit-main.pid /tmp/playgarba-webkit-candidate.pid; do
+            if [[ -f "$pidfile" ]]; then
+              kill "$(cat "$pidfile")" 2>/dev/null || true
+            fi
+          done
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: webkit-search-hit-test-diagnostic
+          path: |
+            webkit-search-hit-test-diagnostic.json
+            webkit-search-hit-test-fixture.txt
+            webkit-search-hit-test-samples/*.json
+            /tmp/playgarba-webkit-main.log
+            /tmp/playgarba-webkit-candidate.log
+          if-no-files-found: warn
+          retention-days: 7
