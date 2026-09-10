@@ -155,6 +155,9 @@ jobs:
           const allowed = report.result?.allowedSummary || {};
           const blocked = report.result?.blockedSummary || {};
           const delta = report.result?.medianDeltaAllowedMinusBlocked || {};
+          const lifecycle = report.result?.lifecycleSummary?.allowed || {};
+          const median = (key) => lifecycle[key]?.median ?? 'n/a';
+          const samples = (key) => lifecycle[key]?.samples ?? 0;
           console.log('## Service-worker first-visit contention A/B');
           console.log(`- Revision: \`${report.testedRevision || 'unknown'}\``);
           console.log(`- Browser: ${report.browser?.name || 'unknown'} ${report.browser?.version || ''}`);
@@ -164,7 +167,19 @@ jobs:
           console.log(`- Catalogue ready median, allowed / blocked: ${allowed.catalogueReadyMs?.median ?? 'n/a'} / ${blocked.catalogueReadyMs?.median ?? 'n/a'} ms; delta ${delta.catalogueReadyMs ?? 'n/a'} ms`);
           console.log(`- Server requests median, allowed / blocked: ${allowed.serverRequestCount?.median ?? 'n/a'} / ${blocked.serverRequestCount?.median ?? 'n/a'}; delta ${delta.serverRequestCount ?? 'n/a'}`);
           console.log(`- Server response bytes median delta, allowed - blocked: ${delta.serverResponseBytes ?? 'n/a'}`);
-          console.log('- Interpretation: the blocked scenario is an upper bound against zero service-worker install work, not a promised production-deferral benefit.');
+          console.log('### Allowed service-worker lifecycle');
+          console.log(`- Register call: ${median('serviceWorkerRegisterCallMs')} ms (${samples('serviceWorkerRegisterCallMs')} samples)`);
+          console.log(`- Registration resolved: ${median('serviceWorkerRegistrationResolvedMs')} ms`);
+          console.log(`- Installed: ${median('serviceWorkerInstalledMs')} ms`);
+          console.log(`- Activating: ${median('serviceWorkerActivatingMs')} ms`);
+          console.log(`- Activated: ${median('serviceWorkerActivatedMs')} ms`);
+          console.log(`- Ready resolved: ${median('serviceWorkerReadyResolvedMs')} ms`);
+          console.log(`- Controller change: ${median('serviceWorkerControllerChangeMs')} ms (${samples('serviceWorkerControllerChangeMs')} observed samples)`);
+          console.log(`- Register to installed: ${median('serviceWorkerRegisterToInstalledMs')} ms`);
+          console.log(`- Installed to activating: ${median('serviceWorkerInstalledToActivatingMs')} ms`);
+          console.log(`- Activation duration: ${median('serviceWorkerActivationDurationMs')} ms`);
+          console.log(`- Register to ready: ${median('serviceWorkerRegisterToReadyMs')} ms`);
+          console.log('- Interpretation: the blocked scenario is an upper bound against zero service-worker install work, not a promised production-deferral benefit. Lifecycle timestamps are page-observed browser state transitions, not server-side install timing.');
           for (const failure of report.result?.validityFailures || []) console.log(`  - INVALID: ${failure}`);
           NODE
 
