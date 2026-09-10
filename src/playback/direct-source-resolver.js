@@ -200,6 +200,7 @@
   function isExecutableYoutube(song) {
     if (!isPlainObject(song)) return false;
     if (song.playbackSearchOnly === true) return false;
+    if (song.playbackSourceType === 'verified-release-track-reference') return false;
     if (song.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
 
     const explicit = String(song.youtubeId || '').trim();
