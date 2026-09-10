@@ -162,15 +162,22 @@
         };
       }
       if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
-        const queryId = String(parsed.searchParams.get('v') || '').trim();
-        if (queryId) return { isYoutube: true, videoId: queryId, href: parsed.href };
         const parts = parsed.pathname.split('/').filter(Boolean);
-        const marker = parts.findIndex((part) => part === 'embed' || part === 'shorts');
-        return {
-          isYoutube: true,
-          videoId: marker >= 0 ? String(parts[marker + 1] || '').trim() : '',
-          href: parsed.href,
-        };
+        if (parts.length === 1 && parts[0] === 'watch') {
+          return {
+            isYoutube: true,
+            videoId: String(parsed.searchParams.get('v') || '').trim(),
+            href: parsed.href,
+          };
+        }
+        if ((parts[0] === 'embed' || parts[0] === 'shorts') && parts.length >= 2) {
+          return {
+            isYoutube: true,
+            videoId: String(parts[1] || '').trim(),
+            href: parsed.href,
+          };
+        }
+        return { isYoutube: true, videoId: '', href: parsed.href };
       }
       return { isYoutube: false, videoId: '', href: parsed.href };
     } catch {
