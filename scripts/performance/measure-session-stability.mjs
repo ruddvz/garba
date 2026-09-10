@@ -128,7 +128,7 @@ function uniqueFailures(failures) {
 }
 
 async function retryExploreDetailCoverage(page, origin, journey) {
-  if (!journey?.entered || journey.detailOpened) return journey;
+  if (!journey?.entered || (journey.detailOpened && journey.detailClosed)) return journey;
   const exploreUrl = new URL('./explore/', origin).href;
   const retry = {
     attempted: true,
