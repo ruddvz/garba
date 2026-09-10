@@ -238,6 +238,43 @@ test('catalogue healthy requires explicit zero error and warning counts; missing
   assert.equal(Object.hasOwn(incomplete.details, 'warnings'), false)
 })
 
+test('catalogue counts reject coercible, negative, fractional and non-finite values without manufacturing health', () => {
+  const malformedCounts = [
+    '0',
+    '1',
+    false,
+    true,
+    null,
+    '',
+    -1,
+    0.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ]
+
+  for (const malformed of malformedCounts) {
+    for (const field of ['errors', 'warnings']) {
+      const evidence = catalogueValidationEvidence({
+        completed: true,
+        state: 'success',
+        ok: true,
+        errors: 0,
+        warnings: 0,
+        [field]: malformed,
+        checkedAt: NOW,
+      })
+
+      assert.equal(
+        evidence.status,
+        'unknown',
+        `expected malformed ${field}=${String(malformed)} (${typeof malformed}) to stay unavailable`,
+      )
+      assert.equal(Object.hasOwn(evidence.details, field), false)
+    }
+  }
+})
+
 test('unresolved catalogue validation stays unknown even if a caller supplies zero errors', () => {
   const evidence = catalogueValidationEvidence({
     completed: false,
