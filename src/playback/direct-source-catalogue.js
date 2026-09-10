@@ -26,10 +26,6 @@
     return typeof value === 'string' && value.trim().length > 0;
   }
 
-  function freezeArray(values) {
-    return Object.freeze(values.map((value) => isPlainObject(value) ? Object.freeze(value) : value));
-  }
-
   function validateResolver(resolver) {
     if (!resolver || typeof resolver.resolvePlaybackSource !== 'function') {
       throw new TypeError('direct-source catalogue requires resolvePlaybackSource()');
@@ -125,7 +121,7 @@
       });
     });
 
-    const decisionsBySongId = {};
+    const decisionsBySongId = Object.create(null);
     for (const decision of decisions) decisionsBySongId[decision.songId] = decision;
 
     return Object.freeze({
