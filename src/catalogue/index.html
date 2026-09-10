@@ -99,7 +99,14 @@
 
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="listening-library.js"></script>
-  <script type="module" src="explore-telemetry.js"></script>
+  <script type="module">
+    // The repository browser fixture intentionally serves only the source-native
+    // Explore shell. Keep production analytics out of loopback fixtures/local dev,
+    // while preserving the same UI and interaction code under test.
+    if (!['localhost', '127.0.0.1', '::1'].includes(location.hostname)) {
+      import('./explore-telemetry.js').catch(() => {});
+    }
+  </script>
   <script src="../assets/runtime/explore-search.js" defer></script>
   <script type="module">
     (() => {
