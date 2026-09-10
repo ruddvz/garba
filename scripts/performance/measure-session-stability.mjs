@@ -127,6 +127,64 @@ function uniqueFailures(failures) {
   return [...new Set(failures)];
 }
 
+async function retryExploreDetailCoverage(page, origin, journey) {
+  if (!journey?.entered || journey.detailOpened) return journey;
+  const exploreUrl = new URL('./explore/', origin).href;
+  const retry = {
+    attempted: true,
+    entered: false,
+    detailOpened: false,
+    detailClosed: false,
+  };
+
+  const response = await page.goto(exploreUrl, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch(() => null);
+  retry.entered = Boolean(response) && await page.locator('#catalogueTitle').isVisible().catch(() => false);
+  if (retry.entered) {
+    const firstCard = page.locator('.collection-card').first();
+    await firstCard.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
+    await firstCard.scrollIntoViewIfNeeded().catch(() => {});
+    retry.detailOpened = await firstCard.click({ timeout: 2_500 }).then(() => true).catch(() => false);
+    if (retry.detailOpened) {
+      retry.detailOpened = await page.locator('#collectionDetail:not([hidden])')
+        .waitFor({ state: 'visible', timeout: 5_000 })
+        .then(() => true)
+        .catch(() => false);
+    }
+    if (retry.detailOpened) {
+      const back = page.locator('#backToCollections');
+      await back.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {});
+      retry.detailClosed = await back.click({ timeout: 2_500 }).then(() => true).catch(() => false);
+      if (retry.detailClosed) {
+        retry.detailClosed = await page.waitForFunction(() => {
+          const detail = document.getElementById('collectionDetail');
+          const home = document.getElementById('collectionHome');
+          return Boolean(
+            detail?.hidden
+            && home
+            && !home.hidden
+            && !history.state?.collection
+            && !history.state?.release
+            && !history.state?.search
+          );
+        }, null, { timeout: 5_000 }).then(() => true).catch(() => false);
+      }
+    }
+  }
+
+  await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch(() => null);
+  const returned = await page.waitForFunction(() => Boolean(document.getElementById('playButton')), null, { timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+
+  return {
+    ...journey,
+    detailOpened: retry.detailOpened,
+    detailClosed: retry.detailClosed,
+    returnedToPlayer: Boolean(journey.returnedToPlayer && returned),
+    detailCoverageRetry: retry,
+  };
+}
+
 function coverageFailures(boot, journeys, exploreJourneys) {
   const failures = [];
   if (!boot?.catalogueReady) {
@@ -209,7 +267,8 @@ async function main() {
     // navigation creates a new document and would otherwise reset the very listener,
     // observer and object-URL state this soak is designed to measure.
     for (let round = 0; round < profile.exploreRounds; round += 1) {
-      exploreJourneys.push(await exerciseExploreRoundTrip(page, options.origin, round));
+      const journey = await exerciseExploreRoundTrip(page, options.origin, round);
+      exploreJourneys.push(await retryExploreDetailCoverage(page, options.origin, journey));
     }
   } finally {
     detachRuntimeFailures();
@@ -245,7 +304,7 @@ async function main() {
       productionEquivalentFixtureRequired: true,
       harnessInstrumentation: 'context.addInitScript test-only counters plus Chromium CDP Memory/Performance metrics',
       budgetPhaseNavigation: 'none; one player document remains alive for every measured cycle',
-      exploreNavigation: 'exercised only after the final player snapshot and excluded from player memory-growth deltas',
+      exploreNavigation: 'exercised only after the final player snapshot and excluded from player memory-growth deltas; Search and detail/back must both pass, with an explicit fresh-Explore detail retry recorded when Search history makes the combined transition indeterminate',
       detachedDomNodesDirectlyMeasured: false,
       detachedDomBoundary: 'Chromium aggregate document/node/listener counters are recorded; detached-node claims require a heap-snapshot diagnostic and are not fabricated.',
       browserDocumentRule: 'one-time provider/iframe document creation is diagnostic; the gate fails if document count continues growing across the final four player snapshots',
