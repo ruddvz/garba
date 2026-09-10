@@ -1,0 +1,154 @@
+name: Apply issue 1012 Nonstop intent loading
+
+on:
+  push:
+    branches:
+      - perf/issue-1012-nonstop-intent-loading
+    paths:
+      - '.github/workflows/apply-issue-1012-nonstop-intent-loading.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out claimed branch
+        uses: actions/checkout@v6
+        with:
+          ref: perf/issue-1012-nonstop-intent-loading
+          fetch-depth: 0
+
+      - name: Remove idle Nonstop warming and add regression contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('nonstop-browser.js')
+          source = runtime_path.read_text()
+          warm_block = """  function warmNonstop() {
+            const warm = () => loadAllSets().catch(() => null);
+            if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 3500 });
+            else setTimeout(warm, 1800);
+          }
+
+          """
+          if source.count(warm_block) != 1:
+              raise SystemExit('Expected exactly one warmNonstop block')
+          source = source.replace(warm_block, '', 1)
+          startup_call = "    warmNonstop();\n    restoreFromUrl();"
+          if source.count(startup_call) != 1:
+              raise SystemExit('Expected exactly one startup warmNonstop call')
+          source = source.replace(startup_call, "    restoreFromUrl();", 1)
+          if 'warmNonstop' in source:
+              raise SystemExit('warmNonstop remains after patch')
+          runtime_path.write_text(source)
+          PY
+
+          mkdir -p scripts/lib .github/workflows
+          cat > scripts/lib/validate-nonstop-intent-loading.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+
+          const source = readFileSync(new URL('../../nonstop-browser.js', import.meta.url), 'utf8');
+
+          function functionBody(name) {
+            const marker = `${name}(`;
+            const start = source.indexOf(marker);
+            assert.notEqual(start, -1, `${name} must exist`);
+            const open = source.indexOf('{', start);
+            assert.notEqual(open, -1, `${name} must have a body`);
+            let depth = 0;
+            for (let index = open; index < source.length; index += 1) {
+              const char = source[index];
+              if (char === '{') depth += 1;
+              if (char === '}') {
+                depth -= 1;
+                if (depth === 0) return source.slice(open + 1, index);
+              }
+            }
+            assert.fail(`${name} body is not balanced`);
+          }
+
+          assert.equal(source.includes('function warmNonstop'), false, 'ordinary startup must not define an idle full-catalogue warmer');
+          assert.equal(source.includes('warmNonstop();'), false, 'ordinary startup must not invoke an idle full-catalogue warmer');
+
+          const init = functionBody('function init');
+          assert.equal(init.includes('loadAllSets('), false, 'init must not load the full Nonstop catalogue');
+          assert.equal(init.includes('requestIdleCallback'), false, 'init must not schedule Nonstop catalogue work at idle');
+          assert.equal(init.includes('restoreFromUrl();'), true, 'init must preserve explicit Nonstop deep-link restoration');
+
+          const openBrowser = functionBody('async function openBrowser');
+          assert.match(openBrowser, /await\s+Promise\.all\(\[loadAllSets\(\),\s*loadSearchCore\(\)\]\)/, 'opening the chooser must still deliberately load the catalogue');
+
+          const restoreFromUrl = functionBody('function restoreFromUrl');
+          assert.match(restoreFromUrl, /searchParams\.get\(['"]nonstop['"]\)/, 'deep-link restoration must still read the nonstop query parameter');
+          assert.match(restoreFromUrl, /startNonstop\(id,\s*\{\s*quiet:\s*true\s*\}\)/, 'deep-link restoration must still start the requested set');
+
+          assert.match(source, /list:\s*async\s*\(\)\s*=>\s*loadAllSets\(\)/, 'GARBA_NONSTOP.list() must remain an explicit catalogue-loading API');
+          assert.match(source, /if\s*\(state\.allSets\)\s*return\s+state\.allSets;/, 'full catalogue loading must remain cached within the document');
+          assert.match(source, /Promise\.all\(index\.chunks\.map\(loadChunk\)\)/, 'explicit catalogue loading must still load the indexed discovery chunks');
+
+          const idleLoadPattern = /(?:requestIdleCallback|setTimeout)[\s\S]{0,220}loadAllSets\s*\(/;
+          assert.equal(idleLoadPattern.test(source), false, 'loadAllSets must not be reachable from an idle/timer warm path');
+
+          console.log('✓ Nonstop discovery remains intent-driven: no idle full-catalogue warm path, explicit chooser/deep-link/list paths preserved.');
+          EOF
+
+          cat > .github/workflows/nonstop-intent-loading-validate.yml <<'EOF'
+          name: Nonstop intent loading validate
+
+          on:
+            pull_request:
+              paths:
+                - 'nonstop-browser.js'
+                - 'scripts/lib/validate-nonstop-intent-loading.mjs'
+                - '.github/workflows/nonstop-intent-loading-validate.yml'
+            push:
+              branches:
+                - main
+              paths:
+                - 'nonstop-browser.js'
+                - 'scripts/lib/validate-nonstop-intent-loading.mjs'
+                - '.github/workflows/nonstop-intent-loading-validate.yml'
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            validate:
+              runs-on: ubuntu-latest
+              timeout-minutes: 10
+              steps:
+                - name: Check out repository
+                  uses: actions/checkout@v6
+                - name: Use Node.js 22
+                  uses: actions/setup-node@v5
+                  with:
+                    node-version: 22
+                - name: Check Nonstop runtime syntax
+                  run: node --check nonstop-browser.js
+                - name: Validate intent-driven Nonstop loading
+                  run: node scripts/lib/validate-nonstop-intent-loading.mjs
+          EOF
+
+          rm .github/workflows/apply-issue-1012-nonstop-intent-loading.yml
+
+          node --check nonstop-browser.js
+          node scripts/lib/validate-nonstop-intent-loading.mjs
+
+      - name: Commit exact claimed result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nonstop-browser.js scripts/lib/validate-nonstop-intent-loading.mjs .github/workflows/nonstop-intent-loading-validate.yml .github/workflows/apply-issue-1012-nonstop-intent-loading.yml
+          git diff --cached --stat
+          git commit -m 'Defer Nonstop catalogue loading until intent (#1012)'
+          git push origin HEAD:perf/issue-1012-nonstop-intent-loading
