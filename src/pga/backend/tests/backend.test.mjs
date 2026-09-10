@@ -8,6 +8,8 @@ import {
   audienceSql,
   eventDataPoint,
   homeWindowSql,
+  liveBreakdownSql,
+  liveSql,
   listeningTimeSql,
   normaliseForStorage,
   presenceDataPoint,
@@ -219,6 +221,23 @@ test('listening-time SQL caps a session minute at 60 seconds', () => {
   assert.match(sql, /GROUP BY session_key, minute_bucket/)
   assert.match(sql, /raw_played_ms > 60000/)
   assert.match(sql, /GROUP BY event_id/)
+})
+
+test('live SQL uses received-time liveness and deterministic same-time session selection', () => {
+  for (const sql of [liveSql('playgarba_presence_v1'), liveBreakdownSql('playgarba_presence_v1')]) {
+    assert.match(sql, /WITH same_time_sessions AS/)
+    assert.match(sql, /argMax\(blob6, blob1\) AS playback_state/)
+    assert.match(sql, /GROUP BY session_key, received_at_ms/)
+    assert.match(sql, /argMax\(playback_state, received_at_ms\) AS playback_state/)
+    assert.match(sql, /GROUP BY session_key/)
+    assert.match(sql, /toDateTime\(double3 \/ 1000\) >= NOW\(\) - INTERVAL '120' SECOND/)
+    assert.match(sql, /toDateTime\(double3 \/ 1000\) <= NOW\(\)/)
+    assert.doesNotMatch(sql, /timestamp > NOW\(\) - INTERVAL '120' SECOND/)
+    assert.doesNotMatch(sql, /GROUP BY session_key, tab_key/)
+  }
+  const sql = liveSql('playgarba_presence_v1')
+  assert.match(sql, /playback_state = 'playing'/)
+  assert.match(sql, /playback_state != 'playing'/)
 })
 
 test('search demand SQL enforces the minimum-volume privacy threshold', () => {

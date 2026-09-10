@@ -53,6 +53,8 @@ Required bindings/secrets:
 
 Cloudflare Access must protect the PGA application/hostname, and `admin-worker.js` verifies `CF-Access-Jwt-Assertion` again before any API route is served. Private API responses are `Cache-Control: no-store`.
 
+Listening analytics resolve canonical song/release/Nonstop labels from the public generated PlayGarba catalogue. `PUBLIC_ORIGIN` may override the default `https://playgarba.com` catalogue origin for deployment/testing. Historical or renamed IDs that are no longer present in generated catalogue files can be mapped explicitly with `CATALOGUE_ID_ALIASES_JSON`, shaped as `{"song":{"old-id":"current-id"},"release":{"old-id":"current-id"}}`. Invalid or unavailable identity data never changes measured event counts: the API returns the count with an unresolved canonical ID and downgrades the Listening envelope to `partial` when the catalogue source itself is unavailable.
+
 ### Rollup Worker
 
 Required bindings/secrets:
@@ -76,7 +78,11 @@ All admin routes require a valid Access JWT:
 
 Responses preserve `complete`, `partial` or `unavailable` state, freshness and sampled/precision metadata. Query failure is never converted to a numeric zero.
 
-Audience region values are suppressed below three measured sessions. Recent free-text search demand is returned only after the query reaches at least three accepted searches; obvious email-, phone- and URL-like input is discarded at ingestion.
+`GET /api/live` uses the 120-second presence expiry from the architecture contract. It returns active, confirmed-listening and browsing session estimates plus a 30-minute minute-bucket trend and privacy-safe `surface` / `world` / `displayMode` breakdowns. Breakdown rows below three active sessions are suppressed. The summary, breakdown and trend queries are independent: a missing breakdown or trend produces a `partial` response with that field set to `null`, while a failed headline live query produces `503 unavailable` rather than a fabricated zero. Each source and metric preserves exact-versus-estimated sampling metadata and `dataThrough` reflects the freshest successful live source.
+
+Audience region values are suppressed below three measured sessions. Audience acquisition uses bounded UTM source/medium/campaign plus the already-sanitised referrer hostname fallback; no full referrer path or arbitrary query string is returned. Recent free-text search demand is returned only after the query reaches at least three accepted searches; obvious email-, phone- and URL-like input is discarded at ingestion.
+
+Listening keeps `play_intent` separate from provider-confirmed `playback_started`, carries the product surface (`player`, `explore`, `nonstop`) through the aggregate, and resolves content names only from canonical catalogue truth. Nonstop remains a `nonstop_set` content type, never a genre.
 
 ## Validation
 
@@ -87,9 +93,12 @@ node --check src/pga/backend/ingest-worker.js
 node --check src/pga/backend/admin-worker.js
 node --check src/pga/backend/rollup-worker.js
 node --test src/pga/backend/tests/backend.test.mjs
+node --test src/pga/backend/tests/catalogue.test.mjs
+node --test src/pga/backend/tests/live-api.test.mjs
+node scripts/lib/validate-pga-analytics.mjs
 ```
 
-The dedicated GitHub Actions workflow runs the same backend checks. The repository-wide `npm run check` remains the final integration gate.
+The dedicated GitHub Actions workflows run the same backend and PGA analytics checks. The repository-wide `npm run check` remains the final integration gate.
 
 ## Deployment evidence
 

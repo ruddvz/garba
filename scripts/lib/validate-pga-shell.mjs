@@ -101,7 +101,7 @@ async function validateBrowserContract() {
   const { chromium, webkit } = await import('@playwright/test');
   const baseUrl = process.env.PGA_BASE_URL || 'http://127.0.0.1:4174';
   const fixtureOrigin = new URL(baseUrl).origin;
-  const protectedAggregatePaths = new Set(['/api/audience', '/api/listening']);
+  const protectedAggregatePaths = new Set(['/api/home', '/api/live', '/api/audience', '/api/listening']);
   const unavailableAggregate = JSON.stringify({
     status: 'unavailable',
     generatedAt: null,
@@ -123,7 +123,10 @@ async function validateBrowserContract() {
     const browser = await engine.launch({ headless: true });
     try {
       for (const [viewportName, viewport] of viewports) {
-        const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+        // This shell-only fixture mocks protected aggregates at the page layer.
+        // Block service workers so WebKit cannot bypass those deterministic mocks;
+        // real PGA service-worker behavior remains covered by the PWA contract checks.
+        const context = await browser.newContext({ viewport, reducedMotion: 'reduce', serviceWorkers: 'block' });
         const page = await context.newPage();
         const failures = [];
 
