@@ -284,21 +284,96 @@ function renderReleaseDetailIdentity(release, songs) {
   ]);
 }
 
+const EXPLORE_PAGE_DATA_KEY = '__PLAYGARBA_EXPLORE_PAGE_DATA_V1__';
+const EXPLORE_PAGE_DATA_EVENT = 'playgarba:explore-page-data-ready';
+
+function createExplorePageDataStore() {
+  const resolved = new Map();
+  const inFlight = new Map();
+  const artistPromises = new Map();
+  const coreKeys = new Set([paths.songs, paths.releases, paths.catalogueIndex, paths.artwork]);
+  let corePromise = null;
+
+  const fetchJsonOnce = (url, fallback = null) => {
+    const key = String(url);
+    if (resolved.has(key)) return Promise.resolve(resolved.get(key));
+    if (inFlight.has(key)) return inFlight.get(key);
+
+    const request = (async () => {
+      try {
+        const response = await fetch(key, { cache: 'no-store' });
+        if (!response.ok) return fallback;
+        const value = await response.json();
+        resolved.set(key, value);
+        return value;
+      } catch {
+        return fallback;
+      }
+    })();
+    inFlight.set(key, request);
+    void request.finally(() => {
+      if (inFlight.get(key) === request) inFlight.delete(key);
+    });
+    return request;
+  };
+
+  const loadCore = () => {
+    if (!corePromise) {
+      corePromise = Promise.all([
+        fetchJsonOnce(paths.songs, []),
+        fetchJsonOnce(paths.releases, []),
+        fetchJsonOnce(paths.catalogueIndex, {}),
+        fetchJsonOnce(paths.artwork, { releases: {} }),
+      ]).then(([songs, releases, index, artwork]) => ({ songs, releases, index, artwork }));
+    }
+    return corePromise;
+  };
+
+  const loadArtists = async (index = null) => {
+    const sourceIndex = index || (await loadCore()).index;
+    const files = [...new Set((sourceIndex?.discovery?.artists || []).filter(Boolean))];
+    if (!files.length) return [];
+    const signature = files.join('\n');
+    if (artistPromises.has(signature)) return artistPromises.get(signature);
+
+    const request = Promise.all(files.map((file) => fetchJsonOnce(`../${file}`, null))).then((payloads) => {
+      const seen = new Set();
+      const artists = payloads
+        .flatMap((payload) => payload?.artists || [])
+        .filter((artist) => artist?.id && !seen.has(artist.id) && seen.add(artist.id));
+      if (payloads.some((payload) => payload == null)) artistPromises.delete(signature);
+      return artists;
+    });
+    artistPromises.set(signature, request);
+    return request;
+  };
+
+  const invalidate = (url) => {
+    const key = String(url);
+    resolved.delete(key);
+    if (coreKeys.has(key)) corePromise = null;
+  };
+
+  return Object.freeze({ fetchJson: fetchJsonOnce, loadCore, loadArtists, invalidate });
+}
+
+const explorePageData = window[EXPLORE_PAGE_DATA_KEY] || createExplorePageDataStore();
+if (!window[EXPLORE_PAGE_DATA_KEY]) {
+  Object.defineProperty(window, EXPLORE_PAGE_DATA_KEY, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: explorePageData,
+  });
+}
+window.dispatchEvent(new Event(EXPLORE_PAGE_DATA_EVENT));
+
 async function fetchJson(url, fallback = null) {
-  try {
-    const response = await fetch(url, { cache: 'no-store' });
-    return response.ok ? await response.json() : fallback;
-  } catch {
-    return fallback;
-  }
+  return explorePageData.fetchJson(url, fallback);
 }
 
 async function loadArtists(index) {
-  const files = index?.discovery?.artists || [];
-  if (!files.length) return [];
-  const payloads = await Promise.all(files.map((file) => fetchJson(`../${file}`, null)));
-  const seen = new Set();
-  return payloads.flatMap((payload) => payload?.artists || []).filter((artist) => artist?.id && !seen.has(artist.id) && seen.add(artist.id));
+  return explorePageData.loadArtists(index);
 }
 
 function richerRelease(existing, candidate) {
@@ -965,16 +1040,17 @@ function setLoading(loading) {
 
 async function init() {
   els.count.textContent = 'Loading catalogue…';
-  const [songs,releases,genres,taxonomy,index,artwork,curation] = await Promise.all([
-    fetchJson(paths.songs,[]),
-    fetchJson(paths.releases,[]),
+  const [core,genres,taxonomy,curation] = await Promise.all([
+    explorePageData.loadCore(),
     fetchJson(paths.genres,[]),
     fetchJson(paths.taxonomy,[]),
-    fetchJson(paths.catalogueIndex,{}),
-    fetchJson(paths.artwork,{releases:{}}),
     fetchJson(paths.curation,{featuredReleaseIds:[]}),
   ]);
-  if (!songs.length) throw new Error('Song catalogue unavailable');
+  const { songs, releases, index, artwork } = core;
+  if (!songs.length) {
+    explorePageData.invalidate(paths.songs);
+    throw new Error('Song catalogue unavailable');
+  }
   state.songs = songs.filter((song) => String(song?.presentationRole || 'catalogue') === 'catalogue');
   state.releases = releases;
   state.releaseRedirects = new Map(releases.filter((release) => release?.canonicalReleaseId).map((release) => [release.id, release.canonicalReleaseId]));
