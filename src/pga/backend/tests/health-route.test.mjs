@@ -45,6 +45,7 @@ async function accessFixture(path = '/api/health') {
   const payload = base64url(JSON.stringify({
     iss: teamDomain,
     aud: ['pga-aud'],
+    type: 'app',
     exp: Math.floor(NOW / 1000) + 600,
     iat: Math.floor(NOW / 1000),
     sub: 'founder',
