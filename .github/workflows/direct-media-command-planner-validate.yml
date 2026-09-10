@@ -1,0 +1,43 @@
+name: Direct media command planner validate
+
+on:
+  pull_request:
+    paths:
+      - 'src/playback/direct-media-command-planner.js'
+      - 'scripts/lib/test-direct-media-command-planner.mjs'
+      - '.github/workflows/direct-media-command-planner-validate.yml'
+      - 'src/playback/direct-media-authority-state.js'
+      - 'src/playback/media-session-policy.js'
+      - 'src/playback/playback-lifecycle-policy.js'
+      - 'src/playback/direct-source-resolver.js'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/playback/direct-media-command-planner.js'
+      - 'scripts/lib/test-direct-media-command-planner.mjs'
+      - '.github/workflows/direct-media-command-planner-validate.yml'
+      - 'src/playback/direct-media-authority-state.js'
+      - 'src/playback/media-session-policy.js'
+      - 'src/playback/playback-lifecycle-policy.js'
+      - 'src/playback/direct-source-resolver.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Use Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Check command planner syntax
+        run: node --check src/playback/direct-media-command-planner.js
+      - name: Test direct-media command planner
+        run: node scripts/lib/test-direct-media-command-planner.mjs
