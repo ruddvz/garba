@@ -14,6 +14,8 @@ permissions:
   issues: write
   pull-requests: read
 
+# Keep exactly one registry writer. GitHub may replace an older pending run in this
+# group; each surviving run therefore performs bounded recovery from issue history.
 concurrency:
   group: agent-claim-registry
   cancel-in-progress: false
@@ -34,10 +36,14 @@ jobs:
             const boardIssue = Number(process.env.BOARD_ISSUE);
             const legacyPrMax = Number(process.env.LEGACY_PR_MAX);
             const graphBatchSize = 20;
+            const runStartedAt = new Date().toISOString();
+            const recoveryOverlapMs = 60 * 1000;
 
             const claimRe = /<!--\s*agent-claim\s*\n([\s\S]*?)-->/i;
             const releaseRe = /<!--\s*agent-release\s*\n([\s\S]*?)-->/i;
             const overrideRe = /<!--\s*agent-claim-override\s*\n([\s\S]*?)-->/i;
+            const statusMarker = '<!-- agent-coordination-status -->';
+            const watermarkRe = /<!--\s*agent-claim-registry-watermark:\s*([^>]+?)\s*-->/i;
 
             const labels = {
               'agent:claimed': {
@@ -51,19 +57,19 @@ jobs:
             };
 
             function field(block, name) {
-              const match = block.match(new RegExp(`^${name}:\\s*(.+?)\\s*$`, 'mi'));
+              const match = String(block || '').match(new RegExp(`^${name}:\\s*(.+?)\\s*$`, 'mi'));
               return match ? match[1].trim() : '';
             }
 
             function parseEvent(comment) {
-              const body = comment.body || '';
+              const body = comment?.body || '';
               const override = body.match(overrideRe);
               if (override) {
                 return {
                   type: 'override',
                   reason: field(override[1], 'reason'),
                   author: comment.user?.login || 'unknown',
-                  commentId: comment.id,
+                  commentId: Number(comment.id),
                 };
               }
 
@@ -74,7 +80,7 @@ jobs:
                   agent: field(release[1], 'agent'),
                   branch: field(release[1], 'branch'),
                   author: comment.user?.login || 'unknown',
-                  commentId: comment.id,
+                  commentId: Number(comment.id),
                 };
               }
 
@@ -87,10 +93,9 @@ jobs:
                   scope: field(claim[1], 'scope'),
                   files: field(claim[1], 'files'),
                   author: comment.user?.login || 'unknown',
-                  commentId: comment.id,
+                  commentId: Number(comment.id),
                 };
               }
-
               return null;
             }
 
@@ -105,11 +110,9 @@ jobs:
             function deriveState(comments) {
               let active = null;
               let conflicts = [];
-
-              for (const comment of [...comments].sort((a, b) => a.id - b.id)) {
+              for (const comment of [...comments].sort((a, b) => Number(a.id) - Number(b.id))) {
                 const event = parseEvent(comment);
                 if (!event) continue;
-
                 if (event.type === 'override') {
                   if (event.author === owner) {
                     active = null;
@@ -117,7 +120,6 @@ jobs:
                   }
                   continue;
                 }
-
                 if (event.type === 'release') {
                   if (active && sameOwner(active, event)) {
                     active = null;
@@ -125,9 +127,7 @@ jobs:
                   }
                   continue;
                 }
-
                 if (!validClaim(event)) continue;
-
                 if (!active) {
                   active = event;
                   conflicts = [];
@@ -137,24 +137,15 @@ jobs:
                   conflicts.push(event);
                 }
               }
-
               return { active, conflicts };
-            }
-
-            function eventMode(eventName, action) {
-              if (eventName === 'workflow_dispatch') return 'full';
-              if (eventName === 'issue_comment') return 'incremental';
-              if (eventName === 'issues' && ['closed', 'reopened'].includes(action)) return 'incremental';
-              if (eventName === 'pull_request' && ['opened', 'closed', 'reopened'].includes(action)) return 'board-only';
-              return 'noop';
             }
 
             function assert(condition, message) {
               if (!condition) throw new Error(`Agent registry self-test failed: ${message}`);
             }
 
-            function syntheticComment(id, body, login = 'agent') {
-              return { id, body, user: { login } };
+            function syntheticComment(id, body, login = 'agent', type = 'User') {
+              return { id, body, user: { login, type } };
             }
 
             function normalizeGraphComment(node) {
@@ -170,11 +161,20 @@ jobs:
               };
             }
 
+            function normalizeIssueNode(node) {
+              return {
+                number: Number(node.number),
+                state: String(node.state || '').toLowerCase(),
+                updated_at: node.updatedAt || null,
+                labels: (node.labels?.nodes || []).map(label => ({ name: label.name })),
+                pull_request: null,
+              };
+            }
+
             function buildGraphCommentPage(entries) {
               const variableDefs = ['$owner: String!', '$repo: String!'];
               const variables = { owner, repo };
               const fields = [];
-
               entries.forEach(([issueNumber, cursor], index) => {
                 const cursorName = `cursor${index}`;
                 if (cursor) {
@@ -191,7 +191,6 @@ jobs:
                   '}',
                 ].join('\n'));
               });
-
               return {
                 query: [
                   `query(${variableDefs.join(', ')}) {`,
@@ -205,181 +204,129 @@ jobs:
             }
 
             async function listCommentsByIssue(issueNumbers) {
-              const unique = [...new Set(issueNumbers.filter(Boolean))];
+              const unique = [...new Set(issueNumbers.filter(Boolean).map(Number))];
               const commentsByIssue = new Map(unique.map(issueNumber => [issueNumber, []]));
               let pending = new Map(unique.map(issueNumber => [issueNumber, null]));
-
               while (pending.size) {
                 const next = new Map();
-                const pendingEntries = [...pending.entries()];
-                for (let offset = 0; offset < pendingEntries.length; offset += graphBatchSize) {
-                  const chunk = pendingEntries.slice(offset, offset + graphBatchSize);
+                const entries = [...pending.entries()];
+                for (let offset = 0; offset < entries.length; offset += graphBatchSize) {
+                  const chunk = entries.slice(offset, offset + graphBatchSize);
                   const { query, variables } = buildGraphCommentPage(chunk);
                   const response = await github.graphql(query, variables);
                   const repository = response.repository || {};
-
                   chunk.forEach(([expectedIssueNumber], index) => {
                     const issue = repository[`i${index}`];
                     if (!issue) return;
                     if (Number(issue.number) !== Number(expectedIssueNumber)) {
                       throw new Error(`GraphQL comment batch returned issue #${issue.number} for expected #${expectedIssueNumber}.`);
                     }
-                    const connection = issue.comments;
-                    const bucket = commentsByIssue.get(expectedIssueNumber);
-                    for (const node of connection.nodes || []) bucket.push(normalizeGraphComment(node));
-                    if (connection.pageInfo?.hasNextPage) {
-                      const cursor = connection.pageInfo.endCursor;
+                    const bucket = commentsByIssue.get(Number(expectedIssueNumber));
+                    for (const node of issue.comments?.nodes || []) bucket.push(normalizeGraphComment(node));
+                    if (issue.comments?.pageInfo?.hasNextPage) {
+                      const cursor = issue.comments.pageInfo.endCursor;
                       if (!cursor) throw new Error(`Issue #${expectedIssueNumber} reports another comment page without an end cursor.`);
-                      next.set(expectedIssueNumber, cursor);
+                      next.set(Number(expectedIssueNumber), cursor);
                     }
                   });
                 }
                 pending = next;
               }
-
               for (const comments of commentsByIssue.values()) comments.sort((a, b) => a.id - b.id);
               return commentsByIssue;
             }
 
-            function normalizeIssueNode(node) {
-              return {
-                number: Number(node.number),
-                state: String(node.state || '').toLowerCase(),
-                labels: (node.labels?.nodes || []).map(label => ({ name: label.name })),
-                pull_request: null,
-              };
+            async function listOpenOwnershipLabelledIssuesGraph() {
+              const byNumber = new Map();
+              for (const ownershipLabel of Object.keys(labels)) {
+                let cursor = null;
+                do {
+                  const response = await github.graphql(`
+                    query($owner: String!, $repo: String!, $cursor: String, $ownershipLabel: String!) {
+                      repository(owner: $owner, name: $repo) {
+                        issues(first: 100, after: $cursor, states: OPEN, labels: [$ownershipLabel]) {
+                          nodes { number state updatedAt labels(first: 50) { nodes { name } } }
+                          pageInfo { hasNextPage endCursor }
+                        }
+                      }
+                    }
+                  `, { owner, repo, cursor, ownershipLabel });
+                  const connection = response.repository?.issues;
+                  for (const node of connection?.nodes || []) {
+                    if (Number(node.number) !== boardIssue) byNumber.set(Number(node.number), normalizeIssueNode(node));
+                  }
+                  cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
+                  if (connection?.pageInfo?.hasNextPage && !cursor) {
+                    throw new Error(`${ownershipLabel} issue page is missing an end cursor.`);
+                  }
+                } while (cursor);
+              }
+              return byNumber;
             }
 
-            async function listClaimIssuesGraph(extraIssueNumbers = []) {
+            async function listRecentlyUpdatedOpenIssuesGraph(sinceIso) {
               const byNumber = new Map();
+              const threshold = sinceIso ? Date.parse(sinceIso) - recoveryOverlapMs : null;
               let cursor = null;
-
+              let done = false;
               do {
                 const response = await github.graphql(`
                   query($owner: String!, $repo: String!, $cursor: String) {
                     repository(owner: $owner, name: $repo) {
-                      issues(first: 100, after: $cursor, states: OPEN, labels: ["agent:claimed"]) {
-                        nodes { number state labels(first: 50) { nodes { name } } }
+                      issues(first: 100, after: $cursor, states: OPEN, orderBy: {field: UPDATED_AT, direction: DESC}) {
+                        nodes { number state updatedAt labels(first: 50) { nodes { name } } }
                         pageInfo { hasNextPage endCursor }
                       }
                     }
                   }
                 `, { owner, repo, cursor });
                 const connection = response.repository?.issues;
-                for (const node of connection?.nodes || []) {
-                  if (Number(node.number) === boardIssue) continue;
-                  byNumber.set(Number(node.number), normalizeIssueNode(node));
-                }
-                cursor = connection?.pageInfo?.hasNextPage ? connection.pageInfo.endCursor : null;
-                if (connection?.pageInfo?.hasNextPage && !cursor) {
-                  throw new Error('Claimed issue connection reports another page without an end cursor.');
-                }
-              } while (cursor);
-
-              const missing = [...new Set(extraIssueNumbers.filter(Boolean))]
-                .filter(issueNumber => issueNumber !== boardIssue && !byNumber.has(issueNumber));
-              for (let offset = 0; offset < missing.length; offset += graphBatchSize) {
-                const chunk = missing.slice(offset, offset + graphBatchSize);
-                const fields = chunk.map((issueNumber, index) => [
-                  `i${index}: issue(number: ${issueNumber}) {`,
-                  '  number',
-                  '  state',
-                  '  labels(first: 50) { nodes { name } }',
-                  '}',
-                ].join('\n'));
-                const response = await github.graphql(`
-                  query($owner: String!, $repo: String!) {
-                    repository(owner: $owner, name: $repo) {
-                      ${fields.join('\n')}
-                    }
+                const nodes = connection?.nodes || [];
+                for (const node of nodes) {
+                  const updated = Date.parse(node.updatedAt || '');
+                  if (threshold != null && Number.isFinite(updated) && updated < threshold) {
+                    done = true;
+                    continue;
                   }
-                `, { owner, repo });
-                const repository = response.repository || {};
-                chunk.forEach((issueNumber, index) => {
-                  const node = repository[`i${index}`];
-                  if (!node || String(node.state).toUpperCase() !== 'OPEN') return;
-                  byNumber.set(issueNumber, normalizeIssueNode(node));
-                });
-              }
+                  if (Number(node.number) !== boardIssue) byNumber.set(Number(node.number), normalizeIssueNode(node));
+                }
+                if (done || !connection?.pageInfo?.hasNextPage) break;
+                cursor = connection.pageInfo.endCursor;
+                if (!cursor) throw new Error('Recent issue page is missing an end cursor.');
+              } while (cursor);
               return byNumber;
             }
 
-            function runSelfTests() {
-              const claimA = syntheticComment(1, [
-                '<!-- agent-claim',
-                'agent: agent/a',
-                'branch: fix/a',
-                'scope: scope a',
-                'files: file-a',
-                '-->',
-              ].join('\n'));
-              const claimB = syntheticComment(2, [
-                '<!-- agent-claim',
-                'agent: agent/b',
-                'branch: fix/b',
-                'scope: scope b',
-                'files: file-b',
-                '-->',
-              ].join('\n'));
-              const releaseA = syntheticComment(3, [
-                '<!-- agent-release',
-                'agent: agent/a',
-                'branch: fix/a',
-                '-->',
-              ].join('\n'));
-              const updatedA = syntheticComment(4, [
-                '<!-- agent-claim',
-                'agent: agent/a',
-                'branch: fix/a',
-                'scope: narrowed scope',
-                'files: file-a',
-                '-->',
-              ].join('\n'));
-              const override = syntheticComment(5, [
-                '<!-- agent-claim-override',
-                'reason: owner reassignment',
-                '-->',
-              ].join('\n'), owner);
-
-              let state = deriveState([claimA]);
-              assert(state.active?.agent === 'agent/a', 'first valid claim becomes active');
-              state = deriveState([claimA, claimB]);
-              assert(state.active?.agent === 'agent/a' && state.conflicts.length === 1, 'later claim conflicts');
-              state = deriveState([claimA, updatedA]);
-              assert(state.active?.scope === 'narrowed scope' && state.conflicts.length === 0, 'same owner can narrow claim');
-              state = deriveState([claimA, claimB, releaseA]);
-              assert(!state.active && state.conflicts.length === 0, 'matching release clears active claim');
-              state = deriveState([claimA, override]);
-              assert(!state.active, 'repository owner override clears active claim');
-
-              const normalized = normalizeGraphComment({
-                databaseId: 42,
-                body: 'hello',
-                author: { login: 'github-actions', __typename: 'Bot' },
-              });
-              assert(normalized.id === 42 && normalized.user.type === 'Bot', 'GraphQL mapping preserves database ID and bot identity');
-              const firstPage = buildGraphCommentPage([[12, null]]);
-              const nextPage = buildGraphCommentPage([[12, 'cursor-value']]);
-              assert(firstPage.query.includes('comments(first: 100)') && !firstPage.query.includes('after:'), 'first GraphQL comment page omits cursor');
-              assert(nextPage.query.includes('after: $cursor0') && nextPage.variables.cursor0 === 'cursor-value', 'follow-up GraphQL comment page carries cursor');
-
-              assert(eventMode('issue_comment', 'created') === 'incremental', 'claim events use incremental mode');
-              assert(eventMode('issues', 'closed') === 'incremental', 'issue close uses incremental mode');
-              assert(eventMode('pull_request', 'opened') === 'board-only', 'PR events rebuild board only');
-              assert(eventMode('workflow_dispatch', '') === 'full', 'manual recovery retains full reconciliation');
+            async function fetchIssueGraph(issueNumber) {
+              if (!issueNumber || Number(issueNumber) === boardIssue) return null;
+              const response = await github.graphql(`
+                query($owner: String!, $repo: String!, $issueNumber: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    issue(number: $issueNumber) {
+                      number state updatedAt labels(first: 50) { nodes { name } }
+                    }
+                  }
+                }
+              `, { owner, repo, issueNumber: Number(issueNumber) });
+              const node = response.repository?.issue;
+              return node ? normalizeIssueNode(node) : null;
             }
 
-            async function listComments(issueNumber) {
-              return github.paginate(github.rest.issues.listComments, {
-                owner,
-                repo,
-                issue_number: issueNumber,
-                per_page: 100,
-              });
+            function parseWatermark(boardBody) {
+              const match = String(boardBody || '').match(watermarkRe);
+              if (!match) return null;
+              const value = match[1].trim();
+              return Number.isFinite(Date.parse(value)) ? value : null;
+            }
+
+            function writeWatermark(boardBody, value) {
+              const marker = `<!-- agent-claim-registry-watermark: ${value} -->`;
+              if (watermarkRe.test(String(boardBody || ''))) return String(boardBody).replace(watermarkRe, marker);
+              return `${String(boardBody || '').replace(/\s+$/, '')}\n\n${marker}\n`;
             }
 
             function issueLabelNames(issue) {
-              return new Set((issue.labels || [])
+              return new Set((issue?.labels || [])
                 .map(label => typeof label === 'string' ? label : label?.name)
                 .filter(Boolean));
             }
@@ -404,7 +351,7 @@ jobs:
 
             async function addLabelIfNeeded(issue, name) {
               const current = issueLabelNames(issue);
-              if (current.has(name)) return;
+              if (current.has(name)) return false;
               try {
                 await github.rest.issues.addLabels({ owner, repo, issue_number: issue.number, labels: [name] });
               } catch (error) {
@@ -414,11 +361,12 @@ jobs:
               }
               current.add(name);
               writeIssueLabelNames(issue, current);
+              return true;
             }
 
             async function removeLabelIfPresent(issue, name) {
               const current = issueLabelNames(issue);
-              if (!current.has(name)) return;
+              if (!current.has(name)) return false;
               try {
                 await github.rest.issues.removeLabel({ owner, repo, issue_number: issue.number, name });
               } catch (error) {
@@ -426,12 +374,13 @@ jobs:
               }
               current.delete(name);
               writeIssueLabelNames(issue, current);
+              return true;
             }
 
             function statusBody(issueNumber, state) {
               if (!state.active) {
                 return [
-                  '<!-- agent-coordination-status -->',
+                  statusMarker,
                   '### Agent coordination',
                   '',
                   '**Status:** Available',
@@ -440,7 +389,7 @@ jobs:
                 ].join('\n');
               }
               return [
-                '<!-- agent-coordination-status -->',
+                statusMarker,
                 '### Agent coordination',
                 '',
                 '**Status:** Claimed',
@@ -459,7 +408,7 @@ jobs:
             async function upsertStatus(issueNumber, comments, state) {
               const wanted = statusBody(issueNumber, state);
               const existing = comments.find(comment =>
-                comment.body?.includes('<!-- agent-coordination-status -->') && comment.user?.type === 'Bot'
+                comment.body?.includes(statusMarker) && comment.user?.type === 'Bot'
               );
               if (!existing) {
                 await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body: wanted });
@@ -470,10 +419,41 @@ jobs:
               }
             }
 
-            async function reconcileIssue(issue, knownComments = null) {
-              if (!issue || issue.pull_request || issue.number === boardIssue) return null;
-              const comments = knownComments || await listComments(issue.number);
-              const state = deriveState(comments);
+            function previousStatusClaimId(comments) {
+              const status = comments.find(comment => comment.body?.includes(statusMarker) && comment.user?.type === 'Bot');
+              const match = status?.body?.match(/Claim event:\s*comment\s+(\d+)/i);
+              return match ? Number(match[1]) : null;
+            }
+
+            async function recoveryNotice(issue, state, beforeLabels, comments, suppressNotice) {
+              if (suppressNotice) return;
+              const hadClaim = beforeLabels.has('agent:claimed');
+              const hadConflict = beforeLabels.has('agent:conflict');
+              const priorStatusClaimId = previousStatusClaimId(comments);
+              const claimRecovered = Boolean(state.active) && !hadClaim;
+              const updateRecovered = Boolean(state.active) && hadClaim && priorStatusClaimId && priorStatusClaimId !== state.active.commentId;
+              const conflictRecovered = Boolean(state.active && state.conflicts.length) && !hadConflict;
+              const releaseRecovered = !state.active && (hadClaim || hadConflict);
+              if (!claimRecovered && !updateRecovered && !conflictRecovered && !releaseRecovered) return;
+
+              const lines = ['<!-- agent-registry-recovery -->'];
+              if (releaseRecovered) {
+                lines.push('✅ **Release accepted (recovered):** authoritative issue-comment history no longer has an active claim.');
+              } else {
+                if (claimRecovered || updateRecovered) {
+                  lines.push(`✅ **Claim accepted (recovered):** \`${state.active.agent}\` owns this lane on \`${state.active.branch}\`.`);
+                }
+                if (conflictRecovered) {
+                  lines.push(`❌ **Claim conflict (recovered):** ${state.conflicts.length} later claim(s) remain rejected while \`${state.active.agent}\` / \`${state.active.branch}\` owns the lane.`);
+                }
+              }
+              await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body: lines.join('\n') });
+            }
+
+            async function reconcileIssue(issue, comments, suppressRecoveryNotice = false) {
+              if (!issue || issue.pull_request || Number(issue.number) === boardIssue) return null;
+              const state = deriveState(comments || []);
+              const beforeLabels = issueLabelNames(issue);
               const shouldClaim = issue.state === 'open' && Boolean(state.active);
               const shouldConflict = shouldClaim && state.conflicts.length > 0;
 
@@ -485,11 +465,11 @@ jobs:
               if (shouldClaim) {
                 await upsertStatus(issue.number, comments, state);
               } else {
-                const hasStatus = comments.some(comment =>
-                  comment.body?.includes('<!-- agent-coordination-status -->') && comment.user?.type === 'Bot'
-                );
+                const hasStatus = comments.some(comment => comment.body?.includes(statusMarker) && comment.user?.type === 'Bot');
                 if (hasStatus) await upsertStatus(issue.number, comments, { active: null, conflicts: [] });
               }
+
+              await recoveryNotice(issue, state, beforeLabels, comments, suppressRecoveryNotice);
               return { issue, state };
             }
 
@@ -497,12 +477,9 @@ jobs:
               return String(value || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
             }
 
-            async function updateBoard(activeRows) {
+            async function updateBoard(activeRows, board, nextWatermark) {
               const openPulls = await github.paginate(github.rest.pulls.list, {
-                owner,
-                repo,
-                state: 'open',
-                per_page: 100,
+                owner, repo, state: 'open', per_page: 100,
               });
               const legacyPulls = openPulls
                 .filter(pr => pr.number <= legacyPrMax)
@@ -524,79 +501,177 @@ jobs:
                   ].join('\n')
                 : '_No active machine-managed claims._';
 
-              const board = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
-              let body = board.data.body || '';
-              const replacements = [
+              let body = board.body || '';
+              for (const [start, end, value] of [
                 ['<!-- agent-work-board:legacy-start -->', '<!-- agent-work-board:legacy-end -->', legacy],
                 ['<!-- agent-work-board:managed-start -->', '<!-- agent-work-board:managed-end -->', active],
-              ];
-              for (const [start, end, value] of replacements) {
-                const pattern = new RegExp(`${start}[\\s\\S]*?${end}`);
-                if (!pattern.test(body)) throw new Error(`Board issue #${boardIssue} is missing marker ${start}.`);
-                body = body.replace(pattern, `${start}\n${value}\n${end}`);
+              ]) {
+                const startAt = body.indexOf(start);
+                const endAt = body.indexOf(end);
+                if (startAt < 0 || endAt < startAt) throw new Error(`Board issue #${boardIssue} is missing marker ${start}.`);
+                body = `${body.slice(0, startAt)}${start}\n${value}\n${body.slice(endAt)}`;
               }
-              if (body !== (board.data.body || '')) {
+              body = writeWatermark(body, nextWatermark);
+              if (body !== (board.body || '')) {
                 await github.rest.issues.update({ owner, repo, issue_number: boardIssue, body });
               }
             }
 
-            async function collectActiveRows(knownResults = new Map()) {
-              const byNumber = await listClaimIssuesGraph([...knownResults.keys()]);
-              const unknownNumbers = [...byNumber.keys()].filter(issueNumber => !knownResults.has(issueNumber));
-              const commentsByIssue = await listCommentsByIssue(unknownNumbers);
-              const activeRows = [];
-              const seen = new Set();
-
-              for (const issue of byNumber.values()) {
-                seen.add(issue.number);
-                const known = knownResults.get(issue.number);
-                const state = known?.state || deriveState(commentsByIssue.get(issue.number) || []);
-                if (state.active) activeRows.push({ issue: known?.issue || issue, state });
-                else core.warning(`Issue #${issue.number} still has agent:claimed but no active claim. Run workflow_dispatch if the label is stale.`);
-              }
-
-              for (const [issueNumber, result] of knownResults) {
-                if (seen.has(issueNumber) || !result?.state?.active || result.issue?.state !== 'open') continue;
-                activeRows.push(result);
-              }
-              activeRows.sort((a, b) => a.issue.number - b.issue.number);
-              return activeRows;
-            }
-
-            async function updateBoardFromClaimed(knownResults = new Map()) {
-              await updateBoard(await collectActiveRows(knownResults));
-            }
-
-            async function reconcileAll() {
-              const issues = await github.paginate(github.rest.issues.listForRepo, {
-                owner,
-                repo,
-                state: 'open',
-                per_page: 100,
-              });
-              const activeRows = [];
-              for (const issue of issues) {
-                if (issue.pull_request || issue.number === boardIssue) continue;
-                const result = await reconcileIssue(issue);
-                if (result?.state.active) activeRows.push(result);
-              }
-
-              const staleClosed = new Map();
+            async function listStaleClosedLabelledIssues() {
+              const byNumber = new Map();
               for (const name of Object.keys(labels)) {
                 const closed = await github.paginate(github.rest.issues.listForRepo, {
-                  owner,
-                  repo,
-                  state: 'closed',
-                  labels: name,
-                  per_page: 100,
+                  owner, repo, state: 'closed', labels: name, per_page: 100,
                 });
                 for (const issue of closed) {
-                  if (!issue.pull_request && issue.number !== boardIssue) staleClosed.set(issue.number, issue);
+                  if (!issue.pull_request && Number(issue.number) !== boardIssue) byNumber.set(Number(issue.number), issue);
                 }
               }
-              for (const issue of staleClosed.values()) await reconcileIssue(issue);
+              return byNumber;
+            }
+
+            async function collectRecoveryIssues(board, extraIssueNumber = null) {
+              const previousWatermark = parseWatermark(board.body || '');
+              const byNumber = await listOpenOwnershipLabelledIssuesGraph();
+              const recent = await listRecentlyUpdatedOpenIssuesGraph(previousWatermark);
+              for (const [number, issue] of recent) byNumber.set(number, issue);
+              if (extraIssueNumber && !byNumber.has(Number(extraIssueNumber))) {
+                const extra = await fetchIssueGraph(Number(extraIssueNumber));
+                if (extra?.state === 'open') byNumber.set(Number(extraIssueNumber), extra);
+              }
+              return { byNumber, previousWatermark };
+            }
+
+            async function reconcileUniverse(extraIssueNumber = null, suppressIssueNumber = null) {
+              for (const name of Object.keys(labels)) await ensureLabel(name);
+              const boardResponse = await github.rest.issues.get({ owner, repo, issue_number: boardIssue });
+              const board = { body: boardResponse.data.body || '' };
+              const { byNumber } = await collectRecoveryIssues(board, extraIssueNumber);
+              const staleClosed = await listStaleClosedLabelledIssues();
+              const allNumbers = [...new Set([...byNumber.keys(), ...staleClosed.keys()])];
+              const commentsByIssue = await listCommentsByIssue(allNumbers);
+              const activeRows = [];
+
+              for (const issue of byNumber.values()) {
+                const result = await reconcileIssue(
+                  issue,
+                  commentsByIssue.get(Number(issue.number)) || [],
+                  Number(issue.number) === Number(suppressIssueNumber),
+                );
+                if (result?.state?.active && result.issue.state === 'open') activeRows.push(result);
+              }
+              for (const issue of staleClosed.values()) {
+                await reconcileIssue(issue, commentsByIssue.get(Number(issue.number)) || [], false);
+              }
+
               activeRows.sort((a, b) => a.issue.number - b.issue.number);
-              await updateBoard(activeRows);
+              await updateBoard(activeRows, board, runStartedAt);
+            }
+
+            async function listComments(issueNumber) {
+              return github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: issueNumber, per_page: 100,
+              });
+            }
+
+            async function acknowledgeOwnershipEvent(issueNumber, current, comments) {
+              const event = parseEvent(current);
+              if (!event) return false;
+              const beforeState = deriveState(comments.filter(comment => Number(comment.id) < Number(current.id)));
+              let body;
+              if (event.type === 'claim') {
+                if (!validClaim(event)) {
+                  body = '❌ **Claim rejected:** include non-empty `agent`, `branch`, `scope` and `files` fields.';
+                } else if (beforeState.active && !sameOwner(beforeState.active, event)) {
+                  body = `❌ **Claim conflict:** this lane is already owned by \`${beforeState.active.agent}\` on \`${beforeState.active.branch}\`. Do not begin overlapping implementation.`;
+                } else {
+                  body = `✅ **Claim accepted:** \`${event.agent}\` owns this lane on \`${event.branch}\`.`;
+                }
+              } else if (event.type === 'release') {
+                body = beforeState.active && sameOwner(beforeState.active, event)
+                  ? `✅ **Release accepted:** \`${event.agent}\` / \`${event.branch}\` no longer owns this lane.`
+                  : '⚠️ **Release ignored:** it does not match the active agent and branch.';
+              } else {
+                body = event.author === owner
+                  ? '✅ **Owner override accepted:** the previous claim is cleared. A new agent may claim the lane.'
+                  : '❌ **Override rejected:** only the repository owner may override an active claim.';
+              }
+              await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body });
+              return true;
+            }
+
+            async function autoReleaseClosedIssue(issue) {
+              const comments = await listComments(issue.number);
+              const state = deriveState(comments);
+              if (!state.active) return;
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.number,
+                body: [
+                  '<!-- agent-release',
+                  `agent: ${state.active.agent}`,
+                  `branch: ${state.active.branch}`,
+                  '-->',
+                  `RELEASE: issue closed; \`${state.active.agent}\` / \`${state.active.branch}\` is released automatically.`,
+                ].join('\n'),
+              });
+            }
+
+            function eventNeedsRecovery(eventName, action = '') {
+              if (eventName === 'issue_comment') return true;
+              if (eventName === 'workflow_dispatch') return true;
+              if (eventName === 'issues') return ['closed', 'reopened'].includes(action);
+              if (eventName === 'pull_request') return ['opened', 'closed', 'reopened'].includes(action);
+              return false;
+            }
+
+            function runSelfTests() {
+              const claimA = syntheticComment(1, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: scope a\nfiles: file-a\n-->');
+              const claimB = syntheticComment(2, '<!-- agent-claim\nagent: agent/b\nbranch: fix/b\nscope: scope b\nfiles: file-b\n-->');
+              const releaseA = syntheticComment(3, '<!-- agent-release\nagent: agent/a\nbranch: fix/a\n-->');
+              const updateA = syntheticComment(4, '<!-- agent-claim\nagent: agent/a\nbranch: fix/a\nscope: narrowed\nfiles: file-a; file-c\n-->');
+              const override = syntheticComment(5, '<!-- agent-claim-override\nreason: owner reassignment\n-->', owner);
+              const botStatus = syntheticComment(6, `${statusMarker}\n**Status:** Claimed`, 'github-actions', 'Bot');
+
+              let state = deriveState([claimA]);
+              assert(state.active?.agent === 'agent/a', 'first valid claim wins');
+              state = deriveState([claimA, claimB]);
+              assert(state.active?.agent === 'agent/a' && state.conflicts.length === 1, 'later different owner conflicts');
+              state = deriveState([claimA, updateA]);
+              assert(state.active?.scope === 'narrowed' && state.active.files === 'file-a; file-c', 'same-owner update remains valid');
+              state = deriveState([claimA, claimB, releaseA]);
+              assert(!state.active && state.conflicts.length === 0, 'matching release clears ownership');
+              state = deriveState([claimA, override]);
+              assert(!state.active, 'repository-owner override clears ownership');
+              assert(parseEvent(botStatus) === null, 'bot status comments never become ownership events');
+
+              const normalized = normalizeGraphComment({
+                databaseId: 42,
+                body: 'hello',
+                author: { login: 'github-actions', __typename: 'Bot' },
+              });
+              assert(normalized.id === 42 && normalized.user.type === 'Bot', 'GraphQL mapping preserves database-ID order and bot identity');
+              const firstPage = buildGraphCommentPage([[12, null]]);
+              const nextPage = buildGraphCommentPage([[12, 'cursor-value']]);
+              assert(firstPage.query.includes('comments(first: 100)') && !firstPage.query.includes('after:'), 'first comment page omits cursor');
+              assert(nextPage.query.includes('after: $cursor0') && nextPage.variables.cursor0 === 'cursor-value', '>100-comment pagination carries its cursor');
+
+              const boardWithout = 'board';
+              const stamped = writeWatermark(boardWithout, '2026-09-10T04:00:00.000Z');
+              assert(parseWatermark(stamped) === '2026-09-10T04:00:00.000Z', 'watermark is persisted and readable');
+              assert(writeWatermark(stamped, '2026-09-10T05:00:00.000Z').match(watermarkRe)?.[1].trim() === '2026-09-10T05:00:00.000Z', 'watermark updates in place');
+
+              const unlabelledActive = new Set();
+              const labelledActive = new Set(['agent:claimed']);
+              assert(Boolean(deriveState([claimA]).active) && !unlabelledActive.has('agent:claimed'), 'a dropped unlabelled claim is recoverable from comments');
+              assert(deriveState([claimA, releaseA]).active === null && labelledActive.has('agent:claimed'), 'a dropped release is recoverable from comments despite a stale label');
+              assert(runStartedAt && recoveryOverlapMs > 0, 'surviving runs use a bounded overlap window');
+              assert(eventNeedsRecovery('issue_comment', 'created'), 'every surviving issue-comment run performs recovery, including bot/non-marker comments');
+              assert(eventNeedsRecovery('issues', 'closed') && eventNeedsRecovery('issues', 'reopened'), 'issue lifecycle runs perform recovery');
+              assert(eventNeedsRecovery('pull_request', 'opened') && eventNeedsRecovery('pull_request', 'closed'), 'PR lifecycle runs perform recovery');
+              assert(eventNeedsRecovery('workflow_dispatch', ''), 'manual runs perform recovery');
+              assert(!eventNeedsRecovery('push', ''), 'unsupported events do not mutate registry state');
             }
 
             function isRateLimitError(error) {
@@ -610,96 +685,53 @@ jobs:
               const resetText = Number.isFinite(reset) && reset > 0
                 ? ` Reset is expected around ${new Date(reset * 1000).toISOString()}.`
                 : '';
-              const message = `Agent claim registry degraded: GitHub API rate limit is exhausted.${resetText} Issue comment claim order remains authoritative; labels and #${boardIssue} may be stale until a workflow_dispatch recovery succeeds.`;
+              const message = `Agent claim registry degraded: GitHub API rate limit is exhausted.${resetText} Issue-comment claim order remains authoritative; labels and #${boardIssue} may be stale until a surviving registry run or workflow_dispatch recovery succeeds.`;
               core.error(message);
-              await core.summary
-                .addHeading('Agent claim registry degraded')
-                .addRaw(message)
-                .write();
+              await core.summary.addHeading('Agent claim registry degraded').addRaw(message).write();
               core.setFailed(message);
             }
 
             async function main() {
               runSelfTests();
+              const eventName = context.eventName;
               const action = context.payload.action || '';
-              const mode = eventMode(context.eventName, action);
-              if (mode === 'noop') return;
+              if (!eventNeedsRecovery(eventName, action)) return;
+              let extraIssueNumber = null;
+              let suppressIssueNumber = null;
 
-              if (mode === 'full') {
-                for (const name of Object.keys(labels)) await ensureLabel(name);
-                await reconcileAll();
-                return;
-              }
-
-              if (context.eventName === 'issue_comment') {
+              if (eventName === 'issue_comment') {
                 const issue = context.payload.issue;
-                if (issue.pull_request || issue.number === boardIssue) return;
+                extraIssueNumber = issue?.pull_request ? null : Number(issue?.number || 0) || null;
                 const current = context.payload.comment;
-                const event = parseEvent(current);
-                if (!event) return;
-
-                const comments = await listComments(issue.number);
-                const beforeState = deriveState(comments.filter(comment => comment.id < current.id));
-                if (event.type === 'claim') {
-                  if (!validClaim(event)) {
-                    await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body: '❌ **Claim rejected:** include non-empty `agent`, `branch`, `scope` and `files` fields.' });
-                  } else if (beforeState.active && !sameOwner(beforeState.active, event)) {
-                    await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body: `❌ **Claim conflict:** this lane is already owned by \`${beforeState.active.agent}\` on \`${beforeState.active.branch}\`. Do not begin overlapping implementation.` });
-                  } else {
-                    await github.rest.issues.createComment({ owner, repo, issue_number: issue.number, body: `✅ **Claim accepted:** \`${event.agent}\` owns this lane on \`${event.branch}\`.` });
-                  }
-                } else if (event.type === 'release') {
-                  await github.rest.issues.createComment({
-                    owner,
-                    repo,
-                    issue_number: issue.number,
-                    body: beforeState.active && sameOwner(beforeState.active, event)
-                      ? `✅ **Release accepted:** \`${event.agent}\` / \`${event.branch}\` no longer owns this lane.`
-                      : '⚠️ **Release ignored:** it does not match the active agent and branch.',
-                  });
-                } else if (event.type === 'override') {
-                  await github.rest.issues.createComment({
-                    owner,
-                    repo,
-                    issue_number: issue.number,
-                    body: event.author === owner
-                      ? '✅ **Owner override accepted:** the previous claim is cleared. A new agent may claim the lane.'
-                      : '❌ **Override rejected:** only the repository owner may override an active claim.',
-                  });
-                }
-
-                const result = await reconcileIssue(issue, comments);
-                await updateBoardFromClaimed(new Map([[issue.number, result]]));
-                return;
-              }
-
-              if (context.eventName === 'issues') {
-                const issue = context.payload.issue;
-                if (issue.pull_request || issue.number === boardIssue) return;
-                if (action === 'closed') {
+                if (issue && !issue.pull_request && Number(issue.number) !== boardIssue) {
                   const comments = await listComments(issue.number);
-                  const state = deriveState(comments);
-                  if (state.active) {
-                    await github.rest.issues.createComment({
-                      owner,
-                      repo,
-                      issue_number: issue.number,
-                      body: [
-                        '<!-- agent-release',
-                        `agent: ${state.active.agent}`,
-                        `branch: ${state.active.branch}`,
-                        '-->',
-                        `RELEASE: issue closed; \`${state.active.agent}\` / \`${state.active.branch}\` is released automatically.`,
-                      ].join('\n'),
-                    });
-                  }
+                  const acknowledged = await acknowledgeOwnershipEvent(issue.number, current, comments);
+                  if (acknowledged) suppressIssueNumber = Number(issue.number);
                 }
-                const result = await reconcileIssue(issue);
-                await updateBoardFromClaimed(new Map([[issue.number, result]]));
+                // Even a bot/PR/non-ownership comment must recover the universe. Such a
+                // run can be the one pending run that survived while a claim run was replaced.
+                await reconcileUniverse(extraIssueNumber, suppressIssueNumber);
                 return;
               }
 
-              if (mode === 'board-only') await updateBoardFromClaimed();
+              if (eventName === 'issues' && ['closed', 'reopened'].includes(action)) {
+                const issue = context.payload.issue;
+                extraIssueNumber = Number(issue?.number || 0) || null;
+                if (action === 'closed' && issue && !issue.pull_request && Number(issue.number) !== boardIssue) {
+                  await autoReleaseClosedIssue(issue);
+                }
+                await reconcileUniverse(extraIssueNumber, null);
+                return;
+              }
+
+              if (eventName === 'pull_request' && ['opened', 'closed', 'reopened'].includes(action)) {
+                await reconcileUniverse(null, null);
+                return;
+              }
+
+              if (eventName === 'workflow_dispatch') {
+                await reconcileUniverse(null, null);
+              }
             }
 
             try {
