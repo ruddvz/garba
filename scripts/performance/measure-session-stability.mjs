@@ -30,7 +30,7 @@ async function loadChromium() {
   }
 }
 
-function attachRuntimeFailureCapture(page, originValue, failures, expectedCancellations) {
+function attachRuntimeFailureCapture(page, originValue, failures, requestAborts) {
   const onPageError = (error) => failures.push(`pageerror: ${error.message}`);
   const onConsole = (message) => {
     if (message.type() !== 'error') return;
@@ -49,13 +49,10 @@ function attachRuntimeFailureCapture(page, originValue, failures, expectedCancel
       const url = new URL(request.url());
       if (url.origin !== originValue) return;
       if (url.searchParams.get('session-soak') === 'offline') return;
-      const failure = request.failure()?.errorText || '';
-      const detail = `${request.method()} ${url.pathname}${url.search} ${failure}`.trim();
-      if (failure.includes('ERR_ABORTED')) {
-        // Rapid selection and navigation are required soak journeys. Chromium reports
-        // correctly superseded requests as ERR_ABORTED; preserve them as cancellation
-        // evidence rather than silently ignoring them or calling them runtime failures.
-        expectedCancellations.push(detail);
+      const errorText = request.failure()?.errorText || '';
+      const detail = `${request.method()} ${url.pathname}${url.search} ${errorText}`.trim();
+      if (errorText.includes('ERR_ABORTED')) {
+        requestAborts.push(detail);
         return;
       }
       failures.push(`requestfailed: ${detail}`);
@@ -111,34 +108,6 @@ function uniqueFailures(failures) {
   return [...new Set(failures)];
 }
 
-function classifyBoundedWarmup(snapshots, failures, budgets = DEFAULT_BUDGETS) {
-  const observations = [];
-  const remainingFailures = failures.filter((failure) => {
-    if (failure.code !== 'document-growth') return true;
-
-    const tail = snapshots
-      .slice(-4)
-      .map((sample) => sample.browser.documents)
-      .filter(Number.isFinite);
-    if (tail.length < 4) return true;
-
-    const tailRange = Math.max(...tail) - Math.min(...tail);
-    if (tailRange > budgets.documentGrowth) return true;
-
-    observations.push({
-      code: 'bounded-document-warmup',
-      initialGrowth: failure.growth,
-      finalFourDocuments: tail,
-      tailRange,
-      budget: budgets.documentGrowth,
-      message: `renderer document counters warmed up by +${failure.growth} but stabilized across the final four player snapshots (${tail.join(' → ')})`,
-    });
-    return false;
-  });
-
-  return { failures: remainingFailures, observations };
-}
-
 function coverageFailures(boot, journeys, exploreJourneys) {
   const failures = [];
   if (!boot?.catalogueReady) {
@@ -163,8 +132,8 @@ function coverageFailures(boot, journeys, exploreJourneys) {
   if (finalJourney?.offlineRecovery !== 'recovered') {
     failures.push({ code: 'offline-recovery-missing', message: `Offline recovery result was ${finalJourney?.offlineRecovery || 'missing'}.` });
   }
-  if (!exploreJourneys.length || exploreJourneys.some((journey) => !journey.entered || !journey.returnedToPlayer)) {
-    failures.push({ code: 'explore-roundtrip-failed', message: 'Explore did not complete a post-soak enter-and-return round trip.' });
+  if (!exploreJourneys.length || exploreJourneys.some((journey) => !journey.entered || !journey.searched || !journey.detailOpened || !journey.detailClosed || !journey.returnedToPlayer)) {
+    failures.push({ code: 'explore-roundtrip-failed', message: 'Explore did not complete search, detail open/close and return-to-player coverage.' });
   }
   return failures;
 }
@@ -181,7 +150,7 @@ async function main() {
   const browser = await chromium.launch({ headless: true });
   const browserVersion = browser.version();
   const runtimeFailures = [];
-  const expectedCancellations = [];
+  const requestAborts = [];
   const journeys = [];
   const exploreJourneys = [];
   const snapshots = [];
@@ -199,7 +168,7 @@ async function main() {
   const cdp = await configureCdp(page);
   const networkState = makeNetworkState(options.originValue);
   const detachNetworkAccounting = attachNetworkAccounting(page, networkState);
-  const detachRuntimeFailures = attachRuntimeFailureCapture(page, options.originValue, runtimeFailures, expectedCancellations);
+  const detachRuntimeFailures = attachRuntimeFailureCapture(page, options.originValue, runtimeFailures, requestAborts);
 
   let boot = null;
   try {
@@ -232,11 +201,10 @@ async function main() {
   }
 
   const dedupedRuntimeFailures = uniqueFailures(runtimeFailures);
-  const dedupedExpectedCancellations = uniqueFailures(expectedCancellations);
-  const evaluatedGrowthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, DEFAULT_BUDGETS);
-  const boundedWarmup = classifyBoundedWarmup(snapshots, evaluatedGrowthFailures, DEFAULT_BUDGETS);
+  const dedupedRequestAborts = uniqueFailures(requestAborts);
+  const growthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, DEFAULT_BUDGETS);
   const journeyFailures = coverageFailures(boot, journeys, exploreJourneys);
-  const budgetFailures = [...boundedWarmup.failures, ...journeyFailures];
+  const budgetFailures = [...growthFailures, ...journeyFailures];
   const baseline = snapshots[0] || null;
   const final = snapshots.at(-1) || null;
 
@@ -261,6 +229,7 @@ async function main() {
       exploreNavigation: 'exercised only after the final player snapshot and excluded from player memory-growth deltas',
       detachedDomNodesDirectlyMeasured: false,
       detachedDomBoundary: 'Chromium aggregate document/node/listener counters are recorded; detached-node claims require a heap-snapshot diagnostic and are not fabricated.',
+      browserDocumentRule: 'one-time provider/iframe document creation is diagnostic; the gate fails if document count continues growing across the final four player snapshots',
       browserWideTimerCountClaimed: false,
       browserWideListenerCountClaimed: false,
       playGarbaOwnedIntervalsInstrumented: true,
@@ -269,7 +238,7 @@ async function main() {
       objectUrlsInstrumented: true,
       longTasksObservedWhereSupported: true,
       sameOriginTransferBytes: 'Resource Timing transferSize, not Content-Length',
-      abortedRequestHandling: 'same-origin net::ERR_ABORTED requests are reported separately as expected cancellation evidence; all other request failures remain blocking runtime failures',
+      requestAborts: 'same-origin net::ERR_ABORTED cancellations are recorded separately and are not treated as hard failures; all other same-origin request failures remain blocking',
       serviceWorkers: 'allowed',
       providerPlaybackMayBeRequestedByJourney: true,
       thirdPartyTransferBytesIncluded: false,
@@ -282,8 +251,7 @@ async function main() {
       passed: budgetFailures.length === 0,
       budgetFailures,
       runtimeFailures: dedupedRuntimeFailures,
-      expectedRequestCancellations: dedupedExpectedCancellations,
-      boundedWarmupObservations: boundedWarmup.observations,
+      requestAborts: dedupedRequestAborts,
     },
     baseline: baseline ? compactSnapshot(baseline) : null,
     final: final ? compactSnapshot(final) : null,
