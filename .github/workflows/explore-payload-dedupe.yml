@@ -1,6 +1,12 @@
 name: Explore payload dedupe
 
 on:
+  push:
+    paths:
+      - 'src/catalogue/catalogue.js'
+      - 'src/catalogue/listening-library.js'
+      - '.github/browser/explore-payload-dedupe.mjs'
+      - '.github/workflows/explore-payload-dedupe.yml'
   pull_request:
     paths:
       - 'src/catalogue/catalogue.js'
