@@ -5,7 +5,9 @@ import {
   listeningSql,
   listeningTimeSql,
   listeningTimeWindowSql,
+  liveBreakdownSql,
   liveSql,
+  liveTrendSql,
   precisionFromRows,
   queryAnalytics,
   safeRangeSeconds,
@@ -20,6 +22,8 @@ import { istDateKey, istDayBounds } from './lib/time.js'
 const EVENTS_DATASET = 'playgarba_events_v1'
 const PRESENCE_DATASET = 'playgarba_presence_v1'
 const PRIVACY_MIN = 3
+const LIVE_EXPIRY_SECONDS = 120
+const LIVE_TREND_MINUTES = 30
 
 function numberOrZero(value) {
   const number = Number(value)
@@ -64,6 +68,32 @@ function maxDataThrough(rowGroups) {
     for (const row of rows || []) max = Math.max(max, numberOrZero(row.data_through_ms))
   }
   return max || null
+}
+
+function liveBreakdownRows(rows, precision) {
+  return rows.map((row) => {
+    const sessions = numberOrZero(row.sessions)
+    const listeningSessions = numberOrZero(row.listening_sessions)
+    const browsingSessions = numberOrZero(row.browsing_sessions)
+    return {
+      surface: row.surface || 'unknown',
+      world: row.world || null,
+      displayMode: row.display_mode || 'unknown',
+      sessions: metric(sessions, precision),
+      listeningSessions: metric(listeningSessions, precision),
+      browsingSessions: metric(browsingSessions, precision),
+      visible: sessions >= PRIVACY_MIN,
+    }
+  }).filter((row) => row.visible).map(({ visible: _visible, ...row }) => row)
+}
+
+function liveTrendRows(rows, precision) {
+  return rows.map((row) => ({
+    minute: Number.isFinite(Number(row.minute_bucket)) ? new Date(Number(row.minute_bucket) * 1000).toISOString() : null,
+    activeSessions: metric(row.active_sessions, precision),
+    listeningSessions: metric(row.listening_sessions, precision),
+    browsingSessions: metric(row.browsing_sessions, precision),
+  })).filter((row) => row.minute)
 }
 
 async function home(env, options = {}) {
@@ -131,24 +161,55 @@ async function home(env, options = {}) {
 
 async function live(env, options = {}) {
   const dataset = env.PRESENCE_DATASET_NAME || PRESENCE_DATASET
-  try {
-    const rows = await analyticsQuery(env, liveSql(dataset), options)
-    const row = rows[0] || {}
-    const precision = precisionFromRows(rows)
+  const [summaryResult, breakdownResult, trendResult] = await Promise.allSettled([
+    analyticsQuery(env, liveSql(dataset), options),
+    analyticsQuery(env, liveBreakdownSql(dataset), options),
+    analyticsQuery(env, liveTrendSql(dataset, LIVE_TREND_MINUTES), options),
+  ])
+
+  const summaryOk = summaryResult.status === 'fulfilled'
+  const breakdownOk = breakdownResult.status === 'fulfilled'
+  const trendOk = trendResult.status === 'fulfilled'
+
+  if (!summaryOk) {
     return envelope({
-      status: 'complete',
-      dataThroughMs: row.data_through_ms,
-      sources: [source('analytics-engine', true, { sampled: precision.sampled })],
-      data: {
-        liveNow: metric(row.live_now, precision),
-        listeningNow: metric(row.listening_now, precision),
-        browsingNow: metric(row.browsing_now, precision),
-        expirySeconds: 120,
-      },
+      status: 'unavailable',
+      statusCode: 503,
+      data: null,
+      sources: [
+        source('analytics-engine-live', false),
+        source('analytics-engine-live-breakdown', breakdownOk),
+        source('analytics-engine-live-trend', trendOk),
+      ],
     })
-  } catch {
-    return envelope({ status: 'unavailable', statusCode: 503, data: null, sources: [source('analytics-engine', false)] })
   }
+
+  const summaryRows = summaryResult.value
+  const breakdownRows = breakdownOk ? breakdownResult.value : []
+  const trendRows = trendOk ? trendResult.value : []
+  const row = summaryRows[0] || {}
+  const summaryPrecision = precisionFromRows(summaryRows)
+  const breakdownPrecision = precisionFromRows(breakdownRows)
+  const trendPrecision = precisionFromRows(trendRows)
+
+  return envelope({
+    status: breakdownOk && trendOk ? 'complete' : 'partial',
+    dataThroughMs: maxDataThrough([summaryRows, breakdownRows, trendRows]),
+    sources: [
+      source('analytics-engine-live', true, { sampled: summaryPrecision.sampled }),
+      source('analytics-engine-live-breakdown', breakdownOk, { sampled: breakdownOk ? breakdownPrecision.sampled : null }),
+      source('analytics-engine-live-trend', trendOk, { sampled: trendOk ? trendPrecision.sampled : null }),
+    ],
+    data: {
+      liveNow: metric(row.live_now, summaryPrecision),
+      listeningNow: metric(row.listening_now, summaryPrecision),
+      browsingNow: metric(row.browsing_now, summaryPrecision),
+      expirySeconds: LIVE_EXPIRY_SECONDS,
+      trendMinutes: LIVE_TREND_MINUTES,
+      breakdowns: breakdownOk ? liveBreakdownRows(breakdownRows, breakdownPrecision) : null,
+      trend: trendOk ? liveTrendRows(trendRows, trendPrecision) : null,
+    },
+  })
 }
 
 async function audience(env, request, options = {}) {
