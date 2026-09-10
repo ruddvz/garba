@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import {
   PROVENANCE,
   assertGraphFresh,
@@ -9,6 +12,12 @@ import {
   edgeCanHardGate,
   impactForSeeds,
 } from './raas-graph.mjs';
+import {
+  buildRepositoryGraph,
+  extractModuleSpecifiers,
+  ownershipGraphInputs,
+  pathMatchesClaim,
+} from './raas-graph-repository.mjs';
 
 const base = {
   repository: 'ruddvz/garba',
@@ -180,3 +189,212 @@ console.log('✓ RAAS graph core: strict freshness and worktree isolation');
 console.log('✓ RAAS graph core: bounded cycle-safe context');
 console.log('✓ RAAS graph core: provider/player/Explore/PWA impact');
 console.log('✓ RAAS graph core: source-first catalogue and advisory inference boundaries');
+
+assert.deepEqual(
+  extractModuleSpecifiers("import x from './x.js';\nexport { y } from './y.mjs';\nconst z = import('./z.js');"),
+  ['./x.js', './y.mjs', './z.js'],
+  'repository extractor must deterministically capture static/export/dynamic relative module specifiers',
+);
+assert.equal(pathMatchesClaim('data/catalogue/songs/songs-01.json', 'data/catalogue/**'), true);
+assert.equal(pathMatchesClaim('app.js', 'data/catalogue/**'), false);
+
+const repoRoot = await mkdtemp(path.join(tmpdir(), 'raas-graph-repo-'));
+const put = async (repoPath, value) => {
+  const absolute = path.join(repoRoot, repoPath);
+  await mkdir(path.dirname(absolute), { recursive: true });
+  await writeFile(absolute, typeof value === 'string' ? value : JSON.stringify(value), 'utf8');
+};
+
+try {
+  await put('data/catalogue/index.json', {
+    version: 'test',
+    songChunks: ['data/catalogue/songs/songs-01.json'],
+    releaseChunks: ['data/catalogue/releases/releases-01.json'],
+    freeSourceChunks: ['data/catalogue/free-sources/free-01.json'],
+    playbackSources: ['data/playback-sources-test.json'],
+    taxonomy: 'data/taxonomy.json',
+    nonstopSets: 'data/nonstop-sets.json',
+    generatedFiles: {
+      songs: 'data/songs.json',
+      releases: 'data/releases.json',
+      freeSources: 'data/free-audio-sources.json',
+      releasePlayback: 'data/playback-sources-generated.json',
+      playbackCoverage: 'data/playback-coverage.json',
+    },
+    discovery: {
+      artists: ['data/discovery/artists-test.json'],
+      recommendations: ['data/discovery/recommendations-test.json'],
+      setsIndex: 'data/discovery/sets/index.json',
+    },
+  });
+  await put('data/catalogue/releases/releases-01.json', [
+    {
+      id: 'release-1',
+      title: 'Release One',
+      artist: 'Artist One & Artist Two',
+      categories: ['traditional-garba'],
+      visualGenre: 'traditional',
+    },
+  ]);
+  await put('data/catalogue/songs/songs-01.json', [
+    {
+      id: 'track-1',
+      title: 'Track One',
+      artist: 'Artist One & Artist Two',
+      releaseId: 'release-1',
+      genre: 'traditional',
+      category: 'traditional-garba',
+    },
+    {
+      id: 'track-orphan',
+      title: 'Orphan Track',
+      artist: 'Artist Three',
+      releaseId: 'missing-release',
+      genre: 'folk',
+      category: 'folk-lokgeet',
+    },
+  ]);
+  await put('data/playback-sources-test.json', {
+    songSources: {
+      'track-1': {
+        provider: 'youtube',
+        videoId: 'verified-id',
+        sourceType: 'official-artist-channel',
+      },
+      'unknown-track': {
+        provider: 'youtube',
+        videoId: 'unknown-id',
+        sourceType: 'official-artist-channel',
+      },
+    },
+  });
+  await put('data/catalogue/free-sources/free-01.json', []);
+  await put('data/songs.json', []);
+  await put('data/releases.json', []);
+  await put('data/free-audio-sources.json', []);
+  await put('data/playback-sources-generated.json', { songSources: {} });
+  await put('data/playback-coverage.json', {});
+  await put('data/taxonomy.json', { version: 1 });
+  await put('data/nonstop-sets.json', []);
+  await put('data/discovery/artists-test.json', []);
+  await put('data/discovery/recommendations-test.json', []);
+  await put('data/discovery/sets/index.json', { sets: [] });
+  await put('player-continuity.js', "import './youtube-player-runtime.js';\n");
+  await put('youtube-player-runtime.js', 'export const player = true;\n');
+
+  const observedAt = '2026-09-10T22:30:00.000Z';
+  const ownershipSnapshot = {
+    observedAt,
+    source: 'github:issue-364',
+    claims: [
+      {
+        issue: 437,
+        agent: 'chatgpt/player-437',
+        branch: 'player/437',
+        files: ['player-continuity.js', 'data/catalogue/**'],
+        status: 'active',
+      },
+    ],
+  };
+
+  const repositoryGraph = await buildRepositoryGraph({
+    root: repoRoot,
+    baseSha: 'repo-sha-1',
+    indexedSha: 'repo-sha-1',
+    branch: 'feature/test',
+    workspace: 'fixture-a',
+    filePaths: ['youtube-player-runtime.js', 'player-continuity.js'],
+    ownershipSnapshot,
+    ownershipFreshness: { now: Date.parse(observedAt) + 1_000, maxAgeMs: 5_000 },
+  });
+
+  const ids = new Set(repositoryGraph.nodes.map((node) => node.id));
+  assert(ids.has('catalogue:release:release-1'));
+  assert(ids.has('catalogue:track:track-1'));
+  assert(ids.has('catalogue:genre:traditional'));
+  assert([...ids].some((id) => id.startsWith('catalogue:artist-credit:')), 'artist credit must remain a source field node rather than inferred person identities');
+  assert(repositoryGraph.edges.some((edge) => edge.from === 'catalogue:track:track-1' && edge.to === 'catalogue:release:release-1' && edge.type === 'BELONGS_TO_RELEASE'));
+  assert(repositoryGraph.edges.some((edge) => edge.from.startsWith('catalogue:playback-route:track-1:') && edge.to === 'catalogue:track:track-1' && edge.type === 'ROUTED_BY'));
+  assert(repositoryGraph.edges.some((edge) => edge.from === 'file:player-continuity.js' && edge.to === 'file:youtube-player-runtime.js' && edge.type === 'IMPORTS'));
+  assert(repositoryGraph.edges.some((edge) => edge.from === 'file:data/songs.json' && edge.to === 'file:data/catalogue/songs/songs-01.json' && edge.type === 'GENERATED_FROM'), 'canonical song shard impact must reach the generated song aggregate');
+
+  const claimId = 'claim:437:chatgpt%2Fplayer-437';
+  const claimEdge = repositoryGraph.edges.find((edge) => edge.from === 'file:player-continuity.js' && edge.to === claimId && edge.type === 'CLAIMED_BY');
+  assert(claimEdge, 'current normalized ownership observation must join matching files read-only');
+  assert.equal(claimEdge.provenance, PROVENANCE.OBSERVED);
+  assert.equal(claimEdge.data.current, true);
+  assert(repositoryGraph.edges.some((edge) => edge.from === 'file:data/catalogue/songs/songs-01.json' && edge.to === claimId && edge.type === 'CLAIMED_BY'));
+
+  assert(!ids.has('catalogue:track:unknown-track'), 'playback manifests must not manufacture a canonical track');
+  assert(repositoryGraph.unresolved.some((item) => item.seed.includes('unknown-track') && item.reason === 'edge-node-not-indexed'), 'unknown playback identities must remain unresolved');
+  assert(repositoryGraph.unresolved.some((item) => item.seed.includes('missing-release') && item.reason === 'edge-node-not-indexed'), 'missing release identity must remain unresolved');
+  assert.equal(repositoryGraph.extraction.catalogue.catalogueRecords, 3);
+  assert.equal(repositoryGraph.extraction.catalogue.playbackRoutes, 2);
+  assert.equal(repositoryGraph.extraction.ownershipClaims, 1);
+
+  const repositoryGraphReordered = await buildRepositoryGraph({
+    root: repoRoot,
+    baseSha: 'repo-sha-1',
+    indexedSha: 'repo-sha-1',
+    branch: 'feature/test',
+    workspace: 'fixture-a',
+    filePaths: ['player-continuity.js', 'youtube-player-runtime.js'],
+    ownershipSnapshot: { ...ownershipSnapshot, claims: ownershipSnapshot.claims.map((claim) => ({ ...claim, files: [...claim.files].reverse() })).reverse() },
+    ownershipFreshness: { now: Date.parse(observedAt) + 1_000, maxAgeMs: 5_000 },
+  });
+  assert.equal(repositoryGraph.metadata.fingerprint, repositoryGraphReordered.metadata.fingerprint, 'repository extraction must be input-order deterministic');
+
+  await put('youtube-player-runtime.js', 'export const player = false;\n');
+  const changedSourceGraph = await buildRepositoryGraph({
+    root: repoRoot,
+    baseSha: 'repo-sha-1',
+    indexedSha: 'repo-sha-1',
+    branch: 'feature/test',
+    workspace: 'fixture-a',
+    filePaths: ['player-continuity.js', 'youtube-player-runtime.js'],
+    ownershipSnapshot,
+    ownershipFreshness: { now: Date.parse(observedAt) + 1_000, maxAgeMs: 5_000 },
+  });
+  assert.notEqual(repositoryGraph.metadata.fingerprint, changedSourceGraph.metadata.fingerprint, 'source content drift must invalidate the repository graph fingerprint');
+
+  assert.throws(
+    () => ownershipGraphInputs(ownershipSnapshot, ['player-continuity.js'], { now: Date.parse(observedAt) + 60_000, maxAgeMs: 5_000 }),
+    /stale ownership snapshot/,
+    'ownership joins must fail closed when observations are stale',
+  );
+
+  await assert.rejects(
+    () => buildRepositoryGraph({
+      root: repoRoot,
+      baseSha: 'repo-sha-1',
+      filePaths: ['../escape.js'],
+    }),
+    /escapes root/,
+  );
+
+  await assert.rejects(
+    () => buildRepositoryGraph({
+      root: repoRoot,
+      baseSha: 'repo-sha-1',
+      limits: { maxCatalogueRecords: 2 },
+    }),
+    /catalogue record budget exceeded/,
+  );
+
+  await symlink(path.join(repoRoot, 'youtube-player-runtime.js'), path.join(repoRoot, 'symlink-runtime.js'));
+  await assert.rejects(
+    () => buildRepositoryGraph({
+      root: repoRoot,
+      baseSha: 'repo-sha-1',
+      filePaths: ['symlink-runtime.js'],
+    }),
+    /refuses symlink input/,
+  );
+} finally {
+  await rm(repoRoot, { recursive: true, force: true });
+}
+
+console.log('✓ RAAS repository graph: canonical catalogue/playback extraction');
+console.log('✓ RAAS repository graph: bounded deterministic source-state fingerprints');
+console.log('✓ RAAS repository graph: fresh read-only ownership joins');
+console.log('✓ RAAS repository graph: unknown identities remain unresolved');
