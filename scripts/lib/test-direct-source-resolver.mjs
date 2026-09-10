@@ -175,6 +175,9 @@ for (const blockedUrl of [
   'https://open.spotify.com/track/example',
   'https://music.apple.com/in/song/example/1',
   'https://soundcloud.com/example/song',
+  'https://artist.bandcamp.com/track/example',
+  'https://t4.bcbits.com/stream/example/mp3-128',
+  'https://www.qobuz.com/us-en/album/example/example',
   'https://www.jiosaavn.com/song/example/abc',
   'https://gaana.com/song/example',
   'https://music.amazon.in/albums/example',
@@ -190,6 +193,25 @@ for (const blockedUrl of [
   const result = resolveDirect(entry);
   assert.equal(result.kind, 'direct-invalid', blockedUrl);
   assert.match(result.errors.join('\n'), /consumer\/provider URL/);
+}
+
+for (const allowedLookalikeUrl of [
+  'https://bandcamp.com.example.org/audio.m4a',
+  'https://bcbits.com.example.org/audio.m4a',
+  'https://qobuz.com.example.org/audio.m4a',
+]) {
+  assert.equal(isBlockedConsumerProviderUrl(allowedLookalikeUrl), false, allowedLookalikeUrl);
+  const entry = directEntry({ audioUrl: allowedLookalikeUrl });
+  const manifestErrors = validateDirectAudioManifest(
+    { version: '1.0.0', tracks: { 'garba-song-001': entry } },
+    new Set(['garba-song-001'])
+  );
+  assert.equal(
+    manifestErrors.some((error) => error.includes('consumer/provider stream URLs')),
+    false,
+    `lookalike hostname must not be provider-blocked: ${allowedLookalikeUrl}`,
+  );
+  assert.equal(resolveDirect(entry).kind, 'direct', `lookalike hostname must remain eligible: ${allowedLookalikeUrl}`);
 }
 
 {
