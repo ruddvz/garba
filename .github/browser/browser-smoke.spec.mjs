@@ -2,8 +2,17 @@ import { test, expect } from '@playwright/test';
 
 const SMOKE_ORIGIN = 'http://127.0.0.1:4173';
 
+function isSupersededDocumentImageAbort({ resourceType, errorText, startedGeneration, currentGeneration }) {
+  return resourceType === 'image'
+    && /net::ERR_ABORTED$/i.test(String(errorText || ''))
+    && Number.isInteger(startedGeneration)
+    && startedGeneration < currentGeneration;
+}
+
 function collectRuntimeFailures(page) {
   const failures = [];
+  const requestGenerations = new WeakMap();
+  let documentGeneration = 0;
   const sameOrigin = (url) => {
     try { return new URL(url).origin === SMOKE_ORIGIN; }
     catch { return false; }
@@ -13,8 +22,21 @@ function collectRuntimeFailures(page) {
   page.on('console', (message) => {
     if (message.type() === 'error') failures.push(`console: ${message.text()}`);
   });
+  page.on('request', (request) => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentGeneration += 1;
+    requestGenerations.set(request, documentGeneration);
+  });
   page.on('requestfailed', (request) => {
-    if (sameOrigin(request.url())) failures.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText || ''}`);
+    if (!sameOrigin(request.url())) return;
+    const errorText = request.failure()?.errorText || '';
+    const startedGeneration = requestGenerations.get(request) ?? documentGeneration;
+    if (isSupersededDocumentImageAbort({
+      resourceType: request.resourceType(),
+      errorText,
+      startedGeneration,
+      currentGeneration: documentGeneration,
+    })) return;
+    failures.push(`requestfailed: ${request.method()} ${request.url()} ${errorText}`);
   });
   page.on('response', (response) => {
     if (sameOrigin(response.url()) && response.status() >= 400) failures.push(`http ${response.status()}: ${response.url()}`);
@@ -284,6 +306,42 @@ test('Explore detail preserves keyboard focus when entering and returning', asyn
   await expect(firstCard).toBeFocused();
   await expectNoDocumentOverflow(page);
   await expectNoRuntimeFailures(page, failures, 'Explore detail');
+});
+
+test('active-document same-origin image request failures remain blocking', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'one deterministic Chromium classifier regression is sufficient');
+  const failures = collectRuntimeFailures(page);
+  const probeUrl = `${SMOKE_ORIGIN}/__browser-smoke/active-document-image.webp`;
+
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'image',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 1,
+    currentGeneration: 2,
+  })).toBe(true);
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'image',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 2,
+    currentGeneration: 2,
+  })).toBe(false);
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'script',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 1,
+    currentGeneration: 2,
+  })).toBe(false);
+
+  await page.route(probeUrl, (route) => route.abort('failed'));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
+  await page.evaluate((url) => new Promise((resolve) => {
+    const image = new Image();
+    image.onload = image.onerror = resolve;
+    image.src = url;
+  }), probeUrl);
+
+  await expect.poll(() => failures.some((failure) => failure.startsWith('requestfailed: GET') && failure.includes('/__browser-smoke/active-document-image.webp'))).toBe(true);
 });
 
 test('installed shell survives an offline reload after the service worker is ready', async ({ page, context }, testInfo) => {
