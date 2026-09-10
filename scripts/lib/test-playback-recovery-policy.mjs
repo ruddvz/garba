@@ -104,6 +104,17 @@ for (const kind of ['embedding-disabled', 'removed-or-private', 'no-route']) {
   assert.equal(capped.actions.some(({ id }) => id === 'retry'), false);
 }
 
+for (const malformedRetry of [
+  { attempts: -1, maxAttempts: 2 },
+  { attempts: Number.NaN, maxAttempts: 2 },
+  { attempts: 0, maxAttempts: -1 },
+  { attempts: 0, maxAttempts: Number.POSITIVE_INFINITY },
+  'invalid',
+]) {
+  const result = recovery('provider-error', { retry: malformedRetry });
+  assert.equal(result.actions.some(({ id }) => id === 'retry'), false);
+}
+
 {
   const noExecutableSource = recovery('api-timeout', {
     context: context({ source: { executable: false } }),
@@ -128,6 +139,27 @@ for (const source of [
     }),
   });
   assert.equal(short.actions.find(({ id }) => id === 'open-youtube').url, 'https://youtu.be/abcdefghijk?t=20');
+}
+
+{
+  const invalidIdentityWithYoutube = recovery('provider-error', {
+    context: context({ songId: '' }),
+  });
+  assert.equal(invalidIdentityWithYoutube.actions.some(({ id }) => id === 'open-youtube'), false);
+}
+
+{
+  const missingSourceIdentity = recovery('api-timeout', {
+    context: context({ source: { provider: '', kind: '', executable: true } }),
+  });
+  assert.equal(missingSourceIdentity.actions.some(({ id }) => id === 'retry'), false);
+}
+
+{
+  const blockedWithoutExecutableSource = recovery('autoplay-blocked', {
+    context: context({ source: { executable: false } }),
+  });
+  assert.deepEqual(blockedWithoutExecutableSource.actions, []);
 }
 
 {
