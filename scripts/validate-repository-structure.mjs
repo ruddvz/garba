@@ -105,6 +105,8 @@ const expectedScriptEntrypoints = [
   'generate-licensing-request.mjs',
   'match-vendor-catalogue.mjs',
   'plan-direct-ingest.mjs',
+  'raas-adaptive.mjs',
+  'raas-adaptive.test.mjs',
   'raas-task.mjs',
   'raas-task.test.mjs',
   'report-hosting-readiness.mjs',
