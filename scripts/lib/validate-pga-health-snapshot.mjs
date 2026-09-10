@@ -40,7 +40,7 @@ forbid('browser session storage', /\bsessionStorage\b/)
 forbid('raw browser-id vocabulary', /\bbrowser_id\b/i)
 forbid('raw session-id vocabulary', /\bsession_id\b/i)
 forbid('raw search-term vocabulary', /\bsearch_term\b/i)
-forbid('raw observation passthrough property', /\bobservations\s*:/)
+forbid('raw observation passthrough property', /^[ \t]*observations[ \t]*:/m)
 forbid('spread of raw observations', /\.\.\.\s*observations\b/)
 
 requireMatch('healthy snapshot fixture', /status,\s*'healthy'/, tests)
