@@ -96,7 +96,10 @@ function acquisitionLabel(value = '', referrerHost = '') {
 }
 
 function displayModeLabel(value = '') {
-  return PWA_DISPLAY_MODES.has(String(value).toLowerCase()) ? 'PWA' : 'Browser';
+  const mode = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (PWA_DISPLAY_MODES.has(mode)) return 'PWA';
+  if (mode === 'browser') return 'Browser';
+  return 'Unknown';
 }
 
 export function normaliseAudience(envelope) {
