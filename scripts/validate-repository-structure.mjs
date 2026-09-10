@@ -35,10 +35,10 @@ const requiredRootFiles = new Set([
   'sw.js',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
+const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
-  if (entry.name === '.git') continue;
+  if (entry.name === '.git' || entry.name === 'node_modules') continue;
   if (entry.isDirectory()) {
     if (!allowedRootDirs.has(entry.name)) fail(`Unexpected root directory: ${entry.name}`);
     continue;
@@ -105,6 +105,8 @@ const expectedScriptEntrypoints = [
   'generate-licensing-request.mjs',
   'match-vendor-catalogue.mjs',
   'plan-direct-ingest.mjs',
+  'raas-adaptive.mjs',
+  'raas-adaptive.test.mjs',
   'raas-task.mjs',
   'raas-task.test.mjs',
   'report-hosting-readiness.mjs',

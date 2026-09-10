@@ -1,32 +1,67 @@
 import { SCHEMA_VERSION } from './constants.js'
 
-function asIso(ms = Date.now()) {
-  return new Date(ms).toISOString()
+function asIso(ms) {
+  const value = ms === undefined ? Date.now() : ms
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error('invalid_rollup_time')
+  }
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) throw new Error('invalid_rollup_time')
+  return date.toISOString()
 }
 
-function metricRow(dayIst, metric, value, meta, dimensionType = '', dimensionValue = '') {
-  if (!Number.isFinite(Number(value))) return null
+function finiteMetricValue(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error('invalid_metric_value')
+  }
+  return value
+}
+
+function optionalDataThroughMs(value) {
+  if (value == null) return null
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error('invalid_data_through_ms')
+  }
+  return value
+}
+
+function readDataThroughMs(row) {
+  if (!Object.prototype.hasOwnProperty.call(row, 'data_through_ms') || row.data_through_ms === null) {
+    return null
+  }
+  if (typeof row.data_through_ms !== 'number' || !Number.isFinite(row.data_through_ms) || row.data_through_ms < 0) {
+    throw new Error('invalid_data_through_ms')
+  }
+  return row.data_through_ms
+}
+
+function sampledFromD1(value) {
+  if (value === 0) return false
+  if (value === 1) return true
+  throw new Error('invalid_sampled_value')
+}
+
+function metricRow(dayIst, metric, value, meta, dataThroughMs, dimensionType = '', dimensionValue = '') {
   return {
     dayIst,
     metric,
     dimensionType,
     dimensionValue,
-    value: Number(value),
+    value: finiteMetricValue(value),
     precision: meta.precision || 'unknown',
     sampled: meta.sampled ? 1 : 0,
-    dataThroughMs: Number.isFinite(Number(meta.dataThroughMs)) ? Number(meta.dataThroughMs) : null,
+    dataThroughMs,
     schemaVersion: meta.schemaVersion || SCHEMA_VERSION,
     updatedAt: meta.updatedAt || asIso(),
   }
 }
 
 export async function replaceDailyMetrics(db, dayIst, metrics, meta = {}) {
-  const rows = []
-  for (const [metric, value] of Object.entries(metrics)) {
-    const row = metricRow(dayIst, metric, value, meta)
-    if (row) rows.push(row)
-  }
-  if (!rows.length) throw new Error('rollup_has_no_metrics')
+  const entries = Object.entries(metrics)
+  if (!entries.length) throw new Error('rollup_has_no_metrics')
+
+  const dataThroughMs = optionalDataThroughMs(meta.dataThroughMs)
+  const rows = entries.map(([metric, value]) => metricRow(dayIst, metric, value, meta, dataThroughMs))
 
   const deleteStatement = db.prepare('DELETE FROM daily_metrics WHERE day_ist = ?').bind(dayIst)
   const insert = db.prepare(`INSERT INTO daily_metrics (
@@ -53,6 +88,7 @@ export async function replaceDailyMetrics(db, dayIst, metrics, meta = {}) {
 }
 
 export async function setRollupRun(db, dayIst, state, options = {}) {
+  const dataThroughMs = optionalDataThroughMs(options.dataThroughMs)
   const now = asIso(options.nowMs)
   const completedAt = state === 'complete' || state === 'failed' ? now : null
   const startedAt = options.startedAt || now
@@ -72,7 +108,7 @@ export async function setRollupRun(db, dayIst, state, options = {}) {
     startedAt,
     completedAt,
     options.errorCode || null,
-    Number.isFinite(Number(options.dataThroughMs)) ? Number(options.dataThroughMs) : null,
+    dataThroughMs,
     options.schemaVersion || SCHEMA_VERSION,
     now,
   ).run()
@@ -90,14 +126,16 @@ export async function getLifetimeMetrics(db) {
   const data = {}
   let dataThroughMs = null
   for (const row of result.results || []) {
-    const sampled = Boolean(row.sampled)
+    const sampled = sampledFromD1(row.sampled)
+    const value = finiteMetricValue(row.value)
+    const rowDataThroughMs = readDataThroughMs(row)
     data[row.metric] = {
-      value: Number(row.value || 0),
+      value,
       sampled,
       precision: sampled ? 'estimated' : 'exact',
     }
-    if (Number.isFinite(Number(row.data_through_ms))) {
-      dataThroughMs = Math.max(dataThroughMs || 0, Number(row.data_through_ms))
+    if (rowDataThroughMs !== null) {
+      dataThroughMs = dataThroughMs === null ? rowDataThroughMs : Math.max(dataThroughMs, rowDataThroughMs)
     }
   }
   return { data, dataThroughMs }
@@ -112,10 +150,10 @@ export async function getDailySeries(db, metric, days = 30) {
     LIMIT ?`).bind(metric, boundedDays).all()
   return (result.results || []).reverse().map((row) => ({
     day: row.day_ist,
-    value: Number(row.value),
+    value: finiteMetricValue(row.value),
     precision: row.precision,
-    sampled: Boolean(row.sampled),
-    dataThroughMs: row.data_through_ms == null ? null : Number(row.data_through_ms),
+    sampled: sampledFromD1(row.sampled),
+    dataThroughMs: readDataThroughMs(row),
   }))
 }
 

@@ -16,9 +16,19 @@ function first(rows) {
   return rows[0] || {}
 }
 
-function finiteOrZero(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : 0
+function finiteMetric(value, metric) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`invalid_rollup_metric:${metric}`)
+  }
+  return value
+}
+
+function optionalDataThroughMs(value, source) {
+  if (value == null) return null
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error(`invalid_rollup_data_through:${source}`)
+  }
+  return value
 }
 
 export async function rollupDay(env, dayIst, options = {}) {
@@ -39,18 +49,19 @@ export async function rollupDay(env, dayIst, options = {}) {
     const event = first(eventRows)
     const listening = first(listeningRows)
     const precision = precisionFromRows([...eventRows, ...listeningRows])
-    const dataThroughMs = Math.max(
-      finiteOrZero(event.data_through_ms),
-      finiteOrZero(listening.data_through_ms),
-    ) || null
+    const dataThroughValues = [
+      optionalDataThroughMs(event.data_through_ms, 'events'),
+      optionalDataThroughMs(listening.data_through_ms, 'listening'),
+    ].filter((value) => value != null)
+    const dataThroughMs = dataThroughValues.length ? Math.max(...dataThroughValues) : null
 
     const metrics = {
-      sessions: finiteOrZero(event.sessions),
-      confirmed_play_starts: finiteOrZero(event.confirmed_play_starts),
-      surface_views: finiteOrZero(event.surface_views),
-      listening_ms: finiteOrZero(listening.played_ms),
-      unique_browsers_daily: finiteOrZero(event.unique_browsers),
-      browser_ids_created: finiteOrZero(event.browser_ids_created),
+      sessions: finiteMetric(event.sessions, 'sessions'),
+      confirmed_play_starts: finiteMetric(event.confirmed_play_starts, 'confirmed_play_starts'),
+      surface_views: finiteMetric(event.surface_views, 'surface_views'),
+      listening_ms: finiteMetric(listening.played_ms, 'listening_ms'),
+      unique_browsers_daily: finiteMetric(event.unique_browsers, 'unique_browsers_daily'),
+      browser_ids_created: finiteMetric(event.browser_ids_created, 'browser_ids_created'),
     }
 
     await replaceDailyMetrics(env.DB, dayIst, metrics, {

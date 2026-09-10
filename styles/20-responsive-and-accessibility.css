@@ -21,7 +21,7 @@
   .player-shell {
     grid-template-rows: auto auto auto auto auto;
     align-content: center;
-    padding: 48px 18px max(10px, var(--safe-bottom));
+    padding: 48px max(18px, var(--safe-right)) max(10px, var(--safe-bottom)) max(18px, var(--safe-left));
   }
   .track-block { grid-row: 1; max-width: 68vw; }
   .genre-eyebrow { font-size: 11px; margin-bottom: 3px; }

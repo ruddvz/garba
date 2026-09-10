@@ -95,21 +95,21 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .search-explore {
   width: 44px !important;
   height: 44px !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-  border-radius: 50% !important;
+  border: 0 !important;
+  border-radius: 12px !important;
   color: var(--text) !important;
-  background: rgba(17,16,21,.5) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 10px 28px rgba(0,0,0,.24) !important;
-  backdrop-filter: blur(18px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
-  transition: transform .18s ease, background .18s ease, border-color .18s ease !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: transform .18s ease, background .18s ease, color .18s ease !important;
 }
 .close-explore { grid-column:3;justify-self:end;display:grid;place-items:center; }
 .close-explore svg { width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round; }
 .close-explore:hover,
-.search-explore:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.25) !important; background: rgba(30,28,34,.62) !important; }
+.search-explore:hover { background: rgba(255,255,255,.055) !important; }
 .close-explore:active,
-.search-explore:active { transform: scale(.96); }
+.search-explore:active { transform: scale(.96);background:rgba(255,255,255,.075) !important; }
 .close-explore:focus-visible,
 .search-explore:focus-visible { outline:2px solid var(--gold);outline-offset:3px; }
 
@@ -131,22 +131,12 @@ main {
 .section-heading h3 { margin:0;letter-spacing:-.035em; }
 .section-title-row h2 {
   position: relative;
-  padding-left: 13px;
+  padding-left: 0;
   color: rgba(255,248,236,.94);
   font-size: clamp(1.03rem, 2.2vw, 1.26rem);
   font-weight: 650;
 }
-.section-title-row h2::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: .18em;
-  bottom: .13em;
-  width: 2px;
-  border-radius: 99px;
-  background: linear-gradient(to bottom, #f2d7a2, rgba(231,201,143,.22));
-  box-shadow: 0 0 18px rgba(231,201,143,.28);
-}
+.section-title-row h2::before { display:none; }
 .section-title-row p {
   max-width: 560px;
   margin: 0;
@@ -169,12 +159,12 @@ main {
   aspect-ratio: 1.18/1;
   overflow: hidden;
   padding: 0;
-  border: 1px solid rgba(255,255,255,.105);
-  border-radius: 27px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 24px;
   background: #17151c;
   text-align: left;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 52px rgba(0,0,0,.28);
+  box-shadow: 0 14px 38px rgba(0,0,0,.22);
   transform: translateZ(0);
   transition: transform .3s cubic-bezier(.2,.7,.2,1), border-color .25s ease, box-shadow .3s ease;
 }
@@ -185,25 +175,25 @@ main {
   z-index: 2;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(145deg, rgba(255,255,255,.12), transparent 20%, transparent 72%, rgba(231,201,143,.08));
-  opacity: .68;
+  background: linear-gradient(145deg, rgba(255,255,255,.055), transparent 26%, transparent 80%);
+  opacity: .38;
 }
 .collection-card::after {
   content: "";
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 17px;
+  right: 17px;
   z-index: 5;
-  width: 36px;
-  height: 36px;
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 50%;
-  background: rgba(10,9,13,.38) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff8ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17L17 7M9 7h8v8'/%3E%3C/svg%3E") center/16px no-repeat;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 24px rgba(0,0,0,.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  opacity: .8;
-  transition: transform .25s ease, opacity .25s ease, background .25s ease;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff8ec' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17L17 7M9 7h8v8'/%3E%3C/svg%3E") center/17px no-repeat;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: .72;
+  transition: transform .25s ease, opacity .25s ease;
 }
 .collection-image,
 .collection-shade { position:absolute;inset:0; }
@@ -261,12 +251,12 @@ main {
   text-shadow:0 2px 14px rgba(0,0,0,.76);
 }
 .collection-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255,255,255,.18);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 28px 72px rgba(0,0,0,.36);
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,.13);
+  box-shadow: 0 20px 48px rgba(0,0,0,.29);
 }
-.collection-card:hover .collection-image { transform:scale(1.052);filter:saturate(1.06) contrast(1.04); }
-.collection-card:hover::after { transform:translate(1px,-1px);opacity:1;background-color:rgba(20,18,24,.58); }
+.collection-card:hover .collection-image { transform:scale(1.045);filter:saturate(1.04) contrast(1.04); }
+.collection-card:hover::after { transform:translate(1px,-1px);opacity:1; }
 .collection-card:active { transform:scale(.99); }
 .collection-card:focus-visible { outline:2px solid var(--gold);outline-offset:4px; }
 
@@ -588,20 +578,20 @@ main {
 
 .essential-release-section {
   display:block;
-  margin-bottom:54px;
-  padding:18px 18px 15px;
-  border:1px solid rgba(255,255,255,.095);
-  border-radius:29px;
-  background:linear-gradient(145deg,rgba(22,18,22,.57),rgba(11,10,14,.45));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 26px 76px rgba(0,0,0,.22);
-  backdrop-filter:blur(20px) saturate(1.05);
-  -webkit-backdrop-filter:blur(20px) saturate(1.05);
+  margin-bottom:48px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
-.essential-release-section .section-title-row { margin:0 3px 17px; }
+.essential-release-section .section-title-row { margin:0 0 16px; }
 .essential-release-section .section-title-row h2 { color:rgba(255,248,236,.97); }
-.essential-release-rail { grid-auto-columns:minmax(190px,228px);gap:14px;padding:4px 3px 10px; }
-.essential-release-card { padding:9px;border:1px solid rgba(255,255,255,.065);border-radius:21px;background:rgba(255,255,255,.018);box-shadow:inset 0 1px 0 rgba(255,255,255,.035);transition:transform .24s cubic-bezier(.2,.7,.2,1),border-color .24s ease,background .24s ease,box-shadow .24s ease; }
-.essential-release-card:hover { transform:translateY(-3px);border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.035);box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 17px 38px rgba(0,0,0,.2); }
+.essential-release-rail { grid-auto-columns:minmax(190px,228px);gap:14px;padding:2px 0 10px; }
+.essential-release-card { padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;transition:none; }
+.essential-release-card:hover { transform:none;border-color:transparent;background:transparent;box-shadow:none; }
 .essential-release-card .release-cover { border-radius:15px; }
 .essential-release-card .release-title { margin-top:10px; }
 
@@ -646,7 +636,7 @@ main[aria-busy="true"] #catalogueSections:empty::before {
 }
 
 @media (max-width:900px) {
-  .catalogue-section { margin-bottom:34px; }
+  .catalogue-section { margin-bottom:38px; }
   .section-title-row { align-items:flex-start; }
   .section-title-row p { max-width:44ch;text-align:left; }
   .collection-grid { grid-auto-columns:minmax(250px,70vw);gap:12px; }
@@ -663,18 +653,18 @@ main[aria-busy="true"] #catalogueSections:empty::before {
 @media (max-width:560px) {
   :root { --explore-bg:url("../assets/backgrounds/library/11-master-dark-courtyard.webp"); }
   .topbar,
-  main { width:min(100% - 22px,var(--max)); }
+  main { width:min(100% - 36px,var(--max)); }
   .topbar { min-height:72px;padding-top:max(8px,env(safe-area-inset-top)); }
   .explore-title::before { font-size:.45rem; }
   .close-explore,
-  .search-explore { width:42px !important;height:42px !important; }
+  .search-explore { width:44px !important;height:44px !important; }
   main { padding-top:7px; }
-  .catalogue-section { margin-bottom:27px; }
-  .section-title-row { margin-bottom:12px; }
+  .catalogue-section { margin-bottom:40px; }
+  .section-title-row { margin-bottom:14px; }
   .section-title-row p { display:none !important; }
-  .collection-grid { grid-auto-columns:minmax(258px,84vw);gap:10px;margin-inline:-11px;padding:3px 11px 13px; }
-  .collection-card { min-height:178px;aspect-ratio:1.38/1;border-radius:23px; }
-  .collection-card::after { top:13px;right:13px;width:33px;height:33px;background-size:15px; }
+  .collection-grid { grid-auto-columns:minmax(250px,82vw);gap:12px;margin-inline:-18px;padding:3px 18px 14px; }
+  .collection-card { min-height:178px;aspect-ratio:1.38/1;border-radius:21px; }
+  .collection-card::after { top:15px;right:15px;width:24px;height:24px;background-size:17px; }
   .collection-copy { inset:auto 17px 17px; }
   .collection-copy strong { max-width:15ch;font-size:clamp(1.28rem,6.1vw,1.58rem); }
   .collection-copy span { margin-top:7px;font-size:.66rem; }
@@ -692,7 +682,7 @@ main[aria-busy="true"] #catalogueSections:empty::before {
   .section-heading h3 { font-size:1.12rem; }
   .section-heading > span { font-size:.68rem; }
   .quiet-button { min-height:36px;font-size:.7rem;padding-inline:10px; }
-  .release-rail { grid-auto-columns:minmax(145px,168px);gap:10px;margin-right:-11px;padding-right:11px; }
+  .release-rail { grid-auto-columns:minmax(145px,168px);gap:10px;margin-right:-18px;padding-right:18px; }
   .release-cover { border-radius:15px; }
   .song-row { grid-template-columns:46px minmax(0,1fr) 40px;gap:9px;margin-inline:-4px;padding:10px 5px; }
   .song-art { width:46px;height:46px;border-radius:11px; }
@@ -705,12 +695,12 @@ main[aria-busy="true"] #catalogueSections:empty::before {
   .song-more { justify-self:stretch;width:100%; }
   .release-more { min-height:168px; }
   .catalogue-error { margin:44px auto;padding:25px 20px; }
-  .essential-release-section { margin-inline:-1px;margin-bottom:30px;padding:13px 12px 11px;border-radius:23px; }
-  .essential-release-section .section-title-row { margin-bottom:12px; }
-  .essential-release-rail { grid-auto-columns:minmax(150px,43vw);gap:9px;margin-right:-12px;padding-right:12px; }
-  .essential-release-card { padding:7px;border-radius:18px; }
+  .essential-release-section { margin-inline:0;margin-bottom:40px;padding:0;border-radius:0; }
+  .essential-release-section .section-title-row { margin-bottom:14px; }
+  .essential-release-rail { grid-auto-columns:minmax(142px,42vw);gap:12px;margin-inline:-18px;padding:2px 18px 10px; }
+  .essential-release-card { padding:0;border-radius:0; }
   .essential-release-card .release-cover { border-radius:14px; }
-  body.explore-search-open .catalogue-status { width:calc(100% - 22px) !important;padding:8px !important;border-radius:18px !important; }
+  body.explore-search-open .catalogue-status { width:calc(100% - 36px) !important;padding:8px !important;border-radius:18px !important; }
   .explore-search-label { min-height:50px !important;border-radius:13px !important; }
   main[aria-busy="true"] #catalogueSections:empty::before { min-height:290px;border-radius:23px;background-size:280px 100%,45% 20px,65% 10px,calc(50% - 27px) 174px,calc(50% - 27px) 174px,0 0,auto;background-position:-140px 0,16px 20px,16px 52px,16px 86px,calc(100% - 16px) 86px,0 0,0 0; }
 }
@@ -718,11 +708,243 @@ main[aria-busy="true"] #catalogueSections:empty::before {
 @media (pointer:coarse) {
   .collection-card:hover { transform:none; }
   .collection-card:hover .collection-image { transform:scale(1.018);filter:saturate(.98) contrast(1.03); }
-  .collection-card::after { opacity:.78; }
+  .collection-card::after { opacity:.72; }
   .release-card:hover .release-cover { transform:none; }
 }
 
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }
   *,*::before,*::after { transition:none !important;animation:none !important;scroll-behavior:auto !important; }
+}
+
+/* Distinct Explore content primitives. */
+.release-title {
+  display:-webkit-box;
+  min-height:2.55em;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+
+.collection-grid--destination {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.collection-card--destination {
+  min-height:190px;
+  aspect-ratio:1.55/1;
+  border-radius:22px;
+}
+.collection-card--destination .collection-copy strong { max-width:18ch; }
+
+.collection-grid--taxonomy {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.collection-card--taxonomy,
+.collection-card--artist {
+  min-height:0;
+  aspect-ratio:auto;
+  display:grid;
+  align-items:center;
+  overflow:hidden;
+  border-color:rgba(255,255,255,.075);
+  background:rgba(16,15,20,.5);
+  box-shadow:none;
+}
+.collection-card--taxonomy {
+  grid-template-columns:56px minmax(0,1fr);
+  gap:12px;
+  min-height:78px;
+  padding:10px 38px 10px 10px;
+  border-radius:16px;
+}
+.collection-card--taxonomy::before,
+.collection-card--artist::before { display:none; }
+.collection-card--taxonomy::after,
+.collection-card--artist::after {
+  top:50%;
+  right:13px;
+  width:18px;
+  height:18px;
+  opacity:.48;
+  background-size:15px;
+  transform:translateY(-50%);
+}
+.collection-card--taxonomy:hover,
+.collection-card--artist:hover {
+  transform:translateY(-1px);
+  border-color:rgba(255,255,255,.14);
+  background:rgba(25,23,30,.64);
+  box-shadow:none;
+}
+.collection-card--taxonomy:hover::after,
+.collection-card--artist:hover::after { transform:translate(1px,calc(-50% - 1px));opacity:.82; }
+.collection-card--taxonomy .collection-image,
+.collection-card--artist .collection-image {
+  position:relative;
+  inset:auto;
+  z-index:auto;
+  transform:none;
+  filter:none;
+}
+.collection-card--taxonomy .collection-image {
+  width:56px;
+  height:56px;
+  border-radius:12px;
+  background-size:cover;
+  background-position:center;
+}
+.collection-card--taxonomy .collection-shade,
+.collection-card--artist .collection-shade { display:none; }
+.collection-card--taxonomy .collection-copy,
+.collection-card--artist .collection-copy {
+  position:static;
+  inset:auto;
+  z-index:auto;
+  min-width:0;
+  display:block;
+  text-align:left;
+}
+.collection-card--taxonomy .collection-copy small,
+.collection-card--artist .collection-copy small {
+  margin-bottom:3px;
+  color:rgba(255,231,190,.62);
+  font-size:.54rem;
+  letter-spacing:.12em;
+  text-shadow:none;
+}
+.collection-card--taxonomy .collection-copy strong,
+.collection-card--artist .collection-copy strong {
+  max-width:none;
+  color:rgba(255,250,242,.95);
+  font-size:.94rem;
+  line-height:1.14;
+  letter-spacing:-.028em;
+  text-wrap:pretty;
+  text-shadow:none;
+}
+.collection-card--taxonomy .collection-copy span,
+.collection-card--artist .collection-copy span {
+  margin-top:4px;
+  overflow:hidden;
+  color:rgba(255,248,236,.48);
+  font-size:.62rem;
+  line-height:1.3;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-shadow:none;
+}
+.collection-card--taxonomy:hover .collection-image,
+.collection-card--artist:hover .collection-image { transform:none;filter:none; }
+
+.collection-grid--artist {
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+.collection-card--artist {
+  grid-template-columns:66px minmax(0,1fr);
+  gap:13px;
+  min-height:92px;
+  padding:12px 38px 12px 12px;
+  border-radius:18px;
+}
+.collection-card--artist .collection-image--monogram {
+  display:grid;
+  place-items:center;
+  width:66px;
+  height:66px;
+  border:1px solid rgba(231,201,143,.16);
+  border-radius:18px;
+  color:rgba(255,235,202,.86);
+  background:
+    radial-gradient(circle at 34% 28%,rgba(231,201,143,.16),transparent 38%),
+    linear-gradient(145deg,rgba(60,51,45,.72),rgba(25,22,28,.96));
+  font-size:1.12rem;
+  font-weight:720;
+  letter-spacing:-.04em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+@media (max-width:1080px) {
+  .collection-grid--taxonomy,
+  .collection-grid--artist { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+
+@media (max-width:900px) {
+  .collection-grid--destination { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .collection-grid--taxonomy { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .collection-grid--artist { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .collection-card--destination { min-height:180px;aspect-ratio:1.48/1; }
+  .collection-card--taxonomy,
+  .collection-card--artist { aspect-ratio:auto; }
+}
+
+@media (max-width:560px) {
+  .collection-section--destination { margin-bottom:44px; }
+  .collection-section--taxonomy,
+  .collection-section--artist { margin-bottom:36px; }
+  .collection-grid--destination,
+  .collection-grid--taxonomy,
+  .collection-grid--artist {
+    grid-auto-columns:auto;
+    margin-inline:0;
+    padding:0;
+  }
+  .collection-grid--destination {
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .collection-card--destination {
+    min-height:0;
+    aspect-ratio:1.58/1;
+    border-radius:20px;
+  }
+  .collection-card--destination .collection-copy { inset:auto 17px 16px; }
+  .collection-card--destination .collection-copy strong { max-width:18ch;font-size:clamp(1.28rem,6vw,1.55rem); }
+  .collection-grid--taxonomy {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+  .collection-card--taxonomy {
+    grid-template-columns:44px minmax(0,1fr);
+    gap:9px;
+    min-height:68px;
+    padding:9px 29px 9px 9px;
+    border-radius:14px;
+  }
+  .collection-card--taxonomy .collection-image {
+    width:44px;
+    height:44px;
+    border-radius:10px;
+  }
+  .collection-card--taxonomy::after,
+  .collection-card--artist::after { right:9px;width:15px;height:15px;background-size:13px; }
+  .collection-card--taxonomy .collection-copy small { margin-bottom:2px;font-size:.5rem;letter-spacing:.09em; }
+  .collection-card--taxonomy .collection-copy strong { font-size:.83rem;line-height:1.12; }
+  .collection-card--taxonomy .collection-copy span { margin-top:3px;font-size:.56rem; }
+  .collection-grid--artist {
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .collection-card--artist {
+    grid-template-columns:54px minmax(0,1fr);
+    gap:11px;
+    min-height:72px;
+    padding:9px 32px 9px 9px;
+    border-radius:15px;
+  }
+  .collection-card--artist .collection-image--monogram {
+    width:54px;
+    height:54px;
+    border-radius:14px;
+    font-size:.98rem;
+  }
+  .collection-card--artist .collection-copy strong { font-size:.9rem; }
+  .collection-card--artist .collection-copy span { font-size:.59rem; }
+  .essential-release-card .release-title { min-height:2.55em; }
+}
+
+@media (max-width:350px) {
+  .collection-card--taxonomy .collection-copy span { display:none; }
 }

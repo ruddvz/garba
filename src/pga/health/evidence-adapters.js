@@ -17,10 +17,21 @@ function safeText(value) {
   return text || null
 }
 
-function finiteNumber(value) {
-  if (value == null || value === '') return null
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+function checkRunId(value) {
+  return typeof value === 'number'
+    && Number.isSafeInteger(value)
+    && value > 0
+    ? value
+    : null
+}
+
+function httpStatusCode(value) {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= 100
+    && value <= 599
+    ? value
+    : null
 }
 
 function canonicalSha(value) {
@@ -53,7 +64,7 @@ function latestCheck(candidates = []) {
         parseTime(run?.updated_at),
         parseTime(run?.created_at),
       ),
-      id: finiteNumber(run?.id) ?? -1,
+      id: checkRunId(run?.id) ?? -1,
     }))
     .sort((a, b) => (
       b.timestamp - a.timestamp
@@ -91,7 +102,9 @@ export function productionProbeEvidence({
   freshnessBudgetMs,
   sourceUrl = `${CANONICAL_ORIGIN}/`,
 } = {}) {
-  const code = finiteNumber(statusCode)
+  const statusCodeSupplied = statusCode !== undefined && statusCode !== null
+  const code = httpStatusCode(statusCode)
+  const invalidStatusCode = statusCodeSupplied && code == null
   const errorText = safeText(error)
   const source = {
     kind: 'production-probe',
@@ -116,7 +129,21 @@ export function productionProbeEvidence({
     }
   }
 
-  const successfulStatus = code == null || (code >= 200 && code < 400)
+  if (invalidStatusCode && ok !== false && !errorText) {
+    return {
+      status: 'unknown',
+      criticality: 'critical',
+      checkedAt,
+      freshnessBudgetMs,
+      source,
+      summary: 'Production probe supplied malformed HTTP status evidence.',
+      reason: 'An explicit production status code must be an integer from 100 to 599.',
+      action: 'Repeat the production reachability probe with a valid HTTP status code.',
+      details,
+    }
+  }
+
+  const successfulStatus = !statusCodeSupplied || (code != null && code >= 200 && code < 400)
   if (ok === true && successfulStatus && !errorText) {
     return {
       status: 'healthy',
@@ -283,7 +310,7 @@ export function requiredChecksEvidence({
       name,
       status: safeText(selected.status)?.toLowerCase() || 'unknown',
       conclusion: safeText(selected.conclusion)?.toLowerCase() || null,
-      id: selected.id ?? null,
+      id: checkRunId(selected.id),
       detailsUrl: safeText(selected.details_url || selected.html_url),
       completedAt: safeText(selected.completed_at),
       evidenceStatus: evidence.status,
