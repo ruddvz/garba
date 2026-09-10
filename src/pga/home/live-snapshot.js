@@ -127,8 +127,8 @@ function composeTrends(input) {
 }
 
 export function composeHomeLiveSnapshot(input = {}, { nowMs = Date.now() } = {}) {
-  const now = Number(nowMs)
-  if (!Number.isFinite(now)) throw new TypeError('nowMs must be a finite number')
+  const now = typeof nowMs === 'number' && Number.isFinite(nowMs) ? nowMs : null
+  if (now == null) throw new TypeError('nowMs must be a finite number')
 
   const source = input && typeof input === 'object' && !Array.isArray(input) ? input : {}
   const home = buildHomeSnapshot(source.home || {}, { nowMs: now })

@@ -154,6 +154,45 @@ test('stale rollup evidence is derived only from the supplied freshness budget',
   assert.equal(result.status, 'stale')
 })
 
+test('freshness budgets accept only finite JavaScript numbers while preserving numeric zero', () => {
+  const numericZero = evaluateSubsystem('telemetry', {
+    status: 'healthy',
+    checkedAt: NOW - 1,
+    freshnessBudgetMs: 0,
+  }, { nowMs: NOW })
+  assert.equal(numericZero.freshnessBudgetMs, 0)
+  assert.equal(numericZero.status, 'stale')
+
+  for (const value of ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    const result = evaluateSubsystem('telemetry', {
+      status: 'healthy',
+      checkedAt: NOW - 365 * 24 * 60 * MINUTE,
+      freshnessBudgetMs: value,
+    }, { nowMs: NOW })
+    assert.equal(result.freshnessBudgetMs, null, `freshnessBudgetMs must reject ${String(value)}`)
+    assert.equal(result.status, 'healthy', `invalid budget must not manufacture stale status for ${String(value)}`)
+  }
+})
+
+test('evaluation clocks reject coercible non-number values in subsystem and aggregate paths', () => {
+  const invalidClocks = ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+  for (const nowMs of invalidClocks) {
+    assert.throws(
+      () => evaluateSubsystem('production', { status: 'healthy' }, { nowMs }),
+      { name: 'TypeError', message: 'nowMs must be a finite number' },
+      `evaluateSubsystem must reject ${String(nowMs)}`,
+    )
+    assert.throws(
+      () => evaluateHealth({}, { nowMs }),
+      { name: 'TypeError', message: 'nowMs must be a finite number' },
+      `evaluateHealth must reject ${String(nowMs)}`,
+    )
+  }
+
+  const atEpoch = evaluateHealth({}, { nowMs: 0 })
+  assert.equal(atEpoch.evaluatedAt, 0)
+})
+
 test('evidence without a freshness budget never becomes stale by guesswork', () => {
   const subsystem = evaluateSubsystem('telemetry', {
     status: 'healthy',
