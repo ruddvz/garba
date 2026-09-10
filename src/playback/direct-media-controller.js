@@ -500,8 +500,8 @@
       if (finiteNumber(currentTime)) payload.currentTime = currentTime;
       if (type === 'error') {
         const mediaError = mediaElement.error;
-        const code = isPlainObject(mediaError) && mediaError.code !== undefined
-          ? `media-error-${String(mediaError.code)}`
+        const code = isPlainObject(mediaError) && mediaElement.error.code !== undefined
+          ? `media-error-${String(mediaElement.error.code)}`
           : 'media-error';
         payload.code = code;
       }
@@ -653,9 +653,12 @@
       if (state === previous) return false;
       lifecycleStateClaim = null;
       lastLifecycleDecision = null;
-      syncMediaSessionThroughPlanner();
+      const execution = planAndExecute(
+        { type: 'clear', songId: state.songId, generation: state.generation },
+        { lifecycleDecision: null, mediaSessionPolicy: null },
+      );
       notify('unavailable');
-      return true;
+      return execution.ok && execution.accepted;
     }
 
     function reset(generation) {
