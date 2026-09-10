@@ -123,7 +123,9 @@ const [source, index, workflow] = await Promise.all([
   readFile(new URL('../../.github/workflows/pga-explore-telemetry-validate.yml', import.meta.url), 'utf8'),
 ]);
 
-assert.match(index, /<script type="module" src="explore-telemetry\.js"><\/script>/, 'Explore must load the isolated adapter');
+assert.match(index, /import\('\.\/explore-telemetry\.js'\)\.catch\(\(\) => \{\}\)/, 'production Explore must dynamically load the isolated adapter');
+assert.match(index, /\['localhost', '127\.0\.0\.1', '::1'\]\.includes\(location\.hostname\)/, 'static loopback fixtures must not request the production telemetry module graph');
+assert.doesNotMatch(index, /<script type="module" src="explore-telemetry\.js"><\/script>/, 'fixture-visible HTML must not eagerly request the telemetry adapter');
 assert.match(source, /import\('\.\.\/pga\/telemetry\/index\.js'\)/, 'telemetry core must be dynamically imported');
 assert.match(source, /import\('\.\.\/pga\/telemetry\/product-bridge\.js'\)/, 'semantic bridge must be dynamically imported');
 assert.match(source, /event\.isTrusted !== true/, 'programmatic input/click replay must be rejected');
