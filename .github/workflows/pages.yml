@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'scripts/lib/validate-pages-explore-telemetry.mjs'
+      - 'src/catalogue/index.html'
+      - 'src/catalogue/explore-telemetry.js'
+      - 'src/pga/telemetry/**'
 
 permissions:
   contents: read
@@ -15,7 +22,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  explore-telemetry-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify Explore telemetry Pages artifact contract
+        run: node scripts/lib/validate-pages-explore-telemetry.mjs --self-test
+
   build:
+    if: github.event_name != 'pull_request'
+    needs: explore-telemetry-artifact
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -80,6 +98,11 @@ jobs:
           cp src/catalogue/catalogue.css _site/explore/catalogue.css
           cp src/catalogue/catalogue.js _site/explore/catalogue.js
           cp src/catalogue/listening-library.js _site/explore/listening-library.js
+
+          # Publish only the browser-reachable Explore telemetry dependency graph and
+          # prove both deployed routes can resolve every transitive local module.
+          node scripts/lib/validate-pages-explore-telemetry.mjs --publish-and-validate _site
+
           cp -R \
             public-site/about \
             public-site/dandiya-raas \
