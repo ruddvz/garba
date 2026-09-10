@@ -1,0 +1,99 @@
+name: Session stability soak
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/performance/measure-session-stability.mjs'
+      - 'scripts/performance/session-stability-lib.mjs'
+      - '.github/workflows/session-stability-soak.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: session-stability-soak-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-soak:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build canonical catalogue data
+        run: npm run catalogue
+
+      - name: Install temporary Playwright runner
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start local PlayGarba origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/playgarba-session-soak-server.log 2>&1 &
+          echo $! > /tmp/playgarba-session-soak-server.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/playgarba-session-soak-server.log || true
+          echo 'PlayGarba session-soak origin did not become ready' >&2
+          exit 1
+
+      - name: Run bounded Chromium session soak
+        env:
+          PLAYGARBA_TESTED_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: >-
+          node scripts/performance/measure-session-stability.mjs
+          --origin=http://127.0.0.1:4173
+          --profile=ci
+          --output=session-stability-report.json
+
+      - name: Summarize soak evidence
+        if: always() && hashFiles('session-stability-report.json') != ''
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync('session-stability-report.json', 'utf8'));
+          const failures = report.result?.budgetFailures || [];
+          const baseline = report.baseline || {};
+          const final = report.final || {};
+          console.log('## Session stability soak');
+          console.log(`- Revision: \`${report.testedRevision || 'unknown'}\``);
+          console.log(`- Browser: ${report.browser?.name || 'unknown'} ${report.browser?.version || ''}`);
+          console.log(`- Profile: ${report.profile}; cycles: ${report.cycles}`);
+          console.log(`- Result: ${report.result?.passed ? 'PASS' : 'FAIL'}`);
+          console.log(`- DOM nodes: ${baseline.browserNodes ?? 'n/a'} → ${final.browserNodes ?? 'n/a'}`);
+          console.log(`- JS heap: ${baseline.jsHeapUsedBytes ?? 'n/a'} → ${final.jsHeapUsedBytes ?? 'n/a'} bytes`);
+          console.log(`- PlayGarba live intervals: ${baseline.liveIntervals ?? 'n/a'} → ${final.liveIntervals ?? 'n/a'}`);
+          console.log(`- PlayGarba live observers: ${baseline.liveObservers ?? 'n/a'} → ${final.liveObservers ?? 'n/a'}`);
+          console.log(`- Active object URLs: ${baseline.activeObjectUrls ?? 'n/a'} → ${final.activeObjectUrls ?? 'n/a'}`);
+          console.log(`- Budget/runtime failures: ${failures.length}`);
+          for (const failure of failures) console.log(`  - ${failure}`);
+          NODE
+
+      - name: Upload soak report
+        if: always() && hashFiles('session-stability-report.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: session-stability-report-${{ github.run_id }}
+          path: session-stability-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Show local server log on failure
+        if: failure()
+        run: cat /tmp/playgarba-session-soak-server.log || true
