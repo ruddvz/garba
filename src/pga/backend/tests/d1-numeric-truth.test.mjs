@@ -141,3 +141,48 @@ test('setRollupRun rejects malformed explicit freshness before mutation', async 
     assert.equal(db.batches.length, 0, `unexpected D1 batch for ${String(value)}`)
   }
 })
+
+test('setRollupRun preserves omitted and valid numeric evaluation clocks', async () => {
+  const zeroDb = new FakeDb()
+  await setRollupRun(zeroDb, '2026-09-10', 'complete', { nowMs: 0 })
+  assert.equal(zeroDb.runs[0].args[3], '1970-01-01T00:00:00.000Z')
+  assert.equal(zeroDb.runs[0].args[7], '1970-01-01T00:00:00.000Z')
+
+  const positiveNowMs = 1_789_034_000_000
+  const positiveDb = new FakeDb()
+  await setRollupRun(positiveDb, '2026-09-10', 'complete', { nowMs: positiveNowMs })
+  assert.equal(positiveDb.runs[0].args[7], new Date(positiveNowMs).toISOString())
+
+  const defaultDb = new FakeDb()
+  const before = Date.now()
+  await setRollupRun(defaultDb, '2026-09-10', 'running')
+  const after = Date.now()
+  const persistedNow = Date.parse(defaultDb.runs[0].args[7])
+  assert.ok(persistedNow >= before && persistedNow <= after)
+})
+
+test('setRollupRun rejects malformed explicit evaluation clocks before mutation', async () => {
+  const invalidValues = [
+    null,
+    true,
+    false,
+    '',
+    '0',
+    '1789034000000',
+    NaN,
+    Infinity,
+    -Infinity,
+    -1,
+    8_640_000_000_000_001,
+  ]
+
+  for (const value of invalidValues) {
+    const db = new FakeDb()
+    await assert.rejects(
+      setRollupRun(db, '2026-09-10', 'complete', { nowMs: value }),
+      /invalid_rollup_time/,
+    )
+    assert.equal(db.runs.length, 0, `unexpected D1 run for ${String(value)}`)
+    assert.equal(db.batches.length, 0, `unexpected D1 batch for ${String(value)}`)
+  }
+})

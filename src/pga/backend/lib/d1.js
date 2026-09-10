@@ -1,7 +1,13 @@
 import { SCHEMA_VERSION } from './constants.js'
 
-function asIso(ms = Date.now()) {
-  return new Date(ms).toISOString()
+function asIso(ms) {
+  const value = ms === undefined ? Date.now() : ms
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error('invalid_rollup_time')
+  }
+  const date = new Date(value)
+  if (!Number.isFinite(date.getTime())) throw new Error('invalid_rollup_time')
+  return date.toISOString()
 }
 
 function finiteMetricValue(value) {
