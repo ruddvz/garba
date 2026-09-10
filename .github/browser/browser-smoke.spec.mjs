@@ -62,84 +62,74 @@ async function expectNoDocumentOverflow(page) {
 }
 
 async function expectInsideViewport(page, selector) {
-  const result = await page.evaluate(async ({ targetSelector, timeoutMs, tolerance }) => {
-    const readState = () => {
-      const element = document.querySelector(targetSelector);
-      if (!(element instanceof Element) || !element.isConnected) {
-        return { inside: false, reason: 'missing-or-disconnected' };
-      }
+  const result = await page.evaluate(({ targetSelector, tolerance }) => {
+    const element = document.querySelector(targetSelector);
+    if (!(element instanceof Element) || !element.isConnected) {
+      return { inside: false, reason: 'missing-or-disconnected' };
+    }
 
-      const style = getComputedStyle(element);
-      if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
-        return { inside: false, reason: 'not-visible' };
-      }
-      if (element.getClientRects().length === 0) {
-        return { inside: false, reason: 'no-layout-box' };
-      }
+    const style = getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
+      return { inside: false, reason: 'not-visible' };
+    }
+    if (element.getClientRects().length === 0) {
+      return { inside: false, reason: 'no-layout-box' };
+    }
 
-      const rect = element.getBoundingClientRect();
-      const visualViewport = window.visualViewport;
-      const viewport = visualViewport
-        ? {
-            left: visualViewport.offsetLeft,
-            top: visualViewport.offsetTop,
-            width: visualViewport.width,
-            height: visualViewport.height,
-          }
-        : { left: 0, top: 0, width: innerWidth, height: innerHeight };
-      const geometry = [
-        rect.left,
-        rect.top,
-        rect.right,
-        rect.bottom,
-        rect.width,
-        rect.height,
-        viewport.left,
-        viewport.top,
-        viewport.width,
-        viewport.height,
-      ];
-      const snapshot = {
-        rect: {
-          left: rect.left,
-          top: rect.top,
-          right: rect.right,
-          bottom: rect.bottom,
-          width: rect.width,
-          height: rect.height,
-        },
-        viewport,
-      };
-
-      if (!geometry.every(Number.isFinite)) {
-        return { inside: false, reason: 'non-finite-geometry', ...snapshot };
-      }
-      if (rect.width <= 0 || rect.height <= 0 || viewport.width <= 0 || viewport.height <= 0) {
-        return { inside: false, reason: 'zero-size-geometry', ...snapshot };
-      }
-
-      return {
-        inside: rect.left >= viewport.left - tolerance
-          && rect.right <= viewport.left + viewport.width + tolerance
-          && rect.top >= viewport.top - tolerance
-          && rect.bottom <= viewport.top + viewport.height + tolerance,
-        reason: 'geometry',
-        ...snapshot,
-      };
+    const rect = element.getBoundingClientRect();
+    const visualViewport = window.visualViewport;
+    const viewport = visualViewport
+      ? {
+          left: visualViewport.offsetLeft,
+          top: visualViewport.offsetTop,
+          width: visualViewport.width,
+          height: visualViewport.height,
+        }
+      : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+    const geometry = [
+      rect.left,
+      rect.top,
+      rect.right,
+      rect.bottom,
+      rect.width,
+      rect.height,
+      viewport.left,
+      viewport.top,
+      viewport.width,
+      viewport.height,
+    ];
+    const snapshot = {
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      },
+      viewport,
     };
 
-    const deadline = performance.now() + timeoutMs;
-    let state = readState();
-    while (!state.inside && performance.now() < deadline) {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      state = readState();
+    if (!geometry.every(Number.isFinite)) {
+      return { inside: false, reason: 'non-finite-geometry', ...snapshot };
     }
-    return state;
-  }, { targetSelector: selector, timeoutMs: 2_500, tolerance: 2 });
+    if (rect.width <= 0 || rect.height <= 0 || viewport.width <= 0 || viewport.height <= 0) {
+      return { inside: false, reason: 'zero-size-geometry', ...snapshot };
+    }
+
+    return {
+      inside: rect.left >= viewport.left - tolerance
+        && rect.right <= viewport.left + viewport.width + tolerance
+        && rect.top >= viewport.top - tolerance
+        && rect.bottom <= viewport.top + viewport.height + tolerance,
+      reason: 'geometry',
+      ...snapshot,
+    };
+  }, { targetSelector: selector, tolerance: 2 });
 
   expect(
     result.inside,
-    `${selector} should settle fully inside the visual viewport (${result.reason || 'unknown state'}: ${JSON.stringify(result)})`,
+    `${selector} should be fully inside the visual viewport (${result.reason || 'unknown state'}: ${JSON.stringify(result)})`,
   ).toBe(true);
 }
 
@@ -296,6 +286,7 @@ test('Search opens without clipping and closing restores focus to the opener', a
     const sheet = page.locator('#songSheet');
     await expect(sheet).toHaveAttribute('aria-hidden', 'false');
     await expect(page.locator('#searchInput')).toBeVisible();
+    await page.waitForTimeout(500);
     await expectInsideViewport(page, '#sheetClose');
     await expectNoDocumentOverflow(page);
 
