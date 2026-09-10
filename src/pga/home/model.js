@@ -13,8 +13,7 @@ const HOME_STATE_SET = new Set(HOME_STATES)
 const VALUE_STATES = new Set(['available', 'partial', 'stale'])
 
 function finiteNumber(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 function nonNegativeNumber(value) {
