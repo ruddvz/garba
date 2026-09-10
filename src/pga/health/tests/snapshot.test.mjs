@@ -288,9 +288,20 @@ test('invalid observation container still produces eight unknown subsystems safe
   assert.equal(snapshot.status, 'unknown')
 })
 
-test('invalid snapshot time is rejected instead of emitting an invalid timestamp', () => {
-  assert.throws(
-    () => composeHealthSnapshot(healthyObservations(), { nowMs: Number.NaN }),
-    /invalid_health_snapshot_time/,
-  )
+test('numeric zero remains a valid snapshot evaluation clock', () => {
+  const snapshot = composeHealthSnapshot({}, { nowMs: 0 })
+
+  assert.equal(snapshot.generatedAt, '1970-01-01T00:00:00.000Z')
+  assert.equal(snapshot.evaluatedAt, '1970-01-01T00:00:00.000Z')
+  assert.equal(snapshot.status, 'unknown')
+})
+
+test('coercible non-number and non-finite snapshot clocks fail closed', () => {
+  for (const nowMs of ['0', '', false, true, null, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    assert.throws(
+      () => composeHealthSnapshot({}, { nowMs }),
+      /invalid_health_snapshot_time/,
+      `expected ${String(nowMs)} (${typeof nowMs}) to be rejected`,
+    )
+  }
 })
