@@ -70,6 +70,13 @@ function maxDataThrough(rowGroups) {
   return max || null
 }
 
+function minimumObservedSessions(row) {
+  const sessions = numberOrZero(row.sessions)
+  const maxSampleInterval = Number(row.max_sample_interval)
+  if (!Number.isFinite(maxSampleInterval) || maxSampleInterval < 1) return 0
+  return Math.ceil(sessions / maxSampleInterval)
+}
+
 function liveBreakdownRows(rows, precision) {
   return rows.map((row) => {
     const sessions = numberOrZero(row.sessions)
@@ -82,7 +89,7 @@ function liveBreakdownRows(rows, precision) {
       sessions: metric(sessions, precision),
       listeningSessions: metric(listeningSessions, precision),
       browsingSessions: metric(browsingSessions, precision),
-      visible: sessions >= PRIVACY_MIN,
+      visible: minimumObservedSessions(row) >= PRIVACY_MIN,
     }
   }).filter((row) => row.visible).map(({ visible: _visible, ...row }) => row)
 }
