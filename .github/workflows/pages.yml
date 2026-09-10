@@ -173,6 +173,49 @@ jobs:
           grep -q '<loc>https://playgarba.com/explore/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing canonical Explore route'; exit 1; }
           grep -q '<loc>https://playgarba.com/navratri-2026/</loc>' _site/sitemap.xml || { echo 'sitemap.xml missing Navratri 2026 route'; exit 1; }
 
+          assert_sitemap_artifact() {
+            local url="$1"
+            local route artifact
+
+            case "$url" in
+              *\?*|*\#*)
+                echo "Sitemap URL must not contain query/hash state: $url"
+                return 1
+                ;;
+              https://playgarba.com/)
+                artifact="_site/index.html"
+                ;;
+              https://playgarba.com/*/)
+                route="${url#https://playgarba.com/}"
+                artifact="_site/${route}index.html"
+                ;;
+              *)
+                echo "Sitemap URL must use the canonical origin and a trailing-slash route: $url"
+                return 1
+                ;;
+            esac
+
+            test -f "$artifact" || {
+              echo "Sitemap URL has no deployed Pages artifact: $url -> $artifact"
+              return 1
+            }
+          }
+
+          mapfile -t SITEMAP_URLS < <(sed -n 's:.*<loc>\([^<]*\)</loc>.*:\1:p' _site/sitemap.xml)
+          test "${#SITEMAP_URLS[@]}" -gt 0 || { echo 'sitemap.xml contains no canonical URLs'; exit 1; }
+          for url in "${SITEMAP_URLS[@]}"; do
+            assert_sitemap_artifact "$url" || exit 1
+          done
+
+          if assert_sitemap_artifact 'https://playgarba.com/__missing-pages-artifact__/' >/dev/null 2>&1; then
+            echo 'Sitemap artifact proof accepted a missing route.'
+            exit 1
+          fi
+          if assert_sitemap_artifact 'https://playgarba.com/explore/?genre=folk' >/dev/null 2>&1; then
+            echo 'Sitemap artifact proof accepted query-state URL.'
+            exit 1
+          fi
+
           for route in \
             dandiya-raas \
             garba-attire-and-craft \

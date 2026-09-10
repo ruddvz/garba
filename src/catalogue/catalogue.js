@@ -284,21 +284,96 @@ function renderReleaseDetailIdentity(release, songs) {
   ]);
 }
 
+const EXPLORE_PAGE_DATA_KEY = '__PLAYGARBA_EXPLORE_PAGE_DATA_V1__';
+const EXPLORE_PAGE_DATA_EVENT = 'playgarba:explore-page-data-ready';
+
+function createExplorePageDataStore() {
+  const resolved = new Map();
+  const inFlight = new Map();
+  const artistPromises = new Map();
+  const coreKeys = new Set([paths.songs, paths.releases, paths.catalogueIndex, paths.artwork]);
+  let corePromise = null;
+
+  const fetchJsonOnce = (url, fallback = null) => {
+    const key = String(url);
+    if (resolved.has(key)) return Promise.resolve(resolved.get(key));
+    if (inFlight.has(key)) return inFlight.get(key);
+
+    const request = (async () => {
+      try {
+        const response = await fetch(key, { cache: 'no-store' });
+        if (!response.ok) return fallback;
+        const value = await response.json();
+        resolved.set(key, value);
+        return value;
+      } catch {
+        return fallback;
+      }
+    })();
+    inFlight.set(key, request);
+    void request.finally(() => {
+      if (inFlight.get(key) === request) inFlight.delete(key);
+    });
+    return request;
+  };
+
+  const loadCore = () => {
+    if (!corePromise) {
+      corePromise = Promise.all([
+        fetchJsonOnce(paths.songs, []),
+        fetchJsonOnce(paths.releases, []),
+        fetchJsonOnce(paths.catalogueIndex, {}),
+        fetchJsonOnce(paths.artwork, { releases: {} }),
+      ]).then(([songs, releases, index, artwork]) => ({ songs, releases, index, artwork }));
+    }
+    return corePromise;
+  };
+
+  const loadArtists = async (index = null) => {
+    const sourceIndex = index || (await loadCore()).index;
+    const files = [...new Set((sourceIndex?.discovery?.artists || []).filter(Boolean))];
+    if (!files.length) return [];
+    const signature = files.join('\n');
+    if (artistPromises.has(signature)) return artistPromises.get(signature);
+
+    const request = Promise.all(files.map((file) => fetchJsonOnce(`../${file}`, null))).then((payloads) => {
+      const seen = new Set();
+      const artists = payloads
+        .flatMap((payload) => payload?.artists || [])
+        .filter((artist) => artist?.id && !seen.has(artist.id) && seen.add(artist.id));
+      if (payloads.some((payload) => payload == null)) artistPromises.delete(signature);
+      return artists;
+    });
+    artistPromises.set(signature, request);
+    return request;
+  };
+
+  const invalidate = (url) => {
+    const key = String(url);
+    resolved.delete(key);
+    if (coreKeys.has(key)) corePromise = null;
+  };
+
+  return Object.freeze({ fetchJson: fetchJsonOnce, loadCore, loadArtists, invalidate });
+}
+
+const explorePageData = window[EXPLORE_PAGE_DATA_KEY] || createExplorePageDataStore();
+if (!window[EXPLORE_PAGE_DATA_KEY]) {
+  Object.defineProperty(window, EXPLORE_PAGE_DATA_KEY, {
+    configurable: false,
+    enumerable: false,
+    writable: false,
+    value: explorePageData,
+  });
+}
+window.dispatchEvent(new Event(EXPLORE_PAGE_DATA_EVENT));
+
 async function fetchJson(url, fallback = null) {
-  try {
-    const response = await fetch(url, { cache: 'no-store' });
-    return response.ok ? await response.json() : fallback;
-  } catch {
-    return fallback;
-  }
+  return explorePageData.fetchJson(url, fallback);
 }
 
 async function loadArtists(index) {
-  const files = index?.discovery?.artists || [];
-  if (!files.length) return [];
-  const payloads = await Promise.all(files.map((file) => fetchJson(`../${file}`, null)));
-  const seen = new Set();
-  return payloads.flatMap((payload) => payload?.artists || []).filter((artist) => artist?.id && !seen.has(artist.id) && seen.add(artist.id));
+  return explorePageData.loadArtists(index);
 }
 
 function richerRelease(existing, candidate) {
@@ -326,6 +401,32 @@ function buildReleaseIndex(rows) {
 function includesTerm(song, release, terms) {
   const text = allSongText(song, release);
   return terms.some((term) => text.includes(normalise(term)));
+}
+
+function artistCreditMatches(creditValue, names) {
+  const credit = normalise(creditValue);
+  if (!credit) return false;
+  const paddedCredit = ` ${credit} `;
+  return names.some((name) => name && paddedCredit.includes(` ${name} `));
+}
+
+function trustedTrackNumber(song) {
+  const value = Number(song?.trackNumber);
+  return Number.isInteger(value) && value > 0 ? value : null;
+}
+
+function trustedReleaseSequence(songs) {
+  if (!Array.isArray(songs) || !songs.length) return null;
+  const pairs = songs.map((song) => ({ song, trackNumber: trustedTrackNumber(song) }));
+  if (pairs.some(({ trackNumber }) => trackNumber == null)) return null;
+  const unique = new Set(pairs.map(({ trackNumber }) => trackNumber));
+  if (unique.size !== pairs.length) return null;
+  return pairs.sort((a, b) => a.trackNumber - b.trackNumber);
+}
+
+function orderedReleaseSongs(songs) {
+  const sequence = trustedReleaseSequence(songs);
+  return sequence ? sequence.map(({ song }) => song) : songs;
 }
 
 function fixedCollection({ id, title, kicker, description, visual, test }) {
@@ -411,10 +512,7 @@ function buildCollections() {
       kicker:'Artist',
       description:`Songs in PlayGarba credited to ${artist.name}, including catalogue aliases where available.`,
       visual:[art.traditional,art.folk,art.dandiya,art.fusion,art.devotional][index % 5],
-      test:(song)=>{
-        const credit = normalise(song.artist);
-        return names.some((name)=>credit.includes(name));
-      },
+      test:(song)=>artistCreditMatches(song.artist, names),
     }));
   });
 
@@ -641,6 +739,10 @@ function makeSongContext(song, release) {
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
+  const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(songs) : null;
+  const trackNumberBySongId = releaseSequence
+    ? new Map(releaseSequence.map(({ song, trackNumber }) => [song.id, trackNumber]))
+    : null;
   const visible = songs.slice(0, limit);
   els.songCount.textContent = visible.length < songs.length
     ? `Showing ${visible.length.toLocaleString()} of ${songs.length.toLocaleString()} songs`
@@ -648,7 +750,10 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   if (!songs.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
-    empty.textContent = 'No songs match this catalogue yet.';
+    const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';
+    empty.textContent = emptyQuery
+      ? `No songs found for “${emptyQuery}”. Try another artist, song or release.`
+      : 'No songs match this catalogue yet.';
     els.songList.append(empty);
     return;
   }
@@ -660,7 +765,17 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
     row.className = 'song-row';
     row.setAttribute('role','listitem');
     row.dataset.songId = song.id;
-    row.append(songArtwork(song));
+    const trackNumber = trackNumberBySongId?.get(song.id);
+    if (trackNumber != null) {
+      const sequence = document.createElement('span');
+      sequence.className = 'song-art fallback song-track-number';
+      sequence.textContent = String(trackNumber).padStart(2, '0');
+      sequence.setAttribute('aria-hidden', 'true');
+      row.dataset.trackNumber = String(trackNumber);
+      row.append(sequence);
+    } else {
+      row.append(songArtwork(song));
+    }
     const copy = document.createElement('div');
     copy.className = 'song-copy';
     const titleEl = document.createElement('strong');
@@ -731,7 +846,7 @@ function filterToRelease(releaseId, { updateHistory = true, scroll = true } = {}
   const requestedRelease = state.releaseById.get(releaseId);
   const resolvedReleaseId = requestedRelease?.canonicalReleaseId || releaseId;
   const release = state.releaseById.get(resolvedReleaseId);
-  const songs = state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId);
+  const songs = orderedReleaseSongs(state.activeSongs.filter((song)=>song.releaseId===resolvedReleaseId));
   if (!release || !songs.length) return false;
   state.activeReleaseId = resolvedReleaseId;
   syncBackLabel();
@@ -925,16 +1040,17 @@ function setLoading(loading) {
 
 async function init() {
   els.count.textContent = 'Loading catalogue…';
-  const [songs,releases,genres,taxonomy,index,artwork,curation] = await Promise.all([
-    fetchJson(paths.songs,[]),
-    fetchJson(paths.releases,[]),
+  const [core,genres,taxonomy,curation] = await Promise.all([
+    explorePageData.loadCore(),
     fetchJson(paths.genres,[]),
     fetchJson(paths.taxonomy,[]),
-    fetchJson(paths.catalogueIndex,{}),
-    fetchJson(paths.artwork,{releases:{}}),
     fetchJson(paths.curation,{featuredReleaseIds:[]}),
   ]);
-  if (!songs.length) throw new Error('Song catalogue unavailable');
+  const { songs, releases, index, artwork } = core;
+  if (!songs.length) {
+    explorePageData.invalidate(paths.songs);
+    throw new Error('Song catalogue unavailable');
+  }
   state.songs = songs.filter((song) => String(song?.presentationRole || 'catalogue') === 'catalogue');
   state.releases = releases;
   state.releaseRedirects = new Map(releases.filter((release) => release?.canonicalReleaseId).map((release) => [release.id, release.canonicalReleaseId]));

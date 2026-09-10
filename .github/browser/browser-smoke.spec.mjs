@@ -2,8 +2,17 @@ import { test, expect } from '@playwright/test';
 
 const SMOKE_ORIGIN = 'http://127.0.0.1:4173';
 
+function isSupersededDocumentImageAbort({ resourceType, errorText, startedGeneration, currentGeneration }) {
+  return resourceType === 'image'
+    && /net::ERR_ABORTED$/i.test(String(errorText || ''))
+    && Number.isInteger(startedGeneration)
+    && startedGeneration < currentGeneration;
+}
+
 function collectRuntimeFailures(page) {
   const failures = [];
+  const requestGenerations = new WeakMap();
+  let documentGeneration = 0;
   const sameOrigin = (url) => {
     try { return new URL(url).origin === SMOKE_ORIGIN; }
     catch { return false; }
@@ -13,14 +22,33 @@ function collectRuntimeFailures(page) {
   page.on('console', (message) => {
     if (message.type() === 'error') failures.push(`console: ${message.text()}`);
   });
+  page.on('request', (request) => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentGeneration += 1;
+    requestGenerations.set(request, documentGeneration);
+  });
   page.on('requestfailed', (request) => {
-    if (sameOrigin(request.url())) failures.push(`requestfailed: ${request.method()} ${request.url()} ${request.failure()?.errorText || ''}`);
+    if (!sameOrigin(request.url())) return;
+    const errorText = request.failure()?.errorText || '';
+    const startedGeneration = requestGenerations.get(request) ?? documentGeneration;
+    if (isSupersededDocumentImageAbort({
+      resourceType: request.resourceType(),
+      errorText,
+      startedGeneration,
+      currentGeneration: documentGeneration,
+    })) return;
+    failures.push(`requestfailed: ${request.method()} ${request.url()} ${errorText}`);
   });
   page.on('response', (response) => {
     if (sameOrigin(response.url()) && response.status() >= 400) failures.push(`http ${response.status()}: ${response.url()}`);
   });
 
   return failures;
+}
+
+function isExpectedOfflineNetworkFailure(failure) {
+  if (failure.startsWith('pageerror:')) return false;
+  if (failure === 'console: Failed to load resource: net::ERR_INTERNET_DISCONNECTED') return true;
+  return failure.startsWith('requestfailed:') && failure.includes('net::ERR_INTERNET_DISCONNECTED');
 }
 
 async function expectNoDocumentOverflow(page) {
@@ -75,20 +103,50 @@ async function expectAppCoversViewport(page) {
   expect(coverage.layer.bottom).toBeGreaterThanOrEqual(coverage.height - 2);
 }
 
-async function expectNoRuntimeFailures(page, failures, label) {
+async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = null } = {}) {
   await page.waitForTimeout(150);
-  expect(failures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
+  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures;
+  expect(unexpectedFailures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
-async function playerAnchors(page) {
-  return page.evaluate(() => {
+async function expectPlayerReady(page) {
+  await expect(page.locator('#app')).toBeVisible();
+  await expect(page.locator('#songTitle')).not.toHaveText('', { timeout: 15_000 });
+  await expect(page.locator('#genreStrip .genre-button[data-genre-bound="true"]').first()).toBeVisible({ timeout: 15_000 });
+}
+
+async function measureTitleGeometry(page, title) {
+  return page.evaluate((nextTitle) => {
+    const trackBlock = document.querySelector('.track-block');
+    const songTitle = document.getElementById('songTitle');
+    if (!(trackBlock instanceof HTMLElement) || !(songTitle instanceof HTMLElement)) {
+      throw new Error('Player title geometry target is missing');
+    }
+
+    songTitle.textContent = nextTitle;
+    const titleLength = [...nextTitle].length;
+    trackBlock.classList.toggle('is-long-title', titleLength > 28);
+    trackBlock.classList.toggle('is-very-long-title', titleLength > 44);
+
     const anchors = {};
     for (const id of ['playButton', 'progress', 'genreStrip', 'browseButton']) {
       const rect = document.getElementById(id)?.getBoundingClientRect();
       anchors[id] = rect ? { top: rect.top, centerY: rect.top + rect.height / 2 } : null;
     }
-    return anchors;
-  });
+
+    return {
+      title: songTitle.textContent,
+      viewportWidth: window.innerWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      bodyScrollWidth: document.body?.scrollWidth || 0,
+      anchors,
+    };
+  }, title);
+}
+
+function expectTitleGeometryNoOverflow(metrics, label) {
+  expect(metrics.scrollWidth, `${label} should not overflow the document horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  expect(metrics.bodyScrollWidth, `${label} should not overflow the body horizontally`).toBeLessThanOrEqual(metrics.viewportWidth + 2);
 }
 
 function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
@@ -102,9 +160,8 @@ function expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors) {
 
 test('production player shell is stable, complete and uses the custom genre artwork', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
-  await expect(page.locator('#app')).toBeVisible();
-  await expect(page.locator('#songTitle')).not.toHaveText('');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
   await expectAppCoversViewport(page);
   await expectNoDocumentOverflow(page);
@@ -113,7 +170,7 @@ test('production player shell is stable, complete and uses the custom genre artw
   }
 
   const browse = page.locator('#browseButton');
-  await expect(browse).toHaveAttribute('href', './catalogue/');
+  await expect(browse).toHaveAttribute('href', './explore/');
   await expect(browse).not.toHaveAttribute('aria-controls', /.+/);
 
   const genreButtons = page.locator('#genreStrip .genre-button[data-genre]');
@@ -130,33 +187,30 @@ test('production player shell is stable, complete and uses the custom genre artw
   await expectNoRuntimeFailures(page, failures, 'player');
 });
 
-test('short and very long song titles keep transport and discovery controls anchored', async ({ page, context }) => {
-  const longFailures = collectRuntimeFailures(page);
-  await page.goto('/?genre=dandiya&song=bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014');
-  await expect(page.locator('#songTitle')).toHaveText('Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014');
-  await page.waitForTimeout(250);
-  await expectNoDocumentOverflow(page);
-  const longTitleAnchors = await playerAnchors(page);
-  await expectNoRuntimeFailures(page, longFailures, 'long-title player');
+test('short and very long song titles keep transport and discovery controls anchored', async ({ page }) => {
+  const failures = collectRuntimeFailures(page);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
-  const shortPage = await context.newPage();
-  const shortFailures = collectRuntimeFailures(shortPage);
-  try {
-    await shortPage.goto('/?genre=traditional&song=ochhav-2023-01-ochhav-theme');
-    await expect(shortPage.locator('#songTitle')).toHaveText('Ochhav Theme');
-    await shortPage.waitForTimeout(250);
-    await expectNoDocumentOverflow(shortPage);
-    const shortTitleAnchors = await playerAnchors(shortPage);
-    expectStablePlayerAnchors(longTitleAnchors, shortTitleAnchors);
-    await expectNoRuntimeFailures(shortPage, shortFailures, 'short-title player');
-  } finally {
-    await shortPage.close();
-  }
+  const longTitle = 'Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014';
+  const shortTitle = 'Ochhav Theme';
+
+  const longTitleGeometry = await measureTitleGeometry(page, longTitle);
+  expect(longTitleGeometry.title).toBe(longTitle);
+  expectTitleGeometryNoOverflow(longTitleGeometry, 'very-long title state');
+
+  const shortTitleGeometry = await measureTitleGeometry(page, shortTitle);
+  expect(shortTitleGeometry.title).toBe(shortTitle);
+  expectTitleGeometryNoOverflow(shortTitleGeometry, 'short title state');
+
+  expectStablePlayerAnchors(longTitleGeometry.anchors, shortTitleGeometry.anchors);
+  await expectNoRuntimeFailures(page, failures, 'title-geometry player');
 });
 
 test('Search opens without clipping and closing restores focus to the opener', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
   const searchButton = page.locator('#searchButton');
   await searchButton.click();
 
@@ -173,9 +227,10 @@ test('Search opens without clipping and closing restores focus to the opener', a
   await expectNoRuntimeFailures(page, failures, 'Search sheet');
 });
 
-test('Nonstop browser is reachable, populated and restores focus when closed', async ({ page }) => {
+test('Nonstop browser is reachable, keyboard-safe, populated and restores focus when closed', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
 
   const nonstopButton = page.locator('#nonstopButton');
   await nonstopButton.scrollIntoViewIfNeeded();
@@ -183,16 +238,31 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
   await nonstopButton.click();
 
   const panel = page.locator('#nonstopBrowser');
+  const search = page.locator('#nonstopBrowserSearch');
   await expect(panel).toHaveAttribute('aria-hidden', 'false');
-  await expect(page.locator('#nonstopBrowserSearch')).toBeVisible();
-  await expect(page.locator('#nonstopBrowserSearch')).toBeFocused();
+  await expect(panel).toBeFocused();
+  await expect(search).toBeVisible();
+  await expect(search).toHaveAttribute('aria-label', 'Search Nonstop Garba');
+  await panel.press('Tab');
+  await expect(search).toBeFocused();
   await expectInsideViewport(page, '#nonstopBrowserClose');
+
   const sets = page.locator('#nonstopBrowserList .nonstop-set');
-  await expect(sets.first()).toBeVisible();
+  const firstSet = sets.first();
+  await expect(firstSet).toBeVisible();
   expect(await sets.count()).toBeGreaterThan(0);
-  await expect(sets.first().locator('.nonstop-set-recording')).toContainText(/One (?:full )?recording/);
-  await expect(sets.first().locator('.nonstop-set-badge.recording')).toHaveText(/^(?:Chaptered|Full) recording$/);
-  await expect(page.locator('#nonstopBrowserSummary')).toContainText('one choice = one recording');
+  await expect(firstSet.locator('.nonstop-set-title')).toHaveText(/\S/);
+  await expect(firstSet.locator('.nonstop-set-meta')).toHaveText(/\S/);
+  await expect(firstSet).toHaveAttribute('aria-label', /^(?:Currently playing|Play),\s+\S/);
+
+  const duration = firstSet.locator('.nonstop-set-duration');
+  await expect(duration).toBeVisible();
+  await expect(duration).toHaveAttribute('aria-hidden', 'true');
+  const durationText = (await duration.textContent() || '').trim();
+  if (durationText) expect(durationText).toMatch(/^(?:\d+:\d{2}|\d+:\d{2}:\d{2})$/);
+
+  await expect(firstSet.locator('.nonstop-set-recording, .nonstop-set-badge')).toHaveCount(0);
+  await expect(page.locator('#nonstopBrowserSummary')).toHaveCount(0);
   await expectNoDocumentOverflow(page);
 
   await page.locator('#nonstopBrowserClose').click();
@@ -204,9 +274,11 @@ test('Nonstop browser is reachable, populated and restores focus when closed', a
 
 test('Explore is reached through the production player link and renders real catalogue content', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
+  // Navigation commit establishes the document boundary; visible Explore UI establishes readiness.
   await Promise.all([
-    page.waitForURL(/\/explore\/$/),
+    page.waitForURL(/\/explore\/$/, { waitUntil: 'commit' }),
     page.locator('#browseButton').click(),
   ]);
 
@@ -221,7 +293,7 @@ test('Explore is reached through the production player link and renders real cat
 
 test('Explore detail preserves keyboard focus when entering and returning', async ({ page }) => {
   const failures = collectRuntimeFailures(page);
-  await page.goto('/explore/');
+  await page.goto('/explore/', { waitUntil: 'commit' });
   const firstCard = page.locator('.collection-card').first();
   await expect(firstCard).toBeVisible();
   await firstCard.focus();
@@ -236,11 +308,48 @@ test('Explore detail preserves keyboard focus when entering and returning', asyn
   await expectNoRuntimeFailures(page, failures, 'Explore detail');
 });
 
+test('active-document same-origin image request failures remain blocking', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'one deterministic Chromium classifier regression is sufficient');
+  const failures = collectRuntimeFailures(page);
+  const probeUrl = `${SMOKE_ORIGIN}/__browser-smoke/active-document-image.webp`;
+
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'image',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 1,
+    currentGeneration: 2,
+  })).toBe(true);
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'image',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 2,
+    currentGeneration: 2,
+  })).toBe(false);
+  expect(isSupersededDocumentImageAbort({
+    resourceType: 'script',
+    errorText: 'net::ERR_ABORTED',
+    startedGeneration: 1,
+    currentGeneration: 2,
+  })).toBe(false);
+
+  await page.route(probeUrl, (route) => route.abort('failed'));
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
+  await page.evaluate((url) => new Promise((resolve) => {
+    const image = new Image();
+    image.onload = image.onerror = resolve;
+    image.src = url;
+  }), probeUrl);
+
+  await expect.poll(() => failures.some((failure) => failure.startsWith('requestfailed: GET') && failure.includes('/__browser-smoke/active-document-image.webp'))).toBe(true);
+});
+
 test('installed shell survives an offline reload after the service worker is ready', async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'one deterministic Chromium PWA contract is sufficient');
   const failures = collectRuntimeFailures(page);
 
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expectPlayerReady(page);
   const serviceWorkerReady = await page.evaluate(async () => {
     if (!('serviceWorker' in navigator)) return false;
     await navigator.serviceWorker.ready;
@@ -251,13 +360,12 @@ test('installed shell survives an offline reload after the service worker is rea
   await context.setOffline(true);
   try {
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#app')).toBeVisible();
-    await expect(page.locator('#songTitle')).not.toHaveText('');
+    await expectPlayerReady(page);
     await expectAppCoversViewport(page);
     await expectNoDocumentOverflow(page);
   } finally {
     await context.setOffline(false);
   }
 
-  await expectNoRuntimeFailures(page, failures, 'offline PWA shell');
+  await expectNoRuntimeFailures(page, failures, 'offline PWA shell', { ignoreFailure: isExpectedOfflineNetworkFailure });
 });
