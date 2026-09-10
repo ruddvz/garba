@@ -56,6 +56,7 @@ async function accessFixture(path = '/api/live') {
     exp: Math.floor(NOW / 1000) + 600,
     iat: Math.floor(NOW / 1000),
     sub: 'founder',
+    type: 'app',
   }))
   const data = new TextEncoder().encode(`${header}.${payload}`)
   const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', pair.privateKey, data)
