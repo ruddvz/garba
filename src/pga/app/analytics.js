@@ -1,4 +1,5 @@
 export const PGA_RANGES = Object.freeze(['7d', '30d', '90d']);
+const PWA_DISPLAY_MODES = new Set(['standalone', 'minimal-ui', 'fullscreen', 'window-controls-overlay']);
 
 export function metricValue(metric) {
   const value = Number(metric?.value);
@@ -31,6 +32,17 @@ export function ratio(numerator, denominator) {
 export function formatPercent(value) {
   if (!Number.isFinite(value)) return '—';
   return new Intl.NumberFormat('en-IN', { style: 'percent', maximumFractionDigits: 1 }).format(value);
+}
+
+export function formatFreshness(dataThrough) {
+  if (!dataThrough) return 'Freshness unavailable';
+  const timestamp = Date.parse(dataThrough);
+  if (!Number.isFinite(timestamp)) return 'Freshness unavailable';
+  return `Data through ${new Intl.DateTimeFormat('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Kolkata',
+  }).format(timestamp)} IST`;
 }
 
 function metricFromNumber(value, source = {}) {
@@ -69,11 +81,16 @@ export function parseClient(value = '') {
   return { device, os, browser };
 }
 
-function acquisitionLabel(value = '') {
-  const [referrer = '', source = '', medium = ''] = String(value).split('|');
+function acquisitionLabel(value = '', referrerHost = '') {
+  const [source = '', medium = '', campaign = ''] = String(value).split('|');
   if (source) return medium ? `${source} · ${medium}` : source;
-  if (referrer) return referrer;
+  if (referrerHost) return referrerHost;
+  if (campaign) return campaign;
   return 'Direct';
+}
+
+function displayModeLabel(value = '') {
+  return PWA_DISPLAY_MODES.has(String(value).toLowerCase()) ? 'PWA' : 'Browser';
 }
 
 export function normaliseAudience(envelope) {
@@ -91,8 +108,8 @@ export function normaliseAudience(envelope) {
       device: aggregateBreakdowns(rows, (row) => parseClient(row.client).device),
       os: aggregateBreakdowns(rows, (row) => parseClient(row.client).os),
       browser: aggregateBreakdowns(rows, (row) => parseClient(row.client).browser),
-      displayMode: aggregateBreakdowns(rows, (row) => row.displayMode === 'standalone' || row.displayMode === 'minimal-ui' ? 'PWA' : 'Browser'),
-      acquisition: aggregateBreakdowns(rows, (row) => acquisitionLabel(row.acquisition)),
+      displayMode: aggregateBreakdowns(rows, (row) => displayModeLabel(row.displayMode)),
+      acquisition: aggregateBreakdowns(rows, (row) => acquisitionLabel(row.acquisition, row.referrerHost)),
       country: aggregateBreakdowns(rows, (row) => row.country && row.country !== 'ZZ' ? row.country : 'Unknown'),
       region: aggregateBreakdowns(rows, (row) => row.region || null),
     },
@@ -124,8 +141,13 @@ function topContent(rows = []) {
       label: row.contentLabel || null,
       artist: row.artist || null,
       releaseTitle: row.releaseTitle || null,
+      identityStatus: row.identityStatus || 'unresolved',
       metric: { value: 0, precision: 'exact', sampled: false },
     };
+    if (!current.label && row.contentLabel) current.label = row.contentLabel;
+    if (!current.artist && row.artist) current.artist = row.artist;
+    if (!current.releaseTitle && row.releaseTitle) current.releaseTitle = row.releaseTitle;
+    if (row.identityStatus === 'resolved') current.identityStatus = 'resolved';
     addMetric(current.metric, row.events);
     totals.set(key, current);
   }
@@ -133,15 +155,34 @@ function topContent(rows = []) {
     .sort((a, b) => b.metric.value - a.metric.value || a.contentId.localeCompare(b.contentId));
 }
 
-function worldTotals(rows = []) {
+function dimensionTotals(rows = [], keySelector, eventName = 'playback_started') {
   const totals = new Map();
   for (const row of rows) {
-    if (!row.world || row.eventName !== 'playback_started') continue;
-    const current = totals.get(row.world) || { value: 0, precision: 'exact', sampled: false };
+    if (row.eventName !== eventName) continue;
+    const key = keySelector(row);
+    if (!key) continue;
+    const current = totals.get(key) || { value: 0, precision: 'exact', sampled: false };
     addMetric(current, row.events);
-    totals.set(row.world, current);
+    totals.set(key, current);
   }
-  return [...totals.entries()].map(([label, metric]) => ({ label, metric })).sort((a, b) => b.metric.value - a.metric.value);
+  return [...totals.entries()]
+    .map(([label, metric]) => ({ label, metric }))
+    .sort((a, b) => b.metric.value - a.metric.value || a.label.localeCompare(b.label));
+}
+
+function playbackDimensionTotals(rows = [], selector) {
+  const totals = new Map();
+  for (const row of rows) {
+    if (row.eventName !== 'playback_started') continue;
+    const label = selector(row);
+    if (!label) continue;
+    const current = totals.get(label) || { value: 0, precision: 'exact', sampled: false };
+    addMetric(current, row.events);
+    totals.set(label, current);
+  }
+  return [...totals.entries()]
+    .map(([label, metric]) => ({ label, metric }))
+    .sort((a, b) => b.metric.value - a.metric.value || a.label.localeCompare(b.label));
 }
 
 function errorTotals(rows = []) {
@@ -158,7 +199,7 @@ function errorTotals(rows = []) {
 
 export function normaliseListening(envelope) {
   if (!envelope || envelope.status === 'unavailable' || !envelope.data) {
-    return { state: 'unavailable', range: null, metrics: {}, topContent: [], worlds: [], errors: [], unmetDemand: [] };
+    return { state: 'unavailable', range: null, metrics: {}, topContent: [], worlds: [], surfaces: [], errors: [], unmetDemand: [] };
   }
   const rows = Array.isArray(envelope.data.rows) ? envelope.data.rows : [];
   const totals = eventTotals(rows);
@@ -190,14 +231,20 @@ export function normaliseListening(envelope) {
       zeroResultRate: ratio(search.zeroResultSearches, search.searches),
     },
     topContent: topContent(rows),
-    worlds: worldTotals(rows),
+    topSongs: topContent(rows).filter((row) => row.contentType === 'song' || row.contentType === 'chapter'),
+    topArtists: playbackDimensionTotals(rows, (row) => row.artist),
+    topReleases: playbackDimensionTotals(rows, (row) => row.contentType === 'release' ? row.contentLabel : row.releaseTitle),
+    nonstopSets: topContent(rows).filter((row) => row.contentType === 'nonstop_set'),
+    worlds: dimensionTotals(rows, (row) => row.world),
+    surfaces: dimensionTotals(rows, (row) => row.surface),
     errors: errorTotals(rows),
     unmetDemand: Array.isArray(search.unmetDemand) ? search.unmetDemand : [],
   };
 }
 
 export async function fetchPgaEnvelope(path, { range, signal, fetchImpl = fetch } = {}) {
-  const url = new URL(path, location.origin);
+  const origin = globalThis.location?.origin || 'https://pga.playgarba.com';
+  const url = new URL(path, origin);
   if (range && PGA_RANGES.includes(range)) url.searchParams.set('range', range);
   const response = await fetchImpl(url, { credentials: 'same-origin', cache: 'no-store', signal, headers: { accept: 'application/json' } });
   if (response.status === 401 || response.status === 403) return { transport: 'auth-expired', envelope: null };

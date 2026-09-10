@@ -182,6 +182,7 @@ async function audience(env, request, options = {}) {
             client: row.client || 'unknown|unknown|unknown',
             country,
             region: sessions >= PRIVACY_MIN ? region : null,
+            referrerHost: row.referrer_host || null,
             acquisition: row.acquisition || '||',
             displayMode: row.display_mode || 'unknown',
             sessions: metric(sessions, precision),
@@ -221,7 +222,7 @@ async function listening(env, request, options = {}) {
       }
     }
     return envelope({
-      status: 'complete',
+      status: catalogueOk ? 'complete' : 'partial',
       dataThroughMs: maxDataThrough([eventRows, timeRows, funnelRows, demandRows]),
       sources: [
         source('analytics-engine', true, { sampled: precision.sampled }),
@@ -243,6 +244,7 @@ async function listening(env, request, options = {}) {
         },
         rows: enrichedRows.map((row) => ({
           eventName: row.event_name,
+          surface: row.surface || null,
           world: row.world || null,
           contentType: row.content_type || null,
           contentId: row.content_id || null,
@@ -302,5 +304,5 @@ export async function handleAdmin(request, env, options = {}) {
 export default {
   fetch(request, env) {
     return handleAdmin(request, env)
-  }
+  },
 }
