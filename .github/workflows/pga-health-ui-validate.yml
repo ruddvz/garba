@@ -1,0 +1,42 @@
+name: PGA Health validate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pga/health/**'
+      - 'src/pga/backend/admin-worker.js'
+      - 'src/pga/backend/tests/health-api.test.mjs'
+      - 'src/pga/app/index.html'
+      - 'src/pga/app/health.js'
+      - 'src/pga/app/health.css'
+      - 'scripts/lib/validate-pga-health-ui.mjs'
+      - '.github/workflows/pga-health-ui-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/pga/health/**'
+      - 'src/pga/backend/admin-worker.js'
+      - 'src/pga/backend/tests/health-api.test.mjs'
+      - 'src/pga/app/index.html'
+      - 'src/pga/app/health.js'
+      - 'src/pga/app/health.css'
+      - 'scripts/lib/validate-pga-health-ui.mjs'
+      - '.github/workflows/pga-health-ui-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Validate canonical Health models and protected endpoint
+        run: node --test src/pga/health/tests/*.test.mjs src/pga/backend/tests/health-api.test.mjs
+      - name: Validate Health UI integration contract
+        run: node scripts/lib/validate-pga-health-ui.mjs
