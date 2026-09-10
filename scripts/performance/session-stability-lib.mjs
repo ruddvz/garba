@@ -566,6 +566,14 @@ export async function exerciseExploreRoundTrip(page, origin, roundIndex = 0) {
         await page.waitForTimeout(80);
         result.searched = true;
         await input.fill('').catch(() => {});
+        // Search state is history-backed. Wait for the product's own empty-query back
+        // navigation to finish before opening a collection, otherwise the following
+        // collection Back action can land on the stale Search history entry.
+        await page.waitForFunction(() => {
+          const detail = document.getElementById('collectionDetail');
+          const home = document.getElementById('collectionHome');
+          return Boolean(detail?.hidden && home && !home.hidden && !history.state?.search);
+        }, null, { timeout: 5_000 }).catch(() => {});
         await page.keyboard.press('Escape').catch(() => {});
       }
     }
@@ -582,7 +590,22 @@ export async function exerciseExploreRoundTrip(page, origin, roundIndex = 0) {
         if (await back.isVisible().catch(() => false)) {
           result.detailClosed = await back.click({ timeout: 1_500 }).then(() => true).catch(() => false);
           if (result.detailClosed) {
-            result.detailClosed = await page.locator('#collectionHome').waitFor({ state: 'visible', timeout: 5_000 }).then(() => true).catch(() => false);
+            // The Explore product contract is state-based: closeCollection() marks the
+            // detail hidden and collection home unhidden after history.back() settles.
+            // Prove that contract directly instead of relying on layout visibility,
+            // which can be affected by content-visibility and scroll positioning.
+            result.detailClosed = await page.waitForFunction(() => {
+              const detail = document.getElementById('collectionDetail');
+              const home = document.getElementById('collectionHome');
+              return Boolean(
+                detail?.hidden
+                && home
+                && !home.hidden
+                && !history.state?.collection
+                && !history.state?.release
+                && !history.state?.search
+              );
+            }, null, { timeout: 5_000 }).then(() => true).catch(() => false);
           }
         }
       }
