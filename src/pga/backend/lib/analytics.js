@@ -207,24 +207,95 @@ ORDER BY weighted_events DESC
 LIMIT 500`
 }
 
-export function liveSql(dataset) {
-  return `WITH latest AS (
-  SELECT blob3 AS session_key,
+function livePresenceCtes(dataset, whereClause) {
+  return `WITH latest_tabs AS (
+  SELECT
+    blob3 AS session_key,
+    blob4 AS tab_key,
     argMax(blob6, double3) AS playback_state,
     argMax(blob5, double3) AS surface,
     argMax(blob7, double3) AS world,
+    argMax(blob10, double3) AS display_mode,
     MAX(double3) AS data_through_ms,
-    MAX(_sample_interval) AS max_sample_interval
+    argMax(_sample_interval, double3) AS sample_interval
   FROM ${dataset}
-  WHERE ${productionFilter()} AND timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND
+  WHERE ${productionFilter()} AND ${whereClause}
+  GROUP BY session_key, tab_key
+), latest_sessions AS (
+  SELECT
+    session_key,
+    MAX(if(playback_state = 'playing', 1, 0)) AS is_listening,
+    argMax(surface, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS surface,
+    argMax(world, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS world,
+    argMax(display_mode, if(playback_state = 'playing', data_through_ms + 10000000000000000, data_through_ms)) AS display_mode,
+    MAX(data_through_ms) AS data_through_ms,
+    MAX(sample_interval) AS sample_interval
+  FROM latest_tabs
   GROUP BY session_key
-)
-SELECT COUNT() AS live_now,
-  SUM(CASE WHEN playback_state = 'playing' THEN 1 ELSE 0 END) AS listening_now,
-  SUM(CASE WHEN playback_state != 'playing' THEN 1 ELSE 0 END) AS browsing_now,
+)`
+}
+
+export function liveSql(dataset) {
+  return `${livePresenceCtes(dataset, `timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND`)}
+SELECT
+  SUM(sample_interval) AS live_now,
+  SUM(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END) AS listening_now,
+  SUM(CASE WHEN is_listening = 0 THEN sample_interval ELSE 0 END) AS browsing_now,
   MAX(data_through_ms) AS data_through_ms,
-  MAX(max_sample_interval) AS max_sample_interval
-FROM latest`
+  MAX(sample_interval) AS max_sample_interval
+FROM latest_sessions`
+}
+
+export function liveBreakdownSql(dataset) {
+  return `${livePresenceCtes(dataset, `timestamp > NOW() - INTERVAL '${LIVE_EXPIRY_SECONDS}' SECOND`)}
+SELECT
+  surface,
+  world,
+  display_mode,
+  SUM(sample_interval) AS sessions,
+  SUM(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END) AS listening_sessions,
+  SUM(CASE WHEN is_listening = 0 THEN sample_interval ELSE 0 END) AS browsing_sessions,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM latest_sessions
+GROUP BY surface, world, display_mode
+ORDER BY sessions DESC
+LIMIT 100`
+}
+
+export function liveTrendSql(dataset, minutes = 30) {
+  const boundedMinutes = Math.max(5, Math.min(60, Math.floor(Number(minutes) || 30)))
+  return `WITH minute_tabs AS (
+  SELECT
+    intDiv(toUInt32(timestamp), 60) * 60 AS minute_bucket,
+    blob3 AS session_key,
+    blob4 AS tab_key,
+    argMax(blob6, double3) AS playback_state,
+    MAX(double3) AS data_through_ms,
+    argMax(_sample_interval, double3) AS sample_interval
+  FROM ${dataset}
+  WHERE ${productionFilter()} AND timestamp > NOW() - INTERVAL '${boundedMinutes}' MINUTE
+  GROUP BY minute_bucket, session_key, tab_key
+), minute_sessions AS (
+  SELECT
+    minute_bucket,
+    session_key,
+    MAX(if(playback_state = 'playing', 1, 0)) AS is_listening,
+    MAX(data_through_ms) AS data_through_ms,
+    MAX(sample_interval) AS sample_interval
+  FROM minute_tabs
+  GROUP BY minute_bucket, session_key
+)
+SELECT
+  minute_bucket,
+  SUM(sample_interval) AS active_sessions,
+  SUM(CASE WHEN is_listening = 1 THEN sample_interval ELSE 0 END) AS listening_sessions,
+  SUM(CASE WHEN is_listening = 0 THEN sample_interval ELSE 0 END) AS browsing_sessions,
+  MAX(data_through_ms) AS data_through_ms,
+  MAX(sample_interval) AS max_sample_interval
+FROM minute_sessions
+GROUP BY minute_bucket
+ORDER BY minute_bucket ASC`
 }
 
 function listeningTimeQuery(dataset, whereClause) {
