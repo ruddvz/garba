@@ -93,33 +93,60 @@ async function playerGeometry(page, engineName, viewport) {
   assertNoRootOverflow(metrics, contextLabel);
 
   const geometry = await page.evaluate(() => {
-    const rect = (selector) => {
-      const node = document.querySelector(selector);
+    const pack = (node) => {
       if (!(node instanceof HTMLElement)) return null;
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility === 'hidden' || node.getClientRects().length === 0) return null;
       const box = node.getBoundingClientRect();
       return {
         x: box.x, y: box.y, width: box.width, height: box.height,
         top: box.top, right: box.right, bottom: box.bottom, left: box.left,
       };
     };
+    const rect = (selector) => pack(document.querySelector(selector));
+    const rects = (selector) => [...document.querySelectorAll(selector)].map(pack).filter(Boolean);
     return {
-      play: rect('#playButton'),
+      title: rect('#songTitle'),
+      artist: rect('#songArtist'),
+      transports: [rect('#prevButton'), rect('#playButton'), rect('#nextButton')],
+      progressParts: [rect('#elapsedTime'), rect('#progress'), rect('#durationTime')],
+      genres: rects('#genreStrip .genre-button'),
       browse: rect('#browseButton'),
-      track: rect('#trackBlock'),
-      controls: rect('.controls'),
-      progress: rect('.progress-wrap'),
-      genres: rect('#genreStrip'),
-      browseActions: rect('#browseActions'),
     };
   });
 
-  insideViewport(geometry.play, metrics.viewport, `${contextLabel} play`);
-  insideViewport(geometry.browse, metrics.viewport, `${contextLabel} Explore`);
-  minTouchTarget(geometry.play, `${contextLabel} primary Play target`);
-  assertDisjoint(geometry.track, geometry.controls, `${contextLabel} track/transport`);
-  assertDisjoint(geometry.controls, geometry.progress, `${contextLabel} transport/progress`);
-  assertDisjoint(geometry.progress, geometry.genres, `${contextLabel} progress/genres`);
-  assertDisjoint(geometry.genres, geometry.browseActions, `${contextLabel} genres/Explore`);
+  const semanticRects = [
+    geometry.title,
+    geometry.artist,
+    ...geometry.transports,
+    ...geometry.progressParts,
+    ...geometry.genres,
+    geometry.browse,
+  ];
+  for (const [index, rect] of semanticRects.entries()) {
+    insideViewport(rect, metrics.viewport, `${contextLabel} semantic anchor ${index + 1}`);
+  }
+  minTouchTarget(geometry.transports[1], `${contextLabel} primary Play target`);
+
+  assertDisjoint(geometry.title, geometry.artist, `${contextLabel} title/artist`);
+  for (const textAnchor of [geometry.title, geometry.artist]) {
+    for (const transport of geometry.transports) {
+      assertDisjoint(textAnchor, transport, `${contextLabel} Now Playing/transport`);
+    }
+  }
+  for (const transport of geometry.transports) {
+    for (const progressPart of geometry.progressParts) {
+      assertDisjoint(transport, progressPart, `${contextLabel} transport/progress`);
+    }
+  }
+  for (const progressPart of geometry.progressParts) {
+    for (const genre of geometry.genres) {
+      assertDisjoint(progressPart, genre, `${contextLabel} progress/genre`);
+    }
+  }
+  for (const genre of geometry.genres) {
+    assertDisjoint(genre, geometry.browse, `${contextLabel} genre/Explore`);
+  }
 
   const titleStates = await page.evaluate(() => {
     const title = document.getElementById('songTitle');
