@@ -133,16 +133,20 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
   const explicitStatus = normaliseStatus(input.status)
   const observedAt = freshnessTimestamp(input)
   const budgetMs = freshnessBudget(input)
-  const ageMs = observedAt == null ? null : Math.max(0, now - observedAt)
+  const futureDated = observedAt != null && observedAt > now
+  const ageMs = observedAt == null || futureDated ? null : now - observedAt
 
-  let status = explicitStatus
+  let status = futureDated && explicitStatus !== 'failed' ? 'unknown' : explicitStatus
   let stale = false
 
-  // A hard failure remains a failure even when its last observation is old. Healthy,
-  // degraded and unknown evidence may become stale only when its producer supplied a
-  // concrete freshness budget. PGA never invents a universal timeout here.
+  // A hard failure remains a failure even when its last observation is old or its
+  // timestamp is invalidly in the future. Non-failure evidence from the future is
+  // never certified current; otherwise evidence may become stale only when its
+  // producer supplied a concrete freshness budget. PGA never invents a universal
+  // timeout or clock-skew tolerance here.
   if (
     explicitStatus !== 'failed'
+    && !futureDated
     && observedAt != null
     && budgetMs != null
     && now - observedAt > budgetMs
@@ -160,6 +164,7 @@ export function evaluateSubsystem(name, input = {}, { nowMs = Date.now() } = {})
   }
   const reason = safeText(input.reason)
   if (reason && !reasons.includes(reason)) reasons.push(reason)
+  if (futureDated) reasons.push('Evidence freshness timestamp is later than the evaluation clock.')
   if (stale) reasons.push(`Evidence is older than its ${budgetMs} ms freshness budget.`)
   if (explicitStatus === 'unknown' && reasons.length === 0) reasons.push('Current evidence is unavailable or unresolved.')
 
