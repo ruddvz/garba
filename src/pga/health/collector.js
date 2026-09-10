@@ -39,6 +39,10 @@ function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
+function positiveSafeInteger(value) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null
+}
+
 function boundedTimeout(value) {
   const number = Number(value)
   if (!Number.isFinite(number) || number <= 0) return DEFAULT_TIMEOUT_MS
@@ -254,8 +258,8 @@ function safeCheckRun(run) {
     details_url: safeGithubWebUrl(run.details_url || run.html_url),
   }
 
-  const id = Number(run.id)
-  if (Number.isFinite(id) && id >= 0) output.id = id
+  const id = positiveSafeInteger(run.id)
+  if (id != null) output.id = id
   return output
 }
 
