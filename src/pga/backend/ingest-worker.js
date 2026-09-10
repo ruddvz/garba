@@ -1,5 +1,6 @@
 import { MAX_BODY_BYTES, PRESENCE_EVENT, SCHEMA_VERSION } from './lib/constants.js'
 import { eventDataPoint, normaliseForStorage, presenceDataPoint } from './lib/analytics.js'
+import { hmacPseudonym } from './lib/crypto.js'
 import { corsHeaders, json } from './lib/http.js'
 import { normalizeEdgeDimensions, validateBatch } from './lib/validation.js'
 
@@ -18,7 +19,8 @@ function requiredBindings(env) {
     env.PGA_HMAC_SECRET &&
     env.EVENTS && typeof env.EVENTS.writeDataPoint === 'function' &&
     env.PRESENCE && typeof env.PRESENCE.writeDataPoint === 'function' &&
-    env.BROWSER_RATE_LIMITER && typeof env.BROWSER_RATE_LIMITER.limit === 'function',
+    env.BROWSER_RATE_LIMITER && typeof env.BROWSER_RATE_LIMITER.limit === 'function' &&
+    env.EDGE_RATE_LIMITER && typeof env.EDGE_RATE_LIMITER.limit === 'function',
   )
 }
 
@@ -65,10 +67,28 @@ export async function handleIngest(request, env, options = {}) {
     return errorResponse(code, status, origin, allowedOrigin)
   }
 
-  const rate = await env.BROWSER_RATE_LIMITER.limit({ key: events[0].browserId })
-  if (!rate?.success) {
-    console.warn('pga_ingest_rate_limited')
-    return errorResponse('rate_limited', 429, origin, allowedOrigin)
+  const edgeAddress = request.headers.get('cf-connecting-ip')?.trim() || ''
+  if (!edgeAddress) {
+    console.error('pga_ingest_edge_identity_missing')
+    return errorResponse('edge_identity_missing', 503, origin, allowedOrigin)
+  }
+
+  try {
+    const edgePseudonym = await hmacPseudonym(env.PGA_HMAC_SECRET, edgeAddress, 'ingest-rate-edge:')
+    const edgeRate = await env.EDGE_RATE_LIMITER.limit({ key: `edge:${edgePseudonym}` })
+    if (!edgeRate?.success) {
+      console.warn('pga_ingest_rate_limited', { scope: 'edge' })
+      return errorResponse('rate_limited', 429, origin, allowedOrigin)
+    }
+
+    const browserRate = await env.BROWSER_RATE_LIMITER.limit({ key: events[0].browserId })
+    if (!browserRate?.success) {
+      console.warn('pga_ingest_rate_limited', { scope: 'browser' })
+      return errorResponse('rate_limited', 429, origin, allowedOrigin)
+    }
+  } catch {
+    console.error('pga_ingest_rate_limit_failed')
+    return errorResponse('rate_limit_unavailable', 503, origin, allowedOrigin)
   }
 
   const edge = normalizeEdgeDimensions(request)
