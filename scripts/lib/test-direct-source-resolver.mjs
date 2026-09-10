@@ -106,6 +106,18 @@ function manifestErrorsFor(entry) {
   assert.equal(result.provenance.sourceUrl, 'https://youtu.be/abcdefghijk?si=source-evidence');
 }
 
+for (const matchingSourceUrl of [
+  'https://www.youtube.com/embed/abcdefghijk',
+  'https://www.youtube.com/shorts/abcdefghijk',
+]) {
+  const matchingSong = song({ playbackSourceUrl: matchingSourceUrl });
+  assert.equal(isExecutableYoutube(matchingSong), true, matchingSourceUrl);
+  const result = resolvePlaybackSource({ song: matchingSong });
+  assert.equal(result.kind, 'youtube-foreground', matchingSourceUrl);
+  assert.equal(result.provenance.videoId, 'abcdefghijk', matchingSourceUrl);
+  assert.equal(result.provenance.sourceUrl, matchingSourceUrl, matchingSourceUrl);
+}
+
 {
   const timestamped = song({ youtubeStartSeconds: 73 });
   const result = resolvePlaybackSource({ song: timestamped });
@@ -141,15 +153,23 @@ for (const conflictingSourceUrl of [
   assert.equal(result.reason, 'no-executable-source', conflictingSourceUrl);
 }
 
-{
+for (const nonMediaYoutubeUrl of [
+  'https://www.youtube.com/@playgarba-example',
+  'https://www.youtube.com/channel/example?v=abcdefghijk',
+  'https://www.youtube.com/results?search_query=garba&v=abcdefghijk',
+  'https://www.youtube.com/library/embed/abcdefghijk',
+]) {
   const nonMediaYoutubeSource = song({
     youtubeId: 'abcdefghijk',
-    playbackSourceUrl: 'https://www.youtube.com/@playgarba-example',
+    playbackSourceUrl: nonMediaYoutubeUrl,
   });
-  assert.equal(isExecutableYoutube(nonMediaYoutubeSource), false);
+  assert.equal(isExecutableYoutube(nonMediaYoutubeSource), false, nonMediaYoutubeUrl);
   const result = resolvePlaybackSource({ song: nonMediaYoutubeSource });
-  assert.equal(result.kind, 'unavailable');
-  assert.equal(result.reason, 'no-executable-source');
+  assert.equal(result.kind, 'unavailable', nonMediaYoutubeUrl);
+  assert.equal(result.reason, 'no-executable-source', nonMediaYoutubeUrl);
+
+  const urlOnly = song({ youtubeId: null, playbackSourceUrl: nonMediaYoutubeUrl });
+  assert.equal(isExecutableYoutube(urlOnly), false, `non-media URL must not derive identity: ${nonMediaYoutubeUrl}`);
 }
 
 {
