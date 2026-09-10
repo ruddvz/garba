@@ -416,19 +416,19 @@
         songId: nextResolution.songId.trim(),
         source: nextResolution,
       });
-      if (next === previous || next.songId !== nextResolution.songId.trim()) return false;
+      if (next === previous || next.songId !== nextResolution.songId.trim() || !next.source) return false;
 
       state = next;
-      resolution = nextResolution;
+      resolution = next.source;
       identity = canonicalIdentity;
       capabilities = cloneCapabilities(nextCapabilities);
-      activeUrl = mediaUrl;
+      activeUrl = next.source.media.url;
       lifecycleStateClaim = null;
       lastLifecycleDecision = null;
       foreground = true;
 
       const assigned = safeCall(() => {
-        mediaElement.src = mediaUrl;
+        mediaElement.src = activeUrl;
         return true;
       }, false);
       if (!assigned) {
