@@ -1,3 +1,6 @@
+import './assets/runtime/route-readiness.js';
+const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
+
 const storage = {
   get(key, fallback) {
     try {
@@ -28,7 +31,6 @@ const state = {
   playing: false,
   elapsed: 0,
   duration: 0,
-  activeWorld: 'A',
   sheetFilter: 'traditional',
   sheetMode: 'all',
   sheetSnap: 'closed',
@@ -43,6 +45,7 @@ const state = {
   catalogueLoadedAt: 0,
   pendingSongId: null,
   sheetTrigger: null,
+  searchFocusTimer: null,
   presentationRedirects: new Map(),
 };
 
@@ -167,7 +170,9 @@ function releaseContinuationSongs(limit = Infinity) {
   if (!match) return [];
   const index = match.ordered.findIndex((song) => song.id === state.releaseContextSongId);
   const remaining = index >= 0
-    ? match.ordered.slice(index + 1).filter((song) => !state.releaseContextConsumedIds.has(song.id))
+    ? match.ordered.slice(index + 1).filter((song) => (
+      !state.releaseContextConsumedIds.has(song.id) && canExecuteSong(song)
+    ))
     : [];
   return Number.isFinite(limit) ? remaining.slice(0, Math.max(0, limit)) : remaining;
 }
@@ -187,7 +192,7 @@ function automaticGenreContinuation(limit = 12, {
   const seen = new Set();
   const result = [];
   for (const song of ordered) {
-    if (!song?.id || song.id === state.songId || excluded.has(song.id) || seen.has(song.id)) continue;
+    if (!song?.id || song.id === state.songId || excluded.has(song.id) || seen.has(song.id) || !canExecuteSong(song)) continue;
     seen.add(song.id);
     result.push(song);
     if (result.length >= limit) break;
@@ -225,7 +230,7 @@ function sanitiseManualQueue() {
   const seen = new Set();
   for (const id of state.manualQueue) {
     const song = byId.get(id);
-    if (!song?.youtubeId || id === state.songId || seen.has(id)) continue;
+    if (!song || !canExecuteSong(song) || id === state.songId || seen.has(id)) continue;
     seen.add(id);
     next.push(id);
     if (next.length >= 30) break;
@@ -262,32 +267,6 @@ function setPlaying(playing) {
   els.playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   els.miniPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
-}
-
-function preloadBackgrounds() {
-  state.genres.forEach((genre) => {
-    const image = new Image();
-    image.decoding = 'async';
-    image.src = genre.background;
-  });
-}
-
-function setWorld(background, immediate = false) {
-  const incoming = state.activeWorld === 'A' ? els.worldB : els.worldA;
-  const outgoing = state.activeWorld === 'A' ? els.worldA : els.worldB;
-  incoming.style.backgroundImage = `url("${background}")`;
-
-  if (immediate || state.reducedMotion) {
-    outgoing.classList.remove('is-visible');
-    incoming.classList.add('is-visible');
-  } else {
-    requestAnimationFrame(() => {
-      incoming.classList.add('is-visible');
-      outgoing.classList.remove('is-visible');
-    });
-  }
-
-  state.activeWorld = state.activeWorld === 'A' ? 'B' : 'A';
 }
 
 function configureGenreButton(button, genre, activeId, onSelect) {
@@ -449,8 +428,8 @@ function queueSong(songId) {
   }
   const queuedSong = state.songs.find((song) => song.id === songId);
   if (!queuedSong) return;
-  if (!queuedSong.youtubeId) {
-    showToast('This song is not YouTube-ready yet.');
+  if (!canExecuteSong(queuedSong)) {
+    showToast('This recording is not available to play yet.');
     return;
   }
   if (state.manualQueue.includes(songId)) {
@@ -536,6 +515,15 @@ function renderPlayer() {
   els.miniArtist.textContent = song.artist;
   els.durationTime.textContent = formatDuration(state.duration || song.durationSeconds);
   els.elapsedTime.textContent = formatTime(state.elapsed);
+
+  const readiness = routeReadiness(song);
+  els.app.dataset.playbackReady = String(readiness.executable);
+  for (const button of [els.playButton, els.miniPlay]) {
+    button.disabled = !readiness.executable;
+    button.setAttribute('aria-disabled', String(!readiness.executable));
+    if (!readiness.executable) button.title = 'This recording is not available to play yet';
+    else if (!state.playing) button.title = 'Play';
+  }
 
   const ratio = state.duration ? Math.min(1, Math.max(0, state.elapsed / state.duration)) : 0;
   els.progress.value = Math.round(ratio * 1000);
@@ -626,7 +614,6 @@ async function selectSong(songId, options = {}) {
     state.sheetFilter = song.genre;
     els.app.dataset.genre = song.genre;
     setAccent(genre.accent);
-    setWorld(genre.background);
   }
 
   const apply = () => {
@@ -686,7 +673,6 @@ function selectGenre(genreId) {
     state.sheetFilter = genreId;
     els.app.dataset.genre = genreId;
     setAccent(genre.accent);
-    setWorld(genre.background);
     syncGenreStrips();
     renderSheet();
     updateUrl();
@@ -731,6 +717,12 @@ function renderSheet() {
   els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'My Garba' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
+  if (state.sheetSnap === 'closed') {
+    els.songList.replaceChildren();
+    if (els.sheetSummary) els.sheetSummary.textContent = '';
+    return;
+  }
+
   const query = els.searchInput.value.trim();
   const songs = getSheetSongs();
   els.songList.innerHTML = '';
@@ -877,6 +869,12 @@ function toggleFavourite(songId = state.songId) {
   showToast(willAdd ? 'Saved to My Garba.' : 'Removed from My Garba.');
 }
 
+function cancelPendingSearchFocus() {
+  if (state.searchFocusTimer == null) return;
+  clearTimeout(state.searchFocusTimer);
+  state.searchFocusTimer = null;
+}
+
 function setSheetSnap(snap) {
   const allowed = ['closed', 'collapsed', 'medium', 'full'];
   state.sheetSnap = allowed.includes(snap) ? snap : 'closed';
@@ -886,6 +884,7 @@ function setSheetSnap(snap) {
   els.songSheet.setAttribute('aria-hidden', String(!open));
   if (els.browseButton?.hasAttribute('aria-controls')) els.browseButton.setAttribute('aria-expanded', String(open));
   if (!open) {
+    cancelPendingSearchFocus();
     els.songSheet.classList.remove('searching');
     els.searchInput.blur();
   }
@@ -898,6 +897,7 @@ function preferredOpenSnap(mode) {
 }
 
 function openSheet(mode = 'all', options = {}) {
+  cancelPendingSearchFocus();
   const wasClosed = state.sheetSnap === 'closed';
   if (wasClosed && options.trigger instanceof HTMLElement) state.sheetTrigger = options.trigger;
   state.sheetMode = mode;
@@ -913,11 +913,18 @@ function openSheet(mode = 'all', options = {}) {
 
   if (mode === 'search') {
     els.songSheet.classList.add('searching');
-    setTimeout(() => els.searchInput.focus(), state.reducedMotion ? 0 : 150);
+    state.searchFocusTimer = setTimeout(() => {
+      state.searchFocusTimer = null;
+      if (state.sheetMode !== 'search' || state.sheetSnap === 'closed') return;
+      if (els.songSheet.getAttribute('aria-hidden') !== 'false') return;
+      if (!els.songSheet.classList.contains('searching')) return;
+      els.searchInput.focus({ preventScroll: true });
+    }, state.reducedMotion ? 0 : (mobileQuery.matches ? 150 : 450));
   }
 }
 
 function closeSheet({ fromHistory = false } = {}) {
+  cancelPendingSearchFocus();
   if (!fromHistory && history.state?.garbaSheet) {
     history.back();
     return;
@@ -925,7 +932,10 @@ function closeSheet({ fromHistory = false } = {}) {
   setSheetSnap('closed');
   const trigger = state.sheetTrigger;
   state.sheetTrigger = null;
-  if (trigger?.isConnected) setTimeout(() => trigger.focus({ preventScroll: true }), state.reducedMotion ? 0 : 80);
+  if (trigger?.isConnected) {
+    if (state.reducedMotion) trigger.focus({ preventScroll: true });
+    else setTimeout(() => trigger.focus({ preventScroll: true }), 0);
+  }
 }
 
 async function togglePlay() {
@@ -1013,7 +1023,7 @@ function changeSong(direction) {
   }
 
   const genreId = state.playContextGenreId || state.genreId;
-  const list = songsForGenre(genreId);
+  const list = songsForGenre(genreId).filter(canExecuteSong);
   if (!list.length) return;
   const anchorId = state.playContextSongId || state.songId;
   let index = list.findIndex((song) => song.id === anchorId);
@@ -1026,6 +1036,7 @@ function cycleSheetSnap(direction = 1) {
   const order = ['collapsed', 'medium', 'full'];
   if (state.sheetSnap === 'closed') {
     setSheetSnap('medium');
+    renderSheet();
     return;
   }
   const index = order.indexOf(state.sheetSnap);
@@ -1248,6 +1259,7 @@ function wireEvents() {
     if (event.code === 'ArrowLeft') changeSong(-1);
     if (event.code === 'Escape') {
       if (els.songSheet.classList.contains('searching')) {
+        cancelPendingSearchFocus();
         els.songSheet.classList.remove('searching');
         els.searchInput.blur();
       } else closeSheet();
@@ -1266,7 +1278,6 @@ function wireEvents() {
   window.addEventListener('popstate', () => {
     if (state.sheetSnap !== 'closed') {
       closeSheet({ fromHistory: true });
-      updateUrl();
     }
   });
   window.addEventListener('pagehide', persistSession);
@@ -1348,10 +1359,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
     }
 
     const activeGenre = currentGenre();
-    if (activeGenre) {
-      setAccent(activeGenre.accent);
-      preloadBackgrounds();
-    }
+    if (activeGenre) setAccent(activeGenre.accent);
     renderPlayer();
     syncGenreStrips({ smooth: false });
     renderSheet();
@@ -1383,13 +1391,20 @@ function resolveInitialState() {
 
   let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
   if (!song && !pendingSongId && session.songId) song = state.songs.find((entry) => entry.id === session.songId);
+  const preserveRequestedIdentity = Boolean(song && requestedSong && song.id === requestedSong);
+  const preserveRestoredIdentity = Boolean(song && !requestedSong && session.songId && song.id === session.songId);
 
   let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
   if (!genre && song) genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre && session.genreId) genre = state.genres.find((entry) => entry.id === session.genreId);
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
-  if (!song || song.genre !== genre.id) song = state.songs.find((entry) => entry.genre === genre.id) || state.songs[0];
+  if (!song || (!(preserveRequestedIdentity || preserveRestoredIdentity) && song.genre !== genre.id)) {
+    song = state.songs.find((entry) => entry.genre === genre.id && canExecuteSong(entry))
+      || state.songs.find((entry) => entry.genre === genre.id)
+      || state.songs.find(canExecuteSong)
+      || state.songs[0];
+  }
   const releaseContext = requestedRelease
     && requestedSong
     && song?.id === requestedSong
@@ -1426,8 +1441,6 @@ async function init() {
     state.duration = initial.song?.durationSeconds || 0;
     els.app.dataset.genre = initial.genre.id;
     setAccent(initial.genre.accent);
-    els.worldA.style.backgroundImage = `url("${initial.genre.background}")`;
-    preloadBackgrounds();
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {

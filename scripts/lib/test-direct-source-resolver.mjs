@@ -283,13 +283,19 @@ for (const unavailableSong of [
 
 for (const blockedUrl of [
   'https://www.youtube.com/watch?v=abcdefghijk',
+  'https://www.youtube.com./watch?v=abcdefghijk',
   'https://youtu.be/abcdefghijk',
+  'https://youtu.be./abcdefghijk',
   'https://open.spotify.com/track/example',
+  'https://open.spotify.com./track/example',
   'https://music.apple.com/in/song/example/1',
   'https://soundcloud.com/example/song',
   'https://artist.bandcamp.com/track/example',
+  'https://artist.bandcamp.com./track/example',
   'https://t4.bcbits.com/stream/example/mp3-128',
+  'https://t4.bcbits.com./stream/example/mp3-128',
   'https://www.qobuz.com/us-en/album/example/example',
+  'https://www.qobuz.com./us-en/album/example/example',
   'https://www.jiosaavn.com/song/example/abc',
   'https://gaana.com/song/example',
   'https://music.amazon.in/albums/example',
@@ -305,6 +311,8 @@ for (const blockedUrl of [
 }
 
 for (const allowedLookalikeUrl of [
+  'https://spotify.com.example.org/audio.m4a',
+  'https://open.spotify.com.example.org/audio.m4a',
   'https://bandcamp.com.example.org/audio.m4a',
   'https://bcbits.com.example.org/audio.m4a',
   'https://qobuz.com.example.org/audio.m4a',
