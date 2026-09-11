@@ -196,7 +196,6 @@ if (input && status && topbar && spacer) {
       .collection-card{box-shadow:0 12px 30px rgba(0,0,0,.2)}
       .collection-card::after{mix-blend-mode:normal;opacity:.72;transform:none}
       .collection-image{transform:scale(1.018)}
-      .detail-head,.release-section,.songs-section{backdrop-filter:blur(12px) saturate(1.03);-webkit-backdrop-filter:blur(12px) saturate(1.03)}
     }
     @media(max-width:560px){body::before{transform:none}}
     @media(prefers-reduced-motion:reduce){.song-more[data-auto-paging="true"]::after{animation:none}}
@@ -320,12 +319,10 @@ if (input && status && topbar && spacer) {
     .collection-copy strong{font-size:clamp(1.28rem,2vw,1.76rem)}
     .essential-release-section{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
     .essential-release-card{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
-    .detail-head{width:min(920px,100%);margin-bottom:clamp(20px,3vw,30px)}
     .release-section,.songs-section{scroll-margin-top:100px}
     .release-rail,.essential-release-rail{scroll-padding-inline:3px}
     .release-title,.release-meta{overflow:hidden;text-overflow:ellipsis}
     .release-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;min-height:2.5em}
-    .back-button,.quiet-button,.play-link,.song-more,.retry-button{touch-action:manipulation}
 
     @media(min-width:1181px){
       .collection-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -338,9 +335,6 @@ if (input && status && topbar && spacer) {
       .collection-card{min-height:220px;aspect-ratio:1.12/1}
       .collection-copy strong{font-size:clamp(1.28rem,2.5vw,1.62rem)}
       .section-title-row p{max-width:44vw}
-      .collection-detail{width:min(980px,100%)}
-      .detail-head{padding:clamp(36px,5.5vw,56px) clamp(28px,5vw,54px)}
-      .release-section,.songs-section{padding:20px}
     }
 
     @media(min-width:641px) and (max-width:900px){
@@ -355,12 +349,6 @@ if (input && status && topbar && spacer) {
       .collection-copy strong{font-size:clamp(1.3rem,3.7vw,1.62rem)}
       .essential-release-section{margin-bottom:40px}
       .essential-release-rail{grid-auto-columns:minmax(174px,25vw)}
-      .collection-detail{width:min(760px,100%)}
-      .detail-head{padding:clamp(34px,6vw,50px) clamp(24px,5vw,42px);border-radius:28px}
-      .detail-head h2{font-size:clamp(2.8rem,8vw,4.8rem)}
-      .release-section,.songs-section{padding:19px;border-radius:26px}
-      .release-rail{grid-auto-columns:minmax(164px,25vw)}
-      .song-row{grid-template-columns:50px minmax(0,1fr) auto;gap:12px}
     }
 
     @media(max-width:640px){
@@ -386,40 +374,12 @@ if (input && status && topbar && spacer) {
       .essential-release-section .section-title-row{margin-bottom:14px}
       .essential-release-rail{grid-auto-columns:minmax(142px,42vw);gap:12px;margin-inline:calc(var(--explore-gutter) * -1);padding:2px var(--explore-gutter) 10px;scroll-padding-inline:var(--explore-gutter)}
       .essential-release-card{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
-      .collection-detail{padding-top:1px}
-      .back-button{min-height:44px;margin-bottom:11px;padding-inline:14px}
-      .detail-head{margin-bottom:18px;padding:30px 18px;border-radius:22px}
-      .detail-head h2{font-size:clamp(2.35rem,12.2vw,3.7rem);line-height:.98}
-      .detail-head>p:not(.eyebrow){margin-top:15px;font-size:.88rem;line-height:1.55}
-      .detail-meta{margin-top:16px;gap:6px}
-      .detail-meta span{padding:6px 9px;font-size:.72rem}
-      .release-section,.songs-section{margin-top:12px;margin-inline:0;padding:14px;border-radius:21px}
-      .section-heading{gap:10px;margin-bottom:13px}
-      .section-heading h3{font-size:1.12rem}
-      .section-heading>span{font-size:.76rem}
-      .quiet-button{min-height:42px;padding-inline:10px;font-size:.73rem;white-space:nowrap}
-      .release-rail{grid-auto-columns:minmax(146px,45vw);gap:9px;margin-right:calc(var(--explore-gutter) * -1);padding-right:var(--explore-gutter)}
-      .release-cover{border-radius:16px}
-      .release-title{margin-top:8px;font-size:.86rem}
-      .release-meta{font-size:.71rem}
-      .song-row{grid-template-columns:46px minmax(0,1fr) auto;gap:9px;min-height:64px;padding:9px 2px}
-      .song-art{width:46px;height:46px;border-radius:10px}
-      .song-copy strong{font-size:.89rem}
-      .song-copy span{font-size:.72rem}
-      .play-link{min-width:58px;min-height:42px;padding-inline:11px;font-size:.75rem}
-      .song-more{min-height:46px;width:100%;justify-self:stretch}
       body.explore-search-open .catalogue-status{width:calc(100% - (var(--explore-gutter) * 2));max-height:calc(100dvh - max(86px,calc(env(safe-area-inset-top) + 76px)));padding:9px;border-radius:18px}
       .explore-search-label{min-height:50px;border-radius:14px}
     }
 
     @media(max-width:420px){
-      .section-heading{align-items:flex-start;flex-wrap:wrap}
-      .section-heading>span{margin-left:auto;padding-top:4px}
-      .release-section .section-heading{align-items:center}
-      .release-section .section-heading>div{min-width:0;flex:1 1 170px}
-      .release-section .quiet-button{flex:0 0 auto}
       body .collection-grid{grid-auto-columns:minmax(244px,84vw)}
-      .play-link{min-width:54px;padding-inline:9px}
     }
 
     @media(max-width:350px){
@@ -427,11 +387,6 @@ if (input && status && topbar && spacer) {
       .search-explore,.close-explore{width:44px;height:44px}
       body .collection-grid{grid-auto-columns:minmax(238px,84vw)}
       body .collection-card{min-height:168px}
-      .section-heading{gap:7px}
-      .quiet-button{padding-inline:8px;font-size:.7rem}
-      .song-row{grid-template-columns:42px minmax(0,1fr) auto;gap:7px}
-      .song-art{width:42px;height:42px}
-      .play-link{min-width:50px;padding-inline:8px;font-size:.72rem}
     }
 
     @media(max-height:600px) and (orientation:landscape){
@@ -441,18 +396,11 @@ if (input && status && topbar && spacer) {
       .catalogue-section{margin-bottom:28px}
       body .collection-grid{grid-auto-columns:minmax(230px,34vw);padding-bottom:10px}
       body .collection-card{min-height:154px;aspect-ratio:1.42/1}
-      .detail-head{padding-block:24px}
     }
 
     @media(pointer:coarse){
-      .back-button,.quiet-button,.play-link,.song-more,.retry-button{min-height:44px}
       .release-card{touch-action:manipulation}
       .collection-card{touch-action:manipulation}
-    }
-
-    @media(hover:hover) and (pointer:fine){
-      .back-button,.quiet-button,.play-link,.release-card{transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
-      .back-button:hover,.quiet-button:hover{transform:translateY(-1px)}
     }
 
     @media(prefers-reduced-motion:reduce){
@@ -476,101 +424,6 @@ if (input && status && topbar && spacer) {
   selectedContext.className = 'selected-release-context';
   selectedContext.hidden = true;
   songsHeading.append(selectedContext);
-
-  const detailStyle = document.createElement('style');
-  detailStyle.dataset.playgarbaExploreDetailRefinement = '';
-  detailStyle.textContent = `
-    .collection-detail{width:min(1060px,100%)}
-    .collection-detail .detail-actions{width:min(980px,100%);margin-inline:auto;margin-bottom:12px}
-    .collection-detail .detail-head{width:min(980px,100%);max-width:none;margin-bottom:14px;padding:clamp(28px,4.6vw,48px) clamp(22px,5vw,54px);border-radius:28px;background:radial-gradient(circle at 50% 0%,rgba(255,226,177,.085),transparent 36%),rgba(15,14,20,.48);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 24px 70px rgba(0,0,0,.24)}
-    .collection-detail .detail-head h2{max-width:18ch;margin-inline:auto;font-size:clamp(2.15rem,5.2vw,4.25rem);line-height:.98;letter-spacing:-.055em}
-    .collection-detail .detail-head>p:not(.eyebrow){max-width:620px;margin-top:14px;font-size:.92rem;line-height:1.55}
-    .collection-detail .detail-meta{margin-top:16px}
-    .collection-detail .release-section,.collection-detail .songs-section{border-radius:25px;box-shadow:inset 0 1px 0 rgba(255,255,255,.065),0 20px 58px rgba(0,0,0,.20)}
-    .collection-detail .release-section{margin-top:10px;padding:20px 20px 17px;background:rgba(15,14,20,.44)}
-    .collection-detail .songs-section{margin-top:10px;padding:20px;background:rgba(14,13,19,.60)}
-    .collection-detail[data-release-filter="true"] .release-section{border-color:rgba(231,201,143,.16)}
-    .collection-detail[data-release-filter="true"] .songs-section{border-color:rgba(231,201,143,.20);background:linear-gradient(180deg,rgba(231,201,143,.025),transparent 120px),rgba(14,13,19,.62)}
-    .collection-detail .section-heading{align-items:flex-start;margin-bottom:14px}
-    .collection-detail .section-heading>div{min-width:0}
-    .collection-detail .section-heading h3{max-width:32ch;font-size:clamp(1.18rem,2vw,1.38rem);line-height:1.12;text-wrap:balance}
-    .collection-detail .section-heading>span{max-width:40ch;padding-top:3px;line-height:1.35;text-align:right}
-    .selected-release-context{display:block;max-width:58ch;margin:6px 0 0;color:rgba(255,248,236,.56);font-size:.74rem;line-height:1.4}
-    .selected-release-context[hidden]{display:none}
-    .release-rail{scroll-padding-inline:3px;overscroll-behavior-x:contain}
-    .release-card{display:grid;grid-template-rows:auto minmax(2.45em,auto) minmax(2em,auto);align-content:start}
-    .release-title{display:-webkit-box;min-height:2.45em;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;text-overflow:ellipsis;text-wrap:pretty}
-    .release-meta{display:-webkit-box;min-height:2em;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;text-overflow:ellipsis}
-    .release-card.active .release-cover{transform:none;outline:0;border-color:rgba(231,201,143,.80);box-shadow:0 18px 46px rgba(0,0,0,.32),0 0 0 2px rgba(231,201,143,.82),0 0 0 6px rgba(231,201,143,.055)}
-    .release-card.active::after{content:"✓";top:9px;right:9px;display:grid;place-items:center;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.32);border-radius:50%;color:#171419;background:rgba(255,248,236,.94);font-size:.72rem;font-weight:900;line-height:1;box-shadow:0 8px 22px rgba(0,0,0,.26)}
-    .release-card.active .release-title{color:rgba(255,238,209,.96)}
-    .release-card[aria-current="true"]{cursor:default}
-    .quiet-button[hidden]{display:none!important}
-    .song-list{gap:1px}
-    .song-row{min-height:72px;padding:9px 10px;border-top-color:rgba(255,255,255,.065);border-radius:16px}
-    .song-row:hover{background:rgba(255,255,255,.042)}
-    .song-copy strong{line-height:1.25}
-    .play-link{min-width:82px;min-height:42px;gap:6px;padding-inline:14px}
-    .play-link::before{content:"▶";font-size:.58rem;line-height:1;transform:translateY(.2px)}
-
-    @media(max-width:900px){
-      .collection-detail .detail-head{padding:30px 24px}
-      .collection-detail .detail-head h2{font-size:clamp(2.2rem,7.4vw,3.8rem)}
-      .collection-detail .release-section,.collection-detail .songs-section{padding:18px}
-    }
-
-    @media(max-width:640px){
-      .collection-detail .detail-actions{margin-bottom:9px}
-      .collection-detail .detail-head{margin-bottom:11px;padding:24px 17px;border-radius:21px}
-      .collection-detail .detail-head h2{max-width:16ch;font-size:clamp(2rem,10vw,3rem);line-height:1}
-      .collection-detail .detail-head>p:not(.eyebrow){margin-top:12px;font-size:.86rem;line-height:1.5}
-      .collection-detail .detail-meta{margin-top:13px}
-      .collection-detail .release-section,.collection-detail .songs-section{margin-top:8px;padding:13px;border-radius:20px}
-      .collection-detail .section-heading{gap:8px;margin-bottom:11px}
-      .collection-detail .section-heading h3{max-width:22ch;font-size:1.08rem;line-height:1.15}
-      .collection-detail .section-heading>span{font-size:.72rem}
-      .selected-release-context{margin-top:5px;font-size:.7rem;line-height:1.35}
-      .release-rail{grid-auto-columns:minmax(142px,44vw);gap:9px;margin-right:-13px;padding-right:13px}
-      .release-title{font-size:.84rem}
-      .release-meta{font-size:.7rem}
-      .release-card.active::after{top:7px;right:7px;width:25px;height:25px;font-size:.66rem}
-      .song-row{grid-template-columns:45px minmax(0,1fr) auto;gap:9px;min-height:66px;padding:8px 3px}
-      .song-art{width:45px;height:45px}
-      .song-copy strong{display:-webkit-box;overflow:hidden;white-space:normal;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:.88rem;line-height:1.18}
-      .song-copy span{margin-top:2px;white-space:nowrap}
-      .play-link{min-width:60px;min-height:44px;padding-inline:10px;font-size:.73rem}
-      .play-link::before{font-size:.54rem}
-    }
-
-    @media(max-width:420px){
-      .collection-detail .section-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
-      .collection-detail .section-heading>span{align-self:end;max-width:16ch;padding-top:0;font-size:.69rem}
-      .collection-detail .release-section .section-heading{display:flex;align-items:center}
-      .release-card{grid-template-rows:auto minmax(2.35em,auto) minmax(2em,auto)}
-      .song-row{grid-template-columns:43px minmax(0,1fr) auto;gap:8px}
-      .song-art{width:43px;height:43px}
-      .play-link{min-width:56px;padding-inline:8px}
-    }
-
-    @media(max-width:380px){
-      .collection-detail .detail-head{padding-inline:14px}
-      .collection-detail .detail-head h2{font-size:clamp(1.9rem,9.7vw,2.65rem)}
-      .release-rail{grid-auto-columns:minmax(136px,45vw)}
-      .song-row{grid-template-columns:42px minmax(0,1fr) 44px;gap:7px}
-      .song-art{width:42px;height:42px}
-      .play-link{width:44px;min-width:44px;padding:0;font-size:0}
-      .play-link::before{margin:0;font-size:.72rem}
-    }
-
-    @media(hover:hover) and (pointer:fine){
-      .release-card.active:hover .release-cover{transform:none}
-    }
-
-    @media(prefers-reduced-motion:reduce){
-      .release-card.active .release-cover{transform:none}
-    }
-  `;
-  document.head.append(detailStyle);
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let syncQueued = false;
@@ -605,7 +458,7 @@ if (input && status && topbar && spacer) {
     showAll.setAttribute('aria-label', 'Show all songs in this catalogue');
     const nextEyebrow = hasActiveRelease ? 'Selected release' : 'Songs';
     if (songsEyebrow.textContent !== nextEyebrow) {
-      songsEyebrow.textContent = hasActiveRelease ? 'Selected release' : 'Songs';
+      songsEyebrow.textContent = nextEyebrow;
     }
 
     cards.forEach((card) => {
