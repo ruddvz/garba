@@ -130,7 +130,7 @@ jobs:
           set -euo pipefail
           curl -fsSL \
             https://raw.githubusercontent.com/ruddvz/garba/fb91577963002931ff3443cf2cd32abebdc37ee7/scripts/mobile-quality/mobile-quality-smoke.mjs \
-            -o /tmp/mobile-quality-smoke.mjs
+            -o scripts/issue-1325-mobile-quality-smoke.mjs
           printf '%s\n' 'Pinned QA source: fb91577963002931ff3443cf2cd32abebdc37ee7 / scripts/mobile-quality/mobile-quality-smoke.mjs (Git blob f965d041e54b9c6ad1fa5ced6bfafaaebed95f27)' > /tmp/qa-source.txt
 
       - name: Start mobile fixture
@@ -149,7 +149,7 @@ jobs:
           exit 1
 
       - name: Run unchanged Chromium and WebKit matrix
-        run: node /tmp/mobile-quality-smoke.mjs
+        run: node scripts/issue-1325-mobile-quality-smoke.mjs
 
       - name: Upload verification evidence
         if: always()
