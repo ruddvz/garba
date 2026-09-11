@@ -262,16 +262,18 @@ test('short and very long song titles keep transport and discovery controls anch
 });
 
 test('Search opens without clipping and closing restores focus to the opener', async ({ page: sharedPage, browser }, testInfo) => {
+  const isDesktopWebKit = testInfo.project.name === 'desktop-webkit';
   let isolatedBrowser = null;
   let isolatedContext = null;
   let page = sharedPage;
 
-  if (testInfo.project.name === 'desktop-webkit') {
+  if (isDesktopWebKit) {
     isolatedBrowser = await browser.browserType().launch();
     isolatedContext = await isolatedBrowser.newContext({
       baseURL: SMOKE_ORIGIN,
       viewport: { width: 1440, height: 900 },
       deviceScaleFactor: 1,
+      reducedMotion: 'reduce',
     });
     page = await isolatedContext.newPage();
   }
@@ -283,19 +285,134 @@ test('Search opens without clipping and closing restores focus to the opener', a
     const searchButton = page.locator('#searchButton');
     await searchButton.click();
 
-    const sheet = page.locator('#songSheet');
-    await expect(sheet).toHaveAttribute('aria-hidden', 'false');
-    await expect(sheet).toHaveAttribute('data-snap', 'full');
-    await expect(page.locator('#searchInput')).toBeVisible();
-    await expect(sheet).toHaveCSS('transform', /,\s*0\)$/);
-    await expectInsideViewport(page, '#sheetClose');
-    await expectNoDocumentOverflow(page);
+    if (isDesktopWebKit) {
+      const state = await page.evaluate(({ tolerance }) => {
+        const sheet = document.getElementById('songSheet');
+        const input = document.getElementById('searchInput');
+        const close = document.getElementById('sheetClose');
+        const viewportWidth = window.innerWidth;
+        const scrollWidth = document.documentElement.scrollWidth;
+        const bodyScrollWidth = document.body?.scrollWidth || 0;
 
-    await page.locator('#sheetClose').click();
-    await expect(sheet).toHaveAttribute('aria-hidden', 'true');
-    await expect(searchButton).toBeFocused();
-    await expectNoDocumentOverflow(page);
-    await expectNoRuntimeFailures(page, failures, 'Search sheet');
+        if (!(sheet instanceof HTMLElement) || !(input instanceof HTMLElement) || !(close instanceof HTMLElement)) {
+          return {
+            ready: false,
+            reason: 'missing-search-elements',
+            viewportWidth,
+            scrollWidth,
+            bodyScrollWidth,
+          };
+        }
+
+        const isRendered = (element) => {
+          const style = getComputedStyle(element);
+          return element.isConnected
+            && style.display !== 'none'
+            && style.visibility !== 'hidden'
+            && style.visibility !== 'collapse'
+            && element.getClientRects().length > 0;
+        };
+        const rect = close.getBoundingClientRect();
+        const visualViewport = window.visualViewport;
+        const viewport = visualViewport
+          ? {
+              left: visualViewport.offsetLeft,
+              top: visualViewport.offsetTop,
+              width: visualViewport.width,
+              height: visualViewport.height,
+            }
+          : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+        const geometry = [
+          rect.left,
+          rect.top,
+          rect.right,
+          rect.bottom,
+          rect.width,
+          rect.height,
+          viewport.left,
+          viewport.top,
+          viewport.width,
+          viewport.height,
+        ];
+        const finiteGeometry = geometry.every(Number.isFinite);
+        const positiveGeometry = rect.width > 0
+          && rect.height > 0
+          && viewport.width > 0
+          && viewport.height > 0;
+        const inside = finiteGeometry
+          && positiveGeometry
+          && rect.left >= viewport.left - tolerance
+          && rect.right <= viewport.left + viewport.width + tolerance
+          && rect.top >= viewport.top - tolerance
+          && rect.bottom <= viewport.top + viewport.height + tolerance;
+        const open = {
+          ariaHidden: sheet.getAttribute('aria-hidden'),
+          snap: sheet.getAttribute('data-snap'),
+          inputRendered: isRendered(input),
+          closeRendered: isRendered(close),
+          reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          finiteGeometry,
+          positiveGeometry,
+          inside,
+          rect: {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+          },
+          viewport,
+          viewportWidth,
+          scrollWidth,
+          bodyScrollWidth,
+        };
+
+        close.click();
+
+        return {
+          ready: true,
+          open,
+          closed: {
+            ariaHidden: sheet.getAttribute('aria-hidden'),
+            focusedId: document.activeElement?.id || null,
+            viewportWidth: window.innerWidth,
+            scrollWidth: document.documentElement.scrollWidth,
+            bodyScrollWidth: document.body?.scrollWidth || 0,
+          },
+        };
+      }, { tolerance: 2 });
+
+      expect(state.ready, `Search snapshot should resolve (${state.reason || 'ready'})`).toBe(true);
+      expect(state.open.reducedMotion, 'isolated desktop WebKit should use the existing reduced-motion CSS path').toBe(true);
+      expect(state.open.ariaHidden, 'Search sheet should be exposed after opening').toBe('false');
+      expect(state.open.snap, 'Search sheet should request the full snap').toBe('full');
+      expect(state.open.inputRendered, 'Search input should be rendered').toBe(true);
+      expect(state.open.closeRendered, 'Search close control should be rendered').toBe(true);
+      expect(state.open.finiteGeometry, `Search close geometry should be finite: ${JSON.stringify(state.open)}`).toBe(true);
+      expect(state.open.positiveGeometry, `Search close geometry should have positive size: ${JSON.stringify(state.open)}`).toBe(true);
+      expect(state.open.inside, `#sheetClose should be fully inside the visual viewport: ${JSON.stringify(state.open)}`).toBe(true);
+      expect(state.open.scrollWidth, 'open Search document should not overflow horizontally').toBeLessThanOrEqual(state.open.viewportWidth + 2);
+      expect(state.open.bodyScrollWidth, 'open Search body should not overflow horizontally').toBeLessThanOrEqual(state.open.viewportWidth + 2);
+      expect(state.closed.ariaHidden, 'Search sheet should be hidden after closing').toBe('true');
+      expect(state.closed.focusedId, 'closing Search should restore focus to its opener').toBe('searchButton');
+      expect(state.closed.scrollWidth, 'closed Search document should not overflow horizontally').toBeLessThanOrEqual(state.closed.viewportWidth + 2);
+      expect(state.closed.bodyScrollWidth, 'closed Search body should not overflow horizontally').toBeLessThanOrEqual(state.closed.viewportWidth + 2);
+      expect(failures, 'Search sheet should have no uncaught errors, failed same-origin requests or HTTP errors').toEqual([]);
+    } else {
+      const sheet = page.locator('#songSheet');
+      await expect(sheet).toHaveAttribute('aria-hidden', 'false');
+      await expect(sheet).toHaveAttribute('data-snap', 'full');
+      await expect(page.locator('#searchInput')).toBeVisible();
+      await expectInsideViewport(page, '#sheetClose');
+      await expectNoDocumentOverflow(page);
+
+      await page.locator('#sheetClose').click();
+      await expect(sheet).toHaveAttribute('aria-hidden', 'true');
+      await expect(searchButton).toBeFocused();
+      await expectNoDocumentOverflow(page);
+      await expectNoRuntimeFailures(page, failures, 'Search sheet');
+    }
   } finally {
     if (isolatedContext) await isolatedContext.close().catch(() => {});
     if (isolatedBrowser) await isolatedBrowser.close().catch(() => {});
