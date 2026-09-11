@@ -245,7 +245,7 @@ jobs:
           npx playwright test
           --config=.github/browser/playwright.config.mjs
           --project=desktop-webkit
-          --grep '^Search opens without clipping and closing restores focus to the opener$'
+          --grep 'Search opens without clipping and closing restores focus to the opener'
 
       - name: Upload failure diagnostics
         if: failure()
