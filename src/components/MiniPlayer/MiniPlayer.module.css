@@ -1,0 +1,171 @@
+.miniPlayer {
+  position: fixed;
+  bottom: calc(18px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 640px;
+  background: rgba(18, 21, 38, 0.92);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(246, 236, 215, 0.12);
+  z-index: 45;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.miniPlayer:hover {
+  background: rgba(18, 21, 38, 0.98);
+  border-color: rgba(214, 176, 111, 0.35);
+  transform: translate(-50%, -2px);
+}
+
+/* Progress bar along top edge */
+.progressBarTrack {
+  width: 100%;
+  height: 3px;
+  background: rgba(246, 236, 215, 0.08);
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  transition: width 350ms linear;
+}
+
+.innerContent {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.leftBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.artworkIndicator {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #252a4a 0%, #101221 100%);
+  border: 1.5px solid rgba(214, 176, 111, 0.4);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.discIcon {
+  color: var(--accent);
+}
+
+.spinning {
+  animation: discSpin 8s linear infinite;
+}
+
+@keyframes discSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.songInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.songTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.songArtist {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.controlBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.controlBtn:hover {
+  color: var(--text-primary);
+  background: rgba(246, 236, 215, 0.08);
+}
+
+.playPauseBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #101221;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(214, 176, 111, 0.35);
+  transition: all var(--transition-fast);
+}
+
+.playPauseBtn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 18px rgba(214, 176, 111, 0.45);
+}
+
+.expandBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(246, 236, 215, 0.06);
+  border: none;
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.expandBtn:hover {
+  color: var(--text-primary);
+  background: rgba(246, 236, 215, 0.12);
+}

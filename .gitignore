@@ -12,4 +12,5 @@ node_modules/
 /data/playback-sources-generated.json
 /data/playback-coverage.json
 .vercel
+dist/
 .env*

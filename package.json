@@ -2,8 +2,13 @@
   "name": "garba-music",
   "version": "0.7.0",
   "private": true,
+  "type": "module",
   "description": "Open, community-built Gujarati Garba catalogue and immersive music player.",
   "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && cp -R data assets manifest.webmanifest robots.txt sitemap.xml CNAME offline.html sw.js dist/",
+    "preview": "vite preview",
+    "test:modern": "node --test scripts/lib/test-modern-app.mjs",
     "catalogue": "node scripts/lib/validate-catalogue-release-ids.mjs && node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",
     "catalogue:metadata:audit": "node scripts/lib/audit-catalogue-metadata.mjs",
     "playback:report": "npm run catalogue && node scripts/report-playback-route-quality.mjs",
@@ -40,6 +45,21 @@
     "listening:flow:validate": "node scripts/lib/validate-listening-flow.mjs",
     "release:context:validate": "node scripts/lib/validate-release-listening-context.mjs",
     "raas:verify": "node scripts/lib/raas-verify.mjs",
-    "raas:test": "node scripts/lib/test-raas-verify.mjs"
+    "raas:test": "node scripts/lib/test-raas-verify.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "lucide-react": "^1.45.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }

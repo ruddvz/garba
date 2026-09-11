@@ -79,7 +79,7 @@ self.addEventListener('install', (event) => {
 
     const cache = await caches.open(STAGING_CACHE_NAME);
     try {
-      await cache.addAll(CORE_SHELL);
+      await Promise.allSettled(CORE_SHELL.map((url) => cache.add(url)));
       await cache.put(STAGING_READY_URL, new Response('ready', {
         headers: { 'content-type': 'text/plain; charset=utf-8' },
       }));

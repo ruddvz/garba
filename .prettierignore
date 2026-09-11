@@ -1,0 +1,25 @@
+# Build & package artifacts
+node_modules/
+dist/
+.git/
+.raas/
+.github/
+
+# Legacy runtime & test fixtures (rely on exact string assertions)
+scripts/
+assets/
+data/
+docs/
+public-site/
+styles/
+src/accessibility/
+src/catalogue/
+src/navigation/
+src/optional/
+src/pga/
+src/playback/
+styles.css
+*.js
+*.html
+*.md
+manifest.webmanifest

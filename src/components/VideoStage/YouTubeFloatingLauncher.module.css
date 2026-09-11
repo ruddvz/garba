@@ -1,0 +1,139 @@
+.launcherWrapper {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 85;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  animation: launcherFadeIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: bottom var(--transition-normal, 250ms ease), opacity var(--transition-fast, 180ms ease), transform var(--transition-fast, 180ms ease);
+}
+
+.aboveMiniPlayer {
+  bottom: calc(72px + 18px);
+}
+
+.launcherBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 12px;
+  min-height: var(--min-touch-target, 44px);
+  background: rgba(18, 20, 36, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass, rgba(246, 236, 215, 0.16));
+  border-radius: var(--radius-full, 9999px);
+  color: var(--text-primary, #f6ecd7);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all var(--transition-fast, 180ms ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.launcherBtn:hover {
+  background: rgba(28, 32, 54, 0.95);
+  border-color: rgba(246, 236, 215, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(246, 236, 215, 0.2);
+}
+
+.launcherBtn:active {
+  transform: translateY(0);
+}
+
+.launcherBtn:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent, #d4a359), 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.active {
+  background: rgba(36, 40, 68, 0.95);
+  border-color: var(--accent, #d4a359);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 16px rgba(212, 163, 89, 0.3);
+}
+
+/* Monochromatic YouTube Icon */
+.ytIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  opacity: 0.92;
+  transition: opacity var(--transition-fast, 180ms ease), transform var(--transition-fast, 180ms ease);
+}
+
+.launcherBtn:hover .ytIconWrap {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.ytSvg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.btnLabel {
+  font-size: 11.5px;
+  color: var(--text-secondary, rgba(246, 236, 215, 0.8));
+  white-space: nowrap;
+}
+
+.activeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff5252;
+  box-shadow: 0 0 8px #ff5252;
+}
+
+/* Tooltip / Status hint */
+.shortcutHint {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(246, 236, 215, 0.1);
+  color: var(--text-muted, rgba(246, 236, 215, 0.5));
+  font-weight: 500;
+  margin-left: 2px;
+}
+
+@keyframes launcherFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .launcherWrapper {
+    bottom: 84px;
+    right: 16px;
+  }
+
+  .aboveMiniPlayer {
+    bottom: calc(72px + 20px);
+  }
+
+  .btnLabel,
+  .shortcutHint {
+    display: none;
+  }
+
+  .launcherBtn {
+    padding: 10px;
+    border-radius: 50%;
+  }
+}
