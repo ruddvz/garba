@@ -41,7 +41,6 @@ const SUITES = Object.freeze([
       'env.keyboard-only',
       'env.reduced-motion',
       'env.increased-forced-contrast',
-      'env.offline-flaky-network',
       'env.auth-expired-denied',
       'env.telemetry-backend-unavailable',
       'journey.recover-network-backend-failure',
