@@ -402,6 +402,8 @@ main {
 .section-heading { display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px; }
 .section-heading h3 { font-size:1.28rem;font-weight:650; }
 .section-heading > span { color:rgba(255,248,236,.48);font-size:.77rem; }
+.selected-release-context { max-width:58ch;margin:5px 0 0;color:rgba(255,248,236,.52);font-size:.72rem;line-height:1.4; }
+.selected-release-context[hidden] { display:none; }
 
 .release-rail,
 .essential-release-rail {
@@ -439,7 +441,7 @@ main {
   transition:transform .24s cubic-bezier(.2,.7,.2,1),border-color .22s ease,box-shadow .22s ease;
 }
 .release-card:hover .release-cover { transform:translateY(-3px);border-color:rgba(255,255,255,.2);box-shadow:0 20px 46px rgba(0,0,0,.33); }
-.release-card.active .release-cover { outline:1px solid rgba(231,201,143,.9);outline-offset:3px;border-color:rgba(231,201,143,.48);box-shadow:0 20px 52px rgba(0,0,0,.36),0 0 0 7px rgba(231,201,143,.045);transform:translateY(-2px); }
+.release-card.active .release-cover { outline:0;border-color:rgba(231,201,143,.72);box-shadow:0 14px 36px rgba(0,0,0,.28),0 0 0 2px rgba(231,201,143,.72);transform:none; }
 .release-card.active::after {
   content:"" !important;
   position:absolute;
@@ -691,6 +693,7 @@ main[aria-busy="true"] #catalogueSections:empty::before {
   .section-heading { align-items:center;margin-bottom:13px; }
   .section-heading h3 { font-size:1.12rem; }
   .section-heading > span { font-size:.68rem; }
+  .selected-release-context { margin-top:4px;font-size:.68rem;line-height:1.35; }
   .quiet-button { min-height:36px;font-size:.7rem;padding-inline:10px; }
   .release-rail { grid-auto-columns:minmax(145px,168px);gap:10px;margin-right:-18px;padding-right:18px; }
   .release-cover { border-radius:15px; }
