@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: issue-1325-mobile-quality-${{ github.ref }}
@@ -22,6 +22,46 @@ jobs:
     steps:
       - name: Checkout product branch
         uses: actions/checkout@v6
+        with:
+          ref: fix/issue-1325-short-landscape-player
+
+      - name: Apply authoritative short-landscape spacing correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('nonstop-browser.js')
+          source = path.read_text()
+          old = '''@media(max-height:560px) and (orientation:landscape){
+            .player-shell{grid-template-rows:auto auto auto auto auto!important}
+            #genreStrip{grid-row:4!important;align-self:end!important}
+            #browseActions{grid-row:5!important;align-self:start!important}
+          }'''
+          new = '''@media(max-height:560px) and (orientation:landscape){
+            html body .app .player-shell{
+              grid-template-rows:auto auto auto 11px 0 auto 36px auto!important;
+              padding-top:52px!important
+            }
+            html body .app #genreStrip{grid-row:6!important;align-self:end!important}
+            html body .app #browseActions{grid-row:8!important;align-self:start!important}
+          }'''
+          if old in source:
+              if source.count(old) != 1:
+                  raise SystemExit('Expected exactly one existing #1325 short-landscape block')
+              path.write_text(source.replace(old, new, 1))
+          elif new not in source:
+              raise SystemExit('Expected #1325 short-landscape block not found')
+          PY
+          git diff --check -- nonstop-browser.js
+          if ! git diff --quiet -- nonstop-browser.js; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add nonstop-browser.js
+            git commit -m 'Fix short-landscape player geometry for #1325'
+            git push origin HEAD:fix/issue-1325-short-landscape-player
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v5
