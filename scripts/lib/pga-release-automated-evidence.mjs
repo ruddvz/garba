@@ -14,6 +14,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i
 const DEFAULT_OUTPUT = 'artifacts/pga-release-automated-evidence.json'
 const DEFAULT_TIMEOUT_MS = 6 * 60 * 1000
 const MAX_TIMEOUT_MS = 15 * 60 * 1000
+const EXPECTED_AUTOMATED_VERIFIED_COUNT = 19
 
 function text(value) {
   if (value == null) return null
@@ -130,7 +131,7 @@ if (failedSuites.length > 0) {
   process.exit(1)
 }
 
-if (record.ledger.status !== 'incomplete' || record.ledger.counts.verified !== 12) {
+if (record.ledger.status !== 'incomplete' || record.ledger.counts.verified !== EXPECTED_AUTOMATED_VERIFIED_COUNT) {
   console.error('Automated evidence boundary changed unexpectedly; refusing to claim release readiness.')
   process.exit(1)
 }

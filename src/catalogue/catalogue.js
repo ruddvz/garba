@@ -530,10 +530,11 @@ function buildCollections() {
   }).filter((collection) => collection.songs.length > 0);
 }
 
-function collectionSection(title, description, collections) {
+function collectionSection(title, description, collections, presentation = 'destination') {
   if (!collections.length) return;
+  const presentationKind = ['destination', 'taxonomy', 'artist'].includes(presentation) ? presentation : 'destination';
   const section = document.createElement('section');
-  section.className = 'catalogue-section';
+  section.className = `catalogue-section collection-section collection-section--${presentationKind}`;
   const head = document.createElement('div');
   head.className = 'section-title-row';
   const heading = document.createElement('h2');
@@ -542,16 +543,27 @@ function collectionSection(title, description, collections) {
   copy.textContent = description;
   head.append(heading, copy);
   const grid = document.createElement('div');
-  grid.className = 'collection-grid';
-  collections.forEach((collection) => grid.append(renderCollectionCard(collection)));
+  grid.className = `collection-grid collection-grid--${presentationKind}`;
+  collections.forEach((collection) => grid.append(renderCollectionCard(collection, presentationKind)));
   section.append(head, grid);
   els.sections.append(section);
 }
 
-function renderCollectionCard(collection) {
+function renderCollectionCard(collection, presentation = 'destination') {
   const card = els.cardTemplate.content.firstElementChild.cloneNode(true);
+  const presentationKind = ['destination', 'taxonomy', 'artist'].includes(presentation) ? presentation : 'destination';
   card.dataset.collectionId = collection.id;
-  card.querySelector('.collection-image').style.backgroundImage = `url("${collection.visual}")`;
+  card.dataset.presentation = presentationKind;
+  card.classList.add(`collection-card--${presentationKind}`);
+  const image = card.querySelector('.collection-image');
+  if (presentationKind === 'artist') {
+    image.style.backgroundImage = 'none';
+    image.textContent = initials(collection.title.replace(/\s+Essentials$/i, ''));
+    image.classList.add('collection-image--monogram');
+    image.setAttribute('aria-hidden', 'true');
+  } else {
+    image.style.backgroundImage = `url("${collection.visual}")`;
+  }
   card.querySelector('small').textContent = collection.kicker;
   card.querySelector('strong').textContent = collection.title;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
@@ -617,10 +629,10 @@ function renderCollectionHome() {
   const byId = (id) => state.collections.find((collection) => collection.id === id);
   const featuredIds = ['nonstop','live','current','classics','dandiya-raas','devotional'];
   renderEssentialReleases();
-  collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean));
-  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)));
-  collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data, not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')));
-  collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')));
+  collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean), 'destination');
+  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)), 'taxonomy');
+  collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data, not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')), 'artist');
+  collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')), 'taxonomy');
 }
 
 function artworkEntry(releaseId) {

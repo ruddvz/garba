@@ -6,10 +6,32 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { compileTask } from './raas-task.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const adaptiveConfigPath = path.resolve(__dirname, '../.raas/adaptive-cto.json')
+const repoRoot = path.resolve(__dirname, '..')
+const adaptiveConfigPath = path.resolve(repoRoot, '.raas/adaptive-cto.json')
+const kernelPath = path.resolve(repoRoot, '.raas/kernel.json')
+const kernelRelativePath = '.raas/kernel.json'
+const kernelCoveredSources = new Set([
+  'AGENTS.md',
+  '.raas/RAAS.md',
+  '.raas/PROJECT-CONTEXT.md',
+  '.raas/EXECUTION.md'
+])
+const requiredKernelInvariantIds = Object.freeze([
+  'source-first-truth',
+  'no-invented-catalogue-facts',
+  'claim-before-code',
+  'canonical-inputs-before-generated',
+  'pr-is-not-completion',
+  'verified-results-only',
+  'client-neutral-truth'
+])
 
 export function loadAdaptiveConfig() {
   return JSON.parse(fs.readFileSync(adaptiveConfigPath, 'utf8'))
+}
+
+export function loadKernel() {
+  return JSON.parse(fs.readFileSync(kernelPath, 'utf8'))
 }
 
 function normalize(value) {
@@ -26,6 +48,57 @@ function includesAny(text, terms) {
 
 function routeIds(task) {
   return task.routes.map((route) => route.id)
+}
+
+function repoPath(root, relativePath) {
+  const target = path.resolve(root, relativePath)
+  const relative = path.relative(root, target)
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    throw new Error(`RAAS kernel source escapes repository root: ${relativePath}`)
+  }
+  return target
+}
+
+export function validateKernel(kernel = loadKernel(), { root = repoRoot } = {}) {
+  if (!kernel || typeof kernel !== 'object' || Array.isArray(kernel)) throw new Error('RAAS kernel must be an object')
+  if (kernel.schemaVersion !== 'raas-kernel/v1') throw new Error(`Unsupported RAAS kernel schema: ${kernel.schemaVersion || '(missing)'}`)
+  if (!Number.isInteger(kernel.version) || kernel.version < 1) throw new Error('RAAS kernel version must be a positive integer')
+  if (!Array.isArray(kernel.invariants)) throw new Error('RAAS kernel invariants must be an array')
+
+  const ids = kernel.invariants.map((invariant) => invariant?.id).filter(Boolean)
+  if (new Set(ids).size !== ids.length) throw new Error('RAAS kernel invariant IDs must be unique')
+  for (const id of requiredKernelInvariantIds) {
+    if (!ids.includes(id)) throw new Error(`RAAS kernel missing required invariant: ${id}`)
+  }
+
+  const humanContract = String(kernel.humanContract || '').trim()
+  if (!humanContract) throw new Error('RAAS kernel humanContract is required')
+  const humanPath = repoPath(root, humanContract)
+  if (!fs.existsSync(humanPath) || !fs.statSync(humanPath).isFile()) {
+    throw new Error(`RAAS kernel human contract is missing: ${humanContract}`)
+  }
+  const human = fs.readFileSync(humanPath, 'utf8')
+
+  for (const invariant of kernel.invariants) {
+    if (!invariant || typeof invariant !== 'object' || Array.isArray(invariant)) throw new Error('RAAS kernel invariant must be an object')
+    const id = String(invariant.id || '').trim()
+    const source = String(invariant.source || '').trim()
+    const anchor = String(invariant.anchor || '').trim()
+    const summary = String(invariant.summary || '').trim()
+    if (!id || !source || !anchor || !summary) throw new Error(`RAAS kernel invariant is incomplete: ${id || '(missing id)'}`)
+
+    const sourcePath = repoPath(root, source)
+    if (!fs.existsSync(sourcePath) || !fs.statSync(sourcePath).isFile()) {
+      throw new Error(`RAAS kernel source is missing for ${id}: ${source}`)
+    }
+    const sourceText = fs.readFileSync(sourcePath, 'utf8')
+    if (!sourceText.includes(anchor)) throw new Error(`RAAS kernel anchor drifted for ${id}: ${source}`)
+    if (!human.includes(`\`${id}\``) || !human.includes(`\`${source}\``)) {
+      throw new Error(`RAAS kernel human contract does not index ${id} -> ${source}`)
+    }
+  }
+
+  return kernel
 }
 
 function detectDeliveryStop(text) {
@@ -155,6 +228,155 @@ function stopConditions(task, deliveryStop) {
   return conditions
 }
 
+function explicitRepoPaths(input) {
+  const values = []
+  const accept = (candidate) => {
+    const value = String(candidate || '').trim().replace(/[),.;:]+$/, '')
+    if (!value || /^https?:\/\//i.test(value) || value.includes(' ') || !value.includes('/')) return
+    if (value.startsWith('/') || value.startsWith('../') || value.includes('/../')) return
+    if (!/^[A-Za-z0-9._*\-/]+$/.test(value)) return
+    values.push(value)
+  }
+  for (const match of String(input || '').matchAll(/`([^`]+)`/g)) accept(match[1])
+  for (const match of String(input || '').matchAll(/\b(?:[A-Za-z0-9._-]+\/)+(?:[A-Za-z0-9._*-]+)\b/g)) accept(match[0])
+  return [...new Set(values)]
+}
+
+function contextQueryKey(query) {
+  return [query.kind, query.target, query.purpose].map(normalize).join('|')
+}
+
+function dedupeContextQueries(queries) {
+  const seen = new Set()
+  return queries.filter((query) => {
+    const key = contextQueryKey(query)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function sourceQueries(task, maxSources) {
+  const sources = task.truth_sources.filter((source) => !kernelCoveredSources.has(source))
+  const bounded = Number.isFinite(maxSources) ? sources.slice(0, Math.max(0, maxSources)) : sources
+  return bounded.map((source, index) => ({
+    id: `source-${index + 1}`,
+    kind: 'source',
+    target: source,
+    purpose: 'Load this route-specific authority only if it can change the bounded task decision.',
+    required: true,
+    freshness: 'repository-revision'
+  }))
+}
+
+function exactIdentityQuery(task) {
+  const routes = new Set(routeIds(task))
+  if (routes.has('rights')) {
+    return {
+      id: 'exact-rights-evidence',
+      kind: 'evidence',
+      target: 'exact recording, rights holder, licence scope and durable provenance for the named asset',
+      purpose: 'Prove redistribution/streaming authority for the exact recording before any executable rights change.',
+      required: true,
+      freshness: 'current-source-evidence'
+    }
+  }
+  if (routes.has('playback')) {
+    return {
+      id: 'exact-playback-identity',
+      kind: 'evidence',
+      target: 'exact canonical recording plus current playback manifest route and authoritative provider recording evidence',
+      purpose: 'Prove that the executable provider route matches the intended recording/release and current canonical ID.',
+      required: true,
+      freshness: 'current-source-evidence'
+    }
+  }
+  if (routes.has('catalogue')) {
+    return {
+      id: 'exact-catalogue-identity',
+      kind: 'evidence',
+      target: 'exact named canonical catalogue record plus direct source evidence controlling the requested facts',
+      purpose: 'Resolve the owning shard and source-backed identity before editing catalogue metadata or relationships.',
+      required: true,
+      freshness: 'current-source-evidence'
+    }
+  }
+  return null
+}
+
+function buildContextQueries({ task, input, budget, mutationAllowed, verification }) {
+  const queries = [{
+    id: 'compact-kernel',
+    kind: 'kernel',
+    target: kernelRelativePath,
+    purpose: 'Load compact cross-cutting invariants and canonical source pointers without preloading full doctrine.',
+    required: true,
+    freshness: 'repository-revision'
+  }]
+
+  if (task.needs_split) {
+    queries.push({
+      id: 'split-preflight',
+      kind: 'github',
+      target: 'current target/master issue, recent comments, issue #364 and open child/overlap PRs',
+      purpose: 'Select one bounded unowned child lane before loading implementation-domain context.',
+      required: true,
+      freshness: 'current'
+    })
+    return dedupeContextQueries(queries)
+  }
+
+  if (mutationAllowed) {
+    queries.push({
+      id: 'ownership-preflight',
+      kind: 'github',
+      target: 'target implementation issue, recent comments, issue #364 and overlapping open PRs',
+      purpose: 'Refresh current issue, branch and file ownership before repository mutation.',
+      required: true,
+      freshness: 'current'
+    })
+  }
+
+  const explicitPaths = explicitRepoPaths(input)
+  if (explicitPaths.length > 0) {
+    queries.push({
+      id: 'explicit-targets',
+      kind: 'repository',
+      target: explicitPaths.join('; '),
+      purpose: 'Inspect the exact named files/symbol-adjacent sources before any broader repository read.',
+      required: true,
+      freshness: 'repository-revision'
+    })
+  } else if (task.routes.length > 0) {
+    queries.push({
+      id: 'resolve-exact-target',
+      kind: 'repository',
+      target: `exact current file/record/symbol inside the ${task.routes.map((route) => route.label).join(' + ')} lane`,
+      purpose: 'Resolve the smallest owning source from the request and issue before reading broad likely-file globs.',
+      required: true,
+      freshness: 'repository-revision'
+    })
+  }
+
+  queries.push(...sourceQueries(task, budget.maxSources ?? null))
+
+  const identityQuery = exactIdentityQuery(task)
+  if (identityQuery) queries.push(identityQuery)
+
+  if (verification.includes('browser-manual-when-acceptance-is-visual')) {
+    queries.push({
+      id: 'visual-browser-evidence',
+      kind: 'browser-evidence',
+      target: 'current affected interaction/layout at the required viewport/browser states',
+      purpose: 'Capture browser evidence only because the acceptance criterion is visual or interaction behavior.',
+      required: true,
+      freshness: 'current-head'
+    })
+  }
+
+  return dedupeContextQueries(queries)
+}
+
 export function compileAdaptiveTask(text, config = loadAdaptiveConfig()) {
   const input = String(text || '').trim()
   const normalized = normalize(input)
@@ -168,6 +390,10 @@ export function compileAdaptiveTask(text, config = loadAdaptiveConfig()) {
   const risk = detectRisk(task, truthSensitivity, mode)
   const tier = selectTier({ task, text: normalized, risk, deliveryStop })
   const budget = config.tiers[tier]
+  const mutationAllowed = !['answer', 'plan'].includes(deliveryStop)
+  const verification = verificationFrontier(task, tier, deliveryStop)
+  const kernel = validateKernel()
+  const contextQueries = buildContextQueries({ task, input, budget, mutationAllowed, verification })
 
   return {
     version: config.version,
@@ -182,15 +408,23 @@ export function compileAdaptiveTask(text, config = loadAdaptiveConfig()) {
     tier,
     budget,
     budget_is_ceiling_not_target: true,
-    mutation_allowed: !['answer', 'plan'].includes(deliveryStop),
+    mutation_allowed: mutationAllowed,
     needs_split: task.needs_split,
     routes: task.routes,
     scope: task.scope,
     truth_sources: task.truth_sources,
     likely_files: task.likely_files,
     risks: task.risks,
+    compact_kernel: {
+      path: kernelRelativePath,
+      human: kernel.humanContract,
+      schema_version: kernel.schemaVersion,
+      version: kernel.version,
+      invariant_ids: kernel.invariants.map((invariant) => invariant.id)
+    },
+    context_queries: contextQueries,
     escalation_reasons: escalationReasons({ task, risk, truthSensitivity, deliveryStop, tier }),
-    verification_frontier: verificationFrontier(task, tier, deliveryStop),
+    verification_frontier: verification,
     parallelism_policy: {
       read_only_agents_max: budget.parallelReadOnlyAgents,
       mutation_lanes_max: budget.parallelMutationLanes,
@@ -296,6 +530,10 @@ export function formatAdaptiveMarkdown(result) {
     `**Truth sensitivity:** ${result.truth_sensitivity}`,
     `**Mutation allowed:** ${result.mutation_allowed ? 'yes' : 'no'}`,
     `**Needs split:** ${result.needs_split ? 'yes' : 'no'}`,
+    `**Compact kernel:** ${result.compact_kernel.path} (${result.compact_kernel.schema_version})`,
+    '',
+    '## Context queries',
+    ...result.context_queries.map((query) => `- [${query.kind}] \`${query.target}\`: ${query.purpose}`),
     '',
     '## Budget ceiling',
     '```json',

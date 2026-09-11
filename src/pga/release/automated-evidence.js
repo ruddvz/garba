@@ -38,6 +38,13 @@ const SUITES = Object.freeze([
     itemIds: Object.freeze([
       'env.desktop-chrome',
       'env.narrow-phone',
+      'env.keyboard-only',
+      'env.reduced-motion',
+      'env.increased-forced-contrast',
+      'env.auth-expired-denied',
+      'env.telemetry-backend-unavailable',
+      'journey.recover-network-backend-failure',
+      'journey.expire-access-safely',
       'quality.primary-actions-visible',
       'quality.no-horizontal-overflow',
     ]),

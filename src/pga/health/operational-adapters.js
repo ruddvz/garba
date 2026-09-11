@@ -63,7 +63,7 @@ function sourceSummaries(sources) {
       status: safeText(source?.status),
     }
     if (Object.prototype.hasOwnProperty.call(source || {}, 'sampled')) {
-      summary.sampled = Boolean(source.sampled)
+      summary.sampled = typeof source.sampled === 'boolean' ? source.sampled : null
     }
     return summary
   }).filter((source) => source.name || source.status)

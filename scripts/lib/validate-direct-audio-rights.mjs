@@ -33,6 +33,9 @@ const BLOCKED_PROVIDER_HOST_SUFFIXES = [
   'mzstatic.com',
   'soundcloud.com',
   'sndcdn.com',
+  'bandcamp.com',
+  'bcbits.com',
+  'qobuz.com',
   'gaana.com',
   'jiosaavn.com',
   'music.amazon.com',
@@ -64,8 +67,17 @@ function parseHttpsUrl(value) {
   }
 }
 
+function sameHttpResourceIgnoringFragment(left, right) {
+  if (!left || !right) return false
+  const leftUrl = new URL(left.href)
+  const rightUrl = new URL(right.href)
+  leftUrl.hash = ''
+  rightUrl.hash = ''
+  return leftUrl.href === rightUrl.href
+}
+
 function hostMatches(hostname, suffix) {
-  const host = hostname.toLowerCase().replace(/^www\./, '')
+  const host = String(hostname || '').toLowerCase().replace(/\.$/, '').replace(/^www\./, '')
   const target = suffix.toLowerCase()
   return host === target || host.endsWith(`.${target}`)
 }
@@ -161,7 +173,7 @@ export function validateDirectAudioManifest(manifest, canonicalSongIds = new Set
     if (!proof) {
       add(`${at}.rights.proofUrl`, 'must be an absolute HTTPS evidence URL')
     } else {
-      if (audio && proof.href === audio.href) {
+      if (audio && sameHttpResourceIgnoringFragment(proof, audio)) {
         add(`${at}.rights.proofUrl`, 'must be rights evidence, not the media URL itself')
       }
       const contract = `${String(rights.rightsHolder || '').trim()}\u0000${String(rights.licenseName || '').trim()}`

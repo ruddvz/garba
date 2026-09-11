@@ -38,9 +38,8 @@ function normaliseState(value) {
 }
 
 function nonNegativeInteger(value) {
-  if (value == null || value === '') return null
-  const number = Number(value)
-  return Number.isInteger(number) && number >= 0 ? number : null
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  return Number.isInteger(value) && value >= 0 ? value : null
 }
 
 function catalogueSource(sourceUrl, revision) {

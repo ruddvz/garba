@@ -303,3 +303,65 @@ test('critical playback failure can lead overall Health to failed without fabric
   assert.equal(result.leadingSubsystem, 'playback')
   assert.equal(result.subsystems.find((item) => item.name === 'telemetry').status, 'healthy')
 })
+
+test('operational source summaries preserve absent and boolean sampling truth', () => {
+  const absent = telemetryHealthEvidence({
+    ...common,
+    payload: {
+      status: 'complete',
+      sources: [{ name: 'analytics-engine', status: 'complete' }],
+    },
+  })
+  assert.equal(absent.status, 'healthy')
+  assert.equal(Object.hasOwn(absent.details.sources[0], 'sampled'), false)
+
+  for (const sampled of [false, true]) {
+    const telemetry = telemetryHealthEvidence({
+      ...common,
+      payload: {
+        status: 'complete',
+        sources: [{ name: 'analytics-engine', status: 'complete', sampled }],
+      },
+    })
+    assert.equal(telemetry.status, 'healthy')
+    assert.equal(telemetry.details.sources[0].sampled, sampled)
+
+    const rollup = rollupHealthEvidence({
+      ...common,
+      payload: {
+        status: 'complete',
+        sources: [{ name: 'd1-rollups', status: 'complete', sampled }],
+        data: { rollups: [{ run_id: 'rollup-sampling', status: 'complete' }] },
+      },
+    })
+    assert.equal(rollup.status, 'healthy')
+    assert.equal(rollup.details.sources[0].sampled, sampled)
+  }
+})
+
+test('malformed source sampling stays unknown without changing Health classification', () => {
+  const malformed = ['false', '0', 0, 1, null, {}, [], Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]
+
+  for (const sampled of malformed) {
+    const telemetry = telemetryHealthEvidence({
+      ...common,
+      payload: {
+        status: 'complete',
+        sources: [{ name: 'analytics-engine', status: 'complete', sampled }],
+      },
+    })
+    assert.equal(telemetry.status, 'healthy', `telemetry status changed for ${String(sampled)}`)
+    assert.equal(telemetry.details.sources[0].sampled, null, `telemetry sampled ${String(sampled)} must be unknown`)
+
+    const rollup = rollupHealthEvidence({
+      ...common,
+      payload: {
+        status: 'complete',
+        sources: [{ name: 'd1-rollups', status: 'complete', sampled }],
+        data: { rollups: [{ run_id: 'rollup-malformed-sampling', status: 'complete' }] },
+      },
+    })
+    assert.equal(rollup.status, 'healthy', `rollup status changed for ${String(sampled)}`)
+    assert.equal(rollup.details.sources[0].sampled, null, `rollup sampled ${String(sampled)} must be unknown`)
+  }
+})
