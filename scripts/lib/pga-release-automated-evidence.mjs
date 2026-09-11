@@ -14,7 +14,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i
 const DEFAULT_OUTPUT = 'artifacts/pga-release-automated-evidence.json'
 const DEFAULT_TIMEOUT_MS = 6 * 60 * 1000
 const MAX_TIMEOUT_MS = 15 * 60 * 1000
-const EXPECTED_AUTOMATED_VERIFIED_COUNT = 19
+const EXPECTED_AUTOMATED_VERIFIED_COUNT = 21
 
 function text(value) {
   if (value == null) return null
