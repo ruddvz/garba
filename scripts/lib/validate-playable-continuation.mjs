@@ -43,7 +43,7 @@ const checks = [
   [app, /state\.songs\.find\(\(entry\) => entry\.genre === genre\.id && canExecuteSong\(entry\)\)/, 'cold fallback prefers a playable song'],
   [app, /searchFocusTimer: null/, 'Search autofocus has explicit lifecycle state'],
   [app, /function cancelPendingSearchFocus\(\).*clearTimeout\(state\.searchFocusTimer\).*state\.searchFocusTimer = null/s, 'Search autofocus can be cancelled explicitly'],
-  [app, /state\.searchFocusTimer = setTimeout\(\(\) => \{.*state\.sheetMode !== 'search'.*state\.sheetSnap === 'closed'.*getAttribute\('aria-hidden'\) !== 'false'.*classList\.contains\('searching'\).*els\.searchInput\.focus\(\)/s, 'delayed Search autofocus is guarded by live open state'],
+  [app, /state\.searchFocusTimer = setTimeout\(\(\) => \{.*state\.sheetMode !== 'search'.*state\.sheetSnap === 'closed'.*getAttribute\('aria-hidden'\) !== 'false'.*classList\.contains\('searching'\).*els\.searchInput\.focus\(/s, 'delayed Search autofocus is guarded by live open state'],
   [app, /function closeSheet\(\{ fromHistory = false \} = \{\}\) \{\s*cancelPendingSearchFocus\(\);\s*if \(!fromHistory/s, 'Search autofocus is cancelled before history-backed close can return'],
   [app, /if \(!open\) \{\s*cancelPendingSearchFocus\(\);\s*els\.songSheet\.classList\.remove\('searching'\)/s, 'closed sheet state cancels any delayed Search autofocus'],
   [simple, /playbackReady: Boolean\(/, 'fast boot marks route truth instead of claiming every seed ready'],

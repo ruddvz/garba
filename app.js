@@ -912,8 +912,8 @@ function openSheet(mode = 'all', options = {}) {
       if (state.sheetMode !== 'search' || state.sheetSnap === 'closed') return;
       if (els.songSheet.getAttribute('aria-hidden') !== 'false') return;
       if (!els.songSheet.classList.contains('searching')) return;
-      els.searchInput.focus();
-    }, state.reducedMotion ? 0 : 150);
+      els.searchInput.focus({ preventScroll: true });
+    }, state.reducedMotion ? 0 : (mobileQuery.matches ? 150 : 450));
   }
 }
 
@@ -926,7 +926,10 @@ function closeSheet({ fromHistory = false } = {}) {
   setSheetSnap('closed');
   const trigger = state.sheetTrigger;
   state.sheetTrigger = null;
-  if (trigger?.isConnected) setTimeout(() => trigger.focus({ preventScroll: true }), state.reducedMotion ? 0 : 80);
+  if (trigger?.isConnected) {
+    if (state.reducedMotion) trigger.focus({ preventScroll: true });
+    else setTimeout(() => trigger.focus({ preventScroll: true }), 0);
+  }
 }
 
 async function togglePlay() {
@@ -1268,7 +1271,6 @@ function wireEvents() {
   window.addEventListener('popstate', () => {
     if (state.sheetSnap !== 'closed') {
       closeSheet({ fromHistory: true });
-      updateUrl();
     }
   });
   window.addEventListener('pagehide', persistSession);
