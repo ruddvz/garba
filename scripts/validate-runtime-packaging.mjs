@@ -110,10 +110,19 @@ for (const marker of [
   'font-family="GFS Didot',
   'id="text-backdrop"',
   'feDropShadow',
-  '>PlayGarba.com</text>',
+  '>Play<tspan fill="#f2c744">Garba</tspan>.com</text>',
   '>All the Garba in the world.</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
+}
+if (socialSource.includes('All Garba there is in the world')) {
+  fail('Social preview source must not contain retired tagline copy');
+}
+if (socialSource.includes('Validation compatibility for')) {
+  fail('Social preview source must not rely on hidden validation compatibility markers');
+}
+if (socialSource.includes('>PlayGarba.com</text>')) {
+  fail('Social preview headline must use the current split Play/Garba/.com structure');
 }
 const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [

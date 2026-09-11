@@ -15,6 +15,7 @@
         "embeddable": true
       },
       "linkedReleaseId": "ramzat-2-tran-taali-2018",
+      "categories": ["tran-taali","modern-gujarati-garba"],
       "segmentRouting": "metadata-only",
       "durationSeconds": 4126,
       "segments": [

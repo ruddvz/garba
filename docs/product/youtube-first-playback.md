@@ -1,22 +1,35 @@
-# YouTube-only playback
+# Playback source policy: YouTube today, authorised direct media next
 
-Status: production policy, 2026-09-08
+Status: current production execution remains YouTube-only; authorised direct-media execution is rights-gated and not yet production-verified  
+Updated: 11 September 2026
 
-PlayGarba uses YouTube as its only executable music playback source.
+For the exact deployed revision and catalogue/playback counts, read:
 
-Apple Music, Spotify, Amazon Music, SoundCloud, Bandcamp, Qobuz, direct-audio entries and other provider URLs may remain in catalogue provenance while migration is in progress, but the website must not execute those routes. They are research references only until an exact verified YouTube route replaces them.
+```text
+https://playgarba.com/build-info.json
+```
 
-## Playback source policy
+## Current production truth
 
-A song is playable only when PlayGarba has an exact YouTube video identity that is safe for the selected recording.
+PlayGarba currently uses YouTube as its only executable music playback source in production.
 
-Accepted one-tap YouTube routes include:
+That deployed state is narrower than the repository's accepted source architecture. Under #976, an exact direct master may become executable independently of YouTube only after explicit PlayGarba streaming/redistribution permission passes #984 and the production direct-first routing/integration work in #985/#986 is verified. Until those gates land with at least one rights-cleared master, production remains effectively YouTube-only.
+
+Apple Music, Spotify, Amazon Music, SoundCloud, Bandcamp, Qobuz and similar consumer-provider URLs may remain in catalogue provenance while migration is in progress, but the website must not execute those routes. They are research/migration evidence, not playback fallbacks.
+
+Never extract, proxy, mirror, reconstruct or otherwise convert a consumer-provider stream into direct audio. Authorised direct media is a separate rights-gated source class, not a workaround around consumer-provider restrictions.
+
+## Stable playback-source policy
+
+Today, a production song is executable only when PlayGarba has an exact YouTube video identity that is safe for the selected recording.
+
+Accepted exact YouTube routes include:
 
 - an exact verified YouTube video for the selected song;
 - a verified YouTube performance/release chapter with an exact `youtubeStartSeconds`;
-- an exact YouTube route already represented by a verified `youtubeId`.
+- another exact YouTube route whose source type and recording identity pass route-truth validation.
 
-Not one-tap playable:
+Not executable as consumer-provider playback:
 
 - Apple Music;
 - Spotify;
@@ -24,32 +37,38 @@ Not one-tap playable:
 - SoundCloud;
 - Bandcamp;
 - Qobuz;
-- GARBA-hosted/direct audio;
 - release/reference pages that do not prove the selected recording;
 - YouTube search-only evidence;
+- track-shaped provider references reused across a multi-song release;
 - unchaptered multi-song YouTube releases when the selected song boundary is not verified.
 
-`provider-runtime.js` is now a YouTube-only policy layer. It strips executable non-YouTube routes from the runtime catalogue while retaining the original URL/provider as migration evidence.
+GARBA-hosted/direct audio is also non-executable in the current deployed production runtime. It may become executable only through the separate authorised-direct path after the exact recording has explicit streaming/redistribution rights and #984/#985/#986 acceptance is satisfied. A rights-cleared direct master does not need a YouTube replacement merely to be a legitimate future execution source.
 
-## User experience
+`provider-runtime.js` currently remains the production YouTube execution-policy layer. It may retain original provider/source fields as migration evidence while preventing those fields from becoming a playback bypass. #985 owns the future transition to rights-gated direct-first routing; do not infer that transition has shipped from this policy document alone.
 
-The YouTube player is collapsed by default. PlayGarba does not create or play a hidden YouTube audio backend.
+## Interaction contract
 
-A compact YouTube-logo button is fixed to the safe bottom-right area of the player. For a song with an exact YouTube route:
+The source policy above is independent from the exact control choreography.
 
-1. the user clicks the YouTube button;
-2. the visible YouTube player dock opens;
-3. YouTube playback starts or cues according to browser autoplay rules;
-4. PlayGarba play/pause, previous, next and seek controls operate the same visible YouTube player;
-5. closing the YouTube dock stops and destroys the active YouTube player.
+For the currently deployed YouTube path, the approved product direction is one deliberate primary Play action for an exact verified YouTube route, using a visible integrated YouTube performance stage. #408 owns that interaction and its regression tests. Other agents must not create a competing "press Play, then press a separate YouTube button" contract in runtime code or documentation.
 
-If the current song has not yet been migrated to an exact YouTube route, the YouTube button remains present but subdued and explains that the source is not mapped yet.
+The YouTube interaction invariants remain stable even while other source classes are developed separately:
 
-The normal Play control does not silently open a provider or create hidden playback. If the visible YouTube player has not been opened yet, the UI asks the user to use the YouTube button.
+1. The selected recording identity is preserved; PlayGarba never silently substitutes another song or performer.
+2. Executable YouTube playback uses the documented visible YouTube IFrame player.
+3. The YouTube stage is visible whenever scripted YouTube playback is active; there is no hidden YouTube audio backend.
+4. Play/pause, previous, next and seek operate the same active YouTube player when the selected route supports those actions.
+5. Closing/stopping the stage has explicit truthful semantics; it must not leave hidden YouTube playback running.
+6. An unavailable or migration-only recording remains identifiable and must not expose a fake playable state.
+7. The secondary YouTube affordance may remain for provider identity/open-stage utility, but it is not a mandatory second authorization step for a ready primary Play action.
+
+Authorised direct-media interaction, background capability and Media Session behaviour belong to #976/#985/#986 and their device-acceptance lanes. Do not describe those capabilities as deployed until the owning implementation and real-device verification say so.
+
+Do not infer deployed interaction behavior from this document alone. `/build-info.json` identifies the deployed revision; the relevant runtime/browser tests determine which interaction contract has shipped on that revision.
 
 ## YouTube compliance contract
 
-The implementation uses the documented YouTube IFrame Player API.
+The YouTube implementation uses the documented YouTube IFrame Player API.
 
 The embedded player:
 
@@ -63,9 +82,11 @@ The embedded player:
 - does not use yt-dlp, youtube-dl or equivalent extraction logic;
 - does not parse YouTube signature ciphers.
 
+Authorised direct media, if and when production-verified, is not sourced from or reconstructed from YouTube and does not alter these YouTube requirements.
+
 ## Route-truth safety
 
-Load order remains:
+The current deployed runtime layers preserve this ordering contract:
 
 ```text
 provider-runtime.js
@@ -73,34 +94,32 @@ provider-runtime.js
 → youtube-player-runtime.js
 ```
 
-The first layer enforces the YouTube-only execution policy. `player-continuity.js` then applies route-truth protections before `youtube-player-runtime.js` makes playback decisions.
+The first layer currently enforces production YouTube execution. `player-continuity.js` applies route-truth/selection safeguards before `youtube-player-runtime.js` controls the visible player.
 
-A route marked `playbackSearchOnly`, a `verified-release-track-reference`, or a `verified-unchaptered-youtube-release` is not treated as an exact playable selection.
+A route marked `playbackSearchOnly`, `verified-release-track-reference`, or `verified-unchaptered-youtube-release` is not an exact selected-song route.
 
-No provider fallback is allowed to become executable merely because an external provider URL exists.
+No consumer-provider source becomes executable merely because a provider URL exists. Likewise, no direct source becomes executable merely because a file or URL exists: it must satisfy the explicit rights and production-routing contracts before it is eligible.
 
 ## Catalogue migration rule
 
-Every non-YouTube route is migration work.
+Every active non-YouTube consumer-provider route is migration/provenance work, not a fallback playback option.
 
 For each affected song or release cluster:
 
 1. find the exact recording on YouTube, preferring official artist, label or distributor uploads;
-2. verify title, artist/edition and recording identity;
-3. for multi-song videos, verify the exact start timestamp rather than deriving it from neighbouring durations;
-4. add `youtubeId`, `playbackProvider: "youtube"`, the exact YouTube URL and the truthful source type;
-5. add `youtubeStartSeconds` and `durationSeconds` when a verified chapter boundary is available;
-6. keep ambiguous material non-playable rather than guessing.
+2. verify title, performer/edition and recording identity;
+3. for multi-song videos, use only directly verified source-published chapter starts;
+4. add the exact YouTube video/URL and truthful source type;
+5. add `youtubeStartSeconds` when a verified chapter boundary exists;
+6. preserve stronger existing exact routes;
+7. retain old consumer-provider URLs only as provenance when useful;
+8. keep ambiguous material non-executable rather than guessing.
 
-Do not replace one artist's recording with another recording merely because the song title is traditional or identical.
+That consumer-provider migration programme is separate from authorised-direct acquisition. If PlayGarba has explicit redistribution/streaming permission for an exact master and it passes the #984/#985/#986 contracts, that direct route does not need to be discarded or replaced merely because the same recording lacks an exact YouTube route.
 
-## PWA and deployment
+Never calculate chapter starts from neighbouring durations. Never replace one artist's recording with another simply because a traditional title matches.
 
-`provider-runtime.js`, `player-continuity.js` and `youtube-player-runtime.js` are part of the GitHub Pages/PWA runtime shell.
-
-The YouTube IFrame API loads from YouTube at runtime and requires connectivity. PlayGarba does not cache YouTube media for offline playback.
-
-## Measuring migration progress
+## Build-time coverage vs current-session playability
 
 Run:
 
@@ -108,12 +127,26 @@ Run:
 npm run youtube:coverage
 ```
 
-The report should be read as a migration report:
+That report classifies the exact source revision's YouTube migration state, including:
 
-- exact controllable YouTube routes are playable coverage;
-- YouTube reference/manual routes still require route-truth work;
-- Apple Music, Spotify, Amazon Music and other provider routes are migration backlog;
-- direct audio is not an executable fallback under the YouTube-only product policy;
-- tracks with no route also remain migration backlog.
+- `youtubePlayable`: exact controllable YouTube routes accepted at build time;
+- chaptered vs untimestamped exact YouTube routes;
+- consumer-provider/direct-source migration or provenance backlog according to the report schema;
+- YouTube reference/manual backlog;
+- no-route backlog.
 
-The target is 100% truthful YouTube playback coverage without weakening exact-recording verification.
+These are build/catalogue facts. They are not a promise that every accepted route can play in the current browser session. Connectivity, YouTube API loading, embed restrictions, autoplay/user-gesture state and transient runtime failures are session facts.
+
+They also do not prove that authorised direct-media execution has shipped. Direct-media production eligibility is governed separately by its rights, routing and release-acceptance evidence.
+
+For that reason `/build-info.json` reports `sessionPlayableCount: null` rather than converting build-time coverage into a fake live-session number.
+
+## PWA and deployment
+
+`provider-runtime.js`, `player-continuity.js` and `youtube-player-runtime.js` are part of the current single GitHub Pages production artifact.
+
+The YouTube IFrame API loads from YouTube at runtime and requires connectivity. PlayGarba does not cache YouTube media for offline playback.
+
+Future authorised direct-media delivery must follow its own rights, storage, caching and lifecycle contract. This document does not grant offline caching rights or claim background/lock-screen playback before the applicable rights and device gates are verified.
+
+GitHub Pages assembles some production files from several source modules. Source and deployed file bytes therefore need not be identical. `/build-info.json` records the deployed Git revision, catalogue version and SHA-256 digests of key assembled files so future audits do not use byte difference alone as evidence of staleness.

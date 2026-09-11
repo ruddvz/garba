@@ -31,7 +31,6 @@ const state = {
   playing: false,
   elapsed: 0,
   duration: 0,
-  activeWorld: 'A',
   sheetFilter: 'traditional',
   sheetMode: 'all',
   sheetSnap: 'closed',
@@ -46,6 +45,7 @@ const state = {
   catalogueLoadedAt: 0,
   pendingSongId: null,
   sheetTrigger: null,
+  searchFocusTimer: null,
   presentationRedirects: new Map(),
 };
 
@@ -267,32 +267,6 @@ function setPlaying(playing) {
   els.playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   els.miniPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
-}
-
-function preloadBackgrounds() {
-  state.genres.forEach((genre) => {
-    const image = new Image();
-    image.decoding = 'async';
-    image.src = genre.background;
-  });
-}
-
-function setWorld(background, immediate = false) {
-  const incoming = state.activeWorld === 'A' ? els.worldB : els.worldA;
-  const outgoing = state.activeWorld === 'A' ? els.worldA : els.worldB;
-  incoming.style.backgroundImage = `url("${background}")`;
-
-  if (immediate || state.reducedMotion) {
-    outgoing.classList.remove('is-visible');
-    incoming.classList.add('is-visible');
-  } else {
-    requestAnimationFrame(() => {
-      incoming.classList.add('is-visible');
-      outgoing.classList.remove('is-visible');
-    });
-  }
-
-  state.activeWorld = state.activeWorld === 'A' ? 'B' : 'A';
 }
 
 function configureGenreButton(button, genre, activeId, onSelect) {
@@ -640,7 +614,6 @@ async function selectSong(songId, options = {}) {
     state.sheetFilter = song.genre;
     els.app.dataset.genre = song.genre;
     setAccent(genre.accent);
-    setWorld(genre.background);
   }
 
   const apply = () => {
@@ -700,7 +673,6 @@ function selectGenre(genreId) {
     state.sheetFilter = genreId;
     els.app.dataset.genre = genreId;
     setAccent(genre.accent);
-    setWorld(genre.background);
     syncGenreStrips();
     renderSheet();
     updateUrl();
@@ -891,6 +863,12 @@ function toggleFavourite(songId = state.songId) {
   showToast(willAdd ? 'Saved to My Garba.' : 'Removed from My Garba.');
 }
 
+function cancelPendingSearchFocus() {
+  if (state.searchFocusTimer == null) return;
+  clearTimeout(state.searchFocusTimer);
+  state.searchFocusTimer = null;
+}
+
 function setSheetSnap(snap) {
   const allowed = ['closed', 'collapsed', 'medium', 'full'];
   state.sheetSnap = allowed.includes(snap) ? snap : 'closed';
@@ -900,6 +878,7 @@ function setSheetSnap(snap) {
   els.songSheet.setAttribute('aria-hidden', String(!open));
   if (els.browseButton?.hasAttribute('aria-controls')) els.browseButton.setAttribute('aria-expanded', String(open));
   if (!open) {
+    cancelPendingSearchFocus();
     els.songSheet.classList.remove('searching');
     els.searchInput.blur();
   }
@@ -912,6 +891,7 @@ function preferredOpenSnap(mode) {
 }
 
 function openSheet(mode = 'all', options = {}) {
+  cancelPendingSearchFocus();
   const wasClosed = state.sheetSnap === 'closed';
   if (wasClosed && options.trigger instanceof HTMLElement) state.sheetTrigger = options.trigger;
   state.sheetMode = mode;
@@ -927,11 +907,18 @@ function openSheet(mode = 'all', options = {}) {
 
   if (mode === 'search') {
     els.songSheet.classList.add('searching');
-    setTimeout(() => els.searchInput.focus(), state.reducedMotion ? 0 : 150);
+    state.searchFocusTimer = setTimeout(() => {
+      state.searchFocusTimer = null;
+      if (state.sheetMode !== 'search' || state.sheetSnap === 'closed') return;
+      if (els.songSheet.getAttribute('aria-hidden') !== 'false') return;
+      if (!els.songSheet.classList.contains('searching')) return;
+      els.searchInput.focus();
+    }, state.reducedMotion ? 0 : 150);
   }
 }
 
 function closeSheet({ fromHistory = false } = {}) {
+  cancelPendingSearchFocus();
   if (!fromHistory && history.state?.garbaSheet) {
     history.back();
     return;
@@ -1262,6 +1249,7 @@ function wireEvents() {
     if (event.code === 'ArrowLeft') changeSong(-1);
     if (event.code === 'Escape') {
       if (els.songSheet.classList.contains('searching')) {
+        cancelPendingSearchFocus();
         els.songSheet.classList.remove('searching');
         els.searchInput.blur();
       } else closeSheet();
@@ -1362,10 +1350,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
     }
 
     const activeGenre = currentGenre();
-    if (activeGenre) {
-      setAccent(activeGenre.accent);
-      preloadBackgrounds();
-    }
+    if (activeGenre) setAccent(activeGenre.accent);
     renderPlayer();
     syncGenreStrips({ smooth: false });
     renderSheet();
@@ -1447,8 +1432,6 @@ async function init() {
     state.duration = initial.song?.durationSeconds || 0;
     els.app.dataset.genre = initial.genre.id;
     setAccent(initial.genre.accent);
-    els.worldA.style.backgroundImage = `url("${initial.genre.background}")`;
-    preloadBackgrounds();
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {

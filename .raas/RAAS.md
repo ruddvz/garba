@@ -15,10 +15,13 @@ Before implementation, read in this order:
 3. `.raas/RAAS.md`
 4. `.raas/PROJECT-CONTEXT.md`
 5. `.raas/LANGUAGE.md` when user-facing words, metadata presentation, onboarding, docs, SEO, social preview text or UI labels may change
-6. `.raas/EXECUTION.md`
-7. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
+6. `.raas/skills/product-ui-ux/SKILL.md` when visual, UI, UX, accessibility, responsive, interaction, motion, layout, or design-system work is in scope
+7. `.raas/EXECUTION.md`
+8. the target issue, all recent issue comments, issue #364, open PR overlap, and the repository docs relevant to the claimed files
 
-Do not preload the whole repository. Load deeper docs only for the lane being implemented.
+Read `.raas/AUTONOMY.md` and `.raas/autonomy.json` for harness federation, cross-repository learning, graph-protocol adoption, or any proposal that could make RAAS depend on another harness. Do not load them for ordinary product work.
+
+Do not preload the whole repository. Load deeper docs only for the lane being implemented. The product UI/UX skill is a review method, not a replacement for `.raas/PROJECT-CONTEXT.md`, `docs/product/design-system.md`, or current implementation truth.
 
 ## What RAAS protects
 
@@ -89,6 +92,12 @@ For an implementation issue, "done" normally means:
 A PR URL alone is not completion.
 
 After a lane is fully completed and released, an agent asked to work through the backlog should return to preflight and select the next open, unowned, non-overlapping implementation issue. The next issue gets a fresh claim and fresh branch. Never carry ownership forward implicitly.
+
+## Local harness autonomy
+
+RAAS may learn reviewed generic harness techniques from sibling repositories, but ordinary PlayGarba execution has zero runtime dependency on those repositories. Product truth, issue ownership, graph vocabulary, context routing, UI/UX rules, validation and release authority remain local to RAAS.
+
+If federation or graph intelligence is unavailable, fall back to the canonical RAAS lifecycle. Never weaken claim, catalogue truth, rights or validation rules merely to keep a cross-repository integration running. Full boundary: `.raas/AUTONOMY.md`.
 
 ## Keep RAAS small
 

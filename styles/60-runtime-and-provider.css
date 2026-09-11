@@ -1,4 +1,4 @@
-/* Minimal player, responsive and genre-art tuning. Loaded last. */
+/* Runtime/provider viewport and playback-surface tuning. Later semantic layers own mobile coordination and genre artwork. */
 
 .source-badge { display: none !important; }
 
@@ -36,7 +36,9 @@ body {
   background: #111323;
 }
 
-.world {
+/* The app owns the fixed viewport. Artwork stays absolute inside that rectangle so
+   iOS/WebKit cannot give nested background layers a smaller independent fixed viewport. */
+.app > .world {
   position: absolute !important;
   inset: -3px !important;
   width: auto !important;
@@ -48,7 +50,7 @@ body {
   overflow: hidden !important;
 }
 
-.world-layer {
+.app > .world > .world-layer {
   position: absolute !important;
   inset: -3px !important;
   width: auto !important;
@@ -105,8 +107,6 @@ body {
   inset: -24px -42px -20px;
   background: radial-gradient(ellipse at center, rgba(7,9,18,.24), rgba(7,9,18,.075) 55%, transparent 78%);
 }
-.utilities .icon-button { background: rgba(8,10,18,.10); }
-.play-button { background: rgba(9,12,22,.16); }
 .browse-actions { gap: 0; }
 
 /* The approved 2K courtyard pack is art-directed per genre. */
@@ -234,8 +234,6 @@ body {
   .genre-eyebrow { margin-bottom: 5px; }
   .song-title { font-size: clamp(38px, 4.25vw, 58px); }
   .artist { margin-top: 8px; }
-  .controls { margin-top: 14px; }
-  .progress-wrap { margin-top: 14px; }
   .genre-strip { padding-top: 10px; }
   .browse-actions { margin-top: 8px; }
   .provider-dock { top: max(74px, calc(var(--safe-top) + 54px)); }
@@ -274,8 +272,6 @@ body {
   .track-block::before { inset: -20px -8px -18px; }
   .song-title { font-size: clamp(36px, 10vw, 46px); }
   .artist { font-size: clamp(15px, 4.25vw, 18px); }
-  .controls { margin-top: 4px; }
-  .progress-wrap { margin-top: 0; }
   .genre-strip { padding-top: 12px; }
   .browse-actions { margin-top: 2px; }
   .install-banner {
@@ -317,6 +313,9 @@ body {
   .provider-media { height: 200px; }
 }
 
-@media (display-mode: standalone) {
+@media (display-mode: standalone),
+       (display-mode: fullscreen),
+       (display-mode: minimal-ui),
+       (display-mode: window-controls-overlay) {
   .install-banner { display: none !important; }
 }

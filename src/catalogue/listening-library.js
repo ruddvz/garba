@@ -64,32 +64,46 @@ function buildReleaseIndex(releases) {
   return map;
 }
 
-async function fetchJson(url, fallback) {
-  try {
-    const response = await fetch(url, { cache: 'default' });
-    return response.ok ? await response.json() : fallback;
-  } catch {
-    return fallback;
+const EXPLORE_PAGE_DATA_KEY = '__PLAYGARBA_EXPLORE_PAGE_DATA_V1__';
+const EXPLORE_PAGE_DATA_EVENT = 'playgarba:explore-page-data-ready';
+let sharedPageDataPromise = null;
+
+function validExplorePageDataStore(store) {
+  return Boolean(store && typeof store.loadCore === 'function' && typeof store.loadArtists === 'function' && typeof store.fetchJson === 'function');
+}
+
+function loadSharedPageDataStore() {
+  const current = window[EXPLORE_PAGE_DATA_KEY];
+  if (validExplorePageDataStore(current)) return Promise.resolve(current);
+  if (!sharedPageDataPromise) {
+    sharedPageDataPromise = new Promise((resolve) => {
+      const resolveWhenReady = () => {
+        const store = window[EXPLORE_PAGE_DATA_KEY];
+        if (validExplorePageDataStore(store)) resolve(store);
+      };
+      window.addEventListener(EXPLORE_PAGE_DATA_EVENT, resolveWhenReady, { once: true });
+      queueMicrotask(resolveWhenReady);
+    });
   }
+  return sharedPageDataPromise;
 }
 
 async function loadCatalogue() {
   if (catalogueData) return catalogueData;
   if (!cataloguePromise) {
-    cataloguePromise = Promise.all([
-      fetchJson('../data/songs.json', []),
-      fetchJson('../data/releases.json', []),
-      fetchJson('../data/release-artwork.json', { releases: {} }),
-    ]).then(([songs, releases, artwork]) => {
-      catalogueData = {
-        songById: new Map((songs || []).filter((song) => song?.id).map((song) => [song.id, song])),
-        releaseById: buildReleaseIndex(releases),
-        artwork: artwork?.releases || {},
-      };
-      return catalogueData;
-    }).finally(() => {
-      if (!catalogueData) cataloguePromise = null;
-    });
+    cataloguePromise = loadSharedPageDataStore()
+      .then((store) => store.loadCore())
+      .then(({ songs, releases, artwork }) => {
+        if (!Array.isArray(songs) || !songs.length) throw new Error('Shared Explore catalogue unavailable');
+        catalogueData = {
+          songById: new Map(songs.filter((song) => song?.id).map((song) => [song.id, song])),
+          releaseById: buildReleaseIndex(releases),
+          artwork: artwork?.releases || {},
+        };
+        return catalogueData;
+      }).finally(() => {
+        if (!catalogueData) cataloguePromise = null;
+      });
   }
   return cataloguePromise;
 }
@@ -776,14 +790,13 @@ watchCatalogueRenders();
 
   async function loadArtistIdentityData() {
     if (artistDataPromise) return artistDataPromise;
-    artistDataPromise = Promise.all([
-      fetchJson('../data/catalogue/index.json', {}),
-      fetchJson('../data/artist-artwork.json', { artists: {} }),
-    ]).then(async ([index, artwork]) => {
-      const files = index?.discovery?.artists || [];
-      const payloads = await Promise.all(files.map((file) => fetchJson(`../${file}`, null)));
+    artistDataPromise = loadSharedPageDataStore().then(async (store) => {
+      const [artists, artwork] = await Promise.all([
+        store.loadArtists(),
+        store.fetchJson('../data/artist-artwork.json', { artists: {} }),
+      ]);
       const artistById = new Map();
-      payloads.flatMap((payload) => payload?.artists || []).forEach((artist) => {
+      artists.forEach((artist) => {
         if (artist?.id && !artistById.has(artist.id)) artistById.set(artist.id, artist);
       });
       return { artistById, artwork: artwork?.artists || {} };
@@ -838,6 +851,8 @@ watchCatalogueRenders();
       if (!(card instanceof HTMLElement)) return;
       const artistId = artistIdFromCollection(card.dataset.collectionId);
       if (!artistId) return;
+      if (card.dataset.artistIdentityDecorated === artistId) return;
+      card.dataset.artistIdentityDecorated = artistId;
       const artist = artistById.get(artistId);
       const name = artist?.name || card.querySelector('.collection-copy strong')?.textContent?.replace(/\s+Essentials$/i, '') || humanize(artistId);
       card.classList.add('artist-collection-card');
@@ -939,7 +954,7 @@ watchCatalogueRenders();
     queueMicrotask(() => { void refreshArtistIdentity(); });
   }
 
-  new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: true });
+  new MutationObserver(queueArtistIdentity).observe(sections, { childList: true, subtree: false });
   new MutationObserver(queueArtistIdentity).observe(detail, { attributes: true, attributeFilter: ['hidden'] });
   new MutationObserver(queueArtistIdentity).observe(releaseRail, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   window.addEventListener('popstate', queueArtistIdentity);

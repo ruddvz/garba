@@ -24,6 +24,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`catalogue/issue-231-khamma-2-youtube-migration.md`](catalogue/issue-231-khamma-2-youtube-migration.md): Khamma 2 YouTube-only migration with 20 exact routes and one fail-closed unresolved interlude
 - [`catalogue/issue-234-youtube-audit.md`](catalogue/issue-234-youtube-audit.md): Parth Oza Garbe Ghoome Tu exact-recording audit and fail-closed YouTube migration evidence boundary
 - [`catalogue/issue-246-youtube-audit.md`](catalogue/issue-246-youtube-audit.md): Hemant Chauhan Ghammar Vol. 3 exact-release audit and fail-closed YouTube migration evidence boundary
+- [`catalogue/issue-341-ramzat-2017-youtube-audit.md`](catalogue/issue-341-ramzat-2017-youtube-audit.md): Ramzat 2017 exact YouTube split-track reconciliation and explicit fail-closed evidence boundary
 - [`catalogue/issue-346-rangili-ramzat-youtube-audit.md`](catalogue/issue-346-rangili-ramzat-youtube-audit.md): Rangili Ramzat 7/8 exact YouTube split-track audit and explicit evidence boundary
 - [`catalogue/issue-347-zankaar-geeta-youtube-audit.md`](catalogue/issue-347-zankaar-geeta-youtube-audit.md): Zankaar 2/3 and Geeta Rabari Taal 2022 exact YouTube split-track reconciliation and fail-closed boundary
 - [`catalogue/issue-156-wave-f-audit.md`](catalogue/issue-156-wave-f-audit.md): Wave F 222-candidate discovery, dedupe, ownership and playback-evidence audit
@@ -34,6 +35,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 - [`product/design-system.md`](product/design-system.md): visual system and interaction direction
 - [`product/playback-runtime-coverage.md`](product/playback-runtime-coverage.md): generated song-route and playback coverage contract
+- [`product/playback-controller.md`](product/playback-controller.md): single playback authority, command, transport-evidence and migration contract
 - [`product/youtube-first-playback.md`](product/youtube-first-playback.md): one-tap YouTube IFrame playback architecture, route safety and provider fallback hierarchy
 - [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour
 - [`product/ux-polish-pass.md`](product/ux-polish-pass.md): product polish notes and remaining UX work
@@ -61,6 +63,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 - [`project/roadmap.md`](project/roadmap.md): project-level roadmap
 - [`project/search-discovery-programme.md`](project/search-discovery-programme.md): SEO, GEO and AEO strategy, baseline, route model, crawl/index rules and Navratri 2026 delivery sequence
+- [`project/event-discovery-contract.md`](project/event-discovery-contract.md): source/evidence, identity, freshness, cancellation, expiry and publication gates for future local event discovery
 
 ## Naming convention
 

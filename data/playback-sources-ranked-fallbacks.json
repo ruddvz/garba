@@ -1,7 +1,7 @@
 {
-  "version": "0.17.0",
-  "updated": "2026-09-07",
-  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat, Ramzat 2, and Rangtaali chapter mappings come from their indexed official-jukebox set records; this manifest adds their continuous-release selections plus verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped.",
+  "version": "0.19.0",
+  "updated": "2026-09-09",
+  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 adds five independently verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release; the other five canonical Govaliyo rows remain fail-closed.",
   "songSources": {
     "ramzat-2017-36-ramzat-non-stop-garba": {
       "provider": "youtube",
@@ -1127,6 +1127,146 @@
       "sourceType": "official-streaming-catalogue",
       "releaseId": "parthiv-palav-nonstop-garba-2007",
       "evidenceType": "verified-release-track-video"
+    },
+    "ramzat-2017-01-sachi-re-mari-chhand-charni-sapakharu": {
+      "provider": "youtube",
+      "videoId": "jnfUfnDn9A8",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=jnfUfnDn9A8",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "ramzat-2017-07-tun-kaali-ne-kalyaani-ma": {
+      "provider": "youtube",
+      "videoId": "I2Qn0Xy86gI",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=I2Qn0Xy86gI",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 7,
+      "evidenceType": "official-label-full-song-original-album-track"
+    },
+    "ramzat-2017-14-sona-no-garbo": {
+      "provider": "youtube",
+      "videoId": "q7IPPJKWbgc",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=q7IPPJKWbgc",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 14,
+      "evidenceType": "official-label-full-song-original-album-track"
+    },
+    "ramzat-2017-16-mer-karo-momai": {
+      "provider": "youtube",
+      "videoId": "n9K21NuxSQs",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=n9K21NuxSQs",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 16,
+      "evidenceType": "official-label-full-song-original-album-track"
+    },
+    "ramzat-2017-22-moj-ma-rehti-re-mahakali": {
+      "provider": "youtube",
+      "videoId": "cg0817MRoyM",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=cg0817MRoyM",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 22,
+      "evidenceType": "official-label-full-song-original-album-track"
+    },
+    "ramzat-2017-27-bahuchar-maa-na-dera-pachhal": {
+      "provider": "youtube",
+      "videoId": "X7luwdfBjrI",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=X7luwdfBjrI",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 27,
+      "evidenceType": "official-label-full-song-original-album-track"
+    },
+    "ramzat-2017-30-dak-geet-meldi-ramti-aave": {
+      "provider": "youtube",
+      "videoId": "T4kBfImdscE",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=T4kBfImdscE",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 30,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "ramzat-2017-32-khel-khel-re-bhavani-maa": {
+      "provider": "youtube",
+      "videoId": "XSGJ7V4JTt0",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=XSGJ7V4JTt0",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 32,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "ramzat-2017-34-maadi-tara-mandiriye": {
+      "provider": "youtube",
+      "videoId": "qRbsjVxEDos",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=qRbsjVxEDos",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 34,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "atul-govaliyo-2025-02": {
+      "provider": "youtube",
+      "videoId": "EdA1Qhh5zJY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=EdA1Qhh5zJY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-04": {
+      "provider": "youtube",
+      "videoId": "pcEQGvkzmek",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=pcEQGvkzmek",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 4,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-07": {
+      "provider": "youtube",
+      "videoId": "NOJKFs2mSts",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=NOJKFs2mSts",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 7,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-09": {
+      "provider": "youtube",
+      "videoId": "tR9n6rkFfZA",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=tR9n6rkFfZA",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 9,
+      "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "atul-govaliyo-2025-10": {
+      "provider": "youtube",
+      "videoId": "BnUgRGxH2sw",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=BnUgRGxH2sw",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 10,
+      "evidenceType": "official-youtube-auto-generated-track"
     }
   }
 }
