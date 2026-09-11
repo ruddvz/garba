@@ -183,28 +183,6 @@ function ensureShareUi() {
     els.detail.prepend(actions);
     els.share = share;
   }
-  if (!document.querySelector('style[data-playgarba-explore-share]')) {
-    const style = document.createElement('style');
-    style.dataset.playgarbaExploreShare = '';
-    style.textContent = `
-      .detail-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
-      .detail-actions .back-button{margin-bottom:0}
-      .share-explore-state{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:var(--text);background:rgba(20,19,24,.44);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font:inherit;font-size:.86rem;font-weight:700;cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease}
-      .share-explore-state:hover{transform:translateY(-1px);background:rgba(31,29,35,.58);border-color:rgba(255,255,255,.24)}
-      .share-explore-state:active{transform:scale(.98)}
-      .share-explore-state:focus-visible,.song-context summary:focus-visible{outline:2px solid var(--gold,var(--accent,#d9b26f));outline-offset:3px}
-      .song-context{margin-top:7px;color:rgba(255,248,236,.68);font-size:.75rem;line-height:1.48}
-      .song-context summary{display:inline-flex;align-items:center;min-height:28px;padding:0 9px;border:1px solid rgba(255,255,255,.11);border-radius:999px;color:rgba(255,248,236,.72);background:rgba(255,255,255,.035);font-size:.7rem;font-weight:700;cursor:pointer;list-style:none}
-      .song-context summary::-webkit-details-marker{display:none}
-      .song-context[open] summary{border-color:rgba(231,201,143,.26);color:var(--gold,var(--accent,#d9b26f));background:rgba(231,201,143,.055)}
-      .song-context-copy{max-width:68ch;margin:8px 0 0;color:rgba(255,248,236,.67)}
-      .song-context-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-      .song-context-meta span{display:inline-flex;align-items:center;min-height:23px;padding:0 7px;border:1px solid rgba(255,255,255,.08);border-radius:999px;color:rgba(255,248,236,.52);background:rgba(255,255,255,.025);font-size:.64rem}
-      @media(max-width:640px){.detail-actions{margin-bottom:18px}.share-explore-state{min-height:40px;padding-inline:14px}.song-context{font-size:.72rem}.song-context-copy{line-height:1.46}}
-      @media(prefers-reduced-motion:reduce){.share-explore-state{transition:none!important}}
-    `;
-    document.head.append(style);
-  }
 }
 
 function announce(message) {
@@ -253,9 +231,9 @@ function syncCollectionIdentity() {
 function replaceDetailMeta(values = []) {
   els.detailMeta.replaceChildren();
   values.filter(Boolean).forEach((value) => {
-    const pill = document.createElement('span');
-    pill.textContent = String(value);
-    els.detailMeta.append(pill);
+    const item = document.createElement('span');
+    item.textContent = String(value);
+    els.detailMeta.append(item);
   });
 }
 
@@ -747,9 +725,9 @@ function makeSongContext(song, release) {
   const labels = taxonomyIdsForSong(song).map(taxonomyLabel).filter(Boolean);
   const year = releaseYear(release);
   [song.genre ? `World: ${song.genre}` : null, ...labels, year ? String(year) : null].filter(Boolean).forEach((text) => {
-    const pill = document.createElement('span');
-    pill.textContent = text;
-    meta.append(pill);
+    const item = document.createElement('span');
+    item.textContent = text;
+    meta.append(item);
   });
   details.append(summary, description);
   if (meta.childElementCount) details.append(meta);
