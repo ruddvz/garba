@@ -501,9 +501,12 @@
         .nonstop-browser{max-height:94dvh;bottom:3dvh}
       }
       @media(max-height:560px) and (orientation:landscape){
-        .player-shell{grid-template-rows:auto auto auto auto auto!important}
-        #genreStrip{grid-row:4!important;align-self:end!important}
-        #browseActions{grid-row:5!important;align-self:start!important}
+        html body .app .player-shell{
+          grid-template-rows:auto auto auto 11px 0 auto 36px auto!important;
+          padding-top:52px!important
+        }
+        html body .app #genreStrip{grid-row:6!important;align-self:end!important}
+        html body .app #browseActions{grid-row:8!important;align-self:start!important}
       }
       @media(prefers-reduced-motion:reduce){
         .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set,.nonstop-chapter{transition:none!important}
@@ -701,6 +704,7 @@
   function markDock() {
     $('youtubeStage')?.classList.toggle('is-nonstop', Boolean(state.activeSet));
   }
+
   function visualGenreForSet(set) {
     const aliases = new Map([
       ['traditional', 'traditional'],
