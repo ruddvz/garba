@@ -20,24 +20,37 @@
   const header = document.querySelector('.site-header');
   const button = document.getElementById('menuButton');
   const nav = document.getElementById('siteNav');
+  const menuLabel = button?.querySelector('.sr-only');
   const year = document.getElementById('year');
 
   const setHeaderState = () => {
     header?.classList.toggle('scrolled', window.scrollY > 18 || document.body.classList.contains('interior-page'));
   };
 
-  const closeMenu = () => {
+  const setMenuOpen = (open) => {
     if (!button || !nav) return;
-    button.setAttribute('aria-expanded', 'false');
-    nav.classList.remove('open');
-    document.body.style.overflow = '';
+    button.setAttribute('aria-expanded', String(open));
+    nav.classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (menuLabel) menuLabel.textContent = open ? 'Close menu' : 'Open menu';
+  };
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    if (!button || !nav) return;
+    const wasOpen = button.getAttribute('aria-expanded') === 'true';
+    setMenuOpen(false);
+    if (restoreFocus && wasOpen) button.focus({ preventScroll: true });
   };
 
   button?.addEventListener('click', () => {
     const isOpen = button.getAttribute('aria-expanded') === 'true';
-    button.setAttribute('aria-expanded', String(!isOpen));
-    nav?.classList.toggle('open', !isOpen);
-    document.body.style.overflow = isOpen ? '' : 'hidden';
+    setMenuOpen(!isOpen);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || button?.getAttribute('aria-expanded') !== 'true') return;
+    event.preventDefault();
+    closeMenu({ restoreFocus: true });
   });
 
   nav?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
