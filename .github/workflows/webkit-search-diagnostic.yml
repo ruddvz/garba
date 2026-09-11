@@ -1,0 +1,230 @@
+name: Desktop WebKit Search diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'styles/30-product-polish.css'
+      - '.github/browser/webkit-search-diagnostic.mjs'
+      - '.github/workflows/webkit-search-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webkit-search-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: current-main
+            target_sha: 3083eec46936d3987d36eb1106d1a55dd65256b6
+            apply_857: false
+          - name: corrected-437
+            target_sha: 66541dc1dd2e8b4669487eb5afa5566e1a76ccd9
+            apply_857: false
+          - name: corrected-437-plus-857-css
+            target_sha: 66541dc1dd2e8b4669487eb5afa5566e1a76ccd9
+            apply_857: true
+    name: ${{ matrix.name }}
+    steps:
+      - name: Checkout #854 diagnostic owner
+        uses: actions/checkout@v4
+        with:
+          path: _owner
+
+      - name: Checkout exact target
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.target_sha }}
+          path: _target
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install production fixture renderers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin icoutils
+
+      - name: Prepare exact target and diagnostic runner
+        working-directory: _target
+        shell: bash
+        env:
+          APPLY_857: ${{ matrix.apply_857 }}
+        run: |
+          set -euo pipefail
+          cp ../_owner/.github/browser/webkit-search-diagnostic.mjs .github/browser/webkit-search-diagnostic.mjs
+
+          npm run catalogue
+
+          if [ "$APPLY_857" = "true" ]; then
+            cat >> styles/30-product-polish.css <<'CSS'
+
+          /* #857 exact A/B only: never committed to the #437 target. */
+          @media (min-width: 701px) {
+            #songSheet.mode-search {
+              transition: height 420ms var(--ease), width 320ms var(--ease);
+            }
+          }
+          CSS
+          fi
+
+          rm -rf _diag
+          mkdir -p _diag/catalogue _diag/explore
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            provider-runtime.js \
+            player-continuity.js \
+            youtube-player-runtime.js \
+            nonstop-browser.js \
+            sw.js \
+            manifest.webmanifest \
+            offline.html \
+            _diag/
+          cp -R assets data _diag/
+          cp \
+            src/catalogue/index.html \
+            src/catalogue/catalogue.css \
+            src/catalogue/catalogue.js \
+            src/catalogue/listening-library.js \
+            _diag/catalogue/
+          cp \
+            src/catalogue/index.html \
+            src/catalogue/catalogue.css \
+            src/catalogue/catalogue.js \
+            src/catalogue/listening-library.js \
+            _diag/explore/
+
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
+          const writeJson = (path, value) => writeFileSync(path, `${JSON.stringify(value)}\n`);
+          const songsPath = '_diag/data/songs.json';
+          const indexPath = '_diag/data/catalogue/index.json';
+          const allSongs = readJson(songsPath);
+          const requiredIds = new Set([
+            'bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014',
+            'ochhav-2023-01-ochhav-theme',
+          ]);
+          const perGenreLimit = 24;
+          const genreCounts = new Map();
+          const selected = [];
+          const selectedIds = new Set();
+          const keep = (song) => {
+            if (!song?.id || selectedIds.has(song.id)) return;
+            selected.push(song);
+            selectedIds.add(song.id);
+          };
+          for (const song of allSongs) {
+            if (requiredIds.has(song?.id)) keep(song);
+            const genre = String(song?.genre || 'traditional');
+            const count = genreCounts.get(genre) || 0;
+            if (count >= perGenreLimit) continue;
+            keep(song);
+            genreCounts.set(genre, count + 1);
+          }
+          for (const id of requiredIds) {
+            if (!selectedIds.has(id)) throw new Error(`Required browser-smoke song missing: ${id}`);
+          }
+          const index = readJson(indexPath);
+          writeJson(songsPath, selected);
+          writeJson(indexPath, { ...index, discovery: { ...(index.discovery || {}), artists: [] } });
+          console.log(`Diagnostic catalogue: ${allSongs.length} -> ${selected.length}`);
+          NODE
+
+          cat app.js assets/runtime/seek-state.js > _diag/app.js
+          grep -q 'GARBA_SEEK_STATE_RUNTIME' _diag/app.js
+
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _diag/styles.css
+
+          mkdir -p _diag/assets/icons
+          rsvg-convert -w 16 -h 16 assets/icons/icon.svg -o _diag/assets/icons/favicon-16.png
+          rsvg-convert -w 32 -h 32 assets/icons/icon.svg -o _diag/assets/icons/favicon-32.png
+          rsvg-convert -w 48 -h 48 assets/icons/icon.svg -o _diag/assets/icons/favicon-48.png
+          rsvg-convert -w 152 -h 152 assets/icons/icon.svg -o _diag/assets/icons/apple-touch-icon-152.png
+          rsvg-convert -w 167 -h 167 assets/icons/icon.svg -o _diag/assets/icons/apple-touch-icon-167.png
+          rsvg-convert -w 180 -h 180 assets/icons/icon.svg -o _diag/assets/icons/apple-touch-icon.png
+          rsvg-convert -w 192 -h 192 assets/icons/icon.svg -o _diag/assets/icons/icon-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _diag/assets/icons/icon-512.png
+          rsvg-convert -w 150 -h 150 assets/icons/icon.svg -o _diag/assets/icons/mstile-150x150.png
+          rsvg-convert -w 310 -h 310 assets/icons/icon.svg -o _diag/assets/icons/mstile-310x310.png
+          rsvg-convert -w 192 -h 192 assets/icons/maskable.svg -o _diag/assets/icons/maskable-192.png
+          rsvg-convert -w 512 -h 512 assets/icons/maskable.svg -o _diag/assets/icons/maskable-512.png
+          icotool -c -o _diag/favicon.ico \
+            _diag/assets/icons/favicon-16.png \
+            _diag/assets/icons/favicon-32.png \
+            _diag/assets/icons/favicon-48.png
+
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+          test -n "$PACK"
+          rm -rf _diag/assets/backgrounds/library
+          mkdir -p _diag/assets/backgrounds/library
+          unzip -oq "$PACK" -d _diag/assets/backgrounds/library
+          rm -f _diag/assets/backgrounds/garba15-*.zip
+
+      - name: Install Playwright WebKit
+        working-directory: _target
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start diagnostic fixture
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory _target/_diag >/tmp/playgarba-webkit-search-diagnostic-${{ matrix.name }}.log 2>&1 &
+          echo $! > /tmp/playgarba-webkit-search-diagnostic-${{ matrix.name }}.pid
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/playgarba-webkit-search-diagnostic-${{ matrix.name }}.log
+          exit 1
+
+      - name: Capture synchronous Search state
+        working-directory: _target
+        env:
+          SEARCH_DIAG_VARIANT: ${{ matrix.name }}
+        shell: bash
+        run: |
+          set -o pipefail
+          node .github/browser/webkit-search-diagnostic.mjs 2>&1 | tee /tmp/search-diag-${{ matrix.name }}.log
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webkit-search-${{ matrix.name }}
+          path: |
+            /tmp/search-diag-${{ matrix.name }}.log
+            /tmp/playgarba-webkit-search-diagnostic-${{ matrix.name }}.log
+          if-no-files-found: ignore
+          retention-days: 2
