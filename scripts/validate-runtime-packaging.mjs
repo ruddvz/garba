@@ -318,8 +318,10 @@ for (const file of [
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v15`")) {
-  fail('PWA cache generation must be v15 after consolidating the canonical apex origin and Explore route');
+const cacheGenerationMatch = sw.match(/const CACHE_NAME = `\$\{CACHE_PREFIX\}v(\d+)`;/);
+const cacheGeneration = Number(cacheGenerationMatch?.[1]);
+if (!Number.isInteger(cacheGeneration) || cacheGeneration < 16) {
+  fail('PWA cache generation must be v16 or newer so an incoming worker can build a complete live cache before retiring the active generation');
 }
 
 if (failed) process.exit(1);
