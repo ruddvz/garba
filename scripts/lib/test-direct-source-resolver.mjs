@@ -125,6 +125,46 @@ for (const matchingSourceUrl of [
   assert.equal(result.provenance.startSeconds, 73);
 }
 
+for (const startSeconds of [0, 73]) {
+  const chapter = song({
+    playbackSourceType: 'verified-performance-chapter',
+    youtubeStartSeconds: startSeconds,
+  });
+  assert.equal(isExecutableYoutube(chapter), true, `numeric chapter offset ${startSeconds} must remain executable`);
+  const result = resolvePlaybackSource({ song: chapter });
+  assert.equal(result.kind, 'youtube-foreground');
+  assert.equal(result.provenance.startSeconds, startSeconds);
+}
+
+{
+  const missingChapterOffset = song({ playbackSourceType: 'verified-performance-chapter' });
+  assert.equal(isExecutableYoutube(missingChapterOffset), false, 'verified chapter without an offset must fail closed');
+  const result = resolvePlaybackSource({ song: missingChapterOffset });
+  assert.equal(result.kind, 'unavailable');
+  assert.equal(result.reason, 'no-executable-source');
+}
+
+for (const [label, youtubeStartSeconds] of [
+  ['numeric string', '73'],
+  ['empty string', ''],
+  ['true', true],
+  ['false', false],
+  ['null', null],
+  ['NaN', Number.NaN],
+  ['Infinity', Number.POSITIVE_INFINITY],
+  ['negative', -1],
+]) {
+  const chapter = song({
+    playbackSourceType: 'verified-performance-chapter',
+    youtubeStartSeconds,
+  });
+  assert.equal(isExecutableYoutube(chapter), false, `${label} chapter offset must fail closed`);
+  const result = resolvePlaybackSource({ song: chapter });
+  assert.equal(result.kind, 'unavailable', label);
+  assert.equal(result.playable, false, label);
+  assert.equal(result.reason, 'no-executable-source', label);
+}
+
 {
   const fromUrl = song({ youtubeId: null, playbackProvider: 'youtube', playbackSourceUrl: 'https://youtu.be/ZYX987abcde' });
   const result = resolvePlaybackSource({ song: fromUrl });
