@@ -625,17 +625,53 @@ class AudioController {
 
       switch (e.code) {
         case 'Space':
+        case 'KeyK':
           e.preventDefault();
           this.togglePlay();
           break;
         case 'ArrowRight':
           e.preventDefault();
-          this.seek(this.state.currentTime + 5);
+          if (e.shiftKey && this.state.duration > 0) {
+            // 25% quadrant forward jump
+            this.seek(Math.min(this.state.duration, this.state.currentTime + this.state.duration * 0.25));
+          } else {
+            this.seek(this.state.currentTime + 5);
+          }
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          this.seek(Math.max(0, this.state.currentTime - 5));
+          if (e.shiftKey && this.state.duration > 0) {
+            // 25% quadrant backward jump
+            this.seek(Math.max(0, this.state.currentTime - this.state.duration * 0.25));
+          } else {
+            this.seek(Math.max(0, this.state.currentTime - 5));
+          }
           break;
+        case 'KeyJ':
+          e.preventDefault();
+          this.seek(Math.max(0, this.state.currentTime - 10));
+          break;
+        case 'KeyL':
+          e.preventDefault();
+          this.seek(this.state.currentTime + 10);
+          break;
+        case 'Digit0':
+        case 'Digit1':
+        case 'Digit2':
+        case 'Digit3':
+        case 'Digit4':
+        case 'Digit5':
+        case 'Digit6':
+        case 'Digit7':
+        case 'Digit8':
+        case 'Digit9': {
+          if (this.state.duration > 0) {
+            e.preventDefault();
+            const percent = parseInt(e.code.replace('Digit', ''), 10) * 0.1;
+            this.seek(this.state.duration * percent);
+          }
+          break;
+        }
         case 'ArrowUp':
           e.preventDefault();
           this.setVolume(Math.min(1, this.state.volume + 0.05));

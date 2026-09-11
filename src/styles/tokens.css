@@ -43,6 +43,28 @@
   --transit-track-height: 4px;
   --transit-thumb-size: 14px;
 
+  /* Chip Design System - Materials & Processes */
+  --chip-bg: rgba(22, 25, 45, 0.65);
+  --chip-bg-hover: rgba(246, 236, 215, 0.12);
+  --chip-bg-active: var(--accent-subtle);
+  --chip-border: rgba(246, 236, 215, 0.12);
+  --chip-border-hover: rgba(246, 236, 215, 0.28);
+  --chip-border-active: var(--accent);
+  --chip-text: var(--text-secondary);
+  --chip-text-hover: var(--text-primary);
+  --chip-text-active: var(--accent);
+  --chip-glow-active: 0 0 16px var(--accent-glow);
+  --chip-press-scale: 0.96;
+  --chip-blur: blur(14px);
+  --chip-radius-pill: 9999px;
+  --chip-radius-sm: 12px;
+
+  /* Transit Milestones & Scrubber Metrics */
+  --milestone-notch-color: rgba(246, 236, 215, 0.35);
+  --milestone-notch-passed: rgba(10, 12, 22, 0.55);
+  --scrub-tooltip-bg: rgba(18, 20, 36, 0.94);
+  --scrub-tooltip-border: rgba(246, 236, 215, 0.22);
+
   /* Touch & Metrics */
   --min-touch-target: 44px;
   --safe-top: env(safe-area-inset-top, 0px);
