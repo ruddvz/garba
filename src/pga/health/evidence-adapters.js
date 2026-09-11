@@ -17,10 +17,12 @@ function safeText(value) {
   return text || null
 }
 
-function finiteNumber(value) {
-  if (value == null || value === '') return null
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
+function checkRunId(value) {
+  return typeof value === 'number'
+    && Number.isSafeInteger(value)
+    && value > 0
+    ? value
+    : null
 }
 
 function httpStatusCode(value) {
@@ -62,7 +64,7 @@ function latestCheck(candidates = []) {
         parseTime(run?.updated_at),
         parseTime(run?.created_at),
       ),
-      id: finiteNumber(run?.id) ?? -1,
+      id: checkRunId(run?.id) ?? -1,
     }))
     .sort((a, b) => (
       b.timestamp - a.timestamp
@@ -308,7 +310,7 @@ export function requiredChecksEvidence({
       name,
       status: safeText(selected.status)?.toLowerCase() || 'unknown',
       conclusion: safeText(selected.conclusion)?.toLowerCase() || null,
-      id: selected.id ?? null,
+      id: checkRunId(selected.id),
       detailsUrl: safeText(selected.details_url || selected.html_url),
       completedAt: safeText(selected.completed_at),
       evidenceStatus: evidence.status,
