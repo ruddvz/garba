@@ -54,7 +54,6 @@ const EXPECTED_MAPPING = {
     'env.keyboard-only',
     'env.reduced-motion',
     'env.increased-forced-contrast',
-    'env.offline-flaky-network',
     'env.auth-expired-denied',
     'env.telemetry-backend-unavailable',
     'journey.recover-network-backend-failure',
@@ -89,21 +88,21 @@ test('suite mapping is exact, non-overlapping and accepted by the canonical evid
     }
   }
 
-  assert.equal(seen.size, 20)
-  assert.equal(AUTOMATED_ITEM_COUNT, 20)
+  assert.equal(seen.size, 19)
+  assert.equal(AUTOMATED_ITEM_COUNT, 19)
 })
 
-test('all passing automated suites verify exactly twenty items and keep the release incomplete', () => {
+test('all passing automated suites verify exactly nineteen items and keep the release incomplete', () => {
   const suites = Object.fromEntries(automatedEvidenceSuites().map((suite) => [suite.id, receipt()]))
   const output = result(suites)
 
   assert.equal(output.schemaVersion, AUTOMATED_EVIDENCE_SCHEMA_VERSION)
   assert.equal(output.ledger.schemaVersion, 'pga-release-acceptance/v1')
   assert.equal(output.ledger.status, 'incomplete')
-  assert.equal(output.ledger.counts.verified, 20)
+  assert.equal(output.ledger.counts.verified, 19)
   assert.equal(output.ledger.counts.failed, 0)
   assert.equal(output.ledger.counts.blocked, 0)
-  assert.equal(output.ledger.counts.not_inspected, acceptanceMatrix().length - 20)
+  assert.equal(output.ledger.counts.not_inspected, acceptanceMatrix().length - 19)
   assert.equal(output.executedSuites.length, 4)
   assert.equal(output.ignoredReceiptCount, 0)
 
@@ -133,6 +132,7 @@ test('stronger evidence classes and unexercised browser states stay not inspecte
     'env.desktop-safari',
     'env.screen-reader-spot-check',
     'env.zoom-200',
+    'env.offline-flaky-network',
     'env.partial-stale-analytics',
     'env.cold-start-warm-return',
     'journey.authenticate-enter-pga',
@@ -150,7 +150,7 @@ test('stronger evidence classes and unexercised browser states stay not inspecte
   }
 })
 
-test('a failed shell suite fails only its expanded browser-owned items', () => {
+test('a failed shell suite fails only its browser-owned items', () => {
   const output = result({
     'pga-security': receipt('passed'),
     'pga-data-truth': receipt('passed'),
@@ -160,12 +160,13 @@ test('a failed shell suite fails only its expanded browser-owned items', () => {
 
   assert.equal(output.ledger.status, 'failed')
   assert.equal(output.ledger.counts.verified, 8)
-  assert.equal(output.ledger.counts.failed, 12)
-  assert.equal(output.ledger.counts.not_inspected, acceptanceMatrix().length - 20)
+  assert.equal(output.ledger.counts.failed, 11)
+  assert.equal(output.ledger.counts.not_inspected, acceptanceMatrix().length - 19)
 
   for (const itemId of EXPECTED_MAPPING['pga-shell-browser']) {
     assert.equal(entry(output, itemId).state, 'failed')
   }
+  assert.equal(entry(output, 'env.offline-flaky-network').state, 'not_inspected')
   assert.equal(entry(output, 'quality.no-public-indexing').state, 'verified')
   assert.equal(entry(output, 'journey.inspect-listening').state, 'verified')
   assert.equal(entry(output, 'env.iphone-safari-browser').state, 'not_inspected')
@@ -178,7 +179,7 @@ test('an omitted suite produces no attempt and remains not inspected', () => {
     'pga-shell-browser': receipt(),
   })
 
-  assert.equal(output.ledger.counts.verified, 15)
+  assert.equal(output.ledger.counts.verified, 14)
   for (const itemId of EXPECTED_MAPPING['pga-analytics-browser']) {
     assert.equal(entry(output, itemId).state, 'not_inspected')
   }
