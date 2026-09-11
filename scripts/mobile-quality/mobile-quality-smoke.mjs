@@ -105,12 +105,19 @@ async function playerGeometry(page, engineName, viewport) {
     };
     const rect = (selector) => pack(document.querySelector(selector));
     const rects = (selector) => [...document.querySelectorAll(selector)].map(pack).filter(Boolean);
+    const genreStrip = document.getElementById('genreStrip');
     return {
       title: rect('#songTitle'),
       artist: rect('#songArtist'),
       transports: [rect('#prevButton'), rect('#playButton'), rect('#nextButton')],
       progressParts: [rect('#elapsedTime'), rect('#progress'), rect('#durationTime')],
       genres: rects('#genreStrip .genre-button'),
+      genreStrip: genreStrip instanceof HTMLElement ? {
+        rect: pack(genreStrip),
+        scrollWidth: genreStrip.scrollWidth,
+        clientWidth: genreStrip.clientWidth,
+        overflowX: getComputedStyle(genreStrip).overflowX,
+      } : null,
       browse: rect('#browseButton'),
     };
   });
@@ -120,11 +127,18 @@ async function playerGeometry(page, engineName, viewport) {
     geometry.artist,
     ...geometry.transports,
     ...geometry.progressParts,
-    ...geometry.genres,
     geometry.browse,
   ];
   for (const [index, rect] of semanticRects.entries()) {
     insideViewport(rect, metrics.viewport, `${contextLabel} semantic anchor ${index + 1}`);
+  }
+  insideViewport(geometry.genreStrip?.rect, metrics.viewport, `${contextLabel} genre strip`);
+  assert.ok(geometry.genres.length > 0, `${contextLabel}: no genre anchors rendered`);
+  assert.ok(geometry.genres.some((genre) => genre.right > 0 && genre.left < metrics.viewport.width),
+    `${contextLabel}: no genre anchor is reachable in the visible strip`);
+  if (geometry.genreStrip.scrollWidth > geometry.genreStrip.clientWidth + TOLERANCE) {
+    assert.ok(['auto', 'scroll'].includes(geometry.genreStrip.overflowX),
+      `${contextLabel}: overflowing genre strip uses overflow-x ${geometry.genreStrip.overflowX}`);
   }
   minTouchTarget(geometry.transports[1], `${contextLabel} primary Play target`);
 
