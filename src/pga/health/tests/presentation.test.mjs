@@ -137,6 +137,63 @@ test('stale evidence is labelled stale and freshness text uses only supplied tim
   assert.match(rollups.freshness.text, /^Stale · checked 2h ago · data through 3h ago$/)
 })
 
+test('future canonical freshness stays unknown instead of rendering as zero-age recency', () => {
+  const input = snapshot('unknown')
+  input.subsystems[5] = row('telemetry', 'unknown', {
+    checkedAt: NOW - 10_000,
+    dataThroughAt: NOW - 12_000,
+    freshnessAt: NOW + 60_000,
+    reasons: ['Evidence freshness timestamp is later than the evaluation clock.'],
+  })
+
+  const model = buildHealthPresentation(input, { nowMs: NOW })
+  const telemetry = byName(model, 'telemetry')
+
+  assert.equal(telemetry.status, 'unknown')
+  assert.equal(telemetry.freshness.ageMs, null)
+  assert.equal(telemetry.freshness.observedAt, new Date(NOW + 60_000).toISOString())
+  assert.match(telemetry.freshness.text, /checked 10s ago/i)
+  assert.match(telemetry.freshness.text, /data through 12s ago/i)
+  assert.match(telemetry.freshness.text, /freshness time is ahead of evaluation clock/i)
+})
+
+test('future canonical freshness can coexist with truthful exact-now checked recency', () => {
+  const input = snapshot('unknown')
+  input.subsystems[5] = row('telemetry', 'unknown', {
+    checkedAt: NOW,
+    dataThroughAt: NOW - 12_000,
+    freshnessAt: NOW + 60_000,
+    reasons: ['Evidence freshness timestamp is later than the evaluation clock.'],
+  })
+
+  const model = buildHealthPresentation(input, { nowMs: NOW })
+  const telemetry = byName(model, 'telemetry')
+
+  assert.equal(telemetry.status, 'unknown')
+  assert.equal(telemetry.freshness.ageMs, null)
+  assert.equal(telemetry.freshness.observedAt, new Date(NOW + 60_000).toISOString())
+  assert.match(telemetry.freshness.text, /checked 0s ago/i)
+  assert.match(telemetry.freshness.text, /data through 12s ago/i)
+  assert.match(telemetry.freshness.text, /freshness time is ahead of evaluation clock/i)
+})
+
+test('future checked and data-through timestamps use explicit ahead-of-clock copy', () => {
+  const input = snapshot('unknown')
+  input.subsystems[6] = row('rollups', 'unknown', {
+    checkedAt: NOW + 10_000,
+    dataThroughAt: NOW + 20_000,
+    freshnessAt: null,
+  })
+
+  const model = buildHealthPresentation(input, { nowMs: NOW })
+  const rollups = byName(model, 'rollups')
+
+  assert.equal(rollups.freshness.ageMs, null)
+  assert.match(rollups.freshness.text, /checked time is ahead of evaluation clock/i)
+  assert.match(rollups.freshness.text, /data through time is ahead of evaluation clock/i)
+  assert.doesNotMatch(rollups.freshness.text, /\b0s ago\b/)
+})
+
 test('missing canonical subsystem stays explicit unknown and prevents a green presentation', () => {
   const input = snapshot('healthy')
   input.subsystems = input.subsystems.filter((item) => item.name !== 'pwa')

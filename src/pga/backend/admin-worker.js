@@ -28,14 +28,27 @@ const LIVE_EXPIRY_SECONDS = 120
 const LIVE_TREND_MINUTES = 30
 const PGA_HEALTH_URL = 'https://pga.playgarba.com/api/health'
 
+function finiteNumber(value, errorCode = 'invalid_analytics_metric') {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(errorCode)
+  return value
+}
+
 function numberOrZero(value) {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : 0
+  return finiteNumber(value)
+}
+
+function optionalFreshnessMs(value) {
+  if (value == null) return null
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error('invalid_analytics_freshness')
+  }
+  if (!Number.isFinite(new Date(value).getTime())) throw new Error('invalid_analytics_freshness')
+  return value
 }
 
 function dateOrNull(ms) {
-  const number = Number(ms)
-  return Number.isFinite(number) && number > 0 ? new Date(number).toISOString() : null
+  const value = optionalFreshnessMs(ms)
+  return value !== null && value > 0 ? new Date(value).toISOString() : null
 }
 
 function metric(value, precision) {
@@ -85,45 +98,66 @@ async function analyticsQuery(env, sql, options) {
   return (options.queryAnalytics || queryAnalytics)(env, sql, options.fetchImpl)
 }
 
-function maxDataThrough(rowGroups) {
-  let max = 0
-  for (const rows of rowGroups) {
-    for (const row of rows || []) max = Math.max(max, numberOrZero(row.data_through_ms))
+function maxFreshnessValues(values) {
+  let max = null
+  for (const value of values) {
+    const parsed = optionalFreshnessMs(value)
+    if (parsed !== null) max = max === null ? parsed : Math.max(max, parsed)
   }
-  return max || null
+  return max
+}
+
+function maxDataThrough(rowGroups) {
+  const values = []
+  for (const rows of rowGroups) {
+    for (const row of rows || []) values.push(row?.data_through_ms)
+  }
+  return maxFreshnessValues(values)
 }
 
 function minimumObservedSessions(row) {
   const sessions = numberOrZero(row.sessions)
-  const maxSampleInterval = Number(row.max_sample_interval)
-  if (!Number.isFinite(maxSampleInterval) || maxSampleInterval < 1) return 0
+  if (!Object.prototype.hasOwnProperty.call(row, 'max_sample_interval')) return 0
+  const maxSampleInterval = finiteNumber(row.max_sample_interval, 'invalid_analytics_sample_interval')
+  if (maxSampleInterval < 1) throw new Error('invalid_analytics_sample_interval')
   return Math.ceil(sessions / maxSampleInterval)
 }
 
 function liveBreakdownRows(rows, precision) {
-  return rows.map((row) => {
-    const sessions = numberOrZero(row.sessions)
-    const listeningSessions = numberOrZero(row.listening_sessions)
-    const browsingSessions = numberOrZero(row.browsing_sessions)
-    return {
-      surface: row.surface || 'unknown',
-      world: row.world || null,
-      displayMode: row.display_mode || 'unknown',
-      sessions: metric(sessions, precision),
-      listeningSessions: metric(listeningSessions, precision),
-      browsingSessions: metric(browsingSessions, precision),
-      visible: minimumObservedSessions(row) >= PRIVACY_MIN,
-    }
-  }).filter((row) => row.visible).map(({ visible: _visible, ...row }) => row)
+  return rows
+    .filter((row) => Object.prototype.hasOwnProperty.call(row, 'sessions'))
+    .map((row) => {
+      const sessions = numberOrZero(row.sessions)
+      const listeningSessions = numberOrZero(row.listening_sessions)
+      const browsingSessions = numberOrZero(row.browsing_sessions)
+      return {
+        surface: row.surface || 'unknown',
+        world: row.world || null,
+        displayMode: row.display_mode || 'unknown',
+        sessions: metric(sessions, precision),
+        listeningSessions: metric(listeningSessions, precision),
+        browsingSessions: metric(browsingSessions, precision),
+        visible: minimumObservedSessions(row) >= PRIVACY_MIN,
+      }
+    })
+    .filter((row) => row.visible)
+    .map(({ visible: _visible, ...row }) => row)
 }
 
 function liveTrendRows(rows, precision) {
-  return rows.map((row) => ({
-    minute: Number.isFinite(Number(row.minute_bucket)) ? new Date(Number(row.minute_bucket) * 1000).toISOString() : null,
-    activeSessions: metric(row.active_sessions, precision),
-    listeningSessions: metric(row.listening_sessions, precision),
-    browsingSessions: metric(row.browsing_sessions, precision),
-  })).filter((row) => row.minute)
+  return rows
+    .filter((row) => Object.prototype.hasOwnProperty.call(row, 'minute_bucket'))
+    .map((row) => {
+      const minuteBucket = finiteNumber(row.minute_bucket, 'invalid_analytics_minute_bucket')
+      const minuteDate = new Date(minuteBucket * 1000)
+      if (!Number.isFinite(minuteDate.getTime())) throw new Error('invalid_analytics_minute_bucket')
+      return {
+        minute: minuteDate.toISOString(),
+        activeSessions: metric(row.active_sessions, precision),
+        listeningSessions: metric(row.listening_sessions, precision),
+        browsingSessions: metric(row.browsing_sessions, precision),
+      }
+    })
 }
 
 async function home(env, options = {}) {
@@ -161,11 +195,11 @@ async function home(env, options = {}) {
   const todayPrecision = precisionFromRows(todayRows)
   const listeningPrecision = precisionFromRows(listeningRows)
   const lifetime = lifetimeOk ? lifetimeResult.value : { data: {}, dataThroughMs: null }
-  const dataThroughMs = Math.max(
-    numberOrZero(today.data_through_ms),
-    numberOrZero(listening.data_through_ms),
-    numberOrZero(lifetime.dataThroughMs),
-  ) || null
+  const dataThroughMs = maxFreshnessValues([
+    today.data_through_ms,
+    listening.data_through_ms,
+    lifetime.dataThroughMs,
+  ])
 
   return envelope({
     status: todayOk && listeningOk && lifetimeOk ? 'complete' : 'partial',

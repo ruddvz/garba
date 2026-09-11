@@ -35,6 +35,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 
 - [`product/design-system.md`](product/design-system.md): visual system and interaction direction
 - [`product/playback-runtime-coverage.md`](product/playback-runtime-coverage.md): generated song-route and playback coverage contract
+- [`product/playback-controller.md`](product/playback-controller.md): single playback authority, command, transport-evidence and migration contract
 - [`product/youtube-first-playback.md`](product/youtube-first-playback.md): one-tap YouTube IFrame playback architecture, route safety and provider fallback hierarchy
 - [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour
 - [`product/player-release-acceptance.md`](product/player-release-acceptance.md): finite, evidence-backed player release gate and listening journeys

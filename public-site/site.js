@@ -20,24 +20,76 @@
   const header = document.querySelector('.site-header');
   const button = document.getElementById('menuButton');
   const nav = document.getElementById('siteNav');
+  const menuLabel = button?.querySelector('.sr-only');
   const year = document.getElementById('year');
 
   const setHeaderState = () => {
     header?.classList.toggle('scrolled', window.scrollY > 18 || document.body.classList.contains('interior-page'));
   };
 
-  const closeMenu = () => {
+  const setMenuOpen = (open) => {
     if (!button || !nav) return;
-    button.setAttribute('aria-expanded', 'false');
-    nav.classList.remove('open');
-    document.body.style.overflow = '';
+    button.setAttribute('aria-expanded', String(open));
+    nav.classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (menuLabel) menuLabel.textContent = open ? 'Close menu' : 'Open menu';
+  };
+
+  const closeMenu = ({ restoreFocus = false } = {}) => {
+    if (!button || !nav) return;
+    const wasOpen = button.getAttribute('aria-expanded') === 'true';
+    setMenuOpen(false);
+    if (restoreFocus && wasOpen) button.focus({ preventScroll: true });
+  };
+
+  const getMenuFocusTargets = () => {
+    if (!button || !nav) return [];
+    const targets = [
+      button,
+      ...nav.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+    ];
+    return targets.filter((target, index) => (
+      targets.indexOf(target) === index
+      && !target.hidden
+      && target.getAttribute('aria-hidden') !== 'true'
+    ));
   };
 
   button?.addEventListener('click', () => {
     const isOpen = button.getAttribute('aria-expanded') === 'true';
-    button.setAttribute('aria-expanded', String(!isOpen));
-    nav?.classList.toggle('open', !isOpen);
-    document.body.style.overflow = isOpen ? '' : 'hidden';
+    setMenuOpen(!isOpen);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (button?.getAttribute('aria-expanded') !== 'true') return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMenu({ restoreFocus: true });
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+    const focusTargets = getMenuFocusTargets();
+    if (focusTargets.length === 0) return;
+
+    const first = focusTargets[0];
+    const last = focusTargets[focusTargets.length - 1];
+    const active = document.activeElement;
+
+    if (!focusTargets.includes(active)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus({ preventScroll: true });
+      return;
+    }
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    }
   });
 
   nav?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));

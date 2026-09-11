@@ -123,8 +123,7 @@ function safeSourceUrl(value) {
 }
 
 function nonNegativeNumber(value) {
-  const number = Number(value)
-  return Number.isFinite(number) && number >= 0 ? number : null
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
 }
 
 function sanitiseEvidence(raw = {}) {
@@ -134,9 +133,10 @@ function sanitiseEvidence(raw = {}) {
   const environment = boundedText(raw.environment, 160)
   const sourceUrl = safeSourceUrl(raw.sourceUrl)
   const sourceId = boundedText(raw.sourceId, 160)
-  const freshnessBudgetMs = raw.freshnessBudgetMs == null
-    ? null
-    : nonNegativeNumber(raw.freshnessBudgetMs)
+  const freshnessBudgetSupplied = Object.prototype.hasOwnProperty.call(raw, 'freshnessBudgetMs')
+  const freshnessBudgetMs = freshnessBudgetSupplied
+    ? nonNegativeNumber(raw.freshnessBudgetMs)
+    : null
 
   return {
     method,
@@ -145,15 +145,18 @@ function sanitiseEvidence(raw = {}) {
     environment,
     sourceUrl,
     sourceId,
+    freshnessBudgetSupplied,
     freshnessBudgetMs,
   }
 }
 
 function sanitiseBlocker(raw = {}) {
-  const issue = Number(raw.issue)
+  const issue = typeof raw.issue === 'number' && Number.isInteger(raw.issue) && raw.issue > 0
+    ? raw.issue
+    : null
   return {
     code: boundedText(raw.code, 80),
-    issue: Number.isInteger(issue) && issue > 0 ? issue : null,
+    issue,
     detail: boundedText(raw.detail, 240),
   }
 }
@@ -191,6 +194,9 @@ function inspectAttempt(entry, attempt, context) {
   if (!evidence.method || !entry.allowedMethods.includes(evidence.method)) {
     return { state: 'not_inspected', reason: 'incompatible_evidence_method' }
   }
+  if (evidence.freshnessBudgetSupplied && evidence.freshnessBudgetMs == null) {
+    return { state: 'not_inspected', reason: 'invalid_freshness_budget' }
+  }
   if (evidence.observedAtMs == null) {
     return { state: 'not_inspected', reason: 'evidence_time_required' }
   }
@@ -224,8 +230,13 @@ function inspectAttempt(entry, attempt, context) {
 }
 
 export function createAcceptanceLedger(attempts = {}, options = {}) {
-  const nowMs = Number(options.nowMs ?? Date.now())
-  if (!Number.isFinite(nowMs)) throw new Error('invalid_acceptance_time')
+  const nowCandidate = Object.prototype.hasOwnProperty.call(options, 'nowMs')
+    ? options.nowMs
+    : Date.now()
+  if (typeof nowCandidate !== 'number' || !Number.isFinite(nowCandidate)) {
+    throw new Error('invalid_acceptance_time')
+  }
+  const nowMs = nowCandidate
 
   const targetRevision = normaliseRevision(options.targetRevision)
   const targetEnvironment = boundedText(options.targetEnvironment, 160)

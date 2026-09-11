@@ -417,6 +417,100 @@ test('GitHub token is outbound-only and raw check payload fields are not returne
   assert.doesNotMatch(serialized, /token=drop-me/)
 })
 
+test('collector preserves only explicit positive safe-integer GitHub check-run IDs', async () => {
+  const targets = healthCollectorTargets({ githubRepository: REPOSITORY, revision: SHA })
+  const invalidIds = [
+    '999',
+    '',
+    true,
+    false,
+    null,
+    0,
+    -1,
+    1.5,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.MAX_SAFE_INTEGER + 1,
+    {},
+    [],
+  ]
+
+  for (const id of invalidIds) {
+    const payload = checksPayload()
+    payload.check_runs[0].id = id
+    const fetchImpl = mockFetch({
+      [targets.production]: response(targets.production),
+      [targets.buildInfo]: jsonResponse(targets.buildInfo, buildInfo()),
+      [targets.githubChecksApi]: jsonResponse(targets.githubChecksApi, payload),
+    })
+
+    const snapshot = await collect(fetchImpl)
+    const ci = subsystem(snapshot, 'ci')
+    const check = ci.details.checks.find((item) => item.name === 'Validate GARBA')
+    assert.equal(ci.status, 'healthy', `malformed ID must not alter CI state for ${String(id)}`)
+    assert.equal(check.id, null, `collector must omit malformed check-run ID ${String(id)}`)
+    assert.equal(check.status, 'completed')
+    assert.equal(check.conclusion, 'success')
+  }
+
+  const payload = checksPayload()
+  payload.check_runs[0].id = 42
+  const fetchImpl = mockFetch({
+    [targets.production]: response(targets.production),
+    [targets.buildInfo]: jsonResponse(targets.buildInfo, buildInfo()),
+    [targets.githubChecksApi]: jsonResponse(targets.githubChecksApi, payload),
+  })
+  const snapshot = await collect(fetchImpl)
+  const check = subsystem(snapshot, 'ci').details.checks.find((item) => item.name === 'Validate GARBA')
+  assert.equal(check.id, 42, 'valid positive safe-integer GitHub ID must survive collection unchanged')
+})
+
+test('malformed high GitHub check-run IDs cannot win equal-timestamp CI selection', async () => {
+  const targets = healthCollectorTargets({ githubRepository: REPOSITORY, revision: SHA })
+  const completedAt = new Date(NOW - 5_000).toISOString()
+  const payload = checksPayload()
+  payload.check_runs = [
+    {
+      id: '999',
+      name: 'Validate GARBA',
+      status: 'completed',
+      conclusion: 'failure',
+      completed_at: completedAt,
+      details_url: 'https://github.com/ruddvz/garba/actions/runs/malformed',
+    },
+    {
+      id: 11,
+      name: 'Validate GARBA',
+      status: 'completed',
+      conclusion: 'success',
+      completed_at: completedAt,
+      details_url: 'https://github.com/ruddvz/garba/actions/runs/11',
+    },
+    {
+      id: 12,
+      name: 'PGA security validate',
+      status: 'completed',
+      conclusion: 'success',
+      completed_at: completedAt,
+      details_url: 'https://github.com/ruddvz/garba/actions/runs/12',
+    },
+  ]
+
+  const fetchImpl = mockFetch({
+    [targets.production]: response(targets.production),
+    [targets.buildInfo]: jsonResponse(targets.buildInfo, buildInfo()),
+    [targets.githubChecksApi]: jsonResponse(targets.githubChecksApi, payload),
+  })
+  const snapshot = await collect(fetchImpl)
+  const ci = subsystem(snapshot, 'ci')
+  const selected = ci.details.checks.find((item) => item.name === 'Validate GARBA')
+
+  assert.equal(ci.status, 'healthy')
+  assert.equal(selected.id, 11)
+  assert.equal(selected.conclusion, 'success')
+})
+
 test('caller-supplied operational observations are adapted rather than echoed raw', async () => {
   const { fetchImpl } = successfulFetch()
   const snapshot = await collect(fetchImpl)
