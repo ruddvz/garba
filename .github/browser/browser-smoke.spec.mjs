@@ -285,8 +285,9 @@ test('Search opens without clipping and closing restores focus to the opener', a
 
     const sheet = page.locator('#songSheet');
     await expect(sheet).toHaveAttribute('aria-hidden', 'false');
+    await expect(sheet).toHaveAttribute('data-snap', 'full');
     await expect(page.locator('#searchInput')).toBeVisible();
-    await page.waitForTimeout(500);
+    await expect(sheet).toHaveCSS('transform', /,\s*0\)$/);
     await expectInsideViewport(page, '#sheetClose');
     await expectNoDocumentOverflow(page);
 
