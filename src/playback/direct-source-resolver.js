@@ -52,6 +52,10 @@
     return typeof value === 'string' && value.trim().length > 0;
   }
 
+  function isFiniteNonNegativeNumber(value) {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  }
+
   function parseHttpsUrl(value) {
     if (!nonEmptyString(value)) return null;
     try {
@@ -202,6 +206,10 @@
     if (song.playbackSearchOnly === true) return false;
     if (song.playbackSourceType === 'verified-release-track-reference') return false;
     if (song.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
+    if (
+      song.playbackSourceType === 'verified-performance-chapter'
+      && !isFiniteNonNegativeNumber(song.youtubeStartSeconds)
+    ) return false;
 
     const explicit = String(song.youtubeId || '').trim();
     const source = youtubeSourceIdentity(song.playbackSourceUrl);
@@ -243,7 +251,9 @@
 
   function youtubeDecision(song) {
     const videoId = youtubeVideoId(song);
-    const startSeconds = Number(song.youtubeStartSeconds || 0);
+    const startSeconds = isFiniteNonNegativeNumber(song.youtubeStartSeconds)
+      ? song.youtubeStartSeconds
+      : 0;
     return freezeDecision({
       ...baseDecision(song.id.trim(), 'youtube-foreground', true, false),
       provider: 'youtube',
@@ -252,7 +262,7 @@
         sourceType: String(song.playbackSourceType || 'youtube').trim() || 'youtube',
         sourceUrl: youtubeSourceUrl(song, videoId),
         videoId,
-        startSeconds: Number.isFinite(startSeconds) && startSeconds >= 0 ? startSeconds : 0,
+        startSeconds,
       },
     });
   }
