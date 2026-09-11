@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Genre, Song, SetChapter } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Genre, SetChapter } from '../../types';
 import { usePlayback } from '../../engine/usePlayback';
 import {
   Play,
@@ -31,6 +31,30 @@ function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function formatStyleTag(style: string): string {
+  const map: Record<string, string> = {
+    '3-taali': '3 Taali',
+    'tran-taali': 'Tran Taali',
+    hinch: 'Hinch',
+    'medium-hinch': 'Medium Hinch',
+    dakla: 'Dakla',
+    'dak-geet': 'Dak Geet',
+    sanedo: 'Sanedo',
+    dandiya: 'Dandiya Raas',
+    dandia: 'Dandiya',
+    raas: 'Raas',
+    nonstop: 'Nonstop Set',
+    live: 'Live Navratri',
+    'traditional-repertoire': 'Prachin Garba',
+    devotional: 'Aarti & Stuti',
+    folk: 'Desi Folk',
+  };
+  return (
+    map[style.toLowerCase()] ||
+    style.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 }
 
 const SPEED_OPTIONS = [0.8, 1, 1.25, 1.5];
@@ -75,6 +99,28 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
   const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
+  // Decoupled scrubbing state for silky non-stuttering scrubbing
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubTime, setScrubTime] = useState(0);
+  const [hoverPercent, setHoverPercent] = useState<number | null>(null);
+  const [hoverTime, setHoverTime] = useState(0);
+
+  // Close speed menu and volume popover on outside click
+  useEffect(() => {
+    if (!showSpeedMenu && !showVolumeSlider) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest(`.${styles.speedControlWrap}`)) {
+        setShowSpeedMenu(false);
+      }
+      if (!target?.closest(`.${styles.volumeControlWrap}`)) {
+        setShowVolumeSlider(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [showSpeedMenu, showVolumeSlider]);
+
   const song = state.currentSong;
   const isFavorite = song ? favorites.has(song.id) : false;
 
@@ -91,11 +137,40 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
     });
   };
 
-  const progressPercent = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
+  const displayTime = isScrubbing ? scrubTime : state.currentTime;
+  const displayPercent =
+    state.duration > 0 ? (displayTime / state.duration) * 100 : 0;
 
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    seek(val);
+  // Track scrubber handlers
+  const handlePointerDown = (e: React.PointerEvent<HTMLInputElement>) => {
+    setIsScrubbing(true);
+    const val = parseFloat(e.currentTarget.value);
+    setScrubTime(val);
+  };
+
+  const handleSeekInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const val = parseFloat((e.target as HTMLInputElement).value);
+    setScrubTime(val);
+  };
+
+  const handleSeekCommit = () => {
+    if (isScrubbing) {
+      seek(scrubTime);
+      setIsScrubbing(false);
+    }
+  };
+
+  const handleTrackMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const pct = (x / rect.width) * 100;
+    setHoverPercent(pct);
+    setHoverTime((pct / 100) * (state.duration || 0));
+  };
+
+  const handleTrackMouseLeave = () => {
+    setHoverPercent(null);
   };
 
   const handleChapterClick = (chapter: SetChapter) => {
@@ -111,7 +186,11 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
   const currentChapter = song?.chapters
     ?.slice()
     .reverse()
-    .find((c) => state.currentTime >= c.startSeconds);
+    .find((c) => displayTime >= c.startSeconds);
+
+  // Active quadrant for 25% milestone chips
+  const currentQuadrant =
+    displayPercent < 25 ? 0 : displayPercent < 50 ? 25 : displayPercent < 75 ? 50 : 75;
 
   return (
     <main className={styles.playerContainer}>
@@ -185,30 +264,146 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
 
         {/* Unified Transit Line (Playback Timeline Scrubber) */}
         <div className={styles.transitLine} role="group" aria-label="Playback timeline scrubber">
-          <span className={styles.transitTime}>{formatTime(state.currentTime)}</span>
-          <div className={styles.progressBarContainer}>
+          <span className={styles.transitTime}>{formatTime(displayTime)}</span>
+          <div
+            className={`${styles.progressBarContainer} ${isScrubbing ? styles.scrubbing : ''}`}
+            onMouseMove={handleTrackMouseMove}
+            onMouseLeave={handleTrackMouseLeave}
+          >
+            {/* 25%, 50%, 75% Milestone Notches & Chapter Notches */}
             <div className={styles.progressTrack}>
               <div
                 className={styles.progressFill}
-                style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                style={{ width: `${Math.min(100, Math.max(0, displayPercent))}%` }}
               />
+              <div className={styles.milestoneMarkers} aria-hidden="true">
+                {[25, 50, 75].map((pct) => (
+                  <span
+                    key={pct}
+                    className={`${styles.milestoneMarker} ${displayPercent >= pct ? styles.passed : ''}`}
+                    style={{ left: `${pct}%` }}
+                    title={`${pct}% Milestone`}
+                  />
+                ))}
+                {song?.chapters &&
+                  state.duration > 0 &&
+                  song.chapters.map((ch, idx) => {
+                    if (idx === 0 || ch.startSeconds <= 0) return null;
+                    const chPct = (ch.startSeconds / state.duration) * 100;
+                    if (chPct >= 99) return null;
+                    return (
+                      <span
+                        key={`ch-${idx}`}
+                        className={`${styles.chapterMarker} ${displayPercent >= chPct ? styles.passed : ''}`}
+                        style={{ left: `${chPct}%` }}
+                        title={`${ch.title} (${formatTime(ch.startSeconds)})`}
+                      />
+                    );
+                  })}
+              </div>
             </div>
+
+            {/* Glowing Scrubber Thumb Handle */}
+            <div
+              className={`${styles.progressThumb} ${isScrubbing ? styles.scrubbing : ''}`}
+              style={{ left: `${Math.min(100, Math.max(0, displayPercent))}%` }}
+              aria-hidden="true"
+            />
+
+            {/* Floating Live Time & Percentage Tooltip */}
+            {(hoverPercent !== null || isScrubbing) && (
+              <div
+                className={styles.seekTooltip}
+                style={{
+                  left: `${isScrubbing ? displayPercent : (hoverPercent ?? 0)}%`,
+                }}
+                aria-hidden="true"
+              >
+                <span className={styles.tooltipTime}>
+                  {formatTime(isScrubbing ? scrubTime : hoverTime)}
+                </span>
+                <span className={styles.tooltipPercent}>
+                  {Math.round(isScrubbing ? displayPercent : (hoverPercent ?? 0))}%
+                </span>
+              </div>
+            )}
+
             <input
               type="range"
               min={0}
               max={state.duration || 100}
               step={0.5}
-              value={state.currentTime || 0}
-              onChange={handleSeekChange}
+              value={displayTime || 0}
+              onPointerDown={handlePointerDown}
+              onInput={handleSeekInput}
+              onChange={handleSeekInput}
+              onPointerUp={handleSeekCommit}
+              onKeyUp={handleSeekCommit}
               className={styles.progressInput}
               aria-label="Playback timeline scrubber"
+              aria-valuemin={0}
+              aria-valuemax={state.duration || 100}
+              aria-valuenow={Math.round(displayTime)}
+              aria-valuetext={`${formatTime(displayTime)} of ${formatTime(state.duration)} (${Math.round(displayPercent)}%)`}
             />
           </div>
           <span className={styles.transitTime}>
             {state.duration > 0
-              ? `-${formatTime(Math.max(0, state.duration - state.currentTime))}`
+              ? `-${formatTime(Math.max(0, state.duration - displayTime))}`
               : '0:00'}
           </span>
+        </div>
+
+        {/* 25% Milestone & Quick-Jump Chips Bar */}
+        <div className={styles.quickSeekRow} role="group" aria-label="Quick jump milestones">
+          <button
+            type="button"
+            className={`${styles.seekChip} ${currentQuadrant === 0 ? styles.activeChip : ''}`}
+            onClick={() => seek(0)}
+            title="Jump to start (0%)"
+          >
+            <span className={styles.seekChipLabel}>0%</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.seekChip} ${currentQuadrant === 25 ? styles.activeChip : ''}`}
+            onClick={() => state.duration > 0 && seek(state.duration * 0.25)}
+            title="Jump to 25% milestone"
+          >
+            <span className={styles.seekChipLabel}>25%</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.seekChip} ${currentQuadrant === 50 ? styles.activeChip : ''}`}
+            onClick={() => state.duration > 0 && seek(state.duration * 0.5)}
+            title="Jump to 50% midpoint"
+          >
+            <span className={styles.seekChipLabel}>50%</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.seekChip} ${currentQuadrant === 75 ? styles.activeChip : ''}`}
+            onClick={() => state.duration > 0 && seek(state.duration * 0.75)}
+            title="Jump to 75% milestone"
+          >
+            <span className={styles.seekChipLabel}>75%</span>
+          </button>
+          <button
+            type="button"
+            className={styles.seekChip}
+            onClick={() => seek(Math.max(0, state.currentTime - 15))}
+            title="Replay 15 seconds"
+          >
+            <span className={styles.seekChipLabel}>-15s</span>
+          </button>
+          <button
+            type="button"
+            className={styles.seekChip}
+            onClick={() => seek(Math.min(state.duration || Infinity, state.currentTime + 15))}
+            title="Skip ahead 15 seconds"
+          >
+            <span className={styles.seekChipLabel}>+15s</span>
+          </button>
         </div>
 
         {/* Focal Transport */}
@@ -217,7 +412,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
           <button
             className={`${styles.utilityBtn} ${state.isShuffled ? styles.active : ''}`}
             onClick={toggleShuffle}
-            title={state.isShuffled ? 'Shuffle: On' : 'Shuffle: Off'}
+            title={state.isShuffled ? 'Shuffle: On (S)' : 'Shuffle: Off (S)'}
             aria-label="Toggle shuffle"
           >
             <Shuffle size={18} />
@@ -237,7 +432,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
           <button
             className={`${styles.playBtn} ${state.isPlaying ? styles.playing : ''}`}
             onClick={togglePlay}
-            title={state.isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+            title={state.isPlaying ? 'Pause (Space or K)' : 'Play (Space or K)'}
             aria-label={state.isPlaying ? 'Pause' : 'Play'}
           >
             {state.isPlaying ? <Pause size={34} /> : <Play size={34} style={{ marginLeft: 3 }} />}
@@ -257,14 +452,14 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
           <button
             className={`${styles.utilityBtn} ${state.repeatMode !== 'off' ? styles.active : ''}`}
             onClick={cycleRepeatMode}
-            title={`Repeat: ${state.repeatMode}`}
+            title={`Repeat: ${state.repeatMode} (R)`}
             aria-label={`Repeat mode: ${state.repeatMode}`}
           >
             {state.repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
           </button>
         </div>
 
-        {/* Audio Utilities Row (Volume & Speed & Video Stage) */}
+        {/* Audio Utilities Row (Volume & Speed) */}
         <div className={styles.auxiliaryRow}>
           {/* Speed Selector */}
           <div className={styles.speedControlWrap}>
@@ -273,6 +468,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
               onClick={() => setShowSpeedMenu(!showSpeedMenu)}
               title="Practice tempo & playback speed"
               aria-label="Change playback speed"
+              aria-expanded={showSpeedMenu}
             >
               <Gauge size={15} />
               <span>{state.playbackRate}x</span>
@@ -326,7 +522,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
 
         {/* Set Chapters Bar (if chapters exist) */}
         {song?.chapters && song.chapters.length > 0 && (
-          <div className={styles.chaptersBarSection}>
+          <div className={styles.chaptersBarSection} aria-label="Set Chapters">
             <div className={styles.chaptersHeader}>
               <span>Jump to Section:</span>
             </div>
@@ -349,6 +545,22 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
             </div>
           </div>
         )}
+
+        {/* Style & Rhythm Chips (when song has authentic styles and no chapters) */}
+        {(!song?.chapters || song.chapters.length === 0) &&
+          song?.styles &&
+          song.styles.length > 0 && (
+            <div className={styles.stylesBarSection} aria-label="Song rhythm and styles">
+              <div className={styles.stylesScrollRow}>
+                {song.styles.map((style, idx) => (
+                  <span key={idx} className={styles.styleChip}>
+                    <Sparkles size={11} className={styles.styleChipIcon} />
+                    <span>{formatStyleTag(style)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
         {/* Genre Selector Strip with Perfectly Aligned Icons & Labels */}
         <div className={styles.genreStrip} role="tablist" aria-label="Music genres">
