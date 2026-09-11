@@ -242,7 +242,7 @@ jobs:
 
       - name: Run isolated desktop WebKit Search journey
         run: >-
-          npx playwright test .github/browser/browser-smoke.spec.mjs
+          npx playwright test
           --config=.github/browser/playwright.config.mjs
           --project=desktop-webkit
           --grep '^Search opens without clipping and closing restores focus to the opener$'
