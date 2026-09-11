@@ -297,6 +297,16 @@
     stage.dataset.routeTruthSong = song.id || 'reference';
   }
 
+  function observeProviderStage() {
+    const stage = document.querySelector('#providerStage');
+    if (!stage) return false;
+
+    guardReferenceOnlyProvider();
+    new MutationObserver(guardReferenceOnlyProvider)
+      .observe(stage, { attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+    return true;
+  }
+
   function providerIsOpen() {
     return Boolean(document.querySelector('#providerStage.open[aria-hidden="false"]'));
   }
@@ -400,6 +410,14 @@
   }
   queueMicrotask(syncMediaMetadata);
 
-  new MutationObserver(guardReferenceOnlyProvider)
-    .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+  if (!observeProviderStage()) {
+    const providerStageMountObserver = new MutationObserver((records, observer) => {
+      const mounted = records.some((record) => [...record.addedNodes]
+        .some((node) => node instanceof Element && node.id === 'providerStage'));
+      if (!mounted) return;
+      observer.disconnect();
+      observeProviderStage();
+    });
+    providerStageMountObserver.observe(document.body, { childList: true });
+  }
 })();
