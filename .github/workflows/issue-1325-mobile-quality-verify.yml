@@ -5,6 +5,7 @@ on:
     paths:
       - 'nonstop-browser.js'
       - '.github/workflows/issue-1325-mobile-quality-verify.yml'
+      - 'scripts/issue-1325-mobile-quality-smoke.mjs'
   workflow_dispatch:
 
 permissions:
@@ -124,15 +125,6 @@ jobs:
       - name: Install browser engines
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Fetch unchanged #1302 matrix
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl -fsSL \
-            https://raw.githubusercontent.com/ruddvz/garba/fb91577963002931ff3443cf2cd32abebdc37ee7/scripts/mobile-quality/mobile-quality-smoke.mjs \
-            -o scripts/issue-1325-mobile-quality-smoke.mjs
-          printf '%s\n' 'Pinned QA source: fb91577963002931ff3443cf2cd32abebdc37ee7 / scripts/mobile-quality/mobile-quality-smoke.mjs (Git blob f965d041e54b9c6ad1fa5ced6bfafaaebed95f27)' > /tmp/qa-source.txt
-
       - name: Start mobile fixture
         shell: bash
         run: |
@@ -148,6 +140,18 @@ jobs:
           cat /tmp/playgarba-mobile-quality.log
           exit 1
 
+      - name: Measure effective 844x390 geometry
+        run: node scripts/issue-1325-mobile-quality-smoke.mjs
+
+      - name: Fetch unchanged #1302 matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            https://raw.githubusercontent.com/ruddvz/garba/fb91577963002931ff3443cf2cd32abebdc37ee7/scripts/mobile-quality/mobile-quality-smoke.mjs \
+            -o scripts/issue-1325-mobile-quality-smoke.mjs
+          printf '%s\n' 'Pinned QA source: fb91577963002931ff3443cf2cd32abebdc37ee7 / scripts/mobile-quality/mobile-quality-smoke.mjs (Git blob f965d041e54b9c6ad1fa5ced6bfafaaebed95f27)' > /tmp/qa-source.txt
+
       - name: Run unchanged Chromium and WebKit matrix
         run: node scripts/issue-1325-mobile-quality-smoke.mjs
 
@@ -158,6 +162,7 @@ jobs:
           name: issue-1325-mobile-quality-verification
           path: |
             artifacts/mobile-quality
+            /tmp/issue1325-layout.json
             /tmp/playgarba-mobile-quality.log
             /tmp/qa-source.txt
           if-no-files-found: ignore
