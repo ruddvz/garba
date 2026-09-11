@@ -35,18 +35,18 @@ jobs:
           path = Path('nonstop-browser.js')
           source = path.read_text()
           old = '''      @media(max-height:560px) and (orientation:landscape){
-              .player-shell{grid-template-rows:auto auto auto auto auto!important}
-              #genreStrip{grid-row:4!important;align-self:end!important}
-              #browseActions{grid-row:5!important;align-self:start!important}
-            }'''
+        .player-shell{grid-template-rows:auto auto auto auto auto!important}
+        #genreStrip{grid-row:4!important;align-self:end!important}
+        #browseActions{grid-row:5!important;align-self:start!important}
+      }'''
           new = '''      @media(max-height:560px) and (orientation:landscape){
-              html body .app .player-shell{
-                grid-template-rows:auto auto auto 11px 0 auto 36px auto!important;
-                padding-top:52px!important
-              }
-              html body .app #genreStrip{grid-row:6!important;align-self:end!important}
-              html body .app #browseActions{grid-row:8!important;align-self:start!important}
-            }'''
+        html body .app .player-shell{
+          grid-template-rows:auto auto auto 11px 0 auto 36px auto!important;
+          padding-top:52px!important
+        }
+        html body .app #genreStrip{grid-row:6!important;align-self:end!important}
+        html body .app #browseActions{grid-row:8!important;align-self:start!important}
+      }'''
           if old in source:
               if source.count(old) != 1:
                   raise SystemExit('Expected exactly one existing #1325 short-landscape block')
