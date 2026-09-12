@@ -1,7 +1,7 @@
 {
-  "version": "0.19.0",
-  "updated": "2026-09-09",
-  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 adds five independently verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release; the other five canonical Govaliyo rows remain fail-closed.",
+  "version": "0.20.0",
+  "updated": "2026-09-12",
+  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 adds five independently verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release; the other five canonical Govaliyo rows remain fail-closed. Issue #1400 adds the exact Kairavi Buch Official Artist Channel full-song route for Kana Mane Dwarika Dekhad (2021); its existing provider metadata remains provenance outside this override layer.",
   "songSources": {
     "ramzat-2017-36-ramzat-non-stop-garba": {
       "provider": "youtube",
@@ -1267,6 +1267,16 @@
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 10,
       "evidenceType": "official-youtube-auto-generated-track"
+    },
+    "kairavi-kana-mane-dwarika-dekhad-2021": {
+      "provider": "youtube",
+      "videoId": "U7kn53GBTRY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=U7kn53GBTRY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "kairavi-kana-mane-dwarika-dekhad-2021",
+      "trackNumber": 1,
+      "evidenceType": "verified-release-track-video"
     }
   }
 }
