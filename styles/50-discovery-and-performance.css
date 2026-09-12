@@ -61,41 +61,34 @@
 
 /*
  * Production player artwork.
- * The runtime still writes the lightweight SVG path inline so first paint and
- * offline fallback remain reliable. On the deployed live origin, override that
- * inline URL with the approved 2048px WebP from the 15-image courtyard pack.
- * Keeping the SVG as the second background layer means a failed WebP request
- * never leaves the player blank.
+ *
+ * Only the visible world is allowed to request a high-resolution WebP. The old
+ * selector matched hidden transition layers as soon as app.js wrote a genre SVG
+ * into their inline style, which let multiple 2K images join the cold-start
+ * waterfall even though only one world could be seen.
+ *
+ * The approved WebP is the only painted image while that world is visible. The
+ * legacy SVG remains an internal runtime identity/fallback token, but it is not
+ * stacked underneath the live artwork, so listeners never see the retired world
+ * flash while the 2K image is arriving.
  */
-.world-layer[style*="assets/backgrounds/traditional.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/11-master-dark-courtyard.webp"),
-    url("/assets/backgrounds/traditional.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/traditional.svg"] {
+  background-image: url("/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/dandiya.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp"),
-    url("/assets/backgrounds/dandiya.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/dandiya.svg"] {
+  background-image: url("/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/devotional.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/03-devotional-garba-courtyard.webp"),
-    url("/assets/backgrounds/devotional.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/devotional.svg"] {
+  background-image: url("/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/folk.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/14-gujarati-folk-courtyard.webp"),
-    url("/assets/backgrounds/folk.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/folk.svg"] {
+  background-image: url("/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/sanedo.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp"),
-    url("/assets/backgrounds/sanedo.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/sanedo.svg"] {
+  background-image: url("/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/fusion.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/05-fusion-gujarati-neon.webp"),
-    url("/assets/backgrounds/fusion.svg") !important;
+.world-layer.is-visible[style*="assets/backgrounds/fusion.svg"] {
+  background-image: url("/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
 }
 .world-layer[style*="assets/backgrounds/"] {
   background-size: cover !important;
@@ -103,6 +96,13 @@
   background-repeat: no-repeat !important;
   filter: none !important;
   image-rendering: auto;
+}
+
+/* A listener who explicitly enables Save-Data, or is on the runtime's very-slow
+ * connection path, should not be forced to download a 2K background. Keep the
+ * stable dark world instead of reviving the retired SVG artwork. */
+.app[data-save-data="true"] .world-layer.is-visible[style*="assets/backgrounds/"] {
+  background-image: none !important;
 }
 
 .sheet-handle[aria-expanded="true"] span {

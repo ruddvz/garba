@@ -12,7 +12,7 @@ for (const file of ['index.html', 'app.js', 'simple-runtime.js', 'nonstop-browse
   try { await access(path.join(root, file)); } catch { fail(`Missing runtime file: ${file}`); }
 }
 
-const [index, app, simple, nonstop, sw, genres, songs, shellCss, playerCss, nonstopIndex] = await Promise.all([
+const [index, app, simple, nonstop, sw, genres, songs, shellCss, playerCss, performanceCss, nonstopIndex] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('simple-runtime.js'),
@@ -22,6 +22,7 @@ const [index, app, simple, nonstop, sw, genres, songs, shellCss, playerCss, nons
   readJson('data/songs.json'),
   read('styles/10-browser-and-shell.css'),
   read('styles/60-runtime-and-provider.css'),
+  read('styles/50-discovery-and-performance.css'),
   readJson('data/discovery/sets/index.json'),
 ]);
 
@@ -48,6 +49,10 @@ for (const marker of [
   'nonstop-browser.js',
   '<link rel="manifest" href="manifest.webmanifest"',
 ]) if (!index.includes(marker)) fail(`Simple index missing marker: ${marker}`);
+
+if (/<link\s+rel="preload"[^>]+href="assets\/backgrounds\/traditional\.svg"/.test(index)) {
+  fail('Production index must not high-priority preload the retired traditional.svg world');
+}
 
 for (const forbidden of [
   'navigator.serviceWorker.register = async ()',
@@ -122,6 +127,32 @@ const expectedVisualFiles = [
   '05-fusion-gujarati-neon.webp',
 ];
 for (const visual of expectedVisualFiles) if (!simple.includes(visual)) fail(`Missing art-directed 2K visual mapping: ${visual}`);
+
+const coldStartArtwork = new Map([
+  ['traditional', '11-master-dark-courtyard.webp'],
+  ['dandiya', '10-dandiya-silhouette-courtyard.webp'],
+  ['devotional', '03-devotional-garba-courtyard.webp'],
+  ['folk', '14-gujarati-folk-courtyard.webp'],
+  ['sanedo', '08-colourful-garba-courtyard-b.webp'],
+  ['fusion', '05-fusion-gujarati-neon.webp'],
+]);
+for (const [genre, visual] of coldStartArtwork) {
+  const visibleSelector = `.world-layer.is-visible[style*="assets/backgrounds/${genre}.svg"]`;
+  if (!performanceCss.includes(visibleSelector)) fail(`Cold-start artwork must be visible-only for ${genre}`);
+  if (!performanceCss.includes(`url("/assets/backgrounds/library/${visual}")`)) fail(`Cold-start artwork mapping missing for ${genre}: ${visual}`);
+  if (performanceCss.includes(`.world-layer[style*="assets/backgrounds/${genre}.svg"]`)) {
+    fail(`Cold-start artwork must not match hidden ${genre} world layers`);
+  }
+}
+if (/background-image:\s*url\("\/assets\/backgrounds\/library\/[^\"]+\.webp"\)\s*,/m.test(performanceCss)) {
+  fail('Live 2K artwork must not stack a retired SVG underneath the WebP');
+}
+if (!performanceCss.includes('.app[data-save-data="true"] .world-layer.is-visible[style*="assets/backgrounds/"]')) {
+  fail('Save-Data must have an explicit visible-world artwork override');
+}
+if (!/\.app\[data-save-data="true"\][\s\S]*?world-layer\.is-visible[\s\S]*?background-image:\s*none\s*!important/m.test(performanceCss)) {
+  fail('Save-Data must suppress high-resolution player artwork');
+}
 
 for (const marker of ['.provider-dock', '.provider-media iframe', '.provider-dock.is-spotify', '.provider-dock.is-apple', '.provider-dock.is-soundcloud', '.provider-dock.is-external', '.provider-dock-open', '.provider-external-action']) {
   if (!playerCss.includes(marker)) fail(`Provider UI styling missing marker: ${marker}`);
@@ -207,6 +238,8 @@ console.log('✓ provider catalogue data is warmed after page load so first Play
 console.log('✓ Space follows the provider-aware Play path without stealing native button/input behaviour');
 console.log('✓ unsupported providers require an explicit user click before leaving GARBA');
 console.log('✓ six art-directed 2K WebPs promote after first paint without blocking the shell');
+console.log('✓ cold-start artwork requests are restricted to the visible world and never reveal retired SVG worlds');
+console.log('✓ Save-Data suppresses high-resolution player artwork');
 console.log('✓ offline state and Media Session controls share the launch-safe runtime path');
 console.log('✓ core runtime assets and songs.json are network-first with cached offline fallback');
 console.log('✓ installed clients cannot keep an old playback-route catalogue after a successful online deploy');
