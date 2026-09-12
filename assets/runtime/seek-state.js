@@ -6,6 +6,9 @@
 
   const defaultLabel = progress.getAttribute('aria-label') || 'Seek';
   let scheduled = false;
+  let youtubeStage = null;
+  let youtubeStageObserver = null;
+  let stageMountObserver = null;
 
   function durationTextIsKnown() {
     const text = String(durationTime?.textContent || '').trim();
@@ -19,10 +22,9 @@
   }
 
   function youtubeSeekable() {
-    const stage = document.getElementById('youtubeStage');
-    if (!stage?.classList.contains('open')) return false;
-    if (stage.classList.contains('is-loading')) return false;
-    if (stage.getAttribute('aria-hidden') === 'true') return false;
+    if (!youtubeStage?.classList.contains('open')) return false;
+    if (youtubeStage.classList.contains('is-loading')) return false;
+    if (youtubeStage.getAttribute('aria-hidden') === 'true') return false;
     return Boolean(window.GARBA_YOUTUBE_PLAYER?.activeSongId && durationTextIsKnown());
   }
 
@@ -42,18 +44,50 @@
     queueMicrotask(sync);
   }
 
+  function bindYoutubeStage(stage) {
+    if (!stage || stage === youtubeStage) return false;
+    youtubeStageObserver?.disconnect();
+    youtubeStage = stage;
+    youtubeStageObserver = new MutationObserver(scheduleSync);
+    youtubeStageObserver.observe(youtubeStage, {
+      attributes: true,
+      attributeFilter: ['class', 'aria-hidden'],
+    });
+    stageMountObserver?.disconnect();
+    stageMountObserver = null;
+    scheduleSync();
+    return true;
+  }
+
+  function observeYoutubeStageMount() {
+    if (bindYoutubeStage(document.getElementById('youtubeStage'))) return;
+    if (!document.body) return;
+    stageMountObserver = new MutationObserver((records, observer) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node?.nodeType !== 1 || node.id !== 'youtubeStage') continue;
+          observer.disconnect();
+          bindYoutubeStage(node);
+          return;
+        }
+      }
+    });
+    stageMountObserver.observe(document.body, { childList: true });
+  }
+
   for (const eventName of ['loadedmetadata', 'durationchange', 'emptied', 'abort', 'error']) {
     audio.addEventListener(eventName, scheduleSync);
   }
 
-  new MutationObserver(scheduleSync).observe(document.body, {
-    subtree: true,
-    childList: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ['class', 'aria-hidden', 'src', 'disabled'],
-  });
+  if (durationTime) {
+    new MutationObserver(scheduleSync).observe(durationTime, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+  }
 
+  observeYoutubeStageMount();
   window.addEventListener('garba:catalogue-ready', scheduleSync);
   window.addEventListener('pageshow', scheduleSync);
   scheduleSync();
