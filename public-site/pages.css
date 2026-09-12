@@ -34,7 +34,7 @@ body.interior-page .site-header {
   position: absolute;
   z-index: -3;
   inset: 0;
-  background: var(--page-hero-image, url('/assets/traditional.svg')) center 54% / cover no-repeat;
+  background: var(--page-hero-image, url('/assets/backgrounds/library/11-master-dark-courtyard.webp')) center 54% / cover no-repeat;
   transform: scale(1.025);
 }
 
@@ -48,9 +48,9 @@ body.interior-page .site-header {
     linear-gradient(90deg, rgba(8, 9, 14, .7), rgba(8, 9, 14, .18) 66%);
 }
 
-.page-hero.install-hero { --page-hero-image: url('/assets/dandiya.svg'); }
-.page-hero.live-hero { --page-hero-image: url('/assets/fusion.svg'); }
-.page-hero.about-hero { --page-hero-image: url('/assets/folk.svg'); }
+.page-hero.install-hero { --page-hero-image: url('/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp'); }
+.page-hero.live-hero { --page-hero-image: url('/assets/backgrounds/library/05-fusion-gujarati-neon.webp'); }
+.page-hero.about-hero { --page-hero-image: url('/assets/backgrounds/library/14-gujarati-folk-courtyard.webp'); }
 
 .page-hero-inner {
   width: min(var(--page-max), 100%);

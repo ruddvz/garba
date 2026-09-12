@@ -12,12 +12,12 @@
   };
 
   const BOOT_GENRES = [
-    { id: 'traditional', name: 'Traditional', label: 'Traditional Garba', background: 'assets/backgrounds/traditional.svg', accent: '#d6b06f' },
-    { id: 'dandiya', name: 'Dandiya', label: 'Dandiya Raas', background: 'assets/backgrounds/dandiya.svg', accent: '#a77ad6' },
-    { id: 'devotional', name: 'Devotional', label: 'Devotional Garba', background: 'assets/backgrounds/devotional.svg', accent: '#c78372' },
-    { id: 'folk', name: 'Folk', label: 'Gujarati Folk', background: 'assets/backgrounds/folk.svg', accent: '#9a9fc7' },
-    { id: 'sanedo', name: 'Sanedo', label: 'Sanedo', background: 'assets/backgrounds/sanedo.svg', accent: '#c99872' },
-    { id: 'fusion', name: 'Fusion', label: 'Modern Fusion Garba', background: 'assets/backgrounds/fusion.svg', accent: '#a78bc4' },
+    { id: 'traditional', name: 'Traditional', label: 'Traditional Garba', background: PRIMARY_WEBP.traditional, accent: '#d6b06f' },
+    { id: 'dandiya', name: 'Dandiya', label: 'Dandiya Raas', background: PRIMARY_WEBP.dandiya, accent: '#a77ad6' },
+    { id: 'devotional', name: 'Devotional', label: 'Devotional Garba', background: PRIMARY_WEBP.devotional, accent: '#c78372' },
+    { id: 'folk', name: 'Folk', label: 'Gujarati Folk', background: PRIMARY_WEBP.folk, accent: '#9a9fc7' },
+    { id: 'sanedo', name: 'Sanedo', label: 'Sanedo', background: PRIMARY_WEBP.sanedo, accent: '#c99872' },
+    { id: 'fusion', name: 'Fusion', label: 'Modern Fusion Garba', background: PRIMARY_WEBP.fusion, accent: '#a78bc4' },
   ];
 
   const BOOT_SONGS = [

@@ -74,7 +74,8 @@
   }
 
   function fallbackFor(genreId) {
-    return `assets/backgrounds/${genreId}.svg`;
+    const candidates = library[genreId] || library.traditional || [];
+    return candidates[0] ? `${base}${candidates[0]}` : 'assets/backgrounds/library/11-master-dark-courtyard.webp';
   }
 
   function loadImage(url, { highPriority = false } = {}) {

@@ -11,9 +11,9 @@
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const MODES = {
     off: { label: 'Off', master: 0, voices: 0, events: 0, crowd: 0, spatial: false },
-    courtyard: { label: 'Courtyard', master: 0.075, voices: 2, events: 0.28, crowd: 0, spatial: true },
-    ground: { label: 'Live Ground', master: 0.095, voices: 3, events: 0.52, crowd: 0.38, spatial: false },
-    immersive: { label: 'Immersive 360°', master: 0.105, voices: 4, events: 0.68, crowd: 0.30, spatial: true },
+    courtyard: { label: 'Courtyard', master: 0.28, voices: 2, events: 0.40, crowd: 0, spatial: true },
+    ground: { label: 'Live Ground', master: 0.34, voices: 3, events: 0.58, crowd: 0.45, spatial: false },
+    immersive: { label: 'Immersive 360°', master: 0.40, voices: 4, events: 0.72, crowd: 0.38, spatial: true },
   };
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -25,6 +25,12 @@
   const state = {
     context: null,
     master: null,
+    convolver: null,
+    convolverGain: null,
+    dryGain: null,
+    subFilter: null,
+    bodyFilter: null,
+    airFilter: null,
     highpass: null,
     lowpass: null,
     compressor: null,
@@ -33,6 +39,8 @@
     voices: [],
     stickBuffers: [],
     clapBuffers: [],
+    thumpBuffers: [],
+    phraseTimers: [],
     eventTimer: 0,
     orbitTimer: 0,
     idleTimer: 0,
@@ -203,7 +211,9 @@
     button.addEventListener('click', () => setPanelOpen(!state.panelOpen));
     backdrop.addEventListener('click', () => setPanelOpen(false));
     close.addEventListener('click', () => setPanelOpen(false));
-    test.addEventListener('click', () => togglePreview());
+    test.addEventListener('click', () => {
+      ensureContext().then(() => togglePreview());
+    });
     slider.addEventListener('input', () => {
       state.level = clamp(Number(slider.value) / 100, 0.05, 1);
       output.value = `${Math.round(state.level * 100)}%`;
@@ -296,32 +306,226 @@
     window.dispatchEvent(new CustomEvent('garba:atmosphere-change', { detail: { reason, mode: state.mode, level: state.level, audible: state.playbackActive || state.previewActive, constrained: constrainedConnection() } }));
   }
 
+  function createVenueImpulse(mode) {
+    const rate = state.context.sampleRate;
+    const duration = mode === 'courtyard' ? 2.4 : mode === 'ground' ? 1.6 : 2.5;
+    const length = Math.ceil(rate * duration);
+    const buffer = state.context.createBuffer(2, length, rate);
+    const left = buffer.getChannelData(0);
+    const right = buffer.getChannelData(1);
+
+    if (mode === 'courtyard') {
+      const earlyTaps = [
+        { time: 0.013, gainL: 0.62, gainR: 0.36 },
+        { time: 0.026, gainL: 0.34, gainR: 0.56 },
+        { time: 0.045, gainL: 0.50, gainR: 0.44 },
+        { time: 0.070, gainL: 0.36, gainR: 0.46 },
+        { time: 0.096, gainL: 0.40, gainR: 0.28 },
+        { time: 0.132, gainL: 0.26, gainR: 0.34 },
+      ];
+      for (const tap of earlyTaps) {
+        const idx = Math.floor(tap.time * rate);
+        if (idx < length) {
+          left[idx] += tap.gainL;
+          right[idx] += tap.gainR;
+        }
+      }
+      let b0L = 0;
+      let b0R = 0;
+      for (let i = 0; i < length; i += 1) {
+        const t = i / rate;
+        const dampCutoff = Math.max(0.04, 1.0 - t * 0.42);
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        b0L = b0L * (1 - dampCutoff) + whiteL * dampCutoff;
+        b0R = b0R * (1 - dampCutoff) + whiteR * dampCutoff;
+        const decay = Math.exp(-t * 2.7);
+        left[i] += b0L * decay * 0.48;
+        right[i] += b0R * decay * 0.48;
+      }
+    } else if (mode === 'ground') {
+      const slapTaps = [
+        { time: 0.118, gainL: 0.54, gainR: 0.32 },
+        { time: 0.182, gainL: 0.32, gainR: 0.50 },
+        { time: 0.244, gainL: 0.26, gainR: 0.22 },
+      ];
+      for (const tap of slapTaps) {
+        const start = Math.floor(tap.time * rate);
+        const smearLen = Math.floor(0.016 * rate);
+        for (let s = 0; s < smearLen && (start + s) < length; s += 1) {
+          const env = Math.sin((s / smearLen) * Math.PI);
+          left[start + s] += (Math.random() * 2 - 1) * tap.gainL * env;
+          right[start + s] += (Math.random() * 2 - 1) * tap.gainR * env;
+        }
+      }
+      let b0L = 0;
+      let b0R = 0;
+      for (let i = 0; i < length; i += 1) {
+        const t = i / rate;
+        const dampCutoff = Math.max(0.02, 0.62 - t * 0.36);
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        b0L = b0L * (1 - dampCutoff) + whiteL * dampCutoff;
+        b0R = b0R * (1 - dampCutoff) + whiteR * dampCutoff;
+        const decay = Math.exp(-t * 3.7);
+        left[i] += b0L * decay * 0.34;
+        right[i] += b0R * decay * 0.34;
+      }
+    } else {
+      const ringTaps = [
+        { time: 0.008, gainL: 0.68, gainR: 0.38 },
+        { time: 0.019, gainL: 0.42, gainR: 0.64 },
+        { time: 0.038, gainL: 0.58, gainR: 0.42 },
+        { time: 0.064, gainL: 0.34, gainR: 0.54 },
+        { time: 0.098, gainL: 0.44, gainR: 0.34 },
+        { time: 0.148, gainL: 0.28, gainR: 0.32 },
+      ];
+      for (const tap of ringTaps) {
+        const idx = Math.floor(tap.time * rate);
+        if (idx < length) {
+          left[idx] += tap.gainL;
+          right[idx] += tap.gainR;
+        }
+      }
+      let b0L = 0;
+      let b0R = 0;
+      for (let i = 0; i < length; i += 1) {
+        const t = i / rate;
+        const dampCutoff = Math.max(0.05, 0.94 - t * 0.30);
+        const whiteL = Math.random() * 2 - 1;
+        const whiteR = Math.random() * 2 - 1;
+        b0L = b0L * (1 - dampCutoff) + whiteL * dampCutoff;
+        b0R = b0R * (1 - dampCutoff) + whiteR * dampCutoff;
+        const decay = Math.exp(-t * 2.3);
+        left[i] += b0L * decay * 0.42;
+        right[i] += b0R * decay * 0.42;
+      }
+    }
+
+    let maxVal = 0;
+    for (let i = 0; i < length; i += 1) {
+      const aL = Math.abs(left[i]);
+      const aR = Math.abs(right[i]);
+      if (aL > maxVal) maxVal = aL;
+      if (aR > maxVal) maxVal = aR;
+    }
+    if (maxVal > 0.001) {
+      const norm = 0.88 / maxVal;
+      for (let i = 0; i < length; i += 1) {
+        left[i] *= norm;
+        right[i] *= norm;
+      }
+    }
+    return buffer;
+  }
+
+  function updateVenueAcoustics(mode) {
+    if (!state.context || mode === 'off') return;
+    try {
+      if (state.convolver) {
+        state.master.disconnect(state.convolver);
+        state.convolver.disconnect();
+      }
+    } catch { /* no-op */ }
+    state.convolver = state.context.createConvolver();
+    state.convolver.buffer = createVenueImpulse(mode);
+    state.master.connect(state.convolver);
+    state.convolver.connect(state.convolverGain);
+
+    if (mode === 'courtyard') {
+      state.convolverGain.gain.value = 0.56;
+      state.dryGain.gain.value = 0.72;
+      state.bodyFilter.gain.value = 2.6;
+      state.airFilter.gain.value = -1.8;
+    } else if (mode === 'ground') {
+      state.convolverGain.gain.value = 0.42;
+      state.dryGain.gain.value = 0.82;
+      state.bodyFilter.gain.value = 1.2;
+      state.airFilter.gain.value = -3.6;
+    } else {
+      state.convolverGain.gain.value = 0.60;
+      state.dryGain.gain.value = 0.75;
+      state.bodyFilter.gain.value = 2.0;
+      state.airFilter.gain.value = -1.5;
+    }
+  }
+
   function createStickBuffer(variation = 0) {
-    const duration = 0.07;
+    const duration = 0.16;
     const rate = state.context.sampleRate;
     const buffer = state.context.createBuffer(1, Math.ceil(rate * duration), rate);
     const data = buffer.getChannelData(0);
-    const base = 960 + variation * 90;
+    const f1 = 1060 + variation * 85;
+    const f2 = f1 * 2.76;
+    const f3 = f1 * 5.40;
+    const b1 = 5880 + variation * 140;
+    const b2 = 7420 + variation * 180;
     for (let i = 0; i < data.length; i += 1) {
       const t = i / rate;
-      const env = Math.exp(-t * 58);
-      const wood = Math.sin(Math.PI * 2 * base * t) * 0.52 + Math.sin(Math.PI * 2 * (base * 1.72) * t) * 0.24;
-      data[i] = (wood + (Math.random() * 2 - 1) * 0.11) * env;
+      const crack = (Math.random() * 2 - 1) * Math.exp(-t * 360) * 0.45;
+      const woodEnv = Math.exp(-t * 54);
+      const wood = (
+        Math.sin(Math.PI * 2 * f1 * t) * 0.55 +
+        Math.sin(Math.PI * 2 * f2 * t) * 0.28 +
+        Math.sin(Math.PI * 2 * f3 * t) * 0.14
+      ) * woodEnv;
+      let brass = 0;
+      if (t > 0.0015) {
+        const bt = t - 0.0015;
+        const shimmer = 0.7 + 0.3 * Math.sin(Math.PI * 2 * 175 * bt);
+        const brassEnv = Math.exp(-bt * 38);
+        brass = (
+          Math.sin(Math.PI * 2 * b1 * bt) * 0.22 +
+          Math.sin(Math.PI * 2 * b2 * bt) * 0.15 +
+          (Math.random() * 2 - 1) * 0.08
+        ) * shimmer * brassEnv;
+      }
+      data[i] = clamp((crack + wood + brass) * 0.92, -1, 1);
     }
     return buffer;
   }
 
   function createClapBuffer(variation = 0) {
-    const duration = 0.14;
+    const duration = 0.24;
     const rate = state.context.sampleRate;
     const buffer = state.context.createBuffer(1, Math.ceil(rate * duration), rate);
     const data = buffer.getChannelData(0);
-    const bursts = [0, 0.015 + variation * 0.001, 0.031 + variation * 0.0015];
+    const cavityFreq = 390 + variation * 35;
+    const flams = [
+      { start: 0, amp: 0.95 },
+      { start: 0.008 + variation * 0.002, amp: 0.72 },
+      { start: 0.017 + variation * 0.003, amp: 0.58 },
+      { start: 0.026 + variation * 0.004, amp: 0.40 },
+    ];
     for (let i = 0; i < data.length; i += 1) {
       const t = i / rate;
-      let env = 0;
-      for (const start of bursts) if (t >= start) env += Math.exp(-(t - start) * 52);
-      data[i] = (Math.random() * 2 - 1) * Math.min(1, env) * 0.62;
+      let sum = 0;
+      for (const flam of flams) {
+        if (t >= flam.start) {
+          const dt = t - flam.start;
+          const cavity = Math.sin(Math.PI * 2 * cavityFreq * dt) * Math.exp(-dt * 46) * 0.45;
+          const slapNoise = (Math.random() * 2 - 1) * Math.exp(-dt * 78) * 0.55;
+          sum += (cavity + slapNoise) * flam.amp;
+        }
+      }
+      data[i] = clamp(sum * 0.68, -1, 1);
+    }
+    return buffer;
+  }
+
+  function createThumpBuffer(variation = 0) {
+    const duration = 0.18;
+    const rate = state.context.sampleRate;
+    const buffer = state.context.createBuffer(1, Math.ceil(rate * duration), rate);
+    const data = buffer.getChannelData(0);
+    const startFreq = 86 + variation * 8;
+    for (let i = 0; i < data.length; i += 1) {
+      const t = i / rate;
+      const currentFreq = Math.max(44, startFreq * Math.exp(-t * 18));
+      const phase = Math.PI * 2 * currentFreq * t;
+      const thump = Math.sin(phase) * Math.exp(-t * 26) * 0.75;
+      const gravel = (Math.random() * 2 - 1) * Math.exp(-t * 90) * 0.22;
+      data[i] = clamp((thump + gravel) * 0.85, -1, 1);
     }
     return buffer;
   }
@@ -334,23 +538,61 @@
       }
       state.master = state.context.createGain();
       state.master.gain.value = 0;
+
+      state.dryGain = state.context.createGain();
+      state.dryGain.gain.value = 0.76;
+
+      state.convolverGain = state.context.createGain();
+      state.convolverGain.gain.value = 0.54;
+
+      state.subFilter = state.context.createBiquadFilter();
+      state.subFilter.type = 'peaking';
+      state.subFilter.frequency.value = 65;
+      state.subFilter.gain.value = 3.2;
+      state.subFilter.Q.value = 0.85;
+
+      state.bodyFilter = state.context.createBiquadFilter();
+      state.bodyFilter.type = 'peaking';
+      state.bodyFilter.frequency.value = 360;
+      state.bodyFilter.gain.value = 2.2;
+      state.bodyFilter.Q.value = 0.9;
+
+      state.airFilter = state.context.createBiquadFilter();
+      state.airFilter.type = 'highshelf';
+      state.airFilter.frequency.value = 6200;
+      state.airFilter.gain.value = -2.5;
+
       state.highpass = state.context.createBiquadFilter();
       state.highpass.type = 'highpass';
-      state.highpass.frequency.value = 105;
-      state.highpass.Q.value = 0.28;
+      state.highpass.frequency.value = 42;
+      state.highpass.Q.value = 0.4;
+
       state.lowpass = state.context.createBiquadFilter();
       state.lowpass.type = 'lowpass';
-      state.lowpass.frequency.value = 7800;
-      state.lowpass.Q.value = 0.22;
+      state.lowpass.frequency.value = 9400;
+      state.lowpass.Q.value = 0.25;
+
       state.compressor = state.context.createDynamicsCompressor();
-      state.compressor.threshold.value = -20;
-      state.compressor.knee.value = 18;
+      state.compressor.threshold.value = -16;
+      state.compressor.knee.value = 12;
       state.compressor.ratio.value = 2.6;
-      state.compressor.attack.value = 0.008;
+      state.compressor.attack.value = 0.005;
       state.compressor.release.value = 0.22;
-      state.master.connect(state.highpass).connect(state.lowpass).connect(state.compressor).connect(state.context.destination);
-      state.stickBuffers = [0, 1, 2].map(createStickBuffer);
-      state.clapBuffers = [0, 1, 2].map(createClapBuffer);
+
+      state.master.connect(state.dryGain);
+      state.dryGain.connect(state.subFilter);
+      state.convolverGain.connect(state.subFilter);
+
+      state.subFilter.connect(state.bodyFilter)
+        .connect(state.airFilter)
+        .connect(state.highpass)
+        .connect(state.lowpass)
+        .connect(state.compressor)
+        .connect(state.context.destination);
+
+      state.stickBuffers = [0, 1, 2, 3].map(createStickBuffer);
+      state.clapBuffers = [0, 1, 2, 3].map(createClapBuffer);
+      state.thumpBuffers = [0, 1].map(createThumpBuffer);
     }
     if (state.context.state !== 'running') {
       try { await state.context.resume(); } catch { return false; }
@@ -362,12 +604,18 @@
     const rate = state.context.sampleRate;
     const buffer = state.context.createBuffer(1, Math.ceil(rate * seconds), rate);
     const data = buffer.getChannelData(0);
-    let brown = 0;
+    let b0 = 0;
+    let b1 = 0;
+    let b2 = 0;
     for (let index = 0; index < data.length; index += 1) {
       const white = Math.random() * 2 - 1;
-      brown = (brown + 0.018 * white) / 1.018;
+      b0 = 0.992 * b0 + white * 0.055;
+      b1 = 0.955 * b1 + white * 0.115;
+      b2 = 0.850 * b2 + white * 0.240;
+      const pink = (b0 + b1 + b2) * 0.42;
       const t = index / rate;
-      data[index] = clamp(brown * 2.2 * (0.72 + 0.28 * Math.sin((t + seedOffset) * Math.PI * 0.18)), -1, 1);
+      const swell = 0.82 + 0.18 * Math.sin((t + seedOffset) * Math.PI * 0.32);
+      data[index] = clamp(pink * swell, -1, 1);
     }
     return buffer;
   }
@@ -379,9 +627,15 @@
     panner.refDistance = 1;
     panner.maxDistance = 9;
     panner.rolloffFactor = 0.46;
-    panner.positionX.value = Math.sin(angle) * distance;
-    panner.positionY.value = 0;
-    panner.positionZ.value = -Math.cos(angle) * distance;
+    const x = Math.sin(angle) * distance;
+    const z = -Math.cos(angle) * distance;
+    if (panner.positionX && 'value' in panner.positionX) {
+      panner.positionX.value = x;
+      panner.positionY.value = 0;
+      panner.positionZ.value = z;
+    } else if (panner.setPosition) {
+      panner.setPosition(x, 0, z);
+    }
     return panner;
   }
 
@@ -394,7 +648,7 @@
     filter.frequency.value = index % 2 ? 620 + index * 95 : 980 + index * 75;
     filter.Q.value = index % 2 ? 0.52 : 0.28;
     const gain = state.context.createGain();
-    gain.gain.value = 0.060 + index * 0.008;
+    gain.gain.value = 0.20 + index * 0.035;
     const angle = (index / Math.max(1, count)) * Math.PI * 2 + 0.45;
     const panner = createPanner(angle, spatial ? 2.0 : 2.7, spatial);
     source.connect(filter).connect(gain).connect(panner).connect(state.master);
@@ -413,10 +667,23 @@
         const manifest = await manifestResponse.json();
         const sourceMeta = manifest.sources?.find((entry) => entry.enabled && entry.role === 'crowd-bed');
         if (!sourceMeta?.audioUrl || sourceMeta.license !== 'public-domain' || sourceMeta.containsMusic !== false) return null;
-        const response = await fetch(sourceMeta.audioUrl, { mode: 'cors', cache: 'force-cache' });
+        let response = await fetch(sourceMeta.audioUrl, { mode: 'cors', cache: 'force-cache' });
+        if (!response.ok && sourceMeta.audioUrl.endsWith('.ogg')) {
+          const mp3Fallback = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/f/fd/1_minute_at_the_alexa_mall_in_berlin.ogg/1_minute_at_the_alexa_mall_in_berlin.ogg.mp3';
+          response = await fetch(mp3Fallback, { mode: 'cors', cache: 'force-cache' });
+        }
         if (!response.ok) return null;
         const bytes = await response.arrayBuffer();
-        state.crowdBuffer = await state.context.decodeAudioData(bytes.slice(0));
+        try {
+          state.crowdBuffer = await state.context.decodeAudioData(bytes.slice(0));
+        } catch {
+          const mp3Fallback = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/f/fd/1_minute_at_the_alexa_mall_in_berlin.ogg/1_minute_at_the_alexa_mall_in_berlin.ogg.mp3';
+          const alt = await fetch(mp3Fallback, { mode: 'cors', cache: 'force-cache' });
+          if (alt.ok) {
+            const altBytes = await alt.arrayBuffer();
+            state.crowdBuffer = await state.context.decodeAudioData(altBytes.slice(0));
+          }
+        }
         return state.crowdBuffer;
       } catch { return null; } finally { state.crowdPromise = null; }
     })();
@@ -444,7 +711,7 @@
     filter.frequency.value = 5400;
     filter.Q.value = 0.2;
     const gain = state.context.createGain();
-    gain.gain.value = profile.crowd * 0.34;
+    gain.gain.value = profile.crowd * 0.45;
     source.connect(filter).connect(gain).connect(state.master);
     source.start(0, Math.random() * Math.max(0.1, buffer.duration - 1));
     state.crowdSource = source;
@@ -462,41 +729,112 @@
     clearInterval(state.orbitTimer);
     state.eventTimer = 0;
     state.orbitTimer = 0;
+    state.phraseTimers.forEach(clearTimeout);
+    state.phraseTimers = [];
     state.voices.splice(0).forEach(disconnectVoice);
     stopCrowd();
     state.sceneReady = false;
   }
 
-  function eventPanner() {
-    return createPanner(Math.random() * Math.PI * 2, 1.35 + Math.random() * 1.8, true);
+  function eventPanner(angle = null, distance = null) {
+    const panAngle = angle ?? (Math.random() * Math.PI * 2);
+    const panDistance = distance ?? (1.35 + Math.random() * 1.8);
+    return createPanner(panAngle, panDistance, true);
   }
 
-  function playTransient(kind) {
+  function playTransient(kind, { angle = null, distance = null, gainScale = 1 } = {}) {
     if (!state.context || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
     const source = state.context.createBufferSource();
-    source.buffer = kind === 'stick' ? state.stickBuffers[Math.floor(Math.random() * state.stickBuffers.length)] : state.clapBuffers[Math.floor(Math.random() * state.clapBuffers.length)];
+    if (kind === 'stick') {
+      source.buffer = state.stickBuffers[Math.floor(Math.random() * state.stickBuffers.length)];
+    } else if (kind === 'thump') {
+      source.buffer = state.thumpBuffers[Math.floor(Math.random() * state.thumpBuffers.length)];
+    } else {
+      source.buffer = state.clapBuffers[Math.floor(Math.random() * state.clapBuffers.length)];
+    }
     const filter = state.context.createBiquadFilter();
-    filter.type = kind === 'stick' ? 'lowpass' : 'bandpass';
-    filter.frequency.value = kind === 'stick' ? 3900 + Math.random() * 700 : 1450 + Math.random() * 450;
-    if (kind === 'clap') filter.Q.value = 0.55;
+    if (kind === 'stick') {
+      filter.type = 'lowpass';
+      filter.frequency.value = 8600 + Math.random() * 1200;
+    } else if (kind === 'thump') {
+      filter.type = 'lowpass';
+      filter.frequency.value = 160 + Math.random() * 40;
+    } else {
+      filter.type = 'bandpass';
+      filter.frequency.value = 1800 + Math.random() * 420;
+      filter.Q.value = 0.55;
+    }
     const gain = state.context.createGain();
-    gain.gain.value = kind === 'stick' ? 0.18 + Math.random() * 0.06 : 0.14 + Math.random() * 0.05;
-    const panner = eventPanner();
+    const baseGain = kind === 'stick' ? 0.44 : kind === 'thump' ? 0.48 : 0.38;
+    gain.gain.value = (baseGain + Math.random() * 0.08) * gainScale;
+    const panner = eventPanner(angle, distance);
     source.connect(filter).connect(gain).connect(panner).connect(state.master);
     source.start();
     source.addEventListener('ended', () => { for (const node of [source, filter, gain, panner]) try { node.disconnect(); } catch { /* no-op */ } }, { once: true });
   }
 
+  function playRhythmicPhrase(phraseType) {
+    if (!state.context || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
+    const generation = state.generation;
+    const queueStep = (fn, delay) => {
+      const tid = setTimeout(() => {
+        if (generation === state.generation && (state.playbackActive || state.previewActive)) fn();
+      }, delay);
+      state.phraseTimers.push(tid);
+    };
+
+    if (phraseType === 'tran-taali') {
+      playTransient('clap', { angle: -0.65, distance: 1.8, gainScale: 0.85 });
+      queueStep(() => playTransient('clap', { angle: 0.65, distance: 1.8, gainScale: 0.88 }), 310);
+      queueStep(() => {
+        playTransient('clap', { angle: 0.05, distance: 1.4, gainScale: 1.15 });
+        playTransient('thump', { angle: 0, distance: 1.2, gainScale: 1.1 });
+        playTransient('stick', { angle: 0.25, distance: 1.6, gainScale: 0.95 });
+      }, 620);
+    } else if (phraseType === 'dandiya-duet') {
+      playTransient('stick', { angle: -0.85, distance: 1.6, gainScale: 0.95 });
+      queueStep(() => playTransient('stick', { angle: 0.85, distance: 1.6, gainScale: 0.95 }), 280);
+      queueStep(() => {
+        playTransient('stick', { angle: 0.0, distance: 1.3, gainScale: 1.2 });
+        playTransient('thump', { angle: 0.1, distance: 1.3, gainScale: 0.9 });
+      }, 560);
+    } else if (phraseType === 'be-taali') {
+      playTransient('clap', { angle: -0.4, distance: 1.7, gainScale: 0.9 });
+      queueStep(() => {
+        playTransient('clap', { angle: 0.4, distance: 1.6, gainScale: 1.05 });
+        playTransient('thump', { angle: 0, distance: 1.3, gainScale: 0.85 });
+      }, 190);
+    } else {
+      const pick = Math.random();
+      if (pick < 0.45) playTransient('stick');
+      else if (pick < 0.80) playTransient('clap');
+      else playTransient('thump');
+    }
+  }
+
   function scheduleEvent(profile, generation) {
     clearTimeout(state.eventTimer);
     if (!profile?.events || generation !== state.generation || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
-    const base = state.mode === 'immersive' ? 1450 : state.mode === 'ground' ? 1950 : 3100;
-    const spread = state.mode === 'immersive' ? 2400 : state.mode === 'ground' ? 3000 : 4200;
+    const base = state.mode === 'immersive' ? 1100 : state.mode === 'ground' ? 1400 : 1900;
+    const spread = state.mode === 'immersive' ? 1600 : state.mode === 'ground' ? 2000 : 2600;
     const delay = base + Math.random() * spread / Math.max(0.18, profile.events);
     state.eventTimer = setTimeout(() => {
       if (generation !== state.generation || (!state.playbackActive && !state.previewActive)) return;
-      playTransient(Math.random() < 0.58 ? 'stick' : 'clap');
-      if ((state.mode === 'immersive' || state.mode === 'ground') && Math.random() < 0.20) setTimeout(() => { if (generation === state.generation && (state.playbackActive || state.previewActive)) playTransient('stick'); }, 120 + Math.random() * 120);
+      const roll = Math.random();
+      if (state.mode === 'courtyard') {
+        if (roll < 0.45) playRhythmicPhrase('tran-taali');
+        else if (roll < 0.75) playRhythmicPhrase('be-taali');
+        else playRhythmicPhrase('single');
+      } else if (state.mode === 'ground') {
+        if (roll < 0.42) playRhythmicPhrase('dandiya-duet');
+        else if (roll < 0.74) playRhythmicPhrase('tran-taali');
+        else playRhythmicPhrase('single');
+      } else {
+        if (roll < 0.38) playRhythmicPhrase('dandiya-duet');
+        else if (roll < 0.72) playRhythmicPhrase('tran-taali');
+        else if (roll < 0.90) playRhythmicPhrase('be-taali');
+        else playRhythmicPhrase('single');
+      }
       scheduleEvent(profile, generation);
     }, delay);
   }
@@ -510,8 +848,14 @@
       state.voices.forEach((voice, index) => {
         voice.angle += (index % 2 ? -1 : 1) * (0.10 + Math.random() * 0.09);
         const distance = 2.0 + index * 0.08;
-        voice.panner.positionX.setTargetAtTime(Math.sin(voice.angle) * distance, now, 3.2);
-        voice.panner.positionZ.setTargetAtTime(-Math.cos(voice.angle) * distance, now, 3.2);
+        const x = Math.sin(voice.angle) * distance;
+        const z = -Math.cos(voice.angle) * distance;
+        if (voice.panner.positionX?.setTargetAtTime) {
+          voice.panner.positionX.setTargetAtTime(x, now, 3.2);
+          voice.panner.positionZ.setTargetAtTime(z, now, 3.2);
+        } else if (voice.panner.setPosition) {
+          voice.panner.setPosition(x, 0, z);
+        }
       });
     }, 5200);
   }
@@ -540,6 +884,7 @@
       if (generation !== state.generation) return;
     }
     clearScene();
+    updateVenueAcoustics(state.mode);
     const profile = runtimeProfile();
     for (let index = 0; index < profile.voices; index += 1) state.voices.push(createBedVoice(index, profile.voices, profile.spatial));
     state.sceneReady = true;
@@ -580,6 +925,20 @@
     syncUi();
     await buildScene({ smooth: true });
     setStatus(`Testing ${MODES[state.mode].label}.`);
+    setTimeout(() => {
+      if (state.previewActive) {
+        if (state.mode === 'courtyard') playRhythmicPhrase('tran-taali');
+        else if (state.mode === 'ground') playRhythmicPhrase('dandiya-duet');
+        else playRhythmicPhrase('tran-taali');
+      }
+    }, 180);
+    setTimeout(() => {
+      if (state.previewActive) {
+        if (state.mode === 'courtyard') playRhythmicPhrase('be-taali');
+        else if (state.mode === 'ground') playRhythmicPhrase('tran-taali');
+        else playRhythmicPhrase('dandiya-duet');
+      }
+    }, 1850);
     state.previewTimer = setTimeout(() => stopPreview({ announce: false }), 6000);
     dispatchChange('preview-started');
   }
@@ -650,6 +1009,8 @@
   directAudio?.addEventListener('ended', syncPlaybackState);
   directAudio?.addEventListener('emptied', syncPlaybackState);
   document.addEventListener('pointerdown', trustedPlaybackUnlock, { capture: true });
+  document.addEventListener('click', trustedPlaybackUnlock, { capture: true });
+  document.addEventListener('touchend', trustedPlaybackUnlock, { capture: true });
   document.addEventListener('keydown', (event) => {
     if (!event.isTrusted || event.code !== 'Space' || state.mode === 'off') return;
     ensureContext().then((ready) => { if (ready) requestAnimationFrame(syncPlaybackState); });
