@@ -72,6 +72,23 @@ for (const marker of [
 }
 
 for (const marker of [
+  "import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';",
+  'function exploreSearchRecord(song)',
+  'titleAliases: song.aliases',
+  'artistAliases: song.artistAliases',
+  'function rankExploreSongs(songs, query)',
+  'rankSearchRecords(songs.map(exploreSearchRecord), query)',
+  'const q = normalizeSearchText(query);',
+  'const songs = rankExploreSongs(state.songs, query);',
+  'Matching songs, artists, reviewed aliases, styles and releases from the PlayGarba catalogue.',
+]) {
+  if (!catalogue.includes(marker)) fail(`Explore shared-search integration is missing: ${marker}`);
+}
+if (/function searchCatalogue\(query[\s\S]*?terms\.every\(\(term\)=>text\.includes\(term\)\)/.test(catalogue)) {
+  fail('Explore search must not regress to its independent term-substring matcher');
+}
+
+for (const marker of [
   'function replaceDetailMeta(values = [])',
   'function renderCollectionDetailIdentity(collection = state.active)',
   'function renderReleaseDetailIdentity(release, songs)',
