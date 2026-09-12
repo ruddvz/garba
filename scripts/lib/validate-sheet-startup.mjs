@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';
 
 const app = fs.readFileSync('app.js', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -29,6 +30,38 @@ const staticChecks = [
 for (const [pattern, description] of staticChecks) {
   assert.match(app, pattern, description);
 }
+
+assert.match(app, /import \{ normalizeSearchText, rankSearchRecords \} from '\.\/assets\/runtime\/search-core\.js';/, 'Player search must consume the shared search core');
+assert.match(app, /function playerSearchRecord\(song\)[\s\S]*?titleAliases: song\.aliases[\s\S]*?artistAliases: song\.artistAliases[\s\S]*?taxonomyTerms:/, 'Player search adapter must expose only reviewed catalogue identity fields');
+assert.match(app, /function rankPlayerSongs\(songs, query\)[\s\S]*?rankSearchRecords\(songs\.map\(playerSearchRecord\), query\)/, 'Player results must use shared relevance ranking');
+assert.match(app, /const rawQuery = els\.searchInput\.value\.trim\(\);[\s\S]*?const query = normalizeSearchText\(rawQuery\);/, 'Player empty-query handling must use shared Unicode normalization');
+assert.doesNotMatch(app, /function getSheetSongs\(\)[\s\S]*?\.toLowerCase\(\)\.includes\(query\)/, 'Player search must not regress to independent lowercase substring matching');
+
+const adapterFixture = [
+  { id: 'broad-taxonomy', title: 'Another Garba', artist: 'Singer', genre: 'folk', category: 'maa' },
+  { id: 'exact-title', title: 'Maa', artist: 'Singer', genre: 'traditional', category: 'garba' },
+  { id: 'gujarati-title', title: 'માડી તારું કંકુ ખર્યું', artist: 'Singer', genre: 'traditional', category: 'garba' },
+];
+const adapterRecord = (song) => ({
+  id: song.id,
+  title: [song.title, song.displayTitle].filter(Boolean),
+  titleAliases: song.aliases,
+  artist: song.artist,
+  artistAliases: song.artistAliases,
+  taxonomyTerms: [song.genre, song.category, ...(song.styles || []), ...(song.taxonomyStyles || [])],
+  song,
+});
+assert.equal(normalizeSearchText('  Maa!!!  '), 'maa', 'Shared normalization must collapse punctuation and spacing for player input');
+assert.deepEqual(
+  rankSearchRecords(adapterFixture.map(adapterRecord), 'maa').map(({ record }) => record.song.id),
+  ['exact-title', 'broad-taxonomy'],
+  'Exact title must rank above a broad taxonomy match through the player adapter',
+);
+assert.equal(
+  rankSearchRecords(adapterFixture.map(adapterRecord), 'માડી તારું').at(0)?.record.song.id,
+  'gujarati-title',
+  'Gujarati script must survive the player adapter and shared normalization',
+);
 
 // 2. Behavioral simulation of player startup, sheet opening, closing, and catalogue refresh
 function createMockElement(id = '', tag = 'div') {
