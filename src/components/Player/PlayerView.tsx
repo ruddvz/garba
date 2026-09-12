@@ -52,8 +52,7 @@ function formatStyleTag(style: string): string {
     folk: 'Desi Folk',
   };
   return (
-    map[style.toLowerCase()] ||
-    style.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    map[style.toLowerCase()] || style.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
   );
 }
 
@@ -138,8 +137,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
   };
 
   const displayTime = isScrubbing ? scrubTime : state.currentTime;
-  const displayPercent =
-    state.duration > 0 ? (displayTime / state.duration) * 100 : 0;
+  const displayPercent = state.duration > 0 ? (displayTime / state.duration) * 100 : 0;
 
   // Track scrubber handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLInputElement>) => {

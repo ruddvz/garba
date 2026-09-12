@@ -12,7 +12,7 @@
 
 @media (max-width: 600px) {
   .videoStageControls {
-    bottom: calc(96px + 30vh + 6px);
+    bottom: calc(84px + 190px + 6px);
     right: 16px;
     width: calc(100vw - 32px);
     max-width: 360px;
@@ -28,7 +28,12 @@
   z-index: 210;
   pointer-events: auto;
   padding: 16px 24px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 70%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.4) 70%,
+    transparent 100%
+  );
   display: flex;
   justify-content: center;
   animation: fadeInStage 300ms ease forwards;

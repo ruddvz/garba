@@ -127,3 +127,57 @@ test('YouTube video stage progressive disclosure & monochromatic floating launch
   assert.ok(audioControllerContent.includes('100vw') && audioControllerContent.includes('100vh'), 'AudioController must support 100vw/100vh theater dock styles');
 });
 
+test('Transit Scrubber 25% Milestones and Precision Controls', () => {
+  const playerViewPath = path.join(root, 'src', 'components', 'Player', 'PlayerView.tsx');
+  const playerCssPath = path.join(root, 'src', 'components', 'Player', 'PlayerView.module.css');
+
+  assert.ok(existsSync(playerViewPath), 'PlayerView.tsx must exist');
+  assert.ok(existsSync(playerCssPath), 'PlayerView.module.css must exist');
+
+  const playerViewContent = readFileSync(playerViewPath, 'utf8');
+  assert.ok(playerViewContent.includes('[25, 50, 75]'), 'PlayerView must map 25%, 50%, 75% milestone markers');
+  assert.ok(playerViewContent.includes('milestoneMarker'), 'PlayerView must render milestoneMarker elements');
+  assert.ok(playerViewContent.includes('progressThumb'), 'PlayerView must render progressThumb element');
+  assert.ok(playerViewContent.includes('seekTooltip'), 'PlayerView must render seekTooltip element');
+  assert.ok(playerViewContent.includes('quickSeekRow'), 'PlayerView must render quickSeekRow');
+  assert.ok(playerViewContent.includes('25%'), 'PlayerView must provide 25% quick-jump milestone chip');
+  assert.ok(playerViewContent.includes('50%'), 'PlayerView must provide 50% quick-jump milestone chip');
+  assert.ok(playerViewContent.includes('75%'), 'PlayerView must provide 75% quick-jump milestone chip');
+
+  const playerCssContent = readFileSync(playerCssPath, 'utf8');
+  assert.ok(playerCssContent.includes('.milestoneMarker'), 'CSS must style .milestoneMarker');
+  assert.ok(playerCssContent.includes('.milestoneMarker.passed'), 'CSS must style passed state for milestoneMarker');
+  assert.ok(playerCssContent.includes('.progressThumb'), 'CSS must style glowing .progressThumb');
+  assert.ok(playerCssContent.includes('.seekTooltip'), 'CSS must style floating .seekTooltip');
+  assert.ok(playerCssContent.includes('.seekChip'), 'CSS must style .seekChip');
+});
+
+test('Chip Design System Tokens, Materials & Processes', () => {
+  const tokensPath = path.join(root, 'src', 'styles', 'tokens.css');
+  const playerCssPath = path.join(root, 'src', 'components', 'Player', 'PlayerView.module.css');
+
+  const tokens = readFileSync(tokensPath, 'utf8');
+  assert.ok(tokens.includes('--chip-bg'), 'Tokens must define --chip-bg');
+  assert.ok(tokens.includes('--chip-border-active'), 'Tokens must define --chip-border-active');
+  assert.ok(tokens.includes('--chip-glow-active'), 'Tokens must define --chip-glow-active');
+  assert.ok(tokens.includes('--chip-press-scale: 0.96'), 'Tokens must define --chip-press-scale tactile physics');
+  assert.ok(tokens.includes('--chip-blur'), 'Tokens must define --chip-blur');
+  assert.ok(tokens.includes('--chip-radius-pill'), 'Tokens must define --chip-radius-pill');
+
+  const playerCss = readFileSync(playerCssPath, 'utf8');
+  assert.ok(playerCss.includes('mask-image: linear-gradient'), 'Chip scroll row must implement bidirectional gradient fade mask');
+  assert.ok(playerCss.includes('transform: scale(var(--chip-press-scale'), 'Chips must implement tactile press scale');
+  assert.ok(playerCss.includes('.styleChip'), 'CSS must style authentic rhythm .styleChip');
+});
+
+test('AudioController Keyboard Shortcuts & Percentage Jumps', () => {
+  const audioControllerPath = path.join(root, 'src', 'engine', 'AudioController.ts');
+  const content = readFileSync(audioControllerPath, 'utf8');
+
+  assert.ok(content.includes('Digit0') && content.includes('Digit9'), 'AudioController must handle 0-9 percentage jumps');
+  assert.ok(content.includes('duration * 0.25'), 'AudioController must support 25% quadrant shift-arrow jumps');
+  assert.ok(content.includes('KeyJ') && content.includes('KeyL'), 'AudioController must support J/L 10s skip keys');
+  assert.ok(content.includes('KeyK'), 'AudioController must support K play/pause key');
+});
+
+

@@ -294,7 +294,7 @@
 .progressBarContainer {
   position: relative;
   width: 100%;
-  height: 24px;
+  height: 28px;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -306,7 +306,12 @@
   height: var(--transit-track-height, 4px);
   border-radius: 9999px;
   background: rgba(246, 236, 215, 0.16);
-  overflow: hidden;
+  transition: height 160ms var(--ease-spring);
+}
+
+.progressBarContainer:hover .progressTrack,
+.progressBarContainer.scrubbing .progressTrack {
+  height: 6px;
 }
 
 .progressFill {
@@ -314,7 +319,123 @@
   background: linear-gradient(90deg, var(--accent) 0%, #fff 100%);
   border-radius: 9999px;
   box-shadow: 0 0 10px var(--accent-glow);
-  transition: width 120ms linear;
+  transition: width 80ms linear;
+  position: relative;
+  z-index: 1;
+}
+
+/* 25%, 50%, 75% Milestone Notches */
+.milestoneMarkers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.milestoneMarker {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 2px;
+  background: var(--milestone-notch-color, rgba(246, 236, 215, 0.4));
+  border-radius: 9999px;
+  transform: translateX(-50%);
+  transition: background 160ms ease;
+}
+
+.milestoneMarker.passed {
+  background: var(--milestone-notch-passed, rgba(10, 12, 22, 0.65));
+}
+
+.chapterMarker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(214, 176, 111, 0.55);
+  border-radius: 9999px;
+  transform: translateX(-50%);
+  transition: background 160ms ease;
+}
+
+.chapterMarker.passed {
+  background: rgba(10, 12, 22, 0.7);
+}
+
+/* Glowing Scrubber Thumb */
+.progressThumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--transit-thumb-size, 14px);
+  height: var(--transit-thumb-size, 14px);
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2.5px solid var(--accent);
+  box-shadow:
+    0 0 12px var(--accent-glow),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.9;
+  transition:
+    transform 120ms var(--ease-spring),
+    opacity 120ms ease;
+}
+
+.progressBarContainer:hover .progressThumb,
+.progressBarContainer.scrubbing .progressThumb {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.28);
+  box-shadow:
+    0 0 16px var(--accent-glow),
+    0 0 0 3px rgba(214, 176, 111, 0.25);
+}
+
+/* Floating Live Time & Percentage Tooltip */
+.seekTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: var(--scrub-tooltip-bg, rgba(18, 20, 36, 0.94));
+  border: 1px solid var(--scrub-tooltip-border, rgba(246, 236, 215, 0.22));
+  border-radius: 9999px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.seekTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0;
+  border-style: solid;
+  border-color: var(--scrub-tooltip-bg, rgba(18, 20, 36, 0.94)) transparent transparent;
+}
+
+.tooltipTime {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipPercent {
+  color: var(--accent);
+  font-size: 10px;
+  opacity: 0.9;
 }
 
 .progressInput {
@@ -325,6 +446,61 @@
   opacity: 0;
   cursor: pointer;
   margin: 0;
+  z-index: 5;
+}
+
+/* 25% Milestone & Quick-Jump Chips Row */
+.quickSeekRow {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: -4px;
+  padding: 0 4px;
+}
+
+.seekChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: var(--chip-radius-pill, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--chip-text, var(--text-secondary));
+  background: var(--chip-bg, rgba(22, 25, 45, 0.65));
+  border: 1px solid var(--chip-border, rgba(246, 236, 215, 0.12));
+  backdrop-filter: var(--chip-blur, blur(14px));
+  -webkit-backdrop-filter: var(--chip-blur, blur(14px));
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  min-height: 26px;
+}
+
+.seekChip:hover {
+  background: var(--chip-bg-hover, rgba(246, 236, 215, 0.12));
+  border-color: var(--chip-border-hover, rgba(246, 236, 215, 0.28));
+  color: var(--chip-text-hover, var(--text-primary));
+  transform: translateY(-1px);
+}
+
+.seekChip:active {
+  transform: scale(var(--chip-press-scale, 0.96));
+}
+
+.seekChip.activeChip {
+  background: var(--chip-bg-active, var(--accent-subtle));
+  border-color: var(--chip-border-active, var(--accent));
+  color: var(--chip-text-active, var(--accent));
+  box-shadow: var(--chip-glow-active, 0 0 16px var(--accent-glow));
+}
+
+.seekChipLabel {
+  line-height: 1;
 }
 
 /* Transport Controls */
@@ -543,18 +719,34 @@
   padding-left: 6px;
 }
 
-.chaptersScrollRow {
+.chaptersScrollRow,
+.stylesScrollRow {
   display: flex;
   align-items: center;
   gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   touch-action: pan-x;
-  padding-bottom: 6px;
+  padding: 4px 8px 6px;
   scrollbar-width: none;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
 }
 
-.chaptersScrollRow::-webkit-scrollbar {
+.chaptersScrollRow::-webkit-scrollbar,
+.stylesScrollRow::-webkit-scrollbar {
   display: none;
 }
 
@@ -563,22 +755,28 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 9999px;
+  padding: 6px 14px;
+  border-radius: var(--chip-radius-pill, 9999px);
   font-size: 12px;
-  color: var(--text-secondary);
-  background: rgba(17, 19, 35, 0.55);
-  border: 1px solid var(--border-subtle);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  color: var(--chip-text, var(--text-secondary));
+  background: var(--chip-bg, rgba(22, 25, 45, 0.65));
+  border: 1px solid var(--chip-border, rgba(246, 236, 215, 0.12));
+  backdrop-filter: var(--chip-blur, blur(14px));
+  -webkit-backdrop-filter: var(--chip-blur, blur(14px));
   cursor: pointer;
   transition: all var(--transition-fast);
+  min-height: 32px;
 }
 
 .chapterPill:hover {
-  background: rgba(246, 236, 215, 0.1);
-  color: var(--text-primary);
-  border-color: var(--border-glass);
+  background: var(--chip-bg-hover, rgba(246, 236, 215, 0.12));
+  color: var(--chip-text-hover, var(--text-primary));
+  border-color: var(--chip-border-hover, rgba(246, 236, 215, 0.28));
+  transform: translateY(-1px);
+}
+
+.chapterPill:active {
+  transform: scale(var(--chip-press-scale, 0.96));
 }
 
 .chapterPill.activeChapter {
@@ -586,7 +784,7 @@
   background: var(--accent);
   border-color: var(--accent);
   font-weight: 600;
-  box-shadow: 0 4px 14px var(--accent-glow);
+  box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 .chapIndex {
@@ -597,6 +795,40 @@
   font-size: 10px;
   opacity: 0.75;
   font-variant-numeric: tabular-nums;
+}
+
+/* Authentic Style & Rhythm Chips */
+.stylesBarSection {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.styleChip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--chip-radius-pill, 9999px);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(214, 176, 111, 0.28);
+  backdrop-filter: var(--chip-blur, blur(14px));
+  -webkit-backdrop-filter: var(--chip-blur, blur(14px));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  letter-spacing: 0.2px;
+  user-select: none;
+}
+
+.styleChipIcon {
+  color: var(--accent);
+  opacity: 0.85;
 }
 
 /* Genre Selector Strip */
@@ -657,7 +889,9 @@
   place-items: center;
   margin-bottom: 4px;
   border-radius: 10px;
-  transition: transform var(--transition-fast), filter var(--transition-fast);
+  transition:
+    transform var(--transition-fast),
+    filter var(--transition-fast);
 }
 
 .genreIconImage {
@@ -698,7 +932,9 @@
   background-position: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
 .activeOption .dandiyaMarker {
@@ -822,14 +1058,26 @@
     padding: 0;
   }
 
-  .browseActions {
-    grid-area: actions;
-    margin-top: 0;
-    justify-content: center;
+  .quickSeekRow {
+    display: none;
+  }
+
+  .deckVisualWrap {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
+  .quickSeekRow {
+    gap: 4px;
+  }
+
+  .seekChip {
+    padding: 2px 7px;
+    font-size: 10px;
+    min-height: 24px;
+  }
+
   .transitLine {
     grid-template-columns: 38px minmax(0, 1fr) 42px;
     gap: 8px;

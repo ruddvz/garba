@@ -23,9 +23,18 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({ onExpand }) => {
       role="region"
       aria-label="Now playing mini player"
     >
-      {/* Top progress line */}
-      <div className={styles.progressBarTrack}>
+      {/* Top progress line with 25% milestones */}
+      <div className={styles.progressBarTrack} aria-hidden="true">
         <div className={styles.progressBarFill} style={{ width: `${progressPercent}%` }} />
+        <div className={styles.milestoneMarkers}>
+          {[25, 50, 75].map((pct) => (
+            <span
+              key={pct}
+              className={`${styles.milestoneMarker} ${progressPercent >= pct ? styles.passed : ''}`}
+              style={{ left: `${pct}%` }}
+            />
+          ))}
+        </div>
       </div>
 
       <div className={styles.innerContent}>

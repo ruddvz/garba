@@ -249,7 +249,21 @@
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding: 4px 8px 6px;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 16px,
+    black calc(100% - 16px),
+    transparent 100%
+  );
 }
 
 .genrePills::-webkit-scrollbar {
@@ -261,21 +275,29 @@
   align-items: center;
   gap: 7px;
   padding: 6px 14px;
-  border-radius: 9999px;
+  border-radius: var(--chip-radius-pill, 9999px);
   font-size: 13px;
   font-weight: 500;
-  background: rgba(246, 236, 215, 0.05);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  background: var(--chip-bg, rgba(22, 25, 45, 0.65));
+  border: 1px solid var(--chip-border, rgba(246, 236, 215, 0.12));
+  backdrop-filter: var(--chip-blur, blur(14px));
+  -webkit-backdrop-filter: var(--chip-blur, blur(14px));
+  color: var(--chip-text, var(--text-secondary));
   cursor: pointer;
   white-space: nowrap;
   transition: all var(--transition-fast);
+  min-height: 34px;
 }
 
 .genrePill:hover {
-  color: var(--text-primary);
-  background: rgba(246, 236, 215, 0.1);
-  border-color: var(--border-glass);
+  color: var(--chip-text-hover, var(--text-primary));
+  background: var(--chip-bg-hover, rgba(246, 236, 215, 0.12));
+  border-color: var(--chip-border-hover, rgba(246, 236, 215, 0.28));
+  transform: translateY(-1px);
+}
+
+.genrePill:active {
+  transform: scale(var(--chip-press-scale, 0.96));
 }
 
 .genrePill.active {
@@ -283,7 +305,7 @@
   border-color: var(--accent);
   color: #101221;
   font-weight: 600;
-  box-shadow: 0 4px 14px var(--accent-glow);
+  box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 .filterPillIcon {

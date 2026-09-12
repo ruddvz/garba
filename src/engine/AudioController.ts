@@ -193,6 +193,7 @@ class AudioController {
 
   private applyDockStyles(container: HTMLElement, visible: boolean, fullscreen: boolean = false) {
     if (visible && fullscreen) {
+      container.className = 'is-fullscreen';
       container.style.position = 'fixed';
       container.style.inset = '0px';
       container.style.top = '0px';
@@ -212,6 +213,7 @@ class AudioController {
       container.style.background = '#000000';
       container.style.transition = 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)';
     } else if (visible) {
+      container.className = 'is-mini';
       container.style.position = 'fixed';
       container.style.inset = 'auto';
       container.style.top = 'auto';
@@ -232,6 +234,7 @@ class AudioController {
       container.style.background = 'transparent';
       container.style.transition = 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)';
     } else {
+      container.className = 'is-hidden';
       container.style.position = 'fixed';
       container.style.inset = 'auto';
       container.style.top = 'auto';
@@ -391,6 +394,15 @@ class AudioController {
       isBuffering: true,
       hasError: false,
     });
+
+    // If next song has no video source, ensure video stage dock is hidden
+    if (!song.youtubeId && this.state.showVideoStage) {
+      this.updateState({ showVideoStage: false, isVideoFullscreen: false });
+      const container = document.getElementById(this.ytContainerId);
+      if (container) {
+        this.applyDockStyles(container, false, false);
+      }
+    }
 
     // Strategy 1: Direct Audio URL if available
     if (song.audioUrl) {
@@ -595,6 +607,9 @@ class AudioController {
     const show = typeof forceState === 'boolean' ? forceState : !this.state.showVideoStage;
     const fullscreen = show ? this.state.isVideoFullscreen : false;
     this.updateState({ showVideoStage: show, isVideoFullscreen: fullscreen });
+    if (show && this.state.currentSong?.youtubeId && this.state.provider !== 'youtube') {
+      this.fallbackToYouTube(this.state.currentSong);
+    }
     const container = document.getElementById(this.ytContainerId);
     if (container) {
       this.applyDockStyles(container, show, fullscreen);
@@ -623,6 +638,11 @@ class AudioController {
         return;
       }
 
+      // Allow native browser/OS shortcuts (e.g. Cmd+1..9 for tabs, Cmd+K for search)
+      if (e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+
       switch (e.code) {
         case 'Space':
         case 'KeyK':
@@ -633,7 +653,9 @@ class AudioController {
           e.preventDefault();
           if (e.shiftKey && this.state.duration > 0) {
             // 25% quadrant forward jump
-            this.seek(Math.min(this.state.duration, this.state.currentTime + this.state.duration * 0.25));
+            this.seek(
+              Math.min(this.state.duration, this.state.currentTime + this.state.duration * 0.25),
+            );
           } else {
             this.seek(this.state.currentTime + 5);
           }

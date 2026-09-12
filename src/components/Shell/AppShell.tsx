@@ -89,7 +89,13 @@ export const AppShell: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [sheetSnap, state.showVideoStage, state.isVideoFullscreen, toggleVideoStage, setVideoFullscreen]);
+  }, [
+    sheetSnap,
+    state.showVideoStage,
+    state.isVideoFullscreen,
+    toggleVideoStage,
+    setVideoFullscreen,
+  ]);
 
   // Determine current active background image
   const currentGenreObj = genres.find(
