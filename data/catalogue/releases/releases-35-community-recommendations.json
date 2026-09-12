@@ -6,25 +6,43 @@
     "releaseDate": "1999-01-01",
     "originalReleaseYear": 1999,
     "label": "Universal Music India Pvt. Ltd.",
-    "categories": ["folk-lokgeet"],
+    "categories": [
+      "folk-lokgeet"
+    ],
     "visualGenre": "folk",
     "entryType": "album",
     "songCount": 10,
     "durationSeconds": 2692,
     "series": null,
     "volume": null,
-    "live": {"isLive": false, "venue": null},
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
     "sources": [
-      {"platform": "Spotify", "url": "https://open.spotify.com/album/101Mmtzgb6iUvoRfACQfYS", "kind": "original-album-stream"},
-      {"platform": "Spotify", "url": "https://open.spotify.com/track/4LWKCiC61rzEPhLgLa7TAn", "kind": "original-track-stream"},
-      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=Rbz1qFlRL_Y", "kind": "verified-label-official-video-reissue"}
+      {
+        "platform": "Spotify",
+        "url": "https://open.spotify.com/album/101Mmtzgb6iUvoRfACQfYS",
+        "kind": "original-album-stream"
+      },
+      {
+        "platform": "Spotify",
+        "url": "https://open.spotify.com/track/4LWKCiC61rzEPhLgLa7TAn",
+        "kind": "original-track-stream"
+      },
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=Rbz1qFlRL_Y",
+        "kind": "verified-label-official-video-reissue"
+      }
     ],
     "trackImportComplete": false,
     "rightsStatus": "commercial-catalogue",
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "notes": "Original 1999 album metadata is preserved. The verified Universal Music India YouTube video is a later official reissue. This title is included as a long-running Navratri/dandiya community staple, not classified as traditional Gujarati Garba."
+    "notes": "Original 1999 album metadata is preserved. The verified Universal Music India YouTube video is a later official reissue. This title is included as a long-running Navratri/dandiya community staple, not classified as traditional Gujarati Garba.",
+    "description": "A 10-track 1999 pop-Garba studio album by Falguni Pathak, issued by Universal Music India."
   },
   {
     "id": "garbo-dhvani-tanishk-2023",
@@ -34,18 +52,35 @@
     "originalReleaseYear": 2023,
     "label": "Jjust Music Label Pvt. Ltd.",
     "description": "A 2023 single credited to Narendra Modi, Tanishk Bagchi and Dhvani Bhanushali, released by Jjust Music Label Pvt. Ltd., running 2:56 and catalogued as modern Gujarati Garba.",
-    "categories": ["modern-gujarati-garba"],
+    "categories": [
+      "modern-gujarati-garba"
+    ],
     "visualGenre": "traditional",
     "entryType": "single",
     "songCount": 1,
     "durationSeconds": 176,
     "series": null,
     "volume": null,
-    "live": {"isLive": false, "venue": null},
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
     "sources": [
-      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=65o5Q_SmIww", "kind": "verified-label-official-video"},
-      {"platform": "Apple Music", "url": "https://music.apple.com/us/song/1711648175", "kind": "official-stream-store"},
-      {"platform": "Amazon Music", "url": "https://music.amazon.in/tracks/B0CKY4NSTC", "kind": "official-stream"}
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=65o5Q_SmIww",
+        "kind": "verified-label-official-video"
+      },
+      {
+        "platform": "Apple Music",
+        "url": "https://music.apple.com/us/song/1711648175",
+        "kind": "official-stream-store"
+      },
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.in/tracks/B0CKY4NSTC",
+        "kind": "official-stream"
+      }
     ],
     "trackImportComplete": true,
     "rightsStatus": "commercial-catalogue",
@@ -61,18 +96,36 @@
     "originalReleaseYear": 2023,
     "label": "T-Series",
     "description": "A 2023 Satyaprem Ki Katha film single by Meet Bros, Parampara Tandon and Piyush Mehroliyaa, released by T-Series, running 4:26 and catalogued across Bollywood/filmi and Raas/Dandiya.",
-    "categories": ["bollywood-filmi", "raas-dandiya"],
+    "categories": [
+      "bollywood-filmi",
+      "raas-dandiya"
+    ],
     "visualGenre": "dandiya",
     "entryType": "single-film",
     "songCount": 1,
     "durationSeconds": 266,
     "series": "Satyaprem Ki Katha",
     "volume": null,
-    "live": {"isLive": false, "venue": null},
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
     "sources": [
-      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=AxA2xYbMCVo", "kind": "verified-label-official-video"},
-      {"platform": "YouTube", "url": "https://www.youtube.com/watch?v=iKbsZJ3Qn9g", "kind": "verified-label-full-song-video"},
-      {"platform": "Spotify", "url": "https://open.spotify.com/album/74EABg5mykh8JE0oUU61oP", "kind": "official-soundtrack-stream"}
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=AxA2xYbMCVo",
+        "kind": "verified-label-official-video"
+      },
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=iKbsZJ3Qn9g",
+        "kind": "verified-label-full-song-video"
+      },
+      {
+        "platform": "Spotify",
+        "url": "https://open.spotify.com/album/74EABg5mykh8JE0oUU61oP",
+        "kind": "official-soundtrack-stream"
+      }
     ],
     "trackImportComplete": true,
     "rightsStatus": "commercial-catalogue",
@@ -88,23 +141,42 @@
     "originalReleaseYear": 2020,
     "label": "Saregama India Ltd.",
     "description": "A 2020 continuous Garba mix credited to Various Artists and DJ Rink, released by Saregama India Ltd., running 29:12 and catalogued across DJ remix and modern Gujarati Garba.",
-    "categories": ["dj-remix", "modern-gujarati-garba"],
+    "categories": [
+      "dj-remix",
+      "modern-gujarati-garba"
+    ],
     "visualGenre": "fusion",
     "entryType": "single-continuous-set",
     "songCount": 1,
     "durationSeconds": 1752,
     "series": null,
     "volume": null,
-    "live": {"isLive": false, "venue": null},
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
     "sources": [
-      {"platform": "Saregama", "url": "https://www.saregama.com/song/non-stop-garba-mix-by-dj-rink_149409", "kind": "official-label-track"},
-      {"platform": "Saregama", "url": "https://www.saregama.com/album/non-stop-garba-mix-by-dj-rink_122130", "kind": "official-label-album"},
-      {"platform": "Amazon Music", "url": "https://music.amazon.in/tracks/B08L9L3WL1", "kind": "official-stream"}
+      {
+        "platform": "Saregama",
+        "url": "https://www.saregama.com/song/non-stop-garba-mix-by-dj-rink_149409",
+        "kind": "official-label-track"
+      },
+      {
+        "platform": "Saregama",
+        "url": "https://www.saregama.com/album/non-stop-garba-mix-by-dj-rink_122130",
+        "kind": "official-label-album"
+      },
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.in/tracks/B08L9L3WL1",
+        "kind": "official-stream"
+      }
     ],
     "trackImportComplete": true,
     "rightsStatus": "commercial-catalogue",
     "audioBundled": false,
     "metadataStatus": "verified",
-    "audioAvailability": "external-source-only"
+    "audioAvailability": "external-source-only",
+    "displayTitle": "Nonstop Garba Mix by DJ Rink"
   }
 ]
