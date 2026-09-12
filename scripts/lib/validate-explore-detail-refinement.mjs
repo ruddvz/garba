@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 const runtime = await readFile(new URL('../../assets/runtime/explore-search.js', import.meta.url), 'utf8');
 const explore = await readFile(new URL('../../src/catalogue/index.html', import.meta.url), 'utf8');
 const catalogue = await readFile(new URL('../../src/catalogue/catalogue.js', import.meta.url), 'utf8');
+const catalogueCss = await readFile(new URL('../../src/catalogue/catalogue.css', import.meta.url), 'utf8');
 const listening = await readFile(new URL('../../src/catalogue/listening-library.js', import.meta.url), 'utf8');
 const artistArtworkPayload = JSON.parse(await readFile(new URL('../../data/artist-artwork.json', import.meta.url), 'utf8'));
 const catalogueIndex = JSON.parse(await readFile(new URL('../../data/catalogue/index.json', import.meta.url), 'utf8'));
@@ -10,21 +11,47 @@ let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
 for (const marker of [
-  'playgarbaExploreDetailRefinement',
   "detail.dataset.releaseFilter = hasActiveRelease ? 'true' : 'false';",
   'showAll.hidden = !hasActiveRelease;',
-  "songsEyebrow.textContent = hasActiveRelease ? 'Selected release' : 'Songs';",
+  'songsEyebrow.textContent = nextEyebrow;',
   "card.setAttribute('aria-current', 'true')",
   'selected-release-context',
   'releaseRail.scrollTo({',
   "behavior: reduced.matches ? 'auto' : 'smooth'",
-  '.collection-detail[data-release-filter="true"] .songs-section',
-  '.release-card.active::after{content:"✓"',
-  '-webkit-line-clamp:2',
-  '.play-link::before{content:"▶"',
-  '@media(max-width:380px)',
 ]) {
-  if (!runtime.includes(marker)) fail(`Explore detail refinement is missing: ${marker}`);
+  if (!runtime.includes(marker)) fail(`Explore detail behavior is missing: ${marker}`);
+}
+
+for (const marker of [
+  '.share-explore-state {',
+  '.detail-head {',
+  '.detail-head::before { display:none; }',
+  '.detail-meta span + span::before { content:"·";',
+  '.songs-section {',
+  '.selected-release-context {',
+  '.release-card.active::after {',
+  '-webkit-line-clamp:2',
+  '.song-context summary {',
+  '.song-context-meta span + span::before { content:"·";',
+  '.play-link {',
+]) {
+  if (!catalogueCss.includes(marker)) fail(`Explore source-owned detail presentation is missing: ${marker}`);
+}
+
+if (runtime.includes('playgarbaExploreDetailRefinement')) {
+  fail('Explore detail presentation must not regress to the retired runtime detail-style island');
+}
+if (runtime.includes('.detail-head,.release-section,.songs-section{backdrop-filter')) {
+  fail('Explore performance runtime must not override detail-surface presentation');
+}
+if (catalogue.includes('playgarbaExploreShare')) {
+  fail('Explore catalogue runtime must not inject share/detail presentation CSS');
+}
+if (!/\.share-explore-state\s*\{[\s\S]*?width:44px;[\s\S]*?height:44px;/.test(catalogueCss)) {
+  fail('Explore Share must retain a 44x44 CSS px effective target in source CSS');
+}
+if (!/\.detail-meta span\s*\{[^}]*border:0;[^}]*background:transparent;/.test(catalogueCss)) {
+  fail('Explore detail metadata must remain flat source-owned text rather than decorative pills');
 }
 
 for (const marker of [
