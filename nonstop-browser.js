@@ -500,6 +500,14 @@
         #browseActions{position:static!important;margin-top:0!important}
         .nonstop-browser{max-height:94dvh;bottom:3dvh}
       }
+      @media(max-height:560px) and (orientation:landscape){
+        html body .app .player-shell{
+          grid-template-rows:auto auto auto 11px 0 auto 36px auto!important;
+          padding-top:52px!important
+        }
+        html body .app #genreStrip{grid-row:6!important;align-self:end!important}
+        html body .app #browseActions{grid-row:8!important;align-self:start!important}
+      }
       @media(prefers-reduced-motion:reduce){
         .nonstop-browser,.nonstop-browser-backdrop,.nonstop-set,.nonstop-chapter{transition:none!important}
       }
