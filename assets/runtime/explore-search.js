@@ -156,7 +156,7 @@ if (input && status && topbar && spacer) {
   if (!songList || !sectionRoot) return;
 
   const STORAGE_KEY = 'playgarba:explore:shelf-scrolls';
-  const SHELF_SELECTOR = '.collection-grid,.essential-release-rail,.release-rail';
+  const SHELF_SELECTOR = '.collection-grid--shelf,.essential-release-rail,.release-rail';
   const AUTO_PAGE_COOLDOWN_MS = 650;
   let pagerObserver = null;
   let refreshQueued = false;
@@ -171,16 +171,16 @@ if (input && status && topbar && spacer) {
     .collection-card{transform:none;contain:layout paint style}
     .song-row{content-visibility:auto;contain-intrinsic-size:72px;contain:layout paint style}
     .release-card,.release-more{content-visibility:auto;contain-intrinsic-size:236px}
-    .collection-grid,.release-rail,.essential-release-rail{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+    .collection-grid--shelf,.release-rail,.essential-release-rail{-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
     .song-more[data-auto-paging="true"]{position:relative;justify-self:stretch;width:100%;min-height:52px;border-style:dashed;color:rgba(255,248,236,.66);background:rgba(255,255,255,.025);pointer-events:none}
     .song-more[data-auto-paging="true"]::after{content:"";display:inline-block;width:13px;height:13px;margin-left:9px;border:1.5px solid rgba(255,248,236,.28);border-top-color:var(--gold);border-radius:50%;vertical-align:-2px;animation:exploreAutoPageSpin .75s linear infinite}
     @keyframes exploreAutoPageSpin{to{transform:rotate(1turn)}}
     @media(max-width:900px){
       .catalogue-section{contain-intrinsic-size:auto 340px}
       .section-title-row p{display:none}
-      .collection-grid{grid-template-columns:none!important;grid-auto-flow:column;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x pan-y}
-      .collection-grid::-webkit-scrollbar,.release-rail::-webkit-scrollbar,.essential-release-rail::-webkit-scrollbar{display:none}
-      .collection-card{width:auto;scroll-snap-align:start;scroll-snap-stop:normal}
+      .collection-grid--shelf{grid-template-columns:none!important;grid-auto-flow:column;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;touch-action:pan-x pan-y}
+      .collection-grid--shelf::-webkit-scrollbar,.release-rail::-webkit-scrollbar,.essential-release-rail::-webkit-scrollbar{display:none}
+      .collection-grid--shelf .collection-card{width:auto;scroll-snap-align:start;scroll-snap-stop:normal}
     }
     @media(max-width:560px){
       html{scroll-padding-top:78px}
@@ -313,10 +313,10 @@ if (input && status && topbar && spacer) {
     .catalogue-section{margin-bottom:clamp(38px,4.2vw,54px)}
     .section-title-row{margin-inline:2px;margin-bottom:15px}
     .section-title-row h2{font-size:clamp(1.03rem,1.6vw,1.22rem)}
-    .collection-grid{gap:clamp(12px,1.25vw,17px)}
-    .collection-card{min-height:clamp(214px,19vw,276px);border-radius:clamp(21px,2vw,26px)}
-    .collection-copy{inset:clamp(18px,2.1vw,26px)}
-    .collection-copy strong{font-size:clamp(1.28rem,2vw,1.76rem)}
+    .collection-grid:not(.collection-grid--taxonomy):not(.collection-grid--artist){gap:clamp(12px,1.25vw,17px)}
+    .collection-card:not(.collection-card--taxonomy):not(.collection-card--artist){min-height:clamp(214px,19vw,276px);border-radius:clamp(21px,2vw,26px)}
+    .collection-card:not(.collection-card--taxonomy):not(.collection-card--artist) .collection-copy{inset:clamp(18px,2.1vw,26px)}
+    .collection-card:not(.collection-card--taxonomy):not(.collection-card--artist) .collection-copy strong{font-size:clamp(1.28rem,2vw,1.76rem)}
     .essential-release-section{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
     .essential-release-card{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
     .release-section,.songs-section{scroll-margin-top:100px}
@@ -325,15 +325,15 @@ if (input && status && topbar && spacer) {
     .release-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;min-height:2.5em}
 
     @media(min-width:1181px){
-      .collection-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
-      .collection-card{aspect-ratio:1.2/1}
+      .collection-grid:not(.collection-grid--destination):not(.collection-grid--taxonomy):not(.collection-grid--artist){grid-template-columns:repeat(4,minmax(0,1fr))}
+      .collection-card:not(.collection-card--destination):not(.collection-card--taxonomy):not(.collection-card--artist){aspect-ratio:1.2/1}
     }
 
     @media(min-width:901px) and (max-width:1180px){
       :root{--explore-gutter:clamp(24px,3.2vw,36px)}
-      .collection-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .collection-card{min-height:220px;aspect-ratio:1.12/1}
-      .collection-copy strong{font-size:clamp(1.28rem,2.5vw,1.62rem)}
+      .collection-grid:not(.collection-grid--destination):not(.collection-grid--taxonomy):not(.collection-grid--artist){grid-template-columns:repeat(3,minmax(0,1fr))}
+      .collection-card:not(.collection-card--destination):not(.collection-card--taxonomy):not(.collection-card--artist){min-height:220px;aspect-ratio:1.12/1}
+      .collection-card:not(.collection-card--destination):not(.collection-card--taxonomy):not(.collection-card--artist) .collection-copy strong{font-size:clamp(1.28rem,2.5vw,1.62rem)}
       .section-title-row p{max-width:44vw}
     }
 
@@ -344,9 +344,9 @@ if (input && status && topbar && spacer) {
       main{padding-top:8px}
       .catalogue-section{margin-bottom:38px;contain-intrinsic-size:auto 340px}
       .section-title-row{margin-bottom:14px}
-      body .collection-grid{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(270px,44vw);gap:14px;overflow-x:auto;overflow-y:hidden;margin-inline:calc(var(--explore-gutter) * -1);padding:4px var(--explore-gutter) 15px;scroll-snap-type:x proximity;scroll-padding-inline:var(--explore-gutter);scrollbar-width:none;touch-action:pan-x pan-y}
-      body .collection-card{width:auto;min-height:204px;aspect-ratio:1.18/1;border-radius:24px;scroll-snap-align:start;scroll-snap-stop:normal}
-      .collection-copy strong{font-size:clamp(1.3rem,3.7vw,1.62rem)}
+      body .collection-grid--shelf{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(270px,44vw);gap:14px;overflow-x:auto;overflow-y:hidden;margin-inline:calc(var(--explore-gutter) * -1);padding:4px var(--explore-gutter) 15px;scroll-snap-type:x proximity;scroll-padding-inline:var(--explore-gutter);scrollbar-width:none;touch-action:pan-x pan-y}
+      body .collection-grid--shelf .collection-card{width:auto;min-height:204px;aspect-ratio:1.18/1;border-radius:24px;scroll-snap-align:start;scroll-snap-stop:normal}
+      body .collection-grid--shelf .collection-copy strong{font-size:clamp(1.3rem,3.7vw,1.62rem)}
       .essential-release-section{margin-bottom:40px}
       .essential-release-rail{grid-auto-columns:minmax(174px,25vw)}
     }
@@ -364,12 +364,12 @@ if (input && status && topbar && spacer) {
       .catalogue-section{margin-bottom:40px;contain-intrinsic-size:auto 310px}
       .section-title-row{margin-inline:0;margin-bottom:14px}
       .section-title-row h2{font-size:1.02rem}
-      body .collection-grid{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(250px,82vw);gap:12px;overflow-x:auto;overflow-y:hidden;margin-inline:calc(var(--explore-gutter) * -1);padding:3px var(--explore-gutter) 14px;scroll-snap-type:x proximity;scroll-padding-inline:var(--explore-gutter);scrollbar-width:none;touch-action:pan-x pan-y}
-      body .collection-card{width:auto;min-height:176px;aspect-ratio:1.38/1;border-radius:21px;scroll-snap-align:start;scroll-snap-stop:normal}
-      .collection-copy{inset:16px}
-      .collection-copy small{font-size:.62rem;margin-bottom:6px}
-      .collection-copy strong{max-width:15ch;font-size:clamp(1.26rem,6.3vw,1.56rem);line-height:1.04}
-      .collection-copy span{margin-top:8px;font-size:.68rem}
+      body .collection-grid--shelf{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(250px,82vw);gap:12px;overflow-x:auto;overflow-y:hidden;margin-inline:calc(var(--explore-gutter) * -1);padding:3px var(--explore-gutter) 14px;scroll-snap-type:x proximity;scroll-padding-inline:var(--explore-gutter);scrollbar-width:none;touch-action:pan-x pan-y}
+      body .collection-grid--shelf .collection-card{width:auto;min-height:176px;aspect-ratio:1.38/1;border-radius:21px;scroll-snap-align:start;scroll-snap-stop:normal}
+      body .collection-grid--shelf .collection-copy{inset:16px}
+      body .collection-grid--shelf .collection-copy small{font-size:.62rem;margin-bottom:6px}
+      body .collection-grid--shelf .collection-copy strong{max-width:15ch;font-size:clamp(1.26rem,6.3vw,1.56rem);line-height:1.04}
+      body .collection-grid--shelf .collection-copy span{margin-top:8px;font-size:.68rem}
       .essential-release-section{margin-inline:0;margin-bottom:40px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
       .essential-release-section .section-title-row{margin-bottom:14px}
       .essential-release-rail{grid-auto-columns:minmax(142px,42vw);gap:12px;margin-inline:calc(var(--explore-gutter) * -1);padding:2px var(--explore-gutter) 10px;scroll-padding-inline:var(--explore-gutter)}
@@ -379,14 +379,14 @@ if (input && status && topbar && spacer) {
     }
 
     @media(max-width:420px){
-      body .collection-grid{grid-auto-columns:minmax(244px,84vw)}
+      body .collection-grid--shelf{grid-auto-columns:minmax(244px,84vw)}
     }
 
     @media(max-width:350px){
       :root{--explore-gutter:16px}
       .search-explore,.close-explore{width:44px;height:44px}
-      body .collection-grid{grid-auto-columns:minmax(238px,84vw)}
-      body .collection-card{min-height:168px}
+      body .collection-grid--shelf{grid-auto-columns:minmax(238px,84vw)}
+      body .collection-grid--shelf .collection-card{min-height:168px}
     }
 
     @media(max-height:600px) and (orientation:landscape){
@@ -394,8 +394,8 @@ if (input && status && topbar && spacer) {
       .search-explore,.close-explore{width:44px;height:44px}
       main{padding-top:2px}
       .catalogue-section{margin-bottom:28px}
-      body .collection-grid{grid-auto-columns:minmax(230px,34vw);padding-bottom:10px}
-      body .collection-card{min-height:154px;aspect-ratio:1.42/1}
+      body .collection-grid--shelf{grid-auto-columns:minmax(230px,34vw);padding-bottom:10px}
+      body .collection-grid--shelf .collection-card{min-height:154px;aspect-ratio:1.42/1}
     }
 
     @media(pointer:coarse){
