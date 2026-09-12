@@ -27,7 +27,7 @@
     <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
-    <link rel="preload" as="image" href="assets/backgrounds/traditional.svg" fetchpriority="high" />
+    <link rel="preload" as="image" href="assets/backgrounds/library/11-master-dark-courtyard.webp" type="image/webp" fetchpriority="high" />
 
     <style>
       html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #111323; }
@@ -367,14 +367,29 @@
 
     <div class="app" id="app" data-genre="traditional" data-sheet-snap="closed" data-loading="false" aria-busy="false">
       <div class="world" aria-hidden="true">
-        <div class="world-layer is-visible" id="worldA" style="background-image:url('assets/backgrounds/traditional.svg')"></div>
+        <div class="world-layer is-visible" id="worldA" style="background-image:url('assets/backgrounds/library/11-master-dark-courtyard.webp')"></div>
         <div class="world-layer" id="worldB"></div>
+        <canvas class="garba-chowk" id="garbaChowk" aria-label="Interactive Garba circle with concentric dancers and central akhand diya"></canvas>
         <div class="world-vignette"></div>
         <div class="world-ambient" id="worldAmbient"></div>
       </div>
 
       <header class="topbar">
-        <a href="./" class="brand" aria-label="PlayGarba home">PlayGarba</a>
+        <a href="./" class="brand" aria-label="PlayGarba home">
+          <span class="brand-text">PlayGarba</span>
+          <span class="brand-guj" lang="gu" aria-hidden="true">ગરબા</span>
+        </a>
+        <div class="topbar-meta" id="topbarMeta" aria-label="Homeland time and listeners in circle">
+          <button class="bg-mode-btn" id="bgModeBtn" type="button" aria-label="Toggle Atmosphere Mode" title="Toggle Courtyard / Tapestry">
+            <span class="bg-mode-icon" id="bgModeIcon" aria-hidden="true">✨</span>
+            <span class="bg-mode-label" id="bgModeLabel">તપોવન</span>
+          </button>
+          <span class="homeland-clock" id="homelandClock" title="Ahmedabad (IST) time">--:--</span>
+          <span class="chowk-presence" id="chowkPresence" title="Khelaiyas in the circle">
+            <span class="presence-pulse" aria-hidden="true"></span>
+            <span id="presenceCount">214</span> <span class="presence-label">in circle</span>
+          </span>
+        </div>
         <nav class="utilities" aria-label="Player tools">
           <span class="network-status" id="networkStatus" aria-hidden="true"></span>
           <button class="icon-button" id="searchButton" type="button" aria-label="Search songs" title="Search songs (/)" aria-keyshortcuts="/">
@@ -394,6 +409,12 @@
       </header>
 
       <main class="player-shell" id="mainPlayer" tabindex="-1">
+        <div class="join-hint" id="joinHint" aria-label="Join the Garba circle">
+          <span class="join-emoji" aria-hidden="true">💃🪘</span>
+          <span>Your Garba gang is waiting!</span>
+          <button class="join-action" id="joinButton" type="button">Join circle</button>
+        </div>
+
         <section class="track-block" id="trackBlock" aria-label="Now playing" aria-live="polite" aria-atomic="true">
           <p class="genre-eyebrow" id="genreEyebrow">Traditional Garba</p>
           <h1 class="song-title" id="songTitle">Ochhav Theme</h1>
@@ -412,7 +433,33 @@
             <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg>
             <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
           </button>
-          <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
+          <button class="transport has-guj-label" id="nextButton" type="button" aria-label="Next song">
+            <span class="next-guj" lang="gu" aria-hidden="true">આગળ</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg>
+          </button>
+          <button class="taali-button" id="taaliButton" type="button" aria-label="Taali (Clap along)" title="Clap along (Taali)">
+            <span class="taali-icon" aria-hidden="true">👏</span>
+            <span class="taali-text" lang="gu">તાલી</span>
+          </button>
+          <button class="flower-button" id="flowerButton" type="button" aria-label="Flower Shower (Pushp)" title="Shower Marigold Petals (Pushp)">
+            <span class="flower-icon" aria-hidden="true">🌸</span>
+            <span class="flower-text" lang="gu">પુષ્પ</span>
+          </button>
+          <div class="taal-guide" id="taalGuide" aria-label="Garba rhythm step guide">
+            <span class="taal-name" id="taalName">૩ તાળી ગરબા</span>
+            <div class="taal-stepper" id="taalStepper">
+              <span class="taal-step is-active"><strong class="step-num">૧</strong> <small class="step-label">તાળી</small></span>
+              <span class="taal-step"><strong class="step-num">૨</strong> <small class="step-label">તાળી</small></span>
+              <span class="taal-step"><strong class="step-num">૩</strong> <small class="step-label">નમો</small></span>
+              <span class="taal-step"><strong class="step-num">૪</strong> <small class="step-label">ફેર</small></span>
+            </div>
+          </div>
+          <div class="beat-meter" id="beatMeter" aria-hidden="true" title="Garba rhythm beat">
+            <span class="beat-pip">◆</span>
+            <span class="beat-pip">◆</span>
+            <span class="beat-pip">◆</span>
+            <span class="beat-pip">◆</span>
+          </div>
         </section>
 
         <section class="progress-wrap" aria-label="Playback progress">
@@ -486,12 +533,12 @@
         try { sessionStorage.removeItem('playgarba:route-handoff'); } catch { /* storage can be unavailable */ }
 
         const genreMeta = {
-          traditional: { label: 'Traditional Garba', background: 'assets/backgrounds/traditional.svg', accent: '#d6b06f' },
-          dandiya: { label: 'Dandiya Raas', background: 'assets/backgrounds/dandiya.svg', accent: '#a77ad6' },
-          devotional: { label: 'Devotional Garba', background: 'assets/backgrounds/devotional.svg', accent: '#c78372' },
-          folk: { label: 'Gujarati Folk', background: 'assets/backgrounds/folk.svg', accent: '#9a9fc7' },
-          sanedo: { label: 'Sanedo', background: 'assets/backgrounds/sanedo.svg', accent: '#c99872' },
-          fusion: { label: 'Modern Fusion Garba', background: 'assets/backgrounds/fusion.svg', accent: '#a78bc4' },
+          traditional: { label: 'Traditional Garba', background: 'assets/backgrounds/library/11-master-dark-courtyard.webp', accent: '#d6b06f' },
+          dandiya: { label: 'Dandiya Raas', background: 'assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp', accent: '#a77ad6' },
+          devotional: { label: 'Devotional Garba', background: 'assets/backgrounds/library/03-devotional-garba-courtyard.webp', accent: '#c78372' },
+          folk: { label: 'Gujarati Folk', background: 'assets/backgrounds/library/14-gujarati-folk-courtyard.webp', accent: '#9a9fc7' },
+          sanedo: { label: 'Sanedo', background: 'assets/backgrounds/library/08-colourful-garba-courtyard-b.webp', accent: '#c99872' },
+          fusion: { label: 'Modern Fusion Garba', background: 'assets/backgrounds/library/05-fusion-gujarati-neon.webp', accent: '#a78bc4' },
         };
         const genreId = genreMeta[handoff.genre] ? handoff.genre : 'traditional';
         const genre = genreMeta[genreId];
@@ -530,6 +577,8 @@
 
     <noscript><p>This music player needs JavaScript enabled.</p></noscript>
     <script src="simple-runtime.js"></script>
+    <script src="assets/runtime/garba-earcons.js"></script>
+    <script src="assets/runtime/garba-chowk.js"></script>
     <script src="nonstop-browser.js" defer></script>
     <script type="module" src="app.js?v=20260908.2"></script>
     <script>

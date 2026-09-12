@@ -74,6 +74,14 @@ if (styleEntry !== expectedImports) fail('styles.css import order does not match
 
 if (!await exists('assets/backgrounds/garba15-2k.zip')) fail('Canonical artwork pack assets/backgrounds/garba15-2k.zip is missing');
 if (await exists('assets/backgrounds/garba15-2k-q82.zip')) fail('Legacy artwork alias garba15-2k-q82.zip must not coexist with the canonical filename');
+if (!await exists('assets/icons/app-icon-master-2k.jpeg')) fail('Canonical master icon assets/icons/app-icon-master-2k.jpeg is missing');
+if (!await exists('assets/icons/README.md')) fail('assets/icons/README.md must document brand icon architecture and generation pipeline');
+
+const expectedGenreIcons = ['dandiya.webp', 'devotional.webp', 'folk-dhol.webp', 'fusion.webp', 'nonstop.webp', 'sanedo.webp', 'traditional.webp'];
+const actualGenreIcons = (await readdir(path.join(root, 'assets/genre-icons'))).filter((file) => !file.startsWith('.')).sort();
+if (!same(actualGenreIcons, expectedGenreIcons)) {
+  fail(`assets/genre-icons must contain only the canonical WebP icon set. Expected ${expectedGenreIcons.join(', ')}, found ${actualGenreIcons.join(', ')}`);
+} else ok('genre icons use canonical WebP set');
 
 const optionalFiles = [
   'catalogue-bootstrap.js',
@@ -187,6 +195,22 @@ const compareCanonicalDir = async (dir, indexed) => {
 await compareCanonicalDir('data/catalogue/songs', catalogueIndex.songChunks || []);
 await compareCanonicalDir('data/catalogue/releases', catalogueIndex.releaseChunks || []);
 await compareCanonicalDir('data/catalogue/free-sources', catalogueIndex.freeSourceChunks || []);
+
+const dataEntries = await readdir(path.join(root, 'data'), { withFileTypes: true });
+for (const entry of dataEntries) {
+  if (entry.isFile()) {
+    if (!entry.name.endsWith('.json') && entry.name !== 'README.md') {
+      fail(`data/ must contain only JSON metadata and README.md; found unexpected file: data/${entry.name}`);
+    }
+    if (entry.name.startsWith('playback-sources-') && entry.name.endsWith('.json')) {
+      const relPath = `data/${entry.name}`;
+      if (!catalogueIndex.playbackSources?.includes(relPath)) {
+        fail(`Unindexed playback source shard in data/: ${relPath}`);
+      }
+    }
+  }
+}
+ok('playback source shards in data/ are all indexed in catalogue manifest');
 
 for (const file of [
   'data/catalogue/archive/README.md',

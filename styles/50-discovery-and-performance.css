@@ -67,35 +67,23 @@
  * Keeping the SVG as the second background layer means a failed WebP request
  * never leaves the player blank.
  */
-.world-layer[style*="assets/backgrounds/traditional.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/11-master-dark-courtyard.webp"),
-    url("/assets/backgrounds/traditional.svg") !important;
+.world-layer[style*="11-master-dark-courtyard.webp"] {
+  background-image: url("/assets/backgrounds/library/11-master-dark-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/dandiya.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp"),
-    url("/assets/backgrounds/dandiya.svg") !important;
+.world-layer[style*="10-dandiya-silhouette-courtyard.webp"] {
+  background-image: url("/assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/devotional.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/03-devotional-garba-courtyard.webp"),
-    url("/assets/backgrounds/devotional.svg") !important;
+.world-layer[style*="03-devotional-garba-courtyard.webp"] {
+  background-image: url("/assets/backgrounds/library/03-devotional-garba-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/folk.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/14-gujarati-folk-courtyard.webp"),
-    url("/assets/backgrounds/folk.svg") !important;
+.world-layer[style*="14-gujarati-folk-courtyard.webp"] {
+  background-image: url("/assets/backgrounds/library/14-gujarati-folk-courtyard.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/sanedo.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp"),
-    url("/assets/backgrounds/sanedo.svg") !important;
+.world-layer[style*="08-colourful-garba-courtyard-b.webp"] {
+  background-image: url("/assets/backgrounds/library/08-colourful-garba-courtyard-b.webp") !important;
 }
-.world-layer[style*="assets/backgrounds/fusion.svg"] {
-  background-image:
-    url("/assets/backgrounds/library/05-fusion-gujarati-neon.webp"),
-    url("/assets/backgrounds/fusion.svg") !important;
+.world-layer[style*="05-fusion-gujarati-neon.webp"] {
+  background-image: url("/assets/backgrounds/library/05-fusion-gujarati-neon.webp") !important;
 }
 .world-layer[style*="assets/backgrounds/"] {
   background-size: cover !important;

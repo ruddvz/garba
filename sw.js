@@ -22,6 +22,8 @@ const CORE_SHELL = [
   './catalogue/listening-library.js',
   './assets/runtime/explore-search.js',
   './assets/runtime/immersive-atmosphere.js',
+  './assets/runtime/garba-earcons.js',
+  './assets/runtime/garba-chowk.js',
   './manifest.webmanifest',
   './offline.html',
   './favicon.ico',
@@ -40,12 +42,6 @@ const CORE_SHELL = [
   './assets/icons/maskable.svg',
   './assets/icons/maskable-192.png',
   './assets/icons/maskable-512.png',
-  './assets/backgrounds/traditional.svg',
-  './assets/backgrounds/dandiya.svg',
-  './assets/backgrounds/devotional.svg',
-  './assets/backgrounds/folk.svg',
-  './assets/backgrounds/sanedo.svg',
-  './assets/backgrounds/fusion.svg',
 ];
 
 const FRESH_RUNTIME_SUFFIXES = [
@@ -62,6 +58,8 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/catalogue/listening-library.js',
   '/assets/runtime/explore-search.js',
   '/assets/runtime/immersive-atmosphere.js',
+  '/assets/runtime/garba-earcons.js',
+  '/assets/runtime/garba-chowk.js',
 ];
 
 async function stagingCacheExists() {

@@ -124,11 +124,13 @@ body {
   top: max(92px, calc(var(--safe-top) + 68px));
   right: max(20px, var(--safe-right));
   width: min(356px, calc(100vw - 40px));
-  border: 1px solid rgba(246,236,215,.13);
-  border-radius: 16px;
+  border: 1px solid rgba(246,236,215,.16);
+  border-radius: 20px;
   overflow: hidden;
-  background: rgba(8,11,20,.96);
-  box-shadow: 0 22px 60px rgba(0,0,0,.38);
+  background: rgba(10,13,24,.96);
+  box-shadow: 0 24px 64px rgba(0,0,0,.48), 0 0 0 1px rgba(246,236,215,.04) inset;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px) scale(.985);

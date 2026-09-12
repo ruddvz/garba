@@ -33,7 +33,7 @@ img { max-width: 100%; }
 .menu-button { display: none; }
 
 .hero { position: relative; min-height: 100svh; overflow: hidden; display: flex; align-items: flex-end; padding: 150px var(--pad) clamp(70px, 9vh, 110px); isolation: isolate; }
-.hero-art { position: absolute; z-index: -3; inset: 0; background: #21160f url('assets/traditional.svg') center 58% / cover no-repeat; transform: scale(1.015); animation: settle 1.8s cubic-bezier(.2,.7,.2,1) both; }
+.hero-art { position: absolute; z-index: -3; inset: 0; background: #21160f url('assets/backgrounds/library/11-master-dark-courtyard.webp') center 58% / cover no-repeat; transform: scale(1.015); animation: settle 1.8s cubic-bezier(.2,.7,.2,1) both; }
 .hero-shade { position: absolute; z-index: -2; inset: 0; background: linear-gradient(180deg, rgba(9,11,19,.08) 4%, rgba(9,11,19,.08) 30%, rgba(9,11,19,.74) 78%, rgba(9,11,19,.96) 100%), linear-gradient(90deg, rgba(8,8,11,.55), transparent 60%); }
 .hero-copy { width: min(790px, 88vw); }
 .eyebrow, .section-kicker { margin: 0 0 22px; font-size: 11px; line-height: 1; letter-spacing: .22em; text-transform: uppercase; color: #d2b37a; }
@@ -70,19 +70,19 @@ img { max-width: 100%; }
 .world-card::after { content: ''; position: absolute; z-index: -2; inset: 0; background: inherit; background-size: cover; background-position: center; transition: transform .8s cubic-bezier(.2,.7,.2,1), filter .6s ease; }
 .world-card:hover::after { transform: scale(1.035); filter: saturate(1.06); }
 .world-card:hover::before { background: linear-gradient(180deg, rgba(7,8,13,0) 20%, rgba(7,8,13,.66) 100%); }
-.world-traditional { background-image: url('assets/traditional.svg'); }
-.world-dandiya { background-image: url('assets/dandiya.svg'); }
-.world-devotional { background-image: url('assets/devotional.svg'); }
-.world-folk { background-image: url('assets/folk.svg'); }
-.world-sanedo { background-image: url('assets/sanedo.svg'); }
-.world-fusion { background-image: url('assets/fusion.svg'); }
+.world-traditional { background-image: url('assets/backgrounds/library/11-master-dark-courtyard.webp'); }
+.world-dandiya { background-image: url('assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp'); }
+.world-devotional { background-image: url('assets/backgrounds/library/03-devotional-garba-courtyard.webp'); }
+.world-folk { background-image: url('assets/backgrounds/library/14-gujarati-folk-courtyard.webp'); }
+.world-sanedo { background-image: url('assets/backgrounds/library/08-colourful-garba-courtyard-b.webp'); }
+.world-fusion { background-image: url('assets/backgrounds/library/05-fusion-gujarati-neon.webp'); }
 .world-number { align-self: center; color: rgba(244,234,215,.45); font-size: 10px; letter-spacing: .12em; }
 .world-name { font: 400 clamp(25px, 2.3vw, 38px)/1 var(--serif); letter-spacing: -.025em; }
 .world-arrow { align-self: center; font-size: 19px; opacity: .65; transition: transform .25s ease, opacity .25s ease; }
 .world-card:hover .world-arrow { transform: translate(3px,-3px); opacity: 1; }
 
 .nonstop { position: relative; min-height: min(84vh, 920px); display: flex; align-items: center; overflow: hidden; padding: 100px var(--pad); isolation: isolate; }
-.nonstop-art { position: absolute; z-index: -3; inset: 0; background: #18121d url('assets/sanedo.svg') center 52% / cover no-repeat; transform: scale(1.01); }
+.nonstop-art { position: absolute; z-index: -3; inset: 0; background: #18121d url('assets/backgrounds/library/08-colourful-garba-courtyard-b.webp') center 52% / cover no-repeat; transform: scale(1.01); }
 .nonstop-overlay { position: absolute; z-index: -2; inset: 0; background: linear-gradient(90deg, rgba(7,8,14,.94) 0%, rgba(7,8,14,.75) 34%, rgba(7,8,14,.2) 67%, rgba(7,8,14,.36) 100%), linear-gradient(0deg, rgba(7,8,14,.52), transparent 45%); }
 .nonstop-copy { max-width: 650px; }
 .nonstop h2 { margin: 0; font: 400 clamp(55px, 7.7vw, 112px)/.88 var(--serif); letter-spacing: -.05em; }
@@ -93,7 +93,7 @@ img { max-width: 100%; }
 .listen-copy > p { max-width: 580px; margin-top: 30px; }
 .listen-copy strong { color: rgba(244,234,215,.9); font-weight: 500; }
 .player-frame { position: relative; aspect-ratio: 4 / 5; max-height: 720px; overflow: hidden; border: 1px solid rgba(244,234,215,.14); border-radius: clamp(20px, 2vw, 30px); background: #171321; box-shadow: 0 40px 100px rgba(0,0,0,.32); isolation: isolate; }
-.player-scene { position: absolute; z-index: -2; inset: 0; background: url('assets/traditional.svg') center / cover no-repeat; transform: scale(1.07); }
+.player-scene { position: absolute; z-index: -2; inset: 0; background: url('assets/backgrounds/library/11-master-dark-courtyard.webp') center / cover no-repeat; transform: scale(1.07); }
 .player-frame::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, rgba(8,9,14,.2), rgba(8,9,14,.35) 45%, rgba(8,9,14,.9)); }
 .player-top { position: absolute; top: 24px; left: 26px; right: 26px; display: flex; justify-content: space-between; font-size: 14px; letter-spacing: .12em; }
 .player-top span:first-child { font-family: var(--serif); font-weight: 700; }

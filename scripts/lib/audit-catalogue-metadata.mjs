@@ -58,7 +58,8 @@ const titleQa = (entity, kind) => {
   const title = String(entity.title || '');
   if (!title.trim()) issues.push(`${kind} ${entity.id || '(missing id)'}: title is missing`);
   if (title !== title.trim() || /\s{2,}/.test(title)) issues.push(`${kind} ${entity.id}: title has unstable whitespace: ${JSON.stringify(title)}`);
-  if (/\bnon[ -]?stop\b/i.test(title) && !/\bNonstop\b/.test(title)) {
+  const display = String(entity.displayTitle || '');
+  if (/\bnon[ -]?stop\b/i.test(title) && !/\bNonstop\b/.test(title) && !/\bNonstop\b/.test(display)) {
     warnings.push(`${kind} ${entity.id}: consider displayTitle using “Nonstop” for consistent presentation (${title})`);
   }
 };

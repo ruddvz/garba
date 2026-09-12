@@ -93,6 +93,12 @@ const els = {
   installText: $('installText'),
   installButton: $('installButton'),
   installDismiss: $('installDismiss'),
+  garbaChowk: $('garbaChowk'),
+  taaliButton: $('taaliButton'),
+  homelandClock: $('homelandClock'),
+  presenceCount: $('presenceCount'),
+  joinHint: $('joinHint'),
+  joinButton: $('joinButton'),
 };
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
@@ -266,6 +272,7 @@ function setPlaying(playing) {
   els.miniPlay.classList.toggle('is-playing', playing);
   els.playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   els.miniPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  if (window.garbaChowk) window.garbaChowk.setPlaying(playing);
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 }
 
@@ -530,6 +537,14 @@ function renderPlayer() {
   els.progress.style.setProperty('--progress', `${ratio * 100}%`);
   els.miniProgress.style.width = `${ratio * 100}%`;
 
+  if (window.garbaChowk) {
+    window.garbaChowk.setProgress(ratio);
+    window.garbaChowk.setPlaying(state.playing);
+    if (window.garbaChowk.theme?.id !== state.genreId) {
+      window.garbaChowk.setTheme(state.genreId);
+    }
+  }
+
   updateFavouriteUI();
   updateQueueBadge();
   updateMediaPositionState();
@@ -614,6 +629,8 @@ async function selectSong(songId, options = {}) {
     state.sheetFilter = song.genre;
     els.app.dataset.genre = song.genre;
     setAccent(genre.accent);
+    if (!options.initial) window.GARBA_EARCONS?.playDhol?.(0.42);
+    window.garbaChowk?.setTheme?.(song.genre);
   }
 
   const apply = () => {
@@ -1212,6 +1229,50 @@ function wireEvents() {
   els.queueButton.addEventListener('click', () => openSheet('queue', { trigger: els.queueButton }));
   els.searchButton.addEventListener('click', () => openSheet('search', { trigger: els.searchButton }));
 
+  els.taaliButton?.addEventListener('click', () => {
+    window.GARBA_EARCONS?.playTaali?.(state.genreId === 'dandiya', 0.6);
+    window.garbaChowk?.triggerTaali?.();
+  });
+
+  const handleCircleJoin = (e) => {
+    e?.stopPropagation?.();
+    window.garbaChowk?.joinCircle?.();
+    els.joinHint?.classList.add('is-hidden');
+    try { sessionStorage.setItem('garba:circle-joined', '1'); } catch {}
+  };
+  els.joinButton?.addEventListener('click', handleCircleJoin);
+  els.joinHint?.addEventListener('click', handleCircleJoin);
+  try {
+    if (sessionStorage.getItem('garba:circle-joined') === '1') {
+      els.joinHint?.classList.add('is-hidden');
+      window.garbaChowk?.joinCircle?.();
+    }
+  } catch {}
+
+  function updateHomelandClock() {
+    if (!els.homelandClock) return;
+    try {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+      els.homelandClock.textContent = formatter.format(now);
+    } catch {
+      els.homelandClock.textContent = '';
+    }
+  }
+  updateHomelandClock();
+  setInterval(updateHomelandClock, 10000);
+
+  setInterval(() => {
+    if (els.presenceCount && window.garbaChowk) {
+      els.presenceCount.textContent = Math.round(window.garbaChowk.crowdCount).toLocaleString('en-IN');
+    }
+  }, 1000);
+
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(renderSheet, 70);
@@ -1441,6 +1502,23 @@ async function init() {
     state.duration = initial.song?.durationSeconds || 0;
     els.app.dataset.genre = initial.genre.id;
     setAccent(initial.genre.accent);
+
+    if (els.garbaChowk && window.GarbaChowk) {
+      window.garbaChowk = new window.GarbaChowk(els.garbaChowk, {
+        onSeek({ phase, fraction }) {
+          if (!state.duration) return;
+          const targetSecond = fraction * state.duration;
+          if (window.GARBA_SEEK_STATE?.requestSeek) {
+            window.GARBA_SEEK_STATE.requestSeek(targetSecond, { source: 'chowk' });
+          } else {
+            if (els.audio.src) els.audio.currentTime = targetSecond;
+            else state.elapsed = targetSecond;
+            renderPlayer();
+          }
+        },
+      });
+      window.garbaChowk.setTheme(initial.genre.id);
+    }
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {

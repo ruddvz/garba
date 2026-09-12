@@ -54,6 +54,7 @@ const state = {
   releaseById: new Map(),
   releaseRedirects: new Map(),
   collections: [],
+  styleCollectionIds: new Set(),
   active: null,
   activeSongs: [],
   activeReleaseId: null,
@@ -415,6 +416,36 @@ function orderedReleaseSongs(songs) {
   return sequence ? sequence.map(({ song }) => song) : songs;
 }
 
+function orderCollectionSongs(songs) {
+  if (!Array.isArray(songs) || songs.length <= 1) return songs;
+  return [...songs].sort((a, b) => {
+    const aPlayable = Boolean(a.youtubeId || a.audioUrl);
+    const bPlayable = Boolean(b.youtubeId || b.audioUrl);
+    if (aPlayable !== bPlayable) return aPlayable ? -1 : 1;
+
+    const relA = state.releaseById.get(a.releaseId);
+    const relB = state.releaseById.get(b.releaseId);
+    const yearA = releaseYear(relA);
+    const yearB = releaseYear(relB);
+    if (yearA !== yearB) return yearB - yearA;
+
+    if (a.releaseId && a.releaseId === b.releaseId) {
+      const trackA = trustedTrackNumber(a) || 999;
+      const trackB = trustedTrackNumber(b) || 999;
+      if (trackA !== trackB) return trackA - trackB;
+    }
+
+    const titleA = String(relA?.title || a.releaseId || '');
+    const titleB = String(relB?.title || b.releaseId || '');
+    const titleComp = titleA.localeCompare(titleB);
+    if (titleComp !== 0) return titleComp;
+
+    const songTitleA = String(a.displayTitle || a.title || '');
+    const songTitleB = String(b.displayTitle || b.title || '');
+    return songTitleA.localeCompare(songTitleB) || String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
 function fixedCollection({ id, title, kicker, description, visual, test }) {
   return { id, title, kicker, description, visual, test };
 }
@@ -456,16 +487,29 @@ function buildCollections() {
   });
 
   const styleCollections = [
-    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna-garba'],[],art.devotional],
-    ['mataji-shakti','Mataji & Shakti','Devi Garba',['mataji-devotional'],[],art.devotional],
+    ['roots-archive','Roots / Archive','Roots & heritage',['roots-archive'],['archive','heritage','vintage'],art.folk],
+    ['traditional-garba','Traditional Garba','Prachin Garba',['traditional-garba'],['prachin'],art.traditional],
     ['tran-taali','Tran Taali','Three-clap tradition',['tran-taali'],[],art.traditional],
     ['be-taali','Be Taali','Two-clap tradition',['be-taali'],[],art.traditional],
+    ['raas-dandiya','Raas & Dandiya','Dandiya Raas',['raas-dandiya'],['raas','dandiya'],art.dandiya],
+    ['dodhiyu','Dodhiyu','Rhythmic steps',['dodhiyu'],['dodhiya','dodiyo'],art.dandiya],
+    ['hinch','Hinch','Fast-paced rhythm',['hinch'],['heench'],art.dandiya],
     ['dakla','Dakla','Percussive folk',['dakla'],[],art.fusion],
-    ['timli','Timli','Regional folk dance',[],['timli'],art.folk],
-    ['folk-fusion','Folk fusion','New folk',['electronic-fusion'],['folk fusion','folk-fusion'],art.fusion],
-    ['filmi-pop','Filmi & pop Garba','Crossover',['bollywood-filmi'],['pop garba'],art.fusion],
     ['sanedo-style','Sanedo','Call-and-response',['sanedo'],[],art.sanedo],
+    ['mataji-shakti','Mataji & Shakti','Devi Garba',['mataji-devotional'],[],art.devotional],
+    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna-garba'],[],art.devotional],
+    ['folk-lokgeet','Folk / Lokgeet','Folk heritage',['folk-lokgeet'],['lok geet','lokgeet','deshi'],art.folk],
+    ['live-garba-style','Live Garba','On stage',['live-garba'],['live garba'],art.folk],
+    ['modern-garba','Modern Gujarati Garba','Contemporary',['modern-gujarati-garba'],['urban garba','contemporary garba'],art.fusion],
+    ['hip-hop-garba','Hip-hop Garba','Urban fusion',['hip-hop-garba'],['hip hop','hip-hop','rap','trap garba','drill garba'],art.fusion],
+    ['folk-fusion','Folk fusion','New folk',['electronic-fusion'],['folk fusion','folk-fusion'],art.fusion],
+    ['dj-remix','DJ / Remix','Nonstop remix',['dj-remix'],['party mix','remix'],art.fusion],
+    ['filmi-pop','Filmi & pop Garba','Crossover',['bollywood-filmi'],['pop garba'],art.fusion],
+    ['instrumental-cinematic','Instrumental / Cinematic','Orchestral & cinematic',['instrumental-cinematic'],['instrumental','cinematic'],art.fusion],
+    ['timli','Timli','Regional folk dance',[],['timli'],art.folk],
   ];
+  state.styleCollectionIds = new Set(styleCollections.map(([id]) => id));
+
   styleCollections.forEach(([id,title,kicker,taxonomyIds,terms,visual]) => c.push(fixedCollection({
     id,
     title,
@@ -503,7 +547,8 @@ function buildCollections() {
   });
 
   return c.map((collection) => {
-    const songs = state.songs.filter((song) => collection.test(song, state.releaseById.get(song.releaseId)));
+    const matched = state.songs.filter((song) => collection.test(song, state.releaseById.get(song.releaseId)));
+    const songs = orderCollectionSongs(matched);
     return { ...collection, songs };
   }).filter((collection) => collection.songs.length > 0);
 }
@@ -608,7 +653,7 @@ function renderCollectionHome() {
   const featuredIds = ['nonstop','live','current','classics','dandiya-raas','devotional'];
   renderEssentialReleases();
   collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean), 'destination');
-  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)), 'taxonomy');
+  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||state.styleCollectionIds.has(c.id)), 'taxonomy');
   collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data, not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')), 'artist');
   collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')), 'taxonomy');
 }

@@ -5,7 +5,12 @@
     "artist": "Falguni Pathak",
     "genre": "folk",
     "category": "folk-lokgeet",
-    "styles": ["navratri-staple", "indi-pop", "folk-pop", "dandiya-adjacent"],
+    "styles": [
+      "navratri-staple",
+      "indi-pop",
+      "folk-pop",
+      "dandiya-adjacent"
+    ],
     "durationSeconds": 278,
     "releaseId": "maine-payal-hai-chhankai-1999",
     "trackNumber": 1,
@@ -21,7 +26,12 @@
     "artist": "Narendra Modi, Tanishk Bagchi, Dhvani Bhanushali",
     "genre": "traditional",
     "category": "modern-gujarati-garba",
-    "styles": ["garba", "navratri", "modern", "gujarati"],
+    "styles": [
+      "garba",
+      "navratri",
+      "modern",
+      "gujarati"
+    ],
     "durationSeconds": 176,
     "releaseId": "garbo-dhvani-tanishk-2023",
     "trackNumber": 1,
@@ -37,7 +47,13 @@
     "artist": "Meet Bros, Parampara Tandon, Piyush Mehroliyaa",
     "genre": "dandiya",
     "category": "bollywood-filmi",
-    "styles": ["filmi", "dandiya", "garba", "wedding", "modern"],
+    "styles": [
+      "filmi",
+      "dandiya",
+      "garba",
+      "wedding",
+      "modern"
+    ],
     "durationSeconds": 266,
     "releaseId": "sun-sajni-satyaprem-2023",
     "trackNumber": 1,
@@ -53,7 +69,12 @@
     "artist": "Various Artists, DJ Rink",
     "genre": "fusion",
     "category": "dj-remix",
-    "styles": ["nonstop", "garba", "dj-remix", "continuous-set"],
+    "styles": [
+      "nonstop",
+      "garba",
+      "dj-remix",
+      "continuous-set"
+    ],
     "durationSeconds": 1752,
     "releaseId": "non-stop-garba-mix-dj-rink-2020",
     "trackNumber": 1,
@@ -61,6 +82,7 @@
     "placeholder": false,
     "sourceStatus": "verified-metadata",
     "audioAvailability": "external-source-only",
-    "youtubeId": null
+    "youtubeId": null,
+    "displayTitle": "Nonstop Garba Mix by DJ Rink"
   }
 ]

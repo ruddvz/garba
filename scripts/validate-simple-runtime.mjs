@@ -43,7 +43,7 @@ for (const forbidden of optionalBasenames) {
 if (scriptSources.length !== expectedScripts.length) fail(`Expected exactly ${expectedScripts.length} runtime scripts, found ${scriptSources.length}`);
 
 for (const marker of [
-  'assets/backgrounds/traditional.svg',
+  'assets/backgrounds/library/11-master-dark-courtyard.webp',
   'data-static-genre="true"',
   'nonstop-browser.js',
   '<link rel="manifest" href="manifest.webmanifest"',
