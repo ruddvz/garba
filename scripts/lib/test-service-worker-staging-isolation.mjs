@@ -4,7 +4,8 @@ import vm from 'node:vm'
 
 const ORIGIN = 'https://playgarba.example/'
 const WORKER_URL = `${ORIGIN}sw.js`
-const LIVE_CACHE = 'garba-live-v15'
+const PREVIOUS_LIVE_CACHE = 'garba-live-v15'
+const LIVE_CACHE = 'garba-live-v16'
 const STAGING_CACHE = 'garba-live-staging'
 const READY_URL = `${ORIGIN}__garba_staging_ready__`
 const source = fs.readFileSync(new URL('../../sw.js', import.meta.url), 'utf8')
@@ -69,6 +70,11 @@ class MockCache {
 
   async put(request, response) {
     const url = requestUrl(request)
+    if (this.storage.failNextPutCache === this.name) {
+      this.storage.failNextPutCache = null
+      this.storage.operations.push(`put:failed:${this.name}:${url}`)
+      throw new Error('mock put failure')
+    }
     this.entries.set(url, response.clone ? response.clone() : response)
     this.storage.operations.push(`put:${this.name}:${url}`)
   }
@@ -88,6 +94,7 @@ class MockCacheStorage {
     this.caches = new Map()
     this.operations = []
     this.failNextAddAll = false
+    this.failNextPutCache = null
   }
 
   async open(name) {
@@ -166,12 +173,17 @@ async function activate(worker) {
 
 {
   const caches = new MockCacheStorage()
+  const previousLive = await caches.open(PREVIOUS_LIVE_CACHE)
+  await previousLive.put('./previous-shell.js', new MockResponse('previous-live'))
+  const beforePreviousLive = caches.snapshot(PREVIOUS_LIVE_CACHE)
+
   const first = createWorker(caches)
   await install(first)
 
   const staged = caches.snapshot(STAGING_CACHE)
   assert.ok(staged && staged.length > 2, 'first install should stage the complete shell plus readiness')
   assert.ok(staged.some(([url]) => url === READY_URL), 'readiness sentinel must exist after successful precache')
+  assert.deepEqual(caches.snapshot(PREVIOUS_LIVE_CACHE), beforePreviousLive, 'install must not mutate the active live generation')
 
   const addAllComplete = caches.operations.indexOf(`addAll:complete:${STAGING_CACHE}`)
   const readinessPut = caches.operations.indexOf(`put:${STAGING_CACHE}:${READY_URL}`)
@@ -188,6 +200,10 @@ async function activate(worker) {
   const live = caches.snapshot(LIVE_CACHE)
   assert.equal(live.length, stagedShellCount, 'activation should promote every staged shell entry')
   assert.ok(!live.some(([url]) => url === READY_URL), 'readiness sentinel must never be copied into the live cache')
+  assert.equal(caches.snapshot(PREVIOUS_LIVE_CACHE), null, 'previous live generation should retire only after successful promotion')
+  const lastLivePut = caches.operations.reduce((last, operation, index) => operation.startsWith(`put:${LIVE_CACHE}:`) ? index : last, -1)
+  const previousDelete = caches.operations.indexOf(`delete:${PREVIOUS_LIVE_CACHE}:true`)
+  assert.ok(lastLivePut >= 0 && previousDelete > lastLivePut, 'previous live generation must not be deleted before the incoming generation is complete')
   assert.equal(first.state.claimCalls, 1, 'successful activation should claim clients')
 
   const third = createWorker(caches)
@@ -205,17 +221,37 @@ async function activate(worker) {
 
 {
   const caches = new MockCacheStorage()
-  const live = await caches.open(LIVE_CACHE)
-  await live.put('./preserve-me.js', new MockResponse('live-before'))
+  const previousLive = await caches.open(PREVIOUS_LIVE_CACHE)
+  await previousLive.put('./preserve-me.js', new MockResponse('live-before'))
   const staged = await caches.open(STAGING_CACHE)
   await staged.put('./partial.js', new MockResponse('partial-stage'))
-  const beforeLive = caches.snapshot(LIVE_CACHE)
+  const beforePreviousLive = caches.snapshot(PREVIOUS_LIVE_CACHE)
 
   const worker = createWorker(caches)
   await assert.rejects(() => activate(worker), /incomplete staged shell/i)
-  assert.deepEqual(caches.snapshot(LIVE_CACHE), beforeLive, 'activation without readiness must not replace the live cache')
+  assert.deepEqual(caches.snapshot(PREVIOUS_LIVE_CACHE), beforePreviousLive, 'activation without readiness must preserve the active live generation')
+  assert.equal(caches.snapshot(LIVE_CACHE), null, 'activation without readiness must not create the incoming live generation')
   assert.ok(caches.snapshot(STAGING_CACHE), 'incomplete stage must remain intact when activation fails closed')
   assert.equal(worker.state.claimCalls, 0)
+}
+
+{
+  const caches = new MockCacheStorage()
+  const previousLive = await caches.open(PREVIOUS_LIVE_CACHE)
+  await previousLive.put('./preserve-a.js', new MockResponse('live-a'))
+  await previousLive.put('./preserve-b.js', new MockResponse('live-b'))
+  const beforePreviousLive = caches.snapshot(PREVIOUS_LIVE_CACHE)
+
+  const worker = createWorker(caches)
+  await install(worker)
+  const beforeStage = caches.snapshot(STAGING_CACHE)
+  caches.failNextPutCache = LIVE_CACHE
+
+  await assert.rejects(() => activate(worker), /mock put failure/)
+  assert.deepEqual(caches.snapshot(PREVIOUS_LIVE_CACHE), beforePreviousLive, 'failed promotion must leave the active live generation byte-for-byte intact')
+  assert.equal(caches.snapshot(LIVE_CACHE), null, 'failed promotion must remove the partial incoming live generation')
+  assert.deepEqual(caches.snapshot(STAGING_CACHE), beforeStage, 'failed promotion must preserve the complete staged shell for diagnosis or retry')
+  assert.equal(worker.state.claimCalls, 0, 'failed promotion must not claim clients')
 }
 
 {
@@ -229,13 +265,13 @@ async function activate(worker) {
 
 {
   const caches = new MockCacheStorage()
-  const live = await caches.open(LIVE_CACHE)
-  await live.put('./already-live.js', new MockResponse('keep-me'))
-  const beforeLive = caches.snapshot(LIVE_CACHE)
+  const previousLive = await caches.open(PREVIOUS_LIVE_CACHE)
+  await previousLive.put('./already-live.js', new MockResponse('keep-me'))
+  const beforePreviousLive = caches.snapshot(PREVIOUS_LIVE_CACHE)
 
   const worker = createWorker(caches)
   await install(worker)
-  assert.deepEqual(caches.snapshot(LIVE_CACHE), beforeLive, 'install must not mutate active live-cache contents')
+  assert.deepEqual(caches.snapshot(PREVIOUS_LIVE_CACHE), beforePreviousLive, 'install must not mutate active live-cache contents')
 }
 
 console.log('service-worker staging isolation: ok')
