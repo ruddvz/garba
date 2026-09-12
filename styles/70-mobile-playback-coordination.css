@@ -192,9 +192,8 @@
   }
 }
 
-/* Current large iPhones sit around 393-430 CSS px in portrait. The old 390px
-   breakpoint missed them, leaving four 42px utility controls squeezed beside the
-   wordmark and visibly clipping the capsule edge. */
+/* Current large iPhones sit around 393-430 CSS px in portrait. Keep the utility
+   controls comfortably tappable without squeezing the wordmark or clipping the row. */
 @media (max-width: 430px) {
   html body .app .topbar {
     padding-left: max(18px, var(--safe-left)) !important;
@@ -211,19 +210,19 @@
 
   html body .app .utilities {
     flex: 0 0 auto;
-    min-height: 40px !important;
-    gap: 0 !important;
+    min-height: 44px !important;
+    gap: 1px !important;
     padding: 2px !important;
     max-width: calc(100vw - 154px);
   }
 
   html body .app .utilities .icon-button,
   html body .app .utilities .mobile-heart {
-    flex: 0 0 39px !important;
-    width: 39px !important;
-    min-width: 39px !important;
-    height: 39px !important;
-    min-height: 39px !important;
+    flex: 0 0 44px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
     padding: 7px !important;
   }
 
