@@ -1,263 +1,191 @@
 # PlayGarba execution ledger
 
-This file is a human-readable snapshot of repository execution state. It is **not** an ownership registry. Issue #364 remains the only authoritative source for active agent claims and file ownership.
+This file is a human-readable execution snapshot for agents and reviewers. It is **not** an ownership registry. Issue #364 remains the only authoritative source for active agent claims, file ownership and conflict state.
+
+Refresh this file before using it to select work. This repository is moving minute by minute and a merge, claim, release, research handoff or catalogue import can make any snapshot row stale.
 
 ## Snapshot
 
-- Snapshot time: 2026-09-12 20:40 UTC / 16:40 America/Toronto
+- Snapshot time: **2026-09-12 21:37 UTC / 17:37 America/Toronto**
 - Repository: `ruddvz/garba`
-- Exact `main`: `2086be5816f0719d7ef82e3ac78ae0949c374427`
-- Main head: `Activate 21 verified Ramzat 2 (2018) YouTube routes in catalogue (#1368) (#1373)`
-- Open issues: **81**
-- Active claims on #364: **24**
-- Open pull requests: **16**
-- Active cross-issue file conflicts reported by #364: **0**
-- Ledger lane: #1374 / `chatgpt-sol-execution-ledger-1374`
+- Exact `main`: `252f074b7ad534af1e77170165cb946de6d2b8f8`
+- Main head: `Fail closed when RAAS ownership comments are edited or deleted (#1431)`
+- Open issues: **100**
+- Open pull requests: **32**
+- Machine-labelled open `agent:claimed` issues: **37**
+- Ledger refresh lane: **#1452** / `chatgpt-sol-execution-ledger-refresh-1452` / `coordination/issue-1452-execution-ledger-refresh`
+- #1452 ownership comment is valid and posted; at snapshot time the derived registry label/board acknowledgement had not yet caught up, so it is not silently added to the 37 machine-labelled count above.
+- Cross-issue file conflicts reported by #364: **none** at the snapshot.
 
-Refresh this snapshot before using it to select work. A later #364 claim, merge, issue closure, catalogue import or new pull request can make any row stale.
+Counts above are point-in-time GitHub search/board values, not durable metrics. The target issue comments, #364 and open PR state must be re-read immediately before implementation or merge.
 
 ## YouTube coverage control panel
 
-### Current main
+### Merged current-main truth
 
-At exact main `2086be5816f0719d7ef82e3ac78ae0949c374427`:
+At exact main `252f074b7ad534af1e77170165cb946de6d2b8f8` the last merged exact coverage baseline remains:
 
 - Canonical songs: **1,706**
-- Playable YouTube routes: **1,030**
+- Executable truthful YouTube routes: **1,030**
 - Playable YouTube coverage: **60.4%**
-- Current migration / no-executable-YouTube backlog: **676**
-- Remaining share of catalogue without a playable YouTube route: **39.6%**
+- Remaining migration / no-executable-YouTube backlog: **676**
+- Remaining share without a playable YouTube route: **39.6%**
 
-The 1,030 figure is current-main evidence from the merged #1373 commit. It must not be mixed with older PR-body coverage figures from smaller catalogue denominators.
+Do **not** add routes from an open PR to these numbers. Open-PR coverage deltas are proposals until the exact diff lands on current main and the coverage report is recalculated there.
 
-### What “100%” means
+### What 100% means
 
-The optimisation target is maximum truthful YouTube coverage. The repository must never manufacture 100% by accepting a wrong performance, title-only match, unofficial substitute, guessed video ID or inferred chapter timestamp.
+The optimisation target is maximum truthful YouTube coverage, not a manufactured percentage.
 
-Track two separate outcomes:
+Track two outcomes separately:
 
-1. **Playable coverage:** canonical rows with a truthful executable exact YouTube route.
+1. **Playable coverage:** canonical rows with an executable exact YouTube route.
 2. **Adjudication coverage:** canonical rows that have been checked and are either exact-YouTube playable or carry a release-specific fail-closed evidence boundary.
 
-Playable coverage should be pushed as high as evidence permits. Adjudication coverage should reach 100%. A row can remain non-playable when the exact recording cannot be proven.
+Playable coverage should be pushed as high as source evidence permits. Adjudication coverage should reach 100%. A canonical row may legitimately remain non-playable when the exact recording cannot be proven.
 
-### Current high-value YouTube lanes
+Never increase coverage with a title-only match, different performance, later re-recording, fan upload without independent master proof, inferred sibling video ID or calculated chapter timestamp.
 
-| Lane | State at snapshot | What it can change |
+## Shared release blocker: #969 desktop WebKit Search
+
+Issue #969 currently owns `.github/browser/browser-smoke.spec.mjs` through agent `chatgpt-sol-webkit-viewport-969-v2` on `fix/issue-969-webkit-viewport-page-side`. PR #1260 is the owning browser-gate lane.
+
+The shared Browser viewport smoke matrix is currently capable of blocking otherwise-clean manifest-only YouTube PRs on the existing desktop-WebKit Search path. Do not fix that from a playback manifest issue and do not weaken, skip or arbitrarily inflate the browser gate to get unrelated route PRs merged.
+
+Observed exact evidence from the reconciled Re Lol PR #1407:
+
+- `Validate GARBA`: green
+- all applicable RAAS ownership/diff/hygiene/drift gates: green
+- Browser viewport smoke: **43 passed / 12 skipped / 1 failed**
+- sole failure: `[desktop-webkit] Search opens without clipping and closing restores focus to the opener`
+- timeout occurred while waiting for `#sheetClose` visibility in `.github/browser/browser-smoke.spec.mjs`
+- this is the same shared browser lane owned by #969, not a playback-source assertion
+
+Until #969 is resolved and the required browser gate is green, route agents should preserve completed one-file diffs, document the blocker, release implementation ownership when no further in-scope work exists, and avoid editing the shared browser file.
+
+## Parked exact-route PRs already implemented
+
+These routes are **not counted** in current-main coverage.
+
+| PR / issue | Proposed delta | Exact scope | Current state |
+| --- | ---: | --- | --- |
+| #1407 / #1401 Re Lol Vol. 7 | +2 | `data/playback-sources-re-lol-exact.json` | Rebuilt on repaired main, full validator and RAAS gates green; sole red is shared #969 browser failure. Reconciliation claim released and PR preserved. |
+| #1427 / #1423 Trupti Gadhvi `Nagar Nandji Na Lal` | +1 | `data/playback-sources-trupti-kaushal.json` | One-file exact Topic/OAC route `w1yvFRfALbc`; implementation complete and parked behind the same desktop-WebKit Search gate. |
+| #1359 / #946 `Tara Vina Shyam` track 4 | +1 | `data/playback-sources-atul-tara-vina-shyam-exact.json` | Exact Soor Mandir route `Sbl8ChSqf0M`; older one-file PR remains open and must be reconciled against fresh main/gates before merge. |
+
+For #1407 specifically, exact-head validation showed the proposed result would be **1,032 / 1,706 = 60.5%** if only those two routes landed against the same denominator. That is a PR delta, not current-main truth.
+
+## Active/open YouTube implementation queue
+
+The following lanes are already owned or have open implementation PRs. Do not duplicate them. Re-read #364 because this table can go stale quickly.
+
+| Lane | Route work | Ownership / PR note |
 | --- | --- | --- |
-| #946 Tara Vina Shyam track 4 | Open PR #1359 | Proposes one exact Soor Mandir route; do not count until reconciled and merged on current main. |
-| #954 Tahukar 9 | Active research claim | Recover exact 12-track / long-form evidence boundary. No production mutation yet. |
-| #1059 Garba No Rang Saajan Ne Sang Vol. 1 | Active research claim | Recover exact 1993 two-entry programme and same-release YouTube evidence. |
-| #1351 Anand Vol. 8 | Active research claim | Audit 17 unresolved split tracks while preserving track 14. |
-| #1376 Garbi 2 (2025) | Active research claim | Audit 60:10 master + 29 component tracks and source authority. |
-| #350 Maro Garbo / Garbi cluster | Open tracker, currently unclaimed | Split remaining release-specific gaps into bounded children after current research/PR overlap checks. |
-| #352 medium/long-tail cluster | Open tracker, currently unclaimed | Catch-all only after named clusters; create release-specific children, not a broad mutation lane. |
-| #354 Atul / Hemant / Praful cluster | Open tracker, currently unclaimed | Preserve prior fail-closed boundaries; split exact remaining batches. |
-| #355 final reconciliation | Open tracker | Run only after cluster work settles; reconcile every remaining provider-reference/no-route row. |
-| #157 / #221 | Programme/master | Burn-down authority and playback policy. Coordination only, not broad implementation claims. |
+| #1377 | `Hu To Gayo No Goval` exact route | Active claim on `data/playback-sources-alpa-current.json`. |
+| #1378 | `Shubhaarambh` exact route | Active claim on shared `data/playback-sources-current.json`. |
+| #1383 / PR #1441 | Morli Vol. 6 | Proposes 17 exact source-published Soor Mandir chapters and owns `data/playback-sources-morli-v6-exact.json` plus `data/catalogue/index.json`. |
+| #1391 | Purva `Vithal Vithala` | Active exact-route implementation claim. |
+| #1395 | Taali Vol. 13 track 12 | Active final-track implementation claim. |
+| #1399 / PR #1404 | Navdurgani Navratri | Open 19-chapter Sony Music India migration/reconciliation lane. |
+| #1402 | Jordar DJ Garba Nonstop 2022 | Active bounded implementation of four research-verified routes. |
+| #1406 | Garba Ni Ramzat 4.0 | Active bounded implementation of seven verified routes. |
+| #1409 / PR #1415 | Maa Ashapura Na Garba track 2 | Open one-file exact Hemant Chauhan route `GyQpCs1SH5Q`. |
+| #1432 | Rangili Ramzat 6 | Active implementation of five research-verified same-release tracks. |
+| #1444 / PR #1454 | Ramzat 5 second-pass additions | New one-file PR proposes exactly +2 routes: `Arji Sunje Amari` and `Navarat Naveli Bani Albeli`; based on current main `252f074b...`. |
 
-### Recent migration movement
+None of these proposed routes belongs in the merged 1,030 count until it lands and current-main coverage is rerun.
 
-Recent merged work materially raised coverage while preserving exact-recording evidence:
+## Active YouTube research queue
 
-- Killol 2.0: 19 exact routes migrated in PR #1363.
-- Maro Garbo 2000: 14 verified chapter routes migrated in PR #1362.
-- Ramzat 5: 10 exact routes migrated in PR #1367; that merge reported 1,006 / 1,675 playable.
-- Studio Saraswati Non Stop Garba 2016: 12 canonical songs imported in PR #1371 with playback deliberately fail-closed, increasing the catalogue denominator without inventing routes.
-- Ramzat 2 (2018): 21 verified routes merged in PR #1373, bringing current main to **1,030 / 1,706 (60.4%)**.
+Research-only lanes should make **zero production-file mutations**. Their job is to produce an implementation-ready exact-route subset and a precise fail-closed remainder.
 
-Coverage reports from old PR bodies are useful deltas, not current-main totals. Always rerun or consume exact-main evidence after catalogue imports and concurrent merges.
+Known active/recent research lanes include:
 
-## YouTube burn-down method
+- #954: Tahukar 9 exact 12-track / long-form evidence boundary.
+- #1059: `Garba No Rang Saajan Ne Sang, Vol. 1` exact 1993 programme evidence.
+- #1351: Anand Vol. 8, 17 unresolved split tracks while preserving track 14.
+- #1425: Rangoli Vol. 16, 23 canonical rows plus any authoritative exact full programme.
+- #1434: Rangili Ramzat 8, 17 unresolved split tracks.
+- #1439: Ramzat 5 second-pass research; it has already produced implementation child #1444 / PR #1454 for two proven routes.
+- #1442: final three unresolved Killol 2.0 tracks.
+- #1446: De Taali 1999, audit the 20 currently catalogued provider-backed playback rows without colliding with the separate 26-track catalogue-import lane.
+- #1449: Amba No Darbar 2022, re-audit seven unresolved long album tracks while preserving the two exact routes already present.
 
-Every remaining row should move through the same evidence funnel:
+Once a research lane proves routes, refresh current main, #364 and open PRs before creating the smallest possible implementation child. A research claim does not reserve the production manifest unless the follow-up implementation claim explicitly does so.
 
-1. Prefer an exact full-song upload from the official label, official artist/OAC or authoritative distributor.
-2. For long-form same-release uploads, accept a split route only when the source directly publishes the chapter start or the boundary is independently proven. Never calculate a timestamp by adding durations.
-3. If the authoritative source proves only a continuous recording, model it as a continuous/Nonstop listening source. Do not pretend it is 20–30 exact split tracks.
+## Shared-file ownership constraints
+
+Current file ownership matters more than issue priority. At this snapshot:
+
+- `.github/browser/browser-smoke.spec.mjs` is owned by #969. Playback/catalogue agents must not edit it.
+- `data/catalogue/index.json` is owned by #1383. New manifest-registration work that also needs the index must wait or be explicitly reconciled with that owner.
+- `data/playback-sources-current.json` is owned by #1378. Other exact routes targeting that shared manifest must wait or narrow to a different unowned source file.
+- `EXECUTION-LEDGER.md` is owned only by #1452 for this refresh.
+- #364 reports no active cross-issue file conflicts at the snapshot. Same-issue rejected claims or later board changes still require direct inspection before coding.
+
+Do not interpret an old issue saying “unclaimed” as permission to edit a file that #364 now assigns to a newer lane.
+
+## Recent coordination hardening
+
+### #1413 repository-structure validator repair
+
+The original execution ledger exposed a repository-structure validator assumption that rejected the intentional root `EXECUTION-LEDGER.md`. #1413 updated that validator so the ledger is a supported repository artifact rather than a permanent unrelated CI failure.
+
+### #1431 / #1405 RAAS ownership-history integrity
+
+Merged current main `252f074b7ad534af1e77170165cb946de6d2b8f8` adds a fail-closed ownership-history mutation guard:
+
+- watches accepted coordination comments for edits/deletions;
+- records deterministic append-only integrity generations;
+- ignores edits that do not change coordination meaning and mutations of originally rejected claims;
+- neutralises ownership exposed by mutated history and installs a conservative machine-readable hold;
+- requires explicit repository-owner reconciliation before reassignment;
+- restores unresolved holds after close/reopen;
+- serialises with the existing claim registry rather than replacing its proven state machine.
+
+The focused integrity suite covered 11 scenarios and passed 11/11 before merge. The exact PR head also passed the repository validator and all applicable ownership, drift, hygiene and diff-scope checks.
+
+This matters for the current high-concurrency YouTube programme: an accepted historical claim/release/override can no longer be silently rewritten into a different ownership outcome by editing or deleting its source comment.
+
+## Burn-down method
+
+Every remaining playback row should move through the same evidence funnel:
+
+1. Prefer an exact full-song upload from the official label, official artist/OAC, Topic surface or authoritative distributor/rightsholder.
+2. For long-form same-release uploads, accept a split route only when the source directly publishes the chapter start or the boundary is independently proven. Never calculate timestamps by adding track durations.
+3. If the authoritative source proves only a continuous recording, model it as a continuous/Nonstop listening source. Do not manufacture 20–30 split-track routes.
 4. Reject same-title performances, later re-recordings, covers, fan uploads and edition substitutions unless exact recording identity is independently proven.
-5. Preserve a stronger existing route. Preserve separately authorised direct media under #976/#984/#985/#986.
-6. For every unresolved row, record the rejected candidates and the precise evidence gap. Fail closed.
-7. After a research lane proves routes, create the smallest implementation child with an unowned manifest/file scope, then validate on fresh main.
-8. Recalculate coverage after every denominator-changing catalogue import and every route merge.
+5. Preserve stronger existing YouTube routes and separately authorised direct media governed by #976/#984/#985/#986.
+6. For every unresolved row, record the rejected candidates and exact evidence gap. Fail closed.
+7. After research proves routes, create the smallest unowned implementation child and keep the diff bounded to the claimed files.
+8. Run focused source/route validation, repository validation and every required current-head gate. A red unrelated required gate is still a merge blocker until its owning lane resolves it.
+9. Recalculate coverage after every route merge and every denominator-changing catalogue import.
 
-### Priority order from this snapshot
+## Integration order while #969 is active
 
-1. Reconcile and finish already-open exact-route PRs such as #1359 before starting duplicate research.
-2. Let active research lanes #954, #1059, #1351 and #1376 finish, then convert proven mappings into non-overlapping implementation children.
-3. Split #350, #352 and #354 into release-specific evidence children for the largest remaining clusters.
-4. Keep catalogue-completeness work such as #1113 separate from YouTube migration so newly imported songs are visible as new backlog rather than hidden in an old percentage.
-5. Run #355 only after named clusters and open route PRs have settled.
-6. Close #157/#221 only when every consumer-provider gap is either exact-YouTube migrated or has a documented release-specific evidence boundary and repository validation is green.
+1. Let #969 finish the shared desktop-WebKit Search/browser repair. Do not create competing browser patches.
+2. Keep completed route PRs intact and documented rather than repeatedly rebuilding them while the shared gate remains red.
+3. Continue non-mutating exact-recording research in independent release lanes.
+4. Continue bounded route implementations whose files are unowned, but do not count or merge them around a required red gate.
+5. Once #969 is green, reconcile parked route PRs against the then-current main one by one, rerun exact-head gates, merge only clean non-overlapping diffs, and recalculate coverage after each integration wave.
+6. Run #355 final post-cluster reconciliation only after named research/implementation lanes and parked PRs settle.
+7. Close #157/#221 only when every remaining consumer-provider gap is either exact-YouTube migrated or has a release-specific evidence boundary, with repository validation green.
 
-## Active ownership snapshot
+## Agent task-selection checklist
 
-The following claims were active on #364 at the snapshot. Do not take these lanes or their files unless the owner releases them or #364 changes.
+Before taking any issue:
 
-| Issue | Agent / branch | State |
-| --- | --- | --- |
-| #440 | `chatgpt/now-playing-full-title-440` / `ux/issue-440-full-title-disclosure` | Active, PR #1116 open |
-| #441 | `chatgpt/mobile-utility-hitareas-441-v2` / `ux/issue-441-mobile-utility-hitareas-v2` | Active, no open PR in snapshot |
-| #443 | `chatgpt/courtyard-contrast-443` / `a11y/issue-443-courtyard-contrast` | Active, no open PR in snapshot |
-| #451 | `chatgpt/offline-truth-451` / `pwa/issue-451-offline-truth` | Active, no open PR in snapshot |
-| #602 | `chatgpt/mobile-cold-start-602` / `perf/mobile-cold-start-602` | Active, PR #605 open |
-| #670 | `chatgpt/sol-releases05-670-20260912` / `metadata/issue-670-releases05-sol` | Active, no open PR in snapshot |
-| #684 | `chatgpt/sol-releases01-metadata-684` / `metadata/issue-684-releases01-sol` | Active, PR #833 open |
-| #761 | `chatgpt/raas-doctor-cli-761` / `raas/issue-761-doctor-cli` | Active; #364 flags for owner review due inactivity |
-| #776 | `chatgpt/raas-run-metrics-776` / `raas/issue-776-run-metrics` | Active; #364 flags for owner review due inactivity |
-| #847 | `chatgpt/repository-cutover-raas-847` / `chore/repository-cutover-raas` | Active, PR #872 open |
-| #894 | `chatgpt/seek-observer-perf-894` / `perf/seek-observer-894` | Active, PR #896 open |
-| #924 | `chatgpt/immersive-pwa-924` / `pwa/issue-924-immersive-display` | Active, PR #1005 open |
-| #954 | `chatgpt/tahukar9-research-954` / `research/issue-954-tahukar9-2021` | Active research-only |
-| #969 | `chatgpt-sol-webkit-viewport-969-v2` / `fix/issue-969-webkit-viewport-page-side` | Active, PR #1260 open |
-| #1054 | `chatgpt/taal2-link-replay-1054` / `discovery/issue-1054-taal2-link-replay` | Active, PR #1078 open |
-| #1059 | `chatgpt/garba-rang-sajan-v1-1059` / `research/issue-1059-garba-rang-sajan-v1` | Active research-only |
-| #1193 | `chatgpt-sol-explore-telemetry-pages-1193` / `fix/issue-1193-explore-telemetry-pages` | Active, PR #1202 open |
-| #1302 | `chatgpt-sol-mobile-quality-1302` / `qa/issue-1302-mobile-quality-gate` | Active, PR #1310 open |
-| #1325 | `chatgpt-sol-short-landscape-1325` / `fix/issue-1325-short-landscape-player` | Active, PR #1340 open |
-| #1336 | `chatgpt-sol-pga-release-browser-evidence-1336` / `qa/issue-1336-pga-release-browser-evidence` | Active; #364 flags for owner review due inactivity |
-| #1342 | `antigravity-explore-primitives-1342` / `fix/issue-1342-mobile-explore-primitives` | Active, PR #1364 open |
-| #1351 | `chatgpt-sol-anand-vol8-research-1351` / `research/issue-1351-anand-vol8` | Active research-only |
-| #1374 | `chatgpt-sol-execution-ledger-1374` / `coordination/issue-1374-execution-ledger` | Active, this ledger lane |
-| #1376 | `chatgpt-sol-garbi2-research-1376` / `research/issue-1376-garbi2-youtube` | Active research-only |
+1. Fetch current `main` and record its SHA.
+2. Read `AGENTS.md`, repository coordination instructions, #364, the target issue comments and open PRs touching the same paths.
+3. Prefer finishing/reconciling existing bounded work over creating a duplicate route/research issue.
+4. Claim exactly one implementation lane with exact semicolon-separated file paths.
+5. If another active claim owns any required file, stop, narrow or wait. Do not broaden the claim to absorb the conflict.
+6. Keep research-only work research-only until a separate production-file claim is accepted.
+7. Do not state a route as merged coverage until it exists on current main.
+8. Before PR readiness, reconcile against fresh main and prove the final diff contains only the claimed paths.
+9. Keep the claim through integration unless the work is explicitly parked behind an external blocker; if parked, document the blocker and release the claim without deleting the completed PR.
+10. After merge, verify issue closure/release and refresh #364 before selecting the next lane.
 
-Stale-review warnings do **not** release ownership. Only #364 / target-issue claim history can do that.
+## Snapshot caveat
 
-## Open pull-request snapshot
-
-These PRs were open when the ledger was written. Their existence makes the associated scope unsafe to duplicate even if a stale board snapshot appears otherwise.
-
-| PR | Related lane | Snapshot note |
-| --- | --- | --- |
-| #1364 | #1342 | Explore mobile primitive runtime fix |
-| #1361 | Experimental broad visual engine | Broad/unbounded experimental direction; review separately, do not treat as approved programme work |
-| #1310 | #1302 | Mobile quality acceptance gate |
-| #1359 | #946 | One exact Tara Vina Shyam YouTube route |
-| #1260 | #969 | WebKit viewport geometry read stabilisation |
-| #1357 | Experimental React/Vite/TypeScript architecture | Backup/experimental rewrite, not current-main architecture approval |
-| #1340 | #1325 | Short-landscape overlap fix |
-| #1116 | #440 | Full Now Playing title/details disclosure |
-| #1329 | #996 | Browser-smoke Actions runtime update |
-| #1202 | #1193 | Publish Explore telemetry graph in Pages |
-| #1078 | #1054 | Taal 2.0 metadata-only discovery link |
-| #1005 | #924 | Installed PWA display modes |
-| #896 | #894 | Bound seek-state DOM observation |
-| #872 | #847 | Stage repository rename cutover links |
-| #833 | #684 | Explore release descriptions |
-| #605 | #602 | Cold mobile artwork load-on-demand |
-
-## Complete open-issue inventory
-
-Status labels below are planning labels for this snapshot only. They do not grant ownership.
-
-| Issue | Title | Snapshot status |
-| --- | --- | --- |
-| #23 | Rights acquisition wave 1: first 100 direct masters | Rights/external work; unclaimed |
-| #157 | Playback Wave G: final consumer-provider to YouTube migration burn-down | YouTube programme / coordination |
-| #158 | MASTER: PlayGarba catalogue expansion + consumer-provider migration programme | Programme / coordination |
-| #221 | MASTER: migrate PlayGarba catalogue to YouTube-only playback | YouTube master / coordination |
-| #276 | Enrich canonical song, release and Nonstop display metadata | Metadata programme / unclaimed umbrella |
-| #311 | Design craft system: PlayGarba UI/UX quality programme | Programme / coordination |
-| #350 | YouTube migration cluster: Maro Garbo / Garbi provider backlog | YouTube tracker; split before mutation |
-| #352 | YouTube migration cluster: remaining medium/long-tail provider batches | YouTube tracker; split before mutation |
-| #354 | YouTube migration cluster: remaining Atul / Hemant / Praful evidence-boundary batches | YouTube tracker; split before mutation |
-| #355 | YouTube migration cluster: final post-cluster coverage reconciliation | Final YouTube reconciliation tracker |
-| #364 | [Agent Board] Active work claims | **Authoritative ownership board** |
-| #368 | MASTER: PlayGarba SEO, GEO and AEO search-discovery programme | Programme / coordination |
-| #374 | SEO Wave 6: search measurement, indexing operations and discovery monitoring | Measurement/external integration |
-| #436 | [Player plan] September 2026 audit: reliable listening, coherent UX and creative roadmap | Coordination-only player plan |
-| #438 | [P0] Player: Make playback status and progress atomic across song and Nonstop transitions | Unclaimed; dependency-sensitive runtime lane |
-| #439 | [P0] Player: Provide persistent listener-facing playback errors and actionable recovery | Unclaimed; dependency-sensitive runtime lane |
-| #440 | [P1] Player: Fix long-title collisions and define stable Now Playing metadata layout | Active claim; PR #1116 |
-| #441 | [P1] Player: Make mobile player utilities and genre navigation reachable and understandable | Active claim |
-| #442 | [P1] Player: Verify and repair keyboard, focus and screen-reader behavior across player overlays | Unclaimed; sequenced after mobile/overlay work |
-| #443 | [P1] Player: Establish verified text, control and focus contrast across all courtyard worlds | Active claim |
-| #444 | [P1] Player: Unify player and Explore search with Gujarati aliases and relevance ranking | Unclaimed; overlaps discovery/search architecture |
-| #446 | [P1] Player: Remember per-set listening positions and offer explicit Nonstop resume | Unclaimed; dependency-sensitive |
-| #447 | [P1] Player: Make song, set and timestamp sharing preserve exact listening context | Unclaimed; dependency-sensitive |
-| #449 | [P1] Player: Define a single playback-controller contract and remove one redundant runtime adapter | Unclaimed; shared-runtime sequencing required |
-| #450 | [P1] Player: Measure player startup and set enforceable interaction and artwork budgets | Measurement lane; check performance owners first |
-| #451 | [P1] Player: Make PWA updates, offline states and install guidance safe for active sessions | Active claim |
-| #454 | [P2] Player: Add a small local listening-preferences and saved-data control surface | Future/sequenced |
-| #455 | [P2] Player: Design a small set of human-curated Garba listening sessions | Future product experiment |
-| #456 | [P2] Player: Prototype optional song stories and verified Gujarati display in recording details | Future product experiment |
-| #457 | [P2] Player: Prototype a focused Garba practice mode using verified chapter boundaries | Future product experiment |
-| #477 | [RAAS] PlayGarba harness system programme | Programme / coordination |
-| #544 | [P1] Player: keep active playback mounted while Explore is open | Sequenced behind shared player/Explore owners |
-| #602 | Make PlayGarba cold mobile startup immediate | Active claim; PR #605 |
-| #606 | Move canonical PlayGarba production to Vercel with explicit caching | Blocked by #602 and cutover verification |
-| #609 | Enable protected main ruleset for coordination and validation checks | Admin/settings lane; connector lacks admin permission |
-| #662 | [RAAS] Evaluate LEAPH coordination engine for federation convergence | Evaluation lane; unclaimed |
-| #670 | Enrich remaining releases-05 Explore metadata | Active claim |
-| #684 | Enrich releases-01 Explore descriptions | Active claim; PR #833 |
-| #752 | MASTER: Mobile + PWA application-grade hardening for iOS, Android, Safari and Chrome | Programme / coordination |
-| #755 | [P1] Mobile: harden viewport, virtual keyboard, safe areas and standalone PWA geometry | Unclaimed; ownership-sensitive |
-| #756 | [P1] Mobile: make playback lifecycle, interruptions and Media Session state truthful | Sequenced behind playback owners |
-| #757 | [P2] Mobile: consolidate responsive CSS and remove late PWA override patches | Deliberately late/sequenced |
-| #761 | [RAAS UX] Add one-command PlayGarba agent doctor/status | Active claim; owner-review warning |
-| #771 | [P0/P1] Catalogue ordering: playable-first now, Popular/Newest/Oldest sorting next | Sequenced behind route/Explore ownership |
-| #776 | [RAAS Adaptive CTO] Add task tiers, context/tool budgets and marginal-value stop rules | Active claim; owner-review warning |
-| #830 | Rebuild adaptive high-resolution backgrounds from current main | Blocked until exact high-resolution binaries can be restored/hash-verified |
-| #836 | [PGA] PlayGarba Admin programme: private founder analytics PWA | Programme / coordination |
-| #838 | [PGA-02] Add first-party privacy-minimised telemetry client to PlayGarba | Parent integration lane; blocked by playback ownership for remaining hooks |
-| #845 | [PGA-09] Harden PGA authentication, authorisation, privacy and admin-data security | Production/external security completion lane |
-| #846 | [PGA-10] Run PGA adaptive/PWA/accessibility/performance release acceptance and production verification | Release acceptance; dependency/external evidence |
-| #847 | Repository rename migration: garba → raas | Active claim; PR #872; requires GitHub Settings cutover |
-| #869 | Upgrade Live Ground crowd bed to verified local venue ambience | Sequenced source/audio-review lane |
-| #894 | [P0 Performance] Bound seek-state DOM observation to playback state | Active claim; PR #896 |
-| #900 | [P0 Scale] Load-test PGA telemetry ingestion for thousands of active listeners | Environment-dependent load/release lane |
-| #905 | [P1 Performance] Make full catalogue hydration cacheable on warm sessions | Blocked/sequenced behind startup/runtime owners |
-| #924 | [P1] Installed PWA: prefer immersive display modes with safe platform fallbacks | Active claim; PR #1005 |
-| #925 | [P1] Installed PWA: add capability-gated true fullscreen control for tablet and desktop | Future/sequenced interaction lane |
-| #946 | Implement Tara Vina Shyam track 4 exact Soor Mandir YouTube route | Open PR #1359; do not duplicate |
-| #947 | [RAAS cutover] Clean old repository URLs from PGA health test fixtures | Post-rename follow-up; blocked until cutover context is ready |
-| #954 | Recover the canonical 2021 Tahukar 9 12-track sequence and exact Kirtidan Gadhvi evidence | Active research-only YouTube evidence lane |
-| #969 | [CI] Stabilise WebKit viewport containment geometry reads | Active claim; PR #1260 |
-| #976 | [P0] Background-capable playback: authorised direct audio + lock-screen controls | Direct-media programme; preserve separate rights gate |
-| #985 | [P0 Background audio] Promote authorised direct-first playback routing | Blocked/sequenced behind rights/runtime ownership |
-| #986 | [P0 Background audio] Make direct-media playback one persistent Media Session authority | Blocked/sequenced behind #985/shared runtime |
-| #987 | [P0 Background audio] Verify iOS, Android, PWA and desktop lifecycle behaviour on real devices | Blocked until rights-cleared pilot + production integration |
-| #988 | [P0 Background audio] Roll out rights-cleared direct-media catalogue in verified batches | Blocked by rights acquisition + #985/#986 |
-| #996 | [CI] Move browser-smoke actions off deprecated Node 20 runtimes | Open PR #1329; do not duplicate |
-| #1054 | Link Taal 2.0 official set without treating chapters as exact album tracks | Active claim; PR #1078 |
-| #1059 | Recover Garba No Rang Saajan Ne Sang Vol. 1 exact 1993 track boundary | Active research-only YouTube evidence lane |
-| #1113 | Import the verified De Taali 1999 26-track catalogue programme | Queued/shared-file-sensitive catalogue import; playback stays fail-closed |
-| #1123 | Correct Sonbai Ni Chundadi soundtrack identity and migrate the legacy 1962 anchor safely | Queued/shared-file-sensitive identity migration |
-| #1132 | [Performance] Make session-stability baseline exclude hidden startup sheet DOM | Follow-up after closed-sheet startup behaviour settles |
-| #1189 | [Coordination] Reconcile stale ready PRs blocked only by shared WebKit Search gate | Coordination only |
-| #1193 | [P1 Analytics] Publish Explore telemetry module graph in production Pages artifact | Active claim; PR #1202 |
-| #1302 | [P1 Mobile QA] Add a bounded PlayGarba phone visual and interaction acceptance gate | Active claim; PR #1310 |
-| #1325 | [P1 Mobile] Prevent short-landscape Now Playing and transport overlap | Active claim; PR #1340 |
-| #1336 | [PGA-10D] Add browser evidence for partial/stale analytics and actionable Health | Active claim; owner-review warning |
-| #1342 | [P2 Explore] Stop generic runtime shelf rules overriding distinct mobile primitives | Active claim; PR #1364 |
-| #1351 | Research exact YouTube routes for Anand (Non Stop Garba, Vol. 8) | Active research-only YouTube evidence lane |
-| #1374 | [Coordination] Add live issue and YouTube coverage execution ledger | Active ledger lane |
-| #1376 | Audit Garbi 2 (2025) exact Sur Sagar YouTube evidence | Active research-only YouTube evidence lane |
-
-## Safe work-selection rules
-
-Before taking anything from the inventory:
-
-1. Fetch current `main` again.
-2. Read #364 and the target issue's latest comments.
-3. Search open PRs for the target issue, branch, release and files.
-4. Treat every active claim as owned even when #364 marks it stale/review-needed.
-5. Do not use master/programme/tracker issues as broad mutation lanes. Create a bounded child first when required.
-6. Prefer a research-only child when source identity is uncertain. Research completion does not reserve production files.
-7. Claim one mutation lane at a time and declare exact files.
-8. Reconcile again before PR and before merge because this repository changes quickly.
-
-## Definition of progress for this ledger
-
-When refreshing this file, update all of the following together:
-
-- exact main SHA and timestamp;
-- open issue, claim and PR counts;
-- current canonical song count, playable YouTube count, coverage percentage and backlog;
-- merged route/catalogue deltas since the previous snapshot;
-- active YouTube research and implementation lanes;
-- full issue inventory statuses;
-- open PR list;
-- blockers that moved or cleared.
-
-Do not mark an item complete because code exists on a branch. Completion follows the repository lifecycle: validated change, reviewable PR, required checks, merge, production verification when applicable, issue closure/release, and then a refreshed ledger snapshot.
+This ledger is deliberately descriptive, not authoritative. At this level of concurrency, issue/PR counts can change within seconds and the derived #364 board can lag a just-posted valid claim while its workflow is queued. Always use current #364 ownership history, current target-issue comments, current open PRs and fresh-main evidence for the actual decision.
