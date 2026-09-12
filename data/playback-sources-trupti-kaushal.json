@@ -1,5 +1,5 @@
 {
-"version":"0.16.4",
+"version":"0.16.5",
 "songSources":{
 "trupti-na-taale-kum-kum-kera-pagle":{"provider":"youtube","videoId":"wJZLxRx3ymc","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","sourceType":"label-continuous-performance"},
 "trupti-na-taale-maa-no-garbo-re":{"provider":"youtube","videoId":"wJZLxRx3ymc","startSeconds":198,"sourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","sourceType":"label-continuous-performance"},
@@ -16,7 +16,7 @@
 "trupti-na-taale-ghor-andhari-re-ratdi-ma":{"provider":"youtube","videoId":"wJZLxRx3ymc","startSeconds":1535,"sourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","sourceType":"label-continuous-performance"},
 "trupti-na-taale-continuous-2022":{"provider":"youtube","videoId":"wJZLxRx3ymc","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=wJZLxRx3ymc","sourceType":"label-continuous-performance"},
 "trupti-mele-zat-jaiye-2025":{"provider":"youtube","videoId":"LX3-30GuN6w","sourceUrl":"https://www.youtube.com/watch?v=LX3-30GuN6w","sourceType":"official-artist-channel"},
-"trupti-nagar-nandji-na-lal-2025":{"provider":"spotify","sourceUrl":"https://open.spotify.com/track/7dxeaTrXgSh1nHTLYSeroE","sourceType":"official-streaming-catalogue"},
+"trupti-nagar-nandji-na-lal-2025":{"provider":"youtube","videoId":"w1yvFRfALbc","sourceUrl":"https://www.youtube.com/watch?v=w1yvFRfALbc","sourceType":"official-artist-channel","alternate":{"provider":"spotify","sourceUrl":"https://open.spotify.com/track/7dxeaTrXgSh1nHTLYSeroE","sourceType":"official-streaming-catalogue"}},
 "trupti-navratri-garba-mashup-2021":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/tracks/B0GV4XYTXP","sourceType":"official-streaming-catalogue"},
 "pop-skope-dandiya-2-2023":{"provider":"youtube","videoId":"Gp5UBX2Se8I","sourceUrl":"https://www.youtube.com/watch?v=Gp5UBX2Se8I","sourceType":"verified-label-channel","alternate":{"provider":"amazon-music","sourceUrl":"https://music.amazon.com/albums/B0DFQCDTN3","sourceType":"official-streaming-catalogue"}},
 "kaushal-aadhyashakti-nonstop-2023":{"provider":"youtube","videoId":"xM3jc5rfLHc","sourceUrl":"https://www.youtube.com/watch?v=xM3jc5rfLHc","sourceType":"official-artist-channel","alternate":{"provider":"apple-music","sourceUrl":"https://music.apple.com/us/album/aadhyashakti-non-stop-garba/1769192663","sourceType":"official-stream-store"}},
