@@ -717,6 +717,12 @@ function renderSheet() {
   els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'My Garba' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
+  if (state.sheetSnap === 'closed') {
+    els.songList.replaceChildren();
+    if (els.sheetSummary) els.sheetSummary.textContent = '';
+    return;
+  }
+
   const query = els.searchInput.value.trim();
   const songs = getSheetSongs();
   els.songList.innerHTML = '';
@@ -1030,6 +1036,7 @@ function cycleSheetSnap(direction = 1) {
   const order = ['collapsed', 'medium', 'full'];
   if (state.sheetSnap === 'closed') {
     setSheetSnap('medium');
+    renderSheet();
     return;
   }
   const index = order.indexOf(state.sheetSnap);
