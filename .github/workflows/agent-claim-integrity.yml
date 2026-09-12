@@ -1,0 +1,63 @@
+name: Agent claim integrity
+
+on:
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request:
+    paths:
+      - scripts/lib/raas-claim-integrity.mjs
+      - scripts/lib/raas-claim-integrity.test.mjs
+      - .github/workflows/agent-claim-integrity.yml
+  workflow_dispatch:
+
+concurrency:
+  group: agent-claim-integrity-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: github.event_name != 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Test claim-integrity state machine
+        run: node --test scripts/lib/raas-claim-integrity.test.mjs
+
+  integrity:
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Reconcile coordination-comment integrity
+        uses: actions/github-script@v7
+        env:
+          BOARD_ISSUE: "364"
+        with:
+          script: |
+            const { pathToFileURL } = await import('node:url');
+            const moduleUrl = pathToFileURL(
+              `${process.env.GITHUB_WORKSPACE}/scripts/lib/raas-claim-integrity.mjs`
+            ).href;
+            const { runClaimIntegrity } = await import(moduleUrl);
+            await runClaimIntegrity({
+              github,
+              context,
+              core,
+              boardIssue: Number(process.env.BOARD_ISSUE),
+            });
