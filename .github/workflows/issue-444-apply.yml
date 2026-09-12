@@ -36,7 +36,6 @@ jobs:
                   raise SystemExit(f'{path}: expected exactly one guarded replacement, found {count}')
               file.write_text(text.replace(old, new, 1))
 
-          # Player imports the shared Unicode-safe normalization/ranking contract.
           replace_once(
               'app.js',
               "import './assets/runtime/route-readiness.js';\nconst { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;",
@@ -121,7 +120,6 @@ jobs:
           }'''
           replace_once('app.js', old_player_search, new_player_search)
 
-          # Explore is already a module; consume the same core directly.
           replace_once(
               'src/catalogue/catalogue.js',
               "const paths = {",
@@ -223,7 +221,6 @@ jobs:
           }'''
           replace_once('src/catalogue/catalogue.js', old_explore_search, new_explore_search)
 
-          # Focused player-sheet regression checks. Keep the existing startup simulation intact.
           replace_once(
               'scripts/lib/validate-sheet-startup.mjs',
               "import fs from 'node:fs';\n",
@@ -269,7 +266,6 @@ jobs:
               player_assertions.strip() + "\n\n// 2. Behavioral simulation of player startup, sheet opening, closing, and catalogue refresh",
           )
 
-          # Explore regression checks prove the same search core owns normalization/ranking.
           explore_assertions = r'''
           for (const marker of [
             "import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';",
@@ -294,12 +290,12 @@ jobs:
               explore_assertions.strip() + "\n\nfor (const marker of [\n  'function replaceDetailMeta(values = [])',",
           )
 
-          # This workflow is an editing transport only. It must not survive in the PR diff.
           Path('.github/workflows/issue-444-apply.yml').unlink()
           PY
 
       - name: Focused syntax and search checks
         run: |
+          npm run catalogue
           node --input-type=module --check < app.js
           node --check src/catalogue/catalogue.js
           node scripts/lib/test-search-core.mjs
