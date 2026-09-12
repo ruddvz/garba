@@ -4,6 +4,7 @@ import './ux-input.js';
 const $ = (id) => document.getElementById(id);
 
 const app = $('app');
+const trackBlock = $('trackBlock');
 const songSheet = $('songSheet');
 const songList = $('songList');
 const searchInput = $('searchInput');
@@ -23,6 +24,15 @@ const nextState = {
   searchTimer: null,
   renderingEnhanced: false,
   lastMediaKey: '',
+  detailsKey: '',
+  detailsSyncFrame: null,
+};
+
+const nowPlayingDetails = {
+  button: null,
+  panel: null,
+  title: null,
+  artist: null,
 };
 
 const themeByGenre = {
@@ -61,6 +71,122 @@ function syncThemeColor() {
   const genre = app?.dataset.genre || 'traditional';
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = themeByGenre[genre] || '#15182a';
+}
+
+function setTextIfChanged(element, value) {
+  if (element && element.textContent !== value) element.textContent = value;
+}
+
+function closeNowPlayingDetails({ restoreFocus = false } = {}) {
+  const { button, panel } = nowPlayingDetails;
+  if (!button || !panel) return;
+  const wasOpen = !panel.hidden;
+  panel.hidden = true;
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-label', 'Show full title and artist');
+  button.removeAttribute('aria-describedby');
+  trackBlock?.classList.remove('track-details-open');
+  if (restoreFocus && wasOpen) button.focus({ preventScroll: true });
+}
+
+function metadataIsUsable(title) {
+  return Boolean(title && !/loading|catalogue unavailable/i.test(title));
+}
+
+function elementIsClipped(element) {
+  if (!element) return false;
+  return element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1;
+}
+
+function syncNowPlayingDetails() {
+  const { button, panel, title: detailTitle, artist: detailArtist } = nowPlayingDetails;
+  if (!trackBlock || !songTitle || !songArtist || !button || !panel) return;
+
+  const title = String(songTitle.textContent || '').trim();
+  const artist = String(songArtist.textContent || '').trim();
+  const key = `${title}\u0000${artist}`;
+
+  if (key !== nextState.detailsKey) {
+    closeNowPlayingDetails();
+    nextState.detailsKey = key;
+  }
+
+  setTextIfChanged(detailTitle, title);
+  setTextIfChanged(detailArtist, artist);
+
+  if (nextState.detailsSyncFrame) cancelAnimationFrame(nextState.detailsSyncFrame);
+  nextState.detailsSyncFrame = requestAnimationFrame(() => {
+    nextState.detailsSyncFrame = null;
+    const lengthClass = trackBlock.classList.contains('is-long-title')
+      || trackBlock.classList.contains('is-very-long-title');
+    const needsDetails = metadataIsUsable(title)
+      && (lengthClass || elementIsClipped(songTitle) || elementIsClipped(songArtist));
+
+    button.hidden = !needsDetails;
+    trackBlock.classList.toggle('has-track-details', needsDetails);
+    if (!needsDetails) closeNowPlayingDetails();
+  });
+}
+
+function ensureNowPlayingDetails() {
+  if (!trackBlock || !songTitle || !songArtist || nowPlayingDetails.button) return;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'track-details-button';
+  button.textContent = 'Details';
+  button.hidden = true;
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-controls', 'nowPlayingDetails');
+  button.setAttribute('aria-label', 'Show full title and artist');
+
+  const panel = document.createElement('div');
+  panel.id = 'nowPlayingDetails';
+  panel.className = 'track-details-panel';
+  panel.hidden = true;
+  panel.setAttribute('role', 'group');
+  panel.setAttribute('aria-label', 'Full track details');
+  panel.setAttribute('aria-live', 'off');
+
+  const detailTitle = document.createElement('strong');
+  detailTitle.className = 'track-details-title';
+  const detailArtist = document.createElement('span');
+  detailArtist.className = 'track-details-artist';
+  panel.append(detailTitle, detailArtist);
+  trackBlock.append(button, panel);
+
+  nowPlayingDetails.button = button;
+  nowPlayingDetails.panel = panel;
+  nowPlayingDetails.title = detailTitle;
+  nowPlayingDetails.artist = detailArtist;
+
+  button.addEventListener('click', () => {
+    const opening = panel.hidden;
+    if (opening) {
+      panel.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      button.setAttribute('aria-label', 'Hide full title and artist');
+      button.setAttribute('aria-describedby', panel.id);
+      trackBlock.classList.add('track-details-open');
+    } else {
+      closeNowPlayingDetails({ restoreFocus: true });
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || panel.hidden || event.defaultPrevented) return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeNowPlayingDetails({ restoreFocus: true });
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    if (panel.hidden || button.contains(event.target) || panel.contains(event.target)) return;
+    closeNowPlayingDetails();
+  }, { passive: true });
+
+  window.addEventListener('resize', syncNowPlayingDetails, { passive: true });
+  syncNowPlayingDetails();
 }
 
 function syncControlLabels() {
@@ -322,6 +448,7 @@ async function loadNextContext() {
 
 function initNext() {
   shareButton?.addEventListener('click', improvedShare, { capture: true });
+  ensureNowPlayingDetails();
 
   searchInput?.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
@@ -341,7 +468,10 @@ function initNext() {
     new MutationObserver(() => {
       syncThemeColor();
       syncControlLabels();
-      if (app.dataset.sheetSnap !== 'closed') setTimeout(scrollCurrentRowIntoView, 240);
+      if (app.dataset.sheetSnap !== 'closed') {
+        closeNowPlayingDetails();
+        setTimeout(scrollCurrentRowIntoView, 240);
+      }
     }).observe(app, { attributes: true, attributeFilter: ['data-genre', 'data-sheet-snap'] });
   }
 
@@ -349,6 +479,7 @@ function initNext() {
     new MutationObserver(() => {
       syncControlLabels();
       syncMediaArtwork();
+      syncNowPlayingDetails();
     }).observe(songTitle.parentElement, { childList: true, subtree: true, characterData: true });
   }
 
@@ -373,6 +504,7 @@ function initNext() {
   syncThemeColor();
   syncControlLabels();
   syncMediaArtwork();
+  syncNowPlayingDetails();
   applyDataSaverState();
   loadNextContext();
 }
