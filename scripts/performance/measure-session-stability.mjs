@@ -18,6 +18,11 @@ import {
   usageText,
 } from './session-stability-lib.mjs';
 
+const STARTUP_SHEET_BUDGETS = Object.freeze({
+  closedSongRows: 0,
+  closedSongListChildren: 0,
+});
+
 async function loadChromium() {
   try {
     const { chromium } = await import('@playwright/test');
@@ -125,6 +130,179 @@ async function configureCdp(page) {
 
 function uniqueFailures(failures) {
   return [...new Set(failures)];
+}
+
+async function captureClosedSheetBaseline(page) {
+  return page.evaluate(() => {
+    const sheet = document.getElementById('songSheet');
+    const songList = document.getElementById('songList');
+    return {
+      sheetPresent: Boolean(sheet),
+      songListPresent: Boolean(songList),
+      sheetAriaHidden: sheet?.getAttribute('aria-hidden') ?? null,
+      sheetTitle: document.getElementById('sheetTitle')?.textContent?.trim() || null,
+      songRowCount: songList?.querySelectorAll('.song-row').length ?? null,
+      songListChildCount: songList?.children.length ?? null,
+      emptyStateCount: songList?.querySelectorAll('.empty-state').length ?? null,
+      domNodeCount: document.getElementsByTagName('*').length,
+    };
+  });
+}
+
+async function snapshotSheetSurface(page) {
+  return page.evaluate(() => {
+    const sheet = document.getElementById('songSheet');
+    const songList = document.getElementById('songList');
+    return {
+      sheetAriaHidden: sheet?.getAttribute('aria-hidden') ?? null,
+      title: document.getElementById('sheetTitle')?.textContent?.trim() || null,
+      songRowCount: songList?.querySelectorAll('.song-row').length ?? null,
+      songListChildCount: songList?.children.length ?? null,
+      emptyStateCount: songList?.querySelectorAll('.empty-state').length ?? null,
+    };
+  });
+}
+
+async function closeProbeSheet(page) {
+  const close = page.locator('#sheetClose').first();
+  if (!(await close.count()) || !(await close.isVisible().catch(() => false))) return false;
+  const clicked = await close.click({ timeout: 2_500 }).then(() => true).catch(() => false);
+  if (!clicked) return false;
+  return page.waitForFunction(() => document.getElementById('songSheet')?.getAttribute('aria-hidden') === 'true', null, { timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false);
+}
+
+async function openProbeSurface(page, triggerSelector, expectedTitle, { searchQuery = null, requireSongRows = false } = {}) {
+  const trigger = page.locator(triggerSelector).first();
+  const result = {
+    trigger: triggerSelector,
+    expectedTitle,
+    clicked: false,
+    opened: false,
+    materialised: false,
+  };
+
+  if (!(await trigger.count()) || !(await trigger.isVisible().catch(() => false)) || !(await trigger.isEnabled().catch(() => false))) {
+    return { ...result, surface: await snapshotSheetSurface(page) };
+  }
+
+  result.clicked = await trigger.click({ timeout: 2_500 }).then(() => true).catch(() => false);
+  if (!result.clicked) return { ...result, surface: await snapshotSheetSurface(page) };
+
+  result.opened = await page.waitForFunction((title) => {
+    const sheet = document.getElementById('songSheet');
+    const sheetTitle = document.getElementById('sheetTitle')?.textContent?.trim();
+    return sheet?.getAttribute('aria-hidden') === 'false' && sheetTitle === title;
+  }, expectedTitle, { timeout: 5_000 }).then(() => true).catch(() => false);
+
+  if (searchQuery !== null && result.opened) {
+    const input = page.locator('#searchInput').first();
+    if (await input.isVisible().catch(() => false)) {
+      await input.fill(searchQuery);
+      await page.waitForFunction(() => document.querySelectorAll('#songList .song-row').length > 0, null, { timeout: 5_000 }).catch(() => {});
+    }
+  }
+
+  const surface = await snapshotSheetSurface(page);
+  result.materialised = requireSongRows
+    ? Number(surface.songRowCount) > 0
+    : Number(surface.songListChildCount) > 0;
+  return { ...result, surface };
+}
+
+async function exerciseStartupSheetMaterialisation(browser, origin) {
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    isMobile: false,
+    serviceWorkers: 'allow',
+  });
+  const page = await context.newPage();
+  const result = {
+    isolatedContext: true,
+    catalogueReady: false,
+    songs: null,
+    search: null,
+    queue: null,
+    favourites: null,
+    closedBetweenSurfaces: [],
+  };
+
+  try {
+    const browseUrl = new URL(origin);
+    browseUrl.searchParams.set('browse', '1');
+    browseUrl.searchParams.set('session-soak', 'startup-sheet-probe');
+    const boot = await waitForPlayer(page, browseUrl.href);
+    result.catalogueReady = Boolean(boot.catalogueReady);
+    await page.waitForTimeout(100);
+
+    const songsSurface = await snapshotSheetSurface(page);
+    result.songs = {
+      trigger: 'query:browse=1',
+      expectedTitle: 'Songs',
+      clicked: true,
+      opened: songsSurface.sheetAriaHidden === 'false' && songsSurface.title === 'Songs',
+      materialised: Number(songsSurface.songRowCount) > 0,
+      surface: songsSurface,
+    };
+
+    const searchQuery = (await page.locator('#songTitle').textContent().catch(() => ''))?.trim() || 'Garba';
+    result.closedBetweenSurfaces.push(await closeProbeSheet(page));
+    result.search = await openProbeSurface(page, '#searchButton', 'Search', { searchQuery, requireSongRows: true });
+
+    result.closedBetweenSurfaces.push(await closeProbeSheet(page));
+    result.queue = await openProbeSurface(page, '#queueButton', 'Up next');
+
+    result.closedBetweenSurfaces.push(await closeProbeSheet(page));
+    result.favourites = await openProbeSurface(page, '#favouritesButton', 'My Garba');
+    result.closedBetweenSurfaces.push(await closeProbeSheet(page));
+  } finally {
+    await context.close();
+  }
+
+  return result;
+}
+
+function startupSheetFailures(baseline, firstUse) {
+  const failures = [];
+  if (!baseline?.sheetPresent || !baseline?.songListPresent) {
+    failures.push({ code: 'startup-sheet-baseline-missing', message: 'Warm startup did not expose the expected song sheet and song list DOM for baseline inspection.' });
+    return failures;
+  }
+  if (baseline.sheetAriaHidden !== 'true') {
+    failures.push({ code: 'startup-sheet-not-closed', message: `Warm startup song sheet aria-hidden was ${String(baseline.sheetAriaHidden)} instead of true.` });
+  }
+  if (baseline.songRowCount !== STARTUP_SHEET_BUDGETS.closedSongRows) {
+    failures.push({ code: 'startup-sheet-hidden-song-rows', message: `Closed warm startup retained ${baseline.songRowCount} .song-row nodes; budget is ${STARTUP_SHEET_BUDGETS.closedSongRows}.` });
+  }
+  if (baseline.songListChildCount !== STARTUP_SHEET_BUDGETS.closedSongListChildren) {
+    failures.push({ code: 'startup-sheet-hidden-children', message: `Closed warm startup retained ${baseline.songListChildCount} song-list children; budget is ${STARTUP_SHEET_BUDGETS.closedSongListChildren}.` });
+  }
+  if (!firstUse?.catalogueReady) {
+    failures.push({ code: 'startup-sheet-probe-catalogue-not-ready', message: 'The isolated first-use sheet probe did not reach full catalogue readiness.' });
+  }
+  if (firstUse?.closedBetweenSurfaces?.some((closed) => !closed)) {
+    failures.push({ code: 'startup-sheet-probe-close-failed', message: 'The isolated first-use probe could not return the song sheet to a closed state between surfaces.' });
+  }
+
+  for (const [name, surface] of Object.entries({
+    songs: firstUse?.songs,
+    search: firstUse?.search,
+    queue: firstUse?.queue,
+    favourites: firstUse?.favourites,
+  })) {
+    if (!surface?.opened) {
+      failures.push({ code: `startup-sheet-${name}-open-failed`, message: `First explicit ${name} use did not open the expected song-sheet mode.` });
+      continue;
+    }
+    if (!surface.materialised) {
+      failures.push({ code: `startup-sheet-${name}-materialisation-failed`, message: `First explicit ${name} use did not materialise song-sheet content on demand.` });
+    }
+  }
+
+  return failures;
 }
 
 async function settleReturnedPlayer(page) {
@@ -259,10 +437,14 @@ async function main() {
   const detachRuntimeFailures = attachRuntimeFailureCapture(page, options.originValue, runtimeFailures, requestAborts);
 
   let boot = null;
+  let startupSheetBaseline = null;
+  let startupSheetFirstUse = null;
   try {
     boot = await waitForPlayer(page, options.origin);
     await page.waitForTimeout(profile.settleMs);
     snapshots.push(await collectSessionSnapshot(page, cdp, 'baseline-warm', networkState));
+    startupSheetBaseline = await captureClosedSheetBaseline(page);
+    startupSheetFirstUse = await exerciseStartupSheetMaterialisation(browser, options.origin);
     await resetSessionTransientMetrics(page);
 
     for (let cycle = 0; cycle < options.cycles; cycle += 1) {
@@ -293,12 +475,13 @@ async function main() {
   const dedupedRequestAborts = uniqueFailures(requestAborts);
   const growthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, DEFAULT_BUDGETS);
   const journeyFailures = coverageFailures(boot, journeys, exploreJourneys);
-  const budgetFailures = [...growthFailures, ...journeyFailures];
+  const startupFailures = startupSheetFailures(startupSheetBaseline, startupSheetFirstUse);
+  const budgetFailures = [...growthFailures, ...journeyFailures, ...startupFailures];
   const baseline = snapshots[0] || null;
   const final = snapshots.at(-1) || null;
 
   const report = {
-    schemaVersion: 3,
+    schemaVersion: 4,
     generatedAt: new Date().toISOString(),
     testedRevision: process.env.PLAYGARBA_TESTED_REVISION || null,
     target: options.origin,
@@ -315,6 +498,8 @@ async function main() {
       productionEquivalentFixtureRequired: true,
       harnessInstrumentation: 'context.addInitScript test-only counters plus Chromium CDP Memory/Performance metrics',
       budgetPhaseNavigation: 'none; one player document remains alive for every measured cycle',
+      startupSheetBaseline: 'measured on the warm player before any explicit song-sheet interaction; hidden .song-row DOM is a hard regression',
+      startupSheetFirstUseProbe: 'Songs/Search/Queue/My Garba first-use materialisation runs in a separate browser context so it cannot alter the measured player document, cache state or soak deltas',
       exploreNavigation: 'exercised only after the final player snapshot and excluded from player memory-growth deltas; Search and detail/back must both pass, with an explicit fresh-Explore detail retry recorded when Search history makes the combined transition indeterminate',
       detachedDomNodesDirectlyMeasured: false,
       detachedDomBoundary: 'Chromium aggregate document/node/listener counters are recorded; detached-node claims require a heap-snapshot diagnostic and are not fabricated.',
@@ -336,6 +521,11 @@ async function main() {
       fullCatalogueReadyBeforeSoak: Boolean(boot?.catalogueReady),
     },
     budgets: DEFAULT_BUDGETS,
+    startupSheet: {
+      budgets: STARTUP_SHEET_BUDGETS,
+      baseline: startupSheetBaseline,
+      firstUse: startupSheetFirstUse,
+    },
     result: {
       passed: budgetFailures.length === 0,
       budgetFailures,
