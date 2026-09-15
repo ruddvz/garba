@@ -1,11 +1,14 @@
 const BRIDGE_TYPE = 'playgarba:explore-continuity';
 const BRIDGE_VERSION = 1;
+const PARENT_CONTRACT_KEY = '__PLAYGARBA_EXPLORE_CONTINUITY_PARENT__';
 const EXPLORE_PAGE_DATA_KEY = '__PLAYGARBA_EXPLORE_PAGE_DATA_V1__';
 
 function sameOriginParent() {
   if (window.parent === window) return null;
   try {
-    return window.parent.location.origin === window.location.origin ? window.parent : null;
+    if (window.parent.location.origin !== window.location.origin) return null;
+    const contract = window.parent[PARENT_CONTRACT_KEY];
+    return contract?.version === BRIDGE_VERSION ? window.parent : null;
   } catch {
     return null;
   }
