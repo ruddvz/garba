@@ -1,0 +1,206 @@
+name: Desktop WebKit Search layout-read bisect
+
+on:
+  push:
+    branches:
+      - diagnostic/issue-1508-webkit-layout-bisect
+    paths:
+      - '.github/browser/webkit-search-layout-read-bisect.mjs'
+      - '.github/workflows/webkit-search-layout-read-bisect.yml'
+  pull_request:
+    paths:
+      - '.github/browser/webkit-search-layout-read-bisect.mjs'
+      - '.github/workflows/webkit-search-layout-read-bisect.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webkit-search-layout-read-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DIAGNOSTIC_BASE_URL: http://127.0.0.1:4178
+      DIAGNOSTIC_OUTPUT: webkit-search-layout-read-bisect.json
+      DIAGNOSTIC_SAMPLE_DIR: webkit-search-layout-read-samples
+      DIAGNOSTIC_SAMPLE_TIMEOUT_MS: '30000'
+      DIAGNOSTIC_ATTEMPTS: '2'
+      DIAGNOSTIC_REVISION: 2592fa73e1bbff42f0075de6336460b6f1377363
+      PLAYWRIGHT_VERSION: 1.55.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install fixture renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+
+      - name: Build catalogue data
+        run: npm run catalogue
+
+      - name: Prepare production-equivalent diagnostic fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _webkit_layout_read webkit-search-layout-read-samples webkit-search-layout-read-logs
+          mkdir -p _webkit_layout_read webkit-search-layout-read-logs
+
+          cp \
+            index.html \
+            app.js \
+            simple-runtime.js \
+            provider-runtime.js \
+            player-continuity.js \
+            youtube-player-runtime.js \
+            nonstop-browser.js \
+            sw.js \
+            manifest.webmanifest \
+            offline.html \
+            _webkit_layout_read/
+          cp -R assets data _webkit_layout_read/
+
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
+          const writeJson = (file, value) => writeFileSync(file, `${JSON.stringify(value)}\n`);
+          const songsPath = '_webkit_layout_read/data/songs.json';
+          const indexPath = '_webkit_layout_read/data/catalogue/index.json';
+          const allSongs = readJson(songsPath);
+          const requiredIds = new Set([
+            'bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014',
+            'ochhav-2023-01-ochhav-theme',
+          ]);
+          const perGenreLimit = 24;
+          const genreCounts = new Map();
+          const selected = [];
+          const selectedIds = new Set();
+
+          const keep = (song) => {
+            if (!song?.id || selectedIds.has(song.id)) return;
+            selected.push(song);
+            selectedIds.add(song.id);
+          };
+
+          for (const song of allSongs) {
+            if (requiredIds.has(song?.id)) keep(song);
+            const genre = String(song?.genre || 'traditional');
+            const count = genreCounts.get(genre) || 0;
+            if (count >= perGenreLimit) continue;
+            keep(song);
+            genreCounts.set(genre, count + 1);
+          }
+
+          for (const id of requiredIds) {
+            if (!selectedIds.has(id)) throw new Error(`Required diagnostic song missing: ${id}`);
+          }
+
+          const index = readJson(indexPath);
+          writeJson(songsPath, selected);
+          writeJson(indexPath, {
+            ...index,
+            discovery: { ...(index.discovery || {}), artists: [] },
+          });
+          console.log(`WebKit layout-read diagnostic catalogue: ${allSongs.length} -> ${selected.length} songs across ${genreCounts.size} genres`);
+          NODE
+
+          cat app.js assets/runtime/seek-state.js > _webkit_layout_read/app.js
+          grep -q 'GARBA_SEEK_STATE_RUNTIME' _webkit_layout_read/app.js
+
+          cat \
+            styles/00-foundation-and-player.css \
+            styles/10-browser-and-shell.css \
+            styles/20-responsive-and-accessibility.css \
+            styles/30-product-polish.css \
+            styles/40-accessibility-states.css \
+            styles/50-discovery-and-performance.css \
+            styles/60-runtime-and-provider.css \
+            styles/70-mobile-playback-coordination.css \
+            styles/80-genre-icon-images.css \
+            > _webkit_layout_read/styles.css
+          ! grep -q '@import' _webkit_layout_read/styles.css
+
+          mkdir -p _webkit_layout_read/assets/icons
+          rsvg-convert -w 512 -h 512 assets/icons/icon.svg -o _webkit_layout_read/assets/icons/icon-512.png
+
+          PACK=''
+          if [ -f assets/backgrounds/garba15-2048-q90.zip ]; then
+            PACK='assets/backgrounds/garba15-2048-q90.zip'
+          elif [ -f assets/backgrounds/garba15-2k.zip ]; then
+            PACK='assets/backgrounds/garba15-2k.zip'
+          elif [ -f assets/backgrounds/garba15-2k-q82.zip ]; then
+            PACK='assets/backgrounds/garba15-2k-q82.zip'
+          fi
+          test -n "$PACK" || { echo 'Required 15-image WebP pack is missing'; exit 1; }
+          rm -rf _webkit_layout_read/assets/backgrounds/library
+          mkdir -p _webkit_layout_read/assets/backgrounds/library
+          unzip -oq "$PACK" -d _webkit_layout_read/assets/backgrounds/library
+          test "$(find _webkit_layout_read/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15
+          rm -f _webkit_layout_read/assets/backgrounds/garba15-*.zip
+
+          test -s _webkit_layout_read/index.html
+          test -s _webkit_layout_read/data/songs.json
+          test -s _webkit_layout_read/assets/icons/icon-512.png
+          grep -q 'id="searchButton"' _webkit_layout_read/index.html
+          grep -q 'id="sheetClose"' _webkit_layout_read/index.html
+          grep -q 'id="searchInput"' _webkit_layout_read/index.html
+
+          printf 'base_revision=%s\nplaywright_version=%s\n' \
+            "$DIAGNOSTIC_REVISION" "$PLAYWRIGHT_VERSION" \
+            > webkit-search-layout-read-fixture.txt
+
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Start diagnostic fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4178 --bind 127.0.0.1 --directory _webkit_layout_read >webkit-search-layout-read-logs/server.log 2>&1 &
+          echo $! > /tmp/playgarba-webkit-layout-read.pid
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:4178/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat webkit-search-layout-read-logs/server.log
+          exit 1
+
+      - name: Run isolated Search layout-read probes
+        run: node .github/browser/webkit-search-layout-read-bisect.mjs
+
+      - name: Stop diagnostic fixture
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f /tmp/playgarba-webkit-layout-read.pid ]]; then
+            kill "$(cat /tmp/playgarba-webkit-layout-read.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: webkit-search-layout-read-bisect
+          path: |
+            webkit-search-layout-read-bisect.json
+            webkit-search-layout-read-fixture.txt
+            webkit-search-layout-read-samples/*.json
+            webkit-search-layout-read-logs/*.log
+          if-no-files-found: warn
+          retention-days: 7
