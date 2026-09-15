@@ -29,7 +29,7 @@ jobs:
       DIAGNOSTIC_OUTPUT: webkit-search-evaluate-diagnostic.json
       DIAGNOSTIC_SAMPLE_DIR: webkit-search-evaluate-samples
       DIAGNOSTIC_SAMPLE_TIMEOUT_MS: '45000'
-      DIAGNOSTIC_REVISION: fa244784b44ea94c29a43a56e89236cad2137e45
+      DIAGNOSTIC_REVISION: e71d3028744ffb475666c566bc6d18ff72b228c3
       PLAYWRIGHT_VERSION: 1.55.0
 
     steps:
