@@ -101,7 +101,7 @@ test('canonical playback smoke passes only with start and control evidence', () 
     confirmedStart: true,
     controlsResponsive: true,
     contentId: 'song-123',
-    sourceUrl: 'https://github.com/ruddvz/garba/actions/runs/1',
+    sourceUrl: 'https://github.com/ruddvz/raas/actions/runs/1',
   })
   assert.equal(evidence.status, 'healthy')
   assert.equal(evidence.criticality, 'critical')
