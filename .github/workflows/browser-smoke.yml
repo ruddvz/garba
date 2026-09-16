@@ -67,10 +67,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -252,11 +252,11 @@ jobs:
           test "$(find _smoke/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15 || { echo 'Browser fixture must contain exactly 15 background WebPs'; exit 1; }
           rm -f _smoke/assets/backgrounds/garba15-*.zip
 
-      - name: Install Playwright test runner
-        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+      - name: Install WebKit smoke runtime
+        run: npm install --no-save --no-package-lock @playwright/test@1.63.0
 
-      - name: Install browser engines and host dependencies
-        run: npx playwright install --with-deps chromium webkit
+      - name: Install WebKit engine and host dependencies
+        run: npx playwright install --with-deps webkit
 
       - name: Start browser fixture
         run: |
@@ -271,12 +271,40 @@ jobs:
           cat /tmp/playgarba-browser-smoke.log
           exit 1
 
-      - name: Run browser viewport smoke suite
-        run: npx playwright test --config=.github/browser/playwright.config.mjs
+      - name: Run WebKit viewport smoke suite
+        id: webkit_smoke
+        continue-on-error: true
+        run: |
+          npx playwright test --config=.github/browser/playwright.config.mjs --output=test-results/webkit \
+            --project=phone-webkit \
+            --project=phone-landscape-webkit \
+            --project=tablet-webkit \
+            --project=tablet-landscape-webkit \
+            --project=desktop-webkit
+
+      - name: Install Chromium smoke runtime
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+
+      - name: Install Chromium engine and host dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Chromium viewport smoke suite
+        id: chromium_smoke
+        continue-on-error: true
+        run: |
+          npx playwright test --config=.github/browser/playwright.config.mjs --output=test-results/chromium \
+            --project=android-chromium \
+            --project=desktop-chromium
+
+      - name: Enforce browser viewport smoke result
+        if: always()
+        run: |
+          test "${{ steps.webkit_smoke.outcome }}" = "success"
+          test "${{ steps.chromium_smoke.outcome }}" = "success"
 
       - name: Upload failure diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: browser-smoke-diagnostics
           path: |

@@ -19,6 +19,7 @@ const requiredRootFiles = new Set([
   '.gitignore',
   'CNAME',
   'CONTRIBUTING.md',
+  'EXECUTION-LEDGER.md',
   'README.md',
   'app.js',
   'index.html',
