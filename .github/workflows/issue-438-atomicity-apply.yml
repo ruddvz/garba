@@ -1,0 +1,62 @@
+name: Issue 438 atomicity apply
+
+on:
+  push:
+    branches:
+      - test/issue-438-playback-atomicity
+    paths:
+      - '.github/workflows/issue-438-atomicity-apply.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: test/issue-438-playback-atomicity
+          fetch-depth: 0
+
+      - name: Apply exact Nonstop identity guard
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('youtube-player-runtime.js')
+          source = path.read_text()
+          old = """  function reopenAfterNavigation() {
+            const next = currentSafeSong();
+          """
+          new = """  function reopenAfterNavigation() {
+            const nonstopOwnsVisibleIdentity = $('app')?.dataset.playMode === 'nonstop'
+              && String(activeSong?.id || '').startsWith('nonstop:');
+            if (nonstopOwnsVisibleIdentity) return;
+
+            const next = currentSafeSong();
+          """
+          if source.count(old) != 1:
+              raise SystemExit(f'expected exactly one navigation observer anchor, found {source.count(old)}')
+          path.write_text(source.replace(old, new, 1))
+          PY
+
+      - name: Validate bounded change
+        run: |
+          node --check youtube-player-runtime.js
+          git diff --check
+          git diff -- youtube-player-runtime.js
+          grep -F "const nonstopOwnsVisibleIdentity = $('app')?.dataset.playMode === 'nonstop'" youtube-player-runtime.js
+          grep -F "String(activeSong?.id || '').startsWith('nonstop:')" youtube-player-runtime.js
+
+      - name: Remove temporary workflow and commit
+        run: |
+          rm .github/workflows/issue-438-atomicity-apply.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add youtube-player-runtime.js .github/workflows/issue-438-atomicity-apply.yml
+          git diff --cached --check
+          git commit -m 'fix(player): preserve Nonstop selection during title sync'
+          git push origin HEAD:test/issue-438-playback-atomicity
