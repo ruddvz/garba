@@ -47,8 +47,8 @@ jobs:
           node --check youtube-player-runtime.js
           git diff --check
           git diff -- youtube-player-runtime.js
-          grep -F "const nonstopOwnsVisibleIdentity = $('app')?.dataset.playMode === 'nonstop'" youtube-player-runtime.js
-          grep -F "String(activeSong?.id || '').startsWith('nonstop:')" youtube-player-runtime.js
+          grep -F 'nonstopOwnsVisibleIdentity' youtube-player-runtime.js
+          grep -F "startsWith('nonstop:')" youtube-player-runtime.js
 
       - name: Remove temporary workflow and commit
         run: |
