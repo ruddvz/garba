@@ -1,27 +1,32 @@
 {
-  "version": "1.3.0",
-  "updatedAt": "2026-09-07",
+  "version": "1.4.0",
+  "updatedAt": "2026-09-15",
   "policy": "A contact route is not rights evidence. Only written authority from the actual rights holder or authorised licensing representative can advance a recording to licence-review or cleared. Similar names, fan pages, booking pages and unrelated organisations must be explicitly disambiguated before outreach.",
   "contacts": [
     {
       "batchId": "hardik-rahul-sur-sagar",
       "entity": "Sur Sagar Music",
-      "contactState": "ready-for-rights-inquiry",
-      "confidence": "high-official-channel",
+      "contactState": "official-brand-route-found-current-legal-licensor-needs-confirmation",
+      "confidence": "high-current-brand-route-medium-legal-authority",
       "primaryRoute": "https://www.youtube.com/@SurSagarMusicOriginal",
       "secondaryRoute": "https://www.instagram.com/sursagarmusic/",
-      "businessDomain": "senseworldmusic.com",
       "identity": {
         "canonicalYouTubeHandle": "@SurSagarMusicOriginal",
         "canonicalInstagramHandle": "@sursagarmusic",
-        "disambiguation": "Gujarati music label associated with current releases including Garbi and Geeta Rabari material; do not substitute similarly named singer/channels."
+        "historicalBusinessDomain": "senseworldmusic.com",
+        "historicalLegalEntity": "SENSE WORLD MUSIC LIMITED (05433423) is dissolved and is not proven to be the current Sur Sagar licensor.",
+        "disambiguation": "Gujarati music label associated with current releases including Garbi and Geeta Rabari material; do not substitute similarly named singer/channels. The current public brand route is suitable for authority discovery, not proof that one legal entity controls every Sur Sagar-labelled recording."
       },
       "evidence": [
         "https://www.youtube.com/@SurSagarMusicOriginal",
         "https://uk.linkedin.com/in/alpesh-patel-3a86aa10",
-        "https://open.spotify.com/album/6RveMtyJ00gDD4SNRiCQQH"
+        "https://open.spotify.com/album/6RveMtyJ00gDD4SNRiCQQH",
+        "https://find-and-update.company-information.service.gov.uk/officers/ZNPbD6hhc-wQQH7KjP0M1d-RYNo/appointments",
+        "https://music.amazon.com/albums/B0GZ62KTP1",
+        "https://connectmusic.ca/wp-content/uploads/2021/09/CONNECT-Schedule-A-Audio.pdf",
+        "https://connectmusic.ca/wp-content/uploads/2021/09/CONNECT-Schedule-A-Video.pdf"
       ],
-      "notes": "Alpesh Patel's current Sur Sagar Music profile lists the canonical YouTube and Instagram routes as company websites. Release metadata for Garbi identifies ©/℗ Sur Sagar. Ask both for Garbi/Garbi 2 and for a larger machine-readable Garba/Raas catalogue that could be licensed as one direct-streaming batch. The canonical handles are preferred over brittle or unverified raw channel-ID matches."
+      "notes": "Alpesh Patel's current Sur Sagar Music profile lists the canonical YouTube and Instagram routes as company websites, so those routes remain the preferred first-contact surface. The historical SENSE WORLD MUSIC LIMITED (05433423) company is dissolved; its old domain must not be treated as present contracting authority. At least one 2026 Sur Sagar Music release is stated to be under exclusive licence to Hyson Export Ltd, while CONNECT schedules map Sense World Music/Sur sagar through Orchard Enterprises for neighbouring-rights administration. These are recording/rights-chain signals, not proof that Hyson, Orchard or any single entity controls the roughly 271 Sur Sagar-labelled GARBA rows or can grant PlayGarba interactive-streaming rights. First contact must identify the current legal licensor, the authorised representative, and per-recording ℗ owner/current digital licensor before commercial negotiation or catalogue-level clearance assumptions."
     },
     {
       "batchId": "strategic-label-soor-mandir",
