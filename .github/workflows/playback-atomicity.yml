@@ -1,4 +1,5 @@
 name: Playback atomicity
+# Retrigger exact-head validation after the bounded Nonstop identity guard.
 
 on:
   pull_request:
