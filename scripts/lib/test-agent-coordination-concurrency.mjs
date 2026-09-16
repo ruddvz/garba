@@ -67,5 +67,11 @@ assert.ok(
 const registry = fs.readFileSync('.github/workflows/agent-claim-registry.yml', 'utf8');
 assert.match(registry, /concurrency:\s*\n\s*group:\s*agent-claim-registry\s*\n\s*cancel-in-progress:\s*false/, 'global claim registry must remain one serialized writer');
 assert.doesNotMatch(registry, /agent-claim-registry-\$\{\{/, 'issue #990 must not make the global registry PR-scoped');
+assert.match(registry, /\*\*Same-issue claim conflicts:\*\*/, 'claim registry status must label issue-local claim conflicts explicitly');
+assert.doesNotMatch(registry, /\*\*Conflicts:\*\*/, 'claim registry status must not use an ambiguous generic conflict label');
+assert.ok(
+  registry.includes('**Cross-issue file ownership:** See the separate cross-issue file-ownership status on this issue.'),
+  'claim registry status must direct readers to the separate cross-issue file-ownership guard',
+);
 
 console.log('agent coordination concurrency regression: PASS');

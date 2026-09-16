@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v15`;
+const CACHE_NAME = `${CACHE_PREFIX}v16`;
 const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 const STAGING_READY_URL = new URL('./__garba_staging_ready__', self.location.href).toString();
@@ -112,11 +112,20 @@ self.addEventListener('activate', (event) => {
     const stagedRequests = await staged.keys();
     const promotableRequests = stagedRequests.filter((request) => request.url !== STAGING_READY_URL);
 
+    // CACHE_NAME is a new generation for this worker. Build it completely while
+    // the previous worker's live generation remains available. If promotion
+    // fails, remove only this incomplete incoming generation and keep staging
+    // intact so the active worker never loses its complete offline shell.
     await caches.delete(CACHE_NAME);
     const live = await caches.open(CACHE_NAME);
-    for (const request of promotableRequests) {
-      const response = await staged.match(request);
-      if (response) await live.put(request, response);
+    try {
+      for (const request of promotableRequests) {
+        const response = await staged.match(request);
+        if (response) await live.put(request, response);
+      }
+    } catch (error) {
+      await caches.delete(CACHE_NAME);
+      throw error;
     }
 
     await caches.delete(STAGING_CACHE_NAME);

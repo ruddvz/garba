@@ -17,6 +17,8 @@
   let playerReadyPromise = null;
   let playerReadyReject = null;
   let playerGeneration = 0;
+  let activeRequestGeneration = 0;
+  let activeVideoId = '';
   let activeSong = null;
   let baseStart = 0;
   let trackDuration = 0;
@@ -25,6 +27,7 @@
   let openToken = 0;
   let continueAfterNavigation = false;
   let lastPersistedSecond = -1;
+  let lastMediaSessionPositionKey = '';
   let advanceLock = false;
   let bypassNextPlay = false;
 
@@ -145,6 +148,55 @@
     }
   }
 
+  function setProgressState(current = 0, total = 0) {
+    const safeCurrent = Number.isFinite(current) ? Math.max(0, current) : 0;
+    const safeTotal = Number.isFinite(total) ? Math.max(0, total) : 0;
+    const ratio = safeTotal > 0 ? Math.min(1, Math.max(0, safeCurrent / safeTotal)) : 0;
+    const progressValue = Math.round(ratio * 1000);
+    const progressPercent = `${progressValue / 10}%`;
+
+    if (progress) {
+      if (String(progress.value) !== String(progressValue)) progress.value = String(progressValue);
+      if (progress.style.getPropertyValue('--progress') !== progressPercent) {
+        progress.style.setProperty('--progress', progressPercent);
+      }
+    }
+
+    const elapsedLabel = formatTime(safeCurrent);
+    if (elapsedTime && elapsedTime.textContent !== elapsedLabel) elapsedTime.textContent = elapsedLabel;
+
+    const durationLabel = formatTime(safeTotal);
+    if (durationTime && durationTime.textContent !== durationLabel) durationTime.textContent = durationLabel;
+
+    if (miniProgress && miniProgress.style.width !== progressPercent) miniProgress.style.width = progressPercent;
+  }
+
+  function resetPlaybackState(song, id, generation, { resume = true } = {}) {
+    activeRequestGeneration = generation;
+    activeVideoId = id;
+    const logicalStart = resume ? restoreElapsed(song) : 0;
+    setPlaying(false);
+    setProgressState(logicalStart, Math.max(0, Number(song?.durationSeconds || 0)));
+    try {
+      if ('mediaSession' in navigator) navigator.mediaSession.setPositionState();
+    } catch {
+      // Clearing stale position state is optional in partial Media Session implementations.
+    }
+    window.dispatchEvent(new CustomEvent('garba:youtube-selection-reset', {
+      detail: Object.freeze({ generation, songId: song?.id || null, videoId: id, position: logicalStart }),
+    }));
+    return logicalStart;
+  }
+
+  function providerEventIsCurrent(event, generation, expectedPlayer) {
+    if (generation !== playerGeneration || expectedPlayer !== player || event?.target !== expectedPlayer) return false;
+    if (!activeSong || !activeVideoId) return false;
+    let observedVideoId = '';
+    try { observedVideoId = String(expectedPlayer.getVideoData?.().video_id || '').trim(); }
+    catch { return false; }
+    return Boolean(observedVideoId) && observedVideoId === activeVideoId;
+  }
+
   function elapsed() {
     if (!player || !activeSong) return 0;
     try { return Math.max(0, Number(player.getCurrentTime?.() || 0) - baseStart); }
@@ -178,28 +230,32 @@
     }
   }
 
-  function syncProgress() {
-    if (!player || !activeSong) return;
+  function syncProgress(expectedRequestGeneration = activeRequestGeneration) {
+    if (expectedRequestGeneration !== activeRequestGeneration || !player || !activeSong) return;
+    if (typeof player.getVideoData === 'function') {
+      let observedVideoId = '';
+      try { observedVideoId = String(player.getVideoData()?.video_id || '').trim(); }
+      catch { return; }
+      if (!observedVideoId || observedVideoId !== activeVideoId) return;
+    }
     const current = elapsed();
     const total = duration();
-    const ratio = total > 0 ? Math.min(1, Math.max(0, current / total)) : 0;
-
-    if (progress) {
-      progress.value = String(Math.round(ratio * 1000));
-      progress.style.setProperty('--progress', `${ratio * 100}%`);
-    }
-    if (elapsedTime) elapsedTime.textContent = formatTime(current);
-    if (durationTime && total > 0) durationTime.textContent = formatTime(total);
-    if (miniProgress) miniProgress.style.width = `${ratio * 100}%`;
+    setProgressState(current, total);
     persistPosition(current);
 
     if ('mediaSession' in navigator && total > 0) {
       try {
-        navigator.mediaSession.setPositionState({
-          duration: Math.max(1, total),
-          playbackRate: Number(player.getPlaybackRate?.() || 1),
-          position: Math.min(Math.max(0, current), total),
-        });
+        const playbackRate = Number(player.getPlaybackRate?.() || 1);
+        const position = Math.min(Math.max(0, current), total);
+        const positionKey = `${Math.max(1, total)}:${playbackRate}:${Math.floor(position)}`;
+        if (positionKey !== lastMediaSessionPositionKey) {
+          navigator.mediaSession.setPositionState({
+            duration: Math.max(1, total),
+            playbackRate,
+            position,
+          });
+          lastMediaSessionPositionKey = positionKey;
+        }
       } catch {
         // Position state is optional.
       }
@@ -208,10 +264,10 @@
     if (trackDuration > 0 && playerState === states().PLAYING && current >= trackDuration - 0.3) advance();
   }
 
-  function startPolling() {
+  function startPolling(expectedRequestGeneration = activeRequestGeneration) {
     clearInterval(pollTimer);
     pollTimer = setInterval(syncProgress, 350);
-    syncProgress();
+    syncProgress(expectedRequestGeneration);
   }
 
   function stopPolling() {
@@ -281,33 +337,39 @@
     document.querySelector('#providerStage.open[aria-hidden="false"] #providerDockStop')?.click();
   }
 
-  function handlePlayerStateChange(event) {
+  function handlePlayerStateChange(event, generation, expectedPlayer) {
+    if (!providerEventIsCurrent(event, generation, expectedPlayer)) return;
+    const requestGeneration = activeRequestGeneration;
     playerState = Number(event.data);
     const s = states();
     if (playerState === s.PLAYING) {
       setPlaying(true);
       setNote('YouTube · playing in GARBA');
-      startPolling();
+      startPolling(requestGeneration);
     } else if (playerState === s.BUFFERING) {
+      setPlaying(false);
       setNote('YouTube · buffering', { loading: true });
-      startPolling();
+      startPolling(requestGeneration);
     } else if (playerState === s.PAUSED || playerState === s.CUED) {
       setPlaying(false);
-      setNote('YouTube · paused');
-      syncProgress();
+      setNote(playerState === s.CUED ? 'YouTube · ready' : 'YouTube · paused');
+      syncProgress(requestGeneration);
     } else if (playerState === s.ENDED) {
       setPlaying(false);
-      syncProgress();
+      syncProgress(requestGeneration);
       advance();
     }
   }
 
-  function handleAutoplayBlocked() {
+  function handleAutoplayBlocked(event, generation, expectedPlayer) {
+    if (!providerEventIsCurrent(event, generation, expectedPlayer)) return;
     setPlaying(false);
+    stopPolling();
     setNote('Tap Play to start YouTube playback', { needsTap: true });
   }
 
-  function handlePlayerError(event) {
+  function handlePlayerError(event, generation, expectedPlayer) {
+    if (!providerEventIsCurrent(event, generation, expectedPlayer)) return;
     setPlaying(false);
     stopPolling();
     const code = Number(event.data || 0);
@@ -328,6 +390,7 @@
     playerReadyPromise = null;
     playerReadyReject = null;
     playerState = -1;
+    lastMediaSessionPositionKey = '';
     try { currentPlayer?.destroy?.(); } catch { /* already detached */ }
     try { rejectReady?.(new Error('YouTube player initialisation cancelled')); } catch { /* already settled */ }
   }
@@ -387,9 +450,9 @@
               playerReadyReject = null;
               resolve(createdPlayer);
             },
-            onStateChange: handlePlayerStateChange,
-            onAutoplayBlocked: handleAutoplayBlocked,
-            onError: handlePlayerError,
+            onStateChange: (event) => handlePlayerStateChange(event, generation, createdPlayer),
+            onAutoplayBlocked: (event) => handleAutoplayBlocked(event, generation, createdPlayer),
+            onError: (event) => handlePlayerError(event, generation, createdPlayer),
           },
         });
         player = createdPlayer;
@@ -408,11 +471,14 @@
 
   function close() {
     openToken += 1;
+    activeRequestGeneration = openToken;
+    activeVideoId = '';
     destroyPlayer();
     activeSong = null;
     baseStart = 0;
     trackDuration = 0;
     lastPersistedSecond = -1;
+    lastMediaSessionPositionKey = '';
     advanceLock = false;
     continueAfterNavigation = false;
     const stage = $('youtubeStage');
@@ -420,6 +486,12 @@
     stage?.setAttribute('aria-hidden', 'true');
     $('youtubeProviderMedia')?.replaceChildren();
     setPlaying(false);
+    setProgressState(0, 0);
+    try {
+      if ('mediaSession' in navigator) navigator.mediaSession.setPositionState();
+    } catch {
+      // Position state clearing is optional.
+    }
   }
 
   function restoreElapsed(song) {
@@ -447,8 +519,9 @@
     trackDuration = Math.max(0, Number(song.durationSeconds || 0));
     playerState = -1;
     lastPersistedSecond = -1;
+    lastMediaSessionPositionKey = '';
     advanceLock = false;
-    setPlaying(false);
+    const logicalStart = resetPlaybackState(song, id, token, { resume });
 
     const stage = ensureStage();
     const openLink = $('youtubeDockOpen');
@@ -462,9 +535,8 @@
 
     try {
       const readyPlayer = await ensurePlayer(id, token);
-      if (token !== openToken || activeSong?.id !== song.id) return false;
+      if (token !== openToken || activeRequestGeneration !== token || activeSong?.id !== song.id) return false;
 
-      const logicalStart = resume ? restoreElapsed(song) : 0;
       const startSeconds = baseStart + logicalStart;
       const endSeconds = trackDuration > 0 ? baseStart + trackDuration : undefined;
       const request = { videoId: id, startSeconds };
@@ -474,12 +546,12 @@
       else readyPlayer.cueVideoById(request);
 
       stage.classList.remove('is-loading');
-      syncProgress();
       return true;
     } catch (error) {
-      if (token !== openToken) return false;
+      if (token !== openToken || activeRequestGeneration !== token) return false;
       console.warn('GARBA YouTube engine failed to initialise', error);
       stage.classList.remove('is-loading');
+      setPlaying(false);
       setNote('YouTube player could not initialise. Use Open YouTube.', { needsTap: true });
       return false;
     }
@@ -506,6 +578,7 @@
     const safe = Math.max(0, total > 0 ? Math.min(Number(logicalSeconds || 0), total) : Number(logicalSeconds || 0));
     try {
       player.seekTo(baseStart + safe, true);
+      lastMediaSessionPositionKey = '';
       syncProgress();
       return true;
     } catch {
@@ -665,6 +738,7 @@
     seekTo,
     toggle,
     get activeSongId() { return activeSong?.id || null; },
+    get requestGeneration() { return activeRequestGeneration; },
     get playing() { return playerState === states().PLAYING; },
   };
 })();
