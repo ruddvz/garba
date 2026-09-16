@@ -77,7 +77,7 @@ function sameHttpResourceIgnoringFragment(left, right) {
 }
 
 function hostMatches(hostname, suffix) {
-  const host = hostname.toLowerCase().replace(/^www\./, '')
+  const host = String(hostname || '').toLowerCase().replace(/\.$/, '').replace(/^www\./, '')
   const target = suffix.toLowerCase()
   return host === target || host.endsWith(`.${target}`)
 }

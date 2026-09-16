@@ -19,6 +19,7 @@ const requiredRootFiles = new Set([
   '.gitignore',
   'CNAME',
   'CONTRIBUTING.md',
+  'EXECUTION-LEDGER.md',
   'README.md',
   'app.js',
   'index.html',
@@ -35,10 +36,10 @@ const requiredRootFiles = new Set([
   'sw.js',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles']);
+const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
-  if (entry.name === '.git') continue;
+  if (entry.name === '.git' || entry.name === 'node_modules') continue;
   if (entry.isDirectory()) {
     if (!allowedRootDirs.has(entry.name)) fail(`Unexpected root directory: ${entry.name}`);
     continue;

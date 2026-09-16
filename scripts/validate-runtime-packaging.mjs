@@ -110,10 +110,19 @@ for (const marker of [
   'font-family="GFS Didot',
   'id="text-backdrop"',
   'feDropShadow',
-  '>PlayGarba.com</text>',
+  '>Play<tspan fill="#f2c744">Garba</tspan>.com</text>',
   '>All the Garba in the world.</text>',
 ]) {
   if (!socialSource.includes(marker)) fail(`Social preview source is missing: ${marker}`);
+}
+if (socialSource.includes('All Garba there is in the world')) {
+  fail('Social preview source must not contain retired tagline copy');
+}
+if (socialSource.includes('Validation compatibility for')) {
+  fail('Social preview source must not rely on hidden validation compatibility markers');
+}
+if (socialSource.includes('>PlayGarba.com</text>')) {
+  fail('Social preview headline must use the current split Play/Garba/.com structure');
 }
 const imageUrl = 'https://playgarba.com/assets/social/garba-og-card.png';
 for (const marker of [
@@ -309,8 +318,10 @@ for (const file of [
 if (/['"]\.\/styles\/[^'"]+['"]/.test(sw)) {
   fail('PWA CORE_SHELL must not precache source CSS layers that Pages does not deploy');
 }
-if (!sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v15`")) {
-  fail('PWA cache generation must be v15 after consolidating the canonical apex origin and Explore route');
+const cacheGenerationMatch = sw.match(/const CACHE_NAME = `\$\{CACHE_PREFIX\}v(\d+)`;/);
+const cacheGeneration = Number(cacheGenerationMatch?.[1]);
+if (!Number.isInteger(cacheGeneration) || cacheGeneration < 16) {
+  fail('PWA cache generation must be v16 or newer so an incoming worker can build a complete live cache before retiring the active generation');
 }
 
 if (failed) process.exit(1);

@@ -4,6 +4,7 @@
     {
       "id": "set-deshi-sanedo-nonstop-2020",
       "title": "Deshi Sanedo - Non Stop",
+      "displayTitle": "Deshi Sanedo - Nonstop",
       "artists": ["Jayesh Barot"],
       "year": 2020,
       "series": "Sanedo",
@@ -20,6 +21,7 @@
     {
       "id": "set-tophani-sanedo-2017",
       "title": "Tophani Sanedo - Non Stop Gujarati Garba",
+      "displayTitle": "Tophani Sanedo - Nonstop Gujarati Garba",
       "artists": ["Mahesh Singh Chauhan"],
       "year": 2017,
       "series": "Sanedo",

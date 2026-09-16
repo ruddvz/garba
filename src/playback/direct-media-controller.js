@@ -692,15 +692,13 @@
 
     function destroy() {
       if (destroyed) return false;
+      const intent = state.songId
+        ? { type: 'clear', songId: state.songId, generation: state.generation }
+        : { type: 'clear' };
+      planAndExecute(intent, { lifecycleDecision: null, mediaSessionPolicy: null });
       destroyed = true;
       for (const [type, handler] of listeners) mediaElement.removeEventListener(type, handler);
       listeners.clear();
-      executeCommand({
-        op: 'clear-media-session',
-        songId: state.songId,
-        generation: state.generation,
-        reason: 'controller-destroyed',
-      });
       return true;
     }
 

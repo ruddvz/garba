@@ -404,8 +404,9 @@ jobs:
                 `**Scope:** ${state.active.scope}`,
                 `**Files:** ${state.active.files}`,
                 state.conflicts.length
-                  ? `**Conflicts:** ${state.conflicts.length} later claim(s) rejected until release.`
-                  : '**Conflicts:** None',
+                  ? `**Same-issue claim conflicts:** ${state.conflicts.length} later claim(s) rejected until release.`
+                  : '**Same-issue claim conflicts:** None',
+                '**Cross-issue file ownership:** See the separate cross-issue file-ownership status on this issue.',
                 '',
                 `Claim event: comment ${state.active.commentId}.`,
               ].join('\n');

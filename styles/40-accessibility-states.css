@@ -162,6 +162,77 @@
   }
 }
 
+/* Windows/Edge High Contrast replaces author colours with system colours. Keep the
+   open control language, but make interaction, selection and focus explicit without
+   relying on translucency, accent colour or opacity alone. */
+@media (forced-colors: active) {
+  .retry-catalogue,
+  .sheet-close,
+  .install-actions button {
+    border: 1px solid ButtonText !important;
+    background: Canvas !important;
+    color: ButtonText !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .browse-button {
+    color: LinkText !important;
+    opacity: 1 !important;
+    text-decoration: underline;
+    text-underline-offset: .24em;
+  }
+
+  .song-copy {
+    color: ButtonText !important;
+    opacity: 1 !important;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+  }
+
+  html body .app .utilities .icon-button,
+  html body .app .utilities .mobile-heart,
+  html body .app .transport,
+  html body .app .play-button,
+  html body .app #genreStrip .genre-button[data-genre],
+  html body .app #genreStrip #nonstopButton {
+    color: ButtonText !important;
+    opacity: 1 !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+
+  html body .app #genreStrip .genre-button[data-genre].active,
+  html body .app #genreStrip #nonstopButton.active,
+  html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton {
+    border-bottom: 2px solid Highlight !important;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: .35em;
+  }
+
+  .progress:disabled {
+    color: GrayText !important;
+    opacity: 1 !important;
+  }
+
+  .retry-catalogue:focus-visible,
+  .browse-button:focus-visible,
+  .sheet-close:focus-visible,
+  .song-copy:focus-visible,
+  .install-actions button:focus-visible,
+  html body .app .utilities .icon-button:focus-visible,
+  html body .app .utilities .mobile-heart:focus-visible,
+  html body .app .transport:focus-visible,
+  html body .app .play-button:focus-visible,
+  html body .app #genreStrip .genre-button[data-genre]:focus-visible,
+  html body .app #genreStrip #nonstopButton:focus-visible {
+    outline: 2px solid Highlight !important;
+    outline-offset: 3px;
+  }
+}
+
 /* Apple platforms expose a reduced-transparency preference. Keep the same hierarchy,
    but trade glass/blur for opaque-enough surfaces and cheaper compositing. Browsers
    that do not support this media feature simply ignore the block. */

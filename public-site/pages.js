@@ -44,8 +44,18 @@
       title: 'Desktop browser detected',
       copy: browser === 'edge'
         ? 'In Edge, open the live player and use Settings and more → More tools → Apps → Install this site as an app.'
-        : 'In Chrome, open the live player and use the Install icon or More → Cast, save, and share → Install page as app.',
-      badge: browser === 'edge' ? 'Edge route' : 'Desktop route',
+        : browser === 'safari'
+          ? 'In Safari on Mac, open the live player, then use Share → Add to Dock.'
+          : browser === 'chrome'
+            ? 'In Chrome, open the live player and use the Install icon or More → Cast, save, and share → Install page as app.'
+            : 'Use your browser’s install or create-shortcut option if available. On Mac, Safari supports Share → Add to Dock; Chrome and Edge also provide site-install options on supported desktop systems.',
+      badge: browser === 'edge'
+        ? 'Edge route'
+        : browser === 'safari'
+          ? 'Safari route'
+          : browser === 'chrome'
+            ? 'Chrome route'
+            : 'Browser-dependent',
     },
   };
 

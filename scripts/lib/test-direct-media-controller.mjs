@@ -225,12 +225,81 @@ assert.deepEqual([...MEDIA_EVENTS], [
 }
 
 {
-  const { controller, mediaElement } = setup();
+  const { controller, mediaElement, mediaSession, plannerCalls } = setup();
   for (const type of MEDIA_EVENTS) assert.equal(mediaElement.addCounts.get(type), 1, `${type} listener must attach once`);
   assert.equal(controller.getState().phase, 'idle');
-  controller.destroy();
+  assert.equal(controller.destroy(), true);
+  assert.deepEqual(plannerCalls.at(-1).intent, { type: 'clear' }, 'idle destroy must still use planner clear');
+  assert.equal(plannerCalls.at(-1).binding, null, 'idle destroy must not manufacture a media binding');
+  assert.deepEqual(mediaElement.operations, [], 'idle destroy must not manufacture transport work');
+  assert.equal(mediaSession.metadata, null);
+  assert.equal(mediaSession.playbackState, 'none');
+  assert.equal(mediaSession.handlers.size, 0);
   for (const type of MEDIA_EVENTS) assert.equal(mediaElement.removeCounts.get(type), 1, `${type} listener must be removed once`);
+  const plannerCount = plannerCalls.length;
   assert.equal(controller.destroy(), false, 'destroy is idempotent');
+  assert.equal(plannerCalls.length, plannerCount, 'repeated destroy must not plan again');
+  for (const type of MEDIA_EVENTS) assert.equal(mediaElement.removeCounts.get(type), 1, `${type} listener must only be removed once`);
+}
+
+{
+  const { controller, mediaElement, mediaSession, plannerCalls } = setup();
+  controller.select({ resolution: resolution('song-a'), identity: identity('song-a'), generation: 1, capabilities: fullCapabilities });
+  mediaElement.emit('loadedmetadata', { currentSrc: mediaElement.src, duration: 120, currentTime: 10 });
+  mediaElement.emit('playing', { currentTime: 10 });
+  const oldUrl = mediaElement.src;
+  mediaElement.operations.length = 0;
+  const plannerCount = plannerCalls.length;
+
+  assert.equal(controller.destroy(), true);
+  assert.equal(plannerCalls.length, plannerCount + 1, 'destroy must plan exactly one teardown');
+  assert.deepEqual(plannerCalls.at(-1).intent, { type: 'clear', songId: 'song-a', generation: 1 });
+  assert.deepEqual(plannerCalls.at(-1).binding, { songId: 'song-a', generation: 1, sourceUrl: oldUrl });
+  assert.deepEqual(mediaElement.operations, ['pause', 'clear-source', 'load'], 'destroy must execute planner pause/clear/load order');
+  assert.equal(mediaElement.operations.includes(`bind:${oldUrl}`), false, 'destroy cleanup must never rebind the old source');
+  assert.equal(mediaElement.src, '');
+  assert.equal(mediaSession.metadata, null);
+  assert.equal(mediaSession.playbackState, 'none');
+  assert.equal(mediaSession.handlers.size, 0);
+  for (const type of MEDIA_EVENTS) assert.equal(mediaElement.removeCounts.get(type), 1, `${type} listener must be removed once`);
+
+  const operationsAfterDestroy = mediaElement.operations.length;
+  const plannerCallsAfterDestroy = plannerCalls.length;
+  assert.equal(controller.play(), false);
+  assert.equal(controller.pause(), false);
+  assert.equal(controller.stop(), false);
+  assert.equal(controller.seekTo(20), false);
+  assert.equal(controller.markUnavailable('post-destroy'), false);
+  assert.equal(controller.reset(2), false);
+  assert.equal(controller.select({ resolution: resolution('song-b'), identity: identity('song-b'), generation: 2, capabilities: fullCapabilities }), false);
+  assert.equal(controller.reconcileLifecycle('hidden'), null);
+  assert.equal(mediaElement.operations.length, operationsAfterDestroy, 'commands after destroy must not mutate transport');
+  assert.equal(plannerCalls.length, plannerCallsAfterDestroy, 'commands after destroy must not reach planner');
+  assert.equal(controller.destroy(), false);
+  for (const type of MEDIA_EVENTS) assert.equal(mediaElement.removeCounts.get(type), 1, `${type} listener must only be removed once`);
+}
+
+{
+  const { controller, mediaElement, mediaSession, plannerCalls } = setup();
+  controller.select({ resolution: resolution('song-a'), identity: identity('song-a'), generation: 1, capabilities: fullCapabilities });
+  mediaElement.emit('playing', { currentSrc: mediaElement.src, currentTime: 3 });
+  const staleUrl = 'https://audio.playgarba.example/stale/master.m4a';
+  mediaElement.src = staleUrl;
+  mediaElement.currentSrc = staleUrl;
+  mediaElement.operations.length = 0;
+  const pauseCalls = mediaElement.pauseCalls;
+  const loadCalls = mediaElement.loadCalls;
+
+  assert.equal(controller.destroy(), true);
+  assert.deepEqual(plannerCalls.at(-1).intent, { type: 'clear', songId: 'song-a', generation: 1 });
+  assert.equal(plannerCalls.at(-1).binding, null, 'stale observed source must not be represented as the authoritative binding');
+  assert.deepEqual(mediaElement.operations, [], 'stale binding destroy must fail closed instead of touching the wrong source');
+  assert.equal(mediaElement.src, staleUrl);
+  assert.equal(mediaElement.pauseCalls, pauseCalls);
+  assert.equal(mediaElement.loadCalls, loadCalls);
+  assert.equal(mediaSession.metadata, null);
+  assert.equal(mediaSession.playbackState, 'none');
+  assert.equal(mediaSession.handlers.size, 0);
 }
 
 {
@@ -574,18 +643,27 @@ assert.deepEqual([...MEDIA_EVENTS], [
   const seekBody = source.match(/function seekTo\(target\) \{([\s\S]*?)\n    \}\n\n    function stop/);
   const selectBody = source.match(/function select\([^]*?\) \{([\s\S]*?)\n    \}\n\n    function play/);
   const unavailableBody = source.match(/function markUnavailable\([^]*?\) \{([\s\S]*?)\n    \}\n\n    function reset/);
+  const destroyBody = source.match(/function destroy\(\) \{([\s\S]*?)\n    \}\n\n    return Object\.freeze/);
   assert.ok(playBody && playBody[1].includes('planAndExecute'), 'play must delegate to planner');
   assert.ok(pauseBody && pauseBody[1].includes('planAndExecute'), 'pause must delegate to planner');
   assert.ok(seekBody && seekBody[1].includes('planAndExecute'), 'seek must delegate to planner');
   assert.ok(selectBody && selectBody[1].includes("planAndExecute({ type: 'sync-source', songId: state.songId, generation: state.generation })"), 'selection must delegate generation-scoped source sync to planner');
   assert.ok(unavailableBody && unavailableBody[1].includes("{ type: 'clear', songId: state.songId, generation: state.generation }"), 'unavailable transition must delegate exact-identity clear to planner');
   assert.equal(unavailableBody[1].includes('syncMediaSessionThroughPlanner'), false, 'unavailable transition must not retain the bound source through source sync');
+  assert.ok(destroyBody && destroyBody[1].includes('planAndExecute'), 'destroy must delegate teardown to planner');
+  assert.ok(destroyBody[1].includes("{ type: 'clear', songId: state.songId, generation: state.generation }"), 'destroy must send exact active identity to planner clear');
+  assert.equal(destroyBody[1].indexOf('planAndExecute') < destroyBody[1].indexOf('destroyed = true'), true, 'destroy must plan cleanup before controller teardown');
+  assert.equal(destroyBody[1].indexOf('planAndExecute') < destroyBody[1].indexOf('removeEventListener'), true, 'destroy must execute planned cleanup before listener teardown');
   assert.equal(playBody[1].includes('mediaElement.play'), false, 'play method must not execute media directly');
   assert.equal(pauseBody[1].includes('mediaElement.pause'), false, 'pause method must not execute media directly');
   assert.equal(seekBody[1].includes('mediaElement.currentTime'), false, 'seek method must not execute media directly');
   assert.equal(selectBody[1].includes('mediaElement.src'), false, 'selection must not bind source directly');
   assert.equal(unavailableBody[1].includes('mediaElement.pause'), false, 'unavailable transition must not pause media outside planner execution');
   assert.equal(unavailableBody[1].includes('mediaElement.src'), false, 'unavailable transition must not clear media outside planner execution');
+  assert.equal(destroyBody[1].includes('mediaElement.pause'), false, 'destroy must not pause media outside planner execution');
+  assert.equal(destroyBody[1].includes('mediaElement.src'), false, 'destroy must not mutate media source outside planner execution');
+  assert.equal(destroyBody[1].includes('removeAttribute'), false, 'destroy must not clear media source outside planner execution');
+  assert.equal(destroyBody[1].includes('executeCommand('), false, 'destroy must not bypass the canonical planner');
 
   for (const forbidden of [
     'new Audio(',

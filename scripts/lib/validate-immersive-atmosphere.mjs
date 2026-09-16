@@ -34,6 +34,59 @@ for (const marker of [
 }
 
 for (const marker of [
+  '<h2 id="atmosphereTitle">Garba Atmosphere</h2>',
+  'class="atmosphere-test"',
+  'aria-label="Test Garba Atmosphere"',
+  'class="atmosphere-headphone-icon"',
+  'class="atmosphere-status" role="status" aria-live="polite"',
+  '.atmosphere-status{position:absolute!important;width:1px!important;',
+  'type="range" min="5" max="100" step="5"',
+  'setTimeout(() => stopPreview({ announce: false }), 6000)',
+  'if (state.previewActive) { stopPreview(); return; }',
+  'if (active) stopPreview({ announce: false });',
+  'if (!profile?.crowd || constrainedConnection()) return;',
+  "state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;",
+]) {
+  if (!runtime.includes(marker)) fail(`Compact Atmosphere/Test contract is missing: ${marker}`);
+}
+
+for (const retired of [
+  'Place a subtle venue layer beneath the song',
+  'Live Ground can add a very quiet public-domain',
+  'Paused with the music',
+  '>Headphones<',
+]) {
+  if (runtime.includes(retired)) fail(`Retired Atmosphere panel copy returned: ${retired}`);
+}
+if (runtime.includes('state.previewActive || constrainedConnection()')) {
+  fail('Test preview must not suppress the selected crowd bed');
+}
+if (/\bIndoor\b|\bOutdoor\b/.test(runtime)) {
+  fail('Provider-backed playback must not expose fake source-processing Soundstage modes');
+}
+
+const setModeStart = runtime.indexOf('async function setMode(');
+const syncPlaybackStart = runtime.indexOf('function syncPlaybackState()', setModeStart);
+if (setModeStart < 0 || syncPlaybackStart <= setModeStart) {
+  fail('Atmosphere mode/playback synchronisation functions are missing');
+} else {
+  const setModeSource = runtime.slice(setModeStart, syncPlaybackStart);
+  if (setModeSource.includes('previewCurrentMode(')) {
+    fail('Selecting an Atmosphere mode while paused must not auto-preview it');
+  }
+  if (!setModeSource.includes('if (state.playbackActive) await buildScene({ smooth: true });\n    else scheduleIdleSuspend();')) {
+    fail('Mode selection must follow real playback and otherwise stay quiet');
+  }
+}
+
+const syncPlaybackSource = syncPlaybackStart >= 0
+  ? runtime.slice(syncPlaybackStart, runtime.indexOf('function trustedPlaybackUnlock(', syncPlaybackStart))
+  : '';
+if (!syncPlaybackSource.includes('} else if (!state.previewActive) {\n      applyMasterLevel({ quick: true });\n      scheduleIdleSuspend();')) {
+  fail('Ordinary pause must silence Atmosphere unless an explicit Test is active');
+}
+
+for (const marker of [
   'function loadAtmosphereRuntime()',
   "script.src = 'assets/runtime/immersive-atmosphere.js'",
   'loadAtmosphereRuntime();',
@@ -62,4 +115,4 @@ for (const marker of [
 }
 
 if (failed) process.exit(1);
-console.log('✓ Garba Atmosphere runtime, source policy, visible boot path and PWA packaging are coherent');
+console.log('✓ Garba Atmosphere compact UI, Test playback, source policy, visible boot path and PWA packaging are coherent');

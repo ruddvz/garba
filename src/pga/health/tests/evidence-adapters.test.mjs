@@ -284,6 +284,86 @@ test('duplicate check names select the newest applicable run deterministically',
   assert.equal(evidence.details.checks[0].conclusion, 'success')
 })
 
+test('equal-timestamp duplicate checks use only real numeric run IDs as identity', () => {
+  const completedAt = '2026-09-09T21:45:00Z'
+  const evidence = requiredChecksEvidence({
+    checkRunsPayload: {
+      check_runs: [
+        run({ id: 11, name: 'Validate GARBA', conclusion: 'failure', completedAt }),
+        run({ id: 12, name: 'Validate GARBA', conclusion: 'success', completedAt }),
+      ],
+    },
+    requiredChecks: ['Validate GARBA'],
+    checkedAt: NOW,
+  })
+
+  assert.equal(evidence.status, 'healthy')
+  assert.equal(evidence.details.checks[0].id, 12)
+})
+
+test('coercible or malformed run IDs cannot outrank a valid equal-timestamp run', () => {
+  const completedAt = '2026-09-09T21:45:00Z'
+  const malformedIds = [
+    '999',
+    true,
+    false,
+    11.5,
+    0,
+    -1,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    null,
+  ]
+
+  for (const malformedId of malformedIds) {
+    const evidence = requiredChecksEvidence({
+      checkRunsPayload: {
+        check_runs: [
+          run({ id: 11, name: 'Validate GARBA', conclusion: 'success', completedAt }),
+          run({ id: malformedId, name: 'Validate GARBA', conclusion: 'failure', completedAt }),
+        ],
+      },
+      requiredChecks: ['Validate GARBA'],
+      checkedAt: NOW,
+    })
+
+    assert.equal(evidence.status, 'healthy', `malformed run ID ${String(malformedId)} must not outrank numeric ID 11`)
+    assert.equal(evidence.details.checks[0].id, 11)
+  }
+})
+
+test('selected malformed run identity is reported as null without changing check truth', () => {
+  const evidence = requiredChecksEvidence({
+    checkRunsPayload: {
+      check_runs: [run({ id: 'not-a-run-id', name: 'Validate GARBA', conclusion: 'success' })],
+    },
+    requiredChecks: ['Validate GARBA'],
+    checkedAt: NOW,
+  })
+
+  assert.equal(evidence.status, 'healthy')
+  assert.equal(evidence.details.checks[0].id, null)
+})
+
+test('equal-timestamp runs with no valid IDs keep deterministic input-order fallback', () => {
+  const completedAt = '2026-09-09T21:45:00Z'
+  const evidence = requiredChecksEvidence({
+    checkRunsPayload: {
+      check_runs: [
+        run({ id: 'old', name: 'Validate GARBA', conclusion: 'failure', completedAt }),
+        run({ id: 'new', name: 'Validate GARBA', conclusion: 'success', completedAt }),
+      ],
+    },
+    requiredChecks: ['Validate GARBA'],
+    checkedAt: NOW,
+  })
+
+  assert.equal(evidence.status, 'healthy')
+  assert.equal(evidence.details.checks[0].id, null)
+  assert.equal(evidence.details.checks[0].conclusion, 'success')
+})
+
 test('empty required-check configuration stays unknown', () => {
   const evidence = requiredChecksEvidence({
     checkRunsPayload: { check_runs: [] },
