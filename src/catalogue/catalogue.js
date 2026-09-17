@@ -2,7 +2,6 @@ import '../../assets/runtime/route-readiness.js';
 import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';
 
 const { routeReadiness } = window.GARBA_ROUTE_READINESS;
-await import('./catalogue-ordering.js').catch(() => null);
 
 function fallbackPlayableFirstOrder(songs, { context = 'browse', getAvailabilityTier } = {}) {
   const source = Array.isArray(songs) ? [...songs] : [];

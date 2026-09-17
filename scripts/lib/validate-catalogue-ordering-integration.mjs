@@ -56,7 +56,6 @@ for (const context of ['search', 'selected-release', 'nonstop']) {
 }
 
 assert.match(catalogue, /import '\.\.\/\.\.\/assets\/runtime\/route-readiness\.js';/);
-assert.match(catalogue, /await import\('\.\/catalogue-ordering\.js'\)\.catch\(\(\) => null\);/);
 assert.match(catalogue, /globalThis\.PlayGarbaCatalogueOrdering\?\.orderCatalogueSongs \|\| fallbackPlayableFirstOrder/);
 assert.match(catalogue, /'selected-release', 'search', 'nonstop', 'continuous', 'queue', 'history', 'user-order'/);
 assert.match(catalogue, /return routeReadiness\(song\)\.executable \? 0 : 1;/);
