@@ -68,6 +68,27 @@ store.write({ setId: 'set-b', sourceIdentity: 'youtube:video-b', positionSeconds
 assert.equal(store.list().records.filter((record) => record.setId === 'set-b').length, 1, 'same set must update rather than duplicate');
 assert.equal(store.read('set-b', 'youtube:video-b').record.positionSeconds, 120);
 
+assert.equal(
+  store.write({ setId: 'set-b', sourceIdentity: 'youtube:stale-source', positionSeconds: 200 }).status,
+  'source-mismatch',
+  'late writes from an old source must not replace the active source record',
+);
+assert.equal(
+  store.write({ setId: 'set-b', sourceIdentity: 'youtube:stale-source', positionSeconds: 200, completed: true }).status,
+  'source-mismatch',
+  'late completion from an old source must not clear the active source record',
+);
+assert.equal(store.read('set-b', 'youtube:video-b').record.positionSeconds, 120);
+
+assert.equal(store.read('set-b', 'youtube:video-c').status, 'source-changed');
+assert.equal(store.write({ setId: 'set-b', sourceIdentity: 'youtube:video-c', positionSeconds: 15 }).status, 'stored');
+assert.equal(store.read('set-b', 'youtube:video-c').record.positionSeconds, 15);
+assert.equal(
+  store.write({ setId: 'set-b', sourceIdentity: 'youtube:video-b', positionSeconds: 125 }).status,
+  'source-mismatch',
+  'stale source callbacks must stay blocked after deliberate source migration',
+);
+
 for (const positionSeconds of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
   assert.equal(store.write({ setId: 'bad', sourceIdentity: 'youtube:bad', positionSeconds }).status, 'invalid');
 }
@@ -150,8 +171,8 @@ assert.deepEqual(JSON.parse(completionOnCorruptStorage.dump(NONSTOP_RESUME_STORA
 
 assert.equal(DEFAULT_NONSTOP_RESUME_LIMIT, 8);
 assert.equal(Object.isFrozen(store), true);
-assert.equal(Object.isFrozen(store.read('set-b', 'youtube:video-b')), true);
-assert.equal(Object.isFrozen(store.read('set-b', 'youtube:video-b').record), true);
+assert.equal(Object.isFrozen(store.read('set-b', 'youtube:video-c')), true);
+assert.equal(Object.isFrozen(store.read('set-b', 'youtube:video-c').record), true);
 
 const sourcePath = fileURLToPath(new URL('../../src/playback/nonstop-resume-store.js', import.meta.url));
 const source = fs.readFileSync(sourcePath, 'utf8');
