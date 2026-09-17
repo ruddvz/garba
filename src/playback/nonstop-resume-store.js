@@ -165,16 +165,21 @@ export function createNonstopResumeStore({
       return freezeResult({ status: 'invalid', record: null });
     }
 
-    if (completed) {
-      const removed = remove(normalizedSetId);
-      if (removed.status === 'unavailable') return freezeResult({ status: 'unavailable', record: null });
-      return freezeResult({ status: 'completed-cleared', record: null });
-    }
-
     const loaded = load();
     if (loaded.status === 'unavailable') return freezeResult({ status: 'unavailable', record: null });
 
     const entries = loaded.status === 'corrupt' ? [] : loaded.entries;
+    const existing = entries.find((entry) => entry.setId === normalizedSetId);
+    if (existing && existing.sourceIdentity !== normalizedSource) {
+      return freezeResult({ status: 'source-mismatch', record: null });
+    }
+
+    if (completed) {
+      const remaining = entries.filter((entry) => entry.setId !== normalizedSetId);
+      if (!persist(remaining)) return freezeResult({ status: 'unavailable', record: null });
+      return freezeResult({ status: 'completed-cleared', record: null });
+    }
+
     const record = {
       setId: normalizedSetId,
       sourceIdentity: normalizedSource,
