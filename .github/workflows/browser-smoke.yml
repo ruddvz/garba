@@ -107,12 +107,14 @@ jobs:
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _smoke/catalogue/
           cp \
             src/catalogue/index.html \
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _smoke/explore/
 
           # The full generated catalogue was already validated above. Browser smoke is a
