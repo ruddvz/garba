@@ -39,7 +39,6 @@ const state = {
   toastTimer: null,
   transitionToken: 0,
   installPrompt: null,
-  installTimer: null,
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   lastPersistedElapsed: -1,
   catalogueSignature: '',
@@ -1142,8 +1141,21 @@ function installDismissedRecently() {
   return Date.now() - Number(dismissedAt || 0) < 7 * 24 * 60 * 60 * 1000;
 }
 
+function installSurfaceIsBusy() {
+  if (state.sheetSnap !== 'closed') return true;
+  return Boolean(document.querySelector([
+    '#providerStage.open[aria-hidden="false"]',
+    '#youtubeStage.open[aria-hidden="false"]',
+    'dialog[open]',
+    '[role="dialog"][aria-modal="true"]:not([aria-hidden="true"]):not([hidden])',
+  ].join(', ')));
+}
+
 function showInstallBanner({ ios = false } = {}) {
-  if (isStandalone() || installDismissedRecently() || state.sheetSnap !== 'closed') return;
+  if (isStandalone() || installDismissedRecently() || installSurfaceIsBusy()) {
+    els.installBanner.hidden = true;
+    return false;
+  }
   if (ios) {
     els.installTitle.textContent = 'Add GARBA to Home Screen';
     els.installText.textContent = 'In Safari, use Share → Add to Home Screen.';
@@ -1156,14 +1168,67 @@ function showInstallBanner({ ios = false } = {}) {
     els.installButton.dataset.mode = 'prompt';
   }
   els.installBanner.hidden = false;
+  return true;
 }
 
 function setupPwaInstall() {
+  const LISTENING_VALUE_MS = 15000;
+  const LISTENING_VALUE_KEY = 'garba:install-listening-value';
+  const ua = navigator.userAgent;
+  const isIpadDesktopUa = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  const isIos = (/iPad|iPhone|iPod/.test(ua) || isIpadDesktopUa) && !window.MSStream;
+  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  const canOfferIosGuidance = isIos && isSafari && !isStandalone();
+  let hasListeningValue = storage.get(LISTENING_VALUE_KEY, false) === true;
+  let listeningValueTimer = null;
+
+  const currentInstallMode = () => {
+    if (canOfferIosGuidance) return 'ios';
+    return state.installPrompt ? 'prompt' : null;
+  };
+
+  const maybeShowInstallBanner = () => {
+    if (!hasListeningValue) {
+      els.installBanner.hidden = true;
+      return;
+    }
+    const mode = currentInstallMode();
+    if (!mode) {
+      els.installBanner.hidden = true;
+      return;
+    }
+    showInstallBanner({ ios: mode === 'ios' });
+  };
+
+  const markListeningValue = () => {
+    if (hasListeningValue) return;
+    hasListeningValue = true;
+    storage.set(LISTENING_VALUE_KEY, true);
+    maybeShowInstallBanner();
+  };
+
+  const reconcileListeningValue = () => {
+    if (hasListeningValue) {
+      maybeShowInstallBanner();
+      return;
+    }
+    const confirmedPlaying = els.app?.classList.contains('is-playing') === true;
+    if (!confirmedPlaying) {
+      clearTimeout(listeningValueTimer);
+      listeningValueTimer = null;
+      return;
+    }
+    if (listeningValueTimer != null) return;
+    listeningValueTimer = setTimeout(() => {
+      listeningValueTimer = null;
+      if (els.app?.classList.contains('is-playing')) markListeningValue();
+    }, LISTENING_VALUE_MS);
+  };
+
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     state.installPrompt = event;
-    clearTimeout(state.installTimer);
-    state.installTimer = setTimeout(() => showInstallBanner(), 5000);
+    maybeShowInstallBanner();
   });
 
   window.addEventListener('appinstalled', () => {
@@ -1191,14 +1256,32 @@ function setupPwaInstall() {
     els.installBanner.hidden = true;
   });
 
-  const ua = navigator.userAgent;
-  const isIpadDesktopUa = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  const isIos = (/iPad|iPhone|iPod/.test(ua) || isIpadDesktopUa) && !window.MSStream;
-  const isSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
-  if (isIos && isSafari && !isStandalone()) {
-    clearTimeout(state.installTimer);
-    state.installTimer = setTimeout(() => showInstallBanner({ ios: true }), 7000);
+  if (els.app && 'MutationObserver' in window) {
+    const playingObserver = new MutationObserver(reconcileListeningValue);
+    playingObserver.observe(els.app, { attributes: true, attributeFilter: ['class'] });
   }
+
+  if ('MutationObserver' in window) {
+    const blockerObserver = new MutationObserver(maybeShowInstallBanner);
+    const blockers = [
+      els.songSheet,
+      document.getElementById('providerStage'),
+      document.getElementById('youtubeStage'),
+      ...document.querySelectorAll('dialog, [role="dialog"]'),
+    ].filter((node, index, nodes) => node && nodes.indexOf(node) === index);
+    blockers.forEach((node) => blockerObserver.observe(node, {
+      attributes: true,
+      attributeFilter: ['class', 'aria-hidden', 'hidden', 'open'],
+    }));
+  }
+
+  document.addEventListener('click', () => setTimeout(maybeShowInstallBanner, 0));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setTimeout(maybeShowInstallBanner, 0);
+  });
+
+  reconcileListeningValue();
+  maybeShowInstallBanner();
 }
 
 function registerServiceWorker() {
