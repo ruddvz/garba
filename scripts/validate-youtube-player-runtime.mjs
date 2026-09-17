@@ -37,6 +37,13 @@ const requiredRuntimeSignals = [
   'let playerGeneration = 0;',
   'let activeRequestGeneration = 0;',
   "let activeVideoId = '';",
+  'let retryCount = 0;',
+  'const MAX_RECOVERY_RETRIES = 2;',
+  'id="youtubeDockRetry"',
+  'id="youtubeDockChoose"',
+  'function retryActive()',
+  'function chooseAnother()',
+  'function showRecovery(message',
   'function resetPlaybackState(song, id, generation, { resume = true } = {})',
   'function providerEventIsCurrent(event, generation, expectedPlayer)',
   'async function ensurePlayer(initialVideoId, expectedToken)',
@@ -56,7 +63,7 @@ for (const signal of requiredRuntimeSignals) {
   if (!runtime.includes(signal)) fail(`YouTube runtime is missing required signal ${JSON.stringify(signal)}`);
 }
 
-const openBlock = runtime.match(/async function open\(song, \{ autoplay = true, resume = true \} = \{\}\) \{[\s\S]*?\n  \}\n\n  function toggle/)?.[0] || '';
+const openBlock = runtime.match(/async function open\(song, \{ autoplay = true, resume = true, retry = false \} = \{\}\) \{[\s\S]*?\n  \}\n\n  function toggle/)?.[0] || '';
 const closeBlock = runtime.match(/function close\(\) \{[\s\S]*?\n  \}\n\n  function restoreElapsed/)?.[0] || '';
 const destroyBlock = runtime.match(/function destroyPlayer\(\) \{[\s\S]*?\n  \}\n\n  async function ensurePlayer/)?.[0] || '';
 const ensureBlock = runtime.match(/async function ensurePlayer\(initialVideoId, expectedToken\) \{[\s\S]*?\n  \}\n\n  function close/)?.[0] || '';
@@ -64,6 +71,9 @@ const stateHandlerBlock = runtime.match(/function handlePlayerStateChange\(event
 const autoplayHandlerBlock = runtime.match(/function handleAutoplayBlocked\(event, generation, expectedPlayer\) \{[\s\S]*?\n  \}\n\n  function handlePlayerError/)?.[0] || '';
 const errorHandlerBlock = runtime.match(/function handlePlayerError\(event, generation, expectedPlayer\) \{[\s\S]*?\n  \}\n\n  function destroyPlayer/)?.[0] || '';
 const syncBlock = runtime.match(/function syncProgress\(expectedRequestGeneration = activeRequestGeneration\) \{[\s\S]*?\n  \}\n\n  function startPolling/)?.[0] || '';
+const retryBlock = runtime.match(/function retryActive\(\) \{[\s\S]*?\n  \}\n\n  function chooseAnother/)?.[0] || '';
+const chooseBlock = runtime.match(/function chooseAnother\(\) \{[\s\S]*?\n  \}\n\n  function setPlaying/)?.[0] || '';
+const offlineBlock = runtime.match(/window\.addEventListener\('offline', \(\) => \{[\s\S]*?\n  \}\);/)?.[0] || '';
 
 if (!openBlock) fail('Could not inspect YouTube open() lifecycle');
 if (openBlock.includes('destroyPlayer();')) {
@@ -77,6 +87,18 @@ if (!openBlock.includes('resetPlaybackState(song, id, token, { resume })')) {
 }
 if (!openBlock.includes('activeRequestGeneration !== token')) {
   fail('YouTube open() must reject stale async work after a newer selection generation wins');
+}
+if (!openBlock.includes('if (!retry) retryCount = 0;')) {
+  fail('A genuinely new YouTube selection must reset the bounded retry budget');
+}
+if (!openBlock.includes('if (!navigator.onLine)')) {
+  fail('YouTube open() must surface an explicit offline recovery state instead of failing silently');
+}
+if (!openBlock.includes("showRecovery('You are offline. Reconnect, then retry this recording.'")) {
+  fail('Offline YouTube selection must keep an actionable listener-facing recovery message');
+}
+if (!openBlock.includes('/timed out/i.test(reason)')) {
+  fail('YouTube initialisation timeout must be distinguished from generic initialisation failure');
 }
 if (openBlock.includes('stage.classList.remove(\'is-loading\');\n      syncProgress();')) {
   fail('A newly requested recording must not sample stale provider progress before matching provider evidence arrives');
@@ -103,6 +125,7 @@ if (!closeBlock.includes('destroyPlayer();')) {
 for (const marker of [
   'activeRequestGeneration = openToken;',
   "activeVideoId = '';",
+  'retryCount = 0;',
   'setProgressState(0, 0);',
 ]) {
   if (!closeBlock.includes(marker)) fail(`Explicit YouTube Close must clear stale selection state: ${marker}`);
@@ -128,14 +151,43 @@ for (const [block, label] of [
     fail(`YouTube ${label} callback must reject stale player/video evidence before mutating UI state`);
   }
 }
+if (!autoplayHandlerBlock.includes('setPlaying(false);') || !autoplayHandlerBlock.includes("showRecovery('Playback is ready. Tap Play to start this recording.'")) {
+  fail('Autoplay-blocked YouTube state must remain paused and request a real user gesture with persistent recovery UI');
+}
+for (const marker of [
+  'code === 101 || code === 150',
+  'code === 100',
+  'showRecovery(',
+]) {
+  if (!errorHandlerBlock.includes(marker)) fail(`YouTube error recovery must distinguish provider failures: ${marker}`);
+}
+if (!retryBlock) fail('Could not inspect bounded YouTube retry action');
+else {
+  if (!retryBlock.includes('retryCount >= MAX_RECOVERY_RETRIES')) fail('YouTube Retry must have a hard attempt bound');
+  if (!retryBlock.includes('activeRequestGeneration !== generation')) fail('YouTube Retry must reject an older selection generation');
+  if (!retryBlock.includes("open(song, { autoplay: true, resume: true, retry: true })")) fail('YouTube Retry must retry the exact active recording through the normal open lifecycle');
+}
+if (!chooseBlock.includes('continueAfterNavigation = true;') || !chooseBlock.includes("$('nextButton')?.click();")) {
+  fail('Choose another recording must preserve queue/navigation context and advance through the normal player path');
+}
 if (!syncBlock.includes('expectedRequestGeneration !== activeRequestGeneration')) {
   fail('YouTube progress polling must stop stale explicit generations from mutating the new recording');
 }
 if (!syncBlock.includes('observedVideoId !== activeVideoId')) {
   fail('YouTube progress polling must reject a reused iframe until its provider video matches the active selection');
 }
-if (!runtime.includes("window.addEventListener('offline', () => { if (activeSong) close(); });")) {
-  fail('Offline transition must tear down active YouTube playback');
+if (!offlineBlock) fail('Active YouTube playback must handle an offline transition explicitly');
+else {
+  if (!offlineBlock.includes('destroyPlayer();')) fail('Offline transition must tear down the provider iframe while preserving the active recording identity');
+  if (!offlineBlock.includes("showRecovery('You are offline. Reconnect, then retry this recording.'")) fail('Offline transition must keep persistent actionable recovery UI');
+}
+for (const marker of [
+  'role="status" aria-live="polite"',
+  "note.setAttribute('aria-live', assertive ? 'assertive' : 'polite')",
+  'setRecoveryActions({ retry: retry && retryCount < MAX_RECOVERY_RETRIES, choose, open });',
+  'openLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;',
+]) {
+  if (!runtime.includes(marker)) fail(`Persistent YouTube recovery contract missing marker: ${marker}`);
 }
 
 const prohibitedPatterns = [
@@ -261,11 +313,13 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
 
 if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
-console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close/offline tears it down');
+console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close tears it down');
 console.log('✓ concurrent first-load navigation shares readiness and Close during API loading cannot create a hidden iframe afterward');
 console.log('✓ provider callbacks and progress polling are scoped to the active player/video selection before they mutate UI state');
 console.log('✓ a new YouTube selection resets stale elapsed/duration/progress before matching provider evidence arrives');
 console.log('✓ stale player generations cannot resume after teardown');
+console.log('✓ YouTube failures remain visible with bounded Retry, exact Open YouTube and Choose another recording recovery');
+console.log('✓ offline, API timeout, autoplay-blocked, unavailable and embed-disabled states are distinguished without stale retries');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
 console.log('✓ mobile Browse/Search reserves space for the visible YouTube player instead of rendering underneath it');
