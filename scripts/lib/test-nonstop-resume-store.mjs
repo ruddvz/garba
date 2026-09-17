@@ -126,6 +126,13 @@ for (const malformed of [
       { setId: 'set-a', sourceIdentity: 'youtube:a', positionSeconds: 2, durationSeconds: null, updatedAtMs: 2 },
     ],
   },
+  {
+    version: NONSTOP_RESUME_STORE_VERSION,
+    entries: [
+      { setId: 'set-a', sourceIdentity: 'youtube:a', positionSeconds: 1, durationSeconds: null, updatedAtMs: 1 },
+      { setId: ' set-a ', sourceIdentity: 'youtube:b', positionSeconds: 2, durationSeconds: null, updatedAtMs: 2 },
+    ],
+  },
 ]) {
   const malformedStorage = createMemoryStorage({ [NONSTOP_RESUME_STORAGE_KEY]: JSON.stringify(malformed) });
   assert.equal(createNonstopResumeStore({ storage: malformedStorage }).read('set-a', 'youtube:a').status, 'corrupt');
