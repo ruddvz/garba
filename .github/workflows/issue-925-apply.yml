@@ -56,6 +56,7 @@ jobs:
 
       - name: Remove temporary workflow and commit
         run: |
+          # This workflow is a branch-only patch helper and must not survive review.
           rm .github/workflows/issue-925-apply.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
