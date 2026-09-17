@@ -64,6 +64,18 @@ const SUITES = Object.freeze([
       'quality.no-critical-console-error',
     ]),
   }),
+  Object.freeze({
+    id: 'pga-release-browser-evidence',
+    label: 'PGA partial, stale and Health browser release evidence',
+    method: 'browser_automation',
+    commands: Object.freeze([
+      Object.freeze(['scripts/lib/validate-pga-release-browser-evidence.mjs']),
+    ]),
+    itemIds: Object.freeze([
+      'env.partial-stale-analytics',
+      'journey.inspect-health',
+    ]),
+  }),
 ])
 
 const SUITE_BY_ID = new Map(SUITES.map((suite) => [suite.id, suite]))

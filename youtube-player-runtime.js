@@ -599,6 +599,10 @@
   }
 
   function reopenAfterNavigation() {
+    const nonstopOwnsVisibleIdentity = $('app')?.dataset.playMode === 'nonstop'
+      && String(activeSong?.id || '').startsWith('nonstop:');
+    if (nonstopOwnsVisibleIdentity) return;
+
     const next = currentSafeSong();
     if (activeSong && next && next.id !== activeSong.id && !continueAfterNavigation) {
       close();
