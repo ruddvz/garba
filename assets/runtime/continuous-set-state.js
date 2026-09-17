@@ -58,6 +58,18 @@ const GARBA_CONTINUOUS_SET_RUNTIME = true;
     return null;
   }
 
+  let syncingBadge = false;
+  let continuousSyncScheduled = false;
+
+  function scheduleContinuousSync() {
+    if (continuousSyncScheduled) return;
+    continuousSyncScheduled = true;
+    queueMicrotask(() => {
+      continuousSyncScheduled = false;
+      syncContinuousUi();
+    });
+  }
+
   function syncContinuousUi() {
     const song = currentSong();
     if (!isContinuousSong(song)) {
@@ -72,24 +84,40 @@ const GARBA_CONTINUOUS_SET_RUNTIME = true;
     els.app?.setAttribute('data-continuous-set', 'true');
     const genre = currentGenre();
     const setTitle = String(song.playbackContainerTitle || '').trim();
-    if (els.genreEyebrow) els.genreEyebrow.textContent = `${genre?.label || 'Garba'} · Continuous set`;
+    if (els.genreEyebrow) {
+      const eyebrowText = `${genre?.label || 'Garba'} · Continuous set`;
+      if (els.genreEyebrow.textContent !== eyebrowText) {
+        els.genreEyebrow.textContent = eyebrowText;
+      }
+    }
 
     const upcoming = distinctUpNext();
     if (els.queueBadge) {
       const count = upcoming.length;
-      els.queueBadge.textContent = count > 9 ? '9+' : String(count);
-      els.queueBadge.classList.toggle('show', count > 0 && !mobileQuery.matches);
+      const nextText = count > 9 ? '9+' : String(count);
+      const nextShow = count > 0 && !mobileQuery.matches;
+      if (els.queueBadge.textContent !== nextText || els.queueBadge.classList.contains('show') !== nextShow) {
+        syncingBadge = true;
+        try {
+          if (els.queueBadge.textContent !== nextText) els.queueBadge.textContent = nextText;
+          els.queueBadge.classList.toggle('show', nextShow);
+        } finally {
+          queueMicrotask(() => { syncingBadge = false; });
+        }
+      }
     }
     if (els.queueButton) {
       els.queueButton.title = 'After this set';
-      els.queueButton.setAttribute(
-        'aria-label',
-        upcoming.length
-          ? `Show what plays after this continuous set, ${upcoming.length} different recordings`
-          : 'Show what plays after this continuous set'
-      );
+      const buttonAria = upcoming.length
+        ? `Show what plays after this continuous set, ${upcoming.length} different recordings`
+        : 'Show what plays after this continuous set';
+      if (els.queueButton.getAttribute('aria-label') !== buttonAria) {
+        els.queueButton.setAttribute('aria-label', buttonAria);
+      }
     }
-    if (els.trackBlock && setTitle) els.trackBlock.setAttribute('data-continuous-set-title', setTitle);
+    if (els.trackBlock && setTitle && els.trackBlock.getAttribute('data-continuous-set-title') !== setTitle) {
+      els.trackBlock.setAttribute('data-continuous-set-title', setTitle);
+    }
   }
 
   async function selectAdjacentDistinct(direction) {
@@ -223,16 +251,22 @@ const GARBA_CONTINUOUS_SET_RUNTIME = true;
   document.addEventListener('keydown', captureContinuousKeys, { capture: true });
 
   if (els.songTitle) {
-    new MutationObserver(() => queueMicrotask(syncContinuousUi))
+    new MutationObserver(scheduleContinuousSync)
       .observe(els.songTitle, { childList: true, characterData: true, subtree: true });
   }
   if (els.queueBadge) {
     new MutationObserver(() => {
-      if (isContinuousSong()) queueMicrotask(syncContinuousUi);
+      if (syncingBadge) return;
+      if (!isContinuousSong()) return;
+      const upcoming = distinctUpNext();
+      const expectedText = upcoming.length > 9 ? '9+' : String(upcoming.length);
+      if (els.queueBadge.textContent !== expectedText) {
+        scheduleContinuousSync();
+      }
     }).observe(els.queueBadge, { childList: true, characterData: true, subtree: true });
   }
 
-  window.addEventListener('garba:catalogue-ready', () => queueMicrotask(syncContinuousUi));
+  window.addEventListener('garba:catalogue-ready', scheduleContinuousSync);
   window.addEventListener('load', () => setTimeout(bindMediaSession, 40), { once: true });
   setTimeout(() => {
     syncContinuousUi();

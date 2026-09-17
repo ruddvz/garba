@@ -40,8 +40,15 @@ for (const marker of [
   'event.stopImmediatePropagation()',
   "navigator.mediaSession.setActionHandler('nexttrack'",
   "navigator.mediaSession.setActionHandler('previoustrack'",
+  'let syncingBadge = false;',
+  'function scheduleContinuousSync()',
+  'if (syncingBadge) return;',
 ]) {
   if (!continuousRuntime.includes(marker)) fail(`Continuous-set UI runtime is missing marker: ${marker}`);
+}
+
+if (!continuousRuntime.includes('if (els.queueBadge.textContent !== nextText)')) {
+  fail('Continuous-set UI runtime must avoid mutating queueBadge textContent when value is unchanged');
 }
 
 if (!pages.includes('assets/runtime/continuous-set-state.js')) {
