@@ -1,3 +1,5 @@
+import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';
+
 const paths = {
   songs: '../data/songs.json',
   releases: '../data/releases.json',
@@ -908,21 +910,46 @@ function returnToCollections() {
   closeCollection();
 }
 
+function exploreSearchRecord(song) {
+  const release = state.releaseById.get(song.releaseId);
+  return {
+    id: song.id,
+    title: [song.title, song.displayTitle].filter(Boolean),
+    titleAliases: song.aliases,
+    artist: song.artist,
+    artistAliases: song.artistAliases,
+    taxonomyTerms: [
+      song.genre,
+      song.category,
+      ...(song.styles || []),
+      ...(song.taxonomyStyles || []),
+    ],
+    releaseTerms: [
+      release?.title,
+      release?.displayTitle,
+      ...aliasesFor(release),
+      release?.artist,
+      release?.label,
+    ],
+    song,
+  };
+}
+
+function rankExploreSongs(songs, query) {
+  return rankSearchRecords(songs.map(exploreSearchRecord), query)
+    .map(({ record }) => record.song);
+}
+
 function searchCatalogue(query, { updateHistory = true } = {}) {
-  const q = normalise(query);
+  const q = normalizeSearchText(query);
   if (!q) {
     if (updateHistory && history.state?.search) history.back();
     else closeCollection({ updateHash: updateHistory });
     return;
   }
-  const terms = q.split(/\s+/).filter(Boolean);
-  const songs = state.songs.filter((song)=>{
-    const release = state.releaseById.get(song.releaseId);
-    const text = allSongText(song,release);
-    return terms.every((term)=>text.includes(term));
-  });
+  const songs = rankExploreSongs(state.songs, query);
   if (state.active?.id !== 'search') state.returnFocusTarget = searchReturnControl();
-  state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists, aliases, descriptions and release metadata from the PlayGarba catalogue.', songs };
+  state.active = { id:'search', title:`Search: ${query.trim()}`, kicker:'Search results', description:'Matching songs, artists, reviewed aliases, styles and releases from the PlayGarba catalogue.', songs };
   state.activeSongs = songs;
   state.activeReleaseId = null;
   syncBackLabel();
@@ -930,7 +957,7 @@ function searchCatalogue(query, { updateHistory = true } = {}) {
   els.detail.hidden = false;
   els.detailKicker.textContent = 'Search results';
   els.detailTitle.textContent = query.trim();
-  els.detailDescription.textContent = 'Matching songs, artists, aliases, descriptions and albums from the PlayGarba catalogue.';
+  els.detailDescription.textContent = 'Matching songs, artists, reviewed aliases, styles and releases from the PlayGarba catalogue.';
   document.title = `Search “${query.trim()}” · PlayGarba`;
   syncShareLabel(`search results for ${query.trim()}`);
   replaceDetailMeta([`${songs.length.toLocaleString()} matches`]);
