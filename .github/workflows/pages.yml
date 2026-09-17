@@ -10,6 +10,7 @@ on:
       - 'scripts/lib/validate-pages-explore-telemetry.mjs'
       - 'src/catalogue/index.html'
       - 'src/catalogue/explore-telemetry.js'
+      - 'src/catalogue/explore-continuity-bridge.js'
       - 'src/pga/telemetry/**'
 
 permissions:
@@ -90,6 +91,7 @@ jobs:
           cp src/catalogue/catalogue.css _site/catalogue/catalogue.css
           cp src/catalogue/catalogue.js _site/catalogue/catalogue.js
           cp src/catalogue/listening-library.js _site/catalogue/listening-library.js
+          cp src/catalogue/explore-continuity-bridge.js _site/catalogue/explore-continuity-bridge.js
 
           # Keep one production artifact: the player at the apex, Explore at
           # /explore/, and the supporting editorial pages alongside it.
@@ -98,6 +100,7 @@ jobs:
           cp src/catalogue/catalogue.css _site/explore/catalogue.css
           cp src/catalogue/catalogue.js _site/explore/catalogue.js
           cp src/catalogue/listening-library.js _site/explore/listening-library.js
+          cp src/catalogue/explore-continuity-bridge.js _site/explore/explore-continuity-bridge.js
 
           # Publish only the browser-reachable Explore telemetry dependency graph and
           # prove both deployed routes can resolve every transitive local module.
