@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/lib/raas-doctor.mjs'
       - 'scripts/lib/raas-doctor.test.mjs'
+      - 'package.json'
       - '.github/workflows/raas-doctor-validate.yml'
   workflow_dispatch:
 
@@ -30,3 +31,13 @@ jobs:
 
       - name: Run RAAS doctor state and CLI fixtures
         run: node scripts/lib/raas-doctor.test.mjs
+
+      - name: Exercise npm doctor entry point
+        shell: bash
+        run: |
+          set +e
+          npm run --silent raas:doctor -- --issue 761 --agent ci/raas-doctor --json > /tmp/raas-doctor.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+          node -e "const fs=require('fs'); const state=JSON.parse(fs.readFileSync('/tmp/raas-doctor.json','utf8')); if (state.schemaVersion !== 'raas-doctor/v1' || state.nextAction?.code !== 'REFRESH') process.exit(1);"
