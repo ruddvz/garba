@@ -250,7 +250,7 @@ async function exploreGeometry(page, engineName, viewport) {
   await page.waitForFunction(() => !document.body.classList.contains('explore-search-open'));
   await page.waitForFunction(() => document.activeElement?.classList.contains('search-explore'));
 
-  const shelves = await page.evaluate(() => [...document.querySelectorAll('.collection-grid,.essential-release-rail,.release-rail')]
+  const shelves = await page.evaluate(() => [...document.querySelectorAll('.collection-grid--shelf,.essential-release-rail,.release-rail')]
     .filter((node) => node instanceof HTMLElement)
     .map((node) => ({
       scrollWidth: node.scrollWidth,
