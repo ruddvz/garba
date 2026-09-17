@@ -255,10 +255,15 @@ async function collectTargets(page, genre) {
 }
 
 async function getFocusStyle(page) {
+  await page.evaluate(() => {
+    const previous = document.getElementById('prevButton');
+    if (!(previous instanceof HTMLButtonElement)) throw new Error('Previous button missing for keyboard focus evidence');
+    previous.focus({ preventScroll: true });
+  });
+  await page.keyboard.press('Tab');
   return page.evaluate(() => {
     const button = document.getElementById('playButton');
     if (!(button instanceof HTMLButtonElement)) throw new Error('Play button missing for focus evidence');
-    button.focus({ preventScroll: true });
     const style = getComputedStyle(button);
     return {
       outlineColor: style.outlineColor,
@@ -266,6 +271,7 @@ async function getFocusStyle(page) {
       outlineWidth: style.outlineWidth,
       boxShadow: style.boxShadow,
       focused: document.activeElement === button,
+      activeElementId: document.activeElement?.id || null,
     };
   });
 }
@@ -311,19 +317,26 @@ async function measureWorld(page, viewport, genre) {
   const focusStyle = await getFocusStyle(page);
   const shadowColours = extractShadowColours(focusStyle.boxShadow);
   if (!focusStyle.focused || focusStyle.outlineStyle === 'none' || Number.parseFloat(focusStyle.outlineWidth) <= 0 || shadowColours.length === 0) {
-    throw new Error(`Focus indicator is incomplete for ${viewport.name}/${genre}`);
+    measurements.push({
+      id: 'play-focus',
+      threshold: CONTROL_THRESHOLD,
+      ratio: 0,
+      pass: false,
+      error: `Keyboard focus indicator incomplete; active=${focusStyle.activeElementId || 'none'}, outline=${focusStyle.outlineStyle} ${focusStyle.outlineWidth}, shadow=${focusStyle.boxShadow}`,
+    });
+  } else {
+    const haloCss = shadowColours[shadowColours.length - 1];
+    const focus = measureFocusContrast(background, playControl.controlRect, focusStyle.outlineColor, haloCss);
+    measurements.push({
+      id: 'play-focus',
+      threshold: CONTROL_THRESHOLD,
+      outline: focusStyle.outlineColor,
+      halo: haloCss,
+      boxShadow: focusStyle.boxShadow,
+      ...focus,
+      pass: focus.ratio >= CONTROL_THRESHOLD,
+    });
   }
-  const haloCss = shadowColours[shadowColours.length - 1];
-  const focus = measureFocusContrast(background, playControl.controlRect, focusStyle.outlineColor, haloCss);
-  measurements.push({
-    id: 'play-focus',
-    threshold: CONTROL_THRESHOLD,
-    outline: focusStyle.outlineColor,
-    halo: haloCss,
-    boxShadow: focusStyle.boxShadow,
-    ...focus,
-    pass: focus.ratio >= CONTROL_THRESHOLD,
-  });
 
   return {
     genre,
@@ -361,10 +374,16 @@ try {
 
     const viewportResult = { ...viewport, worlds: [] };
     for (const genre of uniqueGenres) {
-      const world = await measureWorld(page, viewport, genre);
-      viewportResult.worlds.push(world);
-      for (const measurement of world.measurements) {
-        if (!measurement.pass) failures.push(`${viewport.name}/${genre}/${measurement.id}: ${measurement.ratio}:1 < ${measurement.threshold}:1`);
+      try {
+        const world = await measureWorld(page, viewport, genre);
+        viewportResult.worlds.push(world);
+        for (const measurement of world.measurements) {
+          if (!measurement.pass) failures.push(`${viewport.name}/${genre}/${measurement.id}: ${measurement.error || `${measurement.ratio}:1 < ${measurement.threshold}:1`}`);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        viewportResult.worlds.push({ genre, pass: false, error: message, measurements: [] });
+        failures.push(`${viewport.name}/${genre}/harness: ${message}`);
       }
     }
     report.viewports.push(viewportResult);
@@ -374,11 +393,15 @@ try {
   await browser.close();
 }
 
-const allMeasurements = report.viewports.flatMap((viewport) => viewport.worlds.flatMap((world) => world.measurements.map((measurement) => ({ viewport: viewport.name, genre: world.genre, ...measurement }))));
+const allMeasurements = report.viewports.flatMap((viewport) => viewport.worlds.flatMap((world) => (world.measurements || []).map((measurement) => ({ viewport: viewport.name, genre: world.genre, ...measurement }))));
 const byKind = (prefixes) => allMeasurements.filter((measurement) => prefixes.some((prefix) => measurement.id.startsWith(prefix)));
-const minimum = (measurements) => measurements.length ? Math.min(...measurements.map((measurement) => measurement.ratio)) : null;
+const minimum = (measurements) => {
+  const ratios = measurements.map((measurement) => measurement.ratio).filter((ratio) => Number.isFinite(ratio));
+  return ratios.length ? Math.min(...ratios) : null;
+};
 report.summary = {
-  worldsMeasured: report.viewports.reduce((sum, viewport) => sum + viewport.worlds.length, 0),
+  worldsMeasured: report.viewports.reduce((sum, viewport) => sum + viewport.worlds.filter((world) => !world.error).length, 0),
+  worldAttempts: report.viewports.reduce((sum, viewport) => sum + viewport.worlds.length, 0),
   measurements: allMeasurements.length,
   minimumTextRatio: minimum(byKind(['genre-eyebrow', 'song-', 'genre-active', 'genre-inactive'])),
   minimumControlRatio: minimum(byKind(['play-control', 'search-control', 'queue-control'])),
@@ -388,10 +411,10 @@ report.summary = {
 };
 
 await writeFile(path.join(OUTPUT_ROOT, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
-console.log(`Rendered player contrast: ${report.summary.worldsMeasured} world/viewport combinations, ${report.summary.measurements} measurements.`);
-console.log(`Minimum text contrast: ${report.summary.minimumTextRatio}:1`);
-console.log(`Minimum control contrast: ${report.summary.minimumControlRatio}:1`);
-console.log(`Minimum focus contrast: ${report.summary.minimumFocusRatio}:1`);
+console.log(`Rendered player contrast: ${report.summary.worldsMeasured}/${report.summary.worldAttempts} world/viewport combinations, ${report.summary.measurements} measurements.`);
+console.log(`Minimum text contrast: ${report.summary.minimumTextRatio ?? 'n/a'}:1`);
+console.log(`Minimum control contrast: ${report.summary.minimumControlRatio ?? 'n/a'}:1`);
+console.log(`Minimum focus contrast: ${report.summary.minimumFocusRatio ?? 'n/a'}:1`);
 
 if (failures.length) {
   console.error('Rendered contrast failures:');
