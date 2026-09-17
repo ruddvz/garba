@@ -1,4 +1,19 @@
+import '../../assets/runtime/route-readiness.js';
 import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';
+
+const { routeReadiness } = window.GARBA_ROUTE_READINESS;
+
+function fallbackPlayableFirstOrder(songs, { context = 'browse', getAvailabilityTier } = {}) {
+  const source = Array.isArray(songs) ? [...songs] : [];
+  if (['selected-release', 'search', 'nonstop', 'continuous', 'queue', 'history', 'user-order'].includes(context)) return source;
+  if (typeof getAvailabilityTier !== 'function') return source;
+  return source
+    .map((song, index) => ({ song, index, tier: Number(getAvailabilityTier(song)) || 0 }))
+    .sort((a, b) => a.tier - b.tier || a.index - b.index)
+    .map(({ song }) => song);
+}
+
+const orderCatalogueSongs = globalThis.PlayGarbaCatalogueOrdering?.orderCatalogueSongs || fallbackPlayableFirstOrder;
 
 const paths = {
   songs: '../data/songs.json',
@@ -417,6 +432,26 @@ function orderedReleaseSongs(songs) {
   return sequence ? sequence.map(({ song }) => song) : songs;
 }
 
+function currentSongOrderingContext() {
+  if (state.activeReleaseId) return 'selected-release';
+  if (state.active?.id === 'search') return 'search';
+  if (state.active?.id === 'nonstop') return 'nonstop';
+  return 'browse';
+}
+
+function catalogueAvailabilityTier(song) {
+  return routeReadiness(song).executable ? 0 : 1;
+}
+
+function orderedSongsForRender(songs) {
+  return orderCatalogueSongs(songs, {
+    context: currentSongOrderingContext(),
+    mode: 'popular',
+    availabilityGate: true,
+    getAvailabilityTier: catalogueAvailabilityTier,
+  });
+}
+
 function fixedCollection({ id, title, kicker, description, visual, test }) {
   return { id, title, kicker, description, visual, test };
 }
@@ -739,15 +774,16 @@ function makeSongContext(song, release) {
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
-  const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(songs) : null;
+  const orderedSongs = orderedSongsForRender(songs);
+  const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(orderedSongs) : null;
   const trackNumberBySongId = releaseSequence
     ? new Map(releaseSequence.map(({ song, trackNumber }) => [song.id, trackNumber]))
     : null;
-  const visible = songs.slice(0, limit);
-  els.songCount.textContent = visible.length < songs.length
-    ? `Showing ${visible.length.toLocaleString()} of ${songs.length.toLocaleString()} songs`
-    : `${songs.length.toLocaleString()} ${songs.length===1?'song':'songs'}`;
-  if (!songs.length) {
+  const visible = orderedSongs.slice(0, limit);
+  els.songCount.textContent = visible.length < orderedSongs.length
+    ? `Showing ${visible.length.toLocaleString()} of ${orderedSongs.length.toLocaleString()} songs`
+    : `${orderedSongs.length.toLocaleString()} ${orderedSongs.length===1?'song':'songs'}`;
+  if (!orderedSongs.length) {
     const empty = document.createElement('div');
     empty.className = 'empty';
     const emptyQuery = state.active?.id === 'search' ? els.search.value.trim() : '';
@@ -761,10 +797,12 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   visible.forEach((song)=>{
     const release = state.releaseById.get(song.releaseId);
     const songTitle = displayTitle(song);
+    const readiness = routeReadiness(song);
     const row = document.createElement('div');
     row.className = 'song-row';
     row.setAttribute('role','listitem');
     row.dataset.songId = song.id;
+    row.dataset.playbackStatus = readiness.status;
     const trackNumber = trackNumberBySongId?.get(song.id);
     if (trackNumber != null) {
       const sequence = document.createElement('span');
@@ -785,18 +823,26 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
     copy.append(titleEl,artist,makeSongContext(song,release));
     const releaseEl = document.createElement('span');
     releaseEl.className = 'song-release';
-    releaseEl.textContent = displayTitle(release);
-    const play = document.createElement('a');
-    play.className = 'play-link';
-    play.textContent = 'Listen';
-    play.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
-    play.setAttribute('aria-label',`Open ${songTitle} by ${song.artist} in the PlayGarba player`);
-    row.append(copy,releaseEl,play);
+    releaseEl.textContent = [displayTitle(release), readiness.executable ? null : 'Unavailable'].filter(Boolean).join(' · ');
+    const action = document.createElement(readiness.executable ? 'a' : 'span');
+    action.className = `play-link${readiness.executable ? '' : ' unavailable'}`;
+    if (readiness.executable) {
+      action.textContent = 'Listen';
+      action.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
+      action.setAttribute('aria-label',`Open ${songTitle} by ${song.artist} in the PlayGarba player`);
+    } else {
+      action.textContent = 'Unavailable';
+      action.setAttribute('aria-disabled','true');
+      action.setAttribute('aria-label',`${songTitle} by ${song.artist} is not currently available to play`);
+      action.style.opacity = '.32';
+      action.style.pointerEvents = 'none';
+    }
+    row.append(copy,releaseEl,action);
     fragment.append(row);
   });
 
-  if (visible.length < songs.length) {
-    const remaining = songs.length - visible.length;
+  if (visible.length < orderedSongs.length) {
+    const remaining = orderedSongs.length - visible.length;
     const more = document.createElement('button');
     more.type = 'button';
     more.className = 'song-more';
