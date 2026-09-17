@@ -31,10 +31,11 @@ jobs:
           if index.count(favourite_anchor) != 1:
               raise SystemExit('expected exactly one favourites utility anchor')
 
-          fullscreen_button = '''          <button class="icon-button" id="fullscreenButton" type="button" aria-label="Enter fullscreen" title="Enter fullscreen" aria-pressed="false" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path id="fullscreenIconPath" d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"></path></svg>
-          </button>
-'''
+          fullscreen_button = (
+              '          <button class="icon-button" id="fullscreenButton" type="button" aria-label="Enter fullscreen" title="Enter fullscreen" aria-pressed="false" hidden>\n'
+              '            <svg viewBox="0 0 24 24" aria-hidden="true"><path id="fullscreenIconPath" d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"></path></svg>\n'
+              '          </button>\n'
+          )
           index = index.replace(favourite_anchor, fullscreen_button + favourite_anchor, 1)
 
           script_anchor = '    <script src="simple-runtime.js"></script>\n    <script src="nonstop-browser.js" defer></script>\n'
