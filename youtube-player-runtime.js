@@ -30,6 +30,8 @@
   let lastMediaSessionPositionKey = '';
   let advanceLock = false;
   let bypassNextPlay = false;
+  let retryCount = 0;
+  const MAX_RECOVERY_RETRIES = 2;
 
   const states = () => window.YT?.PlayerState || { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
 
@@ -103,6 +105,18 @@
     return safeSongsPromise;
   }
 
+  function setRecoveryActions({ retry = false, choose = false, open = true } = {}) {
+    const retryButton = $('youtubeDockRetry');
+    const chooseButton = $('youtubeDockChoose');
+    const openLink = $('youtubeDockOpen');
+    if (retryButton) {
+      retryButton.hidden = !retry;
+      retryButton.disabled = false;
+    }
+    if (chooseButton) chooseButton.hidden = !choose;
+    if (openLink) openLink.hidden = !open;
+  }
+
   function ensureStage() {
     let stage = $('youtubeStage');
     if (stage) return stage;
@@ -114,23 +128,75 @@
     stage.innerHTML = `
       <div class="provider-media youtube-provider-media" id="youtubeProviderMedia"></div>
       <div class="provider-dock-bar">
-        <span id="youtubeDockNote">YouTube · ready</span>
+        <span id="youtubeDockNote" role="status" aria-live="polite">YouTube · ready</span>
         <div class="provider-dock-actions">
+          <button type="button" id="youtubeDockRetry" hidden>Retry</button>
           <a id="youtubeDockOpen" class="provider-dock-open" target="_blank" rel="noopener noreferrer">Open YouTube</a>
+          <button type="button" id="youtubeDockChoose" hidden>Choose another recording</button>
           <button type="button" id="youtubeDockStop" aria-label="Close YouTube playback">Close</button>
         </div>
       </div>`;
     document.body.append(stage);
+    $('youtubeDockRetry')?.addEventListener('click', retryActive);
+    $('youtubeDockChoose')?.addEventListener('click', chooseAnother);
     $('youtubeDockStop')?.addEventListener('click', () => close());
     return stage;
   }
 
-  function setNote(message, { loading = false, needsTap = false } = {}) {
+  function setNote(message, { loading = false, needsTap = false, assertive = false, recovery = false } = {}) {
     const stage = ensureStage();
     const note = $('youtubeDockNote');
-    if (note) note.textContent = message;
+    if (note) {
+      note.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+      if (note.textContent !== message) note.textContent = message;
+    }
     stage.classList.toggle('is-loading', loading);
     stage.classList.toggle('needs-tap', needsTap);
+    if (recovery) stage.dataset.recovery = 'true';
+    else {
+      delete stage.dataset.recovery;
+      setRecoveryActions({ open: true });
+    }
+  }
+
+  function showRecovery(message, { retry = true, choose = true, open = true, needsTap = true } = {}) {
+    setNote(message, { needsTap, assertive: true, recovery: true });
+    setRecoveryActions({ retry: retry && retryCount < MAX_RECOVERY_RETRIES, choose, open });
+  }
+
+  function prepareStageForSong(song, id) {
+    const stage = ensureStage();
+    const openLink = $('youtubeDockOpen');
+    stage.classList.add('open');
+    stage.setAttribute('aria-hidden', 'false');
+    if (openLink) {
+      openLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
+      openLink.setAttribute('aria-label', `Open ${song.title} on YouTube`);
+    }
+    return stage;
+  }
+
+  function retryActive() {
+    const song = activeSong;
+    const songId = song?.id;
+    const generation = activeRequestGeneration;
+    if (!song || !canControl(song) || retryCount >= MAX_RECOVERY_RETRIES) return false;
+    retryCount += 1;
+    const retryButton = $('youtubeDockRetry');
+    if (retryButton) retryButton.disabled = true;
+    queueMicrotask(() => {
+      if (activeSong?.id !== songId || activeRequestGeneration !== generation) return;
+      open(song, { autoplay: true, resume: true, retry: true });
+    });
+    return true;
+  }
+
+  function chooseAnother() {
+    if (!activeSong) return false;
+    continueAfterNavigation = true;
+    advanceLock = false;
+    $('nextButton')?.click();
+    return true;
   }
 
   function setPlaying(playing) {
@@ -343,6 +409,7 @@
     playerState = Number(event.data);
     const s = states();
     if (playerState === s.PLAYING) {
+      retryCount = 0;
       setPlaying(true);
       setNote('YouTube · playing in GARBA');
       startPolling(requestGeneration);
@@ -365,7 +432,7 @@
     if (!providerEventIsCurrent(event, generation, expectedPlayer)) return;
     setPlaying(false);
     stopPolling();
-    setNote('Tap Play to start YouTube playback', { needsTap: true });
+    showRecovery('Playback is ready. Tap Play to start this recording.', { retry: false, choose: true, open: true, needsTap: true });
   }
 
   function handlePlayerError(event, generation, expectedPlayer) {
@@ -373,12 +440,15 @@
     setPlaying(false);
     stopPolling();
     const code = Number(event.data || 0);
-    const message = code === 101 || code === 150
-      ? 'This YouTube upload does not allow embedded playback.'
-      : code === 100
-        ? 'This YouTube upload is unavailable.'
-        : 'YouTube playback could not start.';
-    setNote(message, { needsTap: true });
+    if (code === 101 || code === 150) {
+      showRecovery('This recording cannot play inside PlayGarba. Open the exact recording on YouTube or choose another recording.', { retry: false });
+      return;
+    }
+    if (code === 100) {
+      showRecovery('This recording is unavailable on YouTube. Choose another recording, or open its exact YouTube page for details.', { retry: false });
+      return;
+    }
+    showRecovery('YouTube playback failed for this recording. Retry here, open the exact recording on YouTube, or choose another recording.');
   }
 
   function destroyPlayer() {
@@ -481,10 +551,16 @@
     lastMediaSessionPositionKey = '';
     advanceLock = false;
     continueAfterNavigation = false;
+    retryCount = 0;
     const stage = $('youtubeStage');
     stage?.classList.remove('open', 'is-loading', 'needs-tap');
+    if (stage) delete stage.dataset.recovery;
     stage?.setAttribute('aria-hidden', 'true');
     $('youtubeProviderMedia')?.replaceChildren();
+    const retryButton = $('youtubeDockRetry');
+    const chooseButton = $('youtubeDockChoose');
+    if (retryButton) retryButton.hidden = true;
+    if (chooseButton) chooseButton.hidden = true;
     setPlaying(false);
     setProgressState(0, 0);
     try {
@@ -507,10 +583,11 @@
     }
   }
 
-  async function open(song, { autoplay = true, resume = true } = {}) {
-    if (!canControl(song) || !navigator.onLine) return false;
+  async function open(song, { autoplay = true, resume = true, retry = false } = {}) {
+    if (!canControl(song)) return false;
     const id = videoId(song);
     const token = ++openToken;
+    if (!retry) retryCount = 0;
 
     closeGenericProvider();
     stopPolling();
@@ -523,14 +600,14 @@
     advanceLock = false;
     const logicalStart = resetPlaybackState(song, id, token, { resume });
 
-    const stage = ensureStage();
-    const openLink = $('youtubeDockOpen');
-    stage.classList.add('open', 'is-loading');
-    stage.setAttribute('aria-hidden', 'false');
-    if (openLink) {
-      openLink.href = `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
-      openLink.setAttribute('aria-label', `Open ${song.title} on YouTube`);
+    const stage = prepareStageForSong(song, id);
+    if (!navigator.onLine) {
+      stage.classList.remove('is-loading');
+      showRecovery('You are offline. Reconnect, then retry this recording.', { retry: true });
+      return false;
     }
+
+    stage.classList.add('is-loading');
     setNote('YouTube · loading', { loading: true });
 
     try {
@@ -552,7 +629,11 @@
       console.warn('GARBA YouTube engine failed to initialise', error);
       stage.classList.remove('is-loading');
       setPlaying(false);
-      setNote('YouTube player could not initialise. Use Open YouTube.', { needsTap: true });
+      const reason = String(error?.message || '');
+      const message = /timed out/i.test(reason)
+        ? 'YouTube is taking too long to load. Retry here, open the exact recording on YouTube, or choose another recording.'
+        : 'YouTube could not initialise for this recording. Retry here, open the exact recording on YouTube, or choose another recording.';
+      showRecovery(message, { retry: true });
       return false;
     }
   }
@@ -727,7 +808,15 @@
   }
 
   window.addEventListener('garba:catalogue-ready', () => loadSafeSongs({ refresh: true }));
-  window.addEventListener('offline', () => { if (activeSong) close(); });
+  window.addEventListener('offline', () => {
+    if (!activeSong) return;
+    destroyPlayer();
+    setPlaying(false);
+    const id = activeVideoId || videoId(activeSong);
+    const stage = prepareStageForSong(activeSong, id);
+    stage.classList.remove('is-loading');
+    showRecovery('You are offline. Reconnect, then retry this recording.', { retry: true });
+  });
   window.addEventListener('load', () => {
     loadSafeSongs({ refresh: true });
     setTimeout(setupMediaSession, 0);
@@ -741,6 +830,8 @@
     close,
     seekTo,
     toggle,
+    retry: retryActive,
+    chooseAnother,
     get activeSongId() { return activeSong?.id || null; },
     get requestGeneration() { return activeRequestGeneration; },
     get playing() { return playerState === states().PLAYING; },
