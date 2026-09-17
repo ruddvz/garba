@@ -10,7 +10,7 @@ function indent(source, spaces = 4) {
   return source
     .trimEnd()
     .split('\n')
-    .map((line) => `${prefix}${line}`)
+    .map((line) => (line ? `${prefix}${line}` : ''))
     .join('\n');
 }
 
