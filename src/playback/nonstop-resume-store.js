@@ -51,8 +51,9 @@ function parseEnvelope(raw) {
 
   const seen = new Set();
   for (const entry of parsed.entries) {
-    if (seen.has(entry.setId)) return { status: 'corrupt', entries: [] };
-    seen.add(entry.setId);
+    const normalizedSetId = entry.setId.trim();
+    if (seen.has(normalizedSetId)) return { status: 'corrupt', entries: [] };
+    seen.add(normalizedSetId);
   }
 
   return {
