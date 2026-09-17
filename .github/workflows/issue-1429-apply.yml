@@ -1,0 +1,88 @@
+name: Issue 1429 apply and validate
+
+on:
+  push:
+    branches:
+      - youtube/issue-1429-hardik-prachin
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Capture exact-base YouTube coverage
+        run: |
+          npm run youtube:coverage | tee /tmp/coverage-before.txt
+          git restore -- .
+
+      - name: Register dedicated playback manifest
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const indexPath = 'data/catalogue/index.json';
+          const manifestPath = 'data/playback-sources-hardik-prachin-youtube.json';
+          const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          const expected = new Map([
+            ['hardik-prachin-garba-2024-01', 'cCZJC_DAdyM'],
+            ['hardik-prachin-garba-2024-02', 'qPehZ3nvm14'],
+          ]);
+          const actualIds = Object.keys(manifest.songSources || {});
+          if (actualIds.length !== 2 || actualIds.some((id) => !expected.has(id))) {
+            throw new Error(`Unexpected manifest rows: ${actualIds.join(', ')}`);
+          }
+          for (const [id, videoId] of expected) {
+            const route = manifest.songSources[id];
+            if (route.provider !== 'youtube' || route.videoId !== videoId || route.startSeconds !== undefined) {
+              throw new Error(`Route ${id} must be the verified full YouTube recording with no chapter offset`);
+            }
+            if (route.releaseId !== 'hardik-prachin-garba-2024' || route.sourceType !== 'verified-label-channel') {
+              throw new Error(`Route identity drift for ${id}`);
+            }
+          }
+          if (!Array.isArray(index.playbackSources)) throw new Error('catalogue index playbackSources is not an array');
+          if (index.playbackSources.includes(manifestPath)) throw new Error(`${manifestPath} is already registered on the exact base`);
+          const anchor = 'data/playback-sources-garbi-exact.json';
+          const anchorIndex = index.playbackSources.indexOf(anchor);
+          if (anchorIndex < 0) throw new Error(`Expected registration anchor missing: ${anchor}`);
+          index.playbackSources.splice(anchorIndex + 1, 0, manifestPath);
+          const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(index.version || ''));
+          if (!match) throw new Error(`Unexpected catalogue index version: ${index.version}`);
+          index.version = `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+          fs.writeFileSync(indexPath, `${JSON.stringify(index)}\n`);
+          const reloaded = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+          if (reloaded.playbackSources.filter((value) => value === manifestPath).length !== 1) {
+            throw new Error('Prachin playback manifest must be registered exactly once');
+          }
+          console.log(`Registered ${manifestPath} once at catalogue index version ${reloaded.version}`);
+          NODE
+
+      - name: Updated YouTube coverage
+        run: npm run youtube:coverage | tee /tmp/coverage-after.txt
+
+      - name: Full repository checks
+        run: npm run check
+
+      - name: Report exact-base delta
+        run: |
+          echo '===== ISSUE 1429 COVERAGE BEFORE ====='
+          cat /tmp/coverage-before.txt
+          echo '===== ISSUE 1429 COVERAGE AFTER ====='
+          cat /tmp/coverage-after.txt
+
+      - name: Commit source change and remove temporary workflow
+        run: |
+          rm .github/workflows/issue-1429-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalogue/index.json .github/workflows/issue-1429-apply.yml
+          git diff --cached --check
+          git commit -m "chore(catalogue): register Hardik Prachin playback manifest"
+          git push origin HEAD:youtube/issue-1429-hardik-prachin
