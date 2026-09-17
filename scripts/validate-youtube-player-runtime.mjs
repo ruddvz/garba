@@ -35,11 +35,21 @@ const requiredRuntimeSignals = [
   'let playerReadyPromise = null;',
   'let playerReadyReject = null;',
   'let playerGeneration = 0;',
+  'let activeRequestGeneration = 0;',
+  "let activeVideoId = '';",
+  'function resetPlaybackState(song, id, generation, { resume = true } = {})',
+  'function providerEventIsCurrent(event, generation, expectedPlayer)',
   'async function ensurePlayer(initialVideoId, expectedToken)',
   "mount.id = 'garba-youtube-player'",
   'const readyPlayer = await ensurePlayer(id, token);',
+  'const logicalStart = resetPlaybackState(song, id, token, { resume });',
   'readyPlayer.loadVideoById(request)',
   'readyPlayer.cueVideoById(request)',
+  'onStateChange: (event) => handlePlayerStateChange(event, generation, createdPlayer)',
+  'onAutoplayBlocked: (event) => handleAutoplayBlocked(event, generation, createdPlayer)',
+  'onError: (event) => handlePlayerError(event, generation, createdPlayer)',
+  'syncProgress(expectedRequestGeneration = activeRequestGeneration)',
+  'setInterval(syncProgress, 350)',
 ];
 
 for (const signal of requiredRuntimeSignals) {
@@ -50,6 +60,10 @@ const openBlock = runtime.match(/async function open\(song, \{ autoplay = true, 
 const closeBlock = runtime.match(/function close\(\) \{[\s\S]*?\n  \}\n\n  function restoreElapsed/)?.[0] || '';
 const destroyBlock = runtime.match(/function destroyPlayer\(\) \{[\s\S]*?\n  \}\n\n  async function ensurePlayer/)?.[0] || '';
 const ensureBlock = runtime.match(/async function ensurePlayer\(initialVideoId, expectedToken\) \{[\s\S]*?\n  \}\n\n  function close/)?.[0] || '';
+const stateHandlerBlock = runtime.match(/function handlePlayerStateChange\(event, generation, expectedPlayer\) \{[\s\S]*?\n  \}\n\n  function handleAutoplayBlocked/)?.[0] || '';
+const autoplayHandlerBlock = runtime.match(/function handleAutoplayBlocked\(event, generation, expectedPlayer\) \{[\s\S]*?\n  \}\n\n  function handlePlayerError/)?.[0] || '';
+const errorHandlerBlock = runtime.match(/function handlePlayerError\(event, generation, expectedPlayer\) \{[\s\S]*?\n  \}\n\n  function destroyPlayer/)?.[0] || '';
+const syncBlock = runtime.match(/function syncProgress\(expectedRequestGeneration = activeRequestGeneration\) \{[\s\S]*?\n  \}\n\n  function startPolling/)?.[0] || '';
 
 if (!openBlock) fail('Could not inspect YouTube open() lifecycle');
 if (openBlock.includes('destroyPlayer();')) {
@@ -57,6 +71,15 @@ if (openBlock.includes('destroyPlayer();')) {
 }
 if (!openBlock.includes('await ensurePlayer(id, token)')) {
   fail('YouTube open() must await the shared player readiness lifecycle with its navigation token');
+}
+if (!openBlock.includes('resetPlaybackState(song, id, token, { resume })')) {
+  fail('Every YouTube selection must reset visible playback state before provider loading begins');
+}
+if (!openBlock.includes('activeRequestGeneration !== token')) {
+  fail('YouTube open() must reject stale async work after a newer selection generation wins');
+}
+if (openBlock.includes('stage.classList.remove(\'is-loading\');\n      syncProgress();')) {
+  fail('A newly requested recording must not sample stale provider progress before matching provider evidence arrives');
 }
 if (!ensureBlock.includes('if (playerReadyPromise) return playerReadyPromise;')) {
   fail('Concurrent first-load navigation must share the same YouTube player readiness promise');
@@ -67,8 +90,22 @@ if (!ensureBlock.includes("expectedToken !== openToken || !activeSong")) {
 if (!ensureBlock.includes("mount.id = 'garba-youtube-player'")) {
   fail('Persistent YouTube playback must use one stable player mount');
 }
+for (const marker of [
+  'onStateChange: (event) => handlePlayerStateChange(event, generation, createdPlayer)',
+  'onAutoplayBlocked: (event) => handleAutoplayBlocked(event, generation, createdPlayer)',
+  'onError: (event) => handlePlayerError(event, generation, createdPlayer)',
+]) {
+  if (!ensureBlock.includes(marker)) fail(`YouTube provider callback must stay bound to its player generation: ${marker}`);
+}
 if (!closeBlock.includes('destroyPlayer();')) {
   fail('Explicit YouTube Close must still tear down the IFrame player');
+}
+for (const marker of [
+  'activeRequestGeneration = openToken;',
+  "activeVideoId = '';",
+  'setProgressState(0, 0);',
+]) {
+  if (!closeBlock.includes(marker)) fail(`Explicit YouTube Close must clear stale selection state: ${marker}`);
 }
 for (const marker of [
   'playerGeneration += 1;',
@@ -80,6 +117,22 @@ for (const marker of [
 }
 if (!ensureBlock.includes('generation !== playerGeneration')) {
   fail('YouTube readiness callbacks must ignore stale player generations after Close/offline teardown');
+}
+for (const [block, label] of [
+  [stateHandlerBlock, 'state'],
+  [autoplayHandlerBlock, 'autoplay-blocked'],
+  [errorHandlerBlock, 'error'],
+]) {
+  if (!block) fail(`Could not inspect YouTube ${label} callback`);
+  else if (!block.includes('providerEventIsCurrent(event, generation, expectedPlayer)')) {
+    fail(`YouTube ${label} callback must reject stale player/video evidence before mutating UI state`);
+  }
+}
+if (!syncBlock.includes('expectedRequestGeneration !== activeRequestGeneration')) {
+  fail('YouTube progress polling must stop stale explicit generations from mutating the new recording');
+}
+if (!syncBlock.includes('observedVideoId !== activeVideoId')) {
+  fail('YouTube progress polling must reject a reused iframe until its provider video matches the active selection');
 }
 if (!runtime.includes("window.addEventListener('offline', () => { if (activeSong) close(); });")) {
   fail('Offline transition must tear down active YouTube playback');
@@ -210,6 +263,8 @@ if (failed) process.exit(1);
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
 console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close/offline tears it down');
 console.log('✓ concurrent first-load navigation shares readiness and Close during API loading cannot create a hidden iframe afterward');
+console.log('✓ provider callbacks and progress polling are scoped to the active player/video selection before they mutate UI state');
+console.log('✓ a new YouTube selection resets stale elapsed/duration/progress before matching provider evidence arrives');
 console.log('✓ stale player generations cannot resume after teardown');
 console.log('✓ no raw-stream extraction, cipher parsing, ad skipping or ad-removal mechanism is present');
 console.log('✓ the embedded YouTube player retains a visible minimum 200×200 viewport');
