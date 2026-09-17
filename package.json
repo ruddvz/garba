@@ -41,6 +41,7 @@
     "release:context:validate": "node scripts/lib/validate-release-listening-context.mjs",
     "playable:continuation:validate": "node scripts/lib/validate-playable-continuation.mjs",
     "sheet:startup:validate": "node scripts/lib/validate-sheet-startup.mjs",
+    "raas:doctor": "node scripts/lib/raas-doctor.mjs",
     "raas:verify": "node scripts/lib/raas-verify.mjs",
     "raas:test": "node scripts/lib/test-raas-verify.mjs"
   }
