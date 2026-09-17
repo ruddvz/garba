@@ -1,4 +1,5 @@
 import './assets/runtime/route-readiness.js';
+import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 
 const storage = {
@@ -679,8 +680,31 @@ function selectGenre(genreId) {
   }
 }
 
+function playerSearchRecord(song) {
+  return {
+    id: song.id,
+    title: [song.title, song.displayTitle].filter(Boolean),
+    titleAliases: song.aliases,
+    artist: song.artist,
+    artistAliases: song.artistAliases,
+    taxonomyTerms: [
+      song.genre,
+      song.category,
+      ...(song.styles || []),
+      ...(song.taxonomyStyles || []),
+    ],
+    song,
+  };
+}
+
+function rankPlayerSongs(songs, query) {
+  return rankSearchRecords(songs.map(playerSearchRecord), query)
+    .map(({ record }) => record.song);
+}
+
 function getSheetSongs() {
-  const query = els.searchInput.value.trim().toLowerCase();
+  const rawQuery = els.searchInput.value.trim();
+  const query = normalizeSearchText(rawQuery);
   let songs;
 
   if (state.sheetMode === 'favourites') {
@@ -697,14 +721,7 @@ function getSheetSongs() {
     songs = state.songs.filter((song) => song.genre === state.sheetFilter);
   }
 
-  if (query) songs = songs.filter((song) => [
-    song.title,
-    song.artist,
-    song.genre,
-    song.category,
-    ...(song.styles || []),
-    ...(song.taxonomyStyles || []),
-  ].filter(Boolean).join(' ').toLowerCase().includes(query));
+  if (query) songs = rankPlayerSongs(songs, rawQuery);
   state.sheetMatchCount = songs.length;
   if (state.sheetMode === 'search' && songs.length > SEARCH_RESULT_LIMIT) return songs.slice(0, SEARCH_RESULT_LIMIT);
   return songs;
