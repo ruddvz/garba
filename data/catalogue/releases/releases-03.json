@@ -178,7 +178,8 @@
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "durationPrecision": "track-sum"
+    "durationPrecision": "track-sum",
+    "description": "A 2017 video-edit single by Bandish Projekt featuring Aishwarya Joshi and Maulik Nayak, catalogued across Dakla and electronic fusion."
   },
   {
     "id": "dj-rock-dandiya-2017",
@@ -213,7 +214,8 @@
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "durationPrecision": "platform-summary"
+    "durationPrecision": "platform-summary",
+    "description": "A 41-track 2017 Shree Ram Audio album by Aishwariya Majmudar, catalogued across DJ remix and Raas/Dandiya; the current track import remains incomplete."
   },
   {
     "id": "ramzat-2017",
@@ -259,7 +261,9 @@
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "durationPrecision": "track-sum"
+    "durationPrecision": "track-sum",
+    "displayTitle": "Ramzat - Nonstop Garba",
+    "description": "A 36-track 2017 Sur Sagar Garba album by Osman Mir and Bhoomi Trivedi, catalogued across modern Gujarati Garba, Mataji devotional and Dakla."
   },
   {
     "id": "rangtaali-2017",
@@ -299,7 +303,9 @@
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "durationPrecision": "track-sum"
+    "durationPrecision": "track-sum",
+    "displayTitle": "Rangtaali - Nonstop Garba",
+    "description": "A 32-track 2017 Sur Sagar Garba album by Aishwarya Majmudar, catalogued across modern Gujarati Garba and traditional Garba."
   },
   {
     "id": "kirtidan-tahukar-2018",
@@ -333,7 +339,8 @@
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
-    "durationPrecision": "platform-summary"
+    "durationPrecision": "platform-summary",
+    "description": "A single-track 2018 Studio Saraswati Garba album by Kirtidan Gadhvi in the Tahukar series, catalogued as modern Gujarati Garba."
   },
   {
     "releaseDate": "2018-09-29",
@@ -373,7 +380,9 @@
     "id": "ramzat-2-tran-taali-2018",
     "title": "Ramzat 2 - Non Stop Trantaali Garba",
     "artist": "Various Artists",
-    "durationPrecision": "track-sum"
+    "durationPrecision": "track-sum",
+    "displayTitle": "Ramzat 2 - Nonstop Trantaali Garba",
+    "description": "A 37-track 2018 Sur Sagar Garba album credited to Various Artists, Vol. 2 of the Ramzat series and catalogued across Tran Taali and modern Gujarati Garba."
   },
   {
     "id": "dakla-4-2019",
