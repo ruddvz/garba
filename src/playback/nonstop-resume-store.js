@@ -64,6 +64,8 @@ function parseEnvelope(raw) {
       positionSeconds: entry.positionSeconds,
       durationSeconds: entry.durationSeconds,
       updatedAtMs: entry.updatedAtMs,
+      ...(isNonEmptyString(entry.title) ? { title: entry.title.trim() } : {}),
+      ...(isNonEmptyString(entry.artist) ? { artist: entry.artist.trim() } : {}),
     })),
   };
 }
@@ -151,6 +153,8 @@ export function createNonstopResumeStore({
     positionSeconds,
     durationSeconds = null,
     completed = false,
+    title = null,
+    artist = null,
   } = {}) {
     const normalizedSetId = normalizeIdentity(setId);
     const normalizedSource = normalizeIdentity(sourceIdentity);
@@ -186,6 +190,8 @@ export function createNonstopResumeStore({
       positionSeconds,
       durationSeconds,
       updatedAtMs,
+      ...(isNonEmptyString(title) ? { title: title.trim() } : {}),
+      ...(isNonEmptyString(artist) ? { artist: artist.trim() } : {}),
     };
     const nextEntries = [record, ...entries.filter((entry) => entry.setId !== normalizedSetId)];
 

@@ -169,6 +169,29 @@ assert.deepEqual(JSON.parse(completionOnCorruptStorage.dump(NONSTOP_RESUME_STORA
   entries: [],
 });
 
+const metaStorage = createMemoryStorage();
+const metaStore = createNonstopResumeStore({ storage: metaStorage, now: () => 5000 });
+metaStore.write({
+  setId: 'set-meta',
+  sourceIdentity: 'youtube:meta',
+  positionSeconds: 120,
+  durationSeconds: 1800,
+  title: 'Ochhav Live',
+  artist: 'Aditya Gadhvi',
+});
+assert.deepEqual(metaStore.read('set-meta', 'youtube:meta'), {
+  status: 'found',
+  record: {
+    setId: 'set-meta',
+    sourceIdentity: 'youtube:meta',
+    positionSeconds: 120,
+    durationSeconds: 1800,
+    updatedAtMs: 5000,
+    title: 'Ochhav Live',
+    artist: 'Aditya Gadhvi',
+  },
+});
+
 assert.equal(DEFAULT_NONSTOP_RESUME_LIMIT, 8);
 assert.equal(Object.isFrozen(store), true);
 assert.equal(Object.isFrozen(store.read('set-b', 'youtube:video-c')), true);

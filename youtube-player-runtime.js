@@ -279,6 +279,47 @@
     }
   }
 
+  function persistNonstopResume(positionSeconds, completed = false) {
+    if (!activeSong?.id?.startsWith('nonstop:')) return;
+    const setId = activeSong.nonstopSetId || activeSong.id.slice(8);
+    const video = activeVideoId || videoId(activeSong);
+    if (!setId || !video) return;
+    const sourceIdentity = `youtube:${video}`;
+    const total = duration() || trackDuration || null;
+    try {
+      const raw = localStorage.getItem('garba:nonstop-resume:v1');
+      let entries = [];
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.version === 1 && Array.isArray(parsed.entries)) {
+            entries = parsed.entries.filter((e) => e && typeof e.setId === 'string' && typeof e.sourceIdentity === 'string');
+          }
+        } catch { /* corrupt storage cleared */ }
+      }
+      if (completed) {
+        const remaining = entries.filter((e) => e.setId !== setId);
+        localStorage.setItem('garba:nonstop-resume:v1', JSON.stringify({ version: 1, entries: remaining }));
+        return;
+      }
+      const existing = entries.find((e) => e.setId === setId);
+      if (existing && existing.sourceIdentity !== sourceIdentity) return;
+      const record = {
+        setId,
+        sourceIdentity,
+        positionSeconds: Math.max(0, Math.round(positionSeconds || 0)),
+        durationSeconds: total && total > 0 ? Math.round(total) : null,
+        updatedAtMs: Date.now(),
+        ...(activeSong.title ? { title: String(activeSong.title).trim() } : {}),
+        ...(activeSong.artist ? { artist: String(activeSong.artist).trim() } : {}),
+      };
+      const nextEntries = [record, ...entries.filter((e) => e.setId !== setId)].slice(0, 8);
+      localStorage.setItem('garba:nonstop-resume:v1', JSON.stringify({ version: 1, entries: nextEntries }));
+    } catch {
+      // Storage can be denied in private browsing.
+    }
+  }
+
   function persistPosition(current) {
     const rounded = Math.round(current || 0);
     if (rounded === lastPersistedSecond || rounded % 5 !== 0) return;
@@ -294,6 +335,7 @@
     } catch {
       // Storage can be denied in private browsing.
     }
+    persistNonstopResume(rounded, false);
   }
 
   function syncProgress(expectedRequestGeneration = activeRequestGeneration) {
@@ -424,6 +466,7 @@
     } else if (playerState === s.ENDED) {
       setPlaying(false);
       syncProgress(requestGeneration);
+      persistNonstopResume(elapsed(), true);
       advance();
     }
   }
@@ -572,6 +615,20 @@
 
   function restoreElapsed(song) {
     try {
+      if (song?.id?.startsWith('nonstop:')) {
+        const setId = song.nonstopSetId || song.id.slice(8);
+        const sourceIdentity = `youtube:${videoId(song)}`;
+        const raw = localStorage.getItem('garba:nonstop-resume:v1');
+        if (!raw) return 0;
+        const parsed = JSON.parse(raw);
+        if (parsed?.version !== 1 || !Array.isArray(parsed?.entries)) return 0;
+        const record = parsed.entries.find((e) => e?.setId === setId);
+        if (!record || record.sourceIdentity !== sourceIdentity) return 0;
+        const saved = Number(record.positionSeconds || 0);
+        if (!Number.isFinite(saved) || saved < 0) return 0;
+        const max = Number(song.durationSeconds || record.durationSeconds || 0);
+        return max > 0 ? Math.min(saved, Math.max(0, max - 1)) : saved;
+      }
       const session = JSON.parse(localStorage.getItem('garba:session') || '{}');
       if (session.songId !== song?.id) return 0;
       const saved = Number(session.elapsed || 0);

@@ -25,7 +25,105 @@
     searchCorePromise: null,
     chapterObserver: null,
     currentChapterIndex: -1,
+    resumeStore: null,
   };
+
+  const RESUME_STORAGE_KEY = 'garba:nonstop-resume:v1';
+  const RESUME_STORE_VERSION = 1;
+  const RESUME_STORE_LIMIT = 8;
+
+  function createResumeAdapter() {
+    function load() {
+      try {
+        const raw = localStorage.getItem(RESUME_STORAGE_KEY);
+        if (raw == null) return { status: 'empty', entries: [] };
+        const parsed = JSON.parse(raw);
+        if (!parsed || parsed.version !== RESUME_STORE_VERSION || !Array.isArray(parsed.entries)) {
+          return { status: 'corrupt', entries: [] };
+        }
+        return {
+          status: 'ok',
+          entries: parsed.entries.filter((e) => e && typeof e.setId === 'string' && typeof e.sourceIdentity === 'string'),
+        };
+      } catch {
+        return { status: 'unavailable', entries: [] };
+      }
+    }
+
+    function persist(entries) {
+      try {
+        const envelope = {
+          version: RESUME_STORE_VERSION,
+          entries: entries.slice(0, RESUME_STORE_LIMIT),
+        };
+        localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(envelope));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function read(setId, sourceIdentity) {
+      if (!setId || !sourceIdentity) return { status: 'invalid', record: null };
+      const loaded = load();
+      if (loaded.status === 'unavailable' || loaded.status === 'corrupt') return { status: loaded.status, record: null };
+      const record = loaded.entries.find((e) => e.setId === setId);
+      if (!record) return { status: 'missing', record: null };
+      if (record.sourceIdentity !== sourceIdentity) {
+        persist(loaded.entries.filter((e) => e.setId !== setId));
+        return { status: 'source-changed', record: null };
+      }
+      return { status: 'found', record: Object.freeze({ ...record }) };
+    }
+
+    function write({ setId, sourceIdentity, positionSeconds, durationSeconds = null, completed = false, title = null, artist = null } = {}) {
+      if (!setId || !sourceIdentity || typeof positionSeconds !== 'number' || positionSeconds < 0) {
+        return { status: 'invalid', record: null };
+      }
+      const loaded = load();
+      if (loaded.status === 'unavailable') return { status: 'unavailable', record: null };
+      const entries = loaded.status === 'corrupt' ? [] : loaded.entries;
+      const existing = entries.find((e) => e.setId === setId);
+      if (existing && existing.sourceIdentity !== sourceIdentity) {
+        return { status: 'source-mismatch', record: null };
+      }
+      if (completed) {
+        persist(entries.filter((e) => e.setId !== setId));
+        return { status: 'completed-cleared', record: null };
+      }
+      const record = {
+        setId,
+        sourceIdentity,
+        positionSeconds: Math.round(positionSeconds),
+        durationSeconds: durationSeconds && durationSeconds > 0 ? Math.round(durationSeconds) : null,
+        updatedAtMs: Date.now(),
+        ...(title ? { title: String(title).trim() } : {}),
+        ...(artist ? { artist: String(artist).trim() } : {}),
+      };
+      const nextEntries = [record, ...entries.filter((e) => e.setId !== setId)];
+      persist(nextEntries);
+      return { status: 'stored', record: Object.freeze({ ...record }) };
+    }
+
+    function remove(setId) {
+      if (!setId) return { status: 'invalid' };
+      const loaded = load();
+      if (loaded.status === 'unavailable') return { status: 'unavailable' };
+      const remaining = loaded.entries.filter((e) => e.setId !== setId);
+      persist(remaining);
+      return { status: 'removed' };
+    }
+
+    function list() {
+      const loaded = load();
+      if (loaded.status === 'unavailable') return { status: 'unavailable', records: [] };
+      return { status: loaded.status, records: loaded.entries.map((e) => Object.freeze({ ...e })) };
+    }
+
+    return Object.freeze({ read, write, remove, list });
+  }
+
+  state.resumeStore = createResumeAdapter();
 
   const rank = {
     'official-artist-channel': 6,
@@ -544,9 +642,24 @@
       .nonstop-set-duration{min-width:6.5ch;text-align:right;align-self:center;white-space:nowrap;font-size:12px;line-height:1;color:rgba(246,236,215,.68);font-variant-numeric:tabular-nums}
       .nonstop-browser-status{padding:8px 2px 4px;color:rgba(246,236,215,.62);font-size:12px;line-height:1.4}
       .nonstop-browser-empty{padding:38px 12px 52px;color:rgba(246,236,215,.58);font-size:14px;line-height:1.5;text-align:center}
+      .nonstop-resume-prompt{position:fixed;z-index:120;left:50%;bottom:max(24px,env(safe-area-inset-bottom,24px));transform:translateX(-50%);width:min(540px,calc(100vw - 32px));animation:nonstopResumeIn .22s ease-out}
+      @keyframes nonstopResumeIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+      .nonstop-resume-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border:1px solid rgba(246,236,215,.16);border-radius:20px;background:rgba(11,15,26,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.48);color:var(--ivory)}
+      .nonstop-resume-copy{min-width:0}
+      .nonstop-resume-title{display:block;font-size:14px;font-weight:600;line-height:1.3}
+      .nonstop-resume-subtitle{display:block;margin-top:3px;font-size:12px;color:rgba(246,236,215,.62)}
+      .nonstop-resume-actions{display:flex;gap:8px;flex:0 0 auto}
+      .nonstop-resume-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s ease,color .15s ease,transform .12s ease}
+      .nonstop-resume-btn.primary{background:var(--accent);color:#17131b;border:1px solid var(--accent)}
+      .nonstop-resume-btn.primary:hover{filter:brightness(1.1)}
+      .nonstop-resume-btn.secondary{background:rgba(255,255,255,.06);color:rgba(246,236,215,.82);border:1px solid rgba(246,236,215,.14)}
+      .nonstop-resume-btn.secondary:hover{background:rgba(255,255,255,.11);color:var(--ivory)}
       body.nonstop-browser-open{overflow:hidden}
       .nonstop-browser :focus-visible{outline:2px solid var(--ivory);outline-offset:2px}
       @media(max-width:700px){
+        .nonstop-resume-card{flex-direction:column;align-items:stretch;gap:12px;padding:14px 16px}
+        .nonstop-resume-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .nonstop-resume-btn{width:100%;min-height:42px;font-size:12px}
         .player-shell{grid-template-rows:minmax(92px,.92fr) auto auto auto minmax(10px,2.4vh) auto auto minmax(2px,.13fr)!important}
         #genreStrip{grid-row:6!important;padding-top:6px!important;padding-bottom:3px!important;align-self:end!important}
         .app #browseActions{grid-row:7!important;width:auto!important;display:flex!important;align-self:start!important;justify-content:center!important;gap:0!important;margin-top:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
@@ -821,7 +934,56 @@
     };
   }
 
-  async function startNonstop(requestedSetId = null, { quiet = false } = {}) {
+  function showResumePrompt(set, savedSeconds) {
+    hideResumePrompt();
+    const prompt = document.createElement('div');
+    prompt.id = 'nonstopResumePrompt';
+    prompt.className = 'nonstop-resume-prompt';
+    prompt.setAttribute('role', 'region');
+    prompt.setAttribute('aria-label', `Resume playback for ${set.title}`);
+    const timeLabel = formatTime(savedSeconds);
+    prompt.innerHTML = `
+      <div class="nonstop-resume-card">
+        <div class="nonstop-resume-copy">
+          <strong class="nonstop-resume-title">Resume where you left off?</strong>
+          <span class="nonstop-resume-subtitle">Saved at ${timeLabel} · this device</span>
+        </div>
+        <div class="nonstop-resume-actions">
+          <button class="nonstop-resume-btn primary" id="nonstopResumeAction" type="button">Resume at ${timeLabel}</button>
+          <button class="nonstop-resume-btn secondary" id="nonstopStartOverAction" type="button">Start from beginning</button>
+        </div>
+      </div>`;
+    document.body.append(prompt);
+
+    $('nonstopResumeAction')?.addEventListener('click', () => {
+      hideResumePrompt();
+      window.GARBA_YOUTUBE_PLAYER?.seekTo?.(savedSeconds);
+      if (!window.GARBA_YOUTUBE_PLAYER?.playing) {
+        window.GARBA_YOUTUBE_PLAYER?.toggle?.(state.activeTrack);
+      }
+      announce(`Resumed ${set.title} at ${timeLabel}`);
+    });
+
+    $('nonstopStartOverAction')?.addEventListener('click', () => {
+      hideResumePrompt();
+      window.GARBA_YOUTUBE_PLAYER?.seekTo?.(0);
+      state.resumeStore?.write?.({
+        setId: set.id,
+        sourceIdentity: `youtube:${set.videoId}`,
+        positionSeconds: 0,
+        durationSeconds: set.durationSeconds,
+        title: set.title,
+        artist: set.artistsText,
+      });
+      announce(`Starting ${set.title} from beginning`);
+    });
+  }
+
+  function hideResumePrompt() {
+    $('nonstopResumePrompt')?.remove();
+  }
+
+  async function startNonstop(requestedSetId = null, { quiet = false, reload = false } = {}) {
     if (!navigator.onLine) {
       announce('Nonstop Garba needs an internet connection for YouTube playback.');
       return false;
@@ -854,7 +1016,15 @@
       setMetadata(set);
       syncButton();
 
-      const opened = await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: true, resume: false });
+      const resumeCheck = state.resumeStore?.read?.(set.id, `youtube:${set.videoId}`);
+      const savedSeconds = resumeCheck?.status === 'found' ? Number(resumeCheck.record.positionSeconds || 0) : 0;
+      const hasSavedPosition = savedSeconds > 0 && (set.durationSeconds > 0 ? savedSeconds < set.durationSeconds - 10 : true);
+
+      // Never autoplay on reload.
+      const isReloadOrDirectUrl = reload || (quiet && urlAlreadyRequestsSet);
+      const opened = isReloadOrDirectUrl
+        ? await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: false, resume: false })
+        : await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: true, resume: false });
       markDock();
       if (!opened) throw new Error('Nonstop player could not open');
 
@@ -862,10 +1032,18 @@
       setUrlForNonstop(set, { push: shouldPush });
       if (state.previousSession && shouldPush) state.previousSession.historyPushed = true;
       setMetadata(set);
+
+      if (hasSavedPosition) {
+        showResumePrompt(set, savedSeconds);
+      } else {
+        hideResumePrompt();
+      }
+
       if (!quiet) announce(`Playing ${set.title} as one recording`);
       return true;
     } catch (error) {
       console.warn('PlayGarba nonstop playback failed', error);
+      hideResumePrompt();
       deactivateNonstop({ closePlayer: true, restoreSession: true, updateHistory: true });
       announce('That YouTube set could not start here. Try another set.');
       return false;
@@ -877,6 +1055,7 @@
   }
 
   function deactivateNonstop({ closePlayer = true, restoreSession = true, updateHistory = true } = {}) {
+    hideResumePrompt();
     if (!state.activeSet && !new URL(location.href).searchParams.has('nonstop')) return;
     const previous = state.previousSession;
     state.activeSet = null;
@@ -1325,7 +1504,7 @@
     });
     window.addEventListener('popstate', () => {
       const id = new URL(location.href).searchParams.get('nonstop');
-      if (id && state.activeSet?.id !== id) startNonstop(id, { quiet: true });
+      if (id && state.activeSet?.id !== id) startNonstop(id, { quiet: true, reload: true });
       else if (!id && state.activeSet) deactivateNonstop({ closePlayer: true, restoreSession: true, updateHistory: false });
     });
     document.addEventListener('keydown', trapBrowserFocus, { capture: true });
@@ -1338,6 +1517,7 @@
     stop: stopNonstop,
     list: async () => loadAllSets(),
     get activeSetId() { return state.activeSet?.id || null; },
+    get resumeStore() { return state.resumeStore; },
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
