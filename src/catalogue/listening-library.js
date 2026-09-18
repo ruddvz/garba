@@ -1,5 +1,6 @@
 const SESSION_KEY = 'garba:session';
 const FAVOURITES_KEY = 'garba:favourites';
+const NONSTOP_RESUME_KEY = 'garba:nonstop-resume:v1';
 const MAX_FAVOURITES = 6;
 const EXPLORE_RETURN_STATE_KEY = 'playgarbaExploreReturn';
 const EXPLORE_RETURN_MAX_AGE = 2 * 60 * 60 * 1000;
@@ -23,14 +24,16 @@ function readStoredJson(key, fallback) {
 function listeningState() {
   const session = readStoredJson(SESSION_KEY, {});
   const favourites = readStoredJson(FAVOURITES_KEY, []);
+  const nonstopResume = readStoredJson(NONSTOP_RESUME_KEY, {});
   return {
     session: session && typeof session === 'object' ? session : {},
     favourites: Array.isArray(favourites) ? favourites.filter((id) => typeof id === 'string') : [],
+    nonstopResume: nonstopResume && Array.isArray(nonstopResume.entries) ? nonstopResume.entries : [],
   };
 }
 
-function hasListeningState({ session, favourites }) {
-  return Boolean(session?.songId || favourites.length);
+function hasListeningState({ session, favourites, nonstopResume }) {
+  return Boolean(session?.songId || favourites?.length || nonstopResume?.length);
 }
 
 function formatTime(seconds = 0) {
@@ -192,6 +195,48 @@ function makeCard({ song, release, artwork, kind, elapsed = 0 }) {
   return link;
 }
 
+function makeNonstopCard({ entry }) {
+  const link = document.createElement('a');
+  link.className = 'personal-listening-card is-continue is-nonstop';
+  link.href = `../?nonstop=${encodeURIComponent(entry.setId)}`;
+  const title = entry.title || 'Nonstop Garba';
+  const artist = entry.artist || 'Nonstop recording';
+  link.setAttribute('aria-label', `Continue listening to Nonstop set ${title} by ${artist}`);
+
+  const wrap = document.createElement('span');
+  wrap.className = 'personal-listening-cover fallback';
+  wrap.textContent = initials(title);
+  link.append(wrap);
+
+  const copy = document.createElement('span');
+  copy.className = 'personal-listening-copy';
+  const kicker = document.createElement('small');
+  kicker.textContent = 'Continue listening · Nonstop';
+  const heading = document.createElement('strong');
+  heading.textContent = title;
+  const meta = document.createElement('span');
+  meta.textContent = `${artist} · Saved on this device`;
+  copy.append(kicker, heading, meta);
+
+  const duration = Number(entry.durationSeconds || 0);
+  const position = Math.max(0, Number(entry.positionSeconds || 0));
+  if (duration > 0 && position > 0) {
+    const progress = document.createElement('span');
+    progress.className = 'personal-listening-progress';
+    const bar = document.createElement('span');
+    const fill = document.createElement('span');
+    fill.style.width = `${Math.max(2, Math.min(100, (position / duration) * 100))}%`;
+    bar.append(fill);
+    const timing = document.createElement('span');
+    timing.textContent = `${formatTime(position)} of ${formatTime(duration)}`;
+    progress.append(bar, timing);
+    copy.append(progress);
+  }
+
+  link.append(copy);
+  return link;
+}
+
 function installStyles() {
   if (document.querySelector('style[data-playgarba-listening-library]')) return;
   const style = document.createElement('style');
@@ -236,6 +281,9 @@ async function renderListeningLibrary() {
 
   const { songById, releaseById, artwork } = await loadCatalogue();
   const continueSong = stored.session?.songId ? songById.get(stored.session.songId) : null;
+  const nonstopEntry = stored.nonstopResume.length > 0 && Number(stored.nonstopResume[0]?.positionSeconds || 0) > 0
+    ? stored.nonstopResume[0]
+    : null;
   const seen = new Set(continueSong?.id ? [continueSong.id] : []);
   const favouriteSongs = [];
   for (const id of stored.favourites) {
@@ -247,7 +295,7 @@ async function renderListeningLibrary() {
     if (favouriteSongs.length >= MAX_FAVOURITES) break;
   }
 
-  if (!continueSong && !favouriteSongs.length) {
+  if (!continueSong && !nonstopEntry && !favouriteSongs.length) {
     removeSection();
     return;
   }
@@ -264,7 +312,7 @@ async function renderListeningLibrary() {
   heading.id = 'personalListeningTitle';
   heading.textContent = 'My Garba';
   const description = document.createElement('p');
-  description.textContent = continueSong
+  description.textContent = continueSong || nonstopEntry
     ? 'Continue where you left off, then return to songs you saved.'
     : 'Songs you saved with the heart in PlayGarba.';
   const openMyGarba = document.createElement('a');
@@ -277,6 +325,10 @@ async function renderListeningLibrary() {
   const rail = document.createElement('div');
   rail.className = 'personal-listening-rail';
   rail.setAttribute('aria-label', 'My Garba saved songs and continue listening');
+
+  if (nonstopEntry) {
+    rail.append(makeNonstopCard({ entry: nonstopEntry }));
+  }
 
   if (continueSong) {
     rail.append(makeCard({
@@ -455,7 +507,7 @@ window.addEventListener('pageshow', (event) => {
   else restoreExploreReturnState();
 });
 window.addEventListener('storage', (event) => {
-  if (event.key === SESSION_KEY || event.key === FAVOURITES_KEY) queueListeningRender();
+  if (event.key === SESSION_KEY || event.key === FAVOURITES_KEY || event.key === NONSTOP_RESUME_KEY) queueListeningRender();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && hasListeningState(listeningState())) queueListeningRender();
