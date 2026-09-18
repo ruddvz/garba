@@ -172,6 +172,8 @@ async function networkFirst(request, fallback = null) {
       const fallbackResponse = await cache.match(fallback);
       if (fallbackResponse) return fallbackResponse;
     }
+    const offlineFallback = await cache.match('./offline.html') || (typeof caches.match === 'function' ? await caches.match('./offline.html') : null);
+    if (offlineFallback) return offlineFallback;
     return Response.error();
   }
 }
@@ -185,7 +187,8 @@ async function catalogueNavigation(request, fallback) {
       return response;
     })
     .catch(() => null);
-  return cached || await refresh || Response.error();
+  const offlineFallback = async () => await cache.match('./offline.html') || (typeof caches.match === 'function' ? await caches.match('./offline.html') : null);
+  return cached || await refresh || await offlineFallback() || Response.error();
 }
 
 const isFreshRuntime = (pathname) => FRESH_RUNTIME_SUFFIXES.some((suffix) => pathname.endsWith(suffix));

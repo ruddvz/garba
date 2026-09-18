@@ -656,7 +656,12 @@ async function selectSong(songId, options = {}) {
   else await animateTrackSwap(apply);
 
   if (wasPlaying && song.audioUrl && options.preservePlayback !== false) {
-    try { await els.audio.play(); } catch { /* browser can block autoplay after async transitions */ }
+    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
+      setPlaying(false);
+      showToast('You’re offline. Catalogue browsing is available, but music playback requires an internet connection.');
+    } else {
+      try { await els.audio.play(); } catch { /* browser can block autoplay after async transitions */ }
+    }
   }
 
   if (!options.keepSheet && mobileQuery.matches && state.sheetSnap !== 'closed') setSheetSnap('collapsed');
@@ -972,6 +977,16 @@ async function togglePlay() {
   const song = currentSong();
   if (!song) return;
 
+  if (state.playing) {
+    els.audio.pause();
+    return;
+  }
+
+  if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
+    showToast('Playback needs an internet connection. Reconnect to play.');
+    return;
+  }
+
   if (!song.audioUrl) {
     const sourceMessage = song.youtubeId
       ? 'This catalogue entry has a YouTube source. Connect the approved playback provider before publishing.'
@@ -980,12 +995,8 @@ async function togglePlay() {
     return;
   }
 
-  if (state.playing) {
-    els.audio.pause();
-  } else {
-    try { await els.audio.play(); }
-    catch { showToast('Playback could not start. Check the approved audio source.'); }
-  }
+  try { await els.audio.play(); }
+  catch { showToast('Playback could not start. Check the approved audio source.'); }
 }
 
 function changeSong(direction) {
@@ -1298,10 +1309,78 @@ function setupPwaInstall() {
   maybeShowInstallBanner();
 }
 
+let updateApplied = false;
+
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((error) => console.warn('Service worker registration failed', error));
+
+  const isActivelyPlaying = () => state.playing || els.app?.classList.contains('is-playing') === true;
+
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('./sw.js');
+
+      const handleWaitingWorker = (worker) => {
+        if (!worker || updateApplied) return;
+
+        if (isActivelyPlaying()) {
+          showToast('Update available. It will apply when playback is paused.');
+
+          const onPlaybackIdle = () => {
+            if (updateApplied) return;
+            if (!isActivelyPlaying()) {
+              updateApplied = true;
+              persistSession();
+              worker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          };
+
+          els.audio?.addEventListener('pause', onPlaybackIdle, { once: true });
+          els.audio?.addEventListener('ended', onPlaybackIdle, { once: true });
+
+          if (els.app && 'MutationObserver' in window) {
+            const idleObserver = new MutationObserver(() => {
+              if (!isActivelyPlaying()) {
+                idleObserver.disconnect();
+                onPlaybackIdle();
+              }
+            });
+            idleObserver.observe(els.app, { attributes: true, attributeFilter: ['class'] });
+          }
+        } else {
+          updateApplied = true;
+          persistSession();
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        }
+      };
+
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        handleWaitingWorker(registration.waiting);
+      }
+
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing;
+        if (!installing) return;
+
+        installing.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+            handleWaitingWorker(installing);
+          }
+        });
+      });
+    } catch (error) {
+      console.warn('Service worker registration failed', error);
+    }
+  });
+
+  const hadControllerOnLoad = Boolean(navigator.serviceWorker.controller);
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadControllerOnLoad || !updateApplied || refreshing) return;
+    if (isActivelyPlaying()) return;
+    refreshing = true;
+    persistSession();
+    window.location.reload();
   });
 }
 
@@ -1415,7 +1494,7 @@ function wireEvents() {
     if (event.key.toLowerCase() === 'f') toggleFavourite();
   });
 
-  window.addEventListener('offline', () => showToast('Offline. The app shell and cached catalogue remain available.'));
+  window.addEventListener('offline', () => showToast('You’re offline. Catalogue browsing is available, but music playback requires an internet connection.'));
   window.addEventListener('online', () => {
     showToast('Back online.');
     refreshCatalogue({ quiet: true });
