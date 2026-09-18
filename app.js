@@ -54,6 +54,7 @@ const state = {
   sheetTrigger: null,
   searchFocusTimer: null,
   presentationRedirects: new Map(),
+  hasExplicitNavigation: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -374,21 +375,42 @@ function syncSheetGenresOnly() {
 }
 
 function updateUrl() {
+  if (!state.hasExplicitNavigation && !location.search && !location.hash) {
+    return;
+  }
   const url = new URL(location.href);
-  url.searchParams.set('genre', state.genreId);
   const songId = state.pendingSongId || state.songId;
-  if (songId) url.searchParams.set('song', songId);
   const song = state.songs.find((entry) => entry.id === songId) || null;
+
+  if (songId) {
+    url.searchParams.set('song', songId);
+    url.searchParams.delete('genre');
+  } else {
+    url.searchParams.delete('song');
+    if (state.genreId && state.genreId !== 'traditional') {
+      url.searchParams.set('genre', state.genreId);
+    } else {
+      url.searchParams.delete('genre');
+    }
+  }
+
   if (
     state.releaseContextId
     && song?.releaseId === state.releaseContextId
     && numericTrackNumber(song) != null
   ) url.searchParams.set('release', state.releaseContextId);
   else url.searchParams.delete('release');
+
   url.searchParams.delete('browse');
   url.searchParams.delete('source');
   url.searchParams.delete('library');
-  history.replaceState(history.state, '', `${url.pathname}?${url.searchParams.toString()}${url.hash}`);
+
+  const search = url.searchParams.toString();
+  const next = `${url.pathname}${search ? `?${search}` : ''}${url.hash}`;
+  const current = `${location.pathname}${location.search}${location.hash}`;
+  if (next !== current) {
+    history.replaceState(history.state, '', next);
+  }
 }
 
 function updateFavouriteUI() {
@@ -649,7 +671,10 @@ async function selectSong(songId, options = {}) {
     syncGenreStrips({ smooth: !options.initial });
     renderSheet();
     persistSession();
-    if (!options.initial) updateUrl();
+    if (!options.initial) {
+      state.hasExplicitNavigation = true;
+      updateUrl();
+    }
   };
 
   if (options.animate === false || options.initial) apply();
@@ -668,6 +693,7 @@ async function selectSong(songId, options = {}) {
 }
 
 function selectGenre(genreId) {
+  state.hasExplicitNavigation = true;
   const genre = state.genres.find((entry) => entry.id === genreId);
   if (!genre) return;
   if (genreId === state.genreId) {
@@ -1598,6 +1624,14 @@ async function refreshCatalogue({ quiet = false } = {}) {
 
 function resolveInitialState() {
   const params = new URLSearchParams(location.search);
+  const hasInitialExplicitNavigation = Boolean(
+    params.get('song')
+    || params.get('genre')
+    || params.get('nonstop')
+    || params.get('release')
+    || params.get('library')
+    || params.get('browse')
+  );
   const session = storage.get('garba:session', {});
   let requestedSong = params.get('song');
   const requestedGenre = params.get('genre');
@@ -1651,6 +1685,7 @@ function resolveInitialState() {
     browse: params.get('browse') === '1',
     myGarba: params.get('library') === 'my-garba',
     pendingNonstopSetId,
+    hasInitialExplicitNavigation,
   };
 }
 
@@ -1665,6 +1700,7 @@ async function init() {
     state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
     state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
+    state.hasExplicitNavigation = initial.hasInitialExplicitNavigation;
 
     state.genreId = initial.genre.id;
     state.sheetFilter = initial.genre.id;
@@ -1672,6 +1708,10 @@ async function init() {
     state.duration = initial.song?.durationSeconds || 0;
     els.app.dataset.genre = initial.genre.id;
     setAccent(initial.genre.accent);
+
+    if (els.favouritesButton) {
+      els.favouritesButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>';
+    }
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {
