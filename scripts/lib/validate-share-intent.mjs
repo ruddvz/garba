@@ -141,7 +141,7 @@ for (const marker of [
   "import './assets/runtime/share-intent.js';",
   "shareButton: $('shareButton'),",
   'handleShareCurrentSong',
-  'placeMobileShare',
+  'sheetShare',
   'parseShareTimestamp',
   'window.GARBA_SHARE',
 ]) {

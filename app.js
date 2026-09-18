@@ -746,6 +746,26 @@ function renderSheet() {
   els.sheetTitle.textContent = state.sheetMode === 'favourites' ? 'My Garba' : state.sheetMode === 'queue' ? 'Up next' : state.sheetMode === 'search' ? 'Search' : 'Songs';
 
   syncSheetGenresOnly();
+
+  let sheetShare = document.getElementById('sheetShare');
+  if (!sheetShare && els.sheetClose?.parentElement) {
+    sheetShare = document.createElement('button');
+    sheetShare.id = 'sheetShare';
+    sheetShare.type = 'button';
+    sheetShare.className = 'icon-button sheet-share';
+    sheetShare.setAttribute('aria-label', 'Share current song');
+    sheetShare.title = 'Share current song';
+    sheetShare.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.25"></circle><circle cx="6" cy="12" r="2.25"></circle><circle cx="18" cy="19" r="2.25"></circle><path d="m8 11 7.8-4.6M8 13l7.8 4.6"></path></svg>';
+    sheetShare.addEventListener('click', handleShareCurrentSong);
+    els.sheetClose.parentElement.insertBefore(sheetShare, els.sheetClose);
+  }
+  if (sheetShare) {
+    const song = currentSong();
+    const label = song ? `Share ${song.title} by ${song.artist}` : 'Share current song';
+    sheetShare.setAttribute('aria-label', label);
+    sheetShare.title = label;
+  }
+
   if (state.sheetSnap === 'closed') {
     els.songList.replaceChildren();
     if (els.sheetSummary) els.sheetSummary.textContent = '';
@@ -1304,22 +1324,6 @@ function registerServiceWorker() {
   });
 }
 
-function placeMobileShare() {
-  const shareBtn = els.shareButton;
-  if (!shareBtn) return;
-  const artistRow = document.querySelector('.artist-row');
-  const utilities = document.querySelector('.utilities');
-  if (window.innerWidth <= 390 && artistRow) {
-    if (shareBtn.parentElement !== artistRow) {
-      artistRow.append(shareBtn);
-      shareBtn.style.display = 'inline-flex';
-    }
-  } else if (utilities && shareBtn.parentElement !== utilities) {
-    const favBtn = document.getElementById('favouritesButton');
-    utilities.insertBefore(shareBtn, favBtn || null);
-    shareBtn.style.display = '';
-  }
-}
 
 async function handleShareCurrentSong() {
   if (window.GARBA_NONSTOP?.activeSet) {
@@ -1374,8 +1378,6 @@ function wireEvents() {
   els.queueButton.addEventListener('click', () => openSheet('queue', { trigger: els.queueButton }));
   els.searchButton.addEventListener('click', () => openSheet('search', { trigger: els.searchButton }));
   els.shareButton?.addEventListener('click', handleShareCurrentSong);
-  window.addEventListener('resize', placeMobileShare, { passive: true });
-  placeMobileShare();
 
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
