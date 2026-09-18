@@ -1438,6 +1438,9 @@ function registerServiceWorker() {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadControllerOnLoad || !updateApplied || refreshing) return;
     if (isActivelyPlaying()) return;
+    const lastReload = Number(sessionStorage.getItem('garba:sw-reload-at') || 0);
+    if (Date.now() - lastReload < 10000) return;
+    sessionStorage.setItem('garba:sw-reload-at', String(Date.now()));
     refreshing = true;
     persistSession();
     window.location.reload();
@@ -1831,7 +1834,7 @@ function applyExploreHandoff() {
   const clear = () => { delete root.dataset.songHandoff; };
   window.setTimeout(clear, 1100);
   window.addEventListener('pagereveal', (event) => {
-    if (event.viewTransition) event.viewTransition.finished.finally(clear);
+    if (event.viewTransition) event.viewTransition.finished.catch(() => {}).finally(clear);
   }, { once: true });
 }
 
