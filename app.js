@@ -80,6 +80,7 @@ const els = {
   sheetTitle: $('sheetTitle'),
   sheetSummary: $('sheetSummary'),
   sheetClose: $('sheetClose'),
+  sheetBackdrop: $('sheetBackdrop'),
   sheetGenreStrip: $('sheetGenreStrip'),
   songList: $('songList'),
   searchButton: $('searchButton'),
@@ -936,6 +937,38 @@ function cancelPendingSearchFocus() {
   state.searchFocusTimer = null;
 }
 
+function placeFavourite() {
+  if (!els.mobileFavourite) return;
+  const utilities = document.querySelector('.utilities');
+  const artistRow = document.querySelector('.artist-row');
+  if (mobileQuery.matches && utilities) {
+    if (els.mobileFavourite.parentElement !== utilities) utilities.insertBefore(els.mobileFavourite, els.queueButton || null);
+  } else if (artistRow && els.mobileFavourite.parentElement !== artistRow) {
+    artistRow.append(els.mobileFavourite);
+  }
+}
+
+function syncSheetChrome() {
+  const snap = state.sheetSnap || 'closed';
+  const modal = mobileQuery.matches && (snap === 'medium' || snap === 'full');
+  if (els.sheetBackdrop) {
+    els.sheetBackdrop.hidden = !modal;
+    els.sheetBackdrop.setAttribute('aria-hidden', String(!modal));
+  }
+  els.songSheet?.setAttribute('aria-modal', String(modal));
+  if (els.sheetClose) {
+    els.sheetClose.title = 'Close song browser';
+    els.sheetClose.setAttribute('aria-label', 'Close song browser');
+  }
+}
+
+function closeProviderOutside(event) {
+  const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
+  if (!stage || !(event.target instanceof Element)) return;
+  if (stage.contains(event.target) || els.playButton?.contains(event.target) || $('miniPlay')?.contains(event.target)) return;
+  stage.querySelector('#providerDockStop')?.click();
+}
+
 function setSheetSnap(snap) {
   const allowed = ['closed', 'collapsed', 'medium', 'full'];
   state.sheetSnap = allowed.includes(snap) ? snap : 'closed';
@@ -949,6 +982,7 @@ function setSheetSnap(snap) {
     els.songSheet.classList.remove('searching');
     els.searchInput.blur();
   }
+  syncSheetChrome();
 }
 
 function preferredOpenSnap(mode) {
@@ -1404,6 +1438,9 @@ function registerServiceWorker() {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadControllerOnLoad || !updateApplied || refreshing) return;
     if (isActivelyPlaying()) return;
+    const lastReload = Number(sessionStorage.getItem('garba:sw-reload-at') || 0);
+    if (Date.now() - lastReload < 10000) return;
+    sessionStorage.setItem('garba:sw-reload-at', String(Date.now()));
     refreshing = true;
     persistSession();
     window.location.reload();
@@ -1459,6 +1496,7 @@ function wireEvents() {
     });
   }
   els.sheetClose.addEventListener('click', closeSheet);
+  els.sheetBackdrop?.addEventListener('click', () => closeSheet());
   els.mobileFavourite.addEventListener('click', () => toggleFavourite());
   els.favouritesButton.addEventListener('click', () => openSheet('favourites', { trigger: els.favouritesButton }));
   els.queueButton.addEventListener('click', () => openSheet('queue', { trigger: els.queueButton }));
@@ -1510,15 +1548,24 @@ function wireEvents() {
     if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
     if (event.code === 'ArrowRight') changeSong(1);
     if (event.code === 'ArrowLeft') changeSong(-1);
-    if (event.code === 'Escape') {
+    if (event.code === 'Escape' || event.key === 'Escape') {
+      const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
+      if (stage) {
+        event.preventDefault();
+        stage.querySelector('#providerDockStop')?.click();
+        return;
+      }
       if (els.songSheet.classList.contains('searching')) {
         cancelPendingSearchFocus();
         els.songSheet.classList.remove('searching');
         els.searchInput.blur();
       } else closeSheet();
+      return;
     }
     if (event.key.toLowerCase() === 'f') toggleFavourite();
   });
+
+  document.addEventListener('click', closeProviderOutside);
 
   window.addEventListener('offline', () => showToast('You’re offline. Catalogue browsing is available, but music playback requires an internet connection.'));
   window.addEventListener('online', () => {
@@ -1537,7 +1584,14 @@ function wireEvents() {
 
   mobileQuery.addEventListener?.('change', () => {
     if (!mobileQuery.matches && state.sheetSnap !== 'closed') setSheetSnap('full');
+    placeFavourite();
+    syncSheetChrome();
     syncGenreStrips({ smooth: false });
+  });
+
+  window.addEventListener('pageshow', () => {
+    placeFavourite();
+    syncSheetChrome();
   });
 
   setupSheetGestures();
@@ -1739,6 +1793,54 @@ async function init() {
   }
 }
 
+function applyExploreHandoff() {
+  const params = new URLSearchParams(location.search);
+  const requestedSong = params.get('song');
+  if (!requestedSong) return;
+
+  let handoff = null;
+  try { handoff = JSON.parse(sessionStorage.getItem('playgarba:route-handoff') || 'null'); } catch { return; }
+  if (!handoff || handoff.v !== 1 || handoff.songId !== requestedSong || Date.now() - Number(handoff.at || 0) > 15000) return;
+  try { sessionStorage.removeItem('playgarba:route-handoff'); } catch { /* storage can be unavailable */ }
+
+  const genreMeta = {
+    traditional: { label: 'Traditional Garba', background: 'assets/backgrounds/traditional.svg', accent: '#d6b06f' },
+    dandiya: { label: 'Dandiya Raas', background: 'assets/backgrounds/dandiya.svg', accent: '#a77ad6' },
+    devotional: { label: 'Devotional Garba', background: 'assets/backgrounds/devotional.svg', accent: '#c78372' },
+    folk: { label: 'Gujarati Folk', background: 'assets/backgrounds/folk.svg', accent: '#9a9fc7' },
+    sanedo: { label: 'Sanedo', background: 'assets/backgrounds/sanedo.svg', accent: '#c99872' },
+    fusion: { label: 'Modern Fusion Garba', background: 'assets/backgrounds/fusion.svg', accent: '#a78bc4' },
+  };
+  const genreId = genreMeta[handoff.genre] ? handoff.genre : 'traditional';
+  const genre = genreMeta[genreId];
+  const root = document.documentElement;
+
+  root.dataset.songHandoff = 'true';
+  root.style.setProperty('--accent', genre.accent);
+  if (els.app) els.app.dataset.genre = genreId;
+  if (els.worldA) els.worldA.style.backgroundImage = `url("${genre.background}")`;
+  if (els.songTitle && handoff.title) els.songTitle.textContent = handoff.title;
+  if (els.songArtist && handoff.artist) els.songArtist.textContent = handoff.artist;
+  if (els.genreEyebrow) els.genreEyebrow.textContent = genre.label;
+  if (els.miniTitle && handoff.title) els.miniTitle.textContent = handoff.title;
+  if (els.miniArtist && handoff.artist) els.miniArtist.textContent = handoff.artist;
+  document.querySelectorAll('[data-static-genre="true"]').forEach((button) => {
+    const active = button.dataset.genre === genreId;
+    button.classList.toggle('active', active);
+    if (active) button.setAttribute('aria-current', 'true');
+    else button.removeAttribute('aria-current');
+  });
+
+  const clear = () => { delete root.dataset.songHandoff; };
+  window.setTimeout(clear, 1100);
+  window.addEventListener('pagereveal', (event) => {
+    if (event.viewTransition) event.viewTransition.finished.catch(() => {}).finally(clear);
+  }, { once: true });
+}
+
+applyExploreHandoff();
+placeFavourite();
+syncSheetChrome();
 wireEvents();
 setupMediaSessionActions();
 setupPwaInstall();

@@ -11,6 +11,18 @@
 .browse-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.4; transition: transform 260ms var(--ease); }
 .app:not([data-sheet-snap="closed"]) .browse-button svg { transform: rotate(180deg); }
 
+.sheet-backdrop {
+  position: fixed;
+  z-index: 19;
+  inset: 0;
+  background: rgba(4, 5, 10, .34);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.sheet-backdrop[hidden] {
+  display: none !important;
+}
+
 .sheet {
   position: fixed; z-index: 20; inset: auto 50% 0 auto;
   width: min(1120px, 74vw); height: min(68vh, 710px); height: min(68dvh, 710px);
