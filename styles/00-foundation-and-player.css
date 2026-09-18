@@ -240,14 +240,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .progress { width: 100%; accent-color: var(--accent); cursor: pointer; }
 input[type="range"] { appearance: none; height: 18px; background: transparent; }
 input[type="range"]::-webkit-slider-runnable-track {
-  height: 2px;
+  height: 4px;
   background: linear-gradient(to right, var(--ivory) 0 var(--progress,0%), var(--faint) var(--progress,0%) 100%);
   box-shadow: 0 0 0 1px rgba(5,7,16,.74), 0 1px 6px rgba(5,7,16,.72);
 }
-input[type="range"]::-webkit-slider-thumb { appearance: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: -3px; box-shadow: 0 0 0 1px rgba(5,7,16,.82), 0 0 9px color-mix(in srgb, var(--accent) 50%, transparent); }
-input[type="range"]::-moz-range-track { height: 2px; background: var(--faint); box-shadow: 0 0 0 1px rgba(5,7,16,.74), 0 1px 6px rgba(5,7,16,.72); }
-input[type="range"]::-moz-range-progress { height: 2px; background: var(--ivory); }
-input[type="range"]::-moz-range-thumb { border: 1px solid rgba(5,7,16,.82); width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); margin-top: -5px; box-shadow: 0 0 0 1px rgba(5,7,16,.82), 0 0 9px color-mix(in srgb, var(--accent) 50%, transparent); }
+input[type="range"]::-moz-range-track { height: 4px; background: var(--faint); box-shadow: 0 0 0 1px rgba(5,7,16,.74), 0 1px 6px rgba(5,7,16,.72); }
+input[type="range"]::-moz-range-progress { height: 4px; background: var(--ivory); }
+input[type="range"]::-moz-range-thumb { border: 1px solid rgba(5,7,16,.82); width: 14px; height: 14px; border-radius: 50%; background: var(--accent); }
 
 .genre-strip {
   grid-row: 5;
