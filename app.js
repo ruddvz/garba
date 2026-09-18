@@ -1354,7 +1354,7 @@ function registerServiceWorker() {
         }
       };
 
-      if (registration.waiting) {
+      if (registration.waiting && navigator.serviceWorker.controller) {
         handleWaitingWorker(registration.waiting);
       }
 
@@ -1373,9 +1373,10 @@ function registerServiceWorker() {
     }
   });
 
+  const hadControllerOnLoad = Boolean(navigator.serviceWorker.controller);
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
+    if (!hadControllerOnLoad || !updateApplied || refreshing) return;
     if (isActivelyPlaying()) return;
     refreshing = true;
     persistSession();
