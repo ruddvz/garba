@@ -4,9 +4,12 @@
 
   const state = {
     index: null,
+    indexPromise: null,
     chunks: new Map(),
+    chunkPromises: new Map(),
     failedChunks: new Set(),
     allSets: null,
+    allSetsPromise: null,
     activeSet: null,
     activeTrack: null,
     previousSession: null,
@@ -126,49 +129,120 @@
 
   async function loadIndex() {
     if (state.index) return state.index;
-    const index = await fetchJson('data/discovery/sets/index.json');
-    if (!Array.isArray(index?.chunks) || !index.chunks.length) throw new Error('Nonstop index unavailable');
-    state.index = index;
-    return index;
+    if (!state.indexPromise) {
+      state.indexPromise = fetchJson('data/discovery/sets/index.json').then((index) => {
+        if (!Array.isArray(index?.chunks) || !index.chunks.length) throw new Error('Nonstop index unavailable');
+        state.index = index;
+        return index;
+      }).finally(() => {
+        state.indexPromise = null;
+      });
+    }
+    return state.indexPromise;
   }
 
-  async function loadChunk(name) {
-    if (state.chunks.has(name)) return state.chunks.get(name);
-    const payload = await fetchJson(`data/discovery/sets/${name}`);
-    if (!payload || !Array.isArray(payload.sets)) {
-      state.failedChunks.add(name);
-      state.chunks.set(name, []);
-      return [];
+  let progressiveRenderTimer = null;
+
+  function scheduleProgressiveRender() {
+    if (!state.browserOpen || state.allSets) return;
+    const list = $('nonstopBrowserList');
+    if (!list) return;
+    if (!list.querySelector('.nonstop-set')) {
+      renderBrowser();
+      return;
     }
-    state.failedChunks.delete(name);
-    const sets = sortSets(payload.sets.map(normaliseSet).filter(isPlayableSet));
-    state.chunks.set(name, sets);
-    return sets;
+    if (progressiveRenderTimer) return;
+    progressiveRenderTimer = requestAnimationFrame(() => {
+      progressiveRenderTimer = null;
+      if (state.browserOpen && !state.allSets) {
+        renderBrowser();
+      }
+    });
   }
 
-  async function loadAllSets({ refresh = false } = {}) {
-    if (refresh) {
-      state.index = null;
-      state.chunks.clear();
-      state.failedChunks.clear();
-      state.allSets = null;
-    }
+  function getProgressiveSets() {
     if (state.allSets) return state.allSets;
-    const index = await loadIndex();
-    const chunks = await Promise.all(index.chunks.map(loadChunk));
+    if (!state.chunks.size) return [];
+    const all = [];
+    for (const chunkSets of state.chunks.values()) {
+      for (const set of chunkSets) {
+        all.push(set);
+      }
+    }
     const seenIds = new Set();
     const seenVideos = new Set();
-    state.allSets = sortSets(chunks.flat()).filter((set) => {
+    return sortSets(all).filter((set) => {
       if (seenIds.has(set.id) || seenVideos.has(set.videoId)) return false;
       seenIds.add(set.id);
       seenVideos.add(set.videoId);
       return true;
     });
-    if (!state.allSets.length) throw new Error('No playable nonstop sets');
-    return state.allSets;
+  }
+
+  async function loadChunk(name) {
+    if (state.chunks.has(name)) return state.chunks.get(name);
+    if (!state.chunkPromises) state.chunkPromises = new Map();
+    if (state.chunkPromises.has(name)) return state.chunkPromises.get(name);
+    const promise = (async () => {
+      try {
+        const payload = await fetchJson(`data/discovery/sets/${name}`);
+        if (!payload || !Array.isArray(payload.sets)) {
+          state.failedChunks.add(name);
+          state.chunks.set(name, []);
+          return [];
+        }
+        state.failedChunks.delete(name);
+        const sets = sortSets(payload.sets.map(normaliseSet).filter(isPlayableSet));
+        state.chunks.set(name, sets);
+        scheduleProgressiveRender();
+        return sets;
+      } finally {
+        state.chunkPromises?.delete(name);
+      }
+    })();
+    state.chunkPromises.set(name, promise);
+    return promise;
+  }
+
+  async function loadAllSets({ refresh = false } = {}) {
+    if (refresh) {
+      state.index = null;
+      state.indexPromise = null;
+      state.chunks.clear();
+      state.chunkPromises?.clear();
+      state.failedChunks.clear();
+      state.allSets = null;
+      state.allSetsPromise = null;
+    }
+    if (state.allSets) return state.allSets;
+    if (state.allSetsPromise) return state.allSetsPromise;
+    state.allSetsPromise = (async () => {
+      try {
+        const index = await loadIndex();
+        const chunks = await Promise.all(index.chunks.map(loadChunk));
+        const seenIds = new Set();
+        const seenVideos = new Set();
+        state.allSets = sortSets(chunks.flat()).filter((set) => {
+          if (seenIds.has(set.id) || seenVideos.has(set.videoId)) return false;
+          seenIds.add(set.id);
+          seenVideos.add(set.videoId);
+          return true;
+        });
+        if (!state.allSets.length) throw new Error('No playable nonstop sets');
+        return state.allSets;
+      } finally {
+        state.allSetsPromise = null;
+      }
+    })();
+    return state.allSetsPromise;
   }
 
   async function findSet(requestedId = null) {
+    if (requestedId) {
+      const progressive = getProgressiveSets();
+      const match = progressive.find((set) => set.id === requestedId);
+      if (match) return match;
+    }
     const sets = await loadAllSets();
     if (requestedId) return sets.find((set) => set.id === requestedId) || null;
     return sets.find((set) => set.id === DEFAULT_SET_ID) || sets[0] || null;
@@ -974,6 +1048,10 @@
 
   function closeBrowser() {
     if (!state.browserOpen) return;
+    if (progressiveRenderTimer) {
+      cancelAnimationFrame(progressiveRenderTimer);
+      progressiveRenderTimer = null;
+    }
     const panel = $('nonstopBrowser');
     const backdrop = $('nonstopBrowserBackdrop');
     state.browserOpen = false;
@@ -1004,9 +1082,12 @@
     syncButton();
 
     const list = $('nonstopBrowserList');
-    if (list && !state.allSets) {
+    const progressive = getProgressiveSets();
+    if (list && !state.allSets && !progressive.length) {
       list.setAttribute('aria-busy', 'true');
       list.innerHTML = '<div class="nonstop-browser-empty">Loading Nonstop Garba…</div>';
+    } else if (list && (state.allSets || progressive.length)) {
+      renderBrowser();
     }
     requestAnimationFrame(() => panel?.focus({ preventScroll: true }));
     try {
@@ -1022,8 +1103,17 @@
   }
 
   function renderBrowser() {
-    const sets = state.allSets;
+    const sets = state.allSets || getProgressiveSets();
     if (!sets || !$('nonstopBrowser')) return;
+    const list = $('nonstopBrowserList');
+    if (!sets.length && !state.allSets) {
+      if (list) {
+        list.setAttribute('aria-busy', 'true');
+        list.innerHTML = '<div class="nonstop-browser-empty">Loading Nonstop Garba…</div>';
+      }
+      return;
+    }
+
     const searched = searchSets(sets, state.browserQuery);
     const categoryFiltered = searched.filter((set) => matchesCategory(set, state.browserCategory));
     const filtered = state.browserQuery.trim()
@@ -1032,34 +1122,57 @@
 
     const categoryNav = $('nonstopBrowserCategories');
     if (categoryNav) {
-      categoryNav.replaceChildren(...categoryDefinitions.map(([id, label]) => {
-        const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = `nonstop-category${state.browserCategory === id ? ' active' : ''}`;
-        button.textContent = `${label} ${count}`;
-        button.setAttribute('aria-pressed', String(state.browserCategory === id));
-        button.addEventListener('click', () => {
-          state.browserCategory = id;
-          renderBrowser();
-          button.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      if (categoryNav.children.length === categoryDefinitions.length) {
+        categoryDefinitions.forEach(([id, label], index) => {
+          const button = categoryNav.children[index];
+          const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
+          const text = `${label} ${count}`;
+          if (button.textContent !== text) button.textContent = text;
+          const active = state.browserCategory === id;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
         });
-        return button;
-      }));
+      } else {
+        categoryNav.replaceChildren(...categoryDefinitions.map(([id, label]) => {
+          const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `nonstop-category${state.browserCategory === id ? ' active' : ''}`;
+          button.textContent = `${label} ${count}`;
+          button.setAttribute('aria-pressed', String(state.browserCategory === id));
+          button.addEventListener('click', () => {
+            state.browserCategory = id;
+            renderBrowser();
+            button.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+          });
+          return button;
+        }));
+      }
     }
 
     renderChapterNavigation();
 
-    const list = $('nonstopBrowserList');
     if (!list) return;
-    list.removeAttribute('aria-busy');
+    if (state.allSets) {
+      list.removeAttribute('aria-busy');
+    } else {
+      list.setAttribute('aria-busy', 'true');
+    }
 
-    const partialFailureCount = state.failedChunks.size;
+    const partialFailureCount = state.allSets ? state.failedChunks.size : 0;
     const makePartialStatus = () => {
       const status = document.createElement('div');
       status.className = 'nonstop-browser-status';
       status.setAttribute('role', 'status');
       status.textContent = `${partialFailureCount} Nonstop section${partialFailureCount === 1 ? '' : 's'} couldn't load.`;
+      return status;
+    };
+
+    const makeProgressiveStatus = () => {
+      const status = document.createElement('div');
+      status.className = 'nonstop-browser-status';
+      status.setAttribute('role', 'status');
+      status.textContent = 'Loading more recordings…';
       return status;
     };
 
@@ -1069,8 +1182,13 @@
       empty.innerHTML = state.browserQuery
         ? 'No Nonstop Garba matches this search.<br>Try another search or category.'
         : 'No Nonstop Garba matches this category.<br>Choose another category.';
-      if (partialFailureCount) list.replaceChildren(makePartialStatus(), empty);
-      else list.replaceChildren(empty);
+      if (!state.allSets) {
+        list.replaceChildren(empty, makeProgressiveStatus());
+      } else if (partialFailureCount) {
+        list.replaceChildren(makePartialStatus(), empty);
+      } else {
+        list.replaceChildren(empty);
+      }
       return;
     }
 
@@ -1104,8 +1222,13 @@
       return button;
     });
 
-    if (partialFailureCount) list.replaceChildren(makePartialStatus(), ...rows);
-    else list.replaceChildren(...rows);
+    if (partialFailureCount) {
+      list.replaceChildren(makePartialStatus(), ...rows);
+    } else if (!state.allSets) {
+      list.replaceChildren(...rows, makeProgressiveStatus());
+    } else {
+      list.replaceChildren(...rows);
+    }
   }
 
   function focusableElements() {
