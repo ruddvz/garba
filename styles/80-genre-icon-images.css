@@ -1019,8 +1019,14 @@ html body .app #browseActions #browseButton::after {
   --garba-dandiya-marker: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 8'%3E%3Cpath d='M4 4h44' fill='none' stroke='%23e3bf76' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M11 4h5M22 4h5M34 4h5' fill='none' stroke='%238b3043' stroke-width='3.2' stroke-linecap='butt'/%3E%3Cpath d='M16 4h3M30 4h3M42 4h3' fill='none' stroke='%23df7442' stroke-width='3.2' stroke-linecap='butt'/%3E%3C/svg%3E");
 }
 
-/* Genre choices stay visually open. Selection is communicated only by the
-   dandiya marker, never by a pill, border, glow, card or size change. */
+html body .app #genreStrip {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
 html body .app #genreStrip .genre-button,
 html body .app #genreStrip #nonstopButton,
 html body .app .sheet-genres .genre-button {
@@ -1055,8 +1061,42 @@ html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton {
 html body .app #genreStrip .genre-button::before,
 html body .app #genreStrip #nonstopButton::before,
 html body .app .sheet-genres .genre-button::before {
-  content: none !important;
-  display: none !important;
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -4px -10px !important;
+  border-radius: 20px !important;
+  border: 0 !important;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(6, 8, 18, 0.65) 0%,
+    rgba(6, 8, 18, 0.40) 38%,
+    rgba(6, 8, 18, 0.12) 65%,
+    transparent 82%
+  ) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+  opacity: 0.88 !important;
+  transition: opacity 180ms ease, background 180ms ease !important;
+}
+
+html body .app #genreStrip .genre-button:hover::before,
+html body .app #genreStrip #nonstopButton:hover::before {
+  opacity: 1 !important;
+}
+
+html body .app #genreStrip .genre-button.active::before,
+html body .app #genreStrip .genre-button[aria-current="true"]::before,
+html body .app #genreStrip #nonstopButton.active::before,
+html body .app[data-play-mode="nonstop"] #genreStrip #nonstopButton::before {
+  opacity: 1 !important;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    color-mix(in srgb, var(--accent) 26%, rgba(6, 8, 18, 0.75)) 0%,
+    rgba(6, 8, 18, 0.48) 42%,
+    rgba(6, 8, 18, 0.14) 68%,
+    transparent 85%
+  ) !important;
 }
 
 html body .app #genreStrip .genre-button::after,

@@ -131,7 +131,8 @@
   function isPlayerShortcut(event) {
     if (event.code === 'Space' || event.code === 'ArrowLeft' || event.code === 'ArrowRight') return true;
     if (event.key === '/') return true;
-    return String(event.key || '').toLowerCase() === 'f';
+    const key = String(event.key || '').toLowerCase();
+    return key === 'f' || key === 's' || key === 'l';
   }
 
   function sheetIsOpen() {

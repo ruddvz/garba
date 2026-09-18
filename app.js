@@ -1,6 +1,10 @@
 import './assets/runtime/route-readiness.js';
 import './assets/runtime/share-intent.js';
+import './assets/runtime/morphicons.js';
+import './assets/runtime/live-station.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
+import { initMorphicons } from './assets/runtime/morphicons.js';
+import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -55,6 +59,9 @@ const state = {
   searchFocusTimer: null,
   presentationRedirects: new Map(),
   hasExplicitNavigation: false,
+  shuffleMode: storage.get('garba:shuffle', false),
+  liveMode: false,
+  morphs: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -68,6 +75,8 @@ const els = {
   songTitle: $('songTitle'),
   songArtist: $('songArtist'),
   playButton: $('playButton'),
+  shuffleButton: $('shuffleButton'),
+  liveStationButton: $('liveStationButton'),
   prevButton: $('prevButton'),
   nextButton: $('nextButton'),
   progress: $('progress'),
@@ -276,6 +285,8 @@ function setPlaying(playing) {
   els.miniPlay.classList.toggle('is-playing', playing);
   els.playButton.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   els.miniPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  state.morphs?.get('play')?.morphTo(playing ? 'pause' : 'play');
+  state.morphs?.get('miniPlay')?.morphTo(playing ? 'pause' : 'play');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 }
 
@@ -417,8 +428,12 @@ function updateUrl() {
 function updateFavouriteUI() {
   const song = currentSong();
   const active = song ? state.favourites.has(song.id) : false;
-  els.mobileFavourite.classList.toggle('active', active);
-  els.mobileFavourite.setAttribute('aria-pressed', String(active));
+  els.mobileFavourite?.classList.toggle('active', active);
+  els.mobileFavourite?.setAttribute('aria-pressed', String(active));
+  els.favouritesButton?.classList.toggle('active', active);
+  els.favouritesButton?.setAttribute('aria-pressed', String(active));
+  state.morphs?.get('favourites')?.morphTo(active ? 'heartFilled' : 'heartOutline');
+  state.morphs?.get('mobileFavourite')?.morphTo(active ? 'heartFilled' : 'heartOutline');
 }
 
 function automaticUpNextSongs(limit = 12) {
@@ -536,7 +551,16 @@ function renderPlayer() {
   const genre = currentGenre();
   if (!song || !genre) return;
 
-  els.genreEyebrow.textContent = genre.label;
+  if (state.liveMode) {
+    els.genreEyebrow.textContent = '🔴 LIVE 24/7 · Global Radio';
+    els.app.dataset.liveMode = 'true';
+    els.liveStationButton?.setAttribute('aria-pressed', 'true');
+  } else {
+    els.genreEyebrow.textContent = genre.label;
+    els.app.removeAttribute('data-live-mode');
+    els.liveStationButton?.setAttribute('aria-pressed', 'false');
+  }
+  els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
   els.songTitle.textContent = song.title;
   const titleLength = [...song.title].length;
   els.trackBlock.classList.toggle('is-long-title', titleLength > 28);
@@ -630,6 +654,8 @@ async function selectSong(songId, options = {}) {
 
   if (!options.initial) state.pendingSongId = null;
   if (!options.preserveReleaseContext && !options.initial) clearReleaseContext();
+  if (options.liveMode) state.liveMode = true;
+  else if (!options.preserveContext && !options.initial) state.liveMode = false;
 
   const previousSongId = state.songId;
   if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
@@ -1059,6 +1085,49 @@ async function togglePlay() {
   catch { showToast('Playback could not start. Check the approved audio source.'); }
 }
 
+function toggleShuffle() {
+  state.shuffleMode = !state.shuffleMode;
+  storage.set('garba:shuffle', state.shuffleMode);
+  els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
+  state.morphs?.get('shuffle')?.morphTo(state.shuffleMode ? 'shuffleActive' : 'shuffleInactive');
+  showToast(state.shuffleMode ? 'Shuffle turned on.' : 'Shuffle turned off.');
+}
+
+async function toggleLiveStation() {
+  if (state.liveMode) {
+    state.liveMode = false;
+    els.app.removeAttribute('data-live-mode');
+    els.liveStationButton?.setAttribute('aria-pressed', 'false');
+    renderPlayer();
+    showToast('Exited 24/7 Live Radio.');
+    return;
+  }
+
+  const liveState = getLiveBroadcastState(state.songs, Date.now());
+  if (!liveState || !liveState.song) {
+    showToast('24/7 Live Radio is tuning in...');
+    return;
+  }
+
+  state.liveMode = true;
+  els.app.dataset.liveMode = 'true';
+  els.liveStationButton?.setAttribute('aria-pressed', 'true');
+  state.morphs?.get('live')?.pulse();
+  showToast(`Tuned into 24/7 Live Garba Radio · ${liveState.song.title}`);
+
+  await selectSong(liveState.song.id, {
+    restoreElapsed: liveState.seekSeconds,
+    preservePlayback: true,
+    liveMode: true,
+  });
+
+  if (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(liveState.song)) {
+    window.GARBA_YOUTUBE_PLAYER.open(liveState.song, { autoplay: true, resume: true });
+  } else if (window.GARBA_YOUTUBE_PLAYER?.seekTo && liveState.seekSeconds > 0) {
+    window.GARBA_YOUTUBE_PLAYER.seekTo(liveState.seekSeconds);
+  }
+}
+
 function changeSong(direction) {
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
@@ -1070,6 +1139,14 @@ function changeSong(direction) {
         preserveReleaseContext: true,
         syncReleaseAnchor: true,
       });
+      return;
+    }
+  }
+
+  if (state.liveMode) {
+    const nextLive = getNextLiveTrack(state.songs, state.songId);
+    if (nextLive) {
+      selectSong(nextLive.id, { keepSheet: true, preservePlayback: true, liveMode: true });
       return;
     }
   }
@@ -1126,6 +1203,17 @@ function changeSong(direction) {
   const genreId = state.playContextGenreId || state.genreId;
   const list = songsForGenre(genreId).filter(canExecuteSong);
   if (!list.length) return;
+
+  if (state.shuffleMode && direction > 0) {
+    const candidates = list.filter((song) => song.id !== state.songId && !state.listeningHistory.slice(-6).includes(song.id));
+    const pool = candidates.length ? candidates : list.filter((song) => song.id !== state.songId);
+    if (pool.length) {
+      const randomSong = pool[Math.floor(Math.random() * pool.length)];
+      selectSong(randomSong.id, { keepSheet: true, preservePlayback: true });
+      return;
+    }
+  }
+
   const anchorId = state.playContextSongId || state.songId;
   let index = list.findIndex((song) => song.id === anchorId);
   index = index < 0 ? 0 : (index + direction + list.length) % list.length;
@@ -1538,6 +1626,9 @@ function wireEvents() {
   });
   els.audio.addEventListener('ended', () => changeSong(1));
 
+  els.shuffleButton?.addEventListener('click', toggleShuffle);
+  els.liveStationButton?.addEventListener('click', toggleLiveStation);
+
   document.addEventListener('keydown', (event) => {
     if (event.target instanceof HTMLInputElement) return;
     if (event.key === '/') {
@@ -1548,6 +1639,8 @@ function wireEvents() {
     if (event.code === 'Space') { event.preventDefault(); togglePlay(); }
     if (event.code === 'ArrowRight') changeSong(1);
     if (event.code === 'ArrowLeft') changeSong(-1);
+    if (event.key === 's' || event.key === 'S') { event.preventDefault(); toggleShuffle(); }
+    if (event.key === 'l' || event.key === 'L') { event.preventDefault(); toggleLiveStation(); }
     if (event.code === 'Escape' || event.key === 'Escape') {
       const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
       if (stage) {
@@ -1705,13 +1798,32 @@ function resolveInitialState() {
   const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;
 
   let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
-  if (!song && !pendingSongId && session.songId) song = state.songs.find((entry) => entry.id === session.songId);
+  if (!song && !pendingSongId && session.songId && hasInitialExplicitNavigation) {
+    song = state.songs.find((entry) => entry.id === session.songId);
+  }
+
+  // Shuffle starter on initial direct load or reload
+  if (!hasInitialExplicitNavigation && !song && !pendingSongId) {
+    const recentStarters = storage.get('garba:recentInitialSongs', []);
+    const playable = state.songs.filter(canExecuteSong);
+    if (playable.length) {
+      const freshPool = playable.filter((entry) => !recentStarters.includes(entry.id));
+      const pool = freshPool.length ? freshPool : playable;
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      if (picked) {
+        song = picked;
+        const updated = [...recentStarters.filter((id) => id !== picked.id), picked.id].slice(-15);
+        storage.set('garba:recentInitialSongs', updated);
+      }
+    }
+  }
+
   const preserveRequestedIdentity = Boolean(song && requestedSong && song.id === requestedSong);
-  const preserveRestoredIdentity = Boolean(song && !requestedSong && session.songId && song.id === session.songId);
+  const preserveRestoredIdentity = Boolean(song && !requestedSong && session.songId && song.id === session.songId && hasInitialExplicitNavigation);
 
   let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
   if (!genre && song) genre = state.genres.find((entry) => entry.id === song.genre);
-  if (!genre && session.genreId) genre = state.genres.find((entry) => entry.id === session.genreId);
+  if (!genre && session.genreId && hasInitialExplicitNavigation) genre = state.genres.find((entry) => entry.id === session.genreId);
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
   if (!song || (!(preserveRequestedIdentity || preserveRestoredIdentity) && song.genre !== genre.id)) {
@@ -1766,6 +1878,10 @@ async function init() {
     if (els.favouritesButton) {
       els.favouritesButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>';
     }
+
+    state.morphs = initMorphicons(els);
+    els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
+    state.morphs?.get('shuffle')?.morphTo(state.shuffleMode ? 'shuffleActive' : 'shuffleInactive', { instant: true });
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {

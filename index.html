@@ -95,6 +95,7 @@
         </section>
 
         <section class="controls" aria-label="Playback controls">
+          <button class="transport shuffle-button" id="shuffleButton" type="button" aria-label="Toggle shuffle" aria-pressed="false" title="Shuffle songs (S)" aria-keyshortcuts="s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20l17-17M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg></button>
           <button class="transport" id="prevButton" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
           <button class="play-button" id="playButton" type="button" aria-label="Play">
             <span class="ambient-ring" aria-hidden="true"></span>
@@ -103,6 +104,14 @@
           </button>
           <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
         </section>
+
+        <div class="live-station-container" id="liveStationContainer">
+          <button class="live-station-button" id="liveStationButton" type="button" aria-label="Tune into 24/7 Live Garba Radio" aria-pressed="false" title="24/7 Live Garba Radio">
+            <span class="live-beacon" aria-hidden="true"><span class="beacon-ping"></span><span class="beacon-core"></span></span>
+            <svg class="live-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 4.9a10 10 0 0 1 14.1 0M7.8 7.8a6 6 0 0 1 8.4 0M12 11a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"></path></svg>
+            <span class="live-badge-text">24/7 LIVE</span>
+          </button>
+        </div>
 
         <section class="progress-wrap" aria-label="Playback progress">
           <span class="time" id="elapsedTime">0:00</span>
