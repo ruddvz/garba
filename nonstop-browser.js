@@ -1016,8 +1016,11 @@
       setMetadata(set);
       syncButton();
 
+      const urlTimestamp = window.GARBA_SHARE_INTENT?.parseShareTimestamp?.(new URL(location.href).searchParams.get('t'), set.durationSeconds);
       const resumeCheck = state.resumeStore?.read?.(set.id, `youtube:${set.videoId}`);
-      const savedSeconds = resumeCheck?.status === 'found' ? Number(resumeCheck.record.positionSeconds || 0) : 0;
+      const savedSeconds = urlTimestamp != null && urlTimestamp > 0
+        ? urlTimestamp
+        : (resumeCheck?.status === 'found' ? Number(resumeCheck.record.positionSeconds || 0) : 0);
       const hasSavedPosition = savedSeconds > 0 && (set.durationSeconds > 0 ? savedSeconds < set.durationSeconds - 10 : true);
 
       // Never autoplay on reload.
@@ -1511,13 +1514,42 @@
     restoreFromUrl();
   }
 
+  async function shareActiveSet(options = {}) {
+    const set = state.activeSet;
+    if (!set) return null;
+    const elapsed = Math.round(window.GARBA_YOUTUBE_PLAYER?.elapsed?.() || 0);
+    const duration = Math.round(set.durationSeconds || window.GARBA_YOUTUBE_PLAYER?.duration?.() || 0);
+    const includeTimestamp = options.includeTimestamp !== false && elapsed > 5 && (duration > 0 ? elapsed < duration - 5 : true);
+    const timestampSeconds = includeTimestamp ? elapsed : 0;
+
+    const shareIntent = window.GARBA_SHARE_INTENT;
+    const url = shareIntent?.buildNonstopShareUrl
+      ? shareIntent.buildNonstopShareUrl({ setId: set.id, timestampSeconds })
+      : `${location.origin}/?nonstop=${encodeURIComponent(set.id)}${timestampSeconds > 0 ? `&t=${timestampSeconds}` : ''}`;
+
+    const title = set.title || 'Nonstop Garba';
+    const text = shareIntent?.formatShareText
+      ? shareIntent.formatShareText({ title, context: 'nonstop' })
+      : `Listen to "${title}" on PlayGarba Nonstop`;
+
+    if (shareIntent?.executeShare) {
+      const result = await shareIntent.executeShare({ title, text, url });
+      if (result.status === 'copied') announce('Link copied to clipboard');
+      else if (result.status === 'failed') announce('Unable to copy link');
+      return result;
+    }
+    return null;
+  }
+
   window.GARBA_NONSTOP = {
     play: startNonstop,
     browse: openBrowser,
     stop: stopNonstop,
     list: async () => loadAllSets(),
     get activeSetId() { return state.activeSet?.id || null; },
+    get activeSet() { return state.activeSet; },
     get resumeStore() { return state.resumeStore; },
+    share: shareActiveSet,
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });

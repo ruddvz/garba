@@ -1,6 +1,13 @@
 import './assets/runtime/route-readiness.js';
+import './assets/runtime/share-intent.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
+const {
+  parseShareTimestamp,
+  buildSongShareUrl,
+  formatShareText,
+  executeShare,
+} = window.GARBA_SHARE_INTENT || {};
 
 const storage = {
   get(key, fallback) {
@@ -75,6 +82,7 @@ const els = {
   sheetGenreStrip: $('sheetGenreStrip'),
   songList: $('songList'),
   searchButton: $('searchButton'),
+  shareButton: $('shareButton'),
   favouritesButton: $('favouritesButton'),
   queueButton: $('queueButton'),
   queueBadge: $('queueBadge'),
@@ -533,6 +541,11 @@ function renderPlayer() {
   updateFavouriteUI();
   updateQueueBadge();
   updateMediaPositionState();
+  if (els.shareButton) {
+    const shareLabel = song ? `Share ${song.title} by ${song.artist}` : 'Share current song';
+    els.shareButton.setAttribute('aria-label', shareLabel);
+    els.shareButton.title = shareLabel;
+  }
 }
 
 async function animateTrackSwap(update) {
@@ -1291,6 +1304,55 @@ function registerServiceWorker() {
   });
 }
 
+function placeMobileShare() {
+  const shareBtn = els.shareButton;
+  if (!shareBtn) return;
+  const artistRow = document.querySelector('.artist-row');
+  const utilities = document.querySelector('.utilities');
+  if (window.innerWidth <= 390 && artistRow) {
+    if (shareBtn.parentElement !== artistRow) {
+      artistRow.append(shareBtn);
+      shareBtn.style.display = 'inline-flex';
+    }
+  } else if (utilities && shareBtn.parentElement !== utilities) {
+    const favBtn = document.getElementById('favouritesButton');
+    utilities.insertBefore(shareBtn, favBtn || null);
+    shareBtn.style.display = '';
+  }
+}
+
+async function handleShareCurrentSong() {
+  if (window.GARBA_NONSTOP?.activeSet) {
+    if (typeof window.GARBA_NONSTOP.share === 'function') {
+      return window.GARBA_NONSTOP.share();
+    }
+  }
+  const song = currentSong();
+  if (!song) return null;
+
+  const elapsed = Math.round(state.elapsed || 0);
+  const duration = Math.round(state.duration || song.durationSeconds || 0);
+  const includeTimestamp = elapsed > 5 && (duration > 0 ? elapsed < duration - 5 : true);
+  const timestampSeconds = includeTimestamp ? elapsed : 0;
+
+  const url = buildSongShareUrl?.({
+    songId: song.id,
+    timestampSeconds,
+  }) || `${location.origin}/?song=${encodeURIComponent(song.id)}${timestampSeconds > 0 ? `&t=${timestampSeconds}` : ''}`;
+
+  const title = song.title || 'PlayGarba';
+  const text = formatShareText?.({ title: song.title, artist: song.artist, context: 'song' })
+    || `Listen to "${title}" on PlayGarba`;
+
+  if (executeShare) {
+    const result = await executeShare({ title, text, url });
+    if (result?.status === 'copied') showToast('Link copied to clipboard');
+    else if (result?.status === 'failed') showToast('Unable to copy link');
+    return result;
+  }
+  return null;
+}
+
 function wireEvents() {
   let searchTimer = null;
   els.playButton.addEventListener('click', togglePlay);
@@ -1311,6 +1373,9 @@ function wireEvents() {
   els.favouritesButton.addEventListener('click', () => openSheet('favourites', { trigger: els.favouritesButton }));
   els.queueButton.addEventListener('click', () => openSheet('queue', { trigger: els.queueButton }));
   els.searchButton.addEventListener('click', () => openSheet('search', { trigger: els.searchButton }));
+  els.shareButton?.addEventListener('click', handleShareCurrentSong);
+  window.addEventListener('resize', placeMobileShare, { passive: true });
+  placeMobileShare();
 
   els.searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
@@ -1511,12 +1576,16 @@ function resolveInitialState() {
     && !pendingNonstopSetId
     ? releaseContextMatch(requestedRelease, requestedSong)
     : null;
+  const requestedTimestamp = parseShareTimestamp?.(params.get('t'), song?.durationSeconds) ?? null;
+  const elapsed = requestedTimestamp != null && requestedTimestamp > 0
+    ? requestedTimestamp
+    : Number(session.elapsed || 0);
   return {
     genre,
     song,
     pendingSongId,
     releaseContextId: releaseContext?.releaseId || null,
-    elapsed: Number(session.elapsed || 0),
+    elapsed,
     browse: params.get('browse') === '1',
     myGarba: params.get('library') === 'my-garba',
     pendingNonstopSetId,
@@ -1573,3 +1642,7 @@ setupMediaSessionActions();
 setupPwaInstall();
 registerServiceWorker();
 init();
+
+window.GARBA_SHARE = Object.freeze({
+  shareCurrent: handleShareCurrentSong,
+});
