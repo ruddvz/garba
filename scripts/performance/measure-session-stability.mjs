@@ -196,11 +196,12 @@ async function openProbeSurface(page, triggerSelector, expectedTitle, { searchQu
   result.clicked = await trigger.click({ timeout: 2_500 }).then(() => true).catch(() => false);
   if (!result.clicked) return { ...result, surface: await snapshotSheetSurface(page) };
 
-  result.opened = await page.waitForFunction((title) => {
+  const expectedTitles = Array.isArray(expectedTitle) ? expectedTitle : [expectedTitle];
+  result.opened = await page.waitForFunction((titles) => {
     const sheet = document.getElementById('songSheet');
     const sheetTitle = document.getElementById('sheetTitle')?.textContent?.trim();
-    return sheet?.getAttribute('aria-hidden') === 'false' && sheetTitle === title;
-  }, expectedTitle, { timeout: 5_000 }).then(() => true).catch(() => false);
+    return sheet?.getAttribute('aria-hidden') === 'false' && titles.includes(sheetTitle);
+  }, expectedTitles, { timeout: 5_000 }).then(() => true).catch(() => false);
 
   if (searchQuery !== null && result.opened) {
     const input = page.locator('#searchInput').first();
@@ -259,7 +260,7 @@ async function exerciseStartupSheetMaterialisation(browser, origin) {
     result.search = await openProbeSurface(page, '#searchButton', 'Search', { searchQuery, requireSongRows: true });
 
     result.closedBetweenSurfaces.push(await closeProbeSheet(page));
-    result.queue = await openProbeSurface(page, '#queueButton', 'Up next');
+    result.queue = await openProbeSurface(page, '#queueButton', ['Up next', 'After this set']);
 
     result.closedBetweenSurfaces.push(await closeProbeSheet(page));
     result.favourites = await openProbeSurface(page, '#favouritesButton', 'My Garba');
