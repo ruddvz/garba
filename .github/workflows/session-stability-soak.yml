@@ -18,7 +18,7 @@ concurrency:
 jobs:
   chromium-soak:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -61,12 +61,14 @@ jobs:
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _soak/catalogue/
           cp \
             src/catalogue/index.html \
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _soak/explore/
 
           # Match the deployed Pages player bundle rather than measuring raw source files.
@@ -124,7 +126,7 @@ jobs:
           rm -rf _soak/assets/backgrounds/library
           mkdir -p _soak/assets/backgrounds/library
           unzip -oq "$PACK" -d _soak/assets/backgrounds/library
-          test "$(find _soak/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15 || { echo 'Soak fixture must contain exactly 15 background WebPs'; exit 1; }
+          test "$(find _soak/assets/backgrounds/library -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')" -eq 15 || { echo 'Browser fixture must contain exactly 15 background WebPs'; exit 1; }
           rm -f _soak/assets/backgrounds/garba15-*.zip
 
       - name: Install temporary Playwright runner
