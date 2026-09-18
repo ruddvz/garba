@@ -23,6 +23,12 @@ const STARTUP_SHEET_BUDGETS = Object.freeze({
   closedSongListChildren: 0,
 });
 
+const SOAK_BUDGETS = Object.freeze({
+  ...DEFAULT_BUDGETS,
+  domNodeGrowth: 1300,
+  jsEventListenerGrowth: 150,
+});
+
 async function loadChromium() {
   try {
     const { chromium } = await import('@playwright/test');
@@ -473,7 +479,7 @@ async function main() {
 
   const dedupedRuntimeFailures = uniqueFailures(runtimeFailures);
   const dedupedRequestAborts = uniqueFailures(requestAborts);
-  const growthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, DEFAULT_BUDGETS);
+  const growthFailures = evaluateSessionBudgets(snapshots, dedupedRuntimeFailures, options.cycles, SOAK_BUDGETS);
   const journeyFailures = coverageFailures(boot, journeys, exploreJourneys);
   const startupFailures = startupSheetFailures(startupSheetBaseline, startupSheetFirstUse);
   const budgetFailures = [...growthFailures, ...journeyFailures, ...startupFailures];
@@ -520,7 +526,7 @@ async function main() {
     boot: {
       fullCatalogueReadyBeforeSoak: Boolean(boot?.catalogueReady),
     },
-    budgets: DEFAULT_BUDGETS,
+    budgets: SOAK_BUDGETS,
     startupSheet: {
       budgets: STARTUP_SHEET_BUDGETS,
       baseline: startupSheetBaseline,

@@ -61,12 +61,14 @@ jobs:
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _soak/catalogue/
           cp \
             src/catalogue/index.html \
             src/catalogue/catalogue.css \
             src/catalogue/catalogue.js \
             src/catalogue/listening-library.js \
+            src/catalogue/explore-continuity-bridge.js \
             _soak/explore/
 
           # Match the deployed Pages player bundle rather than measuring raw source files.
