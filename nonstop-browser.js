@@ -1021,7 +1021,8 @@
       const hasSavedPosition = savedSeconds > 0 && (set.durationSeconds > 0 ? savedSeconds < set.durationSeconds - 10 : true);
 
       // Never autoplay on reload.
-      const opened = reload
+      const isReloadOrDirectUrl = reload || (quiet && urlAlreadyRequestsSet);
+      const opened = isReloadOrDirectUrl
         ? await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: false, resume: false })
         : await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: true, resume: false });
       markDock();
@@ -1469,7 +1470,7 @@
 
   function restoreFromUrl() {
     const id = new URL(location.href).searchParams.get('nonstop');
-    if (id) startNonstop(id, { quiet: true, reload: true });
+    if (id) startNonstop(id, { quiet: true });
   }
 
 
