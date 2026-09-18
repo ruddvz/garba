@@ -108,6 +108,14 @@ class MockCacheStorage {
     return existed
   }
 
+  async match(request) {
+    for (const cache of this.caches.values()) {
+      const matched = await cache.match(request)
+      if (matched) return matched
+    }
+    return null
+  }
+
   async keys() {
     return [...this.caches.keys()]
   }
@@ -119,7 +127,7 @@ class MockCacheStorage {
   }
 }
 
-function createWorker(caches) {
+function createWorker(caches, fetchImpl = async () => new MockResponse('network')) {
   const handlers = new Map()
   const state = { skipWaitingCalls: 0, claimCalls: 0 }
   const self = {
@@ -142,7 +150,7 @@ function createWorker(caches) {
     caches,
     URL,
     Response: MockResponse,
-    fetch: async () => new MockResponse('network'),
+    fetch: fetchImpl,
     console,
     Promise,
     setTimeout,
@@ -272,6 +280,43 @@ async function activate(worker) {
   const worker = createWorker(caches)
   await install(worker)
   assert.deepEqual(caches.snapshot(PREVIOUS_LIVE_CACHE), beforePreviousLive, 'install must not mutate active live-cache contents')
+}
+
+async function dispatchFetch(worker, request) {
+  let responsePromise = null
+  const handler = worker.handlers.get('fetch')
+  if (!handler) return null
+  handler({
+    request,
+    respondWith(promise) {
+      responsePromise = Promise.resolve(promise)
+    },
+  })
+  return responsePromise
+}
+
+{
+  const caches = new MockCacheStorage()
+  const live = await caches.open(LIVE_CACHE)
+  await live.put('./offline.html', new MockResponse('offline-shell-content'))
+  const worker = createWorker(caches, async () => { throw new Error('offline') })
+  const request = new MockRequest('https://playgarba.example/unknown-path')
+  request.mode = 'navigate'
+  const response = await dispatchFetch(worker, request)
+  assert.ok(response, 'navigation under network and shell-cache failure must respond')
+  assert.equal(response.body, 'offline-shell-content', 'navigation request must fallback to offline.html when network and primary shell miss')
+}
+
+{
+  const caches = new MockCacheStorage()
+  const live = await caches.open(LIVE_CACHE)
+  await live.put('./offline.html', new MockResponse('offline-catalogue-fallback'))
+  const worker = createWorker(caches, async () => { throw new Error('offline') })
+  const request = new MockRequest('https://playgarba.example/explore/')
+  request.mode = 'navigate'
+  const response = await dispatchFetch(worker, request)
+  assert.ok(response, 'catalogue navigation under network and shell-cache failure must respond')
+  assert.equal(response.body, 'offline-catalogue-fallback', 'catalogue navigation must fallback to offline.html when network and explore shell miss')
 }
 
 console.log('service-worker staging isolation: ok')
