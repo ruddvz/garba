@@ -869,7 +869,8 @@ main[aria-busy="true"] #catalogueSections:empty::before {
   width:66px;
   height:66px;
   border:1px solid rgba(231,201,143,.16);
-  border-radius:18px;
+  border-radius:50%;
+  overflow:hidden;
   color:rgba(255,235,202,.86);
   background:
     radial-gradient(circle at 34% 28%,rgba(231,201,143,.16),transparent 38%),

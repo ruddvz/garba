@@ -714,6 +714,15 @@ async function selectSong(songId, options = {}) {
     } else {
       try { await els.audio.play(); } catch { /* browser can block autoplay after async transitions */ }
     }
+  } else if ((state.liveMode || wasPlaying) && options.preservePlayback !== false && canExecuteSong(song)) {
+    if (window.GARBA_YOUTUBE_PLAYER?.open) {
+      const startSec = Number(options.restoreElapsed || 0);
+      window.GARBA_YOUTUBE_PLAYER.open(song, {
+        autoplay: true,
+        resume: startSec > 0,
+        startSeconds: startSec,
+      }).catch(() => {});
+    }
   }
 
   if (!options.keepSheet && mobileQuery.matches && state.sheetSnap !== 'closed') setSheetSnap('collapsed');
@@ -1116,6 +1125,16 @@ async function toggleLiveStation() {
     liveMode: true,
     animate: false,
   });
+
+  if (window.GARBA_YOUTUBE_PLAYER?.open) {
+    try {
+      await window.GARBA_YOUTUBE_PLAYER.open(liveState.song, {
+        autoplay: true,
+        resume: liveState.seekSeconds > 0,
+        startSeconds: liveState.seekSeconds,
+      });
+    } catch { /* autoplay handling */ }
+  }
 
 }
 

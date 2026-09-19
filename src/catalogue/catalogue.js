@@ -554,9 +554,12 @@ function collectionSection(title, description, collections, presentation = 'dest
   head.className = 'section-title-row';
   const heading = document.createElement('h2');
   heading.textContent = title;
-  const copy = document.createElement('p');
-  copy.textContent = description;
-  head.append(heading, copy);
+  head.append(heading);
+  if (description) {
+    const copy = document.createElement('p');
+    copy.textContent = description;
+    head.append(copy);
+  }
   const grid = document.createElement('div');
   grid.className = `collection-grid collection-grid--${presentationKind}`;
   collections.forEach((collection) => grid.append(renderCollectionCard(collection, presentationKind)));
@@ -576,10 +579,11 @@ function renderCollectionCard(collection, presentation = 'destination') {
     image.textContent = initials(collection.title.replace(/\s+Essentials$/i, ''));
     image.classList.add('collection-image--monogram');
     image.setAttribute('aria-hidden', 'true');
+    card.querySelector('small')?.remove();
   } else {
     image.style.backgroundImage = `url("${collection.visual}")`;
+    card.querySelector('small').textContent = collection.kicker;
   }
-  card.querySelector('small').textContent = collection.kicker;
   card.querySelector('strong').textContent = collection.title;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
   card.querySelector('.collection-copy span').textContent = `${collection.songs.length.toLocaleString()} songs · ${releaseCount.toLocaleString()} releases`;
@@ -609,9 +613,7 @@ function renderEssentialReleases() {
   head.className = 'section-title-row';
   const heading = document.createElement('h2');
   heading.textContent = 'Essential releases';
-  const copy = document.createElement('p');
-  copy.textContent = 'A small, intentional shelf of complete Garba releases with verified artwork and catalogue context.';
-  head.append(heading, copy);
+  head.append(heading);
 
   const rail = document.createElement('div');
   rail.className = 'essential-release-rail';
@@ -644,10 +646,19 @@ function renderCollectionHome() {
   const byId = (id) => state.collections.find((collection) => collection.id === id);
   const featuredIds = ['nonstop','live','current','classics','dandiya-raas','devotional'];
   renderEssentialReleases();
-  collectionSection('Ways to explore', 'Broad ways into the library, designed for listening rather than metadata browsing.', featuredIds.map(byId).filter(Boolean), 'destination');
-  collectionSection('Traditions & styles', 'Explore the catalogue by canonical taxonomy, including relevant secondary classifications.', state.collections.filter((c)=>c.id.startsWith('genre-')||['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)), 'taxonomy');
-  collectionSection('Artist essentials', 'Curated artist identities from PlayGarba discovery data, not automatically split credit strings.', state.collections.filter((c)=>c.id.startsWith('artist-')), 'artist');
-  collectionSection('By era', 'Move through the catalogue by original release year.', state.collections.filter((c)=>c.id.startsWith('era-')), 'taxonomy');
+  collectionSection('Ways to explore', '', featuredIds.map(byId).filter(Boolean), 'destination');
+  const seenTaxonomy = new Set();
+  const taxonomyList = state.collections.filter((c) =>
+    c.id.startsWith('genre-') || ['krishna-radha','mataji-shakti','tran-taali','be-taali','dakla','timli','folk-fusion','filmi-pop','sanedo-style'].includes(c.id)
+  ).filter((c) => {
+    const key = c.title.trim().toLowerCase();
+    if (seenTaxonomy.has(key)) return false;
+    seenTaxonomy.add(key);
+    return true;
+  });
+  collectionSection('Traditions & styles', '', taxonomyList, 'taxonomy');
+  collectionSection('Artist essentials', '', state.collections.filter((c)=>c.id.startsWith('artist-')), 'artist');
+  collectionSection('By era', '', state.collections.filter((c)=>c.id.startsWith('era-')), 'taxonomy');
 }
 
 function artworkEntry(releaseId) {

@@ -192,7 +192,14 @@
     padding-right: max(22px, var(--safe-right)) !important;
   }
 
-  html body .app .controls,
+  html body .app .controls {
+    width: auto !important;
+    max-width: min(340px, calc(100vw - 20px)) !important;
+    margin-inline: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
   html body .app .progress-wrap {
     width: min(340px, calc(100vw - 20px)) !important;
     max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 20px) !important;
@@ -248,7 +255,14 @@
     height: 22px !important;
   }
 
-  html body .app .controls,
+  html body .app .controls {
+    width: auto !important;
+    max-width: min(340px, calc(100vw - 20px)) !important;
+    margin-inline: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
   html body .app .progress-wrap {
     width: min(340px, calc(100vw - 20px)) !important;
   }
@@ -260,7 +274,14 @@
     width: 208px;
   }
 
-  html body .app .controls,
+  html body .app .controls {
+    width: auto !important;
+    max-width: min(340px, calc(100vw - 12px)) !important;
+    margin-inline: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
   html body .app .progress-wrap {
     width: min(340px, calc(100vw - 12px)) !important;
   }

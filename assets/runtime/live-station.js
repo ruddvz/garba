@@ -12,15 +12,29 @@ const DEFAULT_SONG_DURATION = 180;
 export function buildLiveSchedule(songs = []) {
   const playable = (songs || []).filter((s) => {
     if (!s || !s.id) return false;
-    // Playable YouTube route
-    const isYouTube = s.playbackProvider === 'youtube'
-      || /youtu(?:\.be|be\.com)/i.test(String(s.playbackSourceUrl || ''))
-      || Boolean(s.youtubeId);
-    const notBlocked = !s.audioUrl
-      && !s.playbackSearchOnly
-      && s.playbackSourceType !== 'verified-release-track-reference'
-      && s.playbackSourceType !== 'verified-unchaptered-youtube-release';
-    return isYouTube && notBlocked;
+    if (s.audioUrl) return false;
+    if (s.playbackSearchOnly) return false;
+    if (s.playbackSourceType === 'verified-release-track-reference' || s.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
+
+    // Must have a verified, playable YouTube route with valid video ID
+    const explicit = String(s.youtubeId || '').trim();
+    if (explicit) return true;
+
+    const provider = String(s.playbackProvider || '').toLowerCase();
+    const sourceUrl = String(s.playbackSourceUrl || '');
+    const isYouTube = provider === 'youtube' || /youtu(?:\.be|be\.com)/i.test(sourceUrl);
+    if (!isYouTube) return false;
+
+    try {
+      const url = new URL(sourceUrl);
+      if (url.hostname.toLowerCase().endsWith('youtu.be')) return Boolean(url.pathname.split('/').filter(Boolean)[0]);
+      if (url.searchParams.get('v')) return Boolean(url.searchParams.get('v').trim());
+      const parts = url.pathname.split('/').filter(Boolean);
+      const marker = parts.findIndex((p) => p === 'embed' || p === 'shorts');
+      return marker >= 0 && Boolean(parts[marker + 1]?.trim());
+    } catch {
+      return false;
+    }
   });
 
   if (!playable.length) return [];

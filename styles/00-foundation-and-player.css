@@ -161,21 +161,24 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   pointer-events: none;
 }
 .genre-eyebrow {
-  margin: 0 0 8px; color: var(--ivory); font-size: clamp(13px, 1.05vw, 18px);
+  margin: 0 auto 8px; color: var(--ivory); font-size: clamp(13px, 1.05vw, 18px);
+  text-align: center;
   text-transform: uppercase; letter-spacing: .055em; font-weight: 600;
   text-shadow: var(--courtyard-text-shadow);
 }
 .song-title {
-  margin: 0; font-family: var(--serif); font-weight: 400;
+  margin: 0 auto; font-family: var(--serif); font-weight: 400;
+  text-align: center;
   font-size: clamp(42px, 4.65vw, 70px); line-height: 1.01; text-wrap: balance;
   color: var(--ivory); letter-spacing: -.022em;
   text-shadow: var(--courtyard-text-shadow);
 }
 .track-block.is-long-title .song-title { font-size: clamp(36px, 3.8vw, 58px); }
 .track-block.is-very-long-title .song-title { font-size: clamp(31px, 3.25vw, 50px); }
-.artist-row { display: flex; justify-content: center; align-items: center; gap: 10px; }
+.artist-row { display: flex; justify-content: center; align-items: center; gap: 10px; margin-inline: auto; text-align: center; }
 .artist {
-  margin: 12px 0 0;
+  margin: 12px auto 0;
+  text-align: center;
   max-width: min(620px, 82vw);
   color: var(--courtyard-muted-text);
   font-size: clamp(15px, 1.35vw, 21px);
@@ -209,6 +212,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   grid-row: 3;
   display: flex;
   align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  text-align: center;
 }
 .play-button {
   appearance: none;
