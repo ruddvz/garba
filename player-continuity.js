@@ -45,6 +45,11 @@
     ].filter(Boolean);
   }
 
+  function clearTransientMediaMetadata() {
+    if (!('mediaSession' in navigator)) return;
+    try { navigator.mediaSession.metadata = null; } catch { /* unsupported metadata setter */ }
+  }
+
   function setDeepLinkUi(status) {
     if (!needsFullCatalogueForDeepLink) return;
     const app = $('app');
@@ -61,6 +66,7 @@
     }
 
     if (status === 'loading') {
+      clearTransientMediaMetadata();
       if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
       if (songTitle) songTitle.textContent = 'Loading requested song…';
       if ($('songArtist')) $('songArtist').textContent = 'Opening the requested track';
@@ -71,6 +77,7 @@
     }
 
     if (failed) {
+      clearTransientMediaMetadata();
       if ($('genreEyebrow')) $('genreEyebrow').textContent = 'PlayGarba';
       if (songTitle) songTitle.textContent = 'Requested song unavailable';
       if ($('songArtist')) $('songArtist').textContent = 'Could not load the full catalogue. Check your connection and try again.';
