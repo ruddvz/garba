@@ -285,6 +285,37 @@ export function compareSearchResults(left, right) {
 }
 
 /**
+ * Prepare a stable search document once for callers that keep record identity stable
+ * across repeated queries. The original record is retained only as the result payload.
+ */
+export function prepareSearchRecord(record) {
+  return { record, document: createSearchDocument(record) };
+}
+
+export function prepareSearchRecords(records) {
+  if (!Array.isArray(records)) return [];
+  return records.map(prepareSearchRecord);
+}
+
+/**
+ * Rank records whose normalized search documents were prepared earlier. Relevance,
+ * query normalization and deterministic tie breaks are identical to rankSearchRecords.
+ */
+export function rankPreparedSearchRecords(preparedRecords, query) {
+  if (!Array.isArray(preparedRecords)) return [];
+  const preparedVariants = prepareQueryVariants(query);
+  if (!preparedVariants.length) return [];
+
+  const ranked = [];
+  for (const entry of preparedRecords) {
+    if (!entry?.document) continue;
+    const result = scorePreparedDocument(entry.document, preparedVariants);
+    if (result) ranked.push({ record: entry.record, ...result });
+  }
+  return ranked.sort(compareSearchResults);
+}
+
+/**
  * Return ranked wrappers around the original records. The input array and records are
  * never sorted or mutated in place.
  */

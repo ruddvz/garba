@@ -2,7 +2,7 @@ import './assets/runtime/route-readiness.js';
 import './assets/runtime/share-intent.js';
 import './assets/runtime/morphicons.js';
 import './assets/runtime/live-station.js';
-import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
+import { normalizeSearchText, prepareSearchRecord, rankPreparedSearchRecords } from './assets/runtime/search-core.js';
 import { initMorphicons } from './assets/runtime/morphicons.js';
 import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
@@ -117,6 +117,8 @@ const els = {
 const mobileQuery = window.matchMedia('(max-width: 700px)');
 const standaloneQuery = window.matchMedia('(display-mode: standalone)');
 const SEARCH_RESULT_LIMIT = 160;
+let playerSearchEntries = [];
+let playerSearchEntryBySong = new WeakMap();
 
 const formatTime = (seconds = 0) => {
   const safe = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0;
@@ -797,8 +799,31 @@ function playerSearchRecord(song) {
   };
 }
 
+function rebuildPlayerSearchIndex(songs = state.songs) {
+  const entries = [];
+  const bySong = new WeakMap();
+  for (const song of songs) {
+    const entry = prepareSearchRecord(playerSearchRecord(song));
+    entries.push(entry);
+    bySong.set(song, entry);
+  }
+  playerSearchEntries = entries;
+  playerSearchEntryBySong = bySong;
+}
+
+function preparedPlayerSearchRecord(song) {
+  let entry = playerSearchEntryBySong.get(song);
+  if (entry) return entry;
+  entry = prepareSearchRecord(playerSearchRecord(song));
+  playerSearchEntryBySong.set(song, entry);
+  return entry;
+}
+
 function rankPlayerSongs(songs, query) {
-  return rankSearchRecords(songs.map(playerSearchRecord), query)
+  const entries = songs === state.songs
+    ? playerSearchEntries
+    : songs.map(preparedPlayerSearchRecord);
+  return rankPreparedSearchRecords(entries, query)
     .map(({ record }) => record.song);
 }
 
@@ -1756,6 +1781,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
     const changed = state.catalogueSignature && signature !== state.catalogueSignature;
     state.genres = next.genres;
     state.songs = next.songs;
+    rebuildPlayerSearchIndex(state.songs);
     state.presentationRedirects = next.presentationRedirects;
     if (state.releaseContextId && !releaseContextMatch(state.releaseContextId, state.releaseContextSongId || state.songId)) {
       clearReleaseContext();
@@ -1895,6 +1921,7 @@ async function init() {
     const catalogue = await fetchCatalogue();
     state.genres = catalogue.genres;
     state.songs = catalogue.songs;
+    rebuildPlayerSearchIndex(state.songs);
     state.presentationRedirects = catalogue.presentationRedirects;
     reconcilePresentationFavourites();
     sanitiseManualQueue();

@@ -33,9 +33,12 @@ for (const [pattern, description] of staticChecks) {
   assert.match(app, pattern, description);
 }
 
-assert.match(app, /import \{ normalizeSearchText, rankSearchRecords \} from '\.\/assets\/runtime\/search-core\.js';/, 'Player search must consume the shared search core');
+assert.match(app, /import \{ normalizeSearchText, prepareSearchRecord, rankPreparedSearchRecords \} from '\.\/assets\/runtime\/search-core\.js';/, 'Player search must consume the shared prepared-search core');
 assert.match(app, /function playerSearchRecord\(song\)[\s\S]*?titleAliases: song\.aliases[\s\S]*?artistAliases: song\.artistAliases[\s\S]*?taxonomyTerms:/, 'Player search adapter must expose only reviewed catalogue identity fields');
-assert.match(app, /function rankPlayerSongs\(songs, query\)[\s\S]*?rankSearchRecords\(songs\.map\(playerSearchRecord\), query\)/, 'Player results must use shared relevance ranking');
+assert.match(app, /function rebuildPlayerSearchIndex\(songs = state\.songs\)[\s\S]*?prepareSearchRecord\(playerSearchRecord\(song\)\)[\s\S]*?playerSearchEntries = entries/, 'Player must prepare stable search documents when the catalogue changes');
+assert.match(app, /function rankPlayerSongs\(songs, query\)[\s\S]*?songs === state\.songs[\s\S]*?rankPreparedSearchRecords\(entries, query\)/, 'Player results must rank the prepared shared search index instead of rebuilding normalized documents per query');
+assert.match(app, /state\.songs = next\.songs;[\s\S]*?rebuildPlayerSearchIndex\(state\.songs\);[\s\S]*?state\.presentationRedirects = next\.presentationRedirects;/, 'Catalogue refresh must rebuild the prepared player search index');
+assert.match(app, /state\.songs = catalogue\.songs;[\s\S]*?rebuildPlayerSearchIndex\(state\.songs\);[\s\S]*?state\.presentationRedirects = catalogue\.presentationRedirects;/, 'Initial catalogue load must build the prepared player search index');
 assert.match(app, /const rawQuery = els\.searchInput\.value\.trim\(\);[\s\S]*?const query = normalizeSearchText\(rawQuery\);/, 'Player empty-query handling must use shared Unicode normalization');
 assert.doesNotMatch(app, /function getSheetSongs\(\)[\s\S]*?\.toLowerCase\(\)\.includes\(query\)/, 'Player search must not regress to independent lowercase substring matching');
 

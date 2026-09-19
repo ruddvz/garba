@@ -8,6 +8,8 @@ const {
   foldLatinDiacritics,
   normalizeSearchText,
   normalizeSearchVariants,
+  prepareSearchRecords,
+  rankPreparedSearchRecords,
   rankSearchRecords,
   scoreSearchRecord,
 } = await import(moduleUrl);
@@ -56,6 +58,26 @@ assert.deepEqual(ids(rankSearchRecords(hierarchy, 'raas')), [
   'taxonomy',
   'release',
 ]);
+
+// Prepared documents must preserve ordinary ranking truth across reviewed aliases, Gujarati,
+// Latin diacritics, taxonomy/release context and the bounded Latin typo fallback.
+const preparedEquivalence = [
+  { id: 'prepared-title', title: 'Raas', artist: 'Singer' },
+  { id: 'prepared-alias', title: 'Festival Set', titleAliases: ['Raas'], artist: 'Singer' },
+  { id: 'prepared-gujarati', title: 'માડી તારું કંકુ ખર્યું', artist: 'Singer' },
+  { id: 'prepared-diacritic', title: 'Gītā Garbā', artist: 'Singer' },
+  { id: 'prepared-typo', title: 'Garba', artist: 'Singer' },
+  { id: 'prepared-taxonomy', title: 'Other', taxonomyTerms: ['Dandiya'] },
+  { id: 'prepared-release', title: 'Other', releaseTerms: ['Archive Collection'] },
+];
+const preparedIndex = prepareSearchRecords(preparedEquivalence);
+for (const query of ['raas', 'માડી તારું', 'gita garba', 'garva', 'dandiya', 'archive collection']) {
+  assert.deepEqual(
+    rankPreparedSearchRecords(preparedIndex, query).map(({ record, score, matchedBy }) => ({ id: record.id, score, matchedBy })),
+    rankSearchRecords(preparedEquivalence, query).map(({ record, score, matchedBy }) => ({ id: record.id, score, matchedBy })),
+    'Prepared ranking must match ordinary ranking for ' + query,
+  );
+}
 
 // Same-title records keep distinct identity and receive a deterministic canonical-ID tie break.
 assert.deepEqual(ids(rankSearchRecords([
