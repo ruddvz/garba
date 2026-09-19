@@ -1,0 +1,67 @@
+name: Issue 1113 guarded De Taali import
+
+on:
+  push:
+    branches:
+      - catalogue/issue-1113-de-taali-complete-v3
+    paths:
+      - '.github/workflows/issue-1113-v3-apply.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: catalogue/issue-1113-de-taali-complete-v3
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply guarded canonical import
+        run: node .github/issue-1113-v3-apply.cjs
+
+      - name: Validate complete repository
+        run: npm run check
+
+      - name: Guard diff scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git status --short | awk '{print $2}')"
+          printf '%s\n' "$changed"
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            case "$path" in
+              data/catalogue/songs/songs-02.json|data/catalogue/songs/songs-03.json|data/catalogue/releases/releases-01.json|data/catalogue/index.json|data/playback-sources-de-taali-exact.json)
+                ;;
+              *)
+                echo "Unexpected tracked/generated change: $path" >&2
+                exit 1
+                ;;
+            esac
+          done <<< "$changed"
+
+      - name: Commit production result and remove temporary helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/issue-1113-v3-apply.cjs .github/workflows/issue-1113-v3-apply.yml
+          git add \
+            data/catalogue/songs/songs-02.json \
+            data/catalogue/songs/songs-03.json \
+            data/catalogue/releases/releases-01.json \
+            data/catalogue/index.json \
+            data/playback-sources-de-taali-exact.json
+          git commit -m "feat(catalogue): complete De Taali 1999 programme (#1113)"
+          git push origin HEAD:catalogue/issue-1113-de-taali-complete-v3
