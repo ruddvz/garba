@@ -194,7 +194,7 @@
 
   html body .app .controls,
   html body .app .progress-wrap {
-    width: min(338px, calc(100vw - 44px)) !important;
+    width: min(340px, calc(100vw - 20px)) !important;
     max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 20px) !important;
   }
 
@@ -250,7 +250,7 @@
 
   html body .app .controls,
   html body .app .progress-wrap {
-    width: min(332px, calc(100vw - 44px)) !important;
+    width: min(340px, calc(100vw - 20px)) !important;
   }
 }
 
@@ -262,7 +262,7 @@
 
   html body .app .controls,
   html body .app .progress-wrap {
-    width: min(320px, calc(100vw - 40px)) !important;
+    width: min(340px, calc(100vw - 12px)) !important;
   }
 }
 
@@ -302,7 +302,7 @@
   .artist { margin-top: 10px; }
   .player-shell { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); padding-bottom: max(16px, calc(var(--safe-bottom) + 2px)); }
   .track-block { max-width: min(91vw, 560px); }
-  .controls { margin-top: 8px; gap: clamp(20px, 6.2vw, 28px); }
+  .controls { margin-top: 8px; gap: clamp(14px, 4.2vw, 28px); }
   .progress-wrap { width: min(440px, 84vw); margin-top: 4px; }
   .genre-strip { padding-top: 14px; padding-bottom: 8px; }
 
@@ -331,6 +331,7 @@
   .topbar { padding-left: max(14px, var(--safe-left)); padding-right: max(14px, var(--safe-right)); }
   .utilities .icon-button, .utilities .mobile-heart { width: 39px; min-width: 39px; height: 39px; min-height: 39px; }
   .app .browse-actions .browse-button { min-height: 38px; padding-inline: 11px; font-size: 13px; }
+  .controls { gap: clamp(8px, 3vw, 14px); }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

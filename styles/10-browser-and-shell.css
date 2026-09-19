@@ -33,6 +33,7 @@
   transition: transform 420ms var(--ease), height 420ms var(--ease), width 320ms var(--ease);
   overflow: hidden;
   contain: layout paint;
+}
 .sheet[aria-hidden="true"],
 .sheet[data-snap="closed"] {
   visibility: hidden;

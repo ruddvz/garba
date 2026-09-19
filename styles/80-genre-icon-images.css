@@ -400,8 +400,14 @@
 
 /* Heart favourite button lives inside .controls as the 5th transport button */
 .controls .favourite-control {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   width: 48px;
   height: 48px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -430,6 +436,30 @@
 
 .controls .favourite-control.active svg {
   fill: var(--accent);
+}
+
+@media (max-width: 700px) {
+  .controls .favourite-control {
+    width: 42px;
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .controls .favourite-control {
+    width: 36px;
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .controls .favourite-control {
+    width: 36px;
+    height: 44px;
+    min-height: 44px;
+  }
 }
 
 

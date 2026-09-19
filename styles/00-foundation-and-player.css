@@ -211,10 +211,18 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   align-items: center;
 }
 .play-button {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   position: relative;
   display: grid;
   place-items: center;
   cursor: pointer;
+  width: 72px;
+  height: 72px;
+  min-width: 44px;
+  min-height: 44px;
 }
 .play-button:active { transform: scale(.96); }
 .play-button svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
