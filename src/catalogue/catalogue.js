@@ -55,6 +55,8 @@ const els = {
   showAllSongs: $('showAllSongs'),
   songSectionTitle: $('songSectionTitle'),
   songCount: $('songCount'),
+  sort: $('catalogueSort'),
+  sortField: $('catalogueSortField'),
   songList: $('catalogueSongList'),
   cardTemplate: $('collectionCardTemplate'),
 };
@@ -77,6 +79,7 @@ const state = {
   eventsWired: false,
   loadFailed: false,
   returnFocusTarget: null,
+  sortMode: 'playable-first',
 };
 
 const SONG_BATCH_SIZE = 160;
@@ -461,13 +464,63 @@ function catalogueAvailabilityTier(song) {
   return routeReadiness(song).executable ? 0 : 1;
 }
 
+const CATALOGUE_SORT_DEFAULT = 'playable-first';
+const CATALOGUE_SORT_MODES = new Set([CATALOGUE_SORT_DEFAULT, 'newest', 'oldest']);
+
+function normaliseCatalogueSortMode(value) {
+  const mode = String(value || '').trim().toLowerCase();
+  return CATALOGUE_SORT_MODES.has(mode) ? mode : CATALOGUE_SORT_DEFAULT;
+}
+
+function catalogueChronology(song) {
+  const release = state.releaseById.get(song?.releaseId);
+  return release?.originalReleaseYear || release?.releaseDate || null;
+}
+
+function currentCatalogueSortMode() {
+  return normaliseCatalogueSortMode(state.sortMode);
+}
+
 function orderedSongsForRender(songs) {
+  const sortMode = currentCatalogueSortMode();
   return orderCatalogueSongs(songs, {
     context: currentSongOrderingContext(),
-    mode: 'popular',
+    mode: sortMode === CATALOGUE_SORT_DEFAULT ? 'popular' : sortMode,
     availabilityGate: true,
     getAvailabilityTier: catalogueAvailabilityTier,
+    getChronology: catalogueChronology,
   });
+}
+
+function syncSortControl() {
+  if (!els.sort || !els.sortField) return;
+  const visible = Boolean(
+    state.active
+    && state.active.id !== 'search'
+    && state.active.id !== 'nonstop'
+    && !state.activeReleaseId
+  );
+  els.sortField.hidden = !visible;
+  els.sort.disabled = !visible;
+  els.sort.value = currentCatalogueSortMode();
+}
+
+function applyCatalogueSort(value, { updateHistory = true } = {}) {
+  const nextMode = normaliseCatalogueSortMode(value);
+  const changed = nextMode !== currentCatalogueSortMode();
+  state.sortMode = nextMode;
+  syncSortControl();
+  if (!state.active || state.active.id === 'search' || state.active.id === 'nonstop' || state.activeReleaseId) return;
+  renderSongs(state.activeSongs);
+  if (updateHistory) {
+    const nextState = { collection: state.active.id };
+    if (nextMode !== CATALOGUE_SORT_DEFAULT) nextState.sort = nextMode;
+    history.replaceState(nextState, '', collectionHash(state.active.id, '', nextMode));
+  }
+  if (changed) {
+    const label = nextMode === CATALOGUE_SORT_DEFAULT ? 'Playable first' : nextMode === 'newest' ? 'Newest' : 'Oldest';
+    announce(`Songs sorted by ${label}.`);
+  }
 }
 
 function fixedCollection({ id, title, kicker, description, visual, test }) {
@@ -859,6 +912,7 @@ function makeSongContext(song, release) {
 }
 
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
+  syncSortControl();
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
   const orderedSongs = orderedSongsForRender(songs);
@@ -941,10 +995,12 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
   els.songList.append(fragment);
 }
 
-function collectionHash(collectionId, releaseId = '') {
+function collectionHash(collectionId, releaseId = '', sortMode = currentCatalogueSortMode()) {
   const params = new URLSearchParams();
   params.set('collection', collectionId);
   if (releaseId) params.set('release', releaseId);
+  const normalisedSort = normaliseCatalogueSortMode(sortMode);
+  if (normalisedSort !== CATALOGUE_SORT_DEFAULT) params.set('sort', normalisedSort);
   return `#${params.toString()}`;
 }
 
@@ -1162,6 +1218,7 @@ function wireEvents() {
   });
   els.back.addEventListener('click',returnToCollections);
   els.share?.addEventListener('click',()=>{ void shareExploreState(); });
+  els.sort?.addEventListener('change',()=>applyCatalogueSort(els.sort.value));
   els.showAllSongs.addEventListener('click',()=>showAllSongs());
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || els.detail.hidden) return;
@@ -1176,6 +1233,8 @@ function applyHashState() {
   const id = params.get('collection');
   const releaseId = params.get('release');
   const search = params.get('search');
+  state.sortMode = normaliseCatalogueSortMode(params.get('sort'));
+  if (els.sort) els.sort.value = currentCatalogueSortMode();
   if (id && openCollection(id,{updateHash:false,focusHeading:false})) {
     if (releaseId) filterToRelease(releaseId,{updateHistory:false,scroll:false});
     focusDetailHeading();
