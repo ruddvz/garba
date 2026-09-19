@@ -94,16 +94,23 @@ for (const marker of [
 
 for (const prohibited of [
   'const MEDIA_ARTWORK = [',
-  'function clearMediaMetadata()',
   'function syncMediaMetadata()',
-  'navigator.mediaSession.metadata',
   'new MediaMetadata(',
   'new MutationObserver(syncMediaMetadata)',
   'queueMicrotask(syncMediaMetadata)',
 ]) {
   if (continuity.includes(prohibited)) {
-    fail(`Continuity runtime must not own Media Session metadata from rendered DOM: ${prohibited}`);
+    fail(`Continuity runtime must not publish Media Session metadata from rendered DOM: ${prohibited}`);
   }
+}
+for (const marker of [
+  'function clearTransientMediaMetadata()',
+  'navigator.mediaSession.metadata = null;',
+]) {
+  if (!continuity.includes(marker)) fail(`Deep-link transient metadata clear missing marker: ${marker}`);
+}
+if ((continuity.match(/clearTransientMediaMetadata\(\);/g) || []).length !== 2) {
+  fail('Deep-link loading and failure states must both clear stale Media Session metadata exactly once');
 }
 
 for (const marker of [
@@ -225,5 +232,5 @@ console.log('✓ YouTube-only routing refreshes after full catalogue hydration a
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
 console.log('✓ deep-link hydration retries on reconnect without showing a fake Back online toast');
 console.log('✓ global playback shortcuts do not steal keyboard input from interactive controls');
-console.log('✓ continuity no longer infers Media Session metadata from rendered title/artist; canonical app and transport owners remain');
+console.log('✓ continuity no longer publishes Media Session identity from rendered title/artist and still clears transient deep-link metadata');
 console.log('✓ continuity layer loads after the YouTube-only policy runtime and before app interaction completes');
