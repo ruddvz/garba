@@ -244,15 +244,11 @@
   function scheduleProgressiveRender() {
     if (!state.browserOpen || state.allSets) return;
     const list = $('nonstopBrowserList');
-    if (!list) return;
-    if (!list.querySelector('.nonstop-set')) {
-      renderBrowser();
-      return;
-    }
+    if (!list || list.querySelector('.nonstop-set')) return;
     if (progressiveRenderTimer) return;
     progressiveRenderTimer = requestAnimationFrame(() => {
       progressiveRenderTimer = null;
-      if (state.browserOpen && !state.allSets) {
+      if (state.browserOpen && !state.allSets && !list.querySelector('.nonstop-set')) {
         renderBrowser();
       }
     });
