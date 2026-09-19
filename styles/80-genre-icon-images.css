@@ -1514,28 +1514,33 @@ html body .app #browseActions #browseButton .browse-chevron {
   html body .app .player-shell {
     padding-top: 48px !important;
     padding-bottom: max(10px, var(--safe-bottom)) !important;
-    grid-template-rows: minmax(0, 0.4fr) auto auto auto minmax(4px, 0.6fr) auto auto !important;
+    grid-template-rows: auto auto auto 10px 0 auto 6px auto !important;
   }
 
   html body .app .track-block {
+    grid-row: 1 !important;
     height: 94px !important;
     min-height: 94px !important;
     max-height: 94px !important;
   }
 
   html body .app .controls {
-    margin-top: 4px !important;
+    grid-row: 2 !important;
+    margin-top: 2px !important;
   }
 
   html body .app .progress-wrap {
-    margin-top: 4px !important;
+    grid-row: 3 !important;
+    margin-top: 2px !important;
   }
 
   html body .app #genreStrip {
+    grid-row: 6 !important;
+    align-self: end !important;
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-    margin: 0 auto 3px !important;
+    margin: 0 auto !important;
   }
 
   html body .app #genreStrip .genre-button,
@@ -1575,6 +1580,8 @@ html body .app #browseActions #browseButton .browse-chevron {
   }
 
   html body .app #browseActions {
+    grid-row: 8 !important;
+    align-self: end !important;
     height: 32px !important;
     min-height: 32px !important;
     max-height: 32px !important;
