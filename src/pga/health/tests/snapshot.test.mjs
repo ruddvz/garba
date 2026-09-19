@@ -56,13 +56,13 @@ function healthyObservations(nowMs = NOW) {
           status: 'completed',
           conclusion: 'success',
           completed_at: iso(nowMs - 1_000),
-          details_url: 'https://github.com/ruddvz/garba/actions',
+          details_url: 'https://github.com/ruddvz/raas/actions',
         }],
       },
       requiredChecks: ['Validate GARBA'],
       checkedAt: nowMs - 1_000,
       freshnessBudgetMs: FIVE_MINUTES,
-      sourceUrl: 'https://github.com/ruddvz/garba/actions',
+      sourceUrl: 'https://github.com/ruddvz/raas/actions',
     },
     catalogue: {
       completed: true,
@@ -73,7 +73,7 @@ function healthyObservations(nowMs = NOW) {
       revision: SHA,
       checkedAt: nowMs - 1_000,
       freshnessBudgetMs: FIVE_MINUTES,
-      sourceUrl: 'https://github.com/ruddvz/garba/actions',
+      sourceUrl: 'https://github.com/ruddvz/raas/actions',
     },
     telemetry: {
       payload: {

@@ -104,7 +104,7 @@ function checksPayload() {
         status: 'completed',
         conclusion: 'success',
         completed_at: new Date(NOW - 5_000).toISOString(),
-        details_url: 'https://github.com/ruddvz/garba/actions/runs/10?token=drop-me#job',
+        details_url: 'https://github.com/ruddvz/raas/actions/runs/10?token=drop-me#job',
         output: { text: 'DO_NOT_COPY_RAW_CHECK_OUTPUT' },
       },
       {
@@ -113,7 +113,7 @@ function checksPayload() {
         status: 'completed',
         conclusion: 'success',
         completed_at: new Date(NOW - 4_000).toISOString(),
-        details_url: 'https://github.com/ruddvz/garba/actions/runs/11',
+        details_url: 'https://github.com/ruddvz/raas/actions/runs/11',
       },
     ],
   }
@@ -130,7 +130,7 @@ function healthyOperationalObservations() {
       controlsResponsive: true,
       contentId: 'fixture-song',
       checkedAt,
-      sourceUrl: 'https://github.com/ruddvz/garba/actions/runs/playback',
+      sourceUrl: 'https://github.com/ruddvz/raas/actions/runs/playback',
       rawSecret: 'DO_NOT_ECHO_PLAYBACK_SECRET',
     },
     catalogue: {
@@ -141,7 +141,7 @@ function healthyOperationalObservations() {
       warnings: 0,
       revision: SHA,
       checkedAt,
-      sourceUrl: 'https://github.com/ruddvz/garba/actions/runs/catalogue',
+      sourceUrl: 'https://github.com/ruddvz/raas/actions/runs/catalogue',
       rawSecret: 'DO_NOT_ECHO_CATALOGUE_SECRET',
     },
     telemetry: {
@@ -174,7 +174,7 @@ function healthyOperationalObservations() {
       activeVersion: 'pga-shell-test',
       expectedVersion: 'pga-shell-test',
       checkedAt,
-      sourceUrl: 'https://github.com/ruddvz/garba/actions/runs/pwa',
+      sourceUrl: 'https://github.com/ruddvz/raas/actions/runs/pwa',
       rawSecret: 'DO_NOT_ECHO_PWA_SECRET',
     },
   }
@@ -477,7 +477,7 @@ test('malformed high GitHub check-run IDs cannot win equal-timestamp CI selectio
       status: 'completed',
       conclusion: 'failure',
       completed_at: completedAt,
-      details_url: 'https://github.com/ruddvz/garba/actions/runs/malformed',
+      details_url: 'https://github.com/ruddvz/raas/actions/runs/malformed',
     },
     {
       id: 11,
@@ -485,7 +485,7 @@ test('malformed high GitHub check-run IDs cannot win equal-timestamp CI selectio
       status: 'completed',
       conclusion: 'success',
       completed_at: completedAt,
-      details_url: 'https://github.com/ruddvz/garba/actions/runs/11',
+      details_url: 'https://github.com/ruddvz/raas/actions/runs/11',
     },
     {
       id: 12,
@@ -493,7 +493,7 @@ test('malformed high GitHub check-run IDs cannot win equal-timestamp CI selectio
       status: 'completed',
       conclusion: 'success',
       completed_at: completedAt,
-      details_url: 'https://github.com/ruddvz/garba/actions/runs/12',
+      details_url: 'https://github.com/ruddvz/raas/actions/runs/12',
     },
   ]
 

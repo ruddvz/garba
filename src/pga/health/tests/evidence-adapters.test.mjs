@@ -52,7 +52,7 @@ function run({
     status,
     conclusion,
     completed_at: completedAt,
-    details_url: `https://github.com/ruddvz/garba/actions/runs/${id}`,
+    details_url: `https://github.com/ruddvz/raas/actions/runs/${id}`,
   }
 }
 
@@ -213,7 +213,7 @@ test('required CI checks are healthy only when every required check passes', () 
     checkRunsPayload: payload,
     requiredChecks: ['Validate GARBA', 'Agent claim guard'],
     checkedAt: NOW,
-    sourceUrl: 'https://github.com/ruddvz/garba/actions',
+    sourceUrl: 'https://github.com/ruddvz/raas/actions',
   })
   assert.equal(evidence.status, 'healthy')
   assert.equal(evidence.details.checks.length, 2)

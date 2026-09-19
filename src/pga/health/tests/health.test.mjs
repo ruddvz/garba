@@ -358,7 +358,7 @@ test('source identity and actionable evidence survive evaluation', () => {
       source: {
         kind: 'github_actions',
         id: 'run-123',
-        url: 'https://github.com/ruddvz/garba/actions/runs/123',
+        url: 'https://github.com/ruddvz/raas/actions/runs/123',
       },
     },
   }, { nowMs: NOW })
@@ -366,7 +366,7 @@ test('source identity and actionable evidence survive evaluation', () => {
   assert.deepEqual(result.actionable[0].source, {
     kind: 'github_actions',
     id: 'run-123',
-    url: 'https://github.com/ruddvz/garba/actions/runs/123',
+    url: 'https://github.com/ruddvz/raas/actions/runs/123',
   })
 })
 
