@@ -6,7 +6,7 @@ ChatGPT Chat should use RAAS as repository context, not as remembered chat perso
 
 When GitHub/repository tools are available, a request such as this is sufficient:
 
-> Use the RAAS harness in `ruddvz/garba`. Work from current GitHub state and carry this request end-to-end: <request>
+> Use the RAAS harness in `ruddvz/raas`. Work from current GitHub state and carry this request end-to-end: <request>
 
 Then ChatGPT should:
 

@@ -94,6 +94,6 @@ If a prior client stopped mid-lane and left an active claim, the new client must
 
 For a repository-aware agent, the operator should only need something as short as:
 
-> Use the RAAS harness in `ruddvz/garba`. Work from current GitHub state and carry this request end-to-end: <request>
+> Use the RAAS harness in `ruddvz/raas`. Work from current GitHub state and carry this request end-to-end: <request>
 
 The agent then loads the repository instructions itself. Do not require the operator to paste the whole harness into every new client.
