@@ -346,30 +346,33 @@ input[type="range"]::-moz-range-thumb { border: 1px solid rgba(5,7,16,.82); widt
 
 @media (max-width: 700px) {
   .player-shell::before {
-    bottom: max(38px, calc(var(--safe-bottom) + 20px));
-    width: 118vw;
-    height: min(330px, 41vh);
-    opacity: .78;
+    left: 0;
+    right: 0;
+    bottom: -16px;
+    width: 100vw;
+    height: 72%;
+    transform: none;
+    border-radius: 0;
+    background: linear-gradient(to bottom, transparent 0%, rgba(6,8,15,.08) 25%, rgba(6,8,15,.42) 65%, rgba(6,8,15,.82) 100%);
+    filter: none;
+    opacity: 1;
   }
 
   .player-shell::after {
-    bottom: max(42px, calc(var(--safe-bottom) + 24px));
-    width: 118vw;
-    height: 150px;
-    opacity: .36;
+    display: none !important;
   }
 
   .world-ambient {
-    bottom: max(4.5%, calc(var(--safe-bottom) + 12px));
+    bottom: max(3.5%, calc(var(--safe-bottom) + 8px));
     width: 94vw;
     height: 96px;
   }
 }
 
 @media (max-height: 660px) and (max-width: 700px) {
-  .player-shell::before { height: 230px; opacity: .66; }
-  .player-shell::after { bottom: 28px; height: 116px; opacity: .28; }
-  .world-ambient { bottom: 2.5%; height: 72px; }
+  .player-shell::before { height: 76%; }
+  .player-shell::after { display: none !important; }
+  .world-ambient { bottom: 2%; height: 72px; }
 }
 
 @media (max-height: 560px) and (orientation: landscape) {

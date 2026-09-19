@@ -33,8 +33,18 @@
   transition: transform 420ms var(--ease), height 420ms var(--ease), width 320ms var(--ease);
   overflow: hidden;
   contain: layout paint;
+.sheet[aria-hidden="true"],
+.sheet[data-snap="closed"] {
+  visibility: hidden;
+  pointer-events: none;
 }
-.sheet[data-snap="medium"], .sheet[data-snap="full"], .sheet[data-snap="collapsed"] { transform: translate(50%, 0); }
+.sheet[data-snap="medium"],
+.sheet[data-snap="full"],
+.sheet[data-snap="collapsed"] {
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(50%, 0);
+}
 .sheet-handle {
   display: none; appearance: none; border: 0; background: transparent; width: 100%; height: 28px; padding: 0; cursor: ns-resize;
 }

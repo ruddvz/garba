@@ -333,9 +333,81 @@
   .app .browse-actions .browse-button { min-height: 38px; padding-inline: 11px; font-size: 13px; }
 }
 
-@media (display-mode: standalone) and (max-width: 700px) {
-  .app { inset: 0 !important; width: auto !important; height: auto !important; }
+/* ─────────────────────────────────────────────────────────────────────────────
+   PWA full-bleed layout (standalone / fullscreen / minimal-ui)
+   Background must cover the ENTIRE screen including behind the bottom home
+   indicator. Controls stay above it via safe-area-inset-bottom padding.
+   The cutout shows at the bottom in browser mode (reserved for the browser UI)
+   but in installed PWA mode there is no browser chrome — so we seal it shut.
+────────────────────────────────────────────────────────────────────────────── */
+@media (display-mode: standalone),
+       (display-mode: fullscreen),
+       (display-mode: minimal-ui),
+       (display-mode: window-controls-overlay) {
+  /* Lock html and body to the exact device screen height — zero gap. */
+  html,
+  body {
+    height: 100% !important;
+    height: -webkit-fill-available !important;
+    height: 100dvh !important;
+    min-height: 100% !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #111323 !important;
+  }
+
+  /* App frame fills exactly the screen; no horizontal scroll or cutout. */
+  .app {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    width: 100% !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    min-height: 100% !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    background: #111323 !important;
+  }
+
+  /* Artwork and background layers bleed past physical display boundaries */
+  .world,
+  .world-layer {
+    position: fixed !important;
+    inset: -12px !important;
+    width: calc(100vw + 24px) !important;
+    height: calc(100dvh + 24px) !important;
+    margin: 0 !important;
+  }
+
+  /* Status bar zone: soft top scrim so notch / dynamic island blends naturally */
+  .world-vignette {
+    background:
+      linear-gradient(to bottom,
+        rgba(5,7,16,.68) 0%,
+        rgba(5,7,16,.18) 10%,
+        rgba(5,7,16,.02) 28%,
+        rgba(5,7,16,.18) 66%,
+        rgba(5,7,16,.76) 100%
+      ),
+      radial-gradient(circle at 50% 46%, rgba(5,7,16,.015) 0 20%, rgba(5,7,16,.07) 56%, rgba(5,7,16,.2) 100%) !important;
+  }
+
+  .player-shell {
+    padding-bottom: max(14px, calc(var(--safe-bottom) + 4px)) !important;
+  }
 }
+
+/* Narrow phone PWA: ensure 100vw width */
+@media (display-mode: standalone) and (max-width: 700px) {
+  .app { inset: 0 !important; width: 100vw !important; }
+}
+
+
+
 
 @media (prefers-reduced-motion: reduce) {
   #youtubeStage.youtube-dock { transition: none; }
