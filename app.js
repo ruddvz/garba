@@ -1319,23 +1319,43 @@ function setupSheetGestures() {
 
 function setupMediaSessionActions() {
   if (!('mediaSession' in navigator)) return;
+  const pauseActive = () => {
+    if (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(currentSong())) {
+      window.GARBA_YOUTUBE_PLAYER.toggle(currentSong());
+    } else {
+      els.audio.pause();
+    }
+  };
+  const seekToPosition = (targetSec) => {
+    const song = currentSong();
+    if (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(song)) {
+      window.GARBA_YOUTUBE_PLAYER.seekTo?.(targetSec);
+    } else if (els.audio.src) {
+      els.audio.currentTime = targetSec;
+    } else {
+      state.elapsed = targetSec;
+      renderPlayer();
+    }
+  };
+
   const actions = {
     play: () => togglePlay(),
-    pause: () => els.audio.pause(),
+    pause: () => pauseActive(),
+    stop: () => pauseActive(),
     previoustrack: () => changeSong(-1),
     nexttrack: () => changeSong(1),
     seekbackward: (details) => {
       if (!state.duration) return;
       const next = Math.max(0, state.elapsed - (details.seekOffset || 10));
-      if (els.audio.src) els.audio.currentTime = next;
+      seekToPosition(next);
     },
     seekforward: (details) => {
       if (!state.duration) return;
       const next = Math.min(state.duration, state.elapsed + (details.seekOffset || 10));
-      if (els.audio.src) els.audio.currentTime = next;
+      seekToPosition(next);
     },
     seekto: (details) => {
-      if (els.audio.src && typeof details.seekTime === 'number') els.audio.currentTime = details.seekTime;
+      if (typeof details.seekTime === 'number') seekToPosition(details.seekTime);
     },
   };
 
@@ -1616,12 +1636,11 @@ function wireEvents() {
   els.miniPrev.addEventListener('click', () => changeSong(-1));
   els.miniNext.addEventListener('click', () => changeSong(1));
 
-  if (els.browseButton?.tagName !== 'A') {
-    els.browseButton?.addEventListener('click', () => {
-      if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-      else closeSheet();
-    });
-  }
+  els.browseButton?.addEventListener('click', (event) => {
+    event?.preventDefault?.();
+    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
+    else closeSheet();
+  });
   els.sheetClose.addEventListener('click', closeSheet);
   els.sheetBackdrop?.addEventListener('click', () => closeSheet());
   els.mobileFavourite.addEventListener('click', () => toggleFavourite());

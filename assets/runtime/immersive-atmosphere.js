@@ -110,7 +110,6 @@
   }
 
   function playbackIsActive() {
-    if (document.hidden) return false;
     if (directAudio?.currentSrc && !directAudio.paused && !directAudio.ended) return true;
     return app.classList.contains('is-playing');
   }
@@ -702,7 +701,7 @@
   }
 
   function targetMasterGain() {
-    if (!state.context || !state.master || state.mode === 'off' || document.hidden || (!state.playbackActive && !state.previewActive)) return 0;
+    if (!state.context || !state.master || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return 0;
     return runtimeProfile().master * state.level;
   }
 
@@ -840,11 +839,15 @@
   }, { capture: true });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      state.playbackActive = false;
       stopPreview({ announce: false });
-      applyMasterLevel({ quick: true });
-      scheduleIdleSuspend();
-    } else requestAnimationFrame(syncPlaybackState);
+      if (!playbackIsActive()) {
+        state.playbackActive = false;
+        applyMasterLevel({ quick: true });
+        scheduleIdleSuspend();
+      }
+    } else {
+      requestAnimationFrame(syncPlaybackState);
+    }
   });
   new MutationObserver(syncPlaybackState).observe(app, { attributes: true, attributeFilter: ['class'] });
   connection?.addEventListener?.('change', handleConnectionChange);
