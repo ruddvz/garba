@@ -106,4 +106,24 @@ rankSearchRecords(input, 'first');
 assert.equal(JSON.stringify(input), before);
 assert.deepEqual(input.map(({ id }) => id), ['b', 'a']);
 
+// Exercise the loaded-index path with an ASCII-heavy catalogue while preserving relevance and mutation contracts.
+const loadedIndex = Array.from({ length: 1800 }, (_, index) => ({
+  id: `archive-${index}`,
+  title: `Archive Garba ${index}`,
+  artist: `Singer ${index}`,
+  taxonomyTerms: ['Traditional Garba'],
+  releaseTerms: [`Archive Collection ${Math.floor(index / 20)}`],
+}));
+loadedIndex.splice(913, 0, {
+  id: 'khalasi',
+  title: 'Khalasi',
+  artist: 'Aditya Gadhvi',
+  taxonomyTerms: ['Folk Lokgeet'],
+});
+const loadedIndexBefore = JSON.stringify(loadedIndex);
+const loadedIndexResults = rankSearchRecords(loadedIndex, 'Khalasi');
+assert.equal(loadedIndexResults[0]?.record.id, 'khalasi');
+assert.equal(loadedIndexResults[0]?.matchedBy, 'title-exact');
+assert.equal(JSON.stringify(loadedIndex), loadedIndexBefore);
+
 console.log('search core regression fixtures passed');
