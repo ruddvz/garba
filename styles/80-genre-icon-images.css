@@ -1084,12 +1084,47 @@ html body .app #browseActions #browseButton::after {
   --garba-dandiya-marker: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 8'%3E%3Cpath d='M4 4h44' fill='none' stroke='%23e3bf76' stroke-width='3.2' stroke-linecap='round'/%3E%3Cpath d='M11 4h5M22 4h5M34 4h5' fill='none' stroke='%238b3043' stroke-width='3.2' stroke-linecap='butt'/%3E%3Cpath d='M16 4h3M30 4h3M42 4h3' fill='none' stroke='%23df7442' stroke-width='3.2' stroke-linecap='butt'/%3E%3C/svg%3E");
 }
 
+html body .app .player-shell {
+  display: grid !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  box-sizing: border-box !important;
+  padding-top: clamp(80px, 9vh, 120px) !important;
+  padding-bottom: max(22px, var(--safe-bottom)) !important;
+  padding-inline: 22px !important;
+  grid-template-rows: minmax(0, 1fr) auto auto auto minmax(12px, 1.2fr) auto auto !important;
+  align-content: stretch !important;
+  justify-items: center !important;
+  row-gap: 0 !important;
+}
+
+html body .app .track-block {
+  grid-row: 2 !important;
+  margin: 0 auto !important;
+}
+
+html body .app .controls {
+  grid-row: 3 !important;
+  margin: clamp(10px, 1.8vh, 20px) auto 0 !important;
+}
+
+html body .app .progress-wrap {
+  grid-row: 4 !important;
+  margin: clamp(8px, 1.4vh, 16px) auto 0 !important;
+}
+
 html body .app #genreStrip {
-  position: fixed !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  bottom: max(74px, calc(var(--safe-bottom) + 52px)) !important;
-  z-index: 11 !important;
+  grid-row: 6 !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  align-self: end !important;
+  justify-self: center !important;
   height: 76px !important;
   min-height: 76px !important;
   max-height: 76px !important;
@@ -1101,6 +1136,7 @@ html body .app #genreStrip {
   max-width: min(780px, 94vw) !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
+  margin: 0 auto clamp(6px, 1vh, 10px) !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1287,18 +1323,23 @@ html body .app #genreStrip .genre-button:nth-child(n) { top: 0 !important; trans
 /* Explore button is center aligned at the very bottom baseline with 24/7 Live and YouTube button.
    The chevron down icon is placed directly below the Explore text. */
 html body .app #browseActions {
-  position: fixed !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  bottom: max(22px, var(--safe-bottom)) !important;
-  z-index: 12 !important;
+  grid-row: 7 !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  align-self: end !important;
+  justify-self: center !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   padding: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1387,13 +1428,28 @@ html body .app #browseActions #browseButton .browse-chevron {
 }
 
 @media (max-width: 700px) {
+  html body .app .player-shell {
+    padding-top: clamp(64px, 8vh, 88px) !important;
+    padding-bottom: max(14px, var(--safe-bottom)) !important;
+    padding-inline: max(14px, var(--safe-left)) !important;
+    grid-template-rows: minmax(0, 1fr) auto auto auto minmax(10px, 1.1fr) auto auto !important;
+  }
+
+  html body .app .controls {
+    margin-top: clamp(8px, 1.4vh, 14px) !important;
+  }
+
+  html body .app .progress-wrap {
+    margin-top: clamp(6px, 1.2vh, 12px) !important;
+  }
+
   html body .app #genreStrip {
-    bottom: max(60px, calc(var(--safe-bottom) + 44px)) !important;
     height: 70px !important;
     min-height: 70px !important;
     max-height: 70px !important;
     padding-inline: max(14px, var(--safe-left)) !important;
     justify-content: flex-start !important;
+    margin: 0 auto 6px !important;
   }
 
   html body .app #genreStrip .genre-button,
@@ -1432,7 +1488,10 @@ html body .app #browseActions #browseButton .browse-chevron {
   }
 
   html body .app #browseActions {
-    bottom: max(14px, var(--safe-bottom)) !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    margin: 0 auto !important;
   }
 
   html body .app #browseActions #browseButton {
@@ -1452,10 +1511,60 @@ html body .app #browseActions #browseButton .browse-chevron {
 }
 
 @media (max-height: 560px) and (orientation: landscape) {
+  html body .app .player-shell {
+    padding-top: 48px !important;
+    padding-bottom: max(10px, var(--safe-bottom)) !important;
+    grid-template-rows: minmax(0, 0.4fr) auto auto auto minmax(4px, 0.6fr) auto auto !important;
+  }
+
+  html body .app .track-block {
+    height: 94px !important;
+    min-height: 94px !important;
+    max-height: 94px !important;
+  }
+
+  html body .app .controls {
+    margin-top: 4px !important;
+  }
+
+  html body .app .progress-wrap {
+    margin-top: 4px !important;
+  }
+
+  html body .app #genreStrip {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    margin: 0 auto 3px !important;
+  }
+
   html body .app #genreStrip .genre-button,
   html body .app #genreStrip #nonstopButton {
     top: 0 !important;
-    padding-bottom: 8px !important;
+    min-width: 56px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 2px 4px 4px !important;
+  }
+
+  html body .app #genreStrip .genre-button .genre-icon-frame,
+  html body .app #genreStrip #nonstopButton .genre-icon-frame {
+    width: 26px !important;
+    height: 26px !important;
+    flex: 0 0 26px !important;
+  }
+
+  html body .app #genreStrip .genre-button .genre-icon-img,
+  html body .app #genreStrip #nonstopButton .genre-icon-img {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  html body .app #genreStrip .genre-button .genre-label,
+  html body .app #genreStrip #nonstopButton .genre-label {
+    font-size: 10px !important;
+    margin-top: 1px !important;
   }
 
   html body .app #genreStrip .genre-button::after,
@@ -1466,7 +1575,10 @@ html body .app #browseActions #browseButton .browse-chevron {
   }
 
   html body .app #browseActions {
-    bottom: max(10px, var(--safe-bottom)) !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    margin: 0 auto !important;
   }
 
   html body .app #browseActions #browseButton {
@@ -1474,6 +1586,26 @@ html body .app #browseActions #browseButton .browse-chevron {
     min-height: 32px !important;
     padding: 0 10px !important;
     font-size: 9.5px !important;
+  }
+
+  html body .live-station-container {
+    bottom: max(10px, var(--safe-bottom)) !important;
+  }
+  html body .live-station-button {
+    height: 32px !important;
+    padding: 0 10px 0 8px !important;
+    font-size: 10px !important;
+    gap: 5px !important;
+  }
+
+  html body .youtube-stage-container {
+    bottom: max(10px, var(--safe-bottom)) !important;
+  }
+  html body .youtube-stage-button {
+    height: 32px !important;
+    padding: 0 10px 0 8px !important;
+    font-size: 10px !important;
+    gap: 5px !important;
   }
 }
 
@@ -1496,7 +1628,7 @@ html body .app #browseActions #browseButton .browse-chevron {
 .app[data-sheet-snap="full"] #genreStrip {
   opacity: 0 !important;
   pointer-events: none !important;
-  transform: translate(-50%, 12px) !important;
+  transform: translateY(12px) !important;
 }
 
 /* Align all genre buttons cleanly on a flat, even baseline without jumping or wave offsets */

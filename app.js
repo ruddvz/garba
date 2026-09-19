@@ -2025,12 +2025,21 @@ function playDandiyaTap() {
 }
 
 function setupMicroBeatFeedback() {
-  document.addEventListener('click', (event) => {
+  let lastTapTime = 0;
+  const triggerTap = (event) => {
+    const now = Date.now();
+    if (now - lastTapTime < 60) return;
     const target = event.target;
-    if (target instanceof Element && target.closest('button, a, input[type="range"], [role="button"]')) {
+    if (target instanceof Element && target.closest('button, a, input[type="range"], [role="button"], .genre-button, #nonstopButton, .browse-button, .live-station-button, .youtube-stage-button')) {
+      lastTapTime = now;
       playDandiyaTap();
     }
-  }, { capture: true, passive: true });
+  };
+  if (window.PointerEvent) {
+    document.addEventListener('pointerdown', triggerTap, { capture: true, passive: true });
+  } else {
+    document.addEventListener('click', triggerTap, { capture: true, passive: true });
+  }
 }
 
 function setupYouTubeStageToggle() {
