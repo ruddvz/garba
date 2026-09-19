@@ -45,9 +45,17 @@
   }
 
   function currentSongFrom(songs) {
-    const id = new URL(location.href).searchParams.get('song');
-    if (id) {
-      const found = songs.find((song) => song.id === id);
+    if (window.GARBA_APP?.getCurrentSong) {
+      const appSong = window.GARBA_APP.getCurrentSong();
+      if (appSong?.id) {
+        const found = songs.find((song) => song.id === appSong.id);
+        if (found) return found;
+        if (appSong.youtubeId) return appSong;
+      }
+    }
+    const songId = songTitle?.dataset?.songId || new URL(location.href).searchParams.get('song');
+    if (songId) {
+      const found = songs.find((song) => song.id === songId);
       if (found) return found;
     }
     const title = String(songTitle?.textContent || '').trim();
@@ -459,7 +467,6 @@
       setNote('YouTube · playing in GARBA');
       startPolling(requestGeneration);
     } else if (playerState === s.BUFFERING) {
-      setPlaying(false);
       setNote('YouTube · buffering', { loading: true });
       startPolling(requestGeneration);
     } else if (playerState === s.PAUSED || playerState === s.CUED) {
@@ -669,6 +676,9 @@
 
     stage.classList.add('is-loading');
     setNote('YouTube · loading', { loading: true });
+    window.dispatchEvent(new CustomEvent('garba:playback-state-change', {
+      detail: Object.freeze({ playing: true, loading: true, songId: song.id }),
+    }));
 
     try {
       const readyPlayer = await ensurePlayer(id, token);
@@ -701,12 +711,16 @@
   function toggle(song = currentSafeSong()) {
     if (!canControl(song)) return false;
     if (activeSong?.id !== song.id || !player) {
+      window.dispatchEvent(new CustomEvent('garba:playback-state-change', {
+        detail: Object.freeze({ playing: true, loading: true, songId: song.id }),
+      }));
       open(song, { autoplay: true });
       return true;
     }
     try {
       if (playerState === states().PLAYING || playerState === states().BUFFERING) player.pauseVideo();
       else player.playVideo();
+      setPlaying(playerState !== states().PLAYING && playerState !== states().BUFFERING);
       return true;
     } catch {
       return false;
@@ -757,7 +771,9 @@
     queueMicrotask(() => {
       const song = currentSafeSong();
       if (canControl(song)) {
-        open(song, { autoplay: true, resume: false });
+        if (activeSong?.id !== song.id) {
+          open(song, { autoplay: true, resume: false });
+        }
         return;
       }
       close();

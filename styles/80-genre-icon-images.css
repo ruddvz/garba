@@ -1645,4 +1645,202 @@ html body .app .track-block .genre-eyebrow {
   display: none !important;
 }
 
+/* Maintain YouTube media runtime without intrusive popup dock obstructing courtyard artwork */
+html body #youtubeStage.youtube-dock {
+  opacity: 0.002 !important;
+  pointer-events: none !important;
+  z-index: -10 !important;
+}
+
+/* Ensure track-block is perfectly centered with genre eyebrow removed */
+html body .app .track-block {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  margin-inline: auto !important;
+  width: 100% !important;
+}
+
+html body .app .track-block .song-title {
+  text-align: center !important;
+  margin-inline: auto !important;
+}
+
+html body .app .track-block .artist-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  margin-inline: auto !important;
+}
+
+/* Perfectly center 5-button transport controls */
+html body .app .controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-inline: auto !important;
+  width: auto !important;
+  max-width: min(440px, 94vw) !important;
+  gap: clamp(14px, 3vw, 26px) !important;
+}
+
+/* Ensure progress wrap aligns with controls center */
+html body .app .progress-wrap {
+  margin-inline: auto !important;
+}
+
+/* Dynamic Garba Dance Floor Canvas */
+.garba-floor {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  display: block !important;
+}
+
+/* Circle Presence Indicator in Topbar */
+.circle-presence {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 5px 13px !important;
+  border-radius: 999px !important;
+  background: rgba(13, 17, 30, 0.76) !important;
+  border: 1px solid rgba(246, 236, 215, 0.14) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: var(--ivory) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.015em !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.presence-pulse {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  background: #10b981 !important;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7) !important;
+  animation: presencePulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+}
+
+@keyframes presencePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Streaming via YouTube Attribution Badge */
+.streaming-via {
+  position: absolute !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  right: max(20px, env(safe-area-inset-right)) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(13, 17, 30, 0.72) !important;
+  border: 1px solid rgba(246, 236, 215, 0.10) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  color: rgba(246, 236, 215, 0.75) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.015em !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+}
+
+.streaming-via .youtube-badge-logo {
+  height: 14px !important;
+  width: auto !important;
+  display: block !important;
+}
+
+@media (max-width: 600px) {
+  .streaming-via {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    right: 12px !important;
+    font-size: 10px !important;
+    padding: 3px 8px !important;
+    opacity: 0.85 !important;
+  }
+  .circle-presence {
+    display: none !important;
+  }
+}
+
+/* Production Hardening: Disable accidental text selection, image drag, and touch callouts */
+html body .app {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+html body .app input[type="search"],
+html body .app input[type="text"] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
+/* Sponsor Slot & Presentation Badge */
+.sponsor-slot {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: 12px !important;
+  vertical-align: middle !important;
+  transition: opacity 200ms ease, transform 200ms ease !important;
+}
+
+.sponsor-badge-link {
+  position: absolute !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  left: max(20px, env(safe-area-inset-left)) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  background: rgba(13, 17, 30, 0.76) !important;
+  border: 1px solid rgba(246, 236, 215, 0.12) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  color: var(--ivory) !important;
+  text-decoration: none !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+  z-index: 5 !important;
+  transition: transform 160ms ease, background-color 160ms ease !important;
+}
+
+.sponsor-badge-link:hover {
+  background: rgba(22, 28, 48, 0.88) !important;
+  transform: translateY(-1px) !important;
+}
+
+.sponsor-badge-link svg,
+.sponsor-badge-link img {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 600px) {
+  .sponsor-badge-link {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    left: 12px !important;
+    padding: 4px 10px !important;
+    font-size: 10.5px !important;
+  }
+}
+
 

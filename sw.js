@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v23`;
+const CACHE_NAME = `${CACHE_PREFIX}v25`;
 const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 const STAGING_READY_URL = new URL('./__garba_staging_ready__', self.location.href).toString();
@@ -15,6 +15,7 @@ const CORE_SHELL = [
   './youtube-player-runtime.js',
   './nonstop-browser.js',
   './app.js',
+  './src/ui/garba-floor.js',
   './explore/',
   './explore/index.html',
   './catalogue/catalogue.css',

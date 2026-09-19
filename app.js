@@ -5,6 +5,7 @@ import './assets/runtime/live-station.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 import { initMorphicons } from './assets/runtime/morphicons.js';
 import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
+import { GarbaFloor } from './src/ui/garba-floor.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -12,6 +13,8 @@ const {
   formatShareText,
   executeShare,
 } = window.GARBA_SHARE_INTENT || {};
+
+let garbaFloor = null;
 
 const storage = {
   get(key, fallback) {
@@ -280,6 +283,7 @@ function setAccent(accent) {
 
 function setPlaying(playing) {
   state.playing = playing;
+  garbaFloor?.setPlaying(playing);
   els.app.classList.toggle('is-playing', playing);
   els.playButton.classList.toggle('is-playing', playing);
   els.miniPlay.classList.toggle('is-playing', playing);
@@ -581,6 +585,7 @@ function renderPlayer() {
   }
   els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
   els.songTitle.textContent = song.title;
+  els.songTitle.dataset.songId = song.id;
   const titleLength = [...song.title].length;
   els.trackBlock.classList.toggle('is-long-title', titleLength > 28);
   els.trackBlock.classList.toggle('is-very-long-title', titleLength > 44);
@@ -603,6 +608,7 @@ function renderPlayer() {
   els.progress.value = Math.round(ratio * 1000);
   els.progress.style.setProperty('--progress', `${ratio * 100}%`);
   els.miniProgress.style.width = `${ratio * 100}%`;
+  garbaFloor?.setProgress(ratio);
 
   updateFavouriteUI();
   updateQueueBadge();
@@ -1091,6 +1097,9 @@ async function togglePlay() {
   if (!song) return;
 
   if (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(song)) {
+    if (!state.playing) {
+      setPlaying(true);
+    }
     window.GARBA_YOUTUBE_PLAYER.toggle(song);
     return;
   }
@@ -1838,6 +1847,7 @@ function resolveInitialState() {
   }
 
   // Shuffle starter on initial direct load or reload
+  let pickedByShuffle = false;
   if (!hasInitialExplicitNavigation && !song && !pendingSongId) {
     const recentStarters = storage.get('garba:recentInitialSongs', []);
     const playable = state.songs.filter(canExecuteSong);
@@ -1847,6 +1857,7 @@ function resolveInitialState() {
       const picked = pool[Math.floor(Math.random() * pool.length)];
       if (picked) {
         song = picked;
+        pickedByShuffle = true;
         const updated = [...recentStarters.filter((id) => id !== picked.id), picked.id].slice(-15);
         storage.set('garba:recentInitialSongs', updated);
       }
@@ -1861,7 +1872,7 @@ function resolveInitialState() {
   if (!genre && session.genreId && hasInitialExplicitNavigation) genre = state.genres.find((entry) => entry.id === session.genreId);
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
 
-  if (!song || (!(preserveRequestedIdentity || preserveRestoredIdentity) && song.genre !== genre.id)) {
+  if (!song || (!pickedByShuffle && !(preserveRequestedIdentity || preserveRestoredIdentity) && song.genre !== genre.id)) {
     song = state.songs.find((entry) => entry.genre === genre.id && canExecuteSong(entry))
       || state.songs.find((entry) => entry.genre === genre.id)
       || state.songs.find(canExecuteSong)
@@ -1888,6 +1899,17 @@ function resolveInitialState() {
     pendingNonstopSetId,
     hasInitialExplicitNavigation,
   };
+}
+
+function initCirclePresence() {
+  const presenceEl = document.getElementById('presenceCount');
+  if (!presenceEl) return;
+  let count = 118;
+  setInterval(() => {
+    const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.6 ? 1 : 0);
+    count = Math.max(104, Math.min(132, count + delta));
+    presenceEl.textContent = `${count} in the circle`;
+  }, 12000);
 }
 
 async function init() {
@@ -1917,6 +1939,13 @@ async function init() {
     state.morphs = initMorphicons(els);
     els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
     state.morphs?.get('shuffle')?.morphTo(state.shuffleMode ? 'shuffleActive' : 'shuffleInactive', { instant: true });
+
+    try {
+      garbaFloor = new GarbaFloor('garbaFloor');
+    } catch (e) {
+      console.warn('Garba floor init error:', e);
+    }
+    initCirclePresence();
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {
@@ -1989,6 +2018,85 @@ function applyExploreHandoff() {
   }, { once: true });
 }
 
+let dandiyaAudioCtx = null;
+
+function playDandiyaTap() {
+  try {
+    garbaFloor?.triggerPulse();
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!dandiyaAudioCtx || dandiyaAudioCtx.state === 'closed') {
+      dandiyaAudioCtx = new AudioCtx();
+    }
+    if (dandiyaAudioCtx.state === 'suspended') {
+      dandiyaAudioCtx.resume();
+    }
+    const t = dandiyaAudioCtx.currentTime;
+
+    const osc = dandiyaAudioCtx.createOscillator();
+    const gain = dandiyaAudioCtx.createGain();
+    const filter = dandiyaAudioCtx.createBiquadFilter();
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(750, t);
+    filter.Q.setValueAtTime(3.2, t);
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(840, t);
+    osc.frequency.exponentialRampToValueAtTime(380, t + 0.038);
+
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(dandiyaAudioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.05);
+  } catch {
+    // Non-blocking tactile feedback
+  }
+}
+
+function setupMicroBeatFeedback() {
+  let lastTapTime = 0;
+  const triggerTap = (event) => {
+    const now = Date.now();
+    if (now - lastTapTime < 60) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, a, input[type="range"], [role="button"], .genre-button, #nonstopButton, .browse-button, .live-station-button')) {
+      lastTapTime = now;
+      playDandiyaTap();
+    } else if (target instanceof Element && !target.closest('input, textarea, #songSheet')) {
+      lastTapTime = now;
+      playDandiyaTap();
+      if (typeof event.clientX === 'number') {
+        garbaFloor?.handleTap(event.clientX, event.clientY);
+      }
+    }
+  };
+  if (window.PointerEvent) {
+    document.addEventListener('pointerdown', triggerTap, { capture: true, passive: true });
+  } else {
+    document.addEventListener('click', triggerTap, { capture: true, passive: true });
+  }
+}
+
+function setupInteractionHardening() {
+  document.addEventListener('contextmenu', (event) => {
+    if (!event.target.closest('input, textarea')) {
+      event.preventDefault();
+    }
+  }, { capture: true });
+
+  document.addEventListener('dragstart', (event) => {
+    if (!event.target.closest('input, textarea')) {
+      event.preventDefault();
+    }
+  }, { capture: true });
+}
+
 window.addEventListener('garba:playback-state-change', (event) => {
   const playing = Boolean(event.detail?.playing);
   setPlaying(playing);
@@ -1999,9 +2107,16 @@ placeFavourite();
 syncSheetChrome();
 wireEvents();
 setupMediaSessionActions();
+setupMicroBeatFeedback();
+setupInteractionHardening();
 setupPwaInstall();
 registerServiceWorker();
 init();
+
+window.GARBA_APP = Object.freeze({
+  getCurrentSong: () => currentSong(),
+  getState: () => state,
+});
 
 window.GARBA_SHARE = Object.freeze({
   shareCurrent: handleShareCurrentSong,

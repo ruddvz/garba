@@ -644,7 +644,9 @@ function renderCollectionCard(collection, presentation = 'destination') {
   }
   card.querySelector('strong').textContent = collection.title;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
-  card.querySelector('.collection-copy span').textContent = `${pluralize(collection.songs.length, 'song')} · ${pluralize(releaseCount, 'release')}`;
+  card.querySelector('.collection-copy span').textContent = presentationKind === 'artist'
+    ? `${pluralize(releaseCount, 'release')} · ${pluralize(collection.songs.length, 'track')}`
+    : `${pluralize(collection.songs.length, 'song')} · ${pluralize(releaseCount, 'release')}`;
   card.addEventListener('click', () => openCollection(collection.id,{trigger:card}));
   return card;
 }
@@ -861,6 +863,92 @@ function makeSongContext(song, release) {
 function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {}) {
   els.songList.replaceChildren();
   els.songSectionTitle.textContent = title;
+
+  const isArtistCollection = Boolean(state.active?.id?.startsWith('artist-') && !state.activeReleaseId);
+  if (isArtistCollection) {
+    const items = releasesForSongs(songs);
+    const standaloneSongs = songs.filter((s) => !s.releaseId);
+    const totalCount = items.length + standaloneSongs.length;
+    els.songCount.textContent = `${totalCount.toLocaleString()} ${totalCount === 1 ? 'recording' : 'recordings'}`;
+    const fragment = document.createDocumentFragment();
+
+    items.forEach(({ release, count }) => {
+      const row = document.createElement('div');
+      row.className = 'song-row artist-release-row';
+      row.setAttribute('role', 'listitem');
+      row.dataset.releaseId = release.id;
+      row.append(makeCover(release, 'song-art'));
+
+      const copy = document.createElement('div');
+      copy.className = 'song-copy';
+      const titleEl = document.createElement('strong');
+      titleEl.textContent = displayTitle(release);
+      const artist = document.createElement('span');
+      const year = releaseYear(release);
+      artist.textContent = [cleanArtistCredits(release.artist), year || null, `${count} ${count === 1 ? 'track' : 'chapters / tracks'}`].filter(Boolean).join(' · ');
+      copy.append(titleEl, artist);
+
+      const releaseEl = document.createElement('span');
+      releaseEl.className = 'song-release';
+      releaseEl.textContent = count > 1 ? `${count} tracks` : 'Single';
+
+      const action = document.createElement('button');
+      action.type = 'button';
+      action.className = 'play-link';
+      action.textContent = count > 1 ? `View chapters (${count})` : 'Listen';
+      action.setAttribute('aria-label', `View chapters for ${displayTitle(release)}`);
+      action.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filterToRelease(release.id);
+      });
+
+      row.addEventListener('click', () => filterToRelease(release.id));
+      row.style.cursor = 'pointer';
+
+      row.append(copy, releaseEl, action);
+      fragment.append(row);
+    });
+
+    standaloneSongs.forEach((song) => {
+      const songTitle = displayTitle(song);
+      const readiness = routeReadiness(song);
+      const row = document.createElement('div');
+      row.className = 'song-row';
+      row.setAttribute('role', 'listitem');
+      row.dataset.songId = song.id;
+      row.append(songArtwork(song));
+
+      const displayArtist = cleanArtistCredits(song.artist);
+      const copy = document.createElement('div');
+      copy.className = 'song-copy';
+      const titleEl = document.createElement('strong');
+      titleEl.textContent = songTitle;
+      const artist = document.createElement('span');
+      artist.textContent = [displayArtist, formatDuration(song.durationSeconds), readiness.executable ? null : 'Unplayable'].filter(Boolean).join(' · ');
+      copy.append(titleEl, artist);
+
+      const releaseEl = document.createElement('span');
+      releaseEl.className = 'song-release';
+      releaseEl.textContent = 'Single';
+
+      const action = document.createElement(readiness.executable ? 'a' : 'span');
+      action.className = `play-link${readiness.executable ? '' : ' unavailable'}`;
+      if (readiness.executable) {
+        action.textContent = 'Listen';
+        action.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
+        action.setAttribute('aria-label', `Open ${songTitle} by ${displayArtist} in the PlayGarba player`);
+      } else {
+        action.textContent = 'Unavailable';
+        action.setAttribute('aria-disabled', 'true');
+      }
+      row.append(copy, releaseEl, action);
+      fragment.append(row);
+    });
+
+    els.songList.append(fragment);
+    return;
+  }
+
   const orderedSongs = orderedSongsForRender(songs);
   const releaseSequence = state.activeReleaseId ? trustedReleaseSequence(orderedSongs) : null;
   const trackNumberBySongId = releaseSequence
