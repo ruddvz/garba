@@ -1810,19 +1810,19 @@ async function refreshCatalogue({ quiet = false } = {}) {
 
 function resolveInitialState() {
   const params = new URLSearchParams(location.search);
+  const requestedSong = params.get('song');
+  const requestedGenre = params.get('genre');
+  const requestedRelease = params.get('release');
+  const hasInitialExplicitSong = Boolean(requestedSong || requestedRelease || params.get('nonstop'));
   const hasInitialExplicitNavigation = Boolean(
-    params.get('song')
-    || params.get('genre')
-    || params.get('nonstop')
-    || params.get('release')
+    hasInitialExplicitSong
+    || requestedGenre
     || params.get('library')
     || params.get('browse')
   );
   const session = storage.get('garba:session', {});
-  let requestedSong = params.get('song');
-  const requestedGenre = params.get('genre');
-  const requestedRelease = params.get('release');
-  const redirect = requestedSong ? state.presentationRedirects.get(requestedSong) : null;
+  let targetSongId = requestedSong;
+  const redirect = targetSongId ? state.presentationRedirects.get(targetSongId) : null;
   let pendingNonstopSetId = null;
   if (redirect?.presentationRole === 'nonstop-only' && redirect.nonstopSetId) {
     pendingNonstopSetId = redirect.nonstopSetId;
@@ -1830,39 +1830,63 @@ function resolveInitialState() {
     url.searchParams.delete('song');
     url.searchParams.set('nonstop', pendingNonstopSetId);
     history.replaceState(history.state, '', url.pathname + url.search + url.hash);
-    requestedSong = redirect.canonicalSongId || null;
+    targetSongId = redirect.canonicalSongId || null;
   } else if (redirect?.canonicalSongId) {
-    requestedSong = redirect.canonicalSongId;
+    targetSongId = redirect.canonicalSongId;
   }
-  const pendingSongId = requestedSong && !state.songs.some((entry) => entry.id === requestedSong) ? requestedSong : null;
+  const pendingSongId = targetSongId && !state.songs.some((entry) => entry.id === targetSongId) ? targetSongId : null;
 
-  let song = requestedSong ? state.songs.find((entry) => entry.id === requestedSong) : null;
-  if (!song && !pendingSongId && session.songId && hasInitialExplicitNavigation) {
-    song = state.songs.find((entry) => entry.id === session.songId);
-  }
-
-  // Shuffle starter on initial direct load or reload
+  let song = targetSongId ? state.songs.find((entry) => entry.id === targetSongId) : null;
   let pickedByShuffle = false;
-  if (!hasInitialExplicitNavigation && !song && !pendingSongId) {
+  let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
+
+  // Shuffle starter on reload or initial direct visit (when no specific song was explicitly requested)
+  if (!hasInitialExplicitSong && !song && !pendingSongId) {
     const recentStarters = storage.get('garba:recentInitialSongs', []);
-    const playable = state.songs.filter(canExecuteSong);
-    if (playable.length) {
-      const freshPool = playable.filter((entry) => !recentStarters.includes(entry.id));
-      const pool = freshPool.length ? freshPool : playable;
-      const picked = pool[Math.floor(Math.random() * pool.length)];
-      if (picked) {
-        song = picked;
+    const recentGenres = storage.get('garba:recentStarterGenres', []);
+    const playableSongs = state.songs.filter(canExecuteSong);
+
+    if (genre) {
+      // Case A: User explicitly opened a genre link (e.g. ?genre=dandiya) -> shuffle fresh song within that genre
+      const genrePlayable = playableSongs.filter((entry) => entry.genre === genre.id);
+      if (genrePlayable.length) {
+        const freshInGenre = genrePlayable.filter((entry) => !recentStarters.includes(entry.id));
+        const pool = freshInGenre.length ? freshInGenre : genrePlayable;
+        song = pool[Math.floor(Math.random() * pool.length)];
         pickedByShuffle = true;
-        const updated = [...recentStarters.filter((id) => id !== picked.id), picked.id].slice(-15);
-        storage.set('garba:recentInitialSongs', updated);
       }
+    } else {
+      // Case B: General visit / reload -> rotate across all genres evenly so every genre gets showcased
+      const activeGenresWithPlayable = state.genres.filter((g) =>
+        playableSongs.some((s) => s.genre === g.id)
+      );
+      // Exclude recently used starter genres (up to 3) so each reload steps into a different genre
+      const freshGenres = activeGenresWithPlayable.filter((g) => !recentGenres.slice(-3).includes(g.id));
+      const genreCandidates = freshGenres.length ? freshGenres : activeGenresWithPlayable;
+      const chosenGenre = genreCandidates[Math.floor(Math.random() * genreCandidates.length)] || activeGenresWithPlayable[0];
+
+      if (chosenGenre) {
+        genre = chosenGenre;
+        const genreSongs = playableSongs.filter((s) => s.genre === chosenGenre.id);
+        const freshSongs = genreSongs.filter((s) => !recentStarters.includes(s.id));
+        const pool = freshSongs.length ? freshSongs : genreSongs;
+        song = pool[Math.floor(Math.random() * pool.length)];
+        pickedByShuffle = true;
+
+        const nextGenres = [...recentGenres.filter((id) => id !== chosenGenre.id), chosenGenre.id].slice(-5);
+        storage.set('garba:recentStarterGenres', nextGenres);
+      }
+    }
+
+    if (song) {
+      const nextStarters = [...recentStarters.filter((id) => id !== song.id), song.id].slice(-30);
+      storage.set('garba:recentInitialSongs', nextStarters);
     }
   }
 
-  const preserveRequestedIdentity = Boolean(song && requestedSong && song.id === requestedSong);
-  const preserveRestoredIdentity = Boolean(song && !requestedSong && session.songId && song.id === session.songId && hasInitialExplicitNavigation);
+  const preserveRequestedIdentity = Boolean(song && targetSongId && song.id === targetSongId);
+  const preserveRestoredIdentity = Boolean(song && !targetSongId && session.songId && song.id === session.songId && hasInitialExplicitNavigation);
 
-  let genre = requestedGenre ? state.genres.find((entry) => entry.id === requestedGenre) : null;
   if (!genre && song) genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre && session.genreId && hasInitialExplicitNavigation) genre = state.genres.find((entry) => entry.id === session.genreId);
   if (!genre) genre = state.genres.find((entry) => entry.id === 'traditional') || state.genres[0];
