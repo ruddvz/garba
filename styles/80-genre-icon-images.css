@@ -77,40 +77,64 @@
   filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 18%, transparent));
 }
 
-/* Keep Browse centred in a reserved slot so state changes above it cannot move it. */
-#browseActions {
-  min-height: 42px;
-  align-items: center;
-  justify-content: center;
+/* Explore Downward Chevron: borderless, transparent, non-button pure chevron floating below genres */
+#browseActions,
+html body .app #browseActions {
+  min-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: -6px auto 0 !important;
 }
 
-#browseActions .browse-button {
-  min-height: 38px;
-  line-height: 1;
-  margin-top: 0 !important;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: 999px;
-  background: rgba(18, 14, 28, .36);
-  border: 1px solid rgba(246, 236, 215, .18);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, .24);
-  color: rgba(246, 236, 215, .90);
-  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+#browseActions .browse-button,
+html body .app #browseActions .browse-button,
+html body .app #browseActions #browseButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: rgba(246, 236, 215, 0.65) !important;
+  cursor: pointer !important;
+  transition: color 200ms ease, transform 200ms ease, opacity 200ms ease !important;
+  text-decoration: none !important;
 }
 
-@media (hover: hover) {
-  #browseActions .browse-button:hover {
-    background: rgba(246, 236, 215, .14);
-    border-color: rgba(246, 236, 215, .32);
-    color: var(--ivory);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
-  }
+#browseActions .browse-button:hover,
+html body .app #browseActions .browse-button:hover,
+html body .app #browseActions #browseButton:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--ivory) !important;
+  transform: translateY(3px) !important;
+}
+
+#browseActions .browse-button svg,
+html body .app #browseActions .browse-button svg,
+html body .app #browseActions .browse-button .browse-chevron {
+  display: block !important;
+  width: 26px !important;
+  height: 26px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7)) !important;
+  transition: transform 260ms var(--ease), stroke 200ms ease !important;
 }
 
 /*
@@ -1136,7 +1160,7 @@ html body .app #genreStrip {
   max-width: min(780px, 94vw) !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  margin: 0 auto clamp(6px, 1vh, 10px) !important;
+  margin: -24px auto clamp(2px, 0.5vh, 6px) !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1692,91 +1716,6 @@ html body .app .progress-wrap {
   margin-inline: auto !important;
 }
 
-/* Dynamic Garba Dance Floor Canvas */
-.garba-floor {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-  display: block !important;
-}
-
-/* Circle Presence Indicator in Topbar */
-.circle-presence {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  padding: 5px 13px !important;
-  border-radius: 999px !important;
-  background: rgba(13, 17, 30, 0.76) !important;
-  border: 1px solid rgba(246, 236, 215, 0.14) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  color: var(--ivory) !important;
-  font-size: 12.5px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.015em !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
-}
-
-.presence-pulse {
-  width: 7px !important;
-  height: 7px !important;
-  border-radius: 50% !important;
-  background: #10b981 !important;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7) !important;
-  animation: presencePulse 2.2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
-}
-
-@keyframes presencePulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-/* Streaming via YouTube Attribution Badge */
-.streaming-via {
-  position: absolute !important;
-  bottom: max(16px, env(safe-area-inset-bottom)) !important;
-  right: max(20px, env(safe-area-inset-right)) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
-  padding: 5px 12px !important;
-  border-radius: 999px !important;
-  background: rgba(13, 17, 30, 0.72) !important;
-  border: 1px solid rgba(246, 236, 215, 0.10) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  color: rgba(246, 236, 215, 0.75) !important;
-  font-size: 11.5px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.015em !important;
-  z-index: 5 !important;
-  pointer-events: none !important;
-}
-
-.streaming-via .youtube-badge-logo {
-  height: 14px !important;
-  width: auto !important;
-  display: block !important;
-}
-
-@media (max-width: 600px) {
-  .streaming-via {
-    bottom: max(8px, env(safe-area-inset-bottom)) !important;
-    right: 12px !important;
-    font-size: 10px !important;
-    padding: 3px 8px !important;
-    opacity: 0.85 !important;
-  }
-  .circle-presence {
-    display: none !important;
-  }
-}
-
 /* Production Hardening: Disable accidental text selection, image drag, and touch callouts */
 html body .app {
   -webkit-user-select: none !important;
@@ -1790,56 +1729,162 @@ html body .app input[type="text"] {
   user-select: text !important;
 }
 
-/* Sponsor Slot & Presentation Badge */
-.sponsor-slot {
+/* Sponsor Slot & Presentation Badge - Stacked neatly above 24/7 LIVE */
+html body .sponsor-container {
+  position: fixed !important;
+  left: max(22px, var(--safe-left)) !important;
+  bottom: calc(max(22px, var(--safe-bottom)) + 50px) !important;
+  z-index: 12 !important;
+  pointer-events: auto !important;
+  transition: opacity 240ms ease, transform 240ms ease !important;
+}
+
+html body .sponsor-badge-link {
+  position: static !important;
   display: inline-flex !important;
   align-items: center !important;
-  margin-left: 12px !important;
-  vertical-align: middle !important;
-  transition: opacity 200ms ease, transform 200ms ease !important;
-}
-
-.sponsor-badge-link {
-  position: absolute !important;
-  bottom: max(16px, env(safe-area-inset-bottom)) !important;
-  left: max(20px, env(safe-area-inset-left)) !important;
-  display: flex !important;
-  align-items: center !important;
   gap: 8px !important;
-  padding: 6px 14px !important;
+  height: 36px !important;
+  padding: 0 14px 0 12px !important;
   border-radius: 999px !important;
-  background: rgba(13, 17, 30, 0.76) !important;
-  border: 1px solid rgba(246, 236, 215, 0.12) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  color: var(--ivory) !important;
+  background: rgba(14, 18, 30, 0.72) !important;
+  border: 1px solid rgba(246, 236, 215, 0.16) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: rgba(246, 236, 215, 0.90) !important;
   text-decoration: none !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
-  z-index: 5 !important;
-  transition: transform 160ms ease, background-color 160ms ease !important;
+  font-family: inherit !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38) !important;
+  transition: transform 180ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
 }
 
-.sponsor-badge-link:hover {
-  background: rgba(22, 28, 48, 0.88) !important;
+html body .sponsor-badge-link:hover {
+  background: rgba(20, 26, 44, 0.88) !important;
+  border-color: rgba(246, 236, 215, 0.28) !important;
+  color: var(--ivory) !important;
   transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
 }
 
-.sponsor-badge-link svg,
-.sponsor-badge-link img {
-  width: 18px !important;
-  height: 18px !important;
+html body .sponsor-badge-link .sponsor-icon svg {
+  width: 15px !important;
+  height: 15px !important;
   display: block !important;
-  object-fit: contain !important;
+  color: var(--accent, #e5a93c) !important;
+}
+
+/* Hide sponsor button when mobile drawer is opened */
+.app:not([data-sheet-snap="closed"]) .sponsor-container,
+.app[data-sheet-snap="collapsed"] .sponsor-container,
+.app[data-sheet-snap="medium"] .sponsor-container,
+.app[data-sheet-snap="full"] .sponsor-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(12px) !important;
 }
 
 @media (max-width: 600px) {
-  .sponsor-badge-link {
-    bottom: max(8px, env(safe-area-inset-bottom)) !important;
-    left: 12px !important;
-    padding: 4px 10px !important;
+  html body .sponsor-container {
+    bottom: calc(max(14px, var(--safe-bottom)) + 44px) !important;
+    left: max(14px, var(--safe-left)) !important;
+  }
+  html body .sponsor-badge-link {
+    height: 32px !important;
+    padding: 0 10px 0 8px !important;
     font-size: 10.5px !important;
+  }
+}
+
+/* Premium Streaming via YouTube Attribution Badge */
+html body .app .streaming-via {
+  position: fixed !important;
+  right: max(22px, var(--safe-right)) !important;
+  bottom: max(22px, var(--safe-bottom)) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 40px !important;
+  padding: 0 16px 0 14px !important;
+  border-radius: 999px !important;
+  background: rgba(14, 18, 30, 0.72) !important;
+  border: 1px solid rgba(246, 236, 215, 0.16) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  z-index: 12 !important;
+  pointer-events: auto !important;
+  cursor: default !important;
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 180ms ease, opacity 240ms ease !important;
+}
+
+html body .app .streaming-via:hover {
+  background: rgba(20, 26, 44, 0.88) !important;
+  border-color: rgba(246, 236, 215, 0.28) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body .app .streaming-via .streaming-label {
+  font-family: inherit !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  color: rgba(246, 236, 215, 0.70) !important;
+  white-space: nowrap !important;
+}
+
+html body .app .streaming-via .yt-brand-lockup {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+html body .app .streaming-via .youtube-badge-logo {
+  width: 22px !important;
+  height: 15px !important;
+  display: block !important;
+  filter: drop-shadow(0 1px 4px rgba(255, 0, 0, 0.4)) !important;
+}
+
+html body .app .streaming-via .yt-brand-text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.03em !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.app:not([data-sheet-snap="closed"]) .streaming-via,
+.app[data-sheet-snap="collapsed"] .streaming-via,
+.app[data-sheet-snap="medium"] .streaming-via,
+.app[data-sheet-snap="full"] .streaming-via {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(12px) !important;
+}
+
+@media (max-width: 600px) {
+  html body .app .streaming-via {
+    bottom: max(14px, var(--safe-bottom)) !important;
+    right: max(14px, var(--safe-right)) !important;
+    height: 34px !important;
+    padding: 0 12px 0 10px !important;
+    gap: 6px !important;
+  }
+  html body .app .streaming-via .streaming-label {
+    font-size: 10px !important;
+  }
+  html body .app .streaming-via .youtube-badge-logo {
+    width: 18px !important;
+    height: 12px !important;
+  }
+  html body .app .streaming-via .yt-brand-text {
+    font-size: 11.5px !important;
   }
 }
 

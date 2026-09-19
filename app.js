@@ -5,7 +5,6 @@ import './assets/runtime/live-station.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 import { initMorphicons } from './assets/runtime/morphicons.js';
 import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
-import { GarbaFloor } from './src/ui/garba-floor.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -13,8 +12,6 @@ const {
   formatShareText,
   executeShare,
 } = window.GARBA_SHARE_INTENT || {};
-
-let garbaFloor = null;
 
 const storage = {
   get(key, fallback) {
@@ -283,7 +280,6 @@ function setAccent(accent) {
 
 function setPlaying(playing) {
   state.playing = playing;
-  garbaFloor?.setPlaying(playing);
   els.app.classList.toggle('is-playing', playing);
   els.playButton.classList.toggle('is-playing', playing);
   els.miniPlay.classList.toggle('is-playing', playing);
@@ -608,7 +604,6 @@ function renderPlayer() {
   els.progress.value = Math.round(ratio * 1000);
   els.progress.style.setProperty('--progress', `${ratio * 100}%`);
   els.miniProgress.style.width = `${ratio * 100}%`;
-  garbaFloor?.setProgress(ratio);
 
   updateFavouriteUI();
   updateQueueBadge();
@@ -1901,17 +1896,6 @@ function resolveInitialState() {
   };
 }
 
-function initCirclePresence() {
-  const presenceEl = document.getElementById('presenceCount');
-  if (!presenceEl) return;
-  let count = 118;
-  setInterval(() => {
-    const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.random() > 0.6 ? 1 : 0);
-    count = Math.max(104, Math.min(132, count + delta));
-    presenceEl.textContent = `${count} in the circle`;
-  }, 12000);
-}
-
 async function init() {
   try {
     const catalogue = await fetchCatalogue();
@@ -1939,13 +1923,6 @@ async function init() {
     state.morphs = initMorphicons(els);
     els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
     state.morphs?.get('shuffle')?.morphTo(state.shuffleMode ? 'shuffleActive' : 'shuffleInactive', { instant: true });
-
-    try {
-      garbaFloor = new GarbaFloor('garbaFloor');
-    } catch (e) {
-      console.warn('Garba floor init error:', e);
-    }
-    initCirclePresence();
 
     if (initial.song) await selectSong(initial.song.id, { initial: true, animate: false, restoreElapsed: initial.elapsed, keepSheet: true });
     else {
@@ -2022,7 +1999,6 @@ let dandiyaAudioCtx = null;
 
 function playDandiyaTap() {
   try {
-    garbaFloor?.triggerPulse();
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
     if (!dandiyaAudioCtx || dandiyaAudioCtx.state === 'closed') {
@@ -2068,12 +2044,6 @@ function setupMicroBeatFeedback() {
     if (target instanceof Element && target.closest('button, a, input[type="range"], [role="button"], .genre-button, #nonstopButton, .browse-button, .live-station-button')) {
       lastTapTime = now;
       playDandiyaTap();
-    } else if (target instanceof Element && !target.closest('input, textarea, #songSheet')) {
-      lastTapTime = now;
-      playDandiyaTap();
-      if (typeof event.clientX === 'number') {
-        garbaFloor?.handleTap(event.clientX, event.clientY);
-      }
     }
   };
   if (window.PointerEvent) {

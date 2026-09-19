@@ -79,9 +79,9 @@ html body .app #browseActions {
   margin-top: -4px !important;
 }
 
-/* The text label is enough here. Removing the chevron also keeps the control centred. */
+/* Ensure Explore chevron remains visible and centered */
 html body .app #browseActions .browse-button svg {
-  display: none !important;
+  display: block;
 }
 
 html body .app #browseActions #browseButton {
