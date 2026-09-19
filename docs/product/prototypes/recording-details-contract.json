@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "prototype": "recording-details",
+  "productionReady": false,
+  "purpose": "Demonstrate source-gated recording details without inventing Gujarati text, translation, lyrics, biography or cultural interpretation.",
+  "policy": {
+    "canonicalIdentityRequired": true,
+    "sourceAttributionRequiredForFacts": true,
+    "verifiedGujaratiRequiresHumanReview": true,
+    "culturalNotesRequireHumanReview": true,
+    "autoTransliterationAllowed": false,
+    "autoTranslationAllowed": false,
+    "lyricsAllowed": false,
+    "biographyInferenceAllowed": false
+  },
+  "fieldStates": {
+    "verified": "May render only when the value has explicit source evidence and required review.",
+    "unavailable": "Render a truthful missing-state message. Do not infer or generate a value.",
+    "pending-review": "Keep the content unpublished until the declared review gate is complete."
+  },
+  "fixture": {
+    "canonicalId": "ochhav-2023-01-ochhav-theme",
+    "title": "Ochhav Theme",
+    "artist": "Aditya Gadhvi",
+    "release": {
+      "id": "ochhav-2023",
+      "title": "Ochhav",
+      "year": 2023,
+      "trackNumber": 1,
+      "durationSeconds": 79
+    },
+    "classification": {
+      "category": "modern-gujarati-garba",
+      "genre": "traditional"
+    },
+    "catalogueNote": {
+      "status": "verified",
+      "contentKind": "metadata-summary",
+      "text": "Track 1 of Aditya Gadhvi’s 25-track 2023 album Ochhav, released by 2245114 Records DK and catalogued as modern Gujarati Garba.",
+      "sources": [
+        {
+          "kind": "repository-record",
+          "path": "data/catalogue/songs/songs-18.json"
+        },
+        {
+          "kind": "official-playback-source",
+          "url": "https://www.youtube.com/watch?v=V4f5I_xJVoA"
+        }
+      ]
+    },
+    "playbackSource": {
+      "status": "verified",
+      "provider": "youtube",
+      "sourceType": "official-artist-channel",
+      "url": "https://www.youtube.com/watch?v=V4f5I_xJVoA",
+      "startSeconds": 0,
+      "repositoryPath": "data/playback-sources.json"
+    },
+    "gujaratiTitle": {
+      "status": "unavailable",
+      "value": null,
+      "language": "gu",
+      "sources": [],
+      "humanReview": {
+        "required": true,
+        "status": "not-reviewed"
+      }
+    },
+    "latinDisplay": {
+      "status": "verified",
+      "value": "Ochhav Theme",
+      "source": "canonical-title",
+      "autoTransliterated": false
+    },
+    "culturalStory": {
+      "status": "pending-review",
+      "blocks": [],
+      "humanReview": {
+        "required": true,
+        "status": "not-reviewed"
+      }
+    }
+  }
+}

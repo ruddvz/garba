@@ -1,0 +1,43 @@
+name: Recording details prototype
+
+on:
+  pull_request:
+    paths:
+      - 'docs/product/prototypes/recording-details-contract.json'
+      - 'docs/product/prototypes/recording-details.html'
+      - 'scripts/lib/validate-recording-details-prototype.mjs'
+      - '.github/workflows/recording-details-prototype-validate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/product/prototypes/recording-details-contract.json'
+      - 'docs/product/prototypes/recording-details.html'
+      - 'scripts/lib/validate-recording-details-prototype.mjs'
+      - '.github/workflows/recording-details-prototype-validate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recording-details-prototype-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: node --check scripts/lib/validate-recording-details-prototype.mjs
+
+      - name: Validate source-gated recording details prototype
+        run: node scripts/lib/validate-recording-details-prototype.mjs
