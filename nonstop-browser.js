@@ -742,6 +742,7 @@
       button.type = 'button';
       button.className = 'genre-button nonstop-mode-button';
       button.textContent = 'Nonstop';
+      button.innerHTML = '<span class="genre-icon-frame" aria-hidden="true"><span class="genre-icon-img"></span></span><span class="genre-label">Nonstop</span>';
       button.dataset.nonstop = 'true';
       button.setAttribute('aria-label', 'Browse Nonstop Garba');
       button.setAttribute('aria-controls', 'nonstopBrowser');

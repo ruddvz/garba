@@ -77,6 +77,7 @@ const els = {
   playButton: $('playButton'),
   shuffleButton: $('shuffleButton'),
   liveStationButton: $('liveStationButton'),
+  youtubeStageButton: $('youtubeStageButton'),
   prevButton: $('prevButton'),
   nextButton: $('nextButton'),
   progress: $('progress'),
@@ -303,7 +304,26 @@ function configureGenreButton(button, genre, activeId, onSelect) {
   button.classList.toggle('active', genre.id === activeId);
   button.type = 'button';
   button.dataset.genre = genre.id;
-  if (button.textContent !== genre.name) button.textContent = genre.name;
+
+  let iconFrame = button.querySelector(':scope > .genre-icon-frame');
+  let label = button.querySelector(':scope > .genre-label');
+  if (!iconFrame || !label) {
+    button.replaceChildren();
+    iconFrame = document.createElement('span');
+    iconFrame.className = 'genre-icon-frame';
+    iconFrame.setAttribute('aria-hidden', 'true');
+    const iconImg = document.createElement('span');
+    iconImg.className = 'genre-icon-img';
+    iconFrame.appendChild(iconImg);
+    label = document.createElement('span');
+    label.className = 'genre-label';
+    label.textContent = genre.name;
+    button.appendChild(iconFrame);
+    button.appendChild(label);
+  } else if (label.textContent !== genre.name) {
+    label.textContent = genre.name;
+  }
+
   if (genre.id === activeId) button.setAttribute('aria-current', 'true');
   else button.removeAttribute('aria-current');
 }
@@ -1964,11 +1984,116 @@ function applyExploreHandoff() {
   }, { once: true });
 }
 
+let dandiyaAudioCtx = null;
+
+function playDandiyaTap() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!dandiyaAudioCtx || dandiyaAudioCtx.state === 'closed') {
+      dandiyaAudioCtx = new AudioCtx();
+    }
+    if (dandiyaAudioCtx.state === 'suspended') {
+      dandiyaAudioCtx.resume();
+    }
+    const t = dandiyaAudioCtx.currentTime;
+
+    const osc = dandiyaAudioCtx.createOscillator();
+    const gain = dandiyaAudioCtx.createGain();
+    const filter = dandiyaAudioCtx.createBiquadFilter();
+
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(750, t);
+    filter.Q.setValueAtTime(3.2, t);
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(840, t);
+    osc.frequency.exponentialRampToValueAtTime(380, t + 0.038);
+
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(dandiyaAudioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.05);
+  } catch {
+    // Non-blocking tactile feedback
+  }
+}
+
+function setupMicroBeatFeedback() {
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('button, a, input[type="range"], [role="button"]')) {
+      playDandiyaTap();
+    }
+  }, { capture: true, passive: true });
+}
+
+function setupYouTubeStageToggle() {
+  const button = els.youtubeStageButton || $('youtubeStageButton');
+  if (!button) return;
+
+  button.addEventListener('click', async () => {
+    let stage = $('youtubeStage');
+    const isVisible = stage?.classList.contains('video-visible');
+
+    if (!isVisible) {
+      if (!stage || !stage.classList.contains('open') || !window.GARBA_YOUTUBE_PLAYER?.activeSongId) {
+        const song = state.currentSong || (state.songs && state.songs[0]);
+        if (song && window.GARBA_YOUTUBE_PLAYER?.open) {
+          await window.GARBA_YOUTUBE_PLAYER.open(song, { autoplay: true });
+          stage = $('youtubeStage');
+        }
+      }
+      if (stage) {
+        stage.classList.add('video-visible');
+        stage.classList.add('open');
+        stage.setAttribute('aria-hidden', 'false');
+      }
+      button.setAttribute('aria-pressed', 'true');
+      button.classList.add('is-active');
+      showToast('Video player active');
+    } else {
+      if (stage) {
+        stage.classList.remove('video-visible');
+      }
+      button.setAttribute('aria-pressed', 'false');
+      button.classList.remove('is-active');
+      showToast('Audio playing in background');
+    }
+  });
+
+  if ('MutationObserver' in window) {
+    const syncStageState = () => {
+      const stage = $('youtubeStage');
+      const isVisible = stage?.classList.contains('video-visible') === true;
+      button.setAttribute('aria-pressed', String(isVisible));
+      button.classList.toggle('is-active', isVisible);
+    };
+    const observer = new MutationObserver(syncStageState);
+    const observeStage = () => {
+      const stage = $('youtubeStage');
+      if (stage) {
+        observer.observe(stage, { attributes: true, attributeFilter: ['class', 'aria-hidden'] });
+      } else {
+        setTimeout(observeStage, 300);
+      }
+    };
+    observeStage();
+  }
+}
+
 applyExploreHandoff();
 placeFavourite();
 syncSheetChrome();
 wireEvents();
 setupMediaSessionActions();
+setupYouTubeStageToggle();
+setupMicroBeatFeedback();
 setupPwaInstall();
 registerServiceWorker();
 init();
