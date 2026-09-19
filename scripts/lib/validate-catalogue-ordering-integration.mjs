@@ -90,6 +90,7 @@ assert.match(catalogue, /globalThis\.PlayGarbaCatalogueOrdering\?\.orderCatalogu
 assert.match(catalogue, /const CATALOGUE_SORT_DEFAULT = 'playable-first';/);
 assert.match(catalogue, /new Set\(\[CATALOGUE_SORT_DEFAULT, 'newest', 'oldest'\]\)/);
 assert.match(catalogue, /getChronology: catalogueChronology/);
+assert.match(catalogue, /if \(sortMode === CATALOGUE_SORT_DEFAULT\) \{[\s\S]*fallbackPlayableFirstOrder\(songs, \{/);
 assert.match(catalogue, /release\?\.originalReleaseYear \|\| release\?\.releaseDate \|\| null/);
 assert.match(catalogue, /params\.set\('sort', normalisedSort\)/);
 assert.match(catalogue, /els\.sort\?\.addEventListener\('change'/);

@@ -483,9 +483,15 @@ function currentCatalogueSortMode() {
 
 function orderedSongsForRender(songs) {
   const sortMode = currentCatalogueSortMode();
+  if (sortMode === CATALOGUE_SORT_DEFAULT) {
+    return fallbackPlayableFirstOrder(songs, {
+      context: currentSongOrderingContext(),
+      getAvailabilityTier: catalogueAvailabilityTier,
+    });
+  }
   return orderCatalogueSongs(songs, {
     context: currentSongOrderingContext(),
-    mode: sortMode === CATALOGUE_SORT_DEFAULT ? 'popular' : sortMode,
+    mode: sortMode,
     availabilityGate: true,
     getAvailabilityTier: catalogueAvailabilityTier,
     getChronology: catalogueChronology,
