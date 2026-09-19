@@ -398,6 +398,42 @@
   justify-content: center;
 }
 
+/* Heart favourite button lives inside .controls as the 5th transport button */
+.controls .favourite-control {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(246, 236, 215, .76);
+  opacity: .90;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.28));
+  transition: color 150ms ease, opacity 150ms ease, filter 150ms ease;
+}
+
+.controls .favourite-control svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.controls .favourite-control.active {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.controls .favourite-control.active svg {
+  fill: var(--accent);
+}
+
+
+
 .ambient-ring {
   inset: -15px;
   border: 0;

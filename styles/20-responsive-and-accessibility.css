@@ -197,18 +197,19 @@ html body .app .utilities .mobile-heart.active {
 }
 
 html body .app .controls {
-  width: min(330px, 78vw);
+  width: min(380px, 86vw);
   min-height: 74px;
   margin-top: 8px;
-  padding: 5px 14px 8px;
+  padding: 5px 12px 8px;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  gap: clamp(30px, 4.4vw, 46px);
+  gap: clamp(22px, 3.2vw, 38px);
 }
+
 
 html body .app .transport {
   width: 48px;
@@ -329,35 +330,36 @@ html body .app .sheet-close:focus-visible {
     border-radius: 0;
   }
 
+  /* 5-button row: [Shuffle][Prev][Play][Next][Fav] — gap tightened for 5 items */
   html body .app .controls {
-    width: min(312px, calc(100vw - 40px));
+    width: min(340px, calc(100vw - 20px));
     min-height: 66px;
-    gap: clamp(26px, 7.5vw, 36px);
-    padding: 3px 12px 6px;
+    gap: clamp(14px, 4.2vw, 28px);
+    padding: 3px 8px 6px;
   }
 
   html body .app .transport {
-    width: 44px;
+    width: 42px;
     height: 44px;
   }
 
   html body .app .transport svg {
-    width: 25px;
-    height: 25px;
+    width: 23px;
+    height: 23px;
   }
 
   html body .app .play-button {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
   }
 
   html body .app .play-button svg {
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 32px;
   }
 
   html body .app .progress-wrap {
-    width: min(312px, calc(100vw - 40px));
+    width: min(340px, calc(100vw - 20px));
     margin-top: -2px;
     padding-inline: 6px;
   }
@@ -368,37 +370,67 @@ html body .app .sheet-close:focus-visible {
   }
 }
 
-@media (max-width: 390px) {
+/* Narrowest phones (320px): keep play ≥44px with 5-button bar */
+@media (max-width: 360px) {
   html body .app .controls,
   html body .app .progress-wrap {
-    width: min(294px, calc(100vw - 34px));
+    width: calc(100vw - 12px);
   }
 
-  html body .app .controls { gap: 24px; }
-}
-
-@media (max-height: 560px) and (orientation: landscape) {
   html body .app .controls {
-    width: min(276px, 40vw);
-    min-height: 46px;
-    margin-top: 2px;
-    padding: 0 8px 2px;
-    gap: 20px;
+    gap: clamp(8px, 3vw, 14px);
+    padding: 3px 4px 6px;
   }
 
   html body .app .transport {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 44px;
+  }
+
+  html body .app .transport svg {
+    width: 20px;
+    height: 20px;
   }
 
   html body .app .play-button {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
   }
 
   html body .app .play-button svg {
-    width: 29px;
-    height: 29px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  /* 5-button row in short landscape — keep play ≥44px, tighten rest */
+  html body .app .controls {
+    width: min(340px, 46vw);
+    min-height: 46px;
+    margin-top: 2px;
+    padding: 0 6px 2px;
+    gap: clamp(10px, 2.4vw, 18px);
+  }
+
+  html body .app .transport {
+    width: 36px;
+    height: 44px;
+  }
+
+  html body .app .transport svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  html body .app .play-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  html body .app .play-button svg {
+    width: 26px;
+    height: 26px;
   }
 
   html body .app .progress-wrap {
