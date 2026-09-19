@@ -27,6 +27,23 @@ const storage = {
   },
 };
 
+const RECENT_SONGS_KEY = 'garba:recentSongs';
+const RECENT_STARTERS_KEY = 'garba:recentInitialSongs';
+const MAX_RECENT_HISTORY = 150;
+
+function getRecentPlayedSongs() {
+  const list = storage.get(RECENT_SONGS_KEY, storage.get(RECENT_STARTERS_KEY, []));
+  return Array.isArray(list) ? list.filter((id) => typeof id === 'string') : [];
+}
+
+function recordRecentPlayedSong(songId) {
+  if (!songId || typeof songId !== 'string') return;
+  const current = getRecentPlayedSongs();
+  const next = [...current.filter((id) => id !== songId), songId].slice(-MAX_RECENT_HISTORY);
+  storage.set(RECENT_SONGS_KEY, next);
+  storage.set(RECENT_STARTERS_KEY, next);
+}
+
 const state = {
   genres: [],
   songs: [],
@@ -680,8 +697,9 @@ async function selectSong(songId, options = {}) {
   const previousSongId = state.songId;
   if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
     state.listeningHistory.push(previousSongId);
-    state.listeningHistory = state.listeningHistory.slice(-40);
+    state.listeningHistory = state.listeningHistory.slice(-60);
   }
+  recordRecentPlayedSong(song.id);
   if (options.consumeQueued) removeQueuedSong(song.id, { announce: false });
 
   const genre = state.genres.find((entry) => entry.id === song.genre);
@@ -1244,7 +1262,18 @@ function changeSong(direction) {
   if (!list.length) return;
 
   if (state.shuffleMode && direction > 0) {
-    const candidates = list.filter((song) => song.id !== state.songId && !state.listeningHistory.slice(-6).includes(song.id));
+    const recentHistory = [...getRecentPlayedSongs(), ...state.listeningHistory];
+    const minBuffer = Math.min(5, Math.max(1, list.length - 1));
+    let candidates = [];
+    for (const count of [80, 50, 35, 20, 10, 5, 2, 1, 0]) {
+      const excludeSet = new Set(recentHistory.slice(-count));
+      excludeSet.add(state.songId);
+      const filtered = list.filter((song) => !excludeSet.has(song.id));
+      if (filtered.length >= minBuffer || (count === 0 && filtered.length > 0)) {
+        candidates = filtered;
+        break;
+      }
+    }
     const pool = candidates.length ? candidates : list.filter((song) => song.id !== state.songId);
     if (pool.length) {
       const randomSong = pool[Math.floor(Math.random() * pool.length)];
@@ -1745,10 +1774,17 @@ function wireEvents() {
     syncSheetChrome();
   });
 
+  window.addEventListener('garba:catalogue-ready', () => {
+    refreshCatalogue({ quiet: true });
+  });
+
   setupSheetGestures();
 }
 
 async function fetchCatalogue() {
+  if (window.GARBA_FAST_BOOT?.hydrate && !window.GARBA_FAST_BOOT.hydrated) {
+    try { await window.GARBA_FAST_BOOT.hydrate(); } catch {}
+  }
   const [genresResponse, songsResponse] = await Promise.all([
     fetch('data/genres.json', { cache: 'no-store' }),
     fetch('data/songs.json', { cache: 'no-store' }),
@@ -1861,45 +1897,36 @@ function resolveInitialState() {
 
   // Shuffle starter on reload or initial direct visit (when no specific song was explicitly requested)
   if (!hasInitialExplicitSong && !song && !pendingSongId) {
-    const recentStarters = storage.get('garba:recentInitialSongs', []);
-    const recentGenres = storage.get('garba:recentStarterGenres', []);
+    const recentHistory = getRecentPlayedSongs();
     const playableSongs = state.songs.filter(canExecuteSong);
 
     if (genre) {
       // Case A: User explicitly opened a genre link (e.g. ?genre=dandiya) -> shuffle fresh song within that genre
       const genrePlayable = playableSongs.filter((entry) => entry.genre === genre.id);
       if (genrePlayable.length) {
-        const freshInGenre = genrePlayable.filter((entry) => !recentStarters.includes(entry.id));
+        const maxExclude = Math.max(0, genrePlayable.length - Math.min(genrePlayable.length, 5));
+        const excludeSet = new Set(recentHistory.slice(-maxExclude));
+        const freshInGenre = genrePlayable.filter((entry) => !excludeSet.has(entry.id));
         const pool = freshInGenre.length ? freshInGenre : genrePlayable;
         song = pool[Math.floor(Math.random() * pool.length)];
         pickedByShuffle = true;
       }
     } else {
-      // Case B: General visit / reload -> rotate across all genres evenly so every genre gets showcased
-      const activeGenresWithPlayable = state.genres.filter((g) =>
-        playableSongs.some((s) => s.genre === g.id)
-      );
-      // Exclude recently used starter genres (up to 3) so each reload steps into a different genre
-      const freshGenres = activeGenresWithPlayable.filter((g) => !recentGenres.slice(-3).includes(g.id));
-      const genreCandidates = freshGenres.length ? freshGenres : activeGenresWithPlayable;
-      const chosenGenre = genreCandidates[Math.floor(Math.random() * genreCandidates.length)] || activeGenresWithPlayable[0];
-
-      if (chosenGenre) {
-        genre = chosenGenre;
-        const genreSongs = playableSongs.filter((s) => s.genre === chosenGenre.id);
-        const freshSongs = genreSongs.filter((s) => !recentStarters.includes(s.id));
-        const pool = freshSongs.length ? freshSongs : genreSongs;
-        song = pool[Math.floor(Math.random() * pool.length)];
+      // Case B: General visit / reload (playgarba.com) -> draw freely from the ENTIRE pool of playable songs across all genres
+      // Exclude recently heard songs (up to 100+ songs) so each reload gives a fresh song and never repeats songs heard a few clicks/reloads ago
+      const maxExclude = Math.max(0, playableSongs.length - 100);
+      const excludeSet = new Set(recentHistory.slice(-maxExclude));
+      const freshPool = playableSongs.filter((entry) => !excludeSet.has(entry.id));
+      const pool = freshPool.length ? freshPool : playableSongs;
+      song = pool[Math.floor(Math.random() * pool.length)];
+      if (song) {
+        genre = state.genres.find((entry) => entry.id === song.genre) || state.genres[0];
         pickedByShuffle = true;
-
-        const nextGenres = [...recentGenres.filter((id) => id !== chosenGenre.id), chosenGenre.id].slice(-5);
-        storage.set('garba:recentStarterGenres', nextGenres);
       }
     }
 
     if (song) {
-      const nextStarters = [...recentStarters.filter((id) => id !== song.id), song.id].slice(-30);
-      storage.set('garba:recentInitialSongs', nextStarters);
+      recordRecentPlayedSong(song.id);
     }
   }
 

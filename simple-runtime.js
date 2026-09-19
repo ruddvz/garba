@@ -42,6 +42,23 @@
     return nativeFetch(input, init);
   };
 
+  try {
+    const cachedSongs = sessionStorage.getItem('garba:boot_songs');
+    const cachedGenres = sessionStorage.getItem('garba:boot_genres');
+    if (cachedSongs && cachedGenres) {
+      const parsedSongs = JSON.parse(cachedSongs);
+      const parsedGenres = JSON.parse(cachedGenres);
+      if (Array.isArray(parsedSongs) && parsedSongs.length > 50 && Array.isArray(parsedGenres) && parsedGenres.length > 0) {
+        bootGenres.splice(0, bootGenres.length, ...parsedGenres);
+        bootSongs.splice(0, bootSongs.length, ...parsedSongs);
+        hydrated = true;
+        window.GARBA_CATALOGUE_READY = true;
+      }
+    }
+  } catch {
+    // Ignore cache read failures
+  }
+
   async function hydrate() {
     if (hydratePromise) return hydratePromise;
     hydratePromise = (async () => {
@@ -57,6 +74,12 @@
         bootGenres.splice(0, bootGenres.length, ...genres);
         bootSongs.splice(0, bootSongs.length, ...songs);
         hydrated = true;
+        try {
+          sessionStorage.setItem('garba:boot_songs', JSON.stringify(songs));
+          sessionStorage.setItem('garba:boot_genres', JSON.stringify(genres));
+        } catch {
+          // Ignore cache write failures
+        }
         window.GARBA_CATALOGUE_READY = true;
         window.dispatchEvent(new CustomEvent('garba:catalogue-ready', { detail: { songs: songs.length } }));
         window.dispatchEvent(new Event('online'));
