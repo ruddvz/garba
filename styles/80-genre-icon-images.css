@@ -137,6 +137,22 @@ html body .app #browseActions .browse-button .browse-chevron {
   transition: transform 260ms var(--ease), stroke 200ms ease !important;
 }
 
+#browseActions .browse-button span,
+html body .app #browseActions .browse-button span,
+html body .app #browseActions #browseButton span,
+#browseActions .browse-button .sr-only,
+html body .app #browseActions .browse-button .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
 /*
   The Now Playing block is a fixed three-row frame. Short, long and very long titles
   therefore change inside the same rectangle instead of pushing transport/progress/
