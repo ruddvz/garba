@@ -1,0 +1,84 @@
+name: Issue 771 preserve playable-first source order
+
+on:
+  push:
+    branches:
+      - fix/issue-771-newest-oldest-sort
+
+permissions:
+  contents: write
+
+jobs:
+  followup:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Preserve existing P0 default ordering
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one guarded match, found {count}')
+              file.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              'src/catalogue/catalogue.js',
+              '''function orderedSongsForRender(songs) {
+  const sortMode = currentCatalogueSortMode();
+  return orderCatalogueSongs(songs, {
+    context: currentSongOrderingContext(),
+    mode: sortMode === CATALOGUE_SORT_DEFAULT ? 'popular' : sortMode,
+    availabilityGate: true,
+    getAvailabilityTier: catalogueAvailabilityTier,
+    getChronology: catalogueChronology,
+  });
+}''',
+              '''function orderedSongsForRender(songs) {
+  const sortMode = currentCatalogueSortMode();
+  if (sortMode === CATALOGUE_SORT_DEFAULT) {
+    return fallbackPlayableFirstOrder(songs, {
+      context: currentSongOrderingContext(),
+      getAvailabilityTier: catalogueAvailabilityTier,
+    });
+  }
+  return orderCatalogueSongs(songs, {
+    context: currentSongOrderingContext(),
+    mode: sortMode,
+    availabilityGate: true,
+    getAvailabilityTier: catalogueAvailabilityTier,
+    getChronology: catalogueChronology,
+  });
+}'''
+          )
+
+          replace_once(
+              'scripts/lib/validate-catalogue-ordering-integration.mjs',
+              "assert.match(catalogue, /getChronology: catalogueChronology/);",
+              "assert.match(catalogue, /getChronology: catalogueChronology/);\nassert.match(catalogue, /if \\(sortMode === CATALOGUE_SORT_DEFAULT\\) \\{[\\s\\S]*fallbackPlayableFirstOrder\\(songs, \\{/);"
+          )
+          PY
+      - name: Validate catalogue ordering
+        run: |
+          node scripts/lib/test-catalogue-ordering.mjs
+          node scripts/lib/validate-catalogue-ordering-integration.mjs
+      - name: Validate repository
+        run: npm run check
+      - name: Commit validated follow-up
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue-771-default-order-followup.yml
+          git add src/catalogue/catalogue.js scripts/lib/validate-catalogue-ordering-integration.mjs
+          git diff --cached --check
+          git commit -m "fix(explore): preserve playable-first source order"
+          git push origin HEAD:${GITHUB_REF_NAME}
