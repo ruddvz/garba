@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import { normalizeSearchText, rankSearchRecords } from '../../assets/runtime/search-core.js';
 
 const app = fs.readFileSync('app.js', 'utf8');
+const bootstrap = fs.readFileSync('simple-runtime.js', 'utf8');
+const uxPolish = fs.readFileSync('src/optional/ux-polish.js', 'utf8');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const songs = JSON.parse(fs.readFileSync('data/songs.json', 'utf8'));
 const releases = JSON.parse(fs.readFileSync('data/releases.json', 'utf8'));
@@ -36,6 +38,32 @@ assert.match(app, /function playerSearchRecord\(song\)[\s\S]*?titleAliases: song
 assert.match(app, /function rankPlayerSongs\(songs, query\)[\s\S]*?rankSearchRecords\(songs\.map\(playerSearchRecord\), query\)/, 'Player results must use shared relevance ranking');
 assert.match(app, /const rawQuery = els\.searchInput\.value\.trim\(\);[\s\S]*?const query = normalizeSearchText\(rawQuery\);/, 'Player empty-query handling must use shared Unicode normalization');
 assert.doesNotMatch(app, /function getSheetSongs\(\)[\s\S]*?\.toLowerCase\(\)\.includes\(query\)/, 'Player search must not regress to independent lowercase substring matching');
+
+// The production bootstrap owns song-sheet modal focus/inert/Tab behavior. app.js owns
+// the triggering control and focus return. Optional polish must not install another
+// sheet focus manager later and race Search or clear the bootstrap's inert state.
+assert.match(
+  bootstrap,
+  /function syncSheetModal\(\)[\s\S]*?setBackgroundInert\(modal\)[\s\S]*?const preferred = sheetClose \|\| visibleFocusable\(songSheet\)\[0\]/,
+  'Fast bootstrap remains the single song-sheet modal focus and inert authority',
+);
+assert.match(bootstrap, /function trapSheetTab\(event\)/, 'Fast bootstrap keeps the song-sheet Tab containment path');
+assert.match(
+  app,
+  /const trigger = state\.sheetTrigger;[\s\S]*?state\.sheetTrigger = null;[\s\S]*?trigger\?\.isConnected[\s\S]*?trigger\.focus\(\{ preventScroll: true \}\)/,
+  'Player restores focus to the control that opened the sheet',
+);
+for (const forbidden of [
+  'function syncSheetAccessibility',
+  'sheetFocusReturn',
+  'sheetModalActive',
+  'function setSheetBackgroundInert',
+  "songSheet.addEventListener('keydown'",
+]) {
+  assert.equal(uxPolish.includes(forbidden), false, `Optional UX polish must not re-own song-sheet focus behavior: ${forbidden}`);
+}
+assert.match(uxPolish, /function setupProviderAccessibility\(overlay\)/, 'Provider overlay accessibility remains independently hardened');
+assert.match(uxPolish, /overlay\.addEventListener\('keydown',[\s\S]*?trapTab\(event, overlay\)/, 'Provider overlay retains its own Tab containment');
 
 const adapterFixture = [
   { id: 'broad-taxonomy', title: 'Another Garba', artist: 'Singer', genre: 'folk', category: 'maa' },
@@ -291,4 +319,5 @@ assert.match(pkg.scripts['check:modules'], /node --check scripts\/lib\/validate-
 
 console.log('✓ Sheet startup performance contract validated: closed sheet remains lightweight with 0 song DOM rows on startup');
 console.log('✓ Explicit open materialises Songs, Search, Queue, and My Garba correctly');
+console.log('✓ Song-sheet focus ownership remains single-authority across bootstrap, app, and optional polish');
 console.log('✓ Background updates while closed avoid reconstructing hidden rows');
