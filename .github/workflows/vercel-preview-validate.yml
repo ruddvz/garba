@@ -6,6 +6,8 @@ on:
       - 'vercel.json'
       - 'scripts/build-vercel-site.mjs'
       - 'scripts/lib/validate-vercel-site.mjs'
+      - 'scripts/lib/validate-host-ownership.mjs'
+      - 'scripts/lib/test-host-ownership-state.mjs'
       - '.github/workflows/vercel-preview-validate.yml'
       - '.github/workflows/pages.yml'
       - 'index.html'
@@ -38,6 +40,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Validate hosting transition policy
+        run: node scripts/lib/test-host-ownership-state.mjs
+
       - name: Validate repository
         run: npm run check
 
@@ -48,7 +53,7 @@ jobs:
 
       - name: Build Vercel static artifact
         env:
-          VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+          VERCEL_GIT_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/build-vercel-site.mjs
 
       - name: Validate Vercel static artifact and cache policy
