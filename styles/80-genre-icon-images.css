@@ -1351,6 +1351,7 @@ html body .app #browseActions #browseButton:hover {
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
 }
 
+html body .app #browseActions #browseButton span,
 html body .app #browseActions #browseButton .browse-label {
   line-height: 1 !important;
   border: 0 !important;
