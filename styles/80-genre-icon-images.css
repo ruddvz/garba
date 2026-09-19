@@ -1607,16 +1607,6 @@ html body .app #browseActions #browseButton .browse-chevron {
     font-size: 10px !important;
     gap: 5px !important;
   }
-
-  html body .youtube-stage-container {
-    bottom: max(10px, var(--safe-bottom)) !important;
-  }
-  html body .youtube-stage-button {
-    height: 32px !important;
-    padding: 0 10px 0 8px !important;
-    font-size: 10px !important;
-    gap: 5px !important;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1653,22 +1643,6 @@ html body .app #genreStrip #nonstopButton {
 /* Remove uppercase genre eyebrow text above the song title */
 html body .app .track-block .genre-eyebrow {
   display: none !important;
-}
-
-/* Background audio by default: keep YouTube iframe playing without obstructing courtyard artwork */
-html body #youtubeStage.youtube-dock:not(.video-visible) {
-  opacity: 0.002 !important;
-  pointer-events: none !important;
-  z-index: -10 !important;
-}
-
-/* When video toggle is active: show the YouTube video dock prominently */
-html body #youtubeStage.youtube-dock.video-visible {
-  opacity: 1 !important;
-  pointer-events: auto !important;
-  z-index: 30 !important;
-  visibility: visible !important;
-  transform: translateY(0) scale(1) !important;
 }
 
 

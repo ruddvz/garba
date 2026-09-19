@@ -212,6 +212,9 @@
     } catch {
       // Some webviews expose Media Session only partially.
     }
+    window.dispatchEvent(new CustomEvent('garba:playback-state-change', {
+      detail: Object.freeze({ playing, songId: activeSong?.id || null }),
+    }));
   }
 
   function setProgressState(current = 0, total = 0) {
@@ -742,13 +745,15 @@
     if (nonstopOwnsVisibleIdentity) return;
 
     const next = currentSafeSong();
-    if (activeSong && next && next.id !== activeSong.id && !continueAfterNavigation) {
+    if (activeSong && next && next.id === activeSong.id) return;
+    if (activeSong && next && next.id !== activeSong.id && !continueAfterNavigation && playerState !== states().PLAYING) {
       close();
       return;
     }
-    if (!continueAfterNavigation) return;
+    if (!continueAfterNavigation && playerState !== states().PLAYING) return;
 
     continueAfterNavigation = false;
+    advanceLock = false;
     queueMicrotask(() => {
       const song = currentSafeSong();
       if (canControl(song)) {
@@ -773,6 +778,12 @@
     if (!target) return;
 
     if (activeSong && target.closest('#prevButton, #nextButton, #miniPrev, #miniNext')) {
+      continueAfterNavigation = true;
+      advanceLock = false;
+      return;
+    }
+
+    if (target.closest('.song-copy')) {
       continueAfterNavigation = true;
       advanceLock = false;
       return;
