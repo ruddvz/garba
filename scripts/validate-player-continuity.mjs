@@ -92,26 +92,40 @@ for (const marker of [
   if (!continuity.includes(marker)) fail(`Catalogue hydration toast guard missing marker: ${marker}`);
 }
 
-for (const marker of [
+for (const prohibited of [
   'const MEDIA_ARTWORK = [',
-  'assets/icons/icon-192.png',
-  'assets/icons/icon-512.png',
-  'function clearMediaMetadata()',
   'function syncMediaMetadata()',
-  'navigator.mediaSession.metadata = new MediaMetadata({',
-  'title,',
-  'artist,',
-  'artwork: MEDIA_ARTWORK',
+  'new MediaMetadata(',
   'new MutationObserver(syncMediaMetadata)',
   'queueMicrotask(syncMediaMetadata)',
 ]) {
-  if (!continuity.includes(marker)) fail(`Media Session metadata guard missing marker: ${marker}`);
+  if (continuity.includes(prohibited)) {
+    fail(`Continuity runtime must not publish Media Session metadata from rendered DOM: ${prohibited}`);
+  }
 }
-if (!continuity.includes("title === 'Loading requested song…'") || !continuity.includes("title === 'Requested song unavailable'")) {
-  fail('Media Session metadata must not publish transient deep-link loading/error labels as song metadata');
+for (const marker of [
+  'function clearTransientMediaMetadata()',
+  'navigator.mediaSession.metadata = null;',
+]) {
+  if (!continuity.includes(marker)) fail(`Deep-link transient metadata clear missing marker: ${marker}`);
 }
-if ((continuity.match(/clearMediaMetadata\(\);/g) || []).length < 3) {
-  fail('Loading, failed and generic transient metadata paths must be able to clear stale Media Session metadata');
+if ((continuity.match(/clearTransientMediaMetadata\(\);/g) || []).length !== 2) {
+  fail('Deep-link loading and failure states must both clear stale Media Session metadata exactly once');
+}
+
+for (const marker of [
+  'navigator.mediaSession.metadata = new MediaMetadata({',
+  'title: song.title,',
+  'artist: song.artist,',
+]) {
+  if (!app.includes(marker)) fail(`Core app Media Session metadata ownership missing marker: ${marker}`);
+}
+
+for (const marker of [
+  "navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';",
+  'navigator.mediaSession.setPositionState({',
+]) {
+  if (!youtube.includes(marker)) fail(`YouTube transport Media Session state ownership missing marker: ${marker}`);
 }
 
 for (const marker of [
@@ -218,5 +232,5 @@ console.log('✓ YouTube-only routing refreshes after full catalogue hydration a
 console.log('✓ deep links outside fast boot hydrate before transport is exposed and fail closed instead of playing a fallback song');
 console.log('✓ deep-link hydration retries on reconnect without showing a fake Back online toast');
 console.log('✓ global playback shortcuts do not steal keyboard input from interactive controls');
-console.log('✓ Media Session publishes the current song/artist with PlayGarba artwork and clears transient loading metadata');
+console.log('✓ continuity no longer publishes Media Session identity from rendered title/artist and still clears transient deep-link metadata');
 console.log('✓ continuity layer loads after the YouTube-only policy runtime and before app interaction completes');
