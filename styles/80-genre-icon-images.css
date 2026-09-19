@@ -1174,7 +1174,10 @@ html body .app #genreStrip #nonstopButton {
   padding: 3px 8px 6px !important;
   border: 0 !important;
   border-radius: 16px !important;
-  background: transparent !important;
+  background-color: transparent !important;
+  background-image: var(--genre-icon-image) !important;
+  background-repeat: no-repeat !important;
+  background-size: 0 0 !important;
   color: rgba(246, 236, 215, 0.72) !important;
   cursor: pointer !important;
   user-select: none !important;
