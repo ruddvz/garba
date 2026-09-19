@@ -1,0 +1,36 @@
+name: Issue 771 guarded catalogue sort apply v3
+
+on:
+  push:
+    branches:
+      - fix/issue-771-newest-oldest-sort
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply guarded patch
+        run: python3 scripts/tmp-issue-771-apply.py
+      - name: Validate catalogue ordering
+        run: |
+          node scripts/lib/test-catalogue-ordering.mjs
+          node scripts/lib/validate-catalogue-ordering-integration.mjs
+      - name: Validate repository
+        run: npm run check
+      - name: Commit validated patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/tmp-issue-771-apply.py .github/workflows/issue-771-apply.yml .github/workflows/issue-771-apply-v2.yml .github/workflows/issue-771-apply-v3.yml
+          git add src/catalogue/catalogue.js src/catalogue/index.html src/catalogue/catalogue.css assets/runtime/catalogue-ordering.js scripts/lib/validate-catalogue-ordering-integration.mjs
+          git diff --cached --check
+          git commit -m "feat(explore): add truthful catalogue chronology sorting"
+          git push origin HEAD:${GITHUB_REF_NAME}
