@@ -201,6 +201,7 @@
   }
 
   function isPlayableSet(set) {
+    if (set?.setType === 'live-highlights' || set?.setType === 'vlog') return false;
     return Boolean(set?.id && set.provider === 'youtube' && set.videoId && set.embeddable);
   }
 
