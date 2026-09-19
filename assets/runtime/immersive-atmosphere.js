@@ -9,11 +9,35 @@
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
   const MODES = {
-    off: { label: 'Off', master: 0, voices: 0, events: 0, crowd: 0, spatial: false },
-    courtyard: { label: 'Courtyard', master: 0.075, voices: 2, events: 0.28, crowd: 0, spatial: true },
-    ground: { label: 'Live Ground', master: 0.095, voices: 3, events: 0.52, crowd: 0.38, spatial: false },
-    immersive: { label: 'Immersive 360°', master: 0.105, voices: 4, events: 0.68, crowd: 0.30, spatial: true },
+    off: { label: 'Off', desc: 'Direct clean playback', master: 0, events: 0, crowd: 0, clapping: 0, spatial: false },
+    crowd: { label: 'Festival Crowd', desc: 'Live ground energy & cheers', master: 0.22, events: 0.35, crowd: 0.85, clapping: 0, spatial: false },
+    clapping: { label: 'Beat Clapping', desc: 'Rhythmic ground handclaps', master: 0.24, events: 0.35, crowd: 0, clapping: 0.85, spatial: false },
+    immersive: { label: 'Circle 360°', desc: 'Surround crowd & rhythm', master: 0.28, events: 0.45, crowd: 0.72, clapping: 0.72, spatial: true },
+  };
+
+  const ENVIRONMENTS = {
+    outdoor: {
+      label: 'Outdoor Ground',
+      icon: '🏟️',
+      desc: 'Open-air stadium slapback echo',
+      delay: 0.165,
+      feedback: 0.24,
+      cutoff: 2400,
+      wet: 0.36,
+      dry: 0.88,
+    },
+    indoor: {
+      label: 'Indoor Hall',
+      icon: '🏛️',
+      desc: 'Palace walls & mandap reverb',
+      delay: 0.042,
+      feedback: 0.40,
+      cutoff: 3600,
+      wet: 0.46,
+      dry: 0.82,
+    },
   };
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -22,26 +46,46 @@
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return null; }
   })();
 
+  const initialMode = (() => {
+    if (stored?.mode && MODES[stored.mode]) return stored.mode;
+    if (stored?.mode === 'ground') return 'crowd';
+    return 'off';
+  })();
+
+  const initialEnvironment = (() => {
+    if (stored?.environment && ENVIRONMENTS[stored.environment]) return stored.environment;
+    return 'outdoor';
+  })();
+
   const state = {
     context: null,
     master: null,
+    bus: null,
+    dryGain: null,
+    wetGain: null,
+    delayNode: null,
+    delayFeedback: null,
+    delayFilter: null,
     highpass: null,
     lowpass: null,
     compressor: null,
-    mode: MODES[stored?.mode] ? stored.mode : 'off',
+    mode: initialMode,
+    environment: initialEnvironment,
     level: clamp(Number(stored?.level ?? 0.45), 0.05, 1),
-    voices: [],
     stickBuffers: [],
     clapBuffers: [],
     eventTimer: 0,
     orbitTimer: 0,
     idleTimer: 0,
     previewTimer: 0,
-    crowdBuffer: null,
-    crowdPromise: null,
     crowdSource: null,
     crowdGain: null,
     crowdFilter: null,
+    crowdPanner: null,
+    clappingSource: null,
+    clappingGain: null,
+    clappingFilter: null,
+    clappingPanner: null,
     panelOpen: false,
     previewActive: false,
     playbackActive: false,
@@ -52,7 +96,13 @@
   };
 
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, level: state.level })); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mode: state.mode,
+        environment: state.environment,
+        level: state.level,
+      }));
+    } catch { /* storage unavailable */ }
   }
 
   function constrainedConnection() {
@@ -68,7 +118,7 @@
   function runtimeProfile() {
     const base = MODES[state.mode];
     if (!base || state.mode === 'off' || !constrainedConnection()) return base;
-    return { ...base, voices: Math.min(base.voices, 2), events: base.events * 0.62, crowd: 0 };
+    return { ...base, events: base.events * 0.5, crowd: Math.min(base.crowd, 0.4), clapping: Math.min(base.clapping, 0.4) };
   }
 
   function injectStyles() {
@@ -83,37 +133,39 @@
       .atmosphere-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
       .atmosphere-backdrop{position:fixed;z-index:89;inset:0;border:0;padding:0;background:rgba(3,5,10,.26);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
       .atmosphere-backdrop[hidden],.atmosphere-panel[hidden]{display:none!important}
-      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(360px,calc(100vw - 28px));box-sizing:border-box;padding:16px;color:#f6ecd7;border:1px solid rgba(246,236,215,.14);border-radius:22px;background:rgba(12,14,25,.965);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(360px,calc(100vw - 28px));box-sizing:border-box;padding:16px 18px 18px;color:#f6ecd7;border:1px solid rgba(246,236,215,.14);border-radius:22px;background:rgba(12,14,25,.965);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
       .atmosphere-panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
       .atmosphere-heading{display:flex;align-items:center;gap:9px;min-width:0}
-      .atmosphere-panel h2{margin:0;font:600 18px/1.15 var(--sans,system-ui);letter-spacing:-.01em}
+      .atmosphere-panel h2{margin:0;font:600 17px/1.15 var(--sans,system-ui);letter-spacing:-.01em}
       .atmosphere-test,.atmosphere-close{display:inline-grid;place-items:center;border:1px solid rgba(246,236,215,.12);color:inherit;background:rgba(246,236,215,.05);cursor:pointer}
       .atmosphere-test{width:30px;height:30px;border-radius:999px}
       .atmosphere-test[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 52%,rgba(246,236,215,.14));background:color-mix(in srgb,var(--accent) 13%,rgba(246,236,215,.04))}
       .atmosphere-test svg{width:14px;height:14px;fill:currentColor}
-      .atmosphere-close{width:34px;height:34px;border-radius:999px;font:300 22px/1 var(--sans,system-ui)}
-      .atmosphere-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:15px}
-      .atmosphere-mode{min-height:42px;padding:10px 11px;border:1px solid rgba(246,236,215,.11);border-radius:13px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);transition:background 160ms ease,border-color 160ms ease,transform 160ms ease}
-      .atmosphere-mode:hover{background:rgba(246,236,215,.075)}
-      .atmosphere-mode:active{transform:scale(.985)}
-      .atmosphere-mode[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 13%,rgba(246,236,215,.04))}
-      .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;margin-left:5px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .atmosphere-level{margin-top:20px}
-      .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+      .atmosphere-close{width:32px;height:32px;border-radius:999px;font:300 20px/1 var(--sans,system-ui)}
+      .atmosphere-section-label{margin:14px 0 7px;font:600 10.5px/1.2 var(--sans,system-ui);letter-spacing:.06em;text-transform:uppercase;color:rgba(246,236,215,.55)}
+      .atmosphere-modes,.atmosphere-environments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+      .atmosphere-mode,.atmosphere-env{min-height:38px;padding:8px 10px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
+      .atmosphere-mode:hover,.atmosphere-env:hover{background:rgba(246,236,215,.08)}
+      .atmosphere-mode:active,.atmosphere-env:active{transform:scale(.985)}
+      .atmosphere-mode[aria-pressed="true"],.atmosphere-env[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
+      .atmosphere-env:disabled,.atmosphere-mode:disabled{opacity:.32;cursor:default;pointer-events:none}
+      .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .atmosphere-level{margin-top:16px}
+      .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
       .atmosphere-level label{font:600 12px/1 var(--sans,system-ui)}
       .atmosphere-level output{opacity:.9;transition:opacity 140ms ease;color:rgba(246,236,215,.68);font:600 11px/1 var(--sans,system-ui)}
-      .atmosphere-level input{--fill:${Math.round(state.level * 100)}%;appearance:none;-webkit-appearance:none;width:100%;height:24px;margin:0;background:transparent;cursor:pointer}
+      .atmosphere-level input{--fill:${Math.round(state.level * 100)}%;appearance:none;-webkit-appearance:none;width:100%;height:22px;margin:0;background:transparent;cursor:pointer}
       .atmosphere-level input::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--accent) 0 var(--fill),rgba(246,236,215,.14) var(--fill) 100%)}
-      .atmosphere-level input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
+      .atmosphere-level input::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;margin-top:-5.5px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
       .atmosphere-level input::-moz-range-track{height:6px;border-radius:999px;background:rgba(246,236,215,.14)}
       .atmosphere-level input::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
       .atmosphere-level input::-moz-range-thumb{width:16px;height:16px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
-      .atmosphere-level input:disabled{opacity:.35;cursor:default}
+      .atmosphere-level input:disabled{opacity:.32;cursor:default}
       .atmosphere-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
       .atmosphere-panel :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       @media(max-width:700px){.atmosphere-backdrop{background:rgba(3,5,10,.42)}.atmosphere-panel{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));left:max(10px,env(safe-area-inset-left));width:auto;border-radius:24px;padding:16px}}
-      @media(max-width:390px){.atmosphere-panel{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom))}.atmosphere-modes{grid-template-columns:1fr 1fr}}
-      @media(prefers-reduced-motion:reduce){.atmosphere-button::after,.atmosphere-mode,.atmosphere-level output{transition:none}}
+      @media(max-width:390px){.atmosphere-panel{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom))}.atmosphere-modes,.atmosphere-environments{grid-template-columns:1fr 1fr}}
+      @media(prefers-reduced-motion:reduce){.atmosphere-button::after,.atmosphere-mode,.atmosphere-env,.atmosphere-level output{transition:none}}
     `;
     document.head.append(style);
   }
@@ -169,7 +221,10 @@
         </div>
         <button class="atmosphere-close" type="button" aria-label="Close Garba Atmosphere">×</button>
       </div>
+      <div class="atmosphere-section-label">Soundscape</div>
       <div class="atmosphere-modes"></div>
+      <div class="atmosphere-section-label">Acoustic Space</div>
+      <div class="atmosphere-environments"></div>
       <div class="atmosphere-level">
         <div class="atmosphere-level-row"><label for="atmosphereLevel">Intensity</label><output for="atmosphereLevel">${Math.round(state.level * 100)}%</output></div>
         <input id="atmosphereLevel" type="range" min="5" max="100" step="5" value="${Math.round(state.level * 100)}" />
@@ -186,8 +241,21 @@
       mode.dataset.mode = id;
       const headphone = id === 'immersive' ? '<svg class="atmosphere-headphone-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"></path><path d="M4 14h3v6H5.5A1.5 1.5 0 0 1 4 18.5V14ZM20 14h-3v6h1.5a1.5 1.5 0 0 0 1.5-1.5V14Z"></path></svg>' : '';
       mode.innerHTML = `${profile.label}${headphone}`;
+      mode.title = profile.desc;
       mode.addEventListener('click', () => setMode(id, { userGesture: true }));
       modes.append(mode);
+    }
+
+    const envs = panel.querySelector('.atmosphere-environments');
+    for (const [id, env] of Object.entries(ENVIRONMENTS)) {
+      const envBtn = document.createElement('button');
+      envBtn.type = 'button';
+      envBtn.className = 'atmosphere-env';
+      envBtn.dataset.env = id;
+      envBtn.innerHTML = `<span>${env.icon}</span> ${env.label}`;
+      envBtn.title = env.desc;
+      envBtn.addEventListener('click', () => applyEnvironment(id));
+      envs.append(envBtn);
     }
 
     const close = panel.querySelector('.atmosphere-close');
@@ -270,12 +338,18 @@
   }
 
   function syncUi() {
-    const profile = MODES[state.mode];
+    const profile = MODES[state.mode] || MODES.off;
     if (!state.button) return;
     state.button.setAttribute('aria-pressed', String(state.mode !== 'off'));
     state.button.setAttribute('aria-label', `Garba Atmosphere: ${profile.label}`);
     state.button.title = `Garba Atmosphere: ${profile.label}`;
-    state.panel?.querySelectorAll('.atmosphere-mode').forEach((control) => control.setAttribute('aria-pressed', String(control.dataset.mode === state.mode)));
+    state.panel?.querySelectorAll('.atmosphere-mode').forEach((control) => {
+      control.setAttribute('aria-pressed', String(control.dataset.mode === state.mode));
+    });
+    state.panel?.querySelectorAll('.atmosphere-env').forEach((control) => {
+      control.setAttribute('aria-pressed', String(control.dataset.env === state.environment));
+      control.disabled = state.mode === 'off';
+    });
     if (state.slider) state.slider.disabled = state.mode === 'off';
     if (state.test) {
       state.test.disabled = state.mode === 'off';
@@ -292,7 +366,16 @@
   }
 
   function dispatchChange(reason) {
-    window.dispatchEvent(new CustomEvent('garba:atmosphere-change', { detail: { reason, mode: state.mode, level: state.level, audible: state.playbackActive || state.previewActive, constrained: constrainedConnection() } }));
+    window.dispatchEvent(new CustomEvent('garba:atmosphere-change', {
+      detail: {
+        reason,
+        mode: state.mode,
+        environment: state.environment,
+        level: state.level,
+        audible: state.playbackActive || state.previewActive,
+        constrained: constrainedConnection(),
+      },
+    }));
   }
 
   function createStickBuffer(variation = 0) {
@@ -325,6 +408,32 @@
     return buffer;
   }
 
+  function applyEnvironment(envKey, { immediate = false } = {}) {
+    const env = ENVIRONMENTS[envKey] || ENVIRONMENTS.outdoor;
+    state.environment = envKey in ENVIRONMENTS ? envKey : 'outdoor';
+    persist();
+    if (!state.context || !state.delayNode) {
+      syncUi();
+      return;
+    }
+    const now = state.context.currentTime;
+    if (immediate) {
+      state.delayNode.delayTime.value = env.delay;
+      state.delayFeedback.gain.value = env.feedback;
+      state.delayFilter.frequency.value = env.cutoff;
+      state.wetGain.gain.value = env.wet;
+      state.dryGain.gain.value = env.dry;
+    } else {
+      state.delayNode.delayTime.setTargetAtTime(env.delay, now, 0.08);
+      state.delayFeedback.gain.setTargetAtTime(env.feedback, now, 0.08);
+      state.delayFilter.frequency.setTargetAtTime(env.cutoff, now, 0.08);
+      state.wetGain.gain.setTargetAtTime(env.wet, now, 0.08);
+      state.dryGain.gain.setTargetAtTime(env.dry, now, 0.08);
+    }
+    syncUi();
+    dispatchChange('environment');
+  }
+
   async function ensureContext() {
     if (!AudioContextCtor) { setStatus('Atmosphere audio is not supported on this browser.'); return false; }
     if (!state.context) {
@@ -333,13 +442,35 @@
       }
       state.master = state.context.createGain();
       state.master.gain.value = 0;
+
+      // Acoustic bus & reflections network
+      state.bus = state.context.createGain();
+      state.dryGain = state.context.createGain();
+      state.wetGain = state.context.createGain();
+      state.delayNode = state.context.createDelay(1.0);
+      state.delayFeedback = state.context.createGain();
+      state.delayFilter = state.context.createBiquadFilter();
+      state.delayFilter.type = 'lowpass';
+
+      // Dry path: bus -> dryGain -> master
+      state.bus.connect(state.dryGain).connect(state.master);
+
+      // Wet reflections path: bus -> delayNode -> delayFilter -> wetGain -> master
+      // Loopback: delayFilter -> delayFeedback -> delayNode
+      state.bus.connect(state.delayNode);
+      state.delayNode.connect(state.delayFilter);
+      state.delayFilter.connect(state.delayFeedback).connect(state.delayNode);
+      state.delayFilter.connect(state.wetGain).connect(state.master);
+
+      applyEnvironment(state.environment, { immediate: true });
+
       state.highpass = state.context.createBiquadFilter();
       state.highpass.type = 'highpass';
-      state.highpass.frequency.value = 105;
+      state.highpass.frequency.value = 95;
       state.highpass.Q.value = 0.28;
       state.lowpass = state.context.createBiquadFilter();
       state.lowpass.type = 'lowpass';
-      state.lowpass.frequency.value = 7800;
+      state.lowpass.frequency.value = 8200;
       state.lowpass.Q.value = 0.22;
       state.compressor = state.context.createDynamicsCompressor();
       state.compressor.threshold.value = -20;
@@ -357,20 +488,6 @@
     return state.context.state === 'running';
   }
 
-  function createNoiseBuffer(seconds = 4, seedOffset = 0) {
-    const rate = state.context.sampleRate;
-    const buffer = state.context.createBuffer(1, Math.ceil(rate * seconds), rate);
-    const data = buffer.getChannelData(0);
-    let brown = 0;
-    for (let index = 0; index < data.length; index += 1) {
-      const white = Math.random() * 2 - 1;
-      brown = (brown + 0.018 * white) / 1.018;
-      const t = index / rate;
-      data[index] = clamp(brown * 2.2 * (0.72 + 0.28 * Math.sin((t + seedOffset) * Math.PI * 0.18)), -1, 1);
-    }
-    return buffer;
-  }
-
   function createPanner(angle, distance = 1.8, hrtf = true) {
     const panner = state.context.createPanner();
     panner.panningModel = hrtf ? 'HRTF' : 'equalpower';
@@ -384,76 +501,120 @@
     return panner;
   }
 
-  function createBedVoice(index, count, spatial) {
-    const source = state.context.createBufferSource();
-    source.buffer = createNoiseBuffer(4.2 + index * 0.39, index * 0.6);
-    source.loop = true;
-    const filter = state.context.createBiquadFilter();
-    filter.type = index % 2 ? 'bandpass' : 'lowpass';
-    filter.frequency.value = index % 2 ? 620 + index * 95 : 980 + index * 75;
-    filter.Q.value = index % 2 ? 0.52 : 0.28;
-    const gain = state.context.createGain();
-    gain.gain.value = 0.060 + index * 0.008;
-    const angle = (index / Math.max(1, count)) * Math.PI * 2 + 0.45;
-    const panner = createPanner(angle, spatial ? 2.0 : 2.7, spatial);
-    source.connect(filter).connect(gain).connect(panner).connect(state.master);
-    source.start(0, Math.random() * source.buffer.duration);
-    return { source, filter, gain, panner, angle };
+  const audioCache = new Map();
+
+  async function fetchAndDecode(url) {
+    if (audioCache.has(url)) return audioCache.get(url);
+    try {
+      const response = await fetch(url, { cache: 'force-cache' });
+      if (!response.ok) return null;
+      const arrayBuffer = await response.arrayBuffer();
+      const decoded = await state.context.decodeAudioData(arrayBuffer);
+      audioCache.set(url, decoded);
+      return decoded;
+    } catch {
+      return null;
+    }
   }
 
-  async function loadCrowdBuffer() {
-    if (state.crowdBuffer) return state.crowdBuffer;
-    if (state.crowdPromise) return state.crowdPromise;
-    if (constrainedConnection() || !navigator.onLine) return null;
-    state.crowdPromise = (async () => {
-      try {
-        const manifestResponse = await fetch(SOURCE_MANIFEST, { cache: 'force-cache' });
-        if (!manifestResponse.ok) return null;
-        const manifest = await manifestResponse.json();
-        const sourceMeta = manifest.sources?.find((entry) => entry.enabled && entry.role === 'crowd-bed');
-        if (!sourceMeta?.audioUrl || sourceMeta.license !== 'public-domain' || sourceMeta.containsMusic !== false) return null;
-        const response = await fetch(sourceMeta.audioUrl, { mode: 'cors', cache: 'force-cache' });
-        if (!response.ok) return null;
-        const bytes = await response.arrayBuffer();
-        state.crowdBuffer = await state.context.decodeAudioData(bytes.slice(0));
-        return state.crowdBuffer;
-      } catch { return null; } finally { state.crowdPromise = null; }
-    })();
-    return state.crowdPromise;
+  async function loadAtmosphereBuffer(role) {
+    let localUrl = null;
+    let remoteUrl = null;
+    if (role === 'ground-crowd') {
+      localUrl = 'assets/audio/festival-crowd.ogg';
+      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Festival_concert_people_crowd.ogg';
+    } else if (role === 'ground-clapping') {
+      localUrl = 'assets/audio/rhythmic-clapping.ogg';
+      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Palmas_sevillanas_%28flamenco_clapping%29%2C_160_BPM.ogg';
+    } else if (role === 'accent-applause') {
+      localUrl = 'assets/audio/ground-applause.ogg';
+      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Applause.ogg';
+    }
+
+    let buffer = await fetchAndDecode(localUrl);
+    if (!buffer && remoteUrl && navigator.onLine) {
+      buffer = await fetchAndDecode(remoteUrl);
+    }
+    return buffer;
   }
 
-  function stopCrowd() {
+  function stopBeds() {
     try { state.crowdSource?.stop(); } catch { /* already stopped */ }
-    for (const node of [state.crowdSource, state.crowdFilter, state.crowdGain]) try { node?.disconnect(); } catch { /* no-op */ }
+    for (const node of [state.crowdSource, state.crowdFilter, state.crowdGain, state.crowdPanner]) try { node?.disconnect(); } catch { /* no-op */ }
     state.crowdSource = null;
     state.crowdGain = null;
     state.crowdFilter = null;
+    state.crowdPanner = null;
+
+    try { state.clappingSource?.stop(); } catch { /* already stopped */ }
+    for (const node of [state.clappingSource, state.clappingFilter, state.clappingGain, state.clappingPanner]) try { node?.disconnect(); } catch { /* no-op */ }
+    state.clappingSource = null;
+    state.clappingGain = null;
+    state.clappingFilter = null;
+    state.clappingPanner = null;
   }
 
-  async function startCrowd(profile, generation) {
-    stopCrowd();
-    if (!profile?.crowd || constrainedConnection()) return;
-    const buffer = await loadCrowdBuffer();
-    if (!buffer || generation !== state.generation || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
-    const source = state.context.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    const filter = state.context.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 5400;
-    filter.Q.value = 0.2;
-    const gain = state.context.createGain();
-    gain.gain.value = profile.crowd * 0.34;
-    source.connect(filter).connect(gain).connect(state.master);
-    source.start(0, Math.random() * Math.max(0.1, buffer.duration - 1));
-    state.crowdSource = source;
-    state.crowdFilter = filter;
-    state.crowdGain = gain;
-  }
+  async function startAtmosphereBeds(profile, generation) {
+    stopBeds();
+    if (!profile || state.mode === 'off' || constrainedConnection()) return;
 
-  function disconnectVoice(voice) {
-    try { voice.source.stop(); } catch { /* already stopped */ }
-    for (const node of [voice.source, voice.filter, voice.gain, voice.panner]) try { node.disconnect(); } catch { /* no-op */ }
+    // 1. Festival Crowd Bed
+    if (profile.crowd > 0) {
+      const buffer = await loadAtmosphereBuffer('ground-crowd');
+      if (buffer && generation === state.generation && state.mode !== 'off' && (state.playbackActive || state.previewActive)) {
+        const source = state.context.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        const filter = state.context.createBiquadFilter();
+        filter.type = 'peaking';
+        filter.frequency.value = 2600;
+        filter.Q.value = 0.55;
+        const gain = state.context.createGain();
+        gain.gain.value = profile.crowd * 0.44;
+
+        if (profile.spatial) {
+          const panner = createPanner(0.3, 2.0, true);
+          source.connect(filter).connect(gain).connect(panner).connect(state.bus);
+          state.crowdPanner = panner;
+        } else {
+          source.connect(filter).connect(gain).connect(state.bus);
+        }
+
+        source.start(0, Math.random() * Math.max(0.1, buffer.duration - 1));
+        state.crowdSource = source;
+        state.crowdFilter = filter;
+        state.crowdGain = gain;
+      }
+    }
+
+    // 2. Rhythmic Beat Clapping Bed
+    if (profile.clapping > 0) {
+      const clapBuffer = await loadAtmosphereBuffer('ground-clapping');
+      if (clapBuffer && generation === state.generation && state.mode !== 'off' && (state.playbackActive || state.previewActive)) {
+        const source = state.context.createBufferSource();
+        source.buffer = clapBuffer;
+        source.loop = true;
+        const filter = state.context.createBiquadFilter();
+        filter.type = 'peaking';
+        filter.frequency.value = 1900;
+        filter.Q.value = 0.65;
+        const gain = state.context.createGain();
+        gain.gain.value = profile.clapping * 0.46;
+
+        if (profile.spatial) {
+          const panner = createPanner(0.3 + Math.PI, 1.6, true);
+          source.connect(filter).connect(gain).connect(panner).connect(state.bus);
+          state.clappingPanner = panner;
+        } else {
+          source.connect(filter).connect(gain).connect(state.bus);
+        }
+
+        source.start(0, Math.random() * Math.max(0.1, clapBuffer.duration - 1));
+        state.clappingSource = source;
+        state.clappingFilter = filter;
+        state.clappingGain = gain;
+      }
+    }
   }
 
   function clearScene() {
@@ -461,8 +622,7 @@
     clearInterval(state.orbitTimer);
     state.eventTimer = 0;
     state.orbitTimer = 0;
-    state.voices.splice(0).forEach(disconnectVoice);
-    stopCrowd();
+    stopBeds();
     state.sceneReady = false;
   }
 
@@ -470,32 +630,54 @@
     return createPanner(Math.random() * Math.PI * 2, 1.35 + Math.random() * 1.8, true);
   }
 
-  function playTransient(kind) {
+  async function playTransient(kind) {
     if (!state.context || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
+    if (kind === 'applause') {
+      const buffer = await loadAtmosphereBuffer('accent-applause');
+      if (!buffer || (!state.playbackActive && !state.previewActive)) return;
+      const source = state.context.createBufferSource();
+      source.buffer = buffer;
+      const gain = state.context.createGain();
+      gain.gain.value = 0.28 + Math.random() * 0.08;
+      const panner = eventPanner();
+      source.connect(gain).connect(panner).connect(state.bus);
+      const startOffset = Math.random() * Math.max(0, buffer.duration - 4);
+      source.start(0, startOffset, 3.5);
+      source.addEventListener('ended', () => {
+        try { source.disconnect(); gain.disconnect(); panner.disconnect(); } catch {}
+      }, { once: true });
+      return;
+    }
+
+    // Dandiya stick strike transient
     const source = state.context.createBufferSource();
-    source.buffer = kind === 'stick' ? state.stickBuffers[Math.floor(Math.random() * state.stickBuffers.length)] : state.clapBuffers[Math.floor(Math.random() * state.clapBuffers.length)];
+    source.buffer = kind === 'stick'
+      ? state.stickBuffers[Math.floor(Math.random() * state.stickBuffers.length)]
+      : state.clapBuffers[Math.floor(Math.random() * state.clapBuffers.length)];
     const filter = state.context.createBiquadFilter();
-    filter.type = kind === 'stick' ? 'lowpass' : 'bandpass';
-    filter.frequency.value = kind === 'stick' ? 3900 + Math.random() * 700 : 1450 + Math.random() * 450;
-    if (kind === 'clap') filter.Q.value = 0.55;
+    filter.type = 'lowpass';
+    filter.frequency.value = 3900 + Math.random() * 700;
     const gain = state.context.createGain();
-    gain.gain.value = kind === 'stick' ? 0.18 + Math.random() * 0.06 : 0.14 + Math.random() * 0.05;
+    gain.gain.value = 0.28 + Math.random() * 0.08;
     const panner = eventPanner();
-    source.connect(filter).connect(gain).connect(panner).connect(state.master);
+    source.connect(filter).connect(gain).connect(panner).connect(state.bus);
     source.start();
-    source.addEventListener('ended', () => { for (const node of [source, filter, gain, panner]) try { node.disconnect(); } catch { /* no-op */ } }, { once: true });
+    source.addEventListener('ended', () => {
+      for (const node of [source, filter, gain, panner]) try { node.disconnect(); } catch { /* no-op */ }
+    }, { once: true });
   }
 
   function scheduleEvent(profile, generation) {
     clearTimeout(state.eventTimer);
     if (!profile?.events || generation !== state.generation || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
-    const base = state.mode === 'immersive' ? 1450 : state.mode === 'ground' ? 1950 : 3100;
-    const spread = state.mode === 'immersive' ? 2400 : state.mode === 'ground' ? 3000 : 4200;
+    const base = state.mode === 'immersive' ? 3800 : 5000;
+    const spread = state.mode === 'immersive' ? 4800 : 6500;
     const delay = base + Math.random() * spread / Math.max(0.18, profile.events);
     state.eventTimer = setTimeout(() => {
       if (generation !== state.generation || (!state.playbackActive && !state.previewActive)) return;
-      playTransient(Math.random() < 0.58 ? 'stick' : 'clap');
-      if ((state.mode === 'immersive' || state.mode === 'ground') && Math.random() < 0.20) setTimeout(() => { if (generation === state.generation && (state.playbackActive || state.previewActive)) playTransient('stick'); }, 120 + Math.random() * 120);
+      // In crowd or immersive mode, occasional celebratory cheer burst (35% chance) or dandiya stick tap
+      const kind = (state.mode === 'crowd' || state.mode === 'immersive') && Math.random() < 0.35 ? 'applause' : 'stick';
+      playTransient(kind);
       scheduleEvent(profile, generation);
     }, delay);
   }
@@ -506,13 +688,17 @@
     state.orbitTimer = setInterval(() => {
       if (generation !== state.generation || state.mode !== 'immersive' || !state.context || !state.sceneReady) return;
       const now = state.context.currentTime;
-      state.voices.forEach((voice, index) => {
-        voice.angle += (index % 2 ? -1 : 1) * (0.10 + Math.random() * 0.09);
-        const distance = 2.0 + index * 0.08;
-        voice.panner.positionX.setTargetAtTime(Math.sin(voice.angle) * distance, now, 3.2);
-        voice.panner.positionZ.setTargetAtTime(-Math.cos(voice.angle) * distance, now, 3.2);
-      });
-    }, 5200);
+      const angle = (Date.now() / 8000) % (Math.PI * 2);
+      if (state.crowdPanner) {
+        state.crowdPanner.positionX.setTargetAtTime(Math.sin(angle) * 2.0, now, 0.3);
+        state.crowdPanner.positionZ.setTargetAtTime(-Math.cos(angle) * 2.0, now, 0.3);
+      }
+      if (state.clappingPanner) {
+        const clapAngle = angle + Math.PI;
+        state.clappingPanner.positionX.setTargetAtTime(Math.sin(clapAngle) * 1.5, now, 0.3);
+        state.clappingPanner.positionZ.setTargetAtTime(-Math.cos(clapAngle) * 1.5, now, 0.3);
+      }
+    }, 280);
   }
 
   function targetMasterGain() {
@@ -540,12 +726,11 @@
     }
     clearScene();
     const profile = runtimeProfile();
-    for (let index = 0; index < profile.voices; index += 1) state.voices.push(createBedVoice(index, profile.voices, profile.spatial));
     state.sceneReady = true;
     scheduleEvent(profile, generation);
     startOrbit(generation);
     applyMasterLevel();
-    void startCrowd(profile, generation);
+    void startAtmosphereBeds(profile, generation);
   }
 
   function scheduleIdleSuspend() {
@@ -578,7 +763,7 @@
     state.previewActive = true;
     syncUi();
     await buildScene({ smooth: true });
-    setStatus(`Testing ${MODES[state.mode].label}.`);
+    setStatus(`Testing ${MODES[state.mode].label} in ${ENVIRONMENTS[state.environment].label}.`);
     state.previewTimer = setTimeout(() => stopPreview({ announce: false }), 6000);
     dispatchChange('preview-started');
   }
@@ -621,7 +806,7 @@
           applyMasterLevel();
           scheduleEvent(runtimeProfile(), state.generation);
           startOrbit(state.generation);
-          if (runtimeProfile().crowd && !state.crowdSource) void startCrowd(runtimeProfile(), state.generation);
+          if (runtimeProfile().crowd && !state.crowdSource) void startAtmosphereBeds(runtimeProfile(), state.generation);
         }
       });
     } else if (!state.previewActive) {
@@ -633,7 +818,7 @@
   function trustedPlaybackUnlock(event) {
     if (!event.isTrusted || state.mode === 'off') return;
     const target = event.target instanceof Element ? event.target : null;
-    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,#atmosphereLevel,.atmosphere-test')) return;
+    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,.atmosphere-env,#atmosphereLevel,.atmosphere-test')) return;
     ensureContext().then((ready) => { if (ready) requestAnimationFrame(syncPlaybackState); });
   }
 
@@ -679,6 +864,8 @@
   window.GARBA_ATMOSPHERE = {
     get mode() { return state.mode; },
     set mode(value) { void setMode(value); },
+    get environment() { return state.environment; },
+    set environment(value) { applyEnvironment(value); },
     get level() { return state.level; },
     set level(value) {
       state.level = clamp(Number(value) || 0.45, 0.05, 1);
@@ -696,6 +883,7 @@
     get constrained() { return constrainedConnection(); },
     get spatialModel() { return state.mode === 'immersive' ? 'HRTF' : 'stereo-plus-spatial-events'; },
     setMode,
+    setEnvironment: applyEnvironment,
     preview() { return previewCurrentMode(); },
     stopPreview,
     stop() { return setMode('off'); },

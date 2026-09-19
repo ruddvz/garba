@@ -115,10 +115,10 @@ Do not leave a claim active after you stop working.
 These design decisions are locked and must not be reversed or compromised by any agent:
 1. **Authentic Background Artwork Only**: The 2K royal palace courtyard artwork (`assets/backgrounds/library/`) is the canonical player background. Never replace or obstruct it with synthetic canvas dancer animations, procedural visualizers, or overlay scripts.
 2. **Clean Topbar**: Do not add live presence counters, user count badges ("118 in the circle"), or extraneous badges to the topbar. The topbar contains only the brand link and utility controls.
-3. **Explore Pure Chevron**: The Explore control beneath the genres must remain a pure, borderless, textless downward chevron (`<svg class="browse-chevron">`). Never wrap it in a pill button, border, background, or text label.
+3. **Explore Pure Text & Chevron**: The Explore control beneath the genres displays the "Explore" text stacked cleanly above the downward chevron (`<svg class="browse-chevron">`), without a pill button, border, or background box.
 4. **Genre Strip Alignment**: The genre strip (`#genreStrip`) must remain tucked directly against the bottom perimeter of the round floor mandala (`margin: -24px auto clamp(2px, 0.5vh, 6px) !important;`).
-5. **Sponsor & 24/7 LIVE Stacking**: The Sponsor container must sit cleanly 50px above `24/7 LIVE` on the bottom-left (`bottom: calc(max(22px, var(--safe-bottom)) + 50px)`). They must never share the same coordinates or collide.
-6. **Bilateral YouTube Badge**: The "Streaming via YouTube" badge is fixed at bottom-right with 40px height and glassmorphism, symmetrically balancing `24/7 LIVE`.
+5. **Sponsor Removed**: The inactive sponsor button is completely removed from the UI.
+6. **Bilateral YouTube Attribution**: The "Streaming via YouTube" attribution is fixed at bottom-right as clean text and icon without a border, pill, or container box, symmetrically balancing `24/7 LIVE`.
 7. **Packaging Contract**: Never import standalone scripts into `app.js` unless they are explicitly deployed in `.github/workflows/pages.yml` and validated in `validate-runtime-packaging.mjs`.
 
 Full protocol and conflict examples: [`docs/operations/agent-coordination.md`](docs/operations/agent-coordination.md).

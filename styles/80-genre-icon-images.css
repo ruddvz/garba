@@ -77,25 +77,27 @@
   filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--accent) 18%, transparent));
 }
 
-/* Explore Downward Chevron: borderless, transparent, non-button pure chevron floating below genres */
+/* Explore: text on top of borderless downward chevron floating below genres */
 #browseActions,
 html body .app #browseActions {
-  min-height: 32px !important;
+  min-height: 42px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin: -6px auto 0 !important;
+  margin: -4px auto 0 !important;
 }
 
 #browseActions .browse-button,
 html body .app #browseActions .browse-button,
 html body .app #browseActions #browseButton {
   display: inline-flex !important;
+  flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 40px !important;
-  height: 32px !important;
-  min-height: 32px !important;
+  gap: 2px !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 38px !important;
   padding: 0 !important;
   margin: 0 auto !important;
   border: none !important;
@@ -105,9 +107,9 @@ html body .app #browseActions #browseButton {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  color: rgba(246, 236, 215, 0.65) !important;
+  color: rgba(246, 236, 215, 0.78) !important;
   cursor: pointer !important;
-  transition: color 200ms ease, transform 200ms ease, opacity 200ms ease !important;
+  transition: color 200ms ease, transform 200ms ease !important;
   text-decoration: none !important;
 }
 
@@ -118,39 +120,43 @@ html body .app #browseActions #browseButton:hover {
   background-color: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: var(--ivory) !important;
-  transform: translateY(3px) !important;
+  color: var(--ivory, #fff) !important;
+  transform: translateY(2px) !important;
 }
 
 #browseActions .browse-button svg,
 html body .app #browseActions .browse-button svg,
 html body .app #browseActions .browse-button .browse-chevron {
   display: block !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 15px !important;
+  height: 9px !important;
   fill: none !important;
   stroke: currentColor !important;
-  stroke-width: 2.2 !important;
+  stroke-width: 2.6 !important;
   stroke-linecap: round !important;
   stroke-linejoin: round !important;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7)) !important;
-  transition: transform 260ms var(--ease), stroke 200ms ease !important;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85)) !important;
+  transition: transform 200ms ease, stroke 200ms ease !important;
 }
 
 #browseActions .browse-button span,
 html body .app #browseActions .browse-button span,
-html body .app #browseActions #browseButton span,
-#browseActions .browse-button .sr-only,
-html body .app #browseActions .browse-button .sr-only {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
+html body .app #browseActions #browseButton span {
+  position: static !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  clip: auto !important;
   white-space: nowrap !important;
-  border: 0 !important;
+  font-family: inherit !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: currentColor !important;
+  line-height: 1.2 !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85) !important;
 }
 
 /*
@@ -663,42 +669,7 @@ input[type="range"]::-moz-range-thumb {
   right: 30%;
   bottom: 7px;
 }
-
-html body .app #browseActions {
-  margin-top: 2px !important;
-}
-
-html body .app #browseActions #browseButton {
-  position: relative;
-  min-height: 36px;
-  padding: 5px 30px 8px !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--ivory);
-  letter-spacing: .01em;
-}
-
-html body .app #browseActions #browseButton::before,
-html body .app #browseActions #browseButton::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 22px;
-  height: 1px;
-  background: linear-gradient(to right, transparent, color-mix(in srgb, var(--accent) 66%, var(--ivory)));
-  opacity: .72;
-}
-
-html body .app #browseActions #browseButton::before {
-  left: 0;
-}
-
-html body .app #browseActions #browseButton::after {
-  right: 0;
-  transform: scaleX(-1);
-}
+/* Explore action alignment handled cleanly by primary rules */
 
 @media (pointer: coarse) {
   input[type="range"]::-webkit-slider-thumb {
@@ -1131,10 +1102,10 @@ html body .app .player-shell {
   height: 100vh !important;
   height: 100dvh !important;
   box-sizing: border-box !important;
-  padding-top: clamp(80px, 9vh, 120px) !important;
+  padding-top: clamp(86px, 10vh, 126px) !important;
   padding-bottom: max(22px, var(--safe-bottom)) !important;
   padding-inline: 22px !important;
-  grid-template-rows: minmax(0, 1fr) auto auto auto minmax(12px, 1.2fr) auto auto !important;
+  grid-template-rows: minmax(18px, 1.35fr) auto auto auto minmax(12px, 1.05fr) auto auto !important;
   align-content: stretch !important;
   justify-items: center !important;
   row-gap: 0 !important;
@@ -1147,12 +1118,12 @@ html body .app .track-block {
 
 html body .app .controls {
   grid-row: 3 !important;
-  margin: clamp(10px, 1.8vh, 20px) auto 0 !important;
+  margin: clamp(12px, 1.8vh, 18px) auto 0 !important;
 }
 
 html body .app .progress-wrap {
   grid-row: 4 !important;
-  margin: clamp(8px, 1.4vh, 16px) auto 0 !important;
+  margin: clamp(10px, 1.5vh, 15px) auto 0 !important;
 }
 
 html body .app #genreStrip {
@@ -1398,27 +1369,28 @@ html body .app #browseActions #browseButton {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 1px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  padding: 0 18px !important;
-  border-radius: 999px !important;
-  border: 1px solid rgba(246, 236, 215, 0.16) !important;
-  background: rgba(14, 18, 30, 0.72) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38) !important;
-  color: rgba(246, 236, 215, 0.92) !important;
+  gap: 2px !important;
+  height: auto !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  color: rgba(246, 236, 215, 0.78) !important;
   font-family: inherit !important;
   font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
   text-decoration: none !important;
   cursor: pointer !important;
   user-select: none !important;
   -webkit-user-select: none !important;
-  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, color 200ms ease, transform 180ms ease !important;
+  transition: color 200ms ease, transform 180ms ease !important;
 }
 
 html body .app #browseActions #browseButton::before,
@@ -1428,32 +1400,42 @@ html body .app #browseActions #browseButton::after {
 }
 
 html body .app #browseActions #browseButton:hover {
-  background: rgba(20, 26, 44, 0.88) !important;
-  border-color: rgba(246, 236, 215, 0.28) !important;
-  color: var(--ivory) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  color: var(--ivory, #fff) !important;
+  transform: translateY(2px) !important;
+  box-shadow: none !important;
 }
 
 html body .app #browseActions #browseButton span,
 html body .app #browseActions #browseButton .browse-label {
-  line-height: 1 !important;
+  position: static !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1.2 !important;
   border: 0 !important;
   border-bottom: 0 !important;
   padding: 0 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: currentColor !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85) !important;
 }
 
 html body .app #browseActions #browseButton .browse-chevron {
-  width: 12px !important;
-  height: 8px !important;
+  width: 14px !important;
+  height: 9px !important;
   margin: 0 !important;
   fill: none !important;
-  stroke: color-mix(in srgb, var(--accent) 76%, var(--ivory)) !important;
+  stroke: currentColor !important;
   stroke-width: 2.2 !important;
   stroke-linecap: round !important;
   stroke-linejoin: round !important;
-  opacity: .92 !important;
-  transform: translateY(0) !important;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85)) !important;
   transition: transform 160ms ease, opacity 160ms ease !important;
 }
 
@@ -1531,17 +1513,21 @@ html body .app #browseActions #browseButton .browse-chevron {
   }
 
   html body .app #browseActions {
-    height: 36px !important;
-    min-height: 36px !important;
-    max-height: 36px !important;
+    height: auto !important;
+    min-height: 38px !important;
+    max-height: none !important;
     margin: 0 auto !important;
   }
 
   html body .app #browseActions #browseButton {
-    height: 36px !important;
-    min-height: 36px !important;
-    padding: 0 14px !important;
-    font-size: 10px !important;
+    height: auto !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+    font-size: 10.5px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 }
 
@@ -1727,9 +1713,97 @@ html body .app .controls {
   gap: clamp(14px, 3vw, 26px) !important;
 }
 
-/* Ensure progress wrap aligns with controls center */
+/* Progress Bar & Seek Track - High Contrast, Visible & Luminous */
 html body .app .progress-wrap {
-  margin-inline: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  width: min(380px, 86vw) !important;
+  max-width: 380px !important;
+  margin: clamp(12px, 1.8vh, 18px) auto 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+html body .app .progress-wrap .time {
+  flex: 0 0 38px !important;
+  color: #FFFFFF !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.9) !important;
+}
+
+html body .app .progress-wrap .time:first-child {
+  text-align: right !important;
+}
+
+html body .app .progress-wrap .time:last-child {
+  text-align: left !important;
+}
+
+html body .app .progress-wrap .progress {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 20px !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+}
+
+html body .app .progress-wrap .progress::-webkit-slider-runnable-track {
+  height: 6px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(
+    to right,
+    var(--accent, #e5a93c) 0 var(--progress, 0%),
+    rgba(246, 236, 215, 0.38) var(--progress, 0%) 100%
+  ) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.85) !important;
+  border: 1px solid rgba(246, 236, 215, 0.25) !important;
+}
+
+html body .app .progress-wrap .progress::-webkit-slider-thumb {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-top: -6px !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid var(--accent, #e5a93c) !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #e5a93c) 75%, transparent), 0 2px 6px rgba(0, 0, 0, 0.85) !important;
+  transition: transform 140ms ease !important;
+}
+
+html body .app .progress-wrap .progress:hover::-webkit-slider-thumb {
+  transform: scale(1.2) !important;
+}
+
+html body .app .progress-wrap .progress::-moz-range-track {
+  height: 6px !important;
+  border-radius: 999px !important;
+  background: rgba(246, 236, 215, 0.38) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.85) !important;
+  border: 1px solid rgba(246, 236, 215, 0.25) !important;
+}
+
+html body .app .progress-wrap .progress::-moz-range-progress {
+  height: 6px !important;
+  border-radius: 999px !important;
+  background: var(--accent, #e5a93c) !important;
+}
+
+html body .app .progress-wrap .progress::-moz-range-thumb {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  background: #FFFFFF !important;
+  border: 2px solid var(--accent, #e5a93c) !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent, #e5a93c) 75%, transparent), 0 2px 6px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* Production Hardening: Disable accidental text selection, image drag, and touch callouts */
@@ -1745,134 +1819,69 @@ html body .app input[type="text"] {
   user-select: text !important;
 }
 
-/* Sponsor Slot & Presentation Badge - Stacked neatly above 24/7 LIVE */
-html body .sponsor-container {
-  position: fixed !important;
-  left: max(22px, var(--safe-left)) !important;
-  bottom: calc(max(22px, var(--safe-bottom)) + 50px) !important;
-  z-index: 12 !important;
-  pointer-events: auto !important;
-  transition: opacity 240ms ease, transform 240ms ease !important;
-}
-
-html body .sponsor-badge-link {
-  position: static !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  height: 36px !important;
-  padding: 0 14px 0 12px !important;
-  border-radius: 999px !important;
-  background: rgba(14, 18, 30, 0.72) !important;
-  border: 1px solid rgba(246, 236, 215, 0.16) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: rgba(246, 236, 215, 0.90) !important;
-  text-decoration: none !important;
-  font-family: inherit !important;
-  font-size: 11.5px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.03em !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38) !important;
-  transition: transform 180ms ease, background-color 200ms ease, border-color 200ms ease, color 200ms ease !important;
-}
-
-html body .sponsor-badge-link:hover {
-  background: rgba(20, 26, 44, 0.88) !important;
-  border-color: rgba(246, 236, 215, 0.28) !important;
-  color: var(--ivory) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
-}
-
-html body .sponsor-badge-link .sponsor-icon svg {
-  width: 15px !important;
-  height: 15px !important;
-  display: block !important;
-  color: var(--accent, #e5a93c) !important;
-}
-
-/* Hide sponsor button when mobile drawer is opened */
-.app:not([data-sheet-snap="closed"]) .sponsor-container,
-.app[data-sheet-snap="collapsed"] .sponsor-container,
-.app[data-sheet-snap="medium"] .sponsor-container,
-.app[data-sheet-snap="full"] .sponsor-container {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: translateY(12px) !important;
-}
-
-@media (max-width: 600px) {
-  html body .sponsor-container {
-    bottom: calc(max(14px, var(--safe-bottom)) + 44px) !important;
-    left: max(14px, var(--safe-left)) !important;
-  }
-  html body .sponsor-badge-link {
-    height: 32px !important;
-    padding: 0 10px 0 8px !important;
-    font-size: 10.5px !important;
-  }
-}
-
-/* Premium Streaming via YouTube Attribution Badge */
+/* Streaming via YouTube - Clean floating attribution text + logo, no button pill */
 html body .app .streaming-via {
   position: fixed !important;
   right: max(22px, var(--safe-right)) !important;
   bottom: max(22px, var(--safe-bottom)) !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  height: 40px !important;
-  padding: 0 16px 0 14px !important;
-  border-radius: 999px !important;
-  background: rgba(14, 18, 30, 0.72) !important;
-  border: 1px solid rgba(246, 236, 215, 0.16) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  gap: 7px !important;
+  height: auto !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
   z-index: 12 !important;
   pointer-events: auto !important;
   cursor: default !important;
-  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 180ms ease, opacity 240ms ease !important;
+  transition: opacity 240ms ease, transform 180ms ease !important;
 }
 
 html body .app .streaming-via:hover {
-  background: rgba(20, 26, 44, 0.88) !important;
-  border-color: rgba(246, 236, 215, 0.28) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 html body .app .streaming-via .streaming-label {
   font-family: inherit !important;
   font-size: 11px !important;
   font-weight: 500 !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
-  color: rgba(246, 236, 215, 0.70) !important;
+  color: rgba(246, 236, 215, 0.72) !important;
   white-space: nowrap !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
 }
 
 html body .app .streaming-via .yt-brand-lockup {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 5px !important;
 }
 
 html body .app .streaming-via .youtube-badge-logo {
-  width: 22px !important;
-  height: 15px !important;
+  width: 20px !important;
+  height: 14px !important;
   display: block !important;
-  filter: drop-shadow(0 1px 4px rgba(255, 0, 0, 0.4)) !important;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.8)) !important;
 }
 
 html body .app .streaming-via .yt-brand-text {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  font-size: 13px !important;
+  font-size: 12.5px !important;
   font-weight: 700 !important;
-  letter-spacing: -0.03em !important;
+  letter-spacing: -0.02em !important;
   color: #FFFFFF !important;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8) !important;
 }
 
 .app:not([data-sheet-snap="closed"]) .streaming-via,
@@ -1888,19 +1897,19 @@ html body .app .streaming-via .yt-brand-text {
   html body .app .streaming-via {
     bottom: max(14px, var(--safe-bottom)) !important;
     right: max(14px, var(--safe-right)) !important;
-    height: 34px !important;
-    padding: 0 12px 0 10px !important;
-    gap: 6px !important;
+    height: auto !important;
+    padding: 0 !important;
+    gap: 5px !important;
   }
   html body .app .streaming-via .streaming-label {
     font-size: 10px !important;
   }
   html body .app .streaming-via .youtube-badge-logo {
-    width: 18px !important;
+    width: 17px !important;
     height: 12px !important;
   }
   html body .app .streaming-via .yt-brand-text {
-    font-size: 11.5px !important;
+    font-size: 11px !important;
   }
 }
 

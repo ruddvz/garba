@@ -2033,27 +2033,43 @@ function playDandiyaTap() {
     }
     const t = dandiyaAudioCtx.currentTime;
 
-    const osc = dandiyaAudioCtx.createOscillator();
-    const gain = dandiyaAudioCtx.createGain();
-    const filter = dandiyaAudioCtx.createBiquadFilter();
+    // Body resonance of the Dandiya wooden stick
+    const bodyOsc = dandiyaAudioCtx.createOscillator();
+    const bodyGain = dandiyaAudioCtx.createGain();
+    const bodyFilter = dandiyaAudioCtx.createBiquadFilter();
 
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(750, t);
-    filter.Q.setValueAtTime(3.2, t);
+    bodyFilter.type = 'bandpass';
+    bodyFilter.frequency.setValueAtTime(820, t);
+    bodyFilter.Q.setValueAtTime(1.8, t);
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(840, t);
-    osc.frequency.exponentialRampToValueAtTime(380, t + 0.038);
+    bodyOsc.type = 'triangle';
+    bodyOsc.frequency.setValueAtTime(880, t);
+    bodyOsc.frequency.exponentialRampToValueAtTime(520, t + 0.045);
 
-    gain.gain.setValueAtTime(0.18, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+    bodyGain.gain.setValueAtTime(0.68, t);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(dandiyaAudioCtx.destination);
+    bodyOsc.connect(bodyFilter);
+    bodyFilter.connect(bodyGain);
+    bodyGain.connect(dandiyaAudioCtx.destination);
 
-    osc.start(t);
-    osc.stop(t + 0.05);
+    // High snap transient of stick contact
+    const snapOsc = dandiyaAudioCtx.createOscillator();
+    const snapGain = dandiyaAudioCtx.createGain();
+    snapOsc.type = 'sine';
+    snapOsc.frequency.setValueAtTime(1750, t);
+    snapOsc.frequency.exponentialRampToValueAtTime(980, t + 0.025);
+
+    snapGain.gain.setValueAtTime(0.32, t);
+    snapGain.gain.exponentialRampToValueAtTime(0.001, t + 0.028);
+
+    snapOsc.connect(snapGain);
+    snapGain.connect(dandiyaAudioCtx.destination);
+
+    bodyOsc.start(t);
+    bodyOsc.stop(t + 0.07);
+    snapOsc.start(t);
+    snapOsc.stop(t + 0.035);
   } catch {
     // Non-blocking tactile feedback
   }
