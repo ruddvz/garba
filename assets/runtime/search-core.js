@@ -3,6 +3,9 @@ const LETTER_RE = /\p{L}/u;
 const MARK_RE = /\p{M}/u;
 const LATIN_RE = /\p{Script=Latin}/u;
 const LATIN_TOKEN_RE = /^[\p{Script=Latin}\p{M}]+$/u;
+const ASCII_RE = /^[\x00-\x7F]*$/;
+const ASCII_NON_ALNUM_RE = /[^a-z0-9]+/g;
+const ASCII_LATIN_TOKEN_RE = /^[a-z]+$/;
 
 function flattenStrings(value, target = []) {
   if (Array.isArray(value)) {
@@ -22,7 +25,12 @@ function flattenStrings(value, target = []) {
  * while Unicode letters, numbers and combining marks are preserved.
  */
 export function normalizeSearchText(value = '') {
-  const source = String(value ?? '').normalize('NFKC').toLowerCase();
+  const raw = String(value ?? '');
+  if (ASCII_RE.test(raw)) {
+    return raw.toLowerCase().replace(ASCII_NON_ALNUM_RE, ' ').trim();
+  }
+
+  const source = raw.normalize('NFKC').toLowerCase();
   let result = '';
   let pendingSpace = false;
 
@@ -44,7 +52,10 @@ export function normalizeSearchText(value = '') {
  * Non-Latin marks, including Gujarati vowel/sign marks, are retained.
  */
 export function foldLatinDiacritics(value = '') {
-  const source = String(value ?? '').normalize('NFD');
+  const raw = String(value ?? '');
+  if (ASCII_RE.test(raw)) return raw;
+
+  const source = raw.normalize('NFD');
   let result = '';
   let previousBaseWasLatin = false;
 
@@ -62,8 +73,11 @@ export function foldLatinDiacritics(value = '') {
 }
 
 export function normalizeSearchVariants(value = '') {
-  const direct = normalizeSearchText(value);
-  const latinFolded = normalizeSearchText(foldLatinDiacritics(value));
+  const raw = String(value ?? '');
+  const direct = normalizeSearchText(raw);
+  if (ASCII_RE.test(raw)) return direct ? [direct] : [];
+
+  const latinFolded = normalizeSearchText(foldLatinDiacritics(raw));
   return [...new Set([direct, latinFolded].filter(Boolean))];
 }
 
@@ -132,13 +146,14 @@ function relation(values, query, weights, labels) {
 }
 
 function isLatinTypoToken(token) {
+  if (ASCII_RE.test(token)) {
+    return token.length >= 4 && token.length <= 24 && ASCII_LATIN_TOKEN_RE.test(token);
+  }
   const length = [...token].length;
   return length >= 4 && length <= 24 && LATIN_TOKEN_RE.test(token);
 }
 
-function withinOneEdit(left, right) {
-  const a = [...left];
-  const b = [...right];
+function withinOneEditUnits(a, b) {
   if (Math.abs(a.length - b.length) > 1) return false;
 
   if (a.length === b.length) {
@@ -168,16 +183,32 @@ function withinOneEdit(left, right) {
   return true;
 }
 
-function termCoverage(document, query) {
-  const queryTokens = query.split(/\s+/u).filter(Boolean);
-  if (!queryTokens.length) return null;
+function withinOneEdit(left, right) {
+  if (ASCII_RE.test(left) && ASCII_RE.test(right)) return withinOneEditUnits(left, right);
+  return withinOneEditUnits([...left], [...right]);
+}
+
+function prepareQueryVariants(query) {
+  return normalizeSearchVariants(query).map((value) => ({
+    value,
+    tokens: value.split(/\s+/u).filter(Boolean).map((token) => ({
+      value: token,
+      typoEligible: isLatinTypoToken(token),
+    })),
+  }));
+}
+
+function termCoverage(document, preparedQuery) {
+  if (!preparedQuery.tokens.length) return null;
   let usedTypo = false;
 
-  for (const queryToken of queryTokens) {
-    if (document.all.some((candidate) => candidate.includes(queryToken))) continue;
+  for (const queryToken of preparedQuery.tokens) {
+    if (document.all.some((candidate) => candidate.includes(queryToken.value))) continue;
 
-    const typoMatch = isLatinTypoToken(queryToken)
-      && document.tokens.some((candidate) => isLatinTypoToken(candidate) && withinOneEdit(queryToken, candidate));
+    const typoMatch = queryToken.typoEligible
+      && document.tokens.some((candidate) => (
+        isLatinTypoToken(candidate) && withinOneEdit(queryToken.value, candidate)
+      ));
 
     if (!typoMatch) return null;
     usedTypo = true;
@@ -195,8 +226,8 @@ const FIELD_RULES = [
   ['release', { exact: 22, prefix: 18, contains: 14 }, 'release'],
 ];
 
-function scoreQueryVariant(document, query) {
-  const coverage = termCoverage(document, query);
+function scoreQueryVariant(document, preparedQuery) {
+  const coverage = termCoverage(document, preparedQuery);
   if (!coverage) return null;
 
   let best = {
@@ -205,7 +236,7 @@ function scoreQueryVariant(document, query) {
   };
 
   for (const [field, weights, label] of FIELD_RULES) {
-    const candidate = relation(document[field], query, weights, {
+    const candidate = relation(document[field], preparedQuery.value, weights, {
       exact: `${label}-exact`,
       prefix: `${label}-prefix`,
       contains: `${label}-contains`,
@@ -216,18 +247,10 @@ function scoreQueryVariant(document, query) {
   return best;
 }
 
-/**
- * Score relevance only. Availability/readiness is intentionally excluded and must be
- * handled by the owning browse/playback contract, never inferred from URLs/providers.
- */
-export function scoreSearchRecord(record, query) {
-  const document = createSearchDocument(record);
-  const variants = normalizeSearchVariants(query);
-  if (!variants.length) return null;
-
+function scorePreparedDocument(document, preparedVariants) {
   let best = null;
-  for (const variant of variants) {
-    const candidate = scoreQueryVariant(document, variant);
+  for (const preparedQuery of preparedVariants) {
+    const candidate = scoreQueryVariant(document, preparedQuery);
     if (candidate && (!best || candidate.score > best.score)) best = candidate;
   }
 
@@ -238,6 +261,16 @@ export function scoreSearchRecord(record, query) {
     normalizedTitle: document.title[0] ?? '',
     normalizedArtist: document.artist[0] ?? '',
   };
+}
+
+/**
+ * Score relevance only. Availability/readiness is intentionally excluded and must be
+ * handled by the owning browse/playback contract, never inferred from URLs/providers.
+ */
+export function scoreSearchRecord(record, query) {
+  const preparedVariants = prepareQueryVariants(query);
+  if (!preparedVariants.length) return null;
+  return scorePreparedDocument(createSearchDocument(record), preparedVariants);
 }
 
 function compareText(left, right) {
@@ -257,12 +290,13 @@ export function compareSearchResults(left, right) {
  */
 export function rankSearchRecords(records, query) {
   if (!Array.isArray(records)) return [];
+  const preparedVariants = prepareQueryVariants(query);
+  if (!preparedVariants.length) return [];
 
-  return records
-    .map((record) => {
-      const result = scoreSearchRecord(record, query);
-      return result ? { record, ...result } : null;
-    })
-    .filter(Boolean)
-    .sort(compareSearchResults);
+  const ranked = [];
+  for (const record of records) {
+    const result = scorePreparedDocument(createSearchDocument(record), preparedVariants);
+    if (result) ranked.push({ record, ...result });
+  }
+  return ranked.sort(compareSearchResults);
 }
