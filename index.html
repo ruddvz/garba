@@ -88,9 +88,6 @@
           <h1 class="song-title" id="songTitle">Ochhav Theme</h1>
           <div class="artist-row">
             <p class="artist" id="songArtist">Aditya Gadhvi</p>
-            <button class="heart-button mobile-heart" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
-            </button>
           </div>
         </section>
 
@@ -103,12 +100,14 @@
             <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
           </button>
           <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
+          <button class="transport heart-button favourite-control" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false" title="Save to My Garba (F)" aria-keyshortcuts="f">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
+          </button>
         </section>
 
         <div class="live-station-container" id="liveStationContainer">
           <button class="live-station-button" id="liveStationButton" type="button" aria-label="Tune into 24/7 Live Garba Radio" aria-pressed="false" title="24/7 Live Garba Radio">
             <span class="live-beacon" aria-hidden="true"><span class="beacon-ping"></span><span class="beacon-core"></span></span>
-            <svg class="live-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.9 4.9a10 10 0 0 1 14.1 0M7.8 7.8a6 6 0 0 1 8.4 0M12 11a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"></path></svg>
             <span class="live-badge-text">24/7 LIVE</span>
           </button>
         </div>

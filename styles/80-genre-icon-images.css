@@ -527,12 +527,11 @@ input[type="range"]::-moz-range-thumb {
   transition: color 160ms ease, filter 160ms ease, background-color 160ms ease, border-color 160ms ease, top 180ms ease;
 }
 
-.app #genreStrip .genre-button:nth-child(1),
-.app #genreStrip .genre-button:nth-child(6) { top: -5px; }
-.app #genreStrip .genre-button:nth-child(2),
-.app #genreStrip .genre-button:nth-child(5) { top: -2px; }
-.app #genreStrip .genre-button:nth-child(3),
-.app #genreStrip .genre-button:nth-child(4) { top: 2px; }
+.app #genreStrip .genre-button,
+.app #genreStrip #nonstopButton {
+  top: 0;
+  transform: none;
+}
 
 .app #genreStrip .genre-button[data-genre].active,
 .app #genreStrip #nonstopButton.active,
@@ -1132,14 +1131,8 @@ html body .app .sheet-genres .genre-button[aria-current="true"]::after {
   opacity: .96 !important;
 }
 
-/* Preserve the shallow courtyard arc while keeping every touch target the same
-   size. The marker rides with the item instead of changing layout geometry. */
-html body .app #genreStrip .genre-button:nth-child(1),
-html body .app #genreStrip .genre-button:nth-child(6) { top: -4px !important; }
-html body .app #genreStrip .genre-button:nth-child(2),
-html body .app #genreStrip .genre-button:nth-child(5) { top: -1px !important; }
-html body .app #genreStrip .genre-button:nth-child(3),
-html body .app #genreStrip .genre-button:nth-child(4) { top: 3px !important; }
+/* Flat horizontal baseline — no arc stepping. Every genre button sits at the same level. */
+html body .app #genreStrip .genre-button:nth-child(n) { top: 0 !important; transform: none !important; }
 
 /* Explore is a quiet directional affordance rather than another button chrome.
    It sits slightly lower than the genre rail and the chevron points into Explore. */
@@ -1305,4 +1298,26 @@ html body .app #browseActions #browseButton .browse-chevron {
     transition: none !important;
   }
 }
+
+/* Align all genre buttons cleanly on a flat, even baseline without jumping or wave offsets */
+html body .app #genreStrip .genre-button,
+html body .app #genreStrip #nonstopButton {
+  top: 0 !important;
+  transform: none !important;
+  align-self: center !important;
+  vertical-align: middle !important;
+}
+
+/* Remove uppercase genre eyebrow text above the song title */
+html body .app .track-block .genre-eyebrow {
+  display: none !important;
+}
+
+/* Maintain YouTube media runtime without intrusive popup dock obstructing courtyard artwork */
+html body #youtubeStage.youtube-dock {
+  opacity: 0.002 !important;
+  pointer-events: none !important;
+  z-index: -10 !important;
+}
+
 

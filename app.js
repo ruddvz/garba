@@ -964,15 +964,10 @@ function cancelPendingSearchFocus() {
 }
 
 function placeFavourite() {
-  if (!els.mobileFavourite) return;
-  const utilities = document.querySelector('.utilities');
-  const artistRow = document.querySelector('.artist-row');
-  if (mobileQuery.matches && utilities) {
-    if (els.mobileFavourite.parentElement !== utilities) utilities.insertBefore(els.mobileFavourite, els.queueButton || null);
-  } else if (artistRow && els.mobileFavourite.parentElement !== artistRow) {
-    artistRow.append(els.mobileFavourite);
-  }
+  // #mobileFavourite lives permanently inside .controls (after #nextButton).
+  // Nothing moves it — it is always visible there on both mobile and desktop.
 }
+
 
 function syncSheetChrome() {
   const snap = state.sheetSnap || 'closed';
@@ -1119,13 +1114,9 @@ async function toggleLiveStation() {
     restoreElapsed: liveState.seekSeconds,
     preservePlayback: true,
     liveMode: true,
+    animate: false,
   });
 
-  if (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(liveState.song)) {
-    window.GARBA_YOUTUBE_PLAYER.open(liveState.song, { autoplay: true, resume: true });
-  } else if (window.GARBA_YOUTUBE_PLAYER?.seekTo && liveState.seekSeconds > 0) {
-    window.GARBA_YOUTUBE_PLAYER.seekTo(liveState.seekSeconds);
-  }
 }
 
 function changeSong(direction) {
