@@ -1,9 +1,6 @@
 const $ = (id) => document.getElementById(id);
 
 const app = $('app');
-const mainPlayer = $('mainPlayer');
-const topbar = document.querySelector('.topbar');
-const installBanner = $('installBanner');
 const songTitle = $('songTitle');
 const songArtist = $('songArtist');
 const genreEyebrow = $('genreEyebrow');
@@ -19,7 +16,6 @@ const progress = $('progress');
 const durationTime = $('durationTime');
 const audio = $('audio');
 const toast = $('toast');
-const mobileQuery = matchMedia('(max-width: 700px)');
 
 const state = {
   songs: new Map(),
@@ -27,8 +23,6 @@ const state = {
   ready: false,
   providerOpen: false,
   providerFocusReturn: null,
-  sheetFocusReturn: null,
-  sheetModalActive: false,
 };
 
 function announce(message) {
@@ -235,44 +229,6 @@ function trapTab(event, root) {
   }
 }
 
-function setSheetBackgroundInert(inert) {
-  for (const element of [topbar, mainPlayer, installBanner]) {
-    if (!element) continue;
-    if (inert) element.setAttribute('inert', '');
-    else element.removeAttribute('inert');
-  }
-}
-
-function syncSheetAccessibility({ moveFocus = true } = {}) {
-  if (!songSheet) return;
-  const open = songSheet.getAttribute('aria-hidden') === 'false';
-  const modal = open && mobileQuery.matches && !state.providerOpen;
-  songSheet.setAttribute('aria-modal', String(modal));
-
-  if (modal === state.sheetModalActive) return;
-  state.sheetModalActive = modal;
-
-  if (modal) {
-    state.sheetFocusReturn = document.activeElement instanceof HTMLElement && !songSheet.contains(document.activeElement)
-      ? document.activeElement
-      : state.sheetFocusReturn;
-    setSheetBackgroundInert(true);
-    if (moveFocus) {
-      requestAnimationFrame(() => {
-        const preferred = songSheet.querySelector('.searching input, .sheet-handle, .song-copy, button:not([disabled])');
-        preferred?.focus?.({ preventScroll: true });
-      });
-    }
-  } else {
-    setSheetBackgroundInert(false);
-    if (!open && !state.providerOpen) {
-      const target = state.sheetFocusReturn?.isConnected ? state.sheetFocusReturn : null;
-      state.sheetFocusReturn = null;
-      if (moveFocus && target) requestAnimationFrame(() => target.focus?.({ preventScroll: true }));
-    }
-  }
-}
-
 function setupProviderAccessibility(overlay) {
   if (!overlay || overlay.dataset.uxPolished === 'true') return;
   overlay.dataset.uxPolished = 'true';
@@ -286,12 +242,10 @@ function setupProviderAccessibility(overlay) {
 
     if (open) {
       state.providerFocusReturn = document.activeElement instanceof HTMLElement ? document.activeElement : playButton;
-      setSheetBackgroundInert(false);
       app?.setAttribute('inert', '');
       requestAnimationFrame(() => overlay.querySelector('.provider-close')?.focus({ preventScroll: true }));
     } else {
       app?.removeAttribute('inert');
-      syncSheetAccessibility({ moveFocus: false });
       const target = state.providerFocusReturn?.isConnected ? state.providerFocusReturn : playButton;
       state.providerFocusReturn = null;
       requestAnimationFrame(() => target?.focus?.({ preventScroll: true }));
@@ -332,14 +286,7 @@ function setupObservers() {
     new MutationObserver(syncSheetSummary).observe(songList, { childList: true, subtree: false });
   }
   if (songSheet) {
-    new MutationObserver(() => {
-      syncSheetAccessibility();
-      syncSheetSummary();
-    }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden', 'class'] });
-
-    songSheet.addEventListener('keydown', (event) => {
-      if (state.sheetModalActive) trapTab(event, songSheet);
-    });
+    new MutationObserver(syncSheetSummary).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden', 'class'] });
   }
 
   const bodyObserver = new MutationObserver(() => {
@@ -403,14 +350,12 @@ function init() {
   searchInput?.setAttribute('placeholder', 'Search songs or artists');
   searchInput?.addEventListener('input', () => setTimeout(syncSheetSummary, 90));
   audio?.addEventListener('loadedmetadata', syncDurationTruth);
-  mobileQuery.addEventListener?.('change', () => syncSheetAccessibility({ moveFocus: false }));
 
   setupObservers();
   setupKeyboardPolish();
   syncNetworkStatus();
   syncSheetSummary();
   syncDocumentMetadata();
-  syncSheetAccessibility({ moveFocus: false });
   loadCatalogueContext();
 
   setTimeout(showCatalogueFailure, 9000);
