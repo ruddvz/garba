@@ -105,6 +105,7 @@ jobs:
       - name: Run focused validation
         run: |
           node scripts/lib/test-search-core.mjs
+          npm run catalogue
           node scripts/lib/validate-sheet-startup.mjs
           npm run check
 
