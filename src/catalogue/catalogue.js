@@ -96,6 +96,24 @@ const formatDuration = (seconds) => {
   if (!Number.isFinite(total) || total <= 0) return '';
   return `${Math.floor(total / 60)}:${String(Math.round(total % 60)).padStart(2, '0')}`;
 };
+const pluralize = (count, singular, plural = `${singular}s`) =>
+  `${Number(count || 0).toLocaleString()} ${Number(count) === 1 ? singular : plural}`;
+
+function cleanArtistCredits(credit = '') {
+  if (!credit) return '';
+  const parts = String(credit).split(/\s*,\s*|\s+&\s+|\s+and\s+/i);
+  const seen = new Set();
+  const cleaned = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    cleaned.push(trimmed);
+  }
+  return cleaned.join(', ');
+}
 const releaseYear = (release) => Number(release?.originalReleaseYear || String(release?.releaseDate || '').slice(0, 4)) || 0;
 const displayTitle = (entity) => String(entity?.displayTitle || entity?.title || '').trim();
 const aliasesFor = (entity) => Array.isArray(entity?.aliases) ? entity.aliases.filter(Boolean) : [];
@@ -261,8 +279,8 @@ function renderCollectionDetailIdentity(collection = state.active) {
   els.detailDescription.textContent = collection.description;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
   replaceDetailMeta([
-    `${collection.songs.length.toLocaleString()} songs`,
-    `${releaseCount.toLocaleString()} releases`,
+    pluralize(collection.songs.length, 'song'),
+    pluralize(releaseCount, 'release'),
   ]);
 }
 
@@ -458,7 +476,24 @@ function fixedCollection({ id, title, kicker, description, visual, test }) {
 
 function buildCollections() {
   const c = [];
-  const art = visualByGenre;
+  const art = {
+    ...visualByGenre,
+    bollywood: '../assets/backgrounds/library/01-bollywood-garba-courtyard.webp',
+    drumsA: '../assets/backgrounds/library/02-rhythmic-drums-courtyard-a.webp',
+    devotional: '../assets/backgrounds/library/03-devotional-garba-courtyard.webp',
+    colourfulA: '../assets/backgrounds/library/04-colourful-garba-courtyard-a.webp',
+    fusionNeon: '../assets/backgrounds/library/05-fusion-gujarati-neon.webp',
+    abstractNeon: '../assets/backgrounds/library/06-fusion-abstract-neon.webp',
+    dandiyaPurple: '../assets/backgrounds/library/07-dandiya-purple-courtyard.webp',
+    colourfulB: '../assets/backgrounds/library/08-colourful-garba-courtyard-b.webp',
+    warmStage: '../assets/backgrounds/library/09-warm-stage-courtyard.webp',
+    dandiyaSilhouette: '../assets/backgrounds/library/10-dandiya-silhouette-courtyard.webp',
+    masterDark: '../assets/backgrounds/library/11-master-dark-courtyard.webp',
+    drumsB: '../assets/backgrounds/library/12-rhythmic-drums-courtyard-b.webp',
+    marigold: '../assets/backgrounds/library/13-traditional-marigold-courtyard.webp',
+    folkCourtyard: '../assets/backgrounds/library/14-gujarati-folk-courtyard.webp',
+    canopy: '../assets/backgrounds/library/15-traditional-canopy-courtyard.webp',
+  };
   const essentialReleaseIds = new Set(state.curation?.featuredReleaseIds || []);
 
   if (essentialReleaseIds.size) {
@@ -467,17 +502,17 @@ function buildCollections() {
       title:'Essential releases',
       kicker:'Curated albums',
       description:'A small, intentional shelf of complete Garba releases with verified artwork, with complete release context kept together.',
-      visual:art.traditional,
+      visual:art.masterDark,
       test:(song)=>essentialReleaseIds.has(song.releaseId),
     }));
   }
 
   c.push(
-    fixedCollection({ id:'nonstop', title:'Nonstop Garba', kicker:'Continuous energy', description:'Long-form nonstop releases, continuous Garba albums and set-style catalogue entries.', visual:art.traditional, test:(song, release)=>includesTerm(song, release, ['non stop','nonstop']) }),
-    fixedCollection({ id:'live', title:'Live Garba', kicker:'On stage', description:'Live Garba performances and event recordings identified by verified live metadata or the Live Garba taxonomy.', visual:art.folk, test:(song, release)=>Boolean(release?.live?.isLive)||songHasTaxonomy(song,['live-garba']) }),
-    fixedCollection({ id:'current', title:'New generation', kicker:'2020s', description:'Recent Gujarati Garba and folk releases from 2020 onward.', visual:art.fusion, test:(song, release)=>releaseYear(release)>=2020 }),
-    fixedCollection({ id:'classics', title:'Garba classics', kicker:'Foundation', description:'Traditional Garba catalogue entries, focused on the core repertoire before modern remixes and crossover styles.', visual:art.traditional, test:(song)=>belongsToVisualGenre(song,'traditional') }),
-    fixedCollection({ id:'dandiya-raas', title:'Dandiya & Raas', kicker:'Raas', description:'Dandiya, Raas, Dodhiyu and related repertoire matched from the catalogue taxonomy.', visual:art.dandiya, test:(song)=>belongsToVisualGenre(song,'dandiya') }),
+    fixedCollection({ id:'nonstop', title:'Nonstop Garba', kicker:'Continuous energy', description:'Long-form nonstop releases, continuous Garba albums and set-style catalogue entries.', visual:art.canopy, test:(song, release)=>includesTerm(song, release, ['non stop','nonstop']) }),
+    fixedCollection({ id:'live', title:'Live Garba', kicker:'On stage', description:'Live Garba performances and event recordings identified by verified live metadata or the Live Garba taxonomy.', visual:art.warmStage, test:(song, release)=>Boolean(release?.live?.isLive)||songHasTaxonomy(song,['live-garba']) }),
+    fixedCollection({ id:'current', title:'New generation', kicker:'2020s', description:'Recent Gujarati Garba and folk releases from 2020 onward.', visual:art.fusionNeon, test:(song, release)=>releaseYear(release)>=2020 }),
+    fixedCollection({ id:'classics', title:'Garba classics', kicker:'Foundation', description:'Traditional Garba catalogue entries, focused on the core repertoire before modern remixes and crossover styles.', visual:art.marigold, test:(song)=>belongsToVisualGenre(song,'traditional') }),
+    fixedCollection({ id:'dandiya-raas', title:'Dandiya & Raas', kicker:'Raas', description:'Dandiya, Raas, Dodhiyu and related repertoire matched from the catalogue taxonomy.', visual:art.dandiyaPurple, test:(song)=>belongsToVisualGenre(song,'dandiya') }),
     fixedCollection({ id:'devotional', title:'Devotional Garba', kicker:'Bhakti', description:'Mataji, Shakti, Krishna and devotional Garba matched from primary and secondary catalogue taxonomy.', visual:art.devotional, test:(song)=>belongsToVisualGenre(song,'devotional') }),
   );
 
@@ -493,15 +528,15 @@ function buildCollections() {
   });
 
   const styleCollections = [
-    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna-garba'],[],art.devotional],
+    ['krishna-radha','Krishna & Radha','Raas & bhakti',['krishna-garba'],[],art.dandiyaPurple],
     ['mataji-shakti','Mataji & Shakti','Devi Garba',['mataji-devotional'],[],art.devotional],
-    ['tran-taali','Tran Taali','Three-clap tradition',['tran-taali'],[],art.traditional],
-    ['be-taali','Be Taali','Two-clap tradition',['be-taali'],[],art.traditional],
-    ['dakla','Dakla','Percussive folk',['dakla'],[],art.fusion],
-    ['timli','Timli','Regional folk dance',[],['timli'],art.folk],
-    ['folk-fusion','Folk fusion','New folk',['electronic-fusion'],['folk fusion','folk-fusion'],art.fusion],
-    ['filmi-pop','Filmi & pop Garba','Crossover',['bollywood-filmi'],['pop garba'],art.fusion],
-    ['sanedo-style','Sanedo','Call-and-response',['sanedo'],[],art.sanedo],
+    ['tran-taali','Tran Taali','Three-clap tradition',['tran-taali'],[],art.marigold],
+    ['be-taali','Be Taali','Two-clap tradition',['be-taali'],[],art.drumsB],
+    ['dakla','Dakla','Percussive folk',['dakla'],[],art.abstractNeon],
+    ['timli','Timli','Regional folk dance',[],['timli'],art.drumsA],
+    ['folk-fusion','Folk fusion','New folk',['electronic-fusion'],['folk fusion','folk-fusion'],art.fusionNeon],
+    ['filmi-pop','Filmi & pop Garba','Crossover',['bollywood-filmi'],['pop garba'],art.bollywood],
+    ['sanedo-style','Sanedo','Call-and-response',['sanedo'],[],art.colourfulB],
   ];
   styleCollections.forEach(([id,title,kicker,taxonomyIds,terms,visual]) => c.push(fixedCollection({
     id,
@@ -523,7 +558,7 @@ function buildCollections() {
     title:label,
     kicker:'By era',
     description:`Garba releases dated from ${from} through ${to}.`,
-    visual:[art.fusion,art.folk,art.dandiya,art.traditional][index],
+    visual:[art.fusionNeon,art.warmStage,art.drumsB,art.masterDark][index],
     test:(song,release)=>releaseYear(release)>=from&&releaseYear(release)<=to,
   })));
 
@@ -534,7 +569,7 @@ function buildCollections() {
       title:`${artist.name} Essentials`,
       kicker:'Artist',
       description:`Songs in PlayGarba credited to ${artist.name}, including catalogue aliases where available.`,
-      visual:[art.traditional,art.folk,art.dandiya,art.fusion,art.devotional][index % 5],
+      visual:[art.marigold,art.folkCourtyard,art.dandiyaPurple,art.fusionNeon,art.devotional,art.warmStage,art.drumsA][index % 7],
       test:(song)=>artistCreditMatches(song.artist, names),
     }));
   });
@@ -567,6 +602,24 @@ function collectionSection(title, description, collections, presentation = 'dest
   els.sections.append(section);
 }
 
+const genreIconMap = {
+  'genre-traditional': '../assets/genre-icons/traditional.webp',
+  'genre-dandiya': '../assets/genre-icons/dandiya.webp',
+  'genre-devotional': '../assets/genre-icons/devotional.webp',
+  'genre-folk': '../assets/genre-icons/folk-dhol.webp',
+  'genre-sanedo': '../assets/genre-icons/sanedo.webp',
+  'genre-fusion': '../assets/genre-icons/fusion.webp',
+  'krishna-radha': '../assets/genre-icons/dandiya.webp',
+  'mataji-shakti': '../assets/genre-icons/devotional.webp',
+  'tran-taali': '../assets/genre-icons/traditional.webp',
+  'be-taali': '../assets/genre-icons/traditional.webp',
+  'dakla': '../assets/genre-icons/fusion.webp',
+  'timli': '../assets/genre-icons/folk-dhol.webp',
+  'folk-fusion': '../assets/genre-icons/fusion.webp',
+  'filmi-pop': '../assets/genre-icons/fusion.webp',
+  'sanedo-style': '../assets/genre-icons/sanedo.webp',
+};
+
 function renderCollectionCard(collection, presentation = 'destination') {
   const card = els.cardTemplate.content.firstElementChild.cloneNode(true);
   const presentationKind = ['destination', 'taxonomy', 'artist'].includes(presentation) ? presentation : 'destination';
@@ -580,13 +633,18 @@ function renderCollectionCard(collection, presentation = 'destination') {
     image.classList.add('collection-image--monogram');
     image.setAttribute('aria-hidden', 'true');
     card.querySelector('small')?.remove();
+  } else if (presentationKind === 'taxonomy' && genreIconMap[collection.id]) {
+    image.style.backgroundImage = `url("${genreIconMap[collection.id]}")`;
+    image.classList.add('collection-image--genre-icon');
+    image.setAttribute('aria-hidden', 'true');
+    card.querySelector('small').textContent = collection.kicker;
   } else {
     image.style.backgroundImage = `url("${collection.visual}")`;
     card.querySelector('small').textContent = collection.kicker;
   }
   card.querySelector('strong').textContent = collection.title;
   const releaseCount = new Set(collection.songs.map((song)=>song.releaseId).filter(Boolean)).size;
-  card.querySelector('.collection-copy span').textContent = `${collection.songs.length.toLocaleString()} songs · ${releaseCount.toLocaleString()} releases`;
+  card.querySelector('.collection-copy span').textContent = `${pluralize(collection.songs.length, 'song')} · ${pluralize(releaseCount, 'release')}`;
   card.addEventListener('click', () => openCollection(collection.id,{trigger:card}));
   return card;
 }
@@ -657,7 +715,7 @@ function renderCollectionHome() {
     return true;
   });
   collectionSection('Traditions & styles', '', taxonomyList, 'taxonomy');
-  collectionSection('Artist essentials', '', state.collections.filter((c)=>c.id.startsWith('artist-')), 'artist');
+  collectionSection('Artist essentials', '', state.collections.filter((c)=>c.id.startsWith('artist-') && c.songs.length >= 3), 'artist');
   collectionSection('By era', '', state.collections.filter((c)=>c.id.startsWith('era-')), 'taxonomy');
 }
 
@@ -669,6 +727,18 @@ function makeCover(release, className = 'release-cover') {
   const wrap = document.createElement('span');
   wrap.className = className;
   const entry = artworkEntry(release?.id);
+  const palettes = [
+    'linear-gradient(135deg, #2a142e 0%, #15141e 100%)',
+    'linear-gradient(135deg, #142338 0%, #0d121d 100%)',
+    'linear-gradient(135deg, #2d1b14 0%, #161113 100%)',
+    'linear-gradient(135deg, #17281f 0%, #0f1614 100%)',
+    'linear-gradient(135deg, #28131d 0%, #170e16 100%)',
+    'linear-gradient(135deg, #1c1a35 0%, #11101d 100%)',
+  ];
+  const hash = String(release?.id || release?.title || '')
+    .split('')
+    .reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) | 0, 0);
+
   if (entry?.imageUrl && entry?.verified !== false) {
     const img = document.createElement('img');
     img.loading = 'lazy';
@@ -678,6 +748,7 @@ function makeCover(release, className = 'release-cover') {
     img.addEventListener('error', () => {
       img.remove();
       wrap.classList.add('fallback');
+      wrap.style.background = palettes[Math.abs(hash) % palettes.length];
       const fallback = document.createElement('span');
       fallback.textContent = initials(displayTitle(release));
       wrap.append(fallback);
@@ -685,6 +756,7 @@ function makeCover(release, className = 'release-cover') {
     wrap.append(img);
   } else {
     wrap.classList.add('fallback');
+    wrap.style.background = palettes[Math.abs(hash) % palettes.length];
     const fallback = document.createElement('span');
     fallback.textContent = initials(displayTitle(release));
     wrap.append(fallback);
@@ -694,7 +766,11 @@ function makeCover(release, className = 'release-cover') {
 
 function initials(value='') {
   const words = String(value).replace(/[^\p{L}\p{N} ]/gu,' ').trim().split(/\s+/).filter(Boolean);
-  return (words.slice(0,2).map((word)=>word[0]).join('') || 'PG').toUpperCase();
+  if (!words.length) return 'PG';
+  if (words.length === 1) {
+    return (words[0].length >= 2 ? words[0].slice(0, 2) : words[0]).toUpperCase();
+  }
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
 function releasesForSongs(songs) {
@@ -825,28 +901,27 @@ function renderSongs(songs, title='All songs', { limit = SONG_BATCH_SIZE } = {})
     } else {
       row.append(songArtwork(song));
     }
+    const displayArtist = cleanArtistCredits(song.artist);
     const copy = document.createElement('div');
     copy.className = 'song-copy';
     const titleEl = document.createElement('strong');
     titleEl.textContent = songTitle;
     const artist = document.createElement('span');
-    artist.textContent = [song.artist, formatDuration(song.durationSeconds)].filter(Boolean).join(' · ');
+    artist.textContent = [displayArtist, formatDuration(song.durationSeconds), readiness.executable ? null : 'Unplayable'].filter(Boolean).join(' · ');
     copy.append(titleEl,artist,makeSongContext(song,release));
     const releaseEl = document.createElement('span');
     releaseEl.className = 'song-release';
-    releaseEl.textContent = [displayTitle(release), readiness.executable ? null : 'Unavailable'].filter(Boolean).join(' · ');
+    releaseEl.textContent = displayTitle(release);
     const action = document.createElement(readiness.executable ? 'a' : 'span');
     action.className = `play-link${readiness.executable ? '' : ' unavailable'}`;
     if (readiness.executable) {
       action.textContent = 'Listen';
       action.href = `../?genre=${encodeURIComponent(song.genre || 'traditional')}&song=${encodeURIComponent(song.id)}`;
-      action.setAttribute('aria-label',`Open ${songTitle} by ${song.artist} in the PlayGarba player`);
+      action.setAttribute('aria-label',`Open ${songTitle} by ${displayArtist} in the PlayGarba player`);
     } else {
       action.textContent = 'Unavailable';
       action.setAttribute('aria-disabled','true');
-      action.setAttribute('aria-label',`${songTitle} by ${song.artist} is not currently available to play`);
-      action.style.opacity = '.32';
-      action.style.pointerEvents = 'none';
+      action.setAttribute('aria-label',`${songTitle} by ${displayArtist} is not currently available to play`);
     }
     row.append(copy,releaseEl,action);
     fragment.append(row);

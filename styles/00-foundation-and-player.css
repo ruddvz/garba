@@ -117,9 +117,11 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .icon-button:active, .transport:active, .heart-button:active { transform: scale(.94); }
 .has-badge { position: relative; }
 .utility-badge {
-  position: absolute; top: 2px; right: 1px; min-width: 15px; height: 15px; padding: 0 4px;
+  position: absolute; top: -2px; right: -2px; min-width: 16px; height: 16px; padding: 0 4px;
   border-radius: 999px; display: none; place-items: center;
-  background: var(--accent); color: #17131b; font-size: 9px; line-height: 1; font-weight: 700;
+  background: var(--accent); color: #17131b; font-size: 9.5px; line-height: 1; font-weight: 750;
+  box-shadow: 0 0 0 2px #0d0f18, 0 2px 6px rgba(0,0,0,.45);
+  pointer-events: none; z-index: 2;
 }
 .utility-badge.show { display: grid; }
 

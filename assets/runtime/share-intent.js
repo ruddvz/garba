@@ -114,11 +114,11 @@ async function executeShare({ title, text, url, navigatorObj = null } = {}) {
         url,
       });
       return { status: 'shared', url };
-    } catch (err) {
-      if (err && (err.name === 'AbortError' || String(err.message).toLowerCase().includes('abort'))) {
-        return { status: 'cancelled', url };
-      }
-      // Non-abort error: continue to clipboard fallback.
+    } catch {
+      // In Safari/iOS/WebKit, closing or cancelling the native share sheet produces AbortError
+      // or consumes the user gesture. Once nav.share was attempted, do not fall through to
+      // clipboard writeText as that causes a secondary NotAllowedError toast.
+      return { status: 'cancelled', url };
     }
   }
 

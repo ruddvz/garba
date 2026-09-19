@@ -62,6 +62,16 @@
       "attribution": "Bollywood Hungama",
       "verified": true,
       "objectPosition": "50% 28%"
+    },
+    "hemant-chauhan": {
+      "imageUrl": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Hemant%20Chauhan%20Gujrat%20(2).jpg",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Hemant_Chauhan_Gujrat_(2).jpg",
+      "sourceType": "wikimedia-commons",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "Suyash Dwivedi",
+      "verified": true,
+      "objectPosition": "50% 25%"
     }
   }
 }

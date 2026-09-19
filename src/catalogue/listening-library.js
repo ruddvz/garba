@@ -113,7 +113,11 @@ async function loadCatalogue() {
 
 function initials(value = '') {
   const words = String(value).replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean);
-  return (words.slice(0, 2).map((word) => word[0]).join('') || 'PG').toUpperCase();
+  if (!words.length) return 'PG';
+  if (words.length === 1) {
+    return (words[0].length >= 2 ? words[0].slice(0, 2) : words[0]).toUpperCase();
+  }
+  return (words[0][0] + words[1][0]).toUpperCase();
 }
 
 function coverFor(song, release, artwork) {

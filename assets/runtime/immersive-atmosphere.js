@@ -98,11 +98,10 @@
       .atmosphere-mode:active{transform:scale(.985)}
       .atmosphere-mode[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 13%,rgba(246,236,215,.04))}
       .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;margin-left:5px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .atmosphere-level{margin-top:16px}
-      .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+      .atmosphere-level{margin-top:20px}
+      .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
       .atmosphere-level label{font:600 12px/1 var(--sans,system-ui)}
-      .atmosphere-level output{opacity:0;transition:opacity 140ms ease;color:rgba(246,236,215,.68);font:600 11px/1 var(--sans,system-ui)}
-      .atmosphere-level.is-adjusting output{opacity:1}
+      .atmosphere-level output{opacity:.9;transition:opacity 140ms ease;color:rgba(246,236,215,.68);font:600 11px/1 var(--sans,system-ui)}
       .atmosphere-level input{--fill:${Math.round(state.level * 100)}%;appearance:none;-webkit-appearance:none;width:100%;height:24px;margin:0;background:transparent;cursor:pointer}
       .atmosphere-level input::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--accent) 0 var(--fill),rgba(246,236,215,.14) var(--fill) 100%)}
       .atmosphere-level input::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}

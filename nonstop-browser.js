@@ -613,7 +613,7 @@
       .nonstop-browser-close{display:grid;place-items:center;width:44px;height:44px;min-width:44px;border:1px solid rgba(246,236,215,.13);border-radius:50%;background:rgba(255,255,255,.04);color:inherit;font-size:25px;line-height:1;cursor:pointer}
       .nonstop-browser-search::placeholder{color:rgba(246,236,215,.42)}
       .nonstop-browser-search:focus{border-color:color-mix(in srgb,var(--accent) 68%,rgba(246,236,215,.25));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
-      .nonstop-browser-categories{display:flex;gap:8px;overflow-x:auto;padding:0 24px 12px;scrollbar-width:none;scroll-padding-inline:24px}
+      .nonstop-browser-categories{display:flex;gap:8px;overflow-x:auto;padding:0 24px 12px;scrollbar-width:none;scroll-padding-inline:24px;-webkit-mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 32px),transparent 100%);mask-image:linear-gradient(to right,#000 0%,#000 calc(100% - 32px),transparent 100%)}
       .nonstop-browser-categories::-webkit-scrollbar{display:none}
       .nonstop-category{flex:0 0 auto;min-height:38px;border:1px solid rgba(246,236,215,.12);border-radius:999px;background:rgba(255,255,255,.035);color:rgba(246,236,215,.72);padding:8px 12px;font:inherit;font-size:12px;cursor:pointer}
       .nonstop-category.active{background:var(--ivory);color:#101018;border-color:var(--ivory)}
