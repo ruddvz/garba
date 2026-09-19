@@ -21,12 +21,18 @@ body {
 .app {
   position: fixed !important;
   inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   width: 100vw !important;
-  height: 100vh !important;
-  height: 100svh !important;
+  width: 100% !important;
+  height: 100% !important;
+  height: -webkit-fill-available !important;
   height: 100dvh !important;
   min-width: 0 !important;
-  min-height: 0 !important;
+  min-height: 100% !important;
+  min-height: 100dvh !important;
   max-width: none !important;
   max-height: none !important;
   margin: 0 !important;
@@ -40,9 +46,9 @@ body {
    iOS/WebKit cannot give nested background layers a smaller independent fixed viewport. */
 .app > .world {
   position: absolute !important;
-  inset: -3px !important;
-  width: auto !important;
-  height: auto !important;
+  inset: -12px !important;
+  width: calc(100% + 24px) !important;
+  height: calc(100% + 24px) !important;
   min-width: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
@@ -52,9 +58,9 @@ body {
 
 .app > .world > .world-layer {
   position: absolute !important;
-  inset: -3px !important;
-  width: auto !important;
-  height: auto !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   background-size: cover !important;
