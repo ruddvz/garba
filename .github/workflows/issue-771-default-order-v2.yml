@@ -1,0 +1,36 @@
+name: Issue 771 default order guard v2
+
+on:
+  push:
+    branches:
+      - fix/issue-771-newest-oldest-sort
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Apply guarded default-order fix
+        run: python3 scripts/tmp-issue-771-default-order.py
+      - name: Validate catalogue ordering
+        run: |
+          node scripts/lib/test-catalogue-ordering.mjs
+          node scripts/lib/validate-catalogue-ordering-integration.mjs
+      - name: Validate repository
+        run: npm run check
+      - name: Commit validated follow-up
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/tmp-issue-771-default-order.py .github/workflows/issue-771-default-order-followup.yml .github/workflows/issue-771-default-order-v2.yml
+          git add src/catalogue/catalogue.js scripts/lib/validate-catalogue-ordering-integration.mjs
+          git diff --cached --check
+          git commit -m "fix(explore): preserve playable-first source order"
+          git push origin HEAD:${GITHUB_REF_NAME}
