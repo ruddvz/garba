@@ -614,7 +614,6 @@ function renderPlayer() {
     button.disabled = !readiness.executable;
     button.setAttribute('aria-disabled', String(!readiness.executable));
     if (!readiness.executable) button.title = 'This recording is not available to play yet';
-    else if (button === els.playButton) button.title = state.playing ? 'Pause (Space)' : 'Play (Space)';
     else if (!state.playing) button.title = 'Play';
   }
 
