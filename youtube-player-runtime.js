@@ -677,7 +677,7 @@
     stage.classList.add('is-loading');
     setNote('YouTube · loading', { loading: true });
     window.dispatchEvent(new CustomEvent('garba:playback-state-change', {
-      detail: Object.freeze({ playing: true, loading: true, songId: song.id }),
+      detail: Object.freeze({ playing: false, loading: true, songId: song.id }),
     }));
 
     try {
