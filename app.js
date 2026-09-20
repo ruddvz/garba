@@ -597,14 +597,14 @@ function renderPlayer() {
     els.liveStationButton?.setAttribute('aria-pressed', 'false');
   }
   els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
-  els.songTitle.textContent = song.title;
+  if (els.songTitle.textContent !== song.title) els.songTitle.textContent = song.title;
   els.songTitle.dataset.songId = song.id;
   const titleLength = [...song.title].length;
   els.trackBlock.classList.toggle('is-long-title', titleLength > 28);
   els.trackBlock.classList.toggle('is-very-long-title', titleLength > 44);
-  els.songArtist.textContent = song.artist;
-  els.miniTitle.textContent = song.title;
-  els.miniArtist.textContent = song.artist;
+  if (els.songArtist.textContent !== song.artist) els.songArtist.textContent = song.artist;
+  if (els.miniTitle.textContent !== song.title) els.miniTitle.textContent = song.title;
+  if (els.miniArtist.textContent !== song.artist) els.miniArtist.textContent = song.artist;
   els.durationTime.textContent = formatDuration(state.duration || song.durationSeconds);
   els.elapsedTime.textContent = formatTime(state.elapsed);
 

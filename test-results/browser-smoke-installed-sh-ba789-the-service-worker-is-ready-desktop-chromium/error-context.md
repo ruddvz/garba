@@ -1,0 +1,70 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to player" [ref=e2] [cursor=pointer]:
+    - /url: "#mainPlayer"
+  - generic [ref=e3]:
+    - banner [ref=e7]:
+      - link "PlayGarba home" [ref=e8] [cursor=pointer]:
+        - /url: ./
+        - text: PlayGarba
+      - navigation "Player tools" [ref=e9]:
+        - button "Search songs" [ref=e10] [cursor=pointer]:
+          - img [ref=e11] [cursor=pointer]
+        - button "Share Kana Tu Vagade Morli" [ref=e14] [cursor=pointer]:
+          - img [ref=e15] [cursor=pointer]
+        - button "Open My Garba" [ref=e20] [cursor=pointer]:
+          - img [ref=e21] [cursor=pointer]
+        - button "Open Up next, 9+ songs shown" [ref=e23] [cursor=pointer]:
+          - img [ref=e24] [cursor=pointer]
+          - generic: 9+
+        - 'button "Garba Atmosphere: Off" [ref=e27] [cursor=pointer]':
+          - img [ref=e28] [cursor=pointer]
+    - main [ref=e31]:
+      - region "Now playing" [ref=e32]:
+        - heading "Kana Tu Vagade Morli" [level=1] [ref=e33]
+        - paragraph [ref=e35]: Geeta Rabari
+      - region "Playback controls" [ref=e36]:
+        - button "Toggle shuffle" [ref=e37] [cursor=pointer]:
+          - img [ref=e38] [cursor=pointer]
+        - button "Previous song" [ref=e40] [cursor=pointer]:
+          - img [ref=e41] [cursor=pointer]
+        - button "Play" [ref=e43] [cursor=pointer]:
+          - img [ref=e44] [cursor=pointer]
+        - button "Next song" [ref=e46] [cursor=pointer]:
+          - img [ref=e47] [cursor=pointer]
+        - button "Save Kana Tu Vagade Morli to My Garba" [ref=e49] [cursor=pointer]:
+          - img [ref=e50] [cursor=pointer]
+      - button "Tune into 24/7 Live Garba Radio" [ref=e53] [cursor=pointer]:
+        - generic [ref=e57] [cursor=pointer]: 24/7 LIVE
+      - region "Playback progress" [ref=e58]:
+        - generic [ref=e59]: 0:00
+        - slider "Seek" [ref=e60] [cursor=pointer]: "0"
+        - generic [ref=e61]: "--:--"
+      - navigation "Genres" [ref=e62]:
+        - button "Browse Nonstop Garba" [ref=e63] [cursor=pointer]:
+          - generic [ref=e64] [cursor=pointer]: Nonstop
+        - button "Traditional" [ref=e65] [cursor=pointer]:
+          - generic [ref=e66] [cursor=pointer]: Traditional
+        - button "Dandiya" [ref=e67] [cursor=pointer]:
+          - generic [ref=e68] [cursor=pointer]: Dandiya
+        - button "Devotional" [ref=e69] [cursor=pointer]:
+          - generic [ref=e70] [cursor=pointer]: Devotional
+        - button "Folk" [ref=e71] [cursor=pointer]:
+          - generic [ref=e72] [cursor=pointer]: Folk
+        - button "Sanedo" [ref=e73] [cursor=pointer]:
+          - generic [ref=e74] [cursor=pointer]: Sanedo
+        - button "Fusion" [ref=e75] [cursor=pointer]:
+          - generic [ref=e76] [cursor=pointer]: Fusion
+      - link "Explore PlayGarba catalogue" [ref=e78] [cursor=pointer]:
+        - /url: ./explore/
+        - generic [ref=e79] [cursor=pointer]: Explore
+        - img [ref=e80] [cursor=pointer]
+      - generic "Streaming via YouTube" [ref=e82]:
+        - generic [ref=e83]: Streaming via
+        - generic [ref=e84]:
+          - img [ref=e85]
+          - generic [ref=e88]: YouTube
+    - status
+```

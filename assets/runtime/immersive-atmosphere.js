@@ -30,7 +30,7 @@
   })();
 
   const initialEnvironment = (() => {
-    if (stored?.environment && ENVIRONMENTS[stored.environment]) return stored.environment;
+    if (stored?.environment) return stored.environment;
     return 'outdoor';
   })();
 
@@ -222,17 +222,6 @@
       modes.append(mode);
     }
 
-    const envs = panel.querySelector('.atmosphere-environments');
-    for (const [id, env] of Object.entries(ENVIRONMENTS)) {
-      const envBtn = document.createElement('button');
-      envBtn.type = 'button';
-      envBtn.className = 'atmosphere-env';
-      envBtn.dataset.env = id;
-      envBtn.innerHTML = `<span>${env.icon}</span> ${env.label}`;
-      envBtn.title = env.desc;
-      envBtn.addEventListener('click', () => applyEnvironment(id));
-      envs.append(envBtn);
-    }
 
     const close = panel.querySelector('.atmosphere-close');
     const test = panel.querySelector('.atmosphere-test');
@@ -322,10 +311,6 @@
     state.panel?.querySelectorAll('.atmosphere-mode').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.mode === state.mode));
     });
-    state.panel?.querySelectorAll('.atmosphere-env').forEach((control) => {
-      control.setAttribute('aria-pressed', String(control.dataset.env === state.environment));
-      control.disabled = state.mode === 'off';
-    });
     if (state.slider) state.slider.disabled = state.mode === 'off';
     if (state.test) {
       state.test.disabled = state.mode === 'off';
@@ -384,31 +369,7 @@
     return buffer;
   }
 
-  function applyEnvironment(envKey, { immediate = false } = {}) {
-    const env = ENVIRONMENTS[envKey] || ENVIRONMENTS.outdoor;
-    state.environment = envKey in ENVIRONMENTS ? envKey : 'outdoor';
-    persist();
-    if (!state.context || !state.delayNode) {
-      syncUi();
-      return;
-    }
-    const now = state.context.currentTime;
-    if (immediate) {
-      state.delayNode.delayTime.value = env.delay;
-      state.delayFeedback.gain.value = env.feedback;
-      state.delayFilter.frequency.value = env.cutoff;
-      state.wetGain.gain.value = env.wet;
-      state.dryGain.gain.value = env.dry;
-    } else {
-      state.delayNode.delayTime.setTargetAtTime(env.delay, now, 0.08);
-      state.delayFeedback.gain.setTargetAtTime(env.feedback, now, 0.08);
-      state.delayFilter.frequency.setTargetAtTime(env.cutoff, now, 0.08);
-      state.wetGain.gain.setTargetAtTime(env.wet, now, 0.08);
-      state.dryGain.gain.setTargetAtTime(env.dry, now, 0.08);
-    }
-    syncUi();
-    dispatchChange('environment');
-  }
+  function applyEnvironment(envKey) {}
 
   async function ensureContext() {
     if (!AudioContextCtor) { setStatus('Atmosphere audio is not supported on this browser.'); return false; }
@@ -739,7 +700,7 @@
     state.previewActive = true;
     syncUi();
     await buildScene({ smooth: true });
-    setStatus(`Testing ${MODES[state.mode].label} in ${ENVIRONMENTS[state.environment].label}.`);
+    setStatus(`Testing ${MODES[state.mode].label}.`);
     state.previewTimer = setTimeout(() => stopPreview({ announce: false }), 6000);
     dispatchChange('preview-started');
   }
