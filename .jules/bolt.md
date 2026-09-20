@@ -1,0 +1,3 @@
+## 2026-09-20 - Memoizing Search Document Creation
+**Learning:** Search queries on 1,700+ song catalogue items were re-running Unicode normalization (`NFKC`/`NFD`), Latin diacritic folding, regex string splits, and `Set` allocations on every keystroke because `createSearchDocument` was called on each record per query. Memoizing `createSearchDocument` with a `WeakMap` keyed on record/song/set objects avoids redundant string parsing and allocation without leaking memory or mutating source records.
+**Action:** Always check if document/index preparation in search and filtering paths can be cached via `WeakMap` when operating over static catalogue data.

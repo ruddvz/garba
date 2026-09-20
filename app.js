@@ -799,8 +799,14 @@ function selectGenre(genreId) {
   }
 }
 
+const playerSearchRecordCache = new WeakMap();
+
 function playerSearchRecord(song) {
-  return {
+  if (song && typeof song === 'object') {
+    const cached = playerSearchRecordCache.get(song);
+    if (cached) return cached;
+  }
+  const record = {
     id: song.id,
     title: [song.title, song.displayTitle].filter(Boolean),
     titleAliases: song.aliases,
@@ -814,6 +820,10 @@ function playerSearchRecord(song) {
     ],
     song,
   };
+  if (song && typeof song === 'object') {
+    playerSearchRecordCache.set(song, record);
+  }
+  return record;
 }
 
 function rankPlayerSongs(songs, query) {

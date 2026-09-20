@@ -36,7 +36,7 @@ const requiredRootFiles = new Set([
   'sw.js',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
+const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist', '.jules']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (entry.name === '.git' || entry.name === 'node_modules') continue;

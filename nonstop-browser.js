@@ -375,8 +375,14 @@
     });
   }
 
+  const setRecordCache = new WeakMap();
+
   function searchRecordForSet(set) {
-    return {
+    if (set && typeof set === 'object') {
+      const cached = setRecordCache.get(set);
+      if (cached) return cached;
+    }
+    const record = {
       id: set.id,
       title: set.title,
       artist: set.artistsText,
@@ -393,6 +399,10 @@
         ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
       ].filter(Boolean),
     };
+    if (set && typeof set === 'object') {
+      setRecordCache.set(set, record);
+    }
+    return record;
   }
 
   async function loadSearchCore() {
