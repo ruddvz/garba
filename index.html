@@ -93,20 +93,20 @@
 
         <section class="controls" aria-label="Playback controls">
           <button class="transport shuffle-button" id="shuffleButton" type="button" aria-label="Toggle shuffle" aria-pressed="false" title="Shuffle songs (S)" aria-keyshortcuts="s"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20l17-17M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg></button>
-          <button class="transport" id="prevButton" type="button" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
-          <button class="play-button" id="playButton" type="button" aria-label="Play">
+          <button class="transport" id="prevButton" type="button" aria-label="Previous song" title="Previous song (←)" aria-keyshortcuts="ArrowLeft"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14M19 6l-9 6 9 6Z"></path></svg></button>
+          <button class="play-button" id="playButton" type="button" aria-label="Play" title="Play or pause (Space)" aria-keyshortcuts="Space">
             <span class="ambient-ring" aria-hidden="true"></span>
             <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6Z"></path></svg>
             <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
           </button>
-          <button class="transport" id="nextButton" type="button" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
+          <button class="transport" id="nextButton" type="button" aria-label="Next song" title="Next song (→)" aria-keyshortcuts="ArrowRight"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14M5 6l9 6-9 6Z"></path></svg></button>
           <button class="transport heart-button favourite-control" id="mobileFavourite" type="button" aria-label="Favourite current song" aria-pressed="false" title="Save to My Garba (F)" aria-keyshortcuts="f">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"></path></svg>
           </button>
         </section>
 
         <div class="live-station-container" id="liveStationContainer">
-          <button class="live-station-button" id="liveStationButton" type="button" aria-label="Tune into 24/7 Live Garba Radio" aria-pressed="false" title="24/7 Live Garba Radio">
+          <button class="live-station-button" id="liveStationButton" type="button" aria-label="Tune into 24/7 Live Garba Radio" aria-pressed="false" title="24/7 Live Radio (L)" aria-keyshortcuts="l">
             <span class="live-beacon" aria-hidden="true"><span class="beacon-ping"></span><span class="beacon-core"></span></span>
             <span class="live-badge-text">24/7 LIVE</span>
           </button>
@@ -149,9 +149,9 @@
         <div class="sheet-inner">
           <header class="sheet-header">
             <div class="sheet-header-title"><h2 id="sheetTitle">Songs</h2><span class="sheet-summary" id="sheetSummary" aria-live="polite"></span></div>
-            <label class="search-field" aria-label="Search songs and artists">
+            <label class="search-field" for="searchInput">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
-              <input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" inputmode="search" enterkeyhint="search" />
+              <input id="searchInput" type="search" placeholder="Search songs or artists" aria-label="Search songs or artists" autocomplete="off" inputmode="search" enterkeyhint="search" />
             </label>
             <button class="icon-button sheet-close" id="sheetClose" type="button" aria-label="Close songs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
           </header>
