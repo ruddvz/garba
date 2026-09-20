@@ -126,6 +126,28 @@ const resDenied = await executeShare({
 assert.equal(resDenied.status, 'failed');
 assert.equal(resDenied.reason, 'clipboard-denied');
 
+// Execution with unsafe / invalid URL schemes
+const resJsScheme = await executeShare({
+  title: 'Test Title',
+  url: 'javascript:alert(1)',
+  navigatorObj: mockNavShare,
+});
+assert.deepEqual(resJsScheme, { status: 'failed', reason: 'invalid-scheme', url: '' });
+
+const resDataScheme = await executeShare({
+  title: 'Test Title',
+  url: 'data:text/html,<script>alert(1)</script>',
+  navigatorObj: mockNavShare,
+});
+assert.deepEqual(resDataScheme, { status: 'failed', reason: 'invalid-scheme', url: '' });
+
+const resInvalidUrl = await executeShare({
+  title: 'Test Title',
+  url: 'not-a-valid-url',
+  navigatorObj: mockNavShare,
+});
+assert.deepEqual(resInvalidUrl, { status: 'failed', reason: 'invalid-url', url: '' });
+
 // 2. Integration marker checks
 const appSrc = await readFile(path.join(root, 'app.js'), 'utf8');
 const nonstopSrc = await readFile(path.join(root, 'nonstop-browser.js'), 'utf8');

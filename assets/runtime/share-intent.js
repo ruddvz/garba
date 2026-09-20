@@ -106,6 +106,16 @@ async function executeShare({ title, text, url, navigatorObj = null } = {}) {
   const nav = navigatorObj || (typeof navigator !== 'undefined' ? navigator : null);
   if (!url) return { status: 'failed', reason: 'missing-url', url: '' };
 
+  // Security validation: ensure URL is valid and uses http: or https: scheme
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { status: 'failed', reason: 'invalid-scheme', url: '' };
+    }
+  } catch {
+    return { status: 'failed', reason: 'invalid-url', url: '' };
+  }
+
   if (nav && typeof nav.share === 'function') {
     try {
       await nav.share({
