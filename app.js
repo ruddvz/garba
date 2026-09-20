@@ -799,14 +799,8 @@ function selectGenre(genreId) {
   }
 }
 
-const playerSearchRecordCache = new WeakMap();
-
 function playerSearchRecord(song) {
-  if (song && typeof song === 'object') {
-    const cached = playerSearchRecordCache.get(song);
-    if (cached) return cached;
-  }
-  const record = {
+  return {
     id: song.id,
     title: [song.title, song.displayTitle].filter(Boolean),
     titleAliases: song.aliases,
@@ -820,10 +814,6 @@ function playerSearchRecord(song) {
     ],
     song,
   };
-  if (song && typeof song === 'object') {
-    playerSearchRecordCache.set(song, record);
-  }
-  return record;
 }
 
 function rankPlayerSongs(songs, query) {
@@ -1985,7 +1975,6 @@ async function init() {
     reconcilePresentationFavourites();
     sanitiseManualQueue();
     state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
-    state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
     state.hasExplicitNavigation = initial.hasInitialExplicitNavigation;
 
@@ -2024,6 +2013,7 @@ async function init() {
     if (initial.myGarba) openSheet('favourites', { snap: 'full', history: false });
     else if (initial.browse) openSheet('all', { snap: 'full', history: false });
     updateUrl();
+    state.catalogueLoadedAt = Date.now();
   } catch (error) {
     console.error(error);
     showToast('Catalogue could not load. The app shell is ready, but song data is unavailable.');

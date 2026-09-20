@@ -1130,15 +1130,9 @@ function returnToCollections() {
   closeCollection();
 }
 
-const searchRecordCache = new WeakMap();
-
 function exploreSearchRecord(song) {
-  if (song && typeof song === 'object') {
-    const cached = searchRecordCache.get(song);
-    if (cached) return cached;
-  }
   const release = state.releaseById.get(song.releaseId);
-  const record = {
+  return {
     id: song.id,
     title: [song.title, song.displayTitle].filter(Boolean),
     titleAliases: song.aliases,
@@ -1159,10 +1153,6 @@ function exploreSearchRecord(song) {
     ],
     song,
   };
-  if (song && typeof song === 'object') {
-    searchRecordCache.set(song, record);
-  }
-  return record;
 }
 
 function rankExploreSongs(songs, query) {

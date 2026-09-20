@@ -178,6 +178,7 @@ try {
     window.GARBA_YOUTUBE_PLAYER?.open
       && window.GARBA_NONSTOP?.play
       && window.GARBA_NONSTOP?.list
+      && window.GARBA_APP?.getState?.()?.catalogueLoadedAt > 0
       && document.getElementById('elapsedTime')
       && document.getElementById('durationTime')
   ));

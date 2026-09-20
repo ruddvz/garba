@@ -375,14 +375,8 @@
     });
   }
 
-  const setRecordCache = new WeakMap();
-
   function searchRecordForSet(set) {
-    if (set && typeof set === 'object') {
-      const cached = setRecordCache.get(set);
-      if (cached) return cached;
-    }
-    const record = {
+    return {
       id: set.id,
       title: set.title,
       artist: set.artistsText,
@@ -399,10 +393,6 @@
         ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
       ].filter(Boolean),
     };
-    if (set && typeof set === 'object') {
-      setRecordCache.set(set, record);
-    }
-    return record;
   }
 
   async function loadSearchCore() {
@@ -1031,9 +1021,9 @@
         : (resumeCheck?.status === 'found' ? Number(resumeCheck.record.positionSeconds || 0) : 0);
       const hasSavedPosition = savedSeconds > 0 && (set.durationSeconds > 0 ? savedSeconds < set.durationSeconds - 10 : true);
 
-      // Never autoplay on reload.
-      const isReloadOrDirectUrl = reload || (quiet && urlAlreadyRequestsSet);
-      const opened = isReloadOrDirectUrl
+      // Never autoplay on reload or quiet init.
+      const isQuietOrReload = quiet || reload || urlAlreadyRequestsSet;
+      const opened = isQuietOrReload
         ? await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: false, resume: false })
         : await window.GARBA_YOUTUBE_PLAYER.open(track, { autoplay: true, resume: false });
       markDock();
