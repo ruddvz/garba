@@ -1665,11 +1665,6 @@ function wireEvents() {
   els.miniPrev.addEventListener('click', () => changeSong(-1));
   els.miniNext.addEventListener('click', () => changeSong(1));
 
-  els.browseButton?.addEventListener('click', (event) => {
-    event?.preventDefault?.();
-    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-    else closeSheet();
-  });
   els.sheetClose.addEventListener('click', closeSheet);
   els.sheetBackdrop?.addEventListener('click', () => closeSheet());
   els.mobileFavourite.addEventListener('click', () => toggleFavourite());
