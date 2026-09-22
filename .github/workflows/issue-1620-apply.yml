@@ -1,0 +1,124 @@
+name: Issue 1620 mobile thumb-zone apply
+
+on:
+  push:
+    branches:
+      - fix/issue-1620-mobile-thumb-zone
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout claimed branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/issue-1620-mobile-thumb-zone
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply guarded final-layer mobile geometry patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('styles/80-genre-icon-images.css')
+          css = path.read_text()
+
+          old = '''  html body .app .player-shell {
+            padding-top: clamp(64px, 8vh, 88px) !important;
+            padding-bottom: max(14px, var(--safe-bottom)) !important;
+            padding-inline: max(14px, var(--safe-left)) !important;
+            grid-template-rows: minmax(0, 1fr) auto auto auto minmax(10px, 1.1fr) auto auto !important;
+          }
+          '''
+
+          new = '''  html body .app .player-shell {
+            padding-top: clamp(64px, 8vh, 88px) !important;
+            padding-bottom: max(14px, var(--safe-bottom)) !important;
+            padding-inline: max(14px, var(--safe-left)) !important;
+            /* Put more of the flexible portrait space above Now Playing and less
+               between the timeline and floor rail. The courtyard/rangoli stays
+               untouched and remains the dominant visual surface. */
+            grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;
+          }
+
+          /* Local readability field only. This follows the fixed metadata anchor and
+             fades back into the courtyard instead of becoming a card or full-screen
+             overlay, so bright arches/lights cannot wash out long titles. */
+          html body .app .track-block::before {
+            width: min(680px, 118vw);
+            height: calc(100% + 68px);
+            background: radial-gradient(
+              ellipse at 50% 48%,
+              rgba(5, 7, 16, .70) 0 48%,
+              rgba(5, 7, 16, .44) 68%,
+              rgba(5, 7, 16, .14) 86%,
+              transparent 100%
+            );
+          }
+          '''
+
+          count = css.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one final mobile player-shell block, found {count}')
+
+          css = css.replace(old, new, 1)
+          path.write_text(css)
+          PY
+
+      - name: Validate bounded visual contract
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          css = Path('styles/80-genre-icon-images.css').read_text()
+
+          required = [
+            'grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;',
+            'html body .app .track-block::before {',
+            'width: min(680px, 118vw);',
+            'height: calc(100% + 68px);',
+            'margin: -24px auto clamp(2px, 0.5vh, 6px) !important;',
+            'background-image: var(--genre-icon-image) !important;',
+          ]
+          for marker in required:
+              if marker not in css:
+                  raise SystemExit(f'Missing required player/artwork invariant: {marker}')
+
+          forbidden = [
+            'canvas',
+            'procedural visualizer',
+          ]
+          # The patch itself must not introduce a new synthetic visual surface.
+          import subprocess
+          diff = subprocess.check_output(['git', 'diff', '--', 'styles/80-genre-icon-images.css'], text=True)
+          for marker in forbidden:
+              if marker.lower() in diff.lower():
+                  raise SystemExit(f'Forbidden synthetic-art marker in diff: {marker}')
+          PY
+          git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = "styles/80-genre-icon-images.css "
+
+      - name: Run repository validation
+        run: npm run check
+
+      - name: Commit only final CSS and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/issue-1620-apply.yml
+          git add styles/80-genre-icon-images.css
+          git diff --cached --check
+          git commit -m "fix(player): lower mobile Now Playing into thumb reach"
+          git push origin HEAD:fix/issue-1620-mobile-thumb-zone
