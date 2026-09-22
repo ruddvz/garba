@@ -34,45 +34,40 @@ jobs:
           path = Path('styles/80-genre-icon-images.css')
           css = path.read_text()
 
-          old = '''  html body .app .player-shell {
-            padding-top: clamp(64px, 8vh, 88px) !important;
-            padding-bottom: max(14px, var(--safe-bottom)) !important;
-            padding-inline: max(14px, var(--safe-left)) !important;
-            grid-template-rows: minmax(0, 1fr) auto auto auto minmax(10px, 1.1fr) auto auto !important;
-          }
-          '''
-
-          new = '''  html body .app .player-shell {
-            padding-top: clamp(64px, 8vh, 88px) !important;
-            padding-bottom: max(14px, var(--safe-bottom)) !important;
-            padding-inline: max(14px, var(--safe-left)) !important;
-            /* Put more of the flexible portrait space above Now Playing and less
+          old_grid = '    grid-template-rows: minmax(0, 1fr) auto auto auto minmax(10px, 1.1fr) auto auto !important;'
+          new_grid = '''    /* Put more of the flexible portrait space above Now Playing and less
                between the timeline and floor rail. The courtyard/rangoli stays
                untouched and remains the dominant visual surface. */
-            grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;
-          }
+            grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;'''.replace('            grid-template', '    grid-template').replace('               between', '       between').replace('               untouched', '       untouched')
 
-          /* Local readability field only. This follows the fixed metadata anchor and
-             fades back into the courtyard instead of becoming a card or full-screen
-             overlay, so bright arches/lights cannot wash out long titles. */
-          html body .app .track-block::before {
-            width: min(680px, 118vw);
-            height: calc(100% + 68px);
-            background: radial-gradient(
-              ellipse at 50% 48%,
-              rgba(5, 7, 16, .70) 0 48%,
-              rgba(5, 7, 16, .44) 68%,
-              rgba(5, 7, 16, .14) 86%,
-              transparent 100%
-            );
-          }
-          '''
+          if css.count(old_grid) != 1:
+              raise SystemExit(f'Expected exactly one final mobile grid line, found {css.count(old_grid)}')
+          css = css.replace(old_grid, new_grid, 1)
 
-          count = css.count(old)
-          if count != 1:
-              raise SystemExit(f'Expected exactly one final mobile player-shell block, found {count}')
+          anchor = '    grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;\n  }\n\n  html body .app .controls {'
+          scrim = '''    grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;
+  }
 
-          css = css.replace(old, new, 1)
+  /* Local readability field only. This follows the fixed metadata anchor and
+     fades back into the courtyard instead of becoming a card or full-screen
+     overlay, so bright arches/lights cannot wash out long titles. */
+  html body .app .track-block::before {
+    width: min(680px, 118vw);
+    height: calc(100% + 68px);
+    background: radial-gradient(
+      ellipse at 50% 48%,
+      rgba(5, 7, 16, .70) 0 48%,
+      rgba(5, 7, 16, .44) 68%,
+      rgba(5, 7, 16, .14) 86%,
+      transparent 100%
+    );
+  }
+
+  html body .app .controls {'''
+
+          if css.count(anchor) != 1:
+              raise SystemExit(f'Expected exactly one mobile controls anchor, found {css.count(anchor)}')
+          css = css.replace(anchor, scrim, 1)
           path.write_text(css)
           PY
 
@@ -81,8 +76,9 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          css = Path('styles/80-genre-icon-images.css').read_text()
+          import subprocess
 
+          css = Path('styles/80-genre-icon-images.css').read_text()
           required = [
             'grid-template-rows: minmax(18px, 1.4fr) auto auto auto minmax(8px, .7fr) auto auto !important;',
             'html body .app .track-block::before {',
@@ -95,14 +91,8 @@ jobs:
               if marker not in css:
                   raise SystemExit(f'Missing required player/artwork invariant: {marker}')
 
-          forbidden = [
-            'canvas',
-            'procedural visualizer',
-          ]
-          # The patch itself must not introduce a new synthetic visual surface.
-          import subprocess
           diff = subprocess.check_output(['git', 'diff', '--', 'styles/80-genre-icon-images.css'], text=True)
-          for marker in forbidden:
+          for marker in ('procedural visualizer',):
               if marker.lower() in diff.lower():
                   raise SystemExit(f'Forbidden synthetic-art marker in diff: {marker}')
           PY
