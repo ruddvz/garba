@@ -350,6 +350,18 @@ test('Access verifier preserves issuer, audience and expiry rejection precedence
   )
 })
 
+test('Access verifier fails closed when the JWKS fetch returns invalid JSON, missing keys, or errors', async () => {
+  const fixture = await accessFixture()
+  const fetchImplError = async () => ({ ok: false, status: 500 })
+  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplError }), { ok: false, reason: 'access_verification_failed' })
+
+  const fetchImplMissingKeys = async () => Response.json({})
+  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplMissingKeys }), { ok: false, reason: 'access_verification_failed' })
+
+  const fetchImplInvalidJson = async () => new Response('invalid json')
+  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplInvalidJson }), { ok: false, reason: 'access_verification_failed' })
+})
+
 test('protected Live API returns aggregate data with no-store caching', async () => {
   const fixture = await accessFixture('/api/live')
   const response = await handleAdmin(fixture.request, fixture.env, {
