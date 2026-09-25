@@ -31,9 +31,12 @@ for (const marker of [
   "aria-modal', 'true'",
   'setBackgroundInert',
   'navigator.audioSession',
-  'Party plot',
+  'Indoor stadium',
+  'Outdoors',
   'Sheri',
-  'Hall',
+  'In the circle',
+  'Far away',
+  'function setListener(',
   'Full circle',
   'Tap the beat',
   'Be tali',
@@ -62,7 +65,8 @@ for (const marker of [
 if (!runtime.includes('The song itself plays as YouTube sends it.')) {
   fail('Atmosphere panel must say the song itself is not processed');
 }
-if (/\bIndoor\b|\bOutdoor\b|Acoustic Space|Soundstage/.test(runtime)) {
+// Venue names are fine; the retired labels that implied the song itself was being processed are not.
+if (/Acoustic Space|Soundstage|Indoor Hall|Outdoor Ground|stadium slapback echo|Palace walls/.test(runtime)) {
   fail('Provider-backed playback must not expose fake source-processing Soundstage modes');
 }
 if (/youtubeStage[^\n]*createMediaElementSource|createMediaElementSource\([^)]*youtube/i.test(runtime)) {
@@ -156,4 +160,4 @@ for (const match of sw.matchAll(/'\.\/(assets\/audio\/[^']+)'/g)) {
 }
 
 if (failed) process.exit(1);
-console.log('✓ Garba Atmosphere venues, beat-locked claps, truthful copy, public-domain sources and PWA packaging are coherent');
+console.log('✓ Garba Atmosphere venues, listening position, beat-locked claps, truthful copy, public-domain sources and PWA packaging are coherent');

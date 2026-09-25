@@ -18,23 +18,46 @@
   // atmosphere layers. Times are seconds, levels are linear gain.
   // ---------------------------------------------------------------------------
   const VENUES = {
-    plot: {
-      label: 'Party plot',
-      desc: 'Open ground. Little reverb, long echoes back from the far edge.',
+    stadium: {
+      label: 'Indoor stadium',
+      desc: 'A big covered arena. A long, dense reverb and a slap back off the far stands.',
+      trim: 1,
+      dry: 0.58,
+      wet: 0.9,
+      clappers: 60,
+      spread: 0.014,
+      distance: [2.5, 12],
+      far: [22, 48],
+      tone: { lowShelf: [160, 2.5], mid: [300, 0.9, 1.5], highShelf: [5500, -3] },
+      ir: {
+        length: 4.4,
+        predelay: 0.035,
+        early: { count: 24, from: 0.02, to: 0.12, level: 0.7 },
+        taps: [[0.19, 0.3, 3500], [0.31, 0.16, 2800]],
+        tail: { level: 0.24, rt: [3.0, 2.5, 1.4] },
+      },
+      night: 0,
+      roomTone: 0.02,
+    },
+    outdoors: {
+      label: 'Outdoors',
+      desc: 'An open garba ground. Almost no reverb, just echoes off the speaker stacks and distant buildings.',
       trim: 1.4,
       dry: 1,
-      wet: 0.34,
-      clappers: 40,
-      spread: 0.012,
-      distance: [2.2, 7.5],
-      tone: { lowShelf: [140, -2.5], mid: [2600, 0.8, 1], highShelf: [5200, -4] },
+      wet: 0.4,
+      clappers: 45,
+      spread: 0.013,
+      distance: [2.2, 9],
+      far: [28, 62],
+      tone: { lowShelf: [140, -3], mid: [2600, 0.8, 1.5], highShelf: [5500, -3.5] },
       ir: {
-        length: 2.2,
+        length: 2.6,
         predelay: 0.004,
-        taps: [[0.004, 0.42, 9000], [0.19, 0.2, 2600], [0.33, 0.13, 2000], [0.51, 0.08, 1500], [0.76, 0.045, 1200]],
-        tail: { level: 0.035, rt: [0.9, 0.7, 0.4] },
+        // Ground bounce, then the speaker stacks around the ground, then far buildings
+        taps: [[0.004, 0.42, 9000], [0.11, 0.26, 3200], [0.23, 0.16, 2800], [0.42, 0.09, 1700], [0.68, 0.05, 1300], [0.95, 0.03, 1100]],
+        tail: { level: 0.03, rt: [1, 0.8, 0.4] },
       },
-      night: 0.9,
+      night: 1,
       roomTone: 0,
     },
     sheri: {
@@ -46,6 +69,7 @@
       clappers: 20,
       spread: 0.009,
       distance: [1.4, 4.5],
+      far: [12, 26],
       tone: { lowShelf: [160, -1], mid: [2400, 0.9, 1.5], highShelf: [6500, -1] },
       ir: {
         length: 1.8,
@@ -57,25 +81,13 @@
       night: 0.55,
       roomTone: 0,
     },
-    hall: {
-      label: 'Hall',
-      desc: 'A community hall. Dense reverb, a warm low end, softer highs.',
-      trim: 1,
-      dry: 0.62,
-      wet: 0.82,
-      clappers: 30,
-      spread: 0.01,
-      distance: [1.8, 6],
-      tone: { lowShelf: [180, 2], mid: [240, 0.8, 2.5], highShelf: [4800, -4.5] },
-      ir: {
-        length: 3.2,
-        predelay: 0.022,
-        early: { count: 26, from: 0.008, to: 0.085, level: 0.5 },
-        tail: { level: 0.42, rt: [2.3, 1.8, 1.0] },
-      },
-      night: 0,
-      roomTone: 0.012,
-    },
+  };
+
+  // Where the listener stands. Far away: the circle loses its direct sound and highs,
+  // the room takes over, the image narrows, and the far side of the circle arrives later.
+  const LISTENERS = {
+    circle: { label: 'In the circle', desc: 'You are dancing, with clappers all around you.', dry: 1, wet: 1, dryCut: 20000, wetCut: 20000, width: 1 },
+    far: { label: 'Far away', desc: 'You are watching from the far edge. The circle sounds distant, softer and more echoey.', dry: 0.26, wet: 0.95, dryCut: 2000, wetCut: 4200, width: 0.3 },
   };
 
   // Claps land on these beats of each round, counted from the first tap.
@@ -163,39 +175,67 @@
     return buffer;
   }
 
-  // Hand claps: a few micro-bursts of noise through a resonant band-pass.
-  // Cupped palms (lower, warmer) and flat palms (brighter) are both common in a circle.
-  function buildClap(ctx, rand, cupped) {
+  // Hand claps, one person at a time. A clap is a single puff of air squeezed out of the
+  // pocket between the palms. That pocket rings like a Helmholtz resonator, and the soft
+  // skin damps it within a few milliseconds. Palm to palm gives a narrow peak below 1 kHz
+  // with a dip near 2.5 kHz; cupped hands ring lower; fingers on palm give a broad peak
+  // near 2 kHz. (Repp 1987; Peltola et al. 2007; Physical Review Research 7, 013259, 2025.)
+  const HANDS = {
+    cupped: { f: [470, 680], q: [6, 9], notch: 0, crack: 0.14 },
+    palm: { f: [760, 980], q: [3.8, 5.8], notch: 2500, crack: 0.26 },
+    finger: { f: [1700, 2400], q: [2.4, 3.6], notch: 0, crack: 0.45 },
+  };
+  function pickHands(rand) {
+    const r = rand();
+    return r < 0.25 ? 'cupped' : r < 0.8 ? 'palm' : 'finger';
+  }
+
+  // RBJ biquad, applied in place: band-pass (0 dB peak), notch or high-pass.
+  function biquad(data, type, freq, q, rate) {
+    const w = TAU * freq / rate;
+    const cos = Math.cos(w);
+    const alpha = Math.sin(w) / (2 * q);
+    let b0; let b1; let b2;
+    if (type === 'bandpass') { b0 = alpha; b1 = 0; b2 = -alpha; }
+    else if (type === 'notch') { b0 = 1; b1 = -2 * cos; b2 = 1; }
+    else { b0 = (1 + cos) / 2; b1 = -(1 + cos); b2 = (1 + cos) / 2; }
+    const a0 = 1 + alpha; const a1 = -2 * cos; const a2 = 1 - alpha;
+    let x1 = 0; let x2 = 0; let y1 = 0; let y2 = 0;
+    for (let i = 0; i < data.length; i += 1) {
+      const x = data[i];
+      const y = (b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2) / a0;
+      x2 = x1; x1 = x; y2 = y1; y1 = y; data[i] = y;
+    }
+    return data;
+  }
+
+  function buildClap(ctx, rand, hand, { freq, q, brightness = 1, distance = 3 }) {
     const rate = ctx.sampleRate;
-    const length = Math.ceil(0.16 * rate);
+    const length = Math.ceil(0.09 * rate);
     const buffer = ctx.createBuffer(1, length, rate);
     const out = buffer.getChannelData(0);
-    const bursts = [0, 0.006 + rand() * 0.005, 0.013 + rand() * 0.007];
-    const decay = cupped ? 0.011 : 0.007;
-    const centre = cupped ? 850 + rand() * 350 : 1500 + rand() * 900;
-    const q = cupped ? 1.6 : 1.1;
-    // State-variable band-pass
-    const f = 2 * Math.sin(Math.PI * centre / rate);
-    let low = 0; let band = 0;
+    const spec = HANDS[hand];
+    // The air puff: a very fast noise burst, about half a millisecond long.
+    const puff = new Float32Array(length);
+    const attack = 0.00015 * rate;
+    const tau = (0.00045 + rand() * 0.0002) * rate;
     for (let i = 0; i < length; i += 1) {
-      const t = i / rate;
-      let env = 0;
-      for (let b = 0; b < bursts.length; b += 1) {
-        const dt = t - bursts[b];
-        if (dt >= 0) env += Math.exp(-dt / (b === bursts.length - 1 ? decay * 2.6 : decay)) * (b === bursts.length - 1 ? 1 : 0.55);
-      }
-      const x = (rand() * 2 - 1) * env;
-      low += f * band;
-      const high = x - low - band / q;
-      band += f * high;
-      out[i] = band * 0.9 + x * 0.03;
+      const env = i < attack ? i / attack : Math.exp(-(i - attack) / tau);
+      puff[i] = (rand() * 2 - 1) * env;
     }
-    onePoleLow(out, cupped ? 3200 : 4800, rate);
-    if (cupped) {
-      // A short body thump from the cupped palm
-      const body = 240 + rand() * 120;
-      for (let i = 0; i < Math.min(length, rate * 0.03); i += 1) out[i] += Math.sin(TAU * body * i / rate) * Math.exp(-i / (rate * 0.006)) * 0.35;
+    // The palms' pocket ringing at its own pitch
+    const ring = biquad(Float32Array.from(puff), 'bandpass', freq, q, rate);
+    // The skin-on-skin crack: the upper part of the same burst, centred around 3.5 kHz
+    const crack = biquad(Float32Array.from(puff), 'bandpass', 3400 + rand() * 600, 0.9, rate);
+    for (let i = 0; i < length; i += 1) out[i] = ring[i] * 5 + crack[i] * spec.crack * brightness;
+    if (hand === 'cupped') {
+      const body = 170 + rand() * 90;
+      for (let i = 0; i < Math.min(length, rate * 0.02); i += 1) out[i] += Math.sin(TAU * body * i / rate) * Math.exp(-i / (rate * 0.0025)) * 0.018;
     }
+    if (spec.notch) biquad(out, 'notch', spec.notch * (0.95 + rand() * 0.1), 1.6, rate);
+    // Air softens the far side of the circle a little
+    onePoleLow(out, Math.max(3200, 6800 - distance * 300), rate);
+    onePoleLow(out, Math.max(3200, 6800 - distance * 300), rate);
     normalise(out, 0.9);
     return buffer;
   }
@@ -271,8 +311,17 @@
     nodes.highShelf = ctx.createBiquadFilter(); nodes.highShelf.type = 'highshelf';
     nodes.lowShelf.connect(nodes.mid).connect(nodes.highShelf).connect(nodes.out);
 
+    // The circle's direct sound passes a distance filter, so a far listener hears it duller.
+    nodes.distance = ctx.createBiquadFilter();
+    nodes.distance.type = 'lowpass';
+    nodes.distance.frequency.value = 20000;
+    nodes.distance.Q.value = 0.5;
+    nodes.distance.connect(nodes.lowShelf);
     nodes.dry = ctx.createGain();
-    nodes.dry.connect(nodes.lowShelf);
+    nodes.dry.connect(nodes.distance);
+    // Sounds right beside the listener (crickets, room tone) skip the distance filter.
+    nodes.near = ctx.createGain();
+    nodes.near.connect(nodes.lowShelf);
     // Two convolvers so a venue change crossfades instead of cutting
     nodes.verbs = [0, 1].map(() => {
       const convolver = ctx.createConvolver();
@@ -283,18 +332,22 @@
       return { convolver, gain, venue: null };
     });
     nodes.send = ctx.createGain();
-    nodes.verbs.forEach((v) => nodes.send.connect(v.convolver));
+    nodes.sendTone = ctx.createBiquadFilter();
+    nodes.sendTone.type = 'lowpass';
+    nodes.sendTone.frequency.value = 20000;
+    nodes.send.connect(nodes.sendTone);
+    nodes.verbs.forEach((v) => nodes.sendTone.connect(v.convolver));
 
     nodes.bus = ctx.createGain();
     nodes.bus.connect(nodes.dry);
     nodes.bus.connect(nodes.send);
 
     const impulses = {};
-    const claps = Array.from({ length: 14 }, (_, i) => buildClap(ctx, rand, i % 3 !== 0));
     const sticks = Array.from({ length: 8 }, () => buildStick(ctx, rand));
 
     const state = {
       venue: null,
+      listener: 'circle',
       activeVerb: 0,
       profile: { crowd: 0, night: 0, claps: 0, spatial: false },
       level: 0.45,
@@ -310,12 +363,17 @@
       orbit: 0,
     };
 
-    function venueSpec() { return VENUES[state.venue] || VENUES.plot; }
+    function venueSpec() { return VENUES[state.venue] || VENUES.outdoors; }
+    function listenerSpec() { return LISTENERS[state.listener] || LISTENERS.circle; }
+    function range() { return state.listener === 'far' ? venueSpec().far : venueSpec().distance; }
 
     // Clappers stand in the circle around the listener, in eight spatial groups.
     function buildCircle() {
       state.groups.forEach((g) => { try { g.input.disconnect(); g.panner.disconnect(); } catch { /* no-op */ } });
       const venue = venueSpec();
+      const listener = listenerSpec();
+      const [near, farEdge] = range();
+      const far = state.listener === 'far';
       const spatial = state.profile.spatial && typeof ctx.createPanner === 'function';
       state.groups = Array.from({ length: 8 }, (_, i) => {
         const angle = (i / 8) * TAU + 0.2;
@@ -327,29 +385,44 @@
           panner.distanceModel = 'inverse';
           panner.refDistance = 1.2;
           panner.rolloffFactor = 0.55;
-          const d = (venue.distance[0] + venue.distance[1]) / 2;
-          setPosition(panner, Math.sin(angle) * d, -Math.cos(angle) * d);
+          const d = (near + farEdge) / 2;
+          // From far away the whole circle sits in front of you, in a narrow arc.
+          if (far) setPosition(panner, Math.sin(angle) * d * 0.28, -d);
+          else setPosition(panner, Math.sin(angle) * d, -Math.cos(angle) * d);
         } else {
           panner = typeof ctx.createStereoPanner === 'function' ? ctx.createStereoPanner() : ctx.createGain();
-          if (panner.pan) panner.pan.value = Math.sin(angle) * 0.8;
+          if (panner.pan) panner.pan.value = Math.sin(angle) * 0.8 * listener.width;
         }
         input.connect(panner).connect(nodes.bus);
         return { input, panner, angle };
       });
       state.clappers = Array.from({ length: venue.clappers }, (_, i) => {
-        const d = venue.distance[0] + (venue.distance[1] - venue.distance[0]) * rand();
+        const d = near + (farEdge - near) * rand();
         return {
           group: i % 8,
           bias: gauss(rand) * venue.spread * 0.6,
           jitter: venue.spread,
-          gain: (0.5 + rand() * 0.5) / Math.max(1, d * 0.55),
+          // Level falls with distance relative to the nearest clapper
+          gain: (0.5 + rand() * 0.5) * Math.pow(near / d, 0.7) * 0.8,
           // Nearest clappers land on the beat; the far side of the circle arrives a little later.
-          delay: (d - venue.distance[0]) / 343,
-          clap: Math.floor(rand() * claps.length),
+          delay: (d - near) / 343,
+          claps: personalClaps(d),
           stick: Math.floor(rand() * sticks.length),
           keen: 0.8 + rand() * 0.2,
         };
       });
+    }
+
+    // Everyone's hands sound a little different, and stay the same all night.
+    // Three takes each: a soft, an ordinary and a hard, brighter clap.
+    function personalClaps(distance) {
+      const hand = pickHands(rand);
+      const spec = HANDS[hand];
+      const freq = spec.f[0] + (spec.f[1] - spec.f[0]) * rand();
+      const q = spec.q[0] + (spec.q[1] - spec.q[0]) * rand();
+      return [0.75, 1, 1.3].map((brightness, i) => buildClap(ctx, rand, hand, {
+        freq: freq * (0.985 + i * 0.012 + rand() * 0.01), q, brightness, distance,
+      }));
     }
 
     function setPosition(panner, x, z) {
@@ -358,7 +431,7 @@
     }
 
     function setVenue(id, { ramp = 0.6 } = {}) {
-      if (!VENUES[id]) id = 'plot';
+      if (!VENUES[id]) id = 'outdoors';
       if (state.venue === id) return;
       const venue = VENUES[id];
       state.venue = id;
@@ -369,11 +442,10 @@
       if (next.venue !== id) { next.convolver.buffer = impulses[id]; next.venue = id; }
       next.gain.gain.cancelScheduledValues(t);
       prev.gain.gain.cancelScheduledValues(t);
-      next.gain.gain.setTargetAtTime(venue.wet, t, ramp / 3);
+      next.gain.gain.setTargetAtTime(venue.wet * listenerSpec().wet, t, ramp / 3);
       prev.gain.gain.setTargetAtTime(0, t, ramp / 3);
       state.activeVerb = 1 - state.activeVerb;
-      nodes.dry.gain.setTargetAtTime(venue.dry * venue.trim, t, ramp / 3);
-      nodes.send.gain.setTargetAtTime(venue.trim, t, ramp / 3);
+      applyMix(ramp);
       nodes.lowShelf.frequency.setTargetAtTime(venue.tone.lowShelf[0], t, ramp / 3);
       nodes.lowShelf.gain.setTargetAtTime(venue.tone.lowShelf[1], t, ramp / 3);
       nodes.mid.frequency.setTargetAtTime(venue.tone.mid[0], t, ramp / 3);
@@ -381,6 +453,29 @@
       nodes.mid.gain.setTargetAtTime(venue.tone.mid[2], t, ramp / 3);
       nodes.highShelf.frequency.setTargetAtTime(venue.tone.highShelf[0], t, ramp / 3);
       nodes.highShelf.gain.setTargetAtTime(venue.tone.highShelf[1], t, ramp / 3);
+      buildCircle();
+      applyBedLevels(ramp);
+    }
+
+    function applyMix(ramp = 0.6) {
+      const t = now();
+      const venue = venueSpec();
+      const listener = listenerSpec();
+      nodes.dry.gain.setTargetAtTime(venue.dry * venue.trim * listener.dry, t, ramp / 3);
+      nodes.send.gain.setTargetAtTime(venue.trim, t, ramp / 3);
+      nodes.near.gain.setTargetAtTime(venue.trim, t, ramp / 3);
+      nodes.distance.frequency.setTargetAtTime(listener.dryCut, t, ramp / 3);
+      nodes.sendTone.frequency.setTargetAtTime(listener.wetCut, t, ramp / 3);
+      const active = nodes.verbs[state.activeVerb];
+      active.gain.gain.setTargetAtTime(venue.wet * listener.wet, t, ramp / 3);
+    }
+
+    function setListener(id, { ramp = 0.8 } = {}) {
+      if (!LISTENERS[id]) id = 'circle';
+      if (state.listener === id) return;
+      state.listener = id;
+      if (!state.venue) return;
+      applyMix(ramp);
       buildCircle();
       applyBedLevels(ramp);
     }
@@ -401,7 +496,7 @@
       const tone = ctx.createBiquadFilter();
       tone.type = 'lowpass';
       tone.frequency.value = 12000;
-      gain.connect(tone).connect(nodes.bus);
+      gain.connect(tone).connect(role === 'courtyard-bed' ? nodes.near : nodes.bus);
       state.beds[role] = { buffer, gain, tone, source: null, drift: rand() * TAU };
       return state.beds[role];
     }
@@ -424,8 +519,8 @@
     function bedTargets() {
       const venue = venueSpec();
       return {
-        crowd: state.profile.crowd * (state.venue === 'hall' ? 0.34 : state.venue === 'sheri' ? 0.4 : 0.46),
-        night: state.profile.night * venue.night * 0.3,
+        crowd: state.profile.crowd * (state.venue === 'stadium' ? 0.34 : state.venue === 'sheri' ? 0.4 : 0.46) * (state.listener === 'far' ? 0.85 : 1),
+        night: state.profile.night * venue.night * (state.listener === 'far' ? 0.4 : 0.3),
       };
     }
 
@@ -436,7 +531,7 @@
       const night = state.beds['courtyard-bed'];
       if (crowd) {
         crowd.gain.gain.setTargetAtTime(state.running ? targets.crowd : 0, t, ramp / 3);
-        crowd.tone.frequency.setTargetAtTime(state.venue === 'plot' ? 7000 : state.venue === 'hall' ? 6000 : 9000, t, ramp / 3);
+        crowd.tone.frequency.setTargetAtTime(state.venue === 'outdoors' ? 7000 : state.venue === 'stadium' ? 6000 : 9000, t, ramp / 3);
       }
       if (night) night.gain.gain.setTargetAtTime(state.running ? targets.night : 0, t, ramp / 3);
       if (nodes.roomTone) nodes.roomTone.gain.gain.setTargetAtTime(state.running ? venueSpec().roomTone * (state.profile.crowd ? 1 : 0.6) : 0, t, ramp / 3);
@@ -461,7 +556,7 @@
       source.loop = true;
       const gain = ctx.createGain();
       gain.gain.value = 0;
-      source.connect(gain).connect(nodes.bus);
+      source.connect(gain).connect(nodes.near);
       source.start();
       nodes.roomTone = { source, gain };
     }
@@ -519,7 +614,6 @@
     function hitAt(time, beat) {
       const venue = venueSpec();
       const accent = beat % (PATTERNS[state.pattern]?.cycle || 1) === (PATTERNS[state.pattern]?.hits.slice(-1)[0] ?? 0) ? 1.12 : 1;
-      const bank = state.style === 'dandiya' ? sticks : claps;
       const amount = state.profile.claps;
       const players = state.style === 'dandiya' ? state.clappers.slice(0, Math.ceil(state.clappers.length * 0.45)) : state.clappers;
       for (const p of players) {
@@ -527,11 +621,14 @@
         // Personal timing, human spread, and the time the sound takes to cross the circle.
         const offset = p.bias + gauss(rand) * p.jitter + p.delay;
         const at = Math.max(now() + 0.005, time + offset);
+        // A harder clap is louder and brighter, so velocity picks the take.
+        const velocity = (0.82 + rand() * 0.36) * accent;
+        const take = velocity > 1.08 ? 2 : velocity < 0.92 ? 0 : 1;
         const source = ctx.createBufferSource();
-        source.buffer = bank[state.style === 'dandiya' ? p.stick : p.clap];
-        source.playbackRate.value = 0.96 + rand() * 0.08;
+        source.buffer = state.style === 'dandiya' ? sticks[p.stick] : p.claps[take];
+        source.playbackRate.value = 0.98 + rand() * 0.04;
         const gain = ctx.createGain();
-        gain.gain.value = p.gain * amount * accent * (state.style === 'dandiya' ? 0.75 : 0.5) * (0.85 + rand() * 0.3) * (30 / Math.max(12, venue.clappers));
+        gain.gain.value = p.gain * amount * velocity * (state.style === 'dandiya' ? 0.75 : 1.05) * (30 / Math.max(12, venue.clappers));
         source.connect(gain).connect(state.groups[p.group].input);
         source.start(at);
         source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* no-op */ } };
@@ -560,18 +657,21 @@
       }
       if (!state.profile.spatial) return;
       state.orbit += dt * 0.12;
-      const venue = venueSpec();
-      const d = (venue.distance[0] + venue.distance[1]) / 2;
+      const [near, farEdge] = range();
+      const d = (near + farEdge) / 2;
+      const far = state.listener === 'far';
       state.groups.forEach((g) => {
         if (!g.panner.positionX) return;
         const a = g.angle + state.orbit;
-        g.panner.positionX.setTargetAtTime(Math.sin(a) * d, now(), 0.2);
-        g.panner.positionZ.setTargetAtTime(-Math.cos(a) * d, now(), 0.2);
+        // Close up the circle turns around you; from far away it turns in front of you.
+        g.panner.positionX.setTargetAtTime(Math.sin(a) * d * (far ? 0.28 : 1), now(), 0.2);
+        g.panner.positionZ.setTargetAtTime(far ? -d - Math.cos(a) * (farEdge - near) * 0.3 : -Math.cos(a) * d, now(), 0.2);
       });
     }
 
     return {
       setVenue,
+      setListener,
       setLevel,
       setProfile,
       setStyle(style) { state.style = style === 'dandiya' ? 'dandiya' : 'claps'; },
@@ -585,11 +685,12 @@
       get tempo() { return state.tempo; },
       get running() { return state.running; },
       get venue() { return state.venue; },
+      get listener() { return state.listener; },
       get pattern() { return state.pattern; },
     };
   }
 
-  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, VENUES, PATTERNS, PREVIEW_BPM };
+  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, buildClap, HANDS, VENUES, LISTENERS, PATTERNS, PREVIEW_BPM };
 
   // ---------------------------------------------------------------------------
   // Player integration and panel
@@ -625,8 +726,8 @@
   })();
   const initialVenue = (() => {
     if (stored?.venue && VENUES[stored.venue]) return stored.venue;
-    if (stored?.environment === 'indoor') return 'hall';
-    return 'plot';
+    if (stored?.venue === 'hall' || stored?.environment === 'indoor') return 'stadium';
+    return 'outdoors';
   })();
 
   const state = {
@@ -635,6 +736,7 @@
     manifest: null,
     mode: initialMode,
     venue: initialVenue,
+    listener: LISTENERS[stored?.listener] ? stored.listener : 'circle',
     pattern: PATTERNS[stored?.pattern] ? stored.pattern : 'beat',
     level: clamp(Number(stored?.level ?? 0.45), 0.05, 1),
     taps: [],
@@ -654,7 +756,7 @@
 
   function persist() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, venue: state.venue, pattern: state.pattern, level: state.level }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, venue: state.venue, listener: state.listener, pattern: state.pattern, level: state.level }));
     } catch { /* storage unavailable */ }
   }
 
@@ -701,12 +803,13 @@
       .atmosphere-section-label{margin:14px 0 7px;font:600 10.5px/1.2 var(--sans,system-ui);letter-spacing:.06em;text-transform:uppercase;color:rgba(246,236,215,.55)}
       .atmosphere-modes,.atmosphere-venues,.atmosphere-patterns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
       .atmosphere-venues,.atmosphere-patterns{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .atmosphere-mode,.atmosphere-venue,.atmosphere-pattern{min-height:38px;padding:8px 8px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
-      .atmosphere-mode:hover,.atmosphere-venue:hover,.atmosphere-pattern:hover{background:rgba(246,236,215,.08)}
-      .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-pattern:active{transform:scale(.985)}
-      .atmosphere-mode[aria-pressed="true"],.atmosphere-venue[aria-pressed="true"],.atmosphere-pattern[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
-      .atmosphere-venue:disabled,.atmosphere-mode:disabled,.atmosphere-pattern:disabled,.atmosphere-tap:disabled{opacity:.32;cursor:default;pointer-events:none}
-      .atmosphere-venue-desc{margin:7px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62);min-height:34px}
+      .atmosphere-listeners{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+      .atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern{min-height:38px;padding:8px 8px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
+      .atmosphere-mode:hover,.atmosphere-venue:hover,.atmosphere-listener:hover,.atmosphere-pattern:hover{background:rgba(246,236,215,.08)}
+      .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-listener:active,.atmosphere-pattern:active{transform:scale(.985)}
+      .atmosphere-mode[aria-pressed="true"],.atmosphere-venue[aria-pressed="true"],.atmosphere-listener[aria-pressed="true"],.atmosphere-pattern[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
+      .atmosphere-venue:disabled,.atmosphere-listener:disabled,.atmosphere-mode:disabled,.atmosphere-pattern:disabled,.atmosphere-tap:disabled{opacity:.32;cursor:default;pointer-events:none}
+      .atmosphere-venue-desc,.atmosphere-listener-desc{margin:7px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62);min-height:34px}
       .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
       .atmosphere-beat{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
       .atmosphere-tap{width:64px;height:64px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:#fff;font:700 12px/1.1 var(--sans,system-ui);cursor:pointer;touch-action:manipulation;transition:transform 90ms ease,background 120ms ease}
@@ -791,6 +894,9 @@
       <div class="atmosphere-section-label">Venue</div>
       <div class="atmosphere-venues"></div>
       <p class="atmosphere-venue-desc" aria-live="polite"></p>
+      <div class="atmosphere-section-label">Where you are</div>
+      <div class="atmosphere-listeners"></div>
+      <p class="atmosphere-listener-desc" aria-live="polite"></p>
       <div class="atmosphere-section-label">Beat</div>
       <div class="atmosphere-beat">
         <button class="atmosphere-tap" type="button" aria-describedby="atmosphereTempo">Tap the beat</button>
@@ -828,6 +934,18 @@
       control.title = venue.desc;
       control.addEventListener('click', () => setVenue(id));
       venues.append(control);
+    }
+
+    const listeners = panel.querySelector('.atmosphere-listeners');
+    for (const [id, listener] of Object.entries(LISTENERS)) {
+      const control = document.createElement('button');
+      control.type = 'button';
+      control.className = 'atmosphere-listener';
+      control.dataset.listener = id;
+      control.textContent = listener.label;
+      control.title = listener.desc;
+      control.addEventListener('click', () => setListener(id));
+      listeners.append(control);
     }
 
     const patterns = panel.querySelector('.atmosphere-patterns');
@@ -899,6 +1017,7 @@
     state.tap = tap;
     state.tempoText = panel.querySelector('.atmosphere-tempo');
     state.venueDesc = panel.querySelector('.atmosphere-venue-desc');
+    state.listenerDesc = panel.querySelector('.atmosphere-listener-desc');
     state.status = panel.querySelector('.atmosphere-status');
     syncSliderFill();
     syncUi();
@@ -953,7 +1072,12 @@
       control.setAttribute('aria-pressed', String(control.dataset.pattern === state.pattern));
       control.disabled = state.mode === 'off' || !profile.claps;
     });
+    state.panel?.querySelectorAll('.atmosphere-listener').forEach((control) => {
+      control.setAttribute('aria-pressed', String(control.dataset.listener === state.listener));
+      control.disabled = state.mode === 'off';
+    });
     if (state.venueDesc) state.venueDesc.textContent = VENUES[state.venue].desc;
+    if (state.listenerDesc) state.listenerDesc.textContent = LISTENERS[state.listener].desc;
     if (state.tap) state.tap.disabled = state.mode === 'off' || !profile.claps;
     if (state.tempoText) state.tempoText.innerHTML = tempoLabel();
     if (state.slider) state.slider.disabled = state.mode === 'off';
@@ -977,6 +1101,7 @@
         reason,
         mode: state.mode,
         venue: state.venue,
+        listener: state.listener,
         pattern: state.pattern,
         bpm: state.engine?.tempo ? Math.round(state.engine.tempo.bpm) : null,
         level: state.level,
@@ -1028,6 +1153,7 @@
       state.engine = createEngine(state.context, { loadBed });
       state.engine.setLevel(state.level * 0.8, 0.01);
       state.engine.setVenue(state.venue, { ramp: 0.05 });
+      state.engine.setListener(state.listener, { ramp: 0.05 });
       state.engine.setPattern(state.pattern);
     }
     if (state.context.state !== 'running') {
@@ -1128,7 +1254,7 @@
     state.previewActive = true;
     syncUi();
     await buildScene({ smooth: true });
-    setStatus(`Testing ${MODES[state.mode].label} at ${VENUES[state.venue].label}.`);
+    setStatus(`Testing ${MODES[state.mode].label} at ${VENUES[state.venue].label}, ${LISTENERS[state.listener].label.toLowerCase()}.`);
     state.previewTimer = setTimeout(() => stopPreview({ announce: false }), 6000);
     dispatchChange('preview-started');
   }
@@ -1142,6 +1268,15 @@
     state.engine?.setVenue(id);
     syncUi();
     dispatchChange('venue');
+  }
+
+  function setListener(id) {
+    if (!LISTENERS[id]) return;
+    state.listener = id;
+    persist();
+    state.engine?.setListener(id);
+    syncUi();
+    dispatchChange('listener');
   }
 
   function setPattern(id) {
@@ -1235,7 +1370,7 @@
   function trustedPlaybackUnlock(event) {
     if (!event.isTrusted || state.mode === 'off') return;
     const target = event.target instanceof Element ? event.target : null;
-    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,.atmosphere-venue,.atmosphere-tap,#atmosphereLevel,.atmosphere-test')) return;
+    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-tap,#atmosphereLevel,.atmosphere-test')) return;
     ensureContext().then((ready) => { if (ready) requestAnimationFrame(syncPlaybackState); });
   }
 
@@ -1290,6 +1425,8 @@
     set mode(value) { void setMode(value); },
     get venue() { return state.venue; },
     set venue(value) { setVenue(value); },
+    get listener() { return state.listener; },
+    set listener(value) { setListener(value); },
     get pattern() { return state.pattern; },
     get bpm() { return state.engine?.tempo ? state.engine.tempo.bpm : null; },
     get level() { return state.level; },
@@ -1310,6 +1447,7 @@
     get spatialModel() { return state.mode === 'immersive' ? 'HRTF' : 'stereo'; },
     setMode,
     setVenue,
+    setListener,
     setPattern,
     tap: registerTap,
     preview() { return previewCurrentMode(); },

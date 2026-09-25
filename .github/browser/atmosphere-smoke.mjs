@@ -94,8 +94,11 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
 
     await page.locator('.atmosphere-mode[data-mode="crowd"]').click();
     await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'crowd', `${name}: Crowd mode did not apply`);
-    await page.locator('.atmosphere-venue[data-venue="hall"]').click();
-    await waitFor(page, () => window.GARBA_ATMOSPHERE?.venue === 'hall', `${name}: Hall venue did not apply`);
+    await page.locator('.atmosphere-venue[data-venue="stadium"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.venue === 'stadium', `${name}: Indoor stadium venue did not apply`);
+    assert.equal(await page.locator('.atmosphere-listener').count(), 2, `${name}: two listening positions must be offered`);
+    await page.locator('.atmosphere-listener[data-listener="far"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.listener === 'far', `${name}: Far away position did not apply`);
     assert.equal(await page.locator('.atmosphere-tap').isDisabled(), true, `${name}: Crowd mode has no claps, so Tap must be disabled`);
     assert.equal(await slider.isDisabled(), false, `${name}: enabled mode must enable intensity`);
     assert.equal(await test.getAttribute('aria-pressed'), 'false', `${name}: selecting a mode must not auto-start Test`);
@@ -142,6 +145,7 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
     assert.ok(reasons.includes('play'), `${name}: playback handoff event missing`);
     assert.ok(reasons.includes('pause'), `${name}: pause event missing`);
     assert.ok(reasons.includes('venue'), `${name}: venue event missing`);
+    assert.ok(reasons.includes('listener'), `${name}: listener event missing`);
     assert.ok(reasons.includes('tempo'), `${name}: tempo event missing`);
 
     await page.keyboard.press('Escape');
