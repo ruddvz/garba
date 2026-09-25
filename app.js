@@ -5,6 +5,7 @@ import './assets/runtime/live-station.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 import { initMorphicons } from './assets/runtime/morphicons.js';
 import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
+import { createCircleController } from './assets/runtime/garba-circle-controller.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -94,6 +95,7 @@ const els = {
   playButton: $('playButton'),
   shuffleButton: $('shuffleButton'),
   liveStationButton: $('liveStationButton'),
+  circleButton: $('circleButton'),
   prevButton: $('prevButton'),
   nextButton: $('nextButton'),
   progress: $('progress'),
@@ -453,6 +455,12 @@ function updateUrl() {
   url.searchParams.delete('source');
   url.searchParams.delete('library');
 
+  // A circle link is the whole listening context: it replaces the song, genre and time.
+  if (circle.code) {
+    for (const key of ['song', 'genre', 'release', 't']) url.searchParams.delete(key);
+    url.searchParams.set('circle', circle.code);
+  } else url.searchParams.delete('circle');
+
   const search = url.searchParams.toString();
   const next = `${url.pathname}${search ? `?${search}` : ''}${url.hash}`;
   const current = `${location.pathname}${location.search}${location.hash}`;
@@ -592,10 +600,13 @@ function renderPlayer() {
     els.app.dataset.liveMode = 'true';
     els.liveStationButton?.setAttribute('aria-pressed', 'true');
   } else {
-    els.genreEyebrow.textContent = genre.label;
+    els.genreEyebrow.textContent = circle.active ? circle.eyebrow() : genre.label;
     els.app.removeAttribute('data-live-mode');
     els.liveStationButton?.setAttribute('aria-pressed', 'false');
   }
+  if (circle.active) els.app.dataset.circleMode = 'true';
+  else els.app.removeAttribute('data-circle-mode');
+  els.circleButton?.setAttribute('aria-pressed', String(circle.active));
   els.shuffleButton?.setAttribute('aria-pressed', String(state.shuffleMode));
   els.songTitle.textContent = song.title;
   els.songTitle.dataset.songId = song.id;
@@ -693,6 +704,8 @@ async function selectSong(songId, options = {}) {
   if (!options.preserveReleaseContext && !options.initial) clearReleaseContext();
   if (options.liveMode) state.liveMode = true;
   else if (!options.preserveContext && !options.initial) state.liveMode = false;
+  if (options.circleMode) state.liveMode = false;
+  else if (!options.initial) circle.leave();
 
   const previousSongId = state.songId;
   if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
@@ -1159,6 +1172,7 @@ async function toggleLiveStation() {
     showToast('24/7 Live Radio is tuning in...');
     return;
   }
+  circle.leave({ quiet: true });
 
   state.liveMode = true;
   els.app.dataset.liveMode = 'true';
@@ -1186,6 +1200,11 @@ async function toggleLiveStation() {
 }
 
 function changeSong(direction) {
+  if (circle.active) {
+    circle.handleChangeSong();
+    return;
+  }
+
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
     if (previousId) {
@@ -1286,6 +1305,25 @@ function changeSong(direction) {
   let index = list.findIndex((song) => song.id === anchorId);
   index = index < 0 ? 0 : (index + direction + list.length) % list.length;
   selectSong(list[index].id, { keepSheet: true, preservePlayback: true });
+}
+
+// Circle playback: position the YouTube player first, then switch the visible song in the same
+// synchronous turn (no swap animation). The YouTube runtime reopens whatever song the title shows
+// when the title re-renders, so the two must never disagree, even for one animation frame.
+async function playCircleSong(song, offsetSeconds) {
+  window.GARBA_YOUTUBE_PLAYER?.openAt?.(song, offsetSeconds).catch(() => {});
+  if (song.id === state.songId) {
+    state.elapsed = offsetSeconds;
+    renderPlayer();
+    return;
+  }
+  await selectSong(song.id, { circleMode: true, keepSheet: true, preservePlayback: false, restoreElapsed: offsetSeconds, animate: false });
+}
+
+function circleHostElapsedSeconds() {
+  const player = window.GARBA_YOUTUBE_PLAYER;
+  const elapsed = player?.activeSongId === state.songId ? player.elapsedSeconds : null;
+  return Number.isFinite(elapsed) ? elapsed : state.elapsed;
 }
 
 function cycleSheetSnap(direction = 1) {
@@ -1715,6 +1753,7 @@ function wireEvents() {
 
   els.shuffleButton?.addEventListener('click', toggleShuffle);
   els.liveStationButton?.addEventListener('click', toggleLiveStation);
+  els.circleButton?.addEventListener('click', () => circle.toggle());
 
   document.addEventListener('keydown', (event) => {
     if (event.target instanceof HTMLInputElement) return;
@@ -1977,6 +2016,15 @@ async function init() {
     state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
     state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
+    const circleCode = new URLSearchParams(location.search).get('circle');
+    const circleStart = circleCode ? circle.prepareJoin(circleCode) : null;
+    if (circleCode) initial.hasInitialExplicitNavigation = true;
+    if (circleStart) {
+      initial.song = circleStart.song;
+      initial.genre = state.genres.find((entry) => entry.id === circleStart.song.genre) || initial.genre;
+      initial.elapsed = circleStart.offsetSeconds;
+      initial.releaseContextId = null;
+    }
     state.hasExplicitNavigation = initial.hasInitialExplicitNavigation;
 
     state.genreId = initial.genre.id;
@@ -2158,6 +2206,20 @@ window.addEventListener('garba:playback-state-change', (event) => {
   setPlaying(playing);
 });
 
+const circle = createCircleController({
+  songs: () => state.songs,
+  currentSong,
+  hostElapsedSeconds: circleHostElapsedSeconds,
+  playCircleSong,
+  showToast,
+  onChange: () => {
+    if (circle.code) state.hasExplicitNavigation = true;
+    renderPlayer();
+    updateUrl();
+  },
+  trigger: () => els.circleButton,
+});
+
 applyExploreHandoff();
 placeFavourite();
 syncSheetChrome();
@@ -2172,6 +2234,7 @@ init();
 window.GARBA_APP = Object.freeze({
   getCurrentSong: () => currentSong(),
   getState: () => state,
+  getCircle: () => circle.diagnostics(),
 });
 
 window.GARBA_SHARE = Object.freeze({
