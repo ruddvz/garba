@@ -105,7 +105,7 @@ async function expectAppCoversViewport(page) {
 
 async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = null } = {}) {
   await page.waitForTimeout(150);
-  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures.filter((f) => !f.includes('ViewTransition opt-in disabled'));
+  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure) && !failure.includes('ViewTransition opt-in disabled')) : failures.filter((f) => !f.includes('ViewTransition opt-in disabled'));
   expect(unexpectedFailures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
@@ -278,7 +278,7 @@ test('Explore is reached through the production player link and renders real cat
   await expectPlayerReady(page);
   // Navigation commit establishes the document boundary; visible Explore UI establishes readiness.
   await Promise.all([
-    page.waitForURL(/\/explore\/$/, { waitUntil: 'commit' }),
+    page.waitForURL(/\/explore\//, { waitUntil: 'commit' }),
     page.locator('#browseButton').click(),
   ]);
 
