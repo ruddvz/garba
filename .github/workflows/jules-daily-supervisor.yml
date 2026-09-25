@@ -27,7 +27,7 @@ jobs:
           echo "$EOF" >> $GITHUB_ENV
 
       - name: Create Supervisor Issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
