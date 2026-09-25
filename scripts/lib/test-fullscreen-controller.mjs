@@ -313,7 +313,6 @@ assert.equal(VERSION, 1);
   const policyPath = require.resolve('../../src/navigation/fullscreen-policy.js');
   const controllerPath = require.resolve('../../src/navigation/fullscreen-controller.js');
 
-  // Create a clean require cache for the controller so it uses our mocked policy
   const originalPolicy = require.cache[policyPath];
   const originalController = require.cache[controllerPath];
 
@@ -343,7 +342,6 @@ assert.equal(VERSION, 1);
   assert.equal(result.status, 'unavailable');
   assert.equal(result.reason, 'fullscreen-action-invalid');
 
-  // Restore
   require.cache[policyPath] = originalPolicy;
   require.cache[controllerPath] = originalController;
 }
