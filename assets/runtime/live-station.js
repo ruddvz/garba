@@ -7,35 +7,41 @@
 const DEFAULT_SONG_DURATION = 180;
 
 /**
+ * True when a song has a verified, playable YouTube route that the live schedule can use.
+ * Shared with Garba Circle so both modes agree on what is playable.
+ */
+export function isLivePlayable(s) {
+  if (!s || !s.id) return false;
+  if (s.audioUrl) return false;
+  if (s.playbackSearchOnly) return false;
+  if (s.playbackSourceType === 'verified-release-track-reference' || s.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
+
+  // Must have a verified, playable YouTube route with valid video ID
+  const explicit = String(s.youtubeId || '').trim();
+  if (explicit) return true;
+
+  const provider = String(s.playbackProvider || '').toLowerCase();
+  const sourceUrl = String(s.playbackSourceUrl || '');
+  const isYouTube = provider === 'youtube' || /youtu(?:\.be|be\.com)/i.test(sourceUrl);
+  if (!isYouTube) return false;
+
+  try {
+    const url = new URL(sourceUrl);
+    if (url.hostname.toLowerCase().endsWith('youtu.be')) return Boolean(url.pathname.split('/').filter(Boolean)[0]);
+    if (url.searchParams.get('v')) return Boolean(url.searchParams.get('v').trim());
+    const parts = url.pathname.split('/').filter(Boolean);
+    const marker = parts.findIndex((p) => p === 'embed' || p === 'shorts');
+    return marker >= 0 && Boolean(parts[marker + 1]?.trim());
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Filter and deterministically sequence playable songs into a balanced 24/7 radio rotation
  */
 export function buildLiveSchedule(songs = []) {
-  const playable = (songs || []).filter((s) => {
-    if (!s || !s.id) return false;
-    if (s.audioUrl) return false;
-    if (s.playbackSearchOnly) return false;
-    if (s.playbackSourceType === 'verified-release-track-reference' || s.playbackSourceType === 'verified-unchaptered-youtube-release') return false;
-
-    // Must have a verified, playable YouTube route with valid video ID
-    const explicit = String(s.youtubeId || '').trim();
-    if (explicit) return true;
-
-    const provider = String(s.playbackProvider || '').toLowerCase();
-    const sourceUrl = String(s.playbackSourceUrl || '');
-    const isYouTube = provider === 'youtube' || /youtu(?:\.be|be\.com)/i.test(sourceUrl);
-    if (!isYouTube) return false;
-
-    try {
-      const url = new URL(sourceUrl);
-      if (url.hostname.toLowerCase().endsWith('youtu.be')) return Boolean(url.pathname.split('/').filter(Boolean)[0]);
-      if (url.searchParams.get('v')) return Boolean(url.searchParams.get('v').trim());
-      const parts = url.pathname.split('/').filter(Boolean);
-      const marker = parts.findIndex((p) => p === 'embed' || p === 'shorts');
-      return marker >= 0 && Boolean(parts[marker + 1]?.trim());
-    } catch {
-      return false;
-    }
-  });
+  const playable = (songs || []).filter(isLivePlayable);
 
   if (!playable.length) return [];
 
@@ -151,6 +157,7 @@ export function getNextLiveTrack(songs = [], currentSongId) {
 
 if (typeof window !== 'undefined') {
   window.GARBA_LIVE_STATION = {
+    isLivePlayable,
     buildLiveSchedule,
     getLiveBroadcastState,
     getNextLiveTrack,
