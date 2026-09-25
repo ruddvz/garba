@@ -180,6 +180,31 @@ test('HMAC pseudonyms are deterministic, scoped and bounded', async () => {
   assert.notEqual(a, 'same')
 })
 
+test('HMAC pseudonyms handle empty and invalid inputs gracefully', async () => {
+  assert.equal(await hmacPseudonym('secret', ''), null)
+  assert.equal(await hmacPseudonym('secret', null), null)
+  assert.equal(await hmacPseudonym('secret', undefined), null)
+  assert.equal(await hmacPseudonym('secret', 123), null)
+  assert.equal(await hmacPseudonym('secret', {}), null)
+
+  await assert.rejects(
+    async () => hmacPseudonym('', 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(null, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(undefined, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(123, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+})
+
 test('storage data points stay within Analytics Engine field limits', async () => {
   const event = validateEvent(baseEvent(), { nowMs: NOW })
   const stored = await normaliseForStorage(event, { PGA_HMAC_SECRET: 'secret' }, { country: 'IN', region: 'GJ', device: 'mobile', os: 'iOS', browser: 'Safari', bot: false }, NOW)
