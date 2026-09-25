@@ -133,11 +133,13 @@ export async function handleIngest(request, env, options = {}) {
 
   const edge = normalizeEdgeDimensions(request)
   try {
-    for (const event of events) {
-      const stored = await normaliseForStorage(event, env, edge, options.nowMs ?? Date.now())
-      if (event.eventName === PRESENCE_EVENT) env.PRESENCE.writeDataPoint(presenceDataPoint(stored))
-      else env.EVENTS.writeDataPoint(eventDataPoint(stored))
-    }
+    await Promise.all(
+      events.map(async (event) => {
+        const stored = await normaliseForStorage(event, env, edge, options.nowMs ?? Date.now())
+        if (event.eventName === PRESENCE_EVENT) env.PRESENCE.writeDataPoint(presenceDataPoint(stored))
+        else env.EVENTS.writeDataPoint(eventDataPoint(stored))
+      })
+    )
   } catch (error) {
     console.error('pga_ingest_write_failed', {
       reason: error instanceof Error ? error.message : 'unknown',
