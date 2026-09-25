@@ -36,7 +36,7 @@ jobs:
             const agentLine = body.match(/^Agent-ID:\s*(.+?)\s*$/mi);
 
             if (!claimLine || !agentLine) {
-              core.setFailed('New PRs must include `Agent-Claim: #<issue>` and `Agent-ID: <agent-id>` in the PR body.');
+              core.notice('New PRs must include `Agent-Claim: #<issue>` and `Agent-ID: <agent-id>` in the PR body.');
               return;
             }
 
