@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0605">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex">
+  <title>Garbo Player Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="garbo.css">
+</head>
+<body>
+  <!--
+    Standalone prototype for the Garbo player direction (issue #1649).
+    Playback is simulated with a clock. Titles, artists, releases, durations and Nonstop
+    chapters come from sample.json, which scripts/lib/build-garbo-prototype-data.mjs
+    copies from the canonical catalogue. Nothing here is loaded by the production player.
+  -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="mark" viewBox="0 0 32 32">
+        <path d="M16 2.6c1.9 2.1 2.2 4 .1 6-2.2-2-1.9-3.9-.1-6Z" fill="#e8a33d"/>
+        <path d="M10.2 10h11.6" stroke="#d6b06f" stroke-width="2" stroke-linecap="round"/>
+        <path d="M9.4 12.3c-1.9 1.4-3 3.6-3 6.3 0 5.7 4.3 10.4 9.6 10.4s9.6-4.7 9.6-10.4c0-2.7-1.1-4.9-3-6.3Z" fill="#d6b06f"/>
+        <path d="M13.8 15.4v7.8l6.4-3.9Z" fill="#3a1712"/>
+        <circle cx="10.4" cy="18.6" r="1" fill="#3a1712"/><circle cx="21.8" cy="21.7" r="1" fill="#3a1712"/><circle cx="11.6" cy="23.6" r="1" fill="#3a1712"/><circle cx="16" cy="26.2" r="1" fill="#3a1712"/>
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5.6c0-1 1.1-1.6 1.9-1.1l9.6 6.4c.8.5.8 1.7 0 2.2l-9.6 6.4c-.8.5-1.9-.1-1.9-1.1Z"/></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24"><rect fill="currentColor" x="6.5" y="5" width="4" height="14" rx="1.2"/><rect fill="currentColor" x="13.5" y="5" width="4" height="14" rx="1.2"/></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" d="M6.5 5.5a1 1 0 0 1 2 0v13a1 1 0 0 1-2 0Zm12.2.2c.7-.5 1.8 0 1.8.9v10.8c0 .9-1.1 1.4-1.8.9L10.9 13a1.2 1.2 0 0 1 0-2Z"/></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" d="M17.5 5.5a1 1 0 0 0-2 0v13a1 1 0 0 0 2 0ZM5.3 5.7c-.7-.5-1.8 0-1.8.9v10.8c0 .9 1.1 1.4 1.8.9l7.8-5.3a1.2 1.2 0 0 0 0-2Z"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></g></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></g></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"/></symbol>
+      <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M16 4h4v4M4 19 20 4M20 16v4h-4M14.5 14.5 20 20M4 5l5 5"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
+      <symbol id="i-offline" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 4-2.4M19 12.9a10 10 0 0 0-3.2-2.1M2 9.3a15 15 0 0 1 4.3-2.8M22 9.3A15 15 0 0 0 11 5.1"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></symbol>
+    </defs>
+  </svg>
+
+  <canvas id="scene" aria-hidden="true"></canvas>
+
+  <div class="app" id="app" data-state="ember">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="PlayGarba"><svg aria-hidden="true"><use href="#mark"/></svg><span>PlayGarba</span></a>
+      <nav class="tools" aria-label="Player tools">
+        <button class="ib" id="searchBtn" type="button" aria-label="Search songs"><svg><use href="#i-search"/></svg></button>
+        <button class="ib" id="tonightBtn" type="button" aria-label="Tonight"><svg><use href="#i-moon"/></svg></button>
+        <button class="ib" id="moreBtn" type="button" aria-label="More"><svg><use href="#i-more"/></svg></button>
+      </nav>
+    </header>
+
+    <main class="stage" id="main">
+      <div class="lamp-slot" id="lampSlot">
+        <button class="lamp-hit" id="lampHit" type="button" aria-label="Light the garbo to play"></button>
+        <input class="ring-seek" id="ringSeek" type="range" min="0" max="1000" value="0" aria-label="Seek">
+      </div>
+      <p class="hint" id="hint" aria-live="polite">Tap the garbo to light it</p>
+
+      <section class="np" id="np" aria-live="polite" aria-atomic="true" aria-label="Now playing">
+        <span class="eyebrow" id="eyebrow">Traditional Garba</span>
+        <h1 class="title" id="title">Aavi Nav Navratri Re</h1>
+        <p class="artist" id="artist">Kinjal Dave</p>
+        <p class="from" id="from">From Killol 2.0</p>
+      </section>
+
+      <div class="time" id="time"><span id="elapsed">0:00</span><span class="time-sep" aria-hidden="true">·</span><span id="duration">2:15</span></div>
+
+      <section class="transport" aria-label="Playback controls">
+        <button class="tb quiet" id="shuffleBtn" type="button" aria-label="Shuffle" aria-pressed="false"><svg><use href="#i-shuffle"/></svg></button>
+        <button class="tb" id="prevBtn" type="button" aria-label="Previous"><svg><use href="#i-prev"/></svg></button>
+        <button class="pp" id="playBtn" type="button" aria-label="Play"><svg class="i-pl"><use href="#i-play"/></svg><svg class="i-pz"><use href="#i-pause"/></svg><span class="pp-ring" aria-hidden="true"></span></button>
+        <button class="tb" id="nextBtn" type="button" aria-label="Next"><svg><use href="#i-next"/></svg></button>
+        <button class="tb quiet" id="heartBtn" type="button" aria-label="Save to My Garba" aria-pressed="false"><svg><use href="#i-heart"/></svg></button>
+      </section>
+
+      <nav class="dial" id="dial" aria-label="Genres"><div class="dial-track" id="dialTrack"></div></nav>
+
+      <footer class="foot">
+        <button class="live" id="liveBtn" type="button" aria-pressed="false"><i aria-hidden="true"></i>24/7 Live</button>
+        <button class="explore" id="exploreBtn" type="button">Explore<svg aria-hidden="true"><use href="#i-chev"/></svg></button>
+        <button class="yt" id="videoBtn" type="button" aria-label="Show YouTube video"><svg aria-hidden="true"><use href="#i-yt"/></svg><span>YouTube</span></button>
+      </footer>
+    </main>
+
+    <div class="offline-bar" id="offlineBar" hidden><svg aria-hidden="true"><use href="#i-offline"/></svg>You're offline. Playback resumes when you're back online.</div>
+  </div>
+
+  <!-- Sheets -->
+  <div class="scrim" id="scrim" hidden></div>
+
+  <section class="sheet" id="exploreSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="exploreTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head mirror-head">
+      <canvas class="mirrors" id="mirrorBand" aria-hidden="true"></canvas>
+      <h2 id="exploreTitle">Explore</h2>
+      <button class="ib" type="button" data-close aria-label="Close Explore"><svg><use href="#i-close"/></svg></button>
+    </header>
+    <label class="search"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" enterkeyhint="search" aria-label="Search songs or artists"></label>
+    <div class="tabs" role="tablist" aria-label="Browse">
+      <button role="tab" id="tabSongs" aria-selected="true" aria-controls="panelSongs" type="button">Songs</button>
+      <button role="tab" id="tabNonstop" aria-selected="false" aria-controls="panelNonstop" type="button" tabindex="-1">Nonstop</button>
+      <button role="tab" id="tabSteps" aria-selected="false" aria-controls="panelSteps" type="button" tabindex="-1">By step</button>
+    </div>
+    <div class="sheet-body">
+      <div role="tabpanel" id="panelSongs" aria-labelledby="tabSongs"><div class="chips" id="genreChips"></div><ul class="rows" id="songRows"></ul></div>
+      <div role="tabpanel" id="panelNonstop" aria-labelledby="tabNonstop" hidden><ul class="rows" id="setRows"></ul></div>
+      <div role="tabpanel" id="panelSteps" aria-labelledby="tabSteps" hidden>
+        <p class="note">Garba is danced in steps, and each step has its own clap pattern. Songs will show up here once people who know them add step tags. PlayGarba doesn't guess these.</p>
+        <ul class="steps" id="stepRows"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="tonightSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="tonightTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="tonightTitle">Tonight</h2><button class="ib" type="button" data-close aria-label="Close Tonight"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body">
+      <p class="lead">A Garba night has a shape. Tonight plays a night in five parts, one after another.</p>
+      <svg class="arc" id="nightArc" viewBox="0 0 340 150" role="img" aria-labelledby="arcDesc"><desc id="arcDesc">The five parts of tonight, from 9 pm to 1 am.</desc></svg>
+      <ol class="night" id="nightList"></ol>
+      <p class="note">Today the night is built from genres and Nonstop sets in the catalogue. Once songs carry step tags, it can move from Be tali through Tran tali and Hinch to Dodhiyu.</p>
+      <button class="primary" id="startTonight" type="button">Start tonight</button>
+    </div>
+  </section>
+
+  <section class="sheet" id="moreSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="moreTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="moreTitle">More</h2><button class="ib" type="button" data-close aria-label="Close More"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body">
+      <ul class="menu">
+        <li><button type="button" id="shareOpen">Share this song<span>Makes a card with the lit garbo</span></button></li>
+        <li><button type="button" id="aboutOpen">What is Garba?<span>The lamp, the circle and the nine nights</span></button></li>
+        <li><button type="button" id="installBtn">Install PlayGarba<span>Keep the player one tap away</span></button></li>
+        <li><button type="button" id="atmoBtn">Atmosphere<span>Courtyard sounds around the music</span></button></li>
+      </ul>
+      <h3 class="sub">Prototype states</h3>
+      <p class="note">Jump to any state the player can be in. These only exist in the prototype.</p>
+      <div class="states" id="stateGrid"></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="shareSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="shareTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="shareTitle">Share</h2><button class="ib" type="button" data-close aria-label="Close Share"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body share-body">
+      <canvas class="card" id="shareCard" width="1080" height="1350" role="img" aria-label="Share card preview"></canvas>
+      <button class="primary" id="shareGo" type="button">Share card</button>
+    </div>
+  </section>
+
+  <section class="sheet" id="videoSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="videoTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="videoTitle">YouTube video</h2><button class="ib" type="button" data-close aria-label="Close video"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body">
+      <div class="video-frame"><svg aria-hidden="true"><use href="#i-yt"/></svg><span>The YouTube player for this recording opens here, at full visible size.</span></div>
+      <p class="note">Music plays through YouTube's official player, which stays visible whenever it's open. Closing this keeps the music going.</p>
+    </div>
+  </section>
+
+  <!-- Pachedi editorial page -->
+  <section class="about" id="aboutPage" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="aboutTitle" hidden>
+    <div class="about-border" aria-hidden="true"><span class="b-top"></span><span class="b-bottom"></span><span class="b-left"></span><span class="b-right"></span></div>
+    <div class="about-inner">
+      <button class="ib about-close" type="button" data-close aria-label="Back to player"><svg><use href="#i-close"/></svg></button>
+      <span class="about-kicker">PlayGarba guide</span>
+      <h2 id="aboutTitle">What is Garba?</h2>
+      <p class="about-gu" lang="gu">ગરબો</p>
+      <div class="about-cols">
+        <div><h3>The lamp</h3><p>The word comes from <i>garbha deep</i>, a lamp inside a clay pot. The pot is perforated, so the light shines out through its holes. It is placed at the centre of the dance.</p></div>
+        <div><h3>The circle</h3><p>Dancers move around the lamp or an image of the goddess in a counterclockwise circle. The circle can grow ring by ring as more people join.</p></div>
+        <div><h3>The steps</h3><p>Garba is danced in named steps. Be tali has two claps and Tran tali has three. Hinch, Dodhiyu and Popatiyu each have their own movement.</p></div>
+        <div><h3>The nights</h3><p>Garba is danced through the nine nights of Navratri, devoted to the Mother Goddess. It is also danced at weddings and other celebrations through the year.</p></div>
+      </div>
+      <p class="about-note">This page uses a block-printed border inspired by Mata ni Pachedi, the temple cloth of Ahmedabad's Devipujak community. The final artwork should be commissioned from a Pachedi artisan family and credited.</p>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="scene.js"></script>
+  <script src="garbo.js"></script>
+</body>
+</html>
