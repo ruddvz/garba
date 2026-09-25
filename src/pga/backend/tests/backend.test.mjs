@@ -302,6 +302,25 @@ test('ingestion fails closed when the browser rate limit is exceeded', async () 
   assert.equal(response.status, 429)
 })
 
+
+test('Access verifier rejects missing environment configuration', async () => {
+  const fixture = await accessFixture()
+  const result1 = await verifyAccessJwt(fixture.request, {}, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result1, { ok: false, reason: 'access_config_missing' })
+
+  const result2 = await verifyAccessJwt(fixture.request, { TEAM_DOMAIN: fixture.env.TEAM_DOMAIN }, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result2, { ok: false, reason: 'access_config_missing' })
+})
+
+test('Access verifier rejects malformed JWTs', async () => {
+  const env = { TEAM_DOMAIN: 'https://example.cloudflareaccess.com', POLICY_AUD: 'pga-aud' }
+  const req1 = new Request('https://pga.playgarba.com/api/home', { headers: { 'cf-access-jwt-assertion': 'not.a.jwt' } })
+  assert.deepEqual(await verifyAccessJwt(req1, env), { ok: false, reason: 'malformed_access_jwt' })
+
+  const req2 = new Request('https://pga.playgarba.com/api/home', { headers: { 'cf-access-jwt-assertion': 'a.b.c' } })
+  assert.deepEqual(await verifyAccessJwt(req2, env), { ok: false, reason: 'malformed_access_jwt' })
+})
+
 test('Access verifier denies missing JWT assertions', async () => {
   const result = await verifyAccessJwt(new Request('https://pga.playgarba.com/api/home'), {
     TEAM_DOMAIN: 'https://example.cloudflareaccess.com',
@@ -316,6 +335,27 @@ test('Access verifier validates a signed RS256 application assertion against the
   assert.equal(result.ok, true)
   assert.equal(result.payload.sub, 'founder')
   assert.equal(result.payload.type, 'app')
+})
+
+
+test('Access verifier rejects tokens with unsupported algorithms or missing Key IDs', async () => {
+  const env = { TEAM_DOMAIN: 'https://example.cloudflareaccess.com', POLICY_AUD: 'pga-aud' }
+  const payloadBase64 = Buffer.from(JSON.stringify({ iss: env.TEAM_DOMAIN, aud: [env.POLICY_AUD] })).toString('base64url')
+
+  const headerHS256 = Buffer.from(JSON.stringify({ alg: 'HS256', kid: 'test-key' })).toString('base64url')
+  const req1 = new Request('https://pga.playgarba.com', { headers: { 'cf-access-jwt-assertion': `${headerHS256}.${payloadBase64}.signature` } })
+  assert.deepEqual(await verifyAccessJwt(req1, env), { ok: false, reason: 'unsupported_access_jwt' })
+
+  const headerNoKid = Buffer.from(JSON.stringify({ alg: 'RS256' })).toString('base64url')
+  const req2 = new Request('https://pga.playgarba.com', { headers: { 'cf-access-jwt-assertion': `${headerNoKid}.${payloadBase64}.signature` } })
+  assert.deepEqual(await verifyAccessJwt(req2, env), { ok: false, reason: 'unsupported_access_jwt' })
+})
+
+test('Access verifier rejects tokens that are not yet valid', async () => {
+  const futureNbf = Math.floor(NOW / 1000) + 60
+  const fixture = await accessFixture('/api/live', { nbf: futureNbf })
+  const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'not_yet_valid' })
 })
 
 test('Access verifier rejects signed non-application token classes', async () => {
@@ -348,6 +388,40 @@ test('Access verifier preserves issuer, audience and expiry rejection precedence
     await verifyAccessJwt(expired.request, expired.env, { nowMs: NOW, fetchImpl: expired.fetchImpl }),
     { ok: false, reason: 'expired' },
   )
+})
+
+
+test('Access verifier rejects tokens signed with unknown keys', async () => {
+  const fixture = await accessFixture()
+  const originalToken = fixture.request.headers.get('cf-access-jwt-assertion')
+  const parts = originalToken.split('.')
+  const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'))
+  header.kid = 'unknown-key'
+  const newHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
+  const modifiedToken = `${newHeader}.${parts[1]}.${parts[2]}`
+  const request = new Request('https://pga.playgarba.com/api/live', { headers: { 'cf-access-jwt-assertion': modifiedToken } })
+
+  const result = await verifyAccessJwt(request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'unknown_signing_key' })
+})
+
+test('Access verifier rejects tokens with invalid signatures', async () => {
+  const fixture = await accessFixture()
+  const originalToken = fixture.request.headers.get('cf-access-jwt-assertion')
+  const parts = originalToken.split('.')
+  const modifiedToken = `${parts[0]}.${parts[1]}.invalidsignature`
+  const request = new Request('https://pga.playgarba.com/api/live', { headers: { 'cf-access-jwt-assertion': modifiedToken } })
+
+  const result = await verifyAccessJwt(request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'invalid_signature' })
+})
+
+test('Access verifier fails safely on JWKS fetch errors', async () => {
+  const fixture = await accessFixture()
+  const fetchImpl = async () => { throw new Error('Network error') }
+
+  const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'access_verification_failed' })
 })
 
 test('protected Live API returns aggregate data with no-store caching', async () => {
