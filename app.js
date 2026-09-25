@@ -1288,19 +1288,6 @@ function changeSong(direction) {
   selectSong(list[index].id, { keepSheet: true, preservePlayback: true });
 }
 
-function cycleSheetSnap(direction = 1) {
-  if (!mobileQuery.matches) return;
-  const order = ['collapsed', 'medium', 'full'];
-  if (state.sheetSnap === 'closed') {
-    setSheetSnap('medium');
-    renderSheet();
-    return;
-  }
-  const index = order.indexOf(state.sheetSnap);
-  const next = Math.max(0, Math.min(order.length - 1, index + direction));
-  setSheetSnap(order[next]);
-}
-
 function setupSheetGestures() {
   let startY = null;
   let pointerId = null;

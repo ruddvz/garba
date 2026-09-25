@@ -20,10 +20,6 @@ const staticChecks = [
     'openSheet updates sheetSnap to open state before rendering sheet contents',
   ],
   [
-    /function cycleSheetSnap\(direction = 1\) \{[\s\S]*?if \(state\.sheetSnap === 'closed'\) \{[\s\S]*?setSheetSnap\('medium'\);[\s\S]*?renderSheet\(\);[\s\S]*?return;/,
-    'cycleSheetSnap materialises sheet contents when opening from closed state',
-  ],
-  [
     /async function refreshCatalogue\(\{ quiet = false \} = \{\}\) \{[\s\S]*?renderSheet\(\);/,
     'refreshCatalogue calls renderSheet to keep open sheets updated and closed sheets clean',
   ],
