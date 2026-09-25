@@ -1,8 +1,9 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
+const exists = async (file) => { try { await access(path.join(root, file)); return true; } catch { return false; } };
 
 const [runtime, manifestText, provider, sw] = await Promise.all([
   read('assets/runtime/immersive-atmosphere.js'),
@@ -15,9 +16,12 @@ const manifest = JSON.parse(manifestText);
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
+// Engine, player integration and accessibility contract
 for (const marker of [
   'GARBA_ATMOSPHERE',
+  'GARBA_ATMOSPHERE_ENGINE',
   'HRTF',
+  'createConvolver',
   'createDynamicsCompressor',
   'prefers-reduced-motion: reduce',
   'constrainedConnection',
@@ -26,9 +30,14 @@ for (const marker of [
   'garba:atmosphere-change',
   "aria-modal', 'true'",
   'setBackgroundInert',
-  'Immersive 360°',
-  'Courtyard',
-  'Live Ground',
+  'navigator.audioSession',
+  'Party plot',
+  'Sheri',
+  'Hall',
+  'Full circle',
+  'Tap the beat',
+  'Be tali',
+  'Tran tali',
 ]) {
   if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing: ${marker}`);
 }
@@ -44,10 +53,31 @@ for (const marker of [
   'setTimeout(() => stopPreview({ announce: false }), 6000)',
   'if (state.previewActive) { stopPreview(); return; }',
   'if (active) stopPreview({ announce: false });',
-  'if (!profile?.crowd || constrainedConnection()) return;',
-  "state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;",
+  "state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return 0;",
 ]) {
   if (!runtime.includes(marker)) fail(`Compact Atmosphere/Test contract is missing: ${marker}`);
+}
+
+// Truthfulness: the song is never processed, and the panel says so.
+if (!runtime.includes('The song itself plays as YouTube sends it.')) {
+  fail('Atmosphere panel must say the song itself is not processed');
+}
+if (/\bIndoor\b|\bOutdoor\b|Acoustic Space|Soundstage/.test(runtime)) {
+  fail('Provider-backed playback must not expose fake source-processing Soundstage modes');
+}
+if (/youtubeStage[^\n]*createMediaElementSource|createMediaElementSource\([^)]*youtube/i.test(runtime)) {
+  fail('Atmosphere must not attempt to process the YouTube player');
+}
+
+// Rhythm: claps are synthesised and follow the listener's taps, never a looped recording.
+for (const retired of ['rhythmic-clapping.ogg', 'ground-applause.ogg', 'Palmas', '160 BPM']) {
+  if (runtime.includes(retired)) fail(`Retired Atmosphere recording is referenced by the runtime: ${retired}`);
+}
+for (const marker of ['function buildClap(', 'function buildStick(', 'function schedule(until)', 'async function registerTap()', 'setTempo(bpm, firstBeat)']) {
+  if (!runtime.includes(marker)) fail(`Beat-locked synthesis contract is missing: ${marker}`);
+}
+if (/setTimeout\([^)]*playTransient|Math\.random\(\) < 0\.35 \? 'applause'/.test(runtime)) {
+  fail('Claps and sticks must be scheduled on the beat, not at random intervals');
 }
 
 for (const retired of [
@@ -57,12 +87,6 @@ for (const retired of [
   '>Headphones<',
 ]) {
   if (runtime.includes(retired)) fail(`Retired Atmosphere panel copy returned: ${retired}`);
-}
-if (runtime.includes('state.previewActive || constrainedConnection()')) {
-  fail('Test preview must not suppress the selected crowd bed');
-}
-if (/\bIndoor\b|\bOutdoor\b/.test(runtime)) {
-  fail('Provider-backed playback must not expose fake source-processing Soundstage modes');
 }
 
 const setModeStart = runtime.indexOf('async function setMode(');
@@ -94,17 +118,30 @@ for (const marker of [
   if (!provider.includes(marker)) fail(`Playback bootstrap is missing Atmosphere loader: ${marker}`);
 }
 
-if (manifest.version !== '1.1.0') fail('Atmosphere source manifest version must be 1.1.0');
+// Source manifest
+if (manifest.version !== '2.0.0') fail('Atmosphere source manifest version must be 2.0.0');
 if (manifest.runtimePolicy?.allowRemoteOnDataSaver !== false) fail('Remote Atmosphere audio must stay disabled on Data Saver');
-if (manifest.runtimePolicy?.requireNoEmbeddedMusic !== true) fail('Atmosphere remote sources must reject embedded music');
+if (manifest.runtimePolicy?.requireNoEmbeddedMusic !== true) fail('Atmosphere sources must reject embedded music');
 if (manifest.runtimePolicy?.fallback !== 'procedural-local-scene') fail('Atmosphere must retain its procedural local fallback');
+if (manifest.runtimePolicy?.songProcessing !== 'none') fail('Atmosphere manifest must declare that songs are not processed');
 
-const enabledSources = Array.isArray(manifest.sources) ? manifest.sources.filter((source) => source.enabled) : [];
+const sources = Array.isArray(manifest.sources) ? manifest.sources : [];
+const enabledSources = sources.filter((source) => source.enabled);
 if (!enabledSources.length) fail('At least one enabled Atmosphere ambience source is required');
+const localOrHttps = (url) => /^https:\/\//.test(url) || /^assets\/audio\/[a-z0-9-]+\.(ogg|m4a)$/.test(url);
 for (const source of enabledSources) {
   if (source.license !== 'public-domain') fail(`Enabled Atmosphere source ${source.id} must be public-domain`);
   if (source.containsMusic !== false) fail(`Enabled Atmosphere source ${source.id} must explicitly contain no music`);
-  if (!/^https:\/\//.test(source.audioUrl || '')) fail(`Enabled Atmosphere source ${source.id} must use HTTPS`);
+  if (!/^https:\/\//.test(source.sourcePage || '')) fail(`Enabled Atmosphere source ${source.id} must cite its source page`);
+  const urls = [source.audioUrl, ...(source.files || []).map((file) => file.url)].filter(Boolean);
+  if (!urls.length) fail(`Enabled Atmosphere source ${source.id} has no audio file`);
+  for (const url of urls) {
+    if (!localOrHttps(url)) fail(`Atmosphere source ${source.id} must use HTTPS or a bundled assets/audio file: ${url}`);
+    if (!/^https:/.test(url) && !await exists(url)) fail(`Atmosphere source ${source.id} file is missing: ${url}`);
+  }
+}
+for (const source of sources.filter((item) => item.license !== 'public-domain')) {
+  if (source.enabled) fail(`Non-public-domain Atmosphere source ${source.id} must stay disabled`);
 }
 
 for (const marker of [
@@ -113,6 +150,10 @@ for (const marker of [
 ]) {
   if (!sw.includes(marker)) fail(`PWA Atmosphere packaging is missing: ${marker}`);
 }
+// Anything sw.js precaches must still exist, or the service worker install fails.
+for (const match of sw.matchAll(/'\.\/(assets\/audio\/[^']+)'/g)) {
+  if (!await exists(match[1])) fail(`sw.js precaches a missing Atmosphere file: ${match[1]}`);
+}
 
 if (failed) process.exit(1);
-console.log('✓ Garba Atmosphere compact UI, Test playback, source policy, visible boot path and PWA packaging are coherent');
+console.log('✓ Garba Atmosphere venues, beat-locked claps, truthful copy, public-domain sources and PWA packaging are coherent');

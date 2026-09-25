@@ -1,4 +1,599 @@
 (() => {
+  /*
+    Garba Atmosphere.
+
+    Atmosphere plays a Garba night around the song: the crowd, the circle's claps or
+    dandiya sticks, and the venue those sounds are heard in. Songs play through the
+    YouTube player, whose audio a page cannot reach, so the song itself is never
+    processed. Everything here is either public-domain ambience or synthesised.
+
+    The audio engine below has no DOM dependencies so the same code can render
+    offline previews with an OfflineAudioContext.
+  */
+
+  const TAU = Math.PI * 2;
+
+  // ---------------------------------------------------------------------------
+  // Venues. Each builds a stereo impulse response and a tone curve for the
+  // atmosphere layers. Times are seconds, levels are linear gain.
+  // ---------------------------------------------------------------------------
+  const VENUES = {
+    plot: {
+      label: 'Party plot',
+      desc: 'Open ground. Little reverb, long echoes back from the far edge.',
+      trim: 1.4,
+      dry: 1,
+      wet: 0.34,
+      clappers: 40,
+      spread: 0.012,
+      distance: [2.2, 7.5],
+      tone: { lowShelf: [140, -2.5], mid: [2600, 0.8, 1], highShelf: [5200, -4] },
+      ir: {
+        length: 2.2,
+        predelay: 0.004,
+        taps: [[0.004, 0.42, 9000], [0.19, 0.2, 2600], [0.33, 0.13, 2000], [0.51, 0.08, 1500], [0.76, 0.045, 1200]],
+        tail: { level: 0.035, rt: [0.9, 0.7, 0.4] },
+      },
+      night: 0.9,
+      roomTone: 0,
+    },
+    sheri: {
+      label: 'Sheri',
+      desc: 'A lane between houses. Bright flutter off the walls, a short tail.',
+      trim: 1.2,
+      dry: 0.9,
+      wet: 0.58,
+      clappers: 20,
+      spread: 0.009,
+      distance: [1.4, 4.5],
+      tone: { lowShelf: [160, -1], mid: [2400, 0.9, 1.5], highShelf: [6500, -1] },
+      ir: {
+        length: 1.8,
+        predelay: 0.008,
+        flutter: { period: 0.038, count: 11, decay: 0.58, first: 0.3 },
+        taps: [[0.012, 0.3, 8000], [0.026, 0.2, 7000]],
+        tail: { level: 0.16, rt: [1.1, 0.95, 0.6] },
+      },
+      night: 0.55,
+      roomTone: 0,
+    },
+    hall: {
+      label: 'Hall',
+      desc: 'A community hall. Dense reverb, a warm low end, softer highs.',
+      trim: 1,
+      dry: 0.62,
+      wet: 0.82,
+      clappers: 30,
+      spread: 0.01,
+      distance: [1.8, 6],
+      tone: { lowShelf: [180, 2], mid: [240, 0.8, 2.5], highShelf: [4800, -4.5] },
+      ir: {
+        length: 3.2,
+        predelay: 0.022,
+        early: { count: 26, from: 0.008, to: 0.085, level: 0.5 },
+        tail: { level: 0.42, rt: [2.3, 1.8, 1.0] },
+      },
+      night: 0,
+      roomTone: 0.012,
+    },
+  };
+
+  // Claps land on these beats of each round, counted from the first tap.
+  // Be tali and Tran tali timings need confirming by someone who dances them.
+  const PATTERNS = {
+    beat: { label: 'On the beat', cycle: 1, hits: [0] },
+    'be-tali': { label: 'Be tali', cycle: 4, hits: [2, 3] },
+    'tran-tali': { label: 'Tran tali', cycle: 4, hits: [1, 2, 3] },
+  };
+
+  const PREVIEW_BPM = 112;
+
+  function seeded(seed) {
+    let s = seed >>> 0 || 1;
+    return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+  function gauss(rand) {
+    let u = 0; let v = 0;
+    while (u === 0) u = rand();
+    while (v === 0) v = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v);
+  }
+
+  // Simple one-pole filters for building buffers offline.
+  function onePoleLow(data, cutoff, rate) {
+    const a = Math.exp(-TAU * cutoff / rate);
+    let y = 0;
+    for (let i = 0; i < data.length; i += 1) { y = (1 - a) * data[i] + a * y; data[i] = y; }
+    return data;
+  }
+
+  function buildImpulse(ctx, venue, seed) {
+    const rate = ctx.sampleRate;
+    const spec = venue.ir;
+    const length = Math.ceil(spec.length * rate);
+    const buffer = ctx.createBuffer(2, length, rate);
+    const rand = seeded(seed);
+    for (let ch = 0; ch < 2; ch += 1) {
+      const out = buffer.getChannelData(ch);
+      const start = Math.floor(spec.predelay * rate);
+      // Diffuse tail in three bands with their own decay times (low, mid, high).
+      const noise = new Float32Array(length);
+      for (let i = 0; i < length; i += 1) noise[i] = rand() * 2 - 1;
+      const low = onePoleLow(Float32Array.from(noise), 320, rate);
+      const lowMid = onePoleLow(Float32Array.from(noise), 3200, rate);
+      const [rtLow, rtMid, rtHigh] = spec.tail.rt;
+      for (let i = start; i < length; i += 1) {
+        const t = (i - start) / rate;
+        const fadeIn = Math.min(1, t / 0.018);
+        const mid = lowMid[i] - low[i];
+        const high = noise[i] - lowMid[i];
+        const value = low[i] * Math.exp(-6.91 * t / rtLow) * 1.4
+          + mid * Math.exp(-6.91 * t / rtMid)
+          + high * Math.exp(-6.91 * t / rtHigh) * 0.7;
+        out[i] = value * spec.tail.level * fadeIn;
+      }
+      // Discrete reflections, softened with their own low-pass.
+      const addTap = (time, level, cutoff) => {
+        const width = Math.floor(0.0022 * rate);
+        const at = Math.floor((time + (ch ? 0.0007 : 0)) * rate);
+        const burst = new Float32Array(width);
+        for (let i = 0; i < width; i += 1) burst[i] = (rand() * 2 - 1) * Math.exp(-i / (width * 0.25));
+        onePoleLow(burst, cutoff, rate);
+        const sign = rand() < 0.5 ? -1 : 1;
+        for (let i = 0; i < width && at + i < length; i += 1) out[at + i] += burst[i] * level * sign * 3;
+      };
+      (spec.taps || []).forEach(([time, level, cutoff]) => addTap(time, level, cutoff));
+      if (spec.flutter) {
+        const f = spec.flutter;
+        for (let k = 0; k < f.count; k += 1) addTap(spec.predelay + f.period * (k + 1), f.first * Math.pow(f.decay, k), 7000 - k * 350);
+      }
+      if (spec.early) {
+        const e = spec.early;
+        for (let k = 0; k < e.count; k += 1) {
+          const time = e.from + (e.to - e.from) * rand();
+          addTap(time, e.level * (1 - (time - e.from) / (e.to - e.from) * 0.6) * (0.5 + rand() * 0.5), 5200);
+        }
+      }
+    }
+    // Unit energy, so each venue's wet gain alone sets how much of the room you hear.
+    let energy = 0;
+    for (let ch = 0; ch < 2; ch += 1) { const d = buffer.getChannelData(ch); for (let i = 0; i < d.length; i += 1) energy += d[i] * d[i]; }
+    const scale = energy > 0 ? 1 / Math.sqrt(energy / 2) : 1;
+    for (let ch = 0; ch < 2; ch += 1) { const d = buffer.getChannelData(ch); for (let i = 0; i < d.length; i += 1) d[i] *= scale; }
+    return buffer;
+  }
+
+  // Hand claps: a few micro-bursts of noise through a resonant band-pass.
+  // Cupped palms (lower, warmer) and flat palms (brighter) are both common in a circle.
+  function buildClap(ctx, rand, cupped) {
+    const rate = ctx.sampleRate;
+    const length = Math.ceil(0.16 * rate);
+    const buffer = ctx.createBuffer(1, length, rate);
+    const out = buffer.getChannelData(0);
+    const bursts = [0, 0.006 + rand() * 0.005, 0.013 + rand() * 0.007];
+    const decay = cupped ? 0.011 : 0.007;
+    const centre = cupped ? 850 + rand() * 350 : 1500 + rand() * 900;
+    const q = cupped ? 1.6 : 1.1;
+    // State-variable band-pass
+    const f = 2 * Math.sin(Math.PI * centre / rate);
+    let low = 0; let band = 0;
+    for (let i = 0; i < length; i += 1) {
+      const t = i / rate;
+      let env = 0;
+      for (let b = 0; b < bursts.length; b += 1) {
+        const dt = t - bursts[b];
+        if (dt >= 0) env += Math.exp(-dt / (b === bursts.length - 1 ? decay * 2.6 : decay)) * (b === bursts.length - 1 ? 1 : 0.55);
+      }
+      const x = (rand() * 2 - 1) * env;
+      low += f * band;
+      const high = x - low - band / q;
+      band += f * high;
+      out[i] = band * 0.9 + x * 0.03;
+    }
+    onePoleLow(out, cupped ? 3200 : 4800, rate);
+    if (cupped) {
+      // A short body thump from the cupped palm
+      const body = 240 + rand() * 120;
+      for (let i = 0; i < Math.min(length, rate * 0.03); i += 1) out[i] += Math.sin(TAU * body * i / rate) * Math.exp(-i / (rate * 0.006)) * 0.35;
+    }
+    normalise(out, 0.9);
+    return buffer;
+  }
+
+  // Dandiya: two wooden sticks struck together. A few inharmonic modes and a click.
+  function buildStick(ctx, rand) {
+    const rate = ctx.sampleRate;
+    const length = Math.ceil(0.12 * rate);
+    const buffer = ctx.createBuffer(1, length, rate);
+    const out = buffer.getChannelData(0);
+    const f0 = 1050 + rand() * 500;
+    const modes = [[1, 1, 0.018], [2.37, 0.55, 0.011], [3.9, 0.3, 0.007], [5.6, 0.12, 0.005]];
+    const second = 0.0015 + rand() * 0.002;
+    for (let i = 0; i < length; i += 1) {
+      const t = i / rate;
+      let v = 0;
+      for (const [ratio, amp, dec] of modes) {
+        v += Math.sin(TAU * f0 * ratio * t) * amp * Math.exp(-t / dec);
+        if (t > second) v += Math.sin(TAU * f0 * 1.08 * ratio * (t - second)) * amp * 0.7 * Math.exp(-(t - second) / dec);
+      }
+      if (t < 0.002) v += (rand() * 2 - 1) * (1 - t / 0.002) * 0.8;
+      out[i] = v;
+    }
+    normalise(out, 0.85);
+    return buffer;
+  }
+
+  function normalise(data, peak) {
+    let max = 0;
+    for (let i = 0; i < data.length; i += 1) max = Math.max(max, Math.abs(data[i]));
+    if (max > 0) for (let i = 0; i < data.length; i += 1) data[i] *= peak / max;
+  }
+
+  // Crossfade the tail of a loop into its head so the bed never clicks when it wraps.
+  function seamless(ctx, buffer, fade = 1.2) {
+    const rate = buffer.sampleRate;
+    const n = Math.min(Math.floor(fade * rate), Math.floor(buffer.length / 3));
+    const length = buffer.length - n;
+    const out = ctx.createBuffer(buffer.numberOfChannels, length, rate);
+    for (let ch = 0; ch < buffer.numberOfChannels; ch += 1) {
+      const src = buffer.getChannelData(ch);
+      const dst = out.getChannelData(ch);
+      dst.set(src.subarray(0, length));
+      for (let i = 0; i < n; i += 1) {
+        const x = i / n;
+        dst[i] = src[i] * Math.sin(x * Math.PI / 2) + src[length + i] * Math.cos(x * Math.PI / 2);
+      }
+    }
+    return out;
+  }
+
+  function createEngine(ctx, { destination = ctx.destination, loadBed = async () => null, seed = 11 } = {}) {
+    const rand = seeded(seed);
+    const now = () => ctx.currentTime;
+    const nodes = {};
+
+    nodes.out = ctx.createGain();
+    nodes.out.gain.value = 0;
+    nodes.highpass = ctx.createBiquadFilter();
+    nodes.highpass.type = 'highpass';
+    nodes.highpass.frequency.value = 55;
+    nodes.compressor = ctx.createDynamicsCompressor();
+    nodes.compressor.threshold.value = -18;
+    nodes.compressor.knee.value = 12;
+    nodes.compressor.ratio.value = 3;
+    nodes.compressor.attack.value = 0.005;
+    nodes.compressor.release.value = 0.25;
+    nodes.out.connect(nodes.highpass).connect(nodes.compressor).connect(destination);
+
+    // Tone curve shared by dry and wet paths
+    nodes.lowShelf = ctx.createBiquadFilter(); nodes.lowShelf.type = 'lowshelf';
+    nodes.mid = ctx.createBiquadFilter(); nodes.mid.type = 'peaking';
+    nodes.highShelf = ctx.createBiquadFilter(); nodes.highShelf.type = 'highshelf';
+    nodes.lowShelf.connect(nodes.mid).connect(nodes.highShelf).connect(nodes.out);
+
+    nodes.dry = ctx.createGain();
+    nodes.dry.connect(nodes.lowShelf);
+    // Two convolvers so a venue change crossfades instead of cutting
+    nodes.verbs = [0, 1].map(() => {
+      const convolver = ctx.createConvolver();
+      convolver.normalize = false;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      convolver.connect(gain).connect(nodes.lowShelf);
+      return { convolver, gain, venue: null };
+    });
+    nodes.send = ctx.createGain();
+    nodes.verbs.forEach((v) => nodes.send.connect(v.convolver));
+
+    nodes.bus = ctx.createGain();
+    nodes.bus.connect(nodes.dry);
+    nodes.bus.connect(nodes.send);
+
+    const impulses = {};
+    const claps = Array.from({ length: 14 }, (_, i) => buildClap(ctx, rand, i % 3 !== 0));
+    const sticks = Array.from({ length: 8 }, () => buildStick(ctx, rand));
+
+    const state = {
+      venue: null,
+      activeVerb: 0,
+      profile: { crowd: 0, night: 0, claps: 0, spatial: false },
+      level: 0.45,
+      running: false,
+      style: 'claps',
+      pattern: 'beat',
+      tempo: null,
+      nextBeat: 0,
+      beatIndex: 0,
+      clappers: [],
+      groups: [],
+      beds: {},
+      orbit: 0,
+    };
+
+    function venueSpec() { return VENUES[state.venue] || VENUES.plot; }
+
+    // Clappers stand in the circle around the listener, in eight spatial groups.
+    function buildCircle() {
+      state.groups.forEach((g) => { try { g.input.disconnect(); g.panner.disconnect(); } catch { /* no-op */ } });
+      const venue = venueSpec();
+      const spatial = state.profile.spatial && typeof ctx.createPanner === 'function';
+      state.groups = Array.from({ length: 8 }, (_, i) => {
+        const angle = (i / 8) * TAU + 0.2;
+        const input = ctx.createGain();
+        let panner;
+        if (spatial) {
+          panner = ctx.createPanner();
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          panner.refDistance = 1.2;
+          panner.rolloffFactor = 0.55;
+          const d = (venue.distance[0] + venue.distance[1]) / 2;
+          setPosition(panner, Math.sin(angle) * d, -Math.cos(angle) * d);
+        } else {
+          panner = typeof ctx.createStereoPanner === 'function' ? ctx.createStereoPanner() : ctx.createGain();
+          if (panner.pan) panner.pan.value = Math.sin(angle) * 0.8;
+        }
+        input.connect(panner).connect(nodes.bus);
+        return { input, panner, angle };
+      });
+      state.clappers = Array.from({ length: venue.clappers }, (_, i) => {
+        const d = venue.distance[0] + (venue.distance[1] - venue.distance[0]) * rand();
+        return {
+          group: i % 8,
+          bias: gauss(rand) * venue.spread * 0.6,
+          jitter: venue.spread,
+          gain: (0.5 + rand() * 0.5) / Math.max(1, d * 0.55),
+          // Nearest clappers land on the beat; the far side of the circle arrives a little later.
+          delay: (d - venue.distance[0]) / 343,
+          clap: Math.floor(rand() * claps.length),
+          stick: Math.floor(rand() * sticks.length),
+          keen: 0.8 + rand() * 0.2,
+        };
+      });
+    }
+
+    function setPosition(panner, x, z) {
+      if (panner.positionX) { panner.positionX.value = x; panner.positionY.value = 0; panner.positionZ.value = z; }
+      else if (panner.setPosition) panner.setPosition(x, 0, z);
+    }
+
+    function setVenue(id, { ramp = 0.6 } = {}) {
+      if (!VENUES[id]) id = 'plot';
+      if (state.venue === id) return;
+      const venue = VENUES[id];
+      state.venue = id;
+      if (!impulses[id]) impulses[id] = buildImpulse(ctx, venue, id.length * 97 + 5);
+      const t = now();
+      const next = nodes.verbs[1 - state.activeVerb];
+      const prev = nodes.verbs[state.activeVerb];
+      if (next.venue !== id) { next.convolver.buffer = impulses[id]; next.venue = id; }
+      next.gain.gain.cancelScheduledValues(t);
+      prev.gain.gain.cancelScheduledValues(t);
+      next.gain.gain.setTargetAtTime(venue.wet, t, ramp / 3);
+      prev.gain.gain.setTargetAtTime(0, t, ramp / 3);
+      state.activeVerb = 1 - state.activeVerb;
+      nodes.dry.gain.setTargetAtTime(venue.dry * venue.trim, t, ramp / 3);
+      nodes.send.gain.setTargetAtTime(venue.trim, t, ramp / 3);
+      nodes.lowShelf.frequency.setTargetAtTime(venue.tone.lowShelf[0], t, ramp / 3);
+      nodes.lowShelf.gain.setTargetAtTime(venue.tone.lowShelf[1], t, ramp / 3);
+      nodes.mid.frequency.setTargetAtTime(venue.tone.mid[0], t, ramp / 3);
+      nodes.mid.Q.setTargetAtTime(venue.tone.mid[1], t, ramp / 3);
+      nodes.mid.gain.setTargetAtTime(venue.tone.mid[2], t, ramp / 3);
+      nodes.highShelf.frequency.setTargetAtTime(venue.tone.highShelf[0], t, ramp / 3);
+      nodes.highShelf.gain.setTargetAtTime(venue.tone.highShelf[1], t, ramp / 3);
+      buildCircle();
+      applyBedLevels(ramp);
+    }
+
+    function masterTarget() { return state.running ? state.level : 0; }
+    function setLevel(level, ramp = 0.18) {
+      state.level = level;
+      nodes.out.gain.setTargetAtTime(masterTarget(), now(), Math.max(0.003, ramp / 3));
+    }
+
+    async function ensureBed(role) {
+      if (state.beds[role]) return state.beds[role];
+      const raw = await loadBed(role);
+      if (!raw) return null;
+      const buffer = seamless(ctx, raw);
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      const tone = ctx.createBiquadFilter();
+      tone.type = 'lowpass';
+      tone.frequency.value = 12000;
+      gain.connect(tone).connect(nodes.bus);
+      state.beds[role] = { buffer, gain, tone, source: null, drift: rand() * TAU };
+      return state.beds[role];
+    }
+
+    function startBed(bed, when) {
+      if (!bed || bed.source) return;
+      const source = ctx.createBufferSource();
+      source.buffer = bed.buffer;
+      source.loop = true;
+      source.connect(bed.gain);
+      source.start(when, rand() * bed.buffer.duration);
+      bed.source = source;
+    }
+    function stopBed(bed, when) {
+      if (!bed?.source) return;
+      try { bed.source.stop(when); } catch { /* already stopped */ }
+      bed.source = null;
+    }
+
+    function bedTargets() {
+      const venue = venueSpec();
+      return {
+        crowd: state.profile.crowd * (state.venue === 'hall' ? 0.34 : state.venue === 'sheri' ? 0.4 : 0.46),
+        night: state.profile.night * venue.night * 0.3,
+      };
+    }
+
+    function applyBedLevels(ramp = 0.6) {
+      const t = now();
+      const targets = bedTargets();
+      const crowd = state.beds['ground-crowd'];
+      const night = state.beds['courtyard-bed'];
+      if (crowd) {
+        crowd.gain.gain.setTargetAtTime(state.running ? targets.crowd : 0, t, ramp / 3);
+        crowd.tone.frequency.setTargetAtTime(state.venue === 'plot' ? 7000 : state.venue === 'hall' ? 6000 : 9000, t, ramp / 3);
+      }
+      if (night) night.gain.gain.setTargetAtTime(state.running ? targets.night : 0, t, ramp / 3);
+      if (nodes.roomTone) nodes.roomTone.gain.gain.setTargetAtTime(state.running ? venueSpec().roomTone * (state.profile.crowd ? 1 : 0.6) : 0, t, ramp / 3);
+    }
+
+    function ensureRoomTone() {
+      if (nodes.roomTone) return;
+      const rate = ctx.sampleRate;
+      const buffer = ctx.createBuffer(2, rate * 4, rate);
+      for (let ch = 0; ch < 2; ch += 1) {
+        const d = buffer.getChannelData(ch);
+        let b0 = 0; let b1 = 0; let b2 = 0;
+        for (let i = 0; i < d.length; i += 1) {
+          const w = rand() * 2 - 1;
+          b0 = 0.99765 * b0 + w * 0.099; b1 = 0.963 * b1 + w * 0.2965; b2 = 0.57 * b2 + w * 1.0527;
+          d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.2;
+        }
+        onePoleLow(d, 700, rate);
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = seamless(ctx, buffer, 0.5);
+      source.loop = true;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      source.connect(gain).connect(nodes.bus);
+      source.start();
+      nodes.roomTone = { source, gain };
+    }
+
+    async function setProfile(profile) {
+      const spatialChanged = Boolean(profile.spatial) !== Boolean(state.profile.spatial);
+      state.profile = { ...profile };
+      if (spatialChanged) buildCircle();
+      if (profile.crowd > 0) await ensureBed('ground-crowd');
+      if (profile.night > 0) await ensureBed('courtyard-bed');
+      ensureRoomTone();
+      if (state.running) {
+        const t = now();
+        if (profile.crowd > 0) startBed(state.beds['ground-crowd'], t);
+        if (profile.night > 0) startBed(state.beds['courtyard-bed'], t);
+      }
+      applyBedLevels();
+    }
+
+    function start() {
+      if (state.running) return;
+      state.running = true;
+      const t = now();
+      if (state.profile.crowd > 0) startBed(state.beds['ground-crowd'], t);
+      if (state.profile.night > 0) startBed(state.beds['courtyard-bed'], t);
+      nodes.out.gain.cancelScheduledValues(t);
+      nodes.out.gain.setTargetAtTime(state.level, t, 0.06);
+      applyBedLevels(0.3);
+      if (state.tempo) alignNextBeat();
+    }
+
+    function stop({ fade = 0.12 } = {}) {
+      if (!state.running) return;
+      state.running = false;
+      const t = now();
+      nodes.out.gain.cancelScheduledValues(t);
+      nodes.out.gain.setTargetAtTime(0, t, fade / 3);
+      const end = t + fade * 2;
+      Object.values(state.beds).forEach((bed) => stopBed(bed, end));
+    }
+
+    // Tempo: one beat every 60 / bpm seconds, with a beat landing exactly at `anchor`.
+    function setTempo(bpm, anchor) {
+      state.tempo = { bpm, period: 60 / bpm, anchor };
+      alignNextBeat();
+    }
+    function clearTempo() { state.tempo = null; }
+    function alignNextBeat() {
+      const { period, anchor } = state.tempo;
+      const k = Math.ceil((now() + 0.02 - anchor) / period);
+      state.nextBeat = anchor + k * period;
+      state.beatIndex = k;
+    }
+
+    function hitAt(time, beat) {
+      const venue = venueSpec();
+      const accent = beat % (PATTERNS[state.pattern]?.cycle || 1) === (PATTERNS[state.pattern]?.hits.slice(-1)[0] ?? 0) ? 1.12 : 1;
+      const bank = state.style === 'dandiya' ? sticks : claps;
+      const amount = state.profile.claps;
+      const players = state.style === 'dandiya' ? state.clappers.slice(0, Math.ceil(state.clappers.length * 0.45)) : state.clappers;
+      for (const p of players) {
+        if (rand() > p.keen) continue;
+        // Personal timing, human spread, and the time the sound takes to cross the circle.
+        const offset = p.bias + gauss(rand) * p.jitter + p.delay;
+        const at = Math.max(now() + 0.005, time + offset);
+        const source = ctx.createBufferSource();
+        source.buffer = bank[state.style === 'dandiya' ? p.stick : p.clap];
+        source.playbackRate.value = 0.96 + rand() * 0.08;
+        const gain = ctx.createGain();
+        gain.gain.value = p.gain * amount * accent * (state.style === 'dandiya' ? 0.75 : 0.5) * (0.85 + rand() * 0.3) * (30 / Math.max(12, venue.clappers));
+        source.connect(gain).connect(state.groups[p.group].input);
+        source.start(at);
+        source.onended = () => { try { source.disconnect(); gain.disconnect(); } catch { /* no-op */ } };
+      }
+    }
+
+    // Schedule every beat that falls before `until` (Web Audio clock).
+    function schedule(until) {
+      if (!state.running || !state.tempo || state.profile.claps <= 0) return;
+      const pattern = PATTERNS[state.pattern] || PATTERNS.beat;
+      while (state.nextBeat < until) {
+        const pos = ((state.beatIndex % pattern.cycle) + pattern.cycle) % pattern.cycle;
+        if (pattern.hits.includes(pos)) hitAt(state.nextBeat, state.beatIndex);
+        state.beatIndex += 1;
+        state.nextBeat += state.tempo.period;
+      }
+    }
+
+    // Slow orbit for Full circle, and a gentle rise and fall in the crowd's energy.
+    function animate(dt) {
+      const crowd = state.beds['ground-crowd'];
+      if (crowd && state.running) {
+        crowd.drift += dt * 0.07;
+        const swell = 1 + 0.18 * Math.sin(crowd.drift) * Math.sin(crowd.drift * 0.37 + 1.3);
+        crowd.gain.gain.setTargetAtTime(bedTargets().crowd * swell, now(), 0.8);
+      }
+      if (!state.profile.spatial) return;
+      state.orbit += dt * 0.12;
+      const venue = venueSpec();
+      const d = (venue.distance[0] + venue.distance[1]) / 2;
+      state.groups.forEach((g) => {
+        if (!g.panner.positionX) return;
+        const a = g.angle + state.orbit;
+        g.panner.positionX.setTargetAtTime(Math.sin(a) * d, now(), 0.2);
+        g.panner.positionZ.setTargetAtTime(-Math.cos(a) * d, now(), 0.2);
+      });
+    }
+
+    return {
+      setVenue,
+      setLevel,
+      setProfile,
+      setStyle(style) { state.style = style === 'dandiya' ? 'dandiya' : 'claps'; },
+      setPattern(id) { state.pattern = PATTERNS[id] ? id : 'beat'; },
+      setTempo,
+      clearTempo,
+      schedule,
+      animate,
+      start,
+      stop,
+      get tempo() { return state.tempo; },
+      get running() { return state.running; },
+      get venue() { return state.venue; },
+      get pattern() { return state.pattern; },
+    };
+  }
+
+  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, VENUES, PATTERNS, PREVIEW_BPM };
+
+  // ---------------------------------------------------------------------------
+  // Player integration and panel
+  // ---------------------------------------------------------------------------
   const STORAGE_KEY = 'garba:atmosphere';
   const SOURCE_MANIFEST = 'data/atmosphere-sources.json';
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
@@ -11,33 +606,10 @@
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
 
   const MODES = {
-    off: { label: 'Off', desc: 'Direct clean playback', master: 0, events: 0, crowd: 0, clapping: 0, spatial: false },
-    crowd: { label: 'Festival Crowd', desc: 'Live ground energy & cheers', master: 0.22, events: 0.35, crowd: 0.85, clapping: 0, spatial: false },
-    clapping: { label: 'Beat Clapping', desc: 'Rhythmic ground handclaps', master: 0.24, events: 0.35, crowd: 0, clapping: 0.85, spatial: false },
-    immersive: { label: 'Circle 360°', desc: 'Surround crowd & rhythm', master: 0.28, events: 0.45, crowd: 0.72, clapping: 0.72, spatial: true },
-  };
-
-  const ENVIRONMENTS = {
-    outdoor: {
-      label: 'Outdoor Ground',
-      icon: '🏟️',
-      desc: 'Open-air stadium slapback echo',
-      delay: 0.165,
-      feedback: 0.24,
-      cutoff: 2400,
-      wet: 0.36,
-      dry: 0.88,
-    },
-    indoor: {
-      label: 'Indoor Hall',
-      icon: '🏛️',
-      desc: 'Palace walls & mandap reverb',
-      delay: 0.042,
-      feedback: 0.40,
-      cutoff: 3600,
-      wet: 0.46,
-      dry: 0.82,
-    },
+    off: { label: 'Off', desc: 'No atmosphere', crowd: 0, night: 0, claps: 0, spatial: false },
+    crowd: { label: 'Crowd', desc: 'The ground around you, without claps', crowd: 1, night: 1, claps: 0, spatial: false },
+    clapping: { label: 'Claps', desc: 'The circle clapping with you, locked to your taps', crowd: 0.35, night: 0.6, claps: 1, spatial: false },
+    immersive: { label: 'Full circle', desc: 'Crowd and claps all around you, best on headphones', crowd: 0.85, night: 1, claps: 0.9, spatial: true },
   };
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -48,44 +620,29 @@
 
   const initialMode = (() => {
     if (stored?.mode && MODES[stored.mode]) return stored.mode;
-    if (stored?.mode === 'ground') return 'crowd';
+    if (stored?.mode === 'ground' || stored?.mode === 'courtyard') return 'crowd';
     return 'off';
   })();
-
-  const initialEnvironment = (() => {
-    if (stored?.environment && ENVIRONMENTS[stored.environment]) return stored.environment;
-    return 'outdoor';
+  const initialVenue = (() => {
+    if (stored?.venue && VENUES[stored.venue]) return stored.venue;
+    if (stored?.environment === 'indoor') return 'hall';
+    return 'plot';
   })();
 
   const state = {
     context: null,
-    master: null,
-    bus: null,
-    dryGain: null,
-    wetGain: null,
-    delayNode: null,
-    delayFeedback: null,
-    delayFilter: null,
-    highpass: null,
-    lowpass: null,
-    compressor: null,
+    engine: null,
+    manifest: null,
     mode: initialMode,
-    environment: initialEnvironment,
+    venue: initialVenue,
+    pattern: PATTERNS[stored?.pattern] ? stored.pattern : 'beat',
     level: clamp(Number(stored?.level ?? 0.45), 0.05, 1),
-    stickBuffers: [],
-    clapBuffers: [],
-    eventTimer: 0,
-    orbitTimer: 0,
+    taps: [],
+    tapTimer: 0,
+    schedulerTimer: 0,
     idleTimer: 0,
     previewTimer: 0,
-    crowdSource: null,
-    crowdGain: null,
-    crowdFilter: null,
-    crowdPanner: null,
-    clappingSource: null,
-    clappingGain: null,
-    clappingFilter: null,
-    clappingPanner: null,
+    lastAnimate: 0,
     panelOpen: false,
     previewActive: false,
     playbackActive: false,
@@ -97,11 +654,7 @@
 
   function persist() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        mode: state.mode,
-        environment: state.environment,
-        level: state.level,
-      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, venue: state.venue, pattern: state.pattern, level: state.level }));
     } catch { /* storage unavailable */ }
   }
 
@@ -117,8 +670,11 @@
   function runtimeProfile() {
     const base = MODES[state.mode];
     if (!base || state.mode === 'off' || !constrainedConnection()) return base;
-    return { ...base, events: base.events * 0.5, crowd: Math.min(base.crowd, 0.4), clapping: Math.min(base.clapping, 0.4) };
+    // On Data Saver the recorded beds stay off; synthesised claps still work.
+    return { ...base, crowd: 0, night: 0 };
   }
+
+  function currentStyle() { return app.dataset.genre === 'dandiya' ? 'dandiya' : 'claps'; }
 
   function injectStyles() {
     if (document.getElementById('garbaAtmosphereStyles')) return;
@@ -132,7 +688,7 @@
       .atmosphere-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
       .atmosphere-backdrop{position:fixed;z-index:89;inset:0;border:0;padding:0;background:rgba(3,5,10,.26);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
       .atmosphere-backdrop[hidden],.atmosphere-panel[hidden]{display:none!important}
-      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(360px,calc(100vw - 28px));box-sizing:border-box;padding:16px 18px 18px;color:#f6ecd7;border:1px solid rgba(246,236,215,.14);border-radius:22px;background:rgba(12,14,25,.965);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(360px,calc(100vw - 28px));max-height:calc(100dvh - 96px);overflow-y:auto;box-sizing:border-box;padding:16px 18px 18px;color:#f6ecd7;border:1px solid rgba(246,236,215,.14);border-radius:22px;background:rgba(12,14,25,.965);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
       .atmosphere-panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
       .atmosphere-heading{display:flex;align-items:center;gap:9px;min-width:0}
       .atmosphere-panel h2{margin:0;font:600 17px/1.15 var(--sans,system-ui);letter-spacing:-.01em}
@@ -141,14 +697,23 @@
       .atmosphere-test[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 52%,rgba(246,236,215,.14));background:color-mix(in srgb,var(--accent) 13%,rgba(246,236,215,.04))}
       .atmosphere-test svg{width:14px;height:14px;fill:currentColor}
       .atmosphere-close{width:32px;height:32px;border-radius:999px;font:300 20px/1 var(--sans,system-ui)}
+      .atmosphere-note{margin:8px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62)}
       .atmosphere-section-label{margin:14px 0 7px;font:600 10.5px/1.2 var(--sans,system-ui);letter-spacing:.06em;text-transform:uppercase;color:rgba(246,236,215,.55)}
-      .atmosphere-modes,.atmosphere-environments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-      .atmosphere-mode,.atmosphere-env{min-height:38px;padding:8px 10px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
-      .atmosphere-mode:hover,.atmosphere-env:hover{background:rgba(246,236,215,.08)}
-      .atmosphere-mode:active,.atmosphere-env:active{transform:scale(.985)}
-      .atmosphere-mode[aria-pressed="true"],.atmosphere-env[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
-      .atmosphere-env:disabled,.atmosphere-mode:disabled{opacity:.32;cursor:default;pointer-events:none}
+      .atmosphere-modes,.atmosphere-venues,.atmosphere-patterns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+      .atmosphere-venues,.atmosphere-patterns{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .atmosphere-mode,.atmosphere-venue,.atmosphere-pattern{min-height:38px;padding:8px 8px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
+      .atmosphere-mode:hover,.atmosphere-venue:hover,.atmosphere-pattern:hover{background:rgba(246,236,215,.08)}
+      .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-pattern:active{transform:scale(.985)}
+      .atmosphere-mode[aria-pressed="true"],.atmosphere-venue[aria-pressed="true"],.atmosphere-pattern[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
+      .atmosphere-venue:disabled,.atmosphere-mode:disabled,.atmosphere-pattern:disabled,.atmosphere-tap:disabled{opacity:.32;cursor:default;pointer-events:none}
+      .atmosphere-venue-desc{margin:7px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62);min-height:34px}
       .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .atmosphere-beat{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+      .atmosphere-tap{width:64px;height:64px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:#fff;font:700 12px/1.1 var(--sans,system-ui);cursor:pointer;touch-action:manipulation;transition:transform 90ms ease,background 120ms ease}
+      .atmosphere-tap:active,.atmosphere-tap.is-hit{transform:scale(.92);background:color-mix(in srgb,var(--accent) 34%,transparent)}
+      .atmosphere-tempo{font:600 13px/1.35 var(--sans,system-ui)}
+      .atmosphere-tempo span{display:block;font-weight:400;font-size:12px;color:rgba(246,236,215,.62)}
+      .atmosphere-patterns{margin-top:9px}
       .atmosphere-level{margin-top:16px}
       .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
       .atmosphere-level label{font:600 12px/1 var(--sans,system-ui)}
@@ -163,8 +728,8 @@
       .atmosphere-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
       .atmosphere-panel :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       @media(max-width:700px){.atmosphere-backdrop{background:rgba(3,5,10,.42)}.atmosphere-panel{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));left:max(10px,env(safe-area-inset-left));width:auto;border-radius:24px;padding:16px}}
-      @media(max-width:390px){.atmosphere-panel{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom))}.atmosphere-modes,.atmosphere-environments{grid-template-columns:1fr 1fr}}
-      @media(prefers-reduced-motion:reduce){.atmosphere-button::after,.atmosphere-mode,.atmosphere-env,.atmosphere-level output{transition:none}}
+      @media(max-width:390px){.atmosphere-panel{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom))}.atmosphere-modes{grid-template-columns:1fr 1fr}}
+      @media(prefers-reduced-motion: reduce){.atmosphere-button::after,.atmosphere-mode,.atmosphere-venue,.atmosphere-pattern,.atmosphere-tap,.atmosphere-level output{transition:none}}
     `;
     document.head.append(style);
   }
@@ -220,10 +785,18 @@
         </div>
         <button class="atmosphere-close" type="button" aria-label="Close Garba Atmosphere">×</button>
       </div>
-      <div class="atmosphere-section-label">Soundscape</div>
+      <p class="atmosphere-note">Plays a Garba night around the song. The song itself plays as YouTube sends it.</p>
+      <div class="atmosphere-section-label">Around the music</div>
       <div class="atmosphere-modes"></div>
-      <div class="atmosphere-section-label">Acoustic Space</div>
-      <div class="atmosphere-environments"></div>
+      <div class="atmosphere-section-label">Venue</div>
+      <div class="atmosphere-venues"></div>
+      <p class="atmosphere-venue-desc" aria-live="polite"></p>
+      <div class="atmosphere-section-label">Beat</div>
+      <div class="atmosphere-beat">
+        <button class="atmosphere-tap" type="button" aria-describedby="atmosphereTempo">Tap the beat</button>
+        <p class="atmosphere-tempo" id="atmosphereTempo" aria-live="polite"></p>
+      </div>
+      <div class="atmosphere-patterns" role="group" aria-label="Clap pattern"></div>
       <div class="atmosphere-level">
         <div class="atmosphere-level-row"><label for="atmosphereLevel">Intensity</label><output for="atmosphereLevel">${Math.round(state.level * 100)}%</output></div>
         <input id="atmosphereLevel" type="range" min="5" max="100" step="5" value="${Math.round(state.level * 100)}" />
@@ -245,20 +818,32 @@
       modes.append(mode);
     }
 
-    const envs = panel.querySelector('.atmosphere-environments');
-    for (const [id, env] of Object.entries(ENVIRONMENTS)) {
-      const envBtn = document.createElement('button');
-      envBtn.type = 'button';
-      envBtn.className = 'atmosphere-env';
-      envBtn.dataset.env = id;
-      envBtn.innerHTML = `<span>${env.icon}</span> ${env.label}`;
-      envBtn.title = env.desc;
-      envBtn.addEventListener('click', () => applyEnvironment(id));
-      envs.append(envBtn);
+    const venues = panel.querySelector('.atmosphere-venues');
+    for (const [id, venue] of Object.entries(VENUES)) {
+      const control = document.createElement('button');
+      control.type = 'button';
+      control.className = 'atmosphere-venue';
+      control.dataset.venue = id;
+      control.textContent = venue.label;
+      control.title = venue.desc;
+      control.addEventListener('click', () => setVenue(id));
+      venues.append(control);
+    }
+
+    const patterns = panel.querySelector('.atmosphere-patterns');
+    for (const [id, pattern] of Object.entries(PATTERNS)) {
+      const control = document.createElement('button');
+      control.type = 'button';
+      control.className = 'atmosphere-pattern';
+      control.dataset.pattern = id;
+      control.textContent = pattern.label;
+      control.addEventListener('click', () => setPattern(id));
+      patterns.append(control);
     }
 
     const close = panel.querySelector('.atmosphere-close');
     const test = panel.querySelector('.atmosphere-test');
+    const tap = panel.querySelector('.atmosphere-tap');
     const slider = panel.querySelector('#atmosphereLevel');
     const output = panel.querySelector('output');
     const levelWrap = panel.querySelector('.atmosphere-level');
@@ -270,6 +855,8 @@
     backdrop.addEventListener('click', () => setPanelOpen(false));
     close.addEventListener('click', () => setPanelOpen(false));
     test.addEventListener('click', () => togglePreview());
+    tap.addEventListener('pointerdown', (event) => { event.preventDefault(); registerTap(); });
+    tap.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) { event.preventDefault(); registerTap(); } });
     slider.addEventListener('input', () => {
       state.level = clamp(Number(slider.value) / 100, 0.05, 1);
       output.value = `${Math.round(state.level * 100)}%`;
@@ -309,6 +896,9 @@
     state.slider = slider;
     state.output = output;
     state.test = test;
+    state.tap = tap;
+    state.tempoText = panel.querySelector('.atmosphere-tempo');
+    state.venueDesc = panel.querySelector('.atmosphere-venue-desc');
     state.status = panel.querySelector('.atmosphere-status');
     syncSliderFill();
     syncUi();
@@ -336,6 +926,16 @@
     }
   }
 
+  function tempoLabel() {
+    const tempo = state.engine?.tempo;
+    const profile = MODES[state.mode] || MODES.off;
+    if (!profile.claps) return 'Claps are off in this mode.';
+    const what = currentStyle() === 'dandiya' ? 'Dandiya sticks' : 'Claps';
+    if (tempo && state.tempoSource === 'taps') return `${Math.round(tempo.bpm)} BPM<span>${what} follow your taps. Tap again if the rhythm changes.</span>`;
+    if (state.taps.length) return `Keep tapping…<span>${Math.max(0, 4 - state.taps.length)} more</span>`;
+    return `Tap 4 times on the beat<span>${what} join in once they know the tempo.</span>`;
+  }
+
   function syncUi() {
     const profile = MODES[state.mode] || MODES.off;
     if (!state.button) return;
@@ -345,10 +945,17 @@
     state.panel?.querySelectorAll('.atmosphere-mode').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.mode === state.mode));
     });
-    state.panel?.querySelectorAll('.atmosphere-env').forEach((control) => {
-      control.setAttribute('aria-pressed', String(control.dataset.env === state.environment));
+    state.panel?.querySelectorAll('.atmosphere-venue').forEach((control) => {
+      control.setAttribute('aria-pressed', String(control.dataset.venue === state.venue));
       control.disabled = state.mode === 'off';
     });
+    state.panel?.querySelectorAll('.atmosphere-pattern').forEach((control) => {
+      control.setAttribute('aria-pressed', String(control.dataset.pattern === state.pattern));
+      control.disabled = state.mode === 'off' || !profile.claps;
+    });
+    if (state.venueDesc) state.venueDesc.textContent = VENUES[state.venue].desc;
+    if (state.tap) state.tap.disabled = state.mode === 'off' || !profile.claps;
+    if (state.tempoText) state.tempoText.innerHTML = tempoLabel();
     if (state.slider) state.slider.disabled = state.mode === 'off';
     if (state.test) {
       state.test.disabled = state.mode === 'off';
@@ -369,7 +976,9 @@
       detail: {
         reason,
         mode: state.mode,
-        environment: state.environment,
+        venue: state.venue,
+        pattern: state.pattern,
+        bpm: state.engine?.tempo ? Math.round(state.engine.tempo.bpm) : null,
         level: state.level,
         audible: state.playbackActive || state.previewActive,
         constrained: constrainedConnection(),
@@ -377,109 +986,49 @@
     }));
   }
 
-  function createStickBuffer(variation = 0) {
-    const duration = 0.07;
-    const rate = state.context.sampleRate;
-    const buffer = state.context.createBuffer(1, Math.ceil(rate * duration), rate);
-    const data = buffer.getChannelData(0);
-    const base = 960 + variation * 90;
-    for (let i = 0; i < data.length; i += 1) {
-      const t = i / rate;
-      const env = Math.exp(-t * 58);
-      const wood = Math.sin(Math.PI * 2 * base * t) * 0.52 + Math.sin(Math.PI * 2 * (base * 1.72) * t) * 0.24;
-      data[i] = (wood + (Math.random() * 2 - 1) * 0.11) * env;
-    }
-    return buffer;
+  async function loadManifest() {
+    if (state.manifest) return state.manifest;
+    try {
+      const response = await fetch(SOURCE_MANIFEST, { cache: 'force-cache' });
+      state.manifest = response.ok ? await response.json() : { sources: [] };
+    } catch { state.manifest = { sources: [] }; }
+    return state.manifest;
   }
 
-  function createClapBuffer(variation = 0) {
-    const duration = 0.14;
-    const rate = state.context.sampleRate;
-    const buffer = state.context.createBuffer(1, Math.ceil(rate * duration), rate);
-    const data = buffer.getChannelData(0);
-    const bursts = [0, 0.015 + variation * 0.001, 0.031 + variation * 0.0015];
-    for (let i = 0; i < data.length; i += 1) {
-      const t = i / rate;
-      let env = 0;
-      for (const start of bursts) if (t >= start) env += Math.exp(-(t - start) * 52);
-      data[i] = (Math.random() * 2 - 1) * Math.min(1, env) * 0.62;
+  // Beds come from the manifest: public-domain, enabled, no music. AAC first for Safari.
+  async function loadBed(role) {
+    if (constrainedConnection()) return null;
+    const manifest = await loadManifest();
+    const source = (manifest.sources || []).find((item) => item.role === role && item.enabled && item.license === 'public-domain' && item.containsMusic === false);
+    if (!source) return null;
+    const candidates = [...(source.files || []).map((file) => file.url), source.audioUrl].filter(Boolean);
+    for (const url of candidates) {
+      try {
+        const response = await fetch(url, { cache: 'force-cache' });
+        if (!response.ok) continue;
+        const data = await response.arrayBuffer();
+        const buffer = await new Promise((resolve, reject) => {
+          const result = state.context.decodeAudioData(data, resolve, reject);
+          if (result?.then) result.then(resolve, reject);
+        });
+        if (buffer) return buffer;
+      } catch { /* try the next format */ }
     }
-    return buffer;
-  }
-
-  function applyEnvironment(envKey, { immediate = false } = {}) {
-    const env = ENVIRONMENTS[envKey] || ENVIRONMENTS.outdoor;
-    state.environment = envKey in ENVIRONMENTS ? envKey : 'outdoor';
-    persist();
-    if (!state.context || !state.delayNode) {
-      syncUi();
-      return;
-    }
-    const now = state.context.currentTime;
-    if (immediate) {
-      state.delayNode.delayTime.value = env.delay;
-      state.delayFeedback.gain.value = env.feedback;
-      state.delayFilter.frequency.value = env.cutoff;
-      state.wetGain.gain.value = env.wet;
-      state.dryGain.gain.value = env.dry;
-    } else {
-      state.delayNode.delayTime.setTargetAtTime(env.delay, now, 0.08);
-      state.delayFeedback.gain.setTargetAtTime(env.feedback, now, 0.08);
-      state.delayFilter.frequency.setTargetAtTime(env.cutoff, now, 0.08);
-      state.wetGain.gain.setTargetAtTime(env.wet, now, 0.08);
-      state.dryGain.gain.setTargetAtTime(env.dry, now, 0.08);
-    }
-    syncUi();
-    dispatchChange('environment');
+    return null;
   }
 
   async function ensureContext() {
     if (!AudioContextCtor) { setStatus('Atmosphere audio is not supported on this browser.'); return false; }
     if (!state.context) {
+      // iOS mutes Web Audio with the ringer switch unless the session is set to playback.
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* unsupported */ }
       try { state.context = new AudioContextCtor({ latencyHint: 'playback' }); } catch {
         try { state.context = new AudioContextCtor(); } catch { setStatus('Garba Atmosphere could not start on this device.'); return false; }
       }
-      state.master = state.context.createGain();
-      state.master.gain.value = 0;
-
-      // Acoustic bus & reflections network
-      state.bus = state.context.createGain();
-      state.dryGain = state.context.createGain();
-      state.wetGain = state.context.createGain();
-      state.delayNode = state.context.createDelay(1.0);
-      state.delayFeedback = state.context.createGain();
-      state.delayFilter = state.context.createBiquadFilter();
-      state.delayFilter.type = 'lowpass';
-
-      // Dry path: bus -> dryGain -> master
-      state.bus.connect(state.dryGain).connect(state.master);
-
-      // Wet reflections path: bus -> delayNode -> delayFilter -> wetGain -> master
-      // Loopback: delayFilter -> delayFeedback -> delayNode
-      state.bus.connect(state.delayNode);
-      state.delayNode.connect(state.delayFilter);
-      state.delayFilter.connect(state.delayFeedback).connect(state.delayNode);
-      state.delayFilter.connect(state.wetGain).connect(state.master);
-
-      applyEnvironment(state.environment, { immediate: true });
-
-      state.highpass = state.context.createBiquadFilter();
-      state.highpass.type = 'highpass';
-      state.highpass.frequency.value = 95;
-      state.highpass.Q.value = 0.28;
-      state.lowpass = state.context.createBiquadFilter();
-      state.lowpass.type = 'lowpass';
-      state.lowpass.frequency.value = 8200;
-      state.lowpass.Q.value = 0.22;
-      state.compressor = state.context.createDynamicsCompressor();
-      state.compressor.threshold.value = -20;
-      state.compressor.knee.value = 18;
-      state.compressor.ratio.value = 2.6;
-      state.compressor.attack.value = 0.008;
-      state.compressor.release.value = 0.22;
-      state.master.connect(state.highpass).connect(state.lowpass).connect(state.compressor).connect(state.context.destination);
-      state.stickBuffers = [0, 1, 2].map(createStickBuffer);
-      state.clapBuffers = [0, 1, 2].map(createClapBuffer);
+      state.engine = createEngine(state.context, { loadBed });
+      state.engine.setLevel(state.level * 0.8, 0.01);
+      state.engine.setVenue(state.venue, { ramp: 0.05 });
+      state.engine.setPattern(state.pattern);
     }
     if (state.context.state !== 'running') {
       try { await state.context.resume(); } catch { return false; }
@@ -487,230 +1036,37 @@
     return state.context.state === 'running';
   }
 
-  function createPanner(angle, distance = 1.8, hrtf = true) {
-    const panner = state.context.createPanner();
-    panner.panningModel = hrtf ? 'HRTF' : 'equalpower';
-    panner.distanceModel = 'inverse';
-    panner.refDistance = 1;
-    panner.maxDistance = 9;
-    panner.rolloffFactor = 0.46;
-    panner.positionX.value = Math.sin(angle) * distance;
-    panner.positionY.value = 0;
-    panner.positionZ.value = -Math.cos(angle) * distance;
-    return panner;
+  // Keep scheduling ahead of the audio clock. Hidden tabs throttle timers, so look further ahead.
+  function startScheduler() {
+    clearInterval(state.schedulerTimer);
+    state.lastAnimate = performance.now();
+    state.schedulerTimer = setInterval(() => {
+      if (!state.engine || !state.context) return;
+      const ahead = document.hidden ? 1.6 : 0.2;
+      state.engine.schedule(state.context.currentTime + ahead);
+      const t = performance.now();
+      if (!reducedMotion.matches) state.engine.animate((t - state.lastAnimate) / 1000);
+      state.lastAnimate = t;
+    }, 25);
   }
-
-  const audioCache = new Map();
-
-  async function fetchAndDecode(url) {
-    if (audioCache.has(url)) return audioCache.get(url);
-    try {
-      const response = await fetch(url, { cache: 'force-cache' });
-      if (!response.ok) return null;
-      const arrayBuffer = await response.arrayBuffer();
-      const decoded = await state.context.decodeAudioData(arrayBuffer);
-      audioCache.set(url, decoded);
-      return decoded;
-    } catch {
-      return null;
-    }
-  }
-
-  async function loadAtmosphereBuffer(role) {
-    let localUrl = null;
-    let remoteUrl = null;
-    if (role === 'ground-crowd') {
-      localUrl = 'assets/audio/festival-crowd.ogg';
-      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/1/15/Festival_concert_people_crowd.ogg';
-    } else if (role === 'ground-clapping') {
-      localUrl = 'assets/audio/rhythmic-clapping.ogg';
-      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Palmas_sevillanas_%28flamenco_clapping%29%2C_160_BPM.ogg';
-    } else if (role === 'accent-applause') {
-      localUrl = 'assets/audio/ground-applause.ogg';
-      remoteUrl = 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Applause.ogg';
-    }
-
-    let buffer = await fetchAndDecode(localUrl);
-    if (!buffer && remoteUrl && navigator.onLine) {
-      buffer = await fetchAndDecode(remoteUrl);
-    }
-    return buffer;
-  }
-
-  function stopBeds() {
-    try { state.crowdSource?.stop(); } catch { /* already stopped */ }
-    for (const node of [state.crowdSource, state.crowdFilter, state.crowdGain, state.crowdPanner]) try { node?.disconnect(); } catch { /* no-op */ }
-    state.crowdSource = null;
-    state.crowdGain = null;
-    state.crowdFilter = null;
-    state.crowdPanner = null;
-
-    try { state.clappingSource?.stop(); } catch { /* already stopped */ }
-    for (const node of [state.clappingSource, state.clappingFilter, state.clappingGain, state.clappingPanner]) try { node?.disconnect(); } catch { /* no-op */ }
-    state.clappingSource = null;
-    state.clappingGain = null;
-    state.clappingFilter = null;
-    state.clappingPanner = null;
-  }
-
-  async function startAtmosphereBeds(profile, generation) {
-    stopBeds();
-    if (!profile || state.mode === 'off' || constrainedConnection()) return;
-
-    // 1. Festival Crowd Bed
-    if (profile.crowd > 0) {
-      const buffer = await loadAtmosphereBuffer('ground-crowd');
-      if (buffer && generation === state.generation && state.mode !== 'off' && (state.playbackActive || state.previewActive)) {
-        const source = state.context.createBufferSource();
-        source.buffer = buffer;
-        source.loop = true;
-        const filter = state.context.createBiquadFilter();
-        filter.type = 'peaking';
-        filter.frequency.value = 2600;
-        filter.Q.value = 0.55;
-        const gain = state.context.createGain();
-        gain.gain.value = profile.crowd * 0.44;
-
-        if (profile.spatial) {
-          const panner = createPanner(0.3, 2.0, true);
-          source.connect(filter).connect(gain).connect(panner).connect(state.bus);
-          state.crowdPanner = panner;
-        } else {
-          source.connect(filter).connect(gain).connect(state.bus);
-        }
-
-        source.start(0, Math.random() * Math.max(0.1, buffer.duration - 1));
-        state.crowdSource = source;
-        state.crowdFilter = filter;
-        state.crowdGain = gain;
-      }
-    }
-
-    // 2. Rhythmic Beat Clapping Bed
-    if (profile.clapping > 0) {
-      const clapBuffer = await loadAtmosphereBuffer('ground-clapping');
-      if (clapBuffer && generation === state.generation && state.mode !== 'off' && (state.playbackActive || state.previewActive)) {
-        const source = state.context.createBufferSource();
-        source.buffer = clapBuffer;
-        source.loop = true;
-        const filter = state.context.createBiquadFilter();
-        filter.type = 'peaking';
-        filter.frequency.value = 1900;
-        filter.Q.value = 0.65;
-        const gain = state.context.createGain();
-        gain.gain.value = profile.clapping * 0.46;
-
-        if (profile.spatial) {
-          const panner = createPanner(0.3 + Math.PI, 1.6, true);
-          source.connect(filter).connect(gain).connect(panner).connect(state.bus);
-          state.clappingPanner = panner;
-        } else {
-          source.connect(filter).connect(gain).connect(state.bus);
-        }
-
-        source.start(0, Math.random() * Math.max(0.1, clapBuffer.duration - 1));
-        state.clappingSource = source;
-        state.clappingFilter = filter;
-        state.clappingGain = gain;
-      }
-    }
-  }
+  function stopScheduler() { clearInterval(state.schedulerTimer); state.schedulerTimer = 0; }
 
   function clearScene() {
-    clearTimeout(state.eventTimer);
-    clearInterval(state.orbitTimer);
-    state.eventTimer = 0;
-    state.orbitTimer = 0;
-    stopBeds();
+    stopScheduler();
+    state.engine?.stop({ fade: 0.1 });
     state.sceneReady = false;
   }
 
-  function eventPanner() {
-    return createPanner(Math.random() * Math.PI * 2, 1.35 + Math.random() * 1.8, true);
-  }
-
-  async function playTransient(kind) {
-    if (!state.context || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
-    if (kind === 'applause') {
-      const buffer = await loadAtmosphereBuffer('accent-applause');
-      if (!buffer || (!state.playbackActive && !state.previewActive)) return;
-      const source = state.context.createBufferSource();
-      source.buffer = buffer;
-      const gain = state.context.createGain();
-      gain.gain.value = 0.28 + Math.random() * 0.08;
-      const panner = eventPanner();
-      source.connect(gain).connect(panner).connect(state.bus);
-      const startOffset = Math.random() * Math.max(0, buffer.duration - 4);
-      source.start(0, startOffset, 3.5);
-      source.addEventListener('ended', () => {
-        try { source.disconnect(); gain.disconnect(); panner.disconnect(); } catch {}
-      }, { once: true });
-      return;
-    }
-
-    // Dandiya stick strike transient
-    const source = state.context.createBufferSource();
-    source.buffer = kind === 'stick'
-      ? state.stickBuffers[Math.floor(Math.random() * state.stickBuffers.length)]
-      : state.clapBuffers[Math.floor(Math.random() * state.clapBuffers.length)];
-    const filter = state.context.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 3900 + Math.random() * 700;
-    const gain = state.context.createGain();
-    gain.gain.value = 0.28 + Math.random() * 0.08;
-    const panner = eventPanner();
-    source.connect(filter).connect(gain).connect(panner).connect(state.bus);
-    source.start();
-    source.addEventListener('ended', () => {
-      for (const node of [source, filter, gain, panner]) try { node.disconnect(); } catch { /* no-op */ }
-    }, { once: true });
-  }
-
-  function scheduleEvent(profile, generation) {
-    clearTimeout(state.eventTimer);
-    if (!profile?.events || generation !== state.generation || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;
-    const base = state.mode === 'immersive' ? 3800 : 5000;
-    const spread = state.mode === 'immersive' ? 4800 : 6500;
-    const delay = base + Math.random() * spread / Math.max(0.18, profile.events);
-    state.eventTimer = setTimeout(() => {
-      if (generation !== state.generation || (!state.playbackActive && !state.previewActive)) return;
-      // In crowd or immersive mode, occasional celebratory cheer burst (35% chance) or dandiya stick tap
-      const kind = (state.mode === 'crowd' || state.mode === 'immersive') && Math.random() < 0.35 ? 'applause' : 'stick';
-      playTransient(kind);
-      scheduleEvent(profile, generation);
-    }, delay);
-  }
-
-  function startOrbit(generation) {
-    clearInterval(state.orbitTimer);
-    if (state.mode !== 'immersive' || reducedMotion.matches) return;
-    state.orbitTimer = setInterval(() => {
-      if (generation !== state.generation || state.mode !== 'immersive' || !state.context || !state.sceneReady) return;
-      const now = state.context.currentTime;
-      const angle = (Date.now() / 8000) % (Math.PI * 2);
-      if (state.crowdPanner) {
-        state.crowdPanner.positionX.setTargetAtTime(Math.sin(angle) * 2.0, now, 0.3);
-        state.crowdPanner.positionZ.setTargetAtTime(-Math.cos(angle) * 2.0, now, 0.3);
-      }
-      if (state.clappingPanner) {
-        const clapAngle = angle + Math.PI;
-        state.clappingPanner.positionX.setTargetAtTime(Math.sin(clapAngle) * 1.5, now, 0.3);
-        state.clappingPanner.positionZ.setTargetAtTime(-Math.cos(clapAngle) * 1.5, now, 0.3);
-      }
-    }, 280);
-  }
-
   function targetMasterGain() {
-    if (!state.context || !state.master || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return 0;
-    return runtimeProfile().master * state.level;
+    if (!state.context || !state.engine || state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return 0;
+    return state.level * 0.8;
   }
 
   function applyMasterLevel({ quick = false } = {}) {
-    if (!state.context || !state.master) return;
+    if (!state.engine) return;
     const target = targetMasterGain();
-    const now = state.context.currentTime;
-    state.master.gain.cancelScheduledValues(now);
-    state.master.gain.setTargetAtTime(target, now, target > 0 ? (quick ? 0.06 : 0.18) : 0.055);
+    if (target > 0) state.engine.setLevel(target, quick ? 0.06 : 0.18);
+    else state.engine.stop({ fade: quick ? 0.08 : 0.16 });
   }
 
   async function buildScene({ smooth = true } = {}) {
@@ -719,17 +1075,26 @@
     if (state.mode === 'off') { applyMasterLevel({ quick: true }); clearScene(); return; }
     if (!await ensureContext()) return;
     if (smooth && state.sceneReady) {
-      state.master.gain.setTargetAtTime(0, state.context.currentTime, 0.05);
+      state.engine.stop({ fade: 0.08 });
       await sleep(110);
       if (generation !== state.generation) return;
     }
-    clearScene();
     const profile = runtimeProfile();
+    state.engine.setStyle(currentStyle());
+    await startBeds(profile);
+    if (generation !== state.generation) return;
+    if (state.previewActive && !state.playbackActive && state.tempoSource !== 'taps') {
+      state.engine.setTempo(PREVIEW_BPM, state.context.currentTime + 0.35);
+      state.tempoSource = 'preview';
+    }
     state.sceneReady = true;
-    scheduleEvent(profile, generation);
-    startOrbit(generation);
-    applyMasterLevel();
-    void startAtmosphereBeds(profile, generation);
+    state.engine.setLevel(targetMasterGain(), 0.2);
+    state.engine.start();
+    startScheduler();
+  }
+
+  async function startBeds(profile) {
+    await state.engine.setProfile(profile);
   }
 
   function scheduleIdleSuspend() {
@@ -747,6 +1112,7 @@
     state.previewTimer = 0;
     if (!state.previewActive) return;
     state.previewActive = false;
+    if (state.tempoSource === 'preview') { state.engine?.clearTempo(); state.tempoSource = null; }
     syncUi();
     applyMasterLevel({ quick: true });
     if (announce) setStatus('Atmosphere test stopped.');
@@ -762,12 +1128,70 @@
     state.previewActive = true;
     syncUi();
     await buildScene({ smooth: true });
-    setStatus(`Testing ${MODES[state.mode].label} in ${ENVIRONMENTS[state.environment].label}.`);
+    setStatus(`Testing ${MODES[state.mode].label} at ${VENUES[state.venue].label}.`);
     state.previewTimer = setTimeout(() => stopPreview({ announce: false }), 6000);
     dispatchChange('preview-started');
   }
 
   function togglePreview() { return previewCurrentMode(); }
+
+  function setVenue(id) {
+    if (!VENUES[id]) return;
+    state.venue = id;
+    persist();
+    state.engine?.setVenue(id);
+    syncUi();
+    dispatchChange('venue');
+  }
+
+  function setPattern(id) {
+    if (!PATTERNS[id]) return;
+    state.pattern = id;
+    persist();
+    state.engine?.setPattern(id);
+    syncUi();
+    dispatchChange('pattern');
+  }
+
+  // Tap tempo. Four taps set the tempo; each later tap refines it. A pause of more
+  // than two seconds starts a new count. Beats are placed where the taps were heard.
+  async function registerTap() {
+    if (!await ensureContext()) return;
+    const ctx = state.context;
+    const heard = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0);
+    const last = state.taps[state.taps.length - 1];
+    if (last !== undefined && heard - last > 2) state.taps = [];
+    state.taps.push(heard);
+    if (state.taps.length > 12) state.taps.shift();
+    state.tap?.classList.add('is-hit');
+    setTimeout(() => state.tap?.classList.remove('is-hit'), 90);
+    if (state.taps.length >= 4) {
+      // Least-squares fit of tap time against tap number gives period and phase.
+      const n = state.taps.length;
+      const xs = state.taps.map((_, i) => i);
+      const mx = (n - 1) / 2;
+      const my = state.taps.reduce((a, b) => a + b, 0) / n;
+      let num = 0; let den = 0;
+      for (let i = 0; i < n; i += 1) { num += (xs[i] - mx) * (state.taps[i] - my); den += (xs[i] - mx) ** 2; }
+      const period = num / den;
+      const bpm = 60 / period;
+      if (bpm >= 50 && bpm <= 200) {
+        const firstBeat = my - mx * period;
+        // Keep the round counted from the first tap of this count.
+        state.engine.setTempo(bpm, firstBeat);
+        state.tempoSource = 'taps';
+        if (!state.sceneReady && (state.playbackActive || state.previewActive)) void buildScene({ smooth: false });
+        dispatchChange('tempo');
+      }
+    }
+    syncUi();
+  }
+
+  function clearTaps() {
+    state.taps = [];
+    if (state.tempoSource === 'taps') { state.engine?.clearTempo(); state.tempoSource = null; }
+    syncUi();
+  }
 
   async function setMode(mode, { userGesture = false } = {}) {
     if (!MODES[mode]) return;
@@ -800,13 +1224,7 @@
       clearTimeout(state.idleTimer);
       ensureContext().then((ready) => {
         if (!ready || !state.playbackActive) return;
-        if (!state.sceneReady) void buildScene({ smooth: false });
-        else {
-          applyMasterLevel();
-          scheduleEvent(runtimeProfile(), state.generation);
-          startOrbit(state.generation);
-          if (runtimeProfile().crowd && !state.crowdSource) void startAtmosphereBeds(runtimeProfile(), state.generation);
-        }
+        void buildScene({ smooth: false });
       });
     } else if (!state.previewActive) {
       applyMasterLevel({ quick: true });
@@ -817,7 +1235,7 @@
   function trustedPlaybackUnlock(event) {
     if (!event.isTrusted || state.mode === 'off') return;
     const target = event.target instanceof Element ? event.target : null;
-    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,.atmosphere-env,#atmosphereLevel,.atmosphere-test')) return;
+    if (target && !target.closest('#playButton,#miniPlay,.song-copy,#prevButton,#nextButton,#miniPrev,#miniNext,#atmosphereButton,.atmosphere-mode,.atmosphere-venue,.atmosphere-tap,#atmosphereLevel,.atmosphere-test')) return;
     ensureContext().then((ready) => { if (ready) requestAnimationFrame(syncPlaybackState); });
   }
 
@@ -850,8 +1268,11 @@
     }
   });
   new MutationObserver(syncPlaybackState).observe(app, { attributes: true, attributeFilter: ['class'] });
+  // A new song or genre means a new rhythm: drop the old tempo and switch claps or sticks.
+  new MutationObserver(() => { state.engine?.setStyle(currentStyle()); syncUi(); }).observe(app, { attributes: true, attributeFilter: ['data-genre'] });
+  const songTitle = document.getElementById('songTitle');
+  if (songTitle) new MutationObserver(clearTaps).observe(songTitle, { childList: true, characterData: true, subtree: true });
   connection?.addEventListener?.('change', handleConnectionChange);
-  reducedMotion.addEventListener?.('change', () => { if (state.mode === 'immersive' && (state.playbackActive || state.previewActive)) void buildScene({ smooth: true }); });
 
   const songSheet = document.getElementById('songSheet');
   if (songSheet) new MutationObserver(() => { if (state.panelOpen && songSheet.getAttribute('aria-hidden') === 'false') setPanelOpen(false); }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
@@ -867,8 +1288,10 @@
   window.GARBA_ATMOSPHERE = {
     get mode() { return state.mode; },
     set mode(value) { void setMode(value); },
-    get environment() { return state.environment; },
-    set environment(value) { applyEnvironment(value); },
+    get venue() { return state.venue; },
+    set venue(value) { setVenue(value); },
+    get pattern() { return state.pattern; },
+    get bpm() { return state.engine?.tempo ? state.engine.tempo.bpm : null; },
     get level() { return state.level; },
     set level(value) {
       state.level = clamp(Number(value) || 0.45, 0.05, 1);
@@ -884,9 +1307,11 @@
     get active() { return state.mode !== 'off' && (state.playbackActive || state.previewActive) && Boolean(state.context) && state.sceneReady; },
     get playbackSynced() { return state.playbackActive; },
     get constrained() { return constrainedConnection(); },
-    get spatialModel() { return state.mode === 'immersive' ? 'HRTF' : 'stereo-plus-spatial-events'; },
+    get spatialModel() { return state.mode === 'immersive' ? 'HRTF' : 'stereo'; },
     setMode,
-    setEnvironment: applyEnvironment,
+    setVenue,
+    setPattern,
+    tap: registerTap,
     preview() { return previewCurrentMode(); },
     stopPreview,
     stop() { return setMode('off'); },
