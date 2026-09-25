@@ -120,5 +120,6 @@ export function normalizeEdgeDimensions(request) {
   const device = /ipad|tablet/.test(ua) ? 'tablet' : /iphone|android|mobile/.test(ua) ? 'mobile' : ua ? 'desktop' : 'unknown'
   const os = /iphone|ipad|ios/.test(ua) ? 'iOS' : /android/.test(ua) ? 'Android' : /mac os|macintosh/.test(ua) ? 'macOS' : /windows/.test(ua) ? 'Windows' : /linux/.test(ua) ? 'Linux' : 'unknown'
   const browser = /edg\//.test(ua) ? 'Edge' : /firefox\//.test(ua) ? 'Firefox' : /chrome\//.test(ua) ? 'Chrome' : /safari\//.test(ua) ? 'Safari' : 'unknown'
-  return { country, region, device, os, browser, bot: /bot|crawler|spider|headless/.test(ua) }
+  const colo = cf.colo || 'unknown'
+  return { colo, country, region, device, os, browser, bot: /bot|crawler|spider|headless/.test(ua) }
 }

@@ -163,11 +163,58 @@ test('normalises edge dimensions without retaining raw user agent', () => {
   const request = new Request('https://events.playgarba.com/v1/events', {
     headers: { 'user-agent': 'Mozilla/5.0 (iPhone) Version/18.0 Mobile Safari/605.1.15' },
   })
+  request.cf = { colo: 'LHR', country: 'GB', regionCode: 'ENG' }
   const edge = normalizeEdgeDimensions(request)
+  assert.equal(edge.colo, 'LHR')
+  assert.equal(edge.country, 'GB')
+  assert.equal(edge.region, 'ENG')
   assert.equal(edge.device, 'mobile')
   assert.equal(edge.os, 'iOS')
   assert.equal(edge.browser, 'Safari')
+  assert.equal(edge.bot, false)
   assert.equal('userAgent' in edge, false)
+})
+
+test('normalises edge dimensions defaults when cf or headers are missing', () => {
+  const request = new Request('https://events.playgarba.com/v1/events')
+  const edge = normalizeEdgeDimensions(request)
+  assert.equal(edge.colo, 'unknown')
+  assert.equal(edge.country, 'ZZ')
+  assert.equal(edge.region, 'unknown')
+  assert.equal(edge.device, 'unknown')
+  assert.equal(edge.os, 'unknown')
+  assert.equal(edge.browser, 'unknown')
+  assert.equal(edge.bot, false)
+})
+
+test('normalises edge dimensions fallback logic and bot detection', () => {
+  const request = new Request('https://events.playgarba.com/v1/events', {
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+  })
+  request.cf = { colo: '', country: 'INVALID', regionCode: null }
+  const edge = normalizeEdgeDimensions(request)
+  assert.equal(edge.colo, 'unknown')
+  assert.equal(edge.country, 'ZZ')
+  assert.equal(edge.region, 'unknown')
+  assert.equal(edge.bot, true)
+})
+
+test('normalises edge dimensions detects various devices, OS, and browsers', () => {
+  const testCases = [
+    { ua: 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1 Mobile/15E148 Safari/604.1', expected: { device: 'tablet', os: 'iOS', browser: 'Safari' } },
+    { ua: 'Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36', expected: { device: 'mobile', os: 'Android', browser: 'Chrome' } },
+    { ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0', expected: { device: 'desktop', os: 'Windows', browser: 'Edge' } },
+    { ua: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0', expected: { device: 'desktop', os: 'macOS', browser: 'Firefox' } },
+    { ua: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36', expected: { device: 'desktop', os: 'Linux', browser: 'Chrome' } },
+  ]
+
+  for (const { ua, expected } of testCases) {
+    const req = new Request('https://events.playgarba.com', { headers: { 'user-agent': ua } })
+    const edge = normalizeEdgeDimensions(req)
+    assert.equal(edge.device, expected.device)
+    assert.equal(edge.os, expected.os)
+    assert.equal(edge.browser, expected.browser)
+  }
 })
 
 test('HMAC pseudonyms are deterministic, scoped and bounded', async () => {
