@@ -185,6 +185,34 @@ near(single.offsetSeconds, 1, 'single-song loop');
 assert.equal(single.nextSong.id, 'only');
 pass('position math is exact across song boundaries, loop wrap, multiple cycles, single-song loops and before the start');
 
+// Unplayable songs: their slot is filled by the following playable songs, from the slot start
+const withUnplayable = (seconds, ids) => getCirclePosition(posSchedule, start, start + seconds * 1000, { unplayable: new Set(ids) });
+{
+  const sub = withUnplayable(110, ['p2']);
+  assert.equal(sub.song.id, 'p3');
+  assert.equal(sub.substituteFor, 'p2');
+  near(sub.offsetSeconds, 10, 'substitute offset');
+  near(sub.remainingSeconds, 40.5, 'substitute ends with the slot');
+  const resumed = withUnplayable(155.5, ['p2']);
+  assert.equal(resumed.song.id, 'p3');
+  assert.equal(resumed.substituteFor, null);
+  near(resumed.offsetSeconds, 5, 'schedule resumes after the slot');
+  const skipTwo = withUnplayable(110, ['p2', 'p3']);
+  assert.equal(skipTwo.song.id, 'p1');
+  near(skipTwo.offsetSeconds, 10, 'skips every unplayable song');
+  const chained = withUnplayable(70, ['p1']);
+  assert.equal(chained.song.id, 'p3', 'a short substitute hands over to the next one');
+  near(chained.offsetSeconds, 19.5, 'chained substitute offset');
+  near(chained.remainingSeconds, 30, 'chained substitute ends with the slot');
+  const none = withUnplayable(20, ['p1', 'p2', 'p3']);
+  assert.equal(none.song, null);
+  assert.equal(none.substituteFor, 'p1');
+  near(none.remainingSeconds, 80, 'silent slot still reports when it ends');
+  assert.deepEqual(withUnplayable(20, []), at(20));
+  assert.equal(at(20).substituteFor, null);
+}
+pass('unplayable songs are filled deterministically by the following playable songs until their slot ends');
+
 // Drift planning
 assert.deepEqual(planDriftCorrection({ expectedSeconds: 50, actualSeconds: 50.2 }), { action: 'none', targetSeconds: null, driftSeconds: planDriftCorrection({ expectedSeconds: 50, actualSeconds: 50.2 }).driftSeconds });
 assert.equal(planDriftCorrection({ expectedSeconds: 50, actualSeconds: 49.7 }).action, 'none');

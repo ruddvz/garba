@@ -137,8 +137,12 @@ export function decodeCircleCode(value) {
 /**
  * Where the circle is at `nowMs` (server-aligned milliseconds). The schedule loops.
  * Before the start instant the circle waits at the top of its first song.
+ *
+ * `unplayable` holds song ids that YouTube refuses to play here (embedding disabled, removed).
+ * Every phone hits the same refusal, so each fills that song's slot the same way: the following
+ * playable songs, laid out from the slot's start. When the slot ends the schedule resumes as usual.
  */
-export function getCirclePosition(schedule, startMs, nowMs) {
+export function getCirclePosition(schedule, startMs, nowMs, { unplayable = null } = {}) {
   if (!Array.isArray(schedule) || !schedule.length || !Number.isFinite(startMs) || !Number.isFinite(nowMs)) return null;
   const durations = schedule.map((song) => Number(song.durationSeconds));
   if (durations.some((duration) => !(duration > 0))) return null;
@@ -166,7 +170,7 @@ export function getCirclePosition(schedule, startMs, nowMs) {
     index += 1;
   }
   const offsetSeconds = Math.min(t, durations[index]);
-  return {
+  const position = {
     song: schedule[index],
     index,
     offsetSeconds,
@@ -175,7 +179,30 @@ export function getCirclePosition(schedule, startMs, nowMs) {
     cycle,
     started: true,
     startsInSeconds: 0,
+    substituteFor: null,
   };
+  return unplayable?.has(position.song.id) ? substitutePosition(schedule, durations, position, unplayable) : position;
+}
+
+function substitutePosition(schedule, durations, slot, unplayable) {
+  const slotRemaining = slot.remainingSeconds;
+  let t = slot.offsetSeconds;
+  for (let step = 1; step < schedule.length; step += 1) {
+    const index = (slot.index + step) % schedule.length;
+    if (unplayable.has(schedule[index].id)) continue;
+    if (t < durations[index]) {
+      return {
+        ...slot,
+        song: schedule[index],
+        index,
+        offsetSeconds: t,
+        remainingSeconds: Math.min(durations[index] - t, slotRemaining),
+        substituteFor: slot.song.id,
+      };
+    }
+    t -= durations[index];
+  }
+  return { ...slot, song: null, substituteFor: slot.song.id };
 }
 
 /**
