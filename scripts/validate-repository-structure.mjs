@@ -102,6 +102,7 @@ const expectedScriptEntrypoints = [
   'audit-direct-host-health.mjs',
   'audit-youtube-health.mjs',
   'build-catalogue.mjs',
+  'enforce-protected-main.mjs',
   'enrich-runtime-songs.mjs',
   'generate-licensing-request.mjs',
   'match-vendor-catalogue.mjs',
