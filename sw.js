@@ -127,10 +127,10 @@ self.addEventListener('activate', (event) => {
     await caches.delete(CACHE_NAME);
     const live = await caches.open(CACHE_NAME);
     try {
-      for (const request of promotableRequests) {
+      await Promise.all(promotableRequests.map(async (request) => {
         const response = await staged.match(request);
         if (response) await live.put(request, response);
-      }
+      }));
     } catch (error) {
       await caches.delete(CACHE_NAME);
       throw error;
