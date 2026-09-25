@@ -397,3 +397,39 @@ test('rollup day stores additive metrics and a daily unique-browser snapshot wit
   assert.equal(result.metrics.unique_browsers_daily, 4)
   assert.equal(db.batches.length, 1)
 })
+
+test('ingestion rejects overly large bodies', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+  const request = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json', 'content-length': '33000' },
+    body: 'x'.repeat(33000),
+  })
+  const response = await handleIngest(request, env, { nowMs: NOW })
+  assert.equal(response.status, 413)
+  const body = await response.json()
+  assert.equal(body.error, 'body_too_large')
+})
+
+test('ingestion rejects invalid json', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+  const request = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: '{ invalid json ',
+  })
+  const response = await handleIngest(request, env, { nowMs: NOW })
+  assert.equal(response.status, 400)
+  const body = await response.json()
+  assert.equal(body.error, 'invalid_json')
+})
