@@ -16,3 +16,4 @@ dist/
 .vercel
 .env*
 /assets/backgrounds/library/
+_smoke/
