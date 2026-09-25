@@ -350,18 +350,6 @@ test('Access verifier preserves issuer, audience and expiry rejection precedence
   )
 })
 
-test('Access verifier fails closed when the JWKS fetch returns invalid JSON, missing keys, or errors', async () => {
-  const fixture = await accessFixture()
-  const fetchImplError = async () => ({ ok: false, status: 500 })
-  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplError }), { ok: false, reason: 'access_verification_failed' })
-
-  const fetchImplMissingKeys = async () => Response.json({})
-  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplMissingKeys }), { ok: false, reason: 'access_verification_failed' })
-
-  const fetchImplInvalidJson = async () => new Response('invalid json')
-  assert.deepEqual(await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fetchImplInvalidJson }), { ok: false, reason: 'access_verification_failed' })
-})
-
 test('protected Live API returns aggregate data with no-store caching', async () => {
   const fixture = await accessFixture('/api/live')
   const response = await handleAdmin(fixture.request, fixture.env, {
@@ -408,4 +396,22 @@ test('rollup day stores additive metrics and a daily unique-browser snapshot wit
   assert.equal(result.metrics.sessions, 5)
   assert.equal(result.metrics.unique_browsers_daily, 4)
   assert.equal(db.batches.length, 1)
+})
+test('Access verifier handles fetch errors and invalid responses', async () => {
+  const fixture = await accessFixture()
+  const errorFetch = async () => { throw new Error('network_error') }
+  const result1 = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: errorFetch })
+  assert.deepEqual(result1, { ok: false, reason: 'access_verification_failed' })
+
+  const notOkFetch = async () => ({ ok: false, status: 500 })
+  const result2 = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: notOkFetch })
+  assert.deepEqual(result2, { ok: false, reason: 'access_verification_failed' })
+
+  const invalidJsonFetch = async () => ({ ok: true, json: async () => { throw new Error('parse_error') } })
+  const result3 = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: invalidJsonFetch })
+  assert.deepEqual(result3, { ok: false, reason: 'access_verification_failed' })
+
+  const missingKeysFetch = async () => ({ ok: true, json: async () => ({ not_keys: [] }) })
+  const result4 = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: missingKeysFetch })
+  assert.deepEqual(result4, { ok: false, reason: 'access_verification_failed' })
 })
