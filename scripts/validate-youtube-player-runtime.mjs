@@ -161,6 +161,15 @@ for (const marker of [
 ]) {
   if (!errorHandlerBlock.includes(marker)) fail(`YouTube error recovery must distinguish provider failures: ${marker}`);
 }
+{
+  const tokenIndex = errorHandlerBlock.indexOf('const token = openToken;');
+  const dispatchIndex = errorHandlerBlock.indexOf("new CustomEvent('garba:youtube-error'");
+  const guardIndex = errorHandlerBlock.indexOf('if (token !== openToken) return;');
+  const recoveryIndex = errorHandlerBlock.indexOf('showRecovery(');
+  if (!(tokenIndex >= 0 && dispatchIndex > tokenIndex && guardIndex > dispatchIndex && recoveryIndex > guardIndex)) {
+    fail('YouTube error recovery must not paint over a replacement opened by a garba:youtube-error listener');
+  }
+}
 if (!retryBlock) fail('Could not inspect bounded YouTube retry action');
 else {
   if (!retryBlock.includes('retryCount >= MAX_RECOVERY_RETRIES')) fail('YouTube Retry must have a hard attempt bound');
@@ -312,6 +321,7 @@ if (!(providerIndex >= 0 && continuityIndex > providerIndex && youtubeIndex > co
 }
 
 if (failed) process.exit(1);
+console.log('✓ YouTube error recovery yields to a replacement opened by an error listener');
 console.log('✓ YouTube playback uses the documented IFrame Player API and GARBA transport controls');
 console.log('✓ queue navigation reuses one visible YouTube IFrame player while explicit Close tears it down');
 console.log('✓ concurrent first-load navigation shares readiness and Close during API loading cannot create a hidden iframe afterward');
