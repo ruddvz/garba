@@ -152,6 +152,11 @@ test('redacts email, phone and URL-like search input', () => {
   assert.equal(sanitizeSearchTerm('  nonstop   garba  '), 'nonstop garba')
 })
 
+test('rejects empty batches', () => {
+  assert.throws(() => validateBatch([], { nowMs: NOW }), /invalid_batch_size/)
+  assert.throws(() => validateBatch({ events: [] }, { nowMs: NOW }), /invalid_batch_size/)
+})
+
 test('rejects mixed-browser batches', () => {
   assert.throws(() => validateBatch([
     baseEvent({ event_id: 'one', browser_id: 'one' }),
