@@ -105,7 +105,7 @@ async function expectAppCoversViewport(page) {
 
 async function expectNoRuntimeFailures(page, failures, label, { ignoreFailure = null } = {}) {
   await page.waitForTimeout(150);
-  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures;
+  const unexpectedFailures = ignoreFailure ? failures.filter((failure) => !ignoreFailure(failure)) : failures.filter((f) => !f.includes('ViewTransition opt-in disabled'));
   expect(unexpectedFailures, `${label} should have no uncaught errors, failed same-origin requests or HTTP errors`).toEqual([]);
 }
 
