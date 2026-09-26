@@ -8,8 +8,8 @@
 
   /* ---------- avatars ----------
      Twelve faces in a flat, outlined style: bandhani pagdis, bindis, jhumkas and odhnis.
-     If the finished cutouts are added as a 4 × 3 sheet, set window.GARBO_AVATAR_SHEET to its path
-     and the faces are cut from that sheet instead. */
+     When the finished cutouts arrive they replace these drawings: as twelve transparent files listed in
+     window.GARBO_AVATAR_FILES, or as one 4 × 3 sheet named by window.GARBO_AVATAR_SHEET. */
   var SKIN = ['#e0a56f', '#c98a57', '#b87a47', '#a56a3a'];
   var AVATARS = [
     { label: 'Woman with a flower in her hair', w: 1, skin: 1, hair: 'bun', flower: 1, garment: '#c2185b' },
@@ -80,12 +80,14 @@
     o.push('</svg>');
     return o.join('');
   }
-  // The avatar as an element: cut from the finished sheet when there is one, drawn otherwise
-  function avatarNode(i, size) {
-    var n = document.createElement('span'); n.className = 'avatar';
+  // The avatar as an element: the finished cutout when there is one, drawn otherwise. `bare` leaves out the
+  // round backing so a transparent cutout can sit on things.
+  function avatarNode(i, size, bare) {
+    var n = document.createElement('span'); n.className = 'avatar' + (bare ? ' bare' : '');
     if (size) { n.style.width = size + 'px'; n.style.height = size + 'px'; }
-    var sheet = window.GARBO_AVATAR_SHEET, k = ((i % AVATARS.length) + AVATARS.length) % AVATARS.length;
-    if (sheet) { n.classList.add('from-sheet'); n.style.backgroundImage = 'url("' + String(sheet).replace(/"/g, '') + '")'; n.style.backgroundSize = '400% 300%'; n.style.backgroundPosition = (k % 4) / 3 * 100 + '% ' + Math.floor(k / 4) / 2 * 100 + '%'; }
+    var files = window.GARBO_AVATAR_FILES, sheet = window.GARBO_AVATAR_SHEET, k = ((i % AVATARS.length) + AVATARS.length) % AVATARS.length;
+    if (files && files[k]) { var img = document.createElement('img'); img.alt = ''; img.src = String(files[k]); n.append(img); }
+    else if (sheet) { n.classList.add('from-sheet'); n.style.backgroundImage = 'url("' + String(sheet).replace(/"/g, '') + '")'; n.style.backgroundSize = '400% 300%'; n.style.backgroundPosition = (k % 4) / 3 * 100 + '% ' + Math.floor(k / 4) / 2 * 100 + '%'; }
     else n.innerHTML = avatarSVG(k);
     return n;
   }
@@ -95,7 +97,10 @@
   function cleanName(s) { return String(s || '').replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME); }
   function b64url(str) { var bytes = new TextEncoder().encode(str), bin = ''; bytes.forEach(function (b) { bin += String.fromCharCode(b); }); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function unb64url(s) { var bin = atob(s.replace(/-/g, '+').replace(/_/g, '/')), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return new TextDecoder().decode(bytes); }
-  function encode(live) { return b64url(JSON.stringify({ v: 1, k: live.id, h: live.host, a: live.avatar, s: live.start, q: live.songs })); }
+  var MAX_TITLE = 32;
+  function cleanTitle(s) { return cleanName(String(s || '').slice(0, MAX_TITLE * 2)).slice(0, MAX_TITLE); }
+  function title(live) { return live.title || live.host + "'s live"; }
+  function encode(live) { var o = { v: 1, k: live.id, h: live.host, a: live.avatar, s: live.start, q: live.songs }; if (live.title) o.n = live.title; return b64url(JSON.stringify(o)); }
   // Everything in a link is untrusted: names are cleaned, numbers checked, songs kept only if this catalogue can play them
   function decode(code, playable) {
     try {
@@ -105,7 +110,7 @@
       if (!host || !isFinite(start) || !(avatar >= 0 && avatar < AVATARS.length)) return null;
       var songs = Array.isArray(o.q) ? o.q.filter(function (id) { return typeof id === 'string' && playable(id); }).slice(0, MAX_SONGS) : [];
       if (!songs.length) return null;
-      return { id: String(o.k || '').replace(/[^a-z0-9]/gi, '').slice(0, 12) || 'x', host: host, avatar: avatar, start: start, songs: songs };
+      return { id: String(o.k || '').replace(/[^a-z0-9]/gi, '').slice(0, 12) || 'x', host: host, title: cleanTitle(o.n) || '', avatar: avatar, start: start, songs: songs };
     } catch (e) { return null; }
   }
   function newId() { return Math.random().toString(36).slice(2, 10); }
@@ -123,7 +128,7 @@
   // start moves back by however far into it the live is
   function reanchor(live, songs, now, lengthOf, fromNext) {
     var cur = at(live, lengthOf, now), playingId = cur.state === 'on' ? live.songs[cur.index] : null;
-    var i = playingId ? songs.indexOf(playingId) : -1, out = { id: live.id, host: live.host, avatar: live.avatar, songs: songs.slice(), start: live.start };
+    var i = playingId ? songs.indexOf(playingId) : -1, out = { id: live.id, host: live.host, title: live.title || '', avatar: live.avatar, songs: songs.slice(), start: live.start };
     if (cur.state !== 'on') return out;
     if (i < 0 || fromNext) {
       // The playing song was taken off (or skipped): the song after it starts now
@@ -140,5 +145,5 @@
   function save(store) { try { localStorage.setItem(KEY, JSON.stringify({ mine: store.mine.slice(0, 12), joined: store.joined.slice(0, 20) })); } catch (e) { /* storage unavailable */ } }
   function remember(store, list, live) { store[list] = [live].concat(store[list].filter(function (x) { return x.id !== live.id; })); save(store); }
 
-  window.GarboLives = { AVATARS: AVATARS, avatarSVG: avatarSVG, avatarNode: avatarNode, cleanName: cleanName, encode: encode, decode: decode, newId: newId, at: at, reanchor: reanchor, load: load, save: save, remember: remember, MAX_NAME: MAX_NAME, MAX_SONGS: MAX_SONGS };
+  window.GarboLives = { AVATARS: AVATARS, avatarSVG: avatarSVG, avatarNode: avatarNode, cleanName: cleanName, cleanTitle: cleanTitle, title: title, MAX_TITLE: MAX_TITLE, encode: encode, decode: decode, newId: newId, at: at, reanchor: reanchor, load: load, save: save, remember: remember, MAX_NAME: MAX_NAME, MAX_SONGS: MAX_SONGS };
 })();

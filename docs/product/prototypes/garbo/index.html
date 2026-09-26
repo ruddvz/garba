@@ -48,6 +48,9 @@
       <symbol id="i-live" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M8.2 15.8a5.4 5.4 0 0 1 0-7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.3 18.7a9.5 9.5 0 0 1 0-13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/></g></symbol>
       <symbol id="i-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 15 6-6 6 6"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></g></symbol>
+      <symbol id="i-tent" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3 3 20h18L12 3Z"/><path d="M12 3v17M9 20l3-6 3 6"/></g></symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3Z"/></g></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
       <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
@@ -63,7 +66,6 @@
       <nav class="tools" aria-label="Player tools">
         <button class="ib" id="searchBtn" type="button" aria-label="Search songs"><svg><use href="#i-search"/></svg></button>
         <button class="ib" id="tonightBtn" type="button" aria-label="Tonight"><svg><use href="#i-moon"/></svg></button>
-        <button class="ib atmo-top" id="atmoTop" type="button" aria-label="Atmosphere" aria-pressed="false"><svg><use href="#i-headphones"/></svg></button>
         <button class="ib" id="moreBtn" type="button" aria-label="More"><svg><use href="#i-more"/></svg></button>
       </nav>
     </header>
@@ -99,11 +101,20 @@
       </nav>
 
       <footer class="foot">
-        <button class="live" id="liveBtn" type="button" aria-pressed="false"><i aria-hidden="true"></i>24/7 Live</button>
+        <button class="live" id="liveBtn" type="button" aria-pressed="false"><i aria-hidden="true"></i><span id="liveLabel">24/7 Live</span></button>
         <button class="explore" id="exploreBtn" type="button">Explore<svg aria-hidden="true"><use href="#i-chev"/></svg></button>
         <button class="yt" id="videoBtn" type="button" aria-label="Show YouTube video"><svg aria-hidden="true"><use href="#i-yt"/></svg><span>YouTube</span></button>
       </footer>
     </main>
+
+    <!-- Scene controls: each opens a small card at the side, leaving the player as it is -->
+    <nav class="rail" id="rail" aria-label="Scene">
+      <button class="rail-btn" type="button" data-card="viewCard" aria-controls="viewCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-eye"/></svg><span>View</span></button>
+      <button class="rail-btn" type="button" data-card="venueCard" aria-controls="venueCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-tent"/></svg><span>Venue</span></button>
+      <button class="rail-btn" type="button" id="soundBtn" data-card="soundCard" aria-controls="soundCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-headphones"/></svg><span>Sound</span></button>
+      <button class="rail-btn" type="button" data-card="ideaCard" aria-controls="ideaCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-bulb"/></svg><span>Ideas</span></button>
+    </nav>
+    <p class="sr-only" id="djSr" aria-live="polite"></p>
 
     <div class="offline-bar" id="offlineBar" hidden><svg aria-hidden="true"><use href="#i-offline"/></svg>You're offline. Playback resumes when you're back online.</div>
   </div>
@@ -152,7 +163,6 @@
     <div class="sheet-body">
       <div class="tiles">
         <button class="tile tile-wide" type="button" id="livesOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-live"/></svg></span><strong>Lives</strong><small>Host your own live with your songs, or go back to one you joined</small></button>
-        <button class="tile" type="button" id="atmoBtn"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-headphones"/></svg></span><strong>Atmosphere</strong><small>Pick the venue and hear the circle</small></button>
         <button class="tile" type="button" id="shareOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-share"/></svg></span><strong>Share this song</strong><small>A card with the lit garbo</small></button>
         <button class="tile" type="button" id="aboutOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-book"/></svg></span><strong>What is Garba?</strong><small>The lamp, the circle, the nights</small></button>
         <button class="tile" type="button" id="installBtn"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-install"/></svg></span><strong>Install PlayGarba</strong><small>Keep it one tap away</small></button>
@@ -190,6 +200,10 @@
       <div class="host-row">
         <h3><label for="hostName">Your name</label></h3>
         <input class="host-input" id="hostName" type="text" maxlength="24" autocomplete="nickname" placeholder="Shown on your live">
+      </div>
+      <div class="host-row">
+        <h3><label for="hostTitleIn">Name your live</label> <span class="pl-sum">Optional</span></h3>
+        <input class="host-input" id="hostTitleIn" type="text" maxlength="32" autocomplete="off" placeholder="For example, Sia's playground">
       </div>
       <div class="host-row" id="startRow">
         <h3 id="startHead">Starts</h3>
@@ -229,17 +243,27 @@
     </div>
   </section>
 
-  <section class="sheet atmo-sheet" id="atmoSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="atmoTitle" hidden>
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <header class="sheet-head"><h2 id="atmoTitle">Atmosphere</h2><button class="ib" type="button" data-close aria-label="Close Atmosphere"><svg><use href="#i-close"/></svg></button></header>
-    <div class="sheet-body atmo-body">
+  <section class="card" id="viewCard" role="dialog" aria-labelledby="viewCardT" hidden>
+    <header class="card-head"><h2 id="viewCardT">Where you are</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="atmo-seg card-seg" id="atmoListeners"></div>
+    <p class="atmo-desc" id="atmoListenerDesc"></p>
+    <button class="atmo-swap" id="atmoSwap" type="button">Dance as the man instead</button>
+  </section>
+
+  <section class="card" id="venueCard" role="dialog" aria-labelledby="venueCardT" hidden>
+    <header class="card-head"><h2 id="venueCardT">Venue</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="atmo-seg card-seg" id="atmoVenues"></div>
+    <p class="atmo-desc" id="atmoVenueDesc"></p>
+    <p class="atmo-desc">The lights follow the kind of music you pick, and Dandiya Raas puts sticks in every hand.</p>
+  </section>
+
+  <section class="card" id="soundCard" role="dialog" aria-labelledby="soundCardT" hidden>
+    <header class="card-head"><h2 id="soundCardT">Sound</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="card-body atmo-body">
       <button class="atmo-power" id="atmoPower" type="button" role="switch" aria-checked="false">
         <span><strong id="atmoPowerLabel">Sound is off</strong><small>Hear the circle around the song. Best on headphones.</small></span><i aria-hidden="true"></i>
       </button>
-      <p class="atmo-desc">The lights follow the kind of music you pick, and Dandiya Raas puts sticks in every hand.</p>
       <p class="atmo-desc" id="atmoUnavailable" hidden>The Atmosphere engine isn't loaded in this copy of the prototype, so only the look changes.</p>
-      <div class="atmo-row"><h3>Venue</h3><div class="atmo-seg" id="atmoVenues"></div><p class="atmo-desc" id="atmoVenueDesc"></p></div>
-      <div class="atmo-row"><h3>Where you are</h3><div class="atmo-seg" id="atmoListeners"></div><p class="atmo-desc" id="atmoListenerDesc"></p><button class="atmo-swap" id="atmoSwap" type="button">Dance as the man instead</button></div>
       <div class="atmo-row"><h3>Who keeps the beat</h3><div class="atmo-seg" id="atmoStyles"></div><p class="atmo-desc" id="atmoStyleDesc"></p></div>
       <div class="atmo-row"><h3>Around the music</h3><div class="atmo-seg" id="atmoModes"></div></div>
       <div class="atmo-row atmo-beat">
@@ -255,6 +279,19 @@
         <div class="atmo-seg" id="atmoPatterns" role="group" aria-label="Clap pattern"></div>
       </div>
       <p class="atmo-note">The song itself plays as YouTube sends it. Atmosphere adds the venue around it. <a href="../../../../public-site/atmosphere/">Open the listening room</a></p>
+    </div>
+  </section>
+
+  <section class="card" id="ideaCard" role="dialog" aria-labelledby="ideaCardT" hidden>
+    <header class="card-head"><h2 id="ideaCardT">Ask for a feature</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="card-body idea-body">
+      <p class="atmo-desc">What should PlayGarba do next? Your words are kept exactly as you write them.</p>
+      <label class="sr-only" for="ideaText">Your idea</label>
+      <textarea class="host-input idea-text" id="ideaText" rows="5" maxlength="2000" placeholder="I'd love to be able to…"></textarea>
+      <label class="sr-only" for="ideaName">Your name, if you want to add it</label>
+      <input class="host-input" id="ideaName" type="text" maxlength="40" autocomplete="nickname" placeholder="Your name (optional)">
+      <button class="primary" type="button" id="ideaSend" disabled>Send idea</button>
+      <p class="atmo-desc idea-note" id="ideaNote" aria-live="polite"></p>
     </div>
   </section>
 
@@ -300,7 +337,6 @@
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
   <script src="../../../../public-site/atmosphere/scene.js"></script>
   <script src="scene.js"></script>
-  <script src="lives.js"></script>
   <script src="garbo.js"></script>
 </body>
 </html>

@@ -51,7 +51,17 @@
     shuffle: false, saved: new Set(), offline: false,
     nonstop: null, tonight: null, live: false, hosted: null, loadTimer: null
   };
-  var LV = window.GarboLives, lives = LV ? LV.load() : { mine: [], joined: [] }, songById = {};
+  var LV = null, lives = { mine: [], joined: [] }, songById = {};
+  // Features load the first time they're used, not with the page
+  var loaded = {};
+  function loadScript(src) {
+    if (!loaded[src]) loaded[src] = new Promise(function (ok, fail) { var sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = function () { delete loaded[src]; fail(new Error(src)); }; document.head.appendChild(sc); });
+    return loaded[src];
+  }
+  function needLives() {
+    if (LV) return Promise.resolve(LV);
+    return loadScript('lives.js').then(function () { LV = window.GarboLives; lives = LV.load(); return LV; });
+  }
 
   try { JSON.parse(localStorage.getItem('garbo-proto-saved') || '[]').forEach(function (id) { S.saved.add(id); }); } catch (e) { /* storage unavailable */ }
 
@@ -78,9 +88,9 @@
       return { eyebrow: 'Nonstop Garba · chapter ' + (t.chapterIndex + 1) + ' of ' + set.chapters.length, title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
     }
     var g = genreInfo(t.song.genre);
-    var eyebrow = S.hosted ? S.hosted.live.host + "'s live" : S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length : '';
+    var eyebrow = S.hosted ? '' : S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length : '';
     var rel = t.song.release;
-    return { eyebrow: eyebrow, face: S.hosted ? S.hosted.live.avatar : null, title: t.song.title, artist: t.song.artist, from: rel ? { text: rel.title, script: rel.script, year: rel.year } : null };
+    return { eyebrow: eyebrow, title: t.song.title, artist: t.song.artist, from: rel ? { text: rel.title, script: rel.script, year: rel.year } : null };
   }
 
   function renderNP(animate) {
@@ -89,7 +99,7 @@
     var apply = function () {
       var v = trackView();
       $('eyebrow').textContent = v.eyebrow;
-      if (v.face != null && LV) $('eyebrow').prepend(LV.avatarNode(v.face));
+      renderPerch();
       var title = $('title');
       title.textContent = v.title;
       title.title = v.title;
@@ -178,7 +188,7 @@
     $('lampHit').disabled = blocked;
     $('hint').textContent = HINTS[mode] || '';
     $('offlineBar').hidden = mode !== 'offline';
-    $('liveBtn').setAttribute('aria-pressed', String(S.live));
+    $('liveBtn').setAttribute('aria-pressed', String(S.live || !!S.hosted));
     scene.set({ mode: mode === 'paused' ? 'ember' : mode === 'empty' ? 'unavailable' : mode });
     if (typeof atmoSync === 'function') atmoSync();
   }
@@ -457,9 +467,9 @@
     if (keep) play(); else setMode(S.offline ? 'offline' : 'ember');
   }
   function leaveHosted(quiet) {
-    var name = S.hosted.live.host; S.hosted = null;
+    var name = LV.title(S.hosted.live); S.hosted = null;
     if (typeof atmoRender === 'function' && $('atmoPower')) atmoRender();
-    if (!quiet) toast('You left ' + name + "'s live");
+    if (!quiet) toast('You left ' + name);
   }
   function hostedStep(dir) {
     var live = S.hosted.live;
@@ -478,7 +488,17 @@
     if (!live) { toast("This live link doesn't work. Ask the host to share it again."); return; }
     if (!isMine(live)) LV.remember(lives, 'joined', live);
     tuneIn(live, false);
-    toast(isMine(live) ? 'Back in your live' : "You're in " + live.host + "'s live. Tap the garbo to listen.");
+    toast(isMine(live) ? 'Back in your live' : "You're in " + LV.title(live) + '. Tap the garbo to listen.');
+  }
+  // In someone's live, the Live button carries the live's name, with the host's avatar sitting on top of it
+  function renderPerch() {
+    if (!LV) return;
+    var b = $('liveBtn'), old = b.querySelector('.avatar'); if (old) old.remove();
+    b.classList.toggle('hosted', !!S.hosted);
+    $('liveLabel').textContent = S.hosted ? LV.title(S.hosted.live) : '24/7 Live';
+    if (S.hosted) { b.prepend(LV.avatarNode(S.hosted.live.avatar, 34, true)); b.setAttribute('aria-label', LV.title(S.hosted.live) + ', hosted by ' + S.hosted.live.host + '. Open Lives.'); }
+    else b.removeAttribute('aria-label');
+    b.setAttribute('aria-pressed', String(S.live || !!S.hosted));
   }
   function liveStatus(live) {
     var a = LV.at(live, lengthOf, nowSec());
@@ -493,7 +513,7 @@
       var ul = $(k[1]); ul.textContent = ''; $(k[2]).hidden = !lives[k[0]].length;
       lives[k[0]].forEach(function (live) {
         var li = el('li'), b = el('button', 'live-card'); b.type = 'button';
-        var txt = el('span'); txt.append(el('strong', null, k[0] === 'mine' ? 'Your live as ' + live.host : live.host + "'s live"), el('small', null, liveStatus(live) + ' · ' + live.songs.length + (live.songs.length === 1 ? ' song' : ' songs')));
+        var txt = el('span'); txt.append(el('strong', null, LV.title(live)), el('small', null, (k[0] === 'mine' ? 'You host · ' : live.host + ' hosts · ') + liveStatus(live) + ' · ' + live.songs.length + (live.songs.length === 1 ? ' song' : ' songs')));
         b.append(LV.avatarNode(live.avatar, 40), txt);
         if (S.hosted && S.hosted.live.id === live.id) b.setAttribute('aria-current', 'true');
         b.addEventListener('click', function () { closeSheet(); tuneIn(live, true); });
@@ -520,6 +540,7 @@
     H.avatar = live ? live.avatar : saved.avatar >= 0 && saved.avatar < LV.AVATARS.length ? saved.avatar : 0;
     H.songs = live ? live.songs.slice() : [];
     $('hostName').value = live ? live.host : LV.cleanName(saved.name || '');
+    $('hostTitleIn').value = live ? live.title || '' : '';
     $('hostTitle').textContent = live ? 'Edit your live' : 'Host a live';
     $('hostGo').textContent = live ? 'Save changes' : 'Go live';
     $('hostEnd').hidden = !live; $('startRow').hidden = !!live;
@@ -599,8 +620,9 @@
     var name = LV.cleanName($('hostName').value); if (!name || !H.songs.length) return;
     try { localStorage.setItem('garbo-proto-host', JSON.stringify({ name: name, avatar: H.avatar })); } catch (e) { /* storage unavailable */ }
     var live, fresh = !H.editing;
-    if (H.editing) { live = LV.reanchor(H.editing, H.songs, nowSec(), lengthOf); live.host = name; live.avatar = H.avatar; }
-    else live = { id: LV.newId(), host: name, avatar: H.avatar, start: Math.floor(nowSec()) + H.start * 60, songs: H.songs.slice() };
+    var ltitle = LV.cleanTitle($('hostTitleIn').value);
+    if (H.editing) { live = LV.reanchor(H.editing, H.songs, nowSec(), lengthOf); live.host = name; live.avatar = H.avatar; live.title = ltitle; }
+    else live = { id: LV.newId(), host: name, title: ltitle, avatar: H.avatar, start: Math.floor(nowSec()) + H.start * 60, songs: H.songs.slice() };
     LV.remember(lives, 'mine', live);
     if (fresh || (S.hosted && S.hosted.live.id === live.id)) tuneIn(live, fresh ? live.start <= nowSec() : isActive());
     showLink(live, fresh);
@@ -616,7 +638,7 @@
   function showLink(live, fresh) {
     var a = LV.at(live, lengthOf, nowSec()), first = songById[live.songs[a.state === 'on' ? a.index : 0]];
     $('linkTitle').textContent = a.state === 'upcoming' ? 'Your live starts at ' + clockTime(live.start) : fresh ? 'Your live is on' : 'Your live';
-    var host = $('linkHost'); host.textContent = ''; host.append(LV.avatarNode(live.avatar), el('span', null, live.host + "'s live"));
+    var host = $('linkHost'); host.textContent = ''; host.append(LV.avatarNode(live.avatar), el('span', null, LV.title(live)));
     $('linkLead').textContent = (a.state === 'upcoming' ? 'Opens with ' : 'Now playing: ') + (first ? first.title : '') + '. ' + live.songs.length + (live.songs.length === 1 ? ' song' : ' songs') + ' in the playlist.';
     $('linkField').value = liveUrl(live);
     showSheet('linkSheet', 'linkShare');
@@ -629,11 +651,70 @@
   });
   $('linkShare').addEventListener('click', function () {
     var v = $('linkField').value;
-    if (navigator.share) navigator.share({ title: 'Garba live on PlayGarba', url: v }).catch(function () { /* cancelled */ });
+    if (navigator.share) navigator.share({ title: $('linkHost').textContent + ' on PlayGarba', url: v }).catch(function () { /* cancelled */ });
     else $('linkCopy').click();
   });
   $('stationRow').addEventListener('click', function () { closeSheet(); if (!S.live) toggleLive(); });
   $('hostNew').addEventListener('click', function () { openHost(null); });
+
+
+  /* ---------- cards from the rail ----------
+     View, venue, sound and ideas open as small cards at the side. There's no dimmed backdrop, so the player
+     keeps going around them; a tap elsewhere or Escape puts them away. */
+  var openCardId = null;
+  function openCard(id) {
+    if (openCardId === id) { closeCard(); return; }
+    closeCard(true);
+    if (openSheet) closeSheet(true);
+    var c = $(id); c.hidden = false; openCardId = id;
+    document.querySelectorAll('.rail-btn').forEach(function (b) { b.setAttribute('aria-expanded', String(b.dataset.card === id)); });
+    if (id === 'ideaCard') loadScript('ideas.js').catch(function () { $('ideaNote').textContent = "The idea box couldn't load. Check your connection."; });
+    setTimeout(function () { var f = c.querySelector('[aria-pressed="true"], textarea, button:not([data-card-close])'); (f || c).focus(); }, 30);
+  }
+  function closeCard(silent) {
+    if (!openCardId) return;
+    var id = openCardId; $(id).hidden = true; openCardId = null;
+    var btn = document.querySelector('.rail-btn[data-card="' + id + '"]'); if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) btn.focus(); }
+  }
+  document.querySelectorAll('.rail-btn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-card-close]')) { closeCard(); return; }
+    if (openCardId && !e.target.closest('.card') && !e.target.closest('.rail')) closeCard(true);
+  });
+
+  /* Ideas: the words go to the project exactly as written */
+  $('ideaText').addEventListener('input', function () { $('ideaSend').disabled = !this.value.trim(); });
+  $('ideaSend').addEventListener('click', function () {
+    var text = $('ideaText').value, name = $('ideaName').value.trim(), btn = this;
+    if (!text.trim() || !window.GarboIdeas) return;
+    btn.disabled = true; $('ideaNote').textContent = 'Sending…';
+    window.GarboIdeas.send(text, name).then(function (r) {
+      if (r.how === 'sent') { $('ideaText').value = ''; $('ideaNote').textContent = 'Thank you. Your idea is with the PlayGarba team.'; }
+      else { btn.disabled = false; $('ideaNote').textContent = 'GitHub opens in a new tab with your idea filled in. Press Submit there to send it. If no tab opened, allow pop-ups for this page.'; }
+    }, function () { btn.disabled = false; $('ideaNote').textContent = "That didn't send. Try again in a moment."; });
+  });
+
+  /* ---------- the DJ ----------
+     Looking for songs walks you over to the DJ's table. Explore opens as his laptop, turned towards you in the
+     corner, while he sips his chhas. Closing it walks you back to where you were. */
+  var djTimer = 0;
+  function djSay(gu, en) { scene.atmosphere({ djSay: gu }); $('djSr').textContent = en; }
+  function djMode(on) {
+    if (!VENUE_SCENE || !scene.atmosphere) return;
+    clearTimeout(djTimer);
+    document.documentElement.classList.toggle('dj-mode', on);
+    scene.dj = on; scene.atmosphere({ dj: on, djSay: '' });
+    relayout();
+    // He looks up as you arrive: "What do you want?"
+    if (on) djTimer = setTimeout(function () { djSay('શું જોઈએ?', 'The DJ asks what you would like to hear.'); }, reducedQuery.matches ? 0 : 1100);
+  }
+  // Picking a song: the laptop closes, he says "It'll be done!", and you walk back as it starts
+  function djPick(start) {
+    if (!document.documentElement.classList.contains('dj-mode')) { closeSheet(); start(); return; }
+    closeSheet(false, true);
+    clearTimeout(djTimer); djSay('થઈ જશે!', "The DJ says it'll be done.");
+    djTimer = setTimeout(function () { djMode(false); start(); }, reducedQuery.matches ? 300 : 1500);
+  }
 
   /* ---------- sheets ---------- */
   var openSheet = null, opener = null;
@@ -643,17 +724,19 @@
     opener = document.activeElement;
     var s = $(id); s.hidden = false; openSheet = s;
     if (id !== 'aboutPage') $('scrim').hidden = false;
-    $('scrim').classList.toggle('light', id === 'atmoSheet');
+    $('scrim').classList.toggle('light', id === 'exploreSheet' && VENUE_SCENE);
+    closeCard(true);
     app.inert = true;
     var target = focusId ? $(focusId) : s;
     setTimeout(function () { if (target) target.focus(); }, 30);
-    if (id === 'exploreSheet') { mirrors.resize(); renderRows(); }
+    if (id === 'exploreSheet') { mirrors.resize(); renderRows(); djMode(true); }
     if (id === 'tonightSheet') renderTonightMarks();
     if (id === 'shareSheet') drawShare();
     if (id === 'livesSheet') renderLives();
   }
-  function closeSheet(silent) {
+  function closeSheet(silent, keepDj) {
     if (!openSheet) return;
+    if (openSheet.id === 'exploreSheet' && !keepDj) djMode(false);
     openSheet.hidden = true; openSheet = null;
     $('scrim').hidden = true; app.inert = false;
     if (!silent && opener && opener.focus) opener.focus();
@@ -661,6 +744,7 @@
   document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheet(); });
   $('scrim').addEventListener('click', function () { closeSheet(); });
   document.addEventListener('keydown', function (e) {
+    if (openCardId && !openSheet && e.key === 'Escape') { e.preventDefault(); closeCard(); return; }
     if (openSheet) {
       if (e.key === 'Escape') {
         if (e.target === $('searchInput') && $('searchInput').value) { $('searchInput').value = ''; renderRows(); return; }
@@ -711,8 +795,7 @@
         exitSpecial();
         S.genre = s.genre; renderDial();
         S.queue = playableIn(s.genre); S.index = Math.max(0, S.queue.indexOf(s));
-        closeSheet(); loadSong(s, s.playable);
-        if (!s.playable) toast('This recording is not available yet.');
+        djPick(function () { loadSong(s, s.playable); if (!s.playable) toast('This recording is not available yet.'); });
       });
       li.append(b); ul.append(li);
     });
@@ -720,7 +803,7 @@
     S.data.nonstopSets.forEach(function (set) {
       var li = el('li'), b = el('button', 'row'); b.type = 'button';
       b.append(el('strong', null, set.title), el('span', 'dur', set.durationSeconds ? fmt(set.durationSeconds) : ''), el('span', null, set.artists.join(', ') + ' · ' + set.chapters.length + ' chapters'));
-      b.addEventListener('click', function () { exitSpecial(); S.genre = 'nonstop'; renderDial(); closeSheet(); loadSet(set, 0, true); });
+      b.addEventListener('click', function () { exitSpecial(); S.genre = 'nonstop'; renderDial(); djPick(function () { loadSet(set, 0, true); }); });
       li.append(b); sets.append(li);
     });
     markCurrentRows();
@@ -785,7 +868,7 @@
     { id: 'offline', name: 'Offline', desc: 'Lamp goes dark', run: function () { goOffline(true); } },
     { id: 'empty', name: 'Empty genre', desc: 'Sanedo has no routes', run: function () { exitSpecial(); setGenre('sanedo', false); } },
     { id: 'tonight', name: 'Tonight', desc: 'Night in five parts', run: function () { startTonightPart(1, false); setMode('playing'); } },
-    { id: 'hosted', name: 'Hosted live', desc: "In someone's live", run: function () { var ids = S.data.songs.filter(function (x) { return x.playable; }).slice(3, 9).map(function (x) { return x.id; }); var live = { id: 'demo1', host: 'Priya', avatar: 5, start: Math.floor(nowSec()) - 70, songs: ids }; LV.remember(lives, 'joined', live); tuneIn(live, true); } }
+    { id: 'hosted', name: 'Hosted live', desc: "In someone's live", run: function () { needLives().then(function () { var ids = S.data.songs.filter(function (x) { return x.playable; }).slice(3, 9).map(function (x) { return x.id; }); var live = { id: 'demo1', host: 'Priya', avatar: 5, start: Math.floor(nowSec()) - 70, songs: ids }; LV.remember(lives, 'joined', live); tuneIn(live, true); }); } }
   ];
   function buildStates() {
     var grid = $('stateGrid');
@@ -831,7 +914,7 @@
     }
     renderTime();
   });
-  $('liveBtn').addEventListener('click', toggleLive);
+  $('liveBtn').addEventListener('click', function () { if (S.hosted) showSheet('livesSheet', 'hostNew'); else toggleLive(); });
   $('searchBtn').addEventListener('click', function () { showSheet('exploreSheet', 'searchInput'); });
   $('exploreBtn').addEventListener('click', function () { showSheet('exploreSheet'); });
   $('tonightBtn').addEventListener('click', function () { showSheet('tonightSheet'); });
@@ -840,9 +923,7 @@
   $('shareOpen').addEventListener('click', function () { showSheet('shareSheet'); });
   $('aboutOpen').addEventListener('click', function () { showSheet('aboutPage'); });
   $('installBtn').addEventListener('click', function () { toast('Your browser shows its install prompt here.'); });
-  $('atmoBtn').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
-  $('livesOpen').addEventListener('click', function () { showSheet('livesSheet', 'hostNew'); });
-  $('atmoTop').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
+  $('livesOpen').addEventListener('click', function () { needLives().then(function () { showSheet('livesSheet', 'hostNew'); }, function () { toast("Lives couldn't load. Check your connection."); }); });
 
   /* ---------- Singer faces ---------- */
   // Faces are listed by artist slug, e.g. window.GARBO_SINGERS = { 'geeta-rabari': { file: 'geeta-rabari.webp', man: false } }.
@@ -864,7 +945,7 @@
   function atmoRender() {
     $('atmoPower').setAttribute('aria-checked', String(A.sound));
     $('atmoPowerLabel').textContent = A.sound ? 'Sound is on' : 'Sound is off';
-    $('atmoTop').setAttribute('aria-pressed', String(A.sound));
+    $('soundBtn').setAttribute('aria-pressed', String(A.sound));
     if (E) {
       $('atmoVenueDesc').textContent = E.VENUES[A.venue].desc;
       $('atmoListenerDesc').textContent = E.LISTENERS[A.listener].desc;
@@ -878,10 +959,8 @@
     A.style = style;
     // The lead singer wears the artist's face when assets/singers/index.json has one for them
     var artist = S.track && S.track.song ? String(S.track.song.artist || '').split(/,|&/)[0].trim() : S.nonstop ? String((S.nonstop.artists || [])[0] || '') : '';
-    var face = SINGERS && SINGERS[slugify(artist)], faceUrl = face ? SINGER_BASE + face.file : null, faceMan = face && !!face.man;
-    // In someone's live, the host takes the lead singer's place, wearing their avatar
-    if (S.hosted && LV) { faceUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LV.avatarSVG(S.hosted.live.avatar)); faceMan = !LV.AVATARS[S.hosted.live.avatar].w; }
-    if (scene.atmosphere) scene.atmosphere({ singerFace: faceUrl ? { url: faceUrl, man: faceMan } : null });
+    var face = SINGERS && SINGERS[slugify(artist)];
+    if (scene.atmosphere) scene.atmosphere({ singerFace: face ? { url: SINGER_BASE + face.file, man: !!face.man } : null });
     if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
   }
   function atmoLoadBed(ctx) {
@@ -1010,9 +1089,9 @@
   function applyHash() {
     var h = location.hash.replace('#', '');
     if (!h) return;
-    if (h.indexOf('live=') === 0) { joinFromLink(h.slice(5)); return; }
-    if (h === 'lives') showSheet('livesSheet', 'hostNew');
-    if (h === 'host') openHost(null);
+    if (h.indexOf('live=') === 0) { needLives().then(function () { joinFromLink(h.slice(5)); }, function () { toast("This live couldn't load. Check your connection."); }); return; }
+    if (h === 'lives') needLives().then(function () { showSheet('livesSheet', 'hostNew'); });
+    if (h === 'host') needLives().then(function () { openHost(null); });
     var st = STATES.filter(function (x) { return x.id === h; })[0];
     if (st) { st.run(); return; }
     if (h === 'explore') showSheet('exploreSheet');
@@ -1020,7 +1099,8 @@
     if (h === 'nonstop-list') { showSheet('exploreSheet'); selectTab(1); }
     if (h === 'tonight-sheet') showSheet('tonightSheet');
     if (h === 'more') showSheet('moreSheet');
-    if (h === 'atmosphere') showSheet('atmoSheet', 'atmoPower');
+    if (h === 'atmosphere') openCard('soundCard');
+    if (h === 'ideas') openCard('ideaCard');
     ['outdoors', 'stadium', 'sheri'].forEach(function (v) { if (h === v || h === v + '-far') { A.venue = v; A.listener = h === v ? 'circle' : 'far'; if (A.engine) { A.engine.setVenue(v); A.engine.setListener(A.listener); } atmoRender(); } });
     if (h === 'about') showSheet('aboutPage');
     if (h === 'share') showSheet('shareSheet');

@@ -328,6 +328,8 @@
   }
   VenueStage.prototype.resize = function () { this.v.resize(); };
   VenueStage.prototype.layout = function (slot, np) {
+    // At the DJ's table the scene has the whole screen: on a phone the DJ sits above the laptop, on a wide screen beside it
+    if (this.dj) { var W = window.innerWidth, H = window.innerHeight; this.v.setBox(W > H * 1.1 ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 40, w: W, h: H * 0.5 }); this.top = 0; this.scrim = null; return; }
     this.v.setBox({ x: slot.left, y: slot.top, w: slot.width, h: slot.height });
     this.scrim = np.left >= slot.right - 10 ? { side: true, at: np.left } : { side: false, at: np.top };
     this.top = slot.top;
@@ -349,10 +351,11 @@
   };
   // Keep the top bar and the controls legible over the venue
   VenueStage.prototype.drawScrim = function (ctx, W, H) {
-    var tg = ctx.createLinearGradient(0, 0, 0, this.top + 40);
-    tg.addColorStop(0, 'rgba(11,6,5,.92)'); tg.addColorStop(Math.min(0.9, this.top / (this.top + 40)), 'rgba(11,6,5,.7)'); tg.addColorStop(1, 'rgba(11,6,5,0)');
-    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, this.top + 40);
-    if (!this.scrim) return;
+    var top = this.dj ? 56 : this.top;
+    var tg = ctx.createLinearGradient(0, 0, 0, top + 40);
+    tg.addColorStop(0, 'rgba(11,6,5,.92)'); tg.addColorStop(Math.min(0.9, top / (top + 40)), 'rgba(11,6,5,.7)'); tg.addColorStop(1, 'rgba(11,6,5,0)');
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, top + 40);
+    if (!this.scrim || this.dj) return;
     var a = this.scrim.at - 40, sg;
     if (this.scrim.side) {
       sg = ctx.createLinearGradient(a, 0, a + 120, 0);
