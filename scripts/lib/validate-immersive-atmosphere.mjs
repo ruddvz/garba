@@ -180,8 +180,12 @@ if (!room.includes("never the song itself")) fail('Listening room must say the s
 
 // The microphone beat follower: opt-in, hears the speaker (echo cancellation off), and its estimator finds a
 // steady 120 BPM beat in a synthetic low-end signal to within 1.5 BPM and 25 ms
-for (const marker of ['function createBeatFollower(', 'echoCancellation: false', 'function estimateBeat(', 'createBeatFollower };', "Follow the song's beat", 'Nothing is recorded or sent.']) {
+for (const marker of ['function createBeatFollower(', 'echoCancellation: false', 'function estimateBeat(', 'createBeatFollower, playDandiyaTap };', "Follow the song's beat", 'Nothing is recorded or sent.']) {
   if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing the beat follower marker: ${marker}`);
+}
+// Every press outside the Simple player (which taps from app.js) knocks two dandiya sticks together, once
+for (const marker of ['function playDandiyaTap(', "script[src*=\"app.js\"]", 'window.__garbaDandiyaTaps', "addEventListener(window.PointerEvent ? 'pointerdown' : 'touchstart', tapFor"]) {
+  if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing the dandiya tap marker: ${marker}`);
 }
 {
   const body = runtime.slice(runtime.indexOf('function estimateBeat('), runtime.indexOf('const BEAT_WORKLET'));

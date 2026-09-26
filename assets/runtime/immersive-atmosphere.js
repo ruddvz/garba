@@ -843,7 +843,88 @@
     return { start, stop, get status() { return status; }, get bpm() { return smoothBpm; } };
   }
 
-  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, buildClap, HANDS, VENUES, LISTENERS, PATTERNS, PREVIEW_BPM, estimateBeat, createBeatFollower };
+  // ---------------------------------------------------------------------------
+  // Dandiya tap. Pressing any button, link or slider knocks two dandiya sticks
+  // together, so the press is felt as well as seen. The Simple player already
+  // does this from app.js; this covers every other page that loads the engine,
+  // the Immersive (Garbo) player inside its frame among them.
+  // ---------------------------------------------------------------------------
+  const TAP_TARGETS = 'button, a[href], input[type="range"], input[type="checkbox"], input[type="radio"], select, summary, label[for], [role="button"], [role="tab"], [role="switch"], [role="option"], [role="menuitem"]';
+  let tapContext = null;
+  let lastTapAt = 0;
+
+  function playDandiyaTap() {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return;
+    try {
+      if (!tapContext || tapContext.state === 'closed') tapContext = new Ctor({ latencyHint: 'interactive' });
+      if (tapContext.state === 'suspended') tapContext.resume().catch(() => {});
+      const ctx = tapContext;
+      const t = ctx.currentTime + 0.002;
+      // A little variation so repeated presses sound like hands, not a sample
+      const pitch = 0.94 + Math.random() * 0.12;
+      const level = 0.8 + Math.random() * 0.2;
+      const out = ctx.createGain();
+      out.gain.value = 0.55 * level;
+      out.connect(ctx.destination);
+
+      // The wooden body of the stick
+      const body = ctx.createOscillator();
+      const bodyFilter = ctx.createBiquadFilter();
+      const bodyGain = ctx.createGain();
+      body.type = 'triangle';
+      body.frequency.setValueAtTime(880 * pitch, t);
+      body.frequency.exponentialRampToValueAtTime(520 * pitch, t + 0.045);
+      bodyFilter.type = 'bandpass';
+      bodyFilter.frequency.value = 820 * pitch;
+      bodyFilter.Q.value = 1.8;
+      bodyGain.gain.setValueAtTime(1, t);
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+      body.connect(bodyFilter).connect(bodyGain).connect(out);
+
+      // The snap where the two sticks meet
+      const snap = ctx.createOscillator();
+      const snapGain = ctx.createGain();
+      snap.type = 'sine';
+      snap.frequency.setValueAtTime(1750 * pitch, t);
+      snap.frequency.exponentialRampToValueAtTime(980 * pitch, t + 0.025);
+      snapGain.gain.setValueAtTime(0.5, t);
+      snapGain.gain.exponentialRampToValueAtTime(0.001, t + 0.028);
+      snap.connect(snapGain).connect(out);
+
+      body.start(t); body.stop(t + 0.08);
+      snap.start(t); snap.stop(t + 0.04);
+      snap.onended = () => out.disconnect();
+    } catch {
+      // The tap is a courtesy; a page without audio still works
+    }
+  }
+
+  function tapFor(event) {
+    if (event.button > 0) return;
+    const target = event.target instanceof Element ? event.target.closest(TAP_TARGETS) : null;
+    if (!target || target.matches(':disabled, [aria-disabled="true"]')) return;
+    const now = performance.now();
+    if (now - lastTapAt < 60) return;
+    lastTapAt = now;
+    playDandiyaTap();
+  }
+
+  function tapKey(event) {
+    if (event.repeat || (event.key !== 'Enter' && event.key !== ' ')) return;
+    const target = event.target instanceof Element ? event.target.closest(TAP_TARGETS) : null;
+    if (target && !target.matches('input[type="range"], select')) tapFor(event);
+  }
+
+  const simplePlayerTaps = Boolean(document.querySelector('script[src*="app.js"]'));
+  if (!simplePlayerTaps && !window.__garbaDandiyaTaps) {
+    window.__garbaDandiyaTaps = true;
+    document.addEventListener(window.PointerEvent ? 'pointerdown' : 'touchstart', tapFor, { capture: true, passive: true });
+    document.addEventListener('keydown', tapKey, { capture: true, passive: true });
+    window.addEventListener('pagehide', () => { if (tapContext?.state === 'running') tapContext.suspend().catch(() => {}); });
+  }
+
+  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, buildClap, HANDS, VENUES, LISTENERS, PATTERNS, PREVIEW_BPM, estimateBeat, createBeatFollower, playDandiyaTap };
 
   // ---------------------------------------------------------------------------
   // Player integration and panel
