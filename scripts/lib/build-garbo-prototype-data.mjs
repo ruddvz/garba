@@ -36,7 +36,24 @@ for (const file of index.playbackSources) {
 const isPlayable = (song) => Boolean(song.youtubeId || exactRoutes.has(song.id));
 
 const retired = new Set(index.retiredSongIds || []);
-const byId = (a, b) => a.id.localeCompare(b.id);
+
+// Recommendation signals and core artists for popularity ranking
+const recFiles = index.discovery?.recommendations || [];
+const recs = [];
+for (const file of recFiles) recs.push(...list(await readJson(file), 'recommendations'));
+const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const recTitles = new Set(recs.map((r) => norm(r.title)));
+
+const artistFiles = index.discovery?.artists || [];
+const artists = [];
+for (const file of artistFiles) artists.push(...list(await readJson(file), 'artists'));
+const coreArtistNames = new Set(artists.filter((a) => a.tier?.includes('core') || a.tier?.includes('headliner') || a.tier?.includes('lead')).map((a) => norm(a.name)));
+
+const ytCount = new Map();
+for (const song of songs) {
+  const vid = song.youtubeId || exactRoutes.get(song.id);
+  if (vid) ytCount.set(vid, (ytCount.get(vid) || 0) + 1);
+}
 
 function releaseView(id) {
   const release = releases.get(id);
@@ -50,6 +67,12 @@ function releaseView(id) {
 }
 
 function songView(song) {
+  const vid = song.youtubeId || exactRoutes.get(song.id) || null;
+  const startSec = Number(song.youtubeStartSeconds || 0);
+  const isChapter = Boolean(
+    startSec > 0
+    || (vid && (ytCount.get(vid) || 0) > 1)
+  );
   return {
     id: song.id,
     title: song.title,
@@ -57,29 +80,34 @@ function songView(song) {
     genre: song.genre,
     durationSeconds: Number.isFinite(song.durationSeconds) && song.durationSeconds > 0 ? song.durationSeconds : null,
     release: releaseView(song.releaseId),
-    playable: isPlayable(song)
+    playable: isPlayable(song),
+    videoId: vid,
+    startSeconds: startSec > 0 ? startSec : 0,
+    isChapter: isChapter,
   };
 }
 
-const eligible = songs.filter((song) => !retired.has(song.id) && !song.placeholder).sort(byId);
-const picked = [];
-for (const genre of GENRES) {
-  const pool = eligible.filter((song) => song.genre === genre && isPlayable(song));
-  picked.push(...pool.slice(0, PER_GENRE).map(songView));
+function songRank(song) {
+  const playable = isPlayable(song);
+  if (!playable) return 999999;
+
+  const vid = song.youtubeId || exactRoutes.get(song.id);
+  const isStandalone = !vid || (ytCount.get(vid) || 0) <= 1;
+  const isRec = recTitles.has(norm(song.title));
+  const artistNorm = norm(song.artist);
+  const isCoreArtist = [...coreArtistNames].some((name) => artistNorm.includes(name));
+
+  if (isRec && isStandalone) return 10;
+  if (isRec) return 20;
+  if (isCoreArtist && isStandalone) return 50;
+  if (isStandalone) return 100;
+  if (isCoreArtist) return 200;
+  return 300;
 }
 
-// One real Gujarati-titled release whose tracks have no exact route yet, to show the
-// Gujarati-first title treatment and the truthful "not playable yet" state.
-const gujaratiRelease = [...releases.values()].filter((release) => GUJARATI.test(release.title)).sort(byId)
-  .find((release) => eligible.some((song) => song.releaseId === release.id && !isPlayable(song)));
-if (gujaratiRelease) {
-  const track = eligible.filter((song) => song.releaseId === gujaratiRelease.id && !isPlayable(song)).sort((a, b) => a.trackNumber - b.trackNumber)[0];
-  if (track) picked.push(songView(track));
-}
-
-// The longest playable title, for the long-title state.
-const longest = eligible.filter(isPlayable).sort((a, b) => b.title.length - a.title.length || a.id.localeCompare(b.id))[0];
-if (longest && !picked.some((song) => song.id === longest.id)) picked.push(songView(longest));
+const eligible = songs.filter((song) => !retired.has(song.id) && !song.placeholder);
+eligible.sort((a, b) => songRank(a) - songRank(b) || a.title.localeCompare(b.title) || a.id.localeCompare(b.id));
+const picked = eligible.map(songView);
 
 // Official Nonstop sets with source-published chapters.
 const setsIndex = await readJson('data/discovery/sets/index.json');
@@ -88,7 +116,6 @@ for (const chunk of setsIndex.chunks) sets.push(...list(await readJson(path.join
 const nonstop = sets
   .filter((set) => set.setType === 'official-nonstop' && set.source?.provider === 'youtube' && set.source.embeddable !== false && Array.isArray(set.segments) && set.segments.length >= 6)
   .sort((a, b) => a.id.localeCompare(b.id))
-  .slice(0, 4)
   .map((set) => {
     const last = set.segments[set.segments.length - 1];
     return {
@@ -96,6 +123,7 @@ const nonstop = sets
       title: set.title,
       artists: set.artists || [],
       year: set.year ?? null,
+      videoId: set.source?.videoId || null,
       durationSeconds: Number.isFinite(last.endSeconds) ? last.endSeconds : null,
       chapters: set.segments.map((segment) => ({ title: segment.title, startSeconds: segment.startSeconds }))
     };
@@ -110,6 +138,11 @@ const output = {
   nonstopSets: nonstop
 };
 
-const target = path.join(root, 'docs/product/prototypes/garbo/sample.json');
-await writeFile(target, JSON.stringify(output, null, 2) + '\n');
-console.log(`✓ wrote ${path.relative(root, target)}: ${picked.length} songs (${picked.filter((song) => song.playable).length} playable), ${nonstop.length} Nonstop sets`);
+const targets = [
+  path.join(root, 'docs/product/prototypes/garbo/sample.json'),
+  path.join(root, 'public-site/garbo/prototype/sample.json'),
+];
+for (const target of targets) {
+  await writeFile(target, JSON.stringify(output, null, 2) + '\n');
+  console.log(`✓ wrote ${path.relative(root, target)}: ${picked.length} songs (${picked.filter((song) => song.playable).length} playable), ${nonstop.length} Nonstop sets`);
+}

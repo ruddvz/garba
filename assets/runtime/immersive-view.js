@@ -19,6 +19,7 @@
 
   /* ---------- complete embedded prototype ---------- */
   var overlay = null, frame = null, syncTimer = 0, catalogueSent = false, catalogueSignature = '';
+  var nonstopSets = [], nonstopSetsStatus = 'loading', nonstopPromise = null;
   var CHANNEL = 'playgarba:immersive-prototype';
   function ensureFrame() {
     if (overlay) return;
@@ -34,12 +35,36 @@
     if (!frame || !frame.contentWindow || view !== 'immersive') return;
     var snapshot = window.GARBA_IMMERSIVE_PLAYER.snapshot();
     var sendCatalogue = includeCatalogue || !catalogueSent || snapshot.catalogueSignature !== catalogueSignature;
-    if (sendCatalogue) snapshot = window.GARBA_IMMERSIVE_PLAYER.snapshot({ includeCatalogue: true });
+    if (sendCatalogue) {
+      snapshot = window.GARBA_IMMERSIVE_PLAYER.snapshot({ includeCatalogue: true });
+      snapshot.nonstopSets = nonstopSets;
+      snapshot.nonstopSetsStatus = nonstopSetsStatus;
+    }
     if (Array.isArray(snapshot.songs) && snapshot.songs.length) {
       catalogueSent = true;
       catalogueSignature = snapshot.catalogueSignature || '';
     }
     frame.contentWindow.postMessage({ channel: CHANNEL, type: 'state', snapshot: snapshot }, location.origin);
+  }
+  function syncNonstopCatalogue() {
+    if (nonstopPromise) return nonstopPromise;
+    if (typeof window.GARBA_IMMERSIVE_PLAYER.loadNonstopCatalogue !== 'function') {
+      nonstopSetsStatus = 'error';
+      sendSnapshot(true);
+      return Promise.resolve([]);
+    }
+    nonstopPromise = window.GARBA_IMMERSIVE_PLAYER.loadNonstopCatalogue().then(function (sets) {
+      nonstopSets = Array.isArray(sets) ? sets : [];
+      nonstopSetsStatus = 'ready';
+      sendSnapshot(true);
+      return nonstopSets;
+    }).catch(function () {
+      nonstopSets = [];
+      nonstopSetsStatus = 'error';
+      sendSnapshot(true);
+      return [];
+    });
+    return nonstopPromise;
   }
   function onMessage(event) {
     if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
@@ -52,8 +77,9 @@
       if (typeof window.GARBA_IMMERSIVE_PLAYER.syncCatalogue === 'function') {
         window.GARBA_IMMERSIVE_PLAYER.syncCatalogue().then(function () {
           if (view === 'immersive') sendSnapshot(true);
-        });
+        }).catch(function () { /* keep the current player snapshot available */ });
       }
+      syncNonstopCatalogue();
     }
     else if (message.type === 'action' && typeof message.action === 'string') {
       if (message.action === 'circle') setView('simple', true);
@@ -65,7 +91,11 @@
     ensureFrame(); overlay.hidden = false;
     closeCard(false);
     app.setAttribute('aria-hidden', 'true'); app.inert = true;
-    if (!frame.src) frame.src = new URL('./garbo/prototype/?live=1&embed=1&v=20260926-3', location.href).href;
+    if (!frame.src) {
+      var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      var protoPath = isLocalDev ? './docs/product/prototypes/garbo/?live=1&embed=1&v=20260926-3' : './garbo/prototype/?live=1&embed=1&v=20260926-3';
+      frame.src = new URL(protoPath, location.href).href;
+    }
     window.addEventListener('message', onMessage);
     sendSnapshot(true);
     clearInterval(syncTimer);
@@ -79,6 +109,7 @@
     if (overlay) overlay.hidden = true;
     app.removeAttribute('aria-hidden'); app.inert = false;
     catalogueSent = false; catalogueSignature = '';
+    nonstopPromise = null;
     if (wasOpen) {
       var simpleSwitch = document.querySelector('[data-view-switch]');
       if (simpleSwitch) simpleSwitch.focus({ preventScroll: true });
