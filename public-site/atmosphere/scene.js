@@ -39,13 +39,18 @@
     sheri: { circle: [0, 4, -11.5], far: [-3, 3, -23], stage: [0, 2.9, 57.6] }
   };
 
+  // The DJ's booth beside the stage, where you walk to pick the next song. The camera stands in front of the table.
+  var DJ = { outdoors: { x: 19.5, z: 22 }, stadium: { x: 15.5, z: 17 }, sheri: { x: 4.4, z: 60.6 } };
+  function clearOfBooth(id, x, z, r) { var b = DJ[id]; return !b || Math.hypot(b.x - x, b.z - z) > r + 3.2; }
+  function djCam(id) { var b = DJ[id] || DJ.outdoors; return [b.x, 1.62, b.z - 2.35]; }
+
   function create(canvas, opts) {
     opts = opts || {};
     var g = canvas.getContext('2d');
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     var cam = { x: 0, y: 4, z: -15 };
     var TH = THEMES.traditional, BEAT = 0, band = {};
-    var st = { youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
+    var st = { dj: false, youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
@@ -130,7 +135,7 @@
         var base = circles.length, want = id === 'outdoors' ? 7 + Math.floor(rnd() * 3) : 5 + Math.floor(rnd() * 2), box = id === 'outdoors' ? [-25, 25, -2, 40] : [-20, 20, 2, 32], tries = 0;
         while (circles.length < want + base && tries++ < 900) {
           var R = rnd() < 0.4 ? 1.6 + rnd() * 1.2 : 2.8 + rnd() * (id === 'outdoors' ? 3 : 2), x = lerp(box[0] + R, box[1] - R, rnd()), z = lerp(box[2] + R, box[3] - R, rnd());
-          var ok = circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + R + 2.4; });
+          var ok = clearOfBooth(id, x, z, R) && circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + R + 2.4; });
           if (ok) circles.push(makeCircle(x, z, R, false));
         }
       }
@@ -138,7 +143,7 @@
       var nPairs = id === 'outdoors' ? 9 : id === 'stadium' ? 6 : 3, bx0 = BOUNDS[id], ptries = 0, placed = 0;
       while (placed < nPairs && ptries++ < 400) {
         var solo = rnd() < 0.3, pr = solo ? 0.3 : 0.55, px = lerp(bx0[0] + 1, bx0[1] - 1, rnd()), pz = lerp(Math.max(bx0[2], 1), bx0[3] - 1, rnd());
-        if (circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
+        if (clearOfBooth(id, px, pz, pr) && circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
       }
       // Life around the dancing: people stopped at the edge of a circle to watch, clusters chatting further off,
       // and phones held up to record
@@ -147,11 +152,11 @@
         if (c.small || ci === 1) return;
         var n = ci === 0 ? 0 : 1 + Math.floor(rnd() * 3), outer = ci === 0 && circles[1] && circles[1].parent ? (circles[2] && circles[2].parent ? circles[2].R : circles[1].R) : c.R;
         if (ci === 0) n = id === 'sheri' ? 4 : 10;
-        for (var k = 0; k < n; k++) { var a = rnd() * TAU, rr = outer + 1.6 + rnd() * 1.6, sx = c.x0 + Math.cos(a) * rr, sz = c.z0 + Math.sin(a) * rr; if (sz < BOUNDS[id][2] - 2 || Math.abs(sx) > (id === 'sheri' ? 6.4 : 26)) continue; standers.push(person({ x: sx, z: sz, stander: true, phone: rnd() < 0.3, sway: rnd() * TAU })); }
+        for (var k = 0; k < n; k++) { var a = rnd() * TAU, rr = outer + 1.6 + rnd() * 1.6, sx = c.x0 + Math.cos(a) * rr, sz = c.z0 + Math.sin(a) * rr; if (sz < BOUNDS[id][2] - 2 || Math.abs(sx) > (id === 'sheri' ? 6.4 : 26) || !clearOfBooth(id, sx, sz, 0)) continue; standers.push(person({ x: sx, z: sz, stander: true, phone: rnd() < 0.3, sway: rnd() * TAU })); }
       });
       for (var gi = 0; gi < (id === 'sheri' ? 3 : 7); gi++) {
         var bx1 = BOUNDS[id], gx = lerp(bx1[0] + 2, bx1[1] - 2, rnd()), gz = lerp(Math.max(bx1[2], 0), bx1[3] - 2, rnd());
-        if (!circles.every(function (c) { return Math.hypot(c.x0 - gx, c.z0 - gz) > c.R + 2.4; })) continue;
+        if (!clearOfBooth(id, gx, gz, 1) || !circles.every(function (c) { return Math.hypot(c.x0 - gx, c.z0 - gz) > c.R + 2.4; })) continue;
         var m = 2 + Math.floor(rnd() * 3);
         for (var j = 0; j < m; j++) { var aj = j / m * TAU + rnd() * 0.5; standers.push(person({ x: gx + Math.cos(aj) * 0.7, z: gz + Math.sin(aj) * 0.55, stander: true, chat: true, phone: rnd() < 0.15, sway: rnd() * TAU, kid: rnd() < 0.15 })); }
       }
@@ -186,7 +191,7 @@
       var bx = BOUNDS[id];
       for (var k = 0; k < 40; k++) {
         var x = lerp(bx[0], bx[1], rnd()), z = lerp(bx[2], bx[3], rnd());
-        if (L.circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + 1.8; })) return { x: x, z: z };
+        if (clearOfBooth(id, x, z, 0) && L.circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + 1.8; })) return { x: x, z: z };
       }
       return { x: bx[0], z: bx[3] };
     }
@@ -261,6 +266,7 @@
       for (var rz = 0; rz < 4; rz++) for (var cx0 = -hw; cx0 <= hw; cx0 += 0.62 + rnd() * 0.3) {
         var zz = sz0 - 2.3 - rz * 0.9 + (rnd() - 0.5) * 0.3, aisle = rz < 2 ? 1.5 : 0.9 + rz * 0.5;
         if (rnd() < 0.2 || Math.abs(cx0) < aisle) continue;
+        var djb0 = DJ[id]; if (djb0 && Math.abs(cx0 - djb0.x) < 1.8 && zz > djb0.z - 3.6 && zz < djb0.z + 1.2) continue;
         var rec = rnd() < 0.45, pp2 = person({ stander: true, phone: rec, video: rec && rnd() < 0.6, sway: rnd() * TAU, kid: rnd() < 0.06 });
         out.push({ x: cx0, y: 0, z: zz, kind: 'stand', who: pp2, view: 'stage' });
       }
@@ -406,7 +412,7 @@
       if (ga.kind === 'chair') fillPoly([[ga.x - 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z + 0.22], [ga.x - 0.22, 0.45, ga.z + 0.22]], ga.col);
       if (ga.who) { ga.who.backWord = null; ga.who.headAt = null; }
       if (ga.who) backFigure(ga.kind === 'stand' || ga.kind === 'runner' ? P(ga.x, ga.y, ga.z) : p, ga.who, T0, ga.kind === 'runner');
-      if (ga.who && ga.who.seatRole && (ga.view || 'far') === st.listener && ga.who.headAt) {
+      if (ga.who && ga.who.seatRole && (ga.view || 'far') === st.listener && !st.dj && ga.who.headAt) {
         var youSeat = ga.who.seatRole === (st.youAs === 'man' ? 'm' : 'w'), lab = { x: ga.who.headAt.x, y: ga.who.headAt.y, h: ga.who.h * p.s, man: ga.who.man, hx: ga.who.headAt.x, hy: ga.who.headAt.y };
         if (youSeat) youLabel = lab; else partnerLabel = lab;
       }
@@ -764,6 +770,46 @@
         }
         if (m.role === 'singer') { var ms = P(m.x - 0.25, y, bz - 0.35), mt = P(m.x - 0.25, y + 1.45, bz - 0.35); if (ms && mt) { g.strokeStyle = '#1a1a1a'; g.lineWidth = Math.max(0.8, ms.s * 0.03); g.beginPath(); g.moveTo(ms.x, ms.y); g.lineTo(mt.x, mt.y); g.stroke(); } }
       });
+    }
+    // The DJ's booth: a table draped in bandhani, a laptop, a controller that blinks on the beat, a steel jug of chhas
+    // and a stack of cups. The DJ sits behind it on a stool, headphones round the neck, sipping chhas from a paper cup.
+    var djMan = { role: 'dj', man: true, sitting: true, rest: { y: 0.8 }, col: '#1d1b26', top: '#1d1b26', pagdi: '#1f130d', stole: '#d8453a', legs: '#2a2733', h: 1.74, ph: 0.45, flash: 0, moustache: true };
+    function djBooth(b, t) {
+      var x = b.x, z = b.z, tw = 0.8, th = 0.74, td = 0.34;
+      // A string of bulbs on two poles behind, so the booth reads from far away
+      var pl = P(x - 1.1, 0, z + 0.9), plt = P(x - 1.1, 2.3, z + 0.9), pr = P(x + 1.1, 0, z + 0.9), prt = P(x + 1.1, 2.3, z + 0.9);
+      if (pl && plt && pr && prt) {
+        g.strokeStyle = '#2a2018'; g.lineWidth = Math.max(1, pl.s * 0.05); g.beginPath(); g.moveTo(pl.x, pl.y); g.lineTo(plt.x, plt.y); g.moveTo(pr.x, pr.y); g.lineTo(prt.x, prt.y); g.stroke();
+        for (var k = 0; k <= 8; k++) { var u = k / 8, bp = P(lerp(x - 1.1, x + 1.1, u), 2.25 - Math.sin(u * Math.PI) * 0.25, z + 0.9); if (bp) glow(bp.x, bp.y, Math.max(0.7, Math.min(3, bp.s * 0.05)), TH.bulbs[k % TH.bulbs.length], (0.75 + 0.25 * pulse) * bright); }
+      }
+      // The DJ, then the table in front hides the legs
+      var dp = P(x, 0.8, z + 0.55);
+      if (dp) {
+        var stool = P(x, 0, z + 0.55); if (stool) { g.strokeStyle = '#3a2a1c'; g.lineWidth = Math.max(1, stool.s * 0.05); g.beginPath(); g.moveTo(stool.x - stool.s * 0.18, stool.y); g.lineTo(dp.x, dp.y); g.lineTo(stool.x + stool.s * 0.18, stool.y); g.stroke(); }
+        var lap = P(x - 0.12, th + 0.2, z), glowR = dp.s * 0.9;
+        if (lap) { var lg0 = g.createRadialGradient(dp.x, dp.y - dp.s * 1.1, 1, dp.x, dp.y - dp.s * 1.1, glowR); lg0.addColorStop(0, 'rgba(170,200,255,' + 0.22 * bright + ')'); lg0.addColorStop(1, 'rgba(170,200,255,0)'); g.fillStyle = lg0; g.beginPath(); g.arc(dp.x, dp.y - dp.s * 1.1, glowR, 0, TAU); g.fill(); }
+        figure(dp, djMan, T, false, BEAT, 1);
+      }
+      // Table top and a cloth front with a bandhani border
+      fillPoly([[x - tw, th, z - td], [x + tw, th, z - td], [x + tw, th, z + td], [x - tw, th, z + td]], '#3b2416');
+      fillPoly([[x - tw, 0, z - td], [x + tw, 0, z - td], [x + tw, th, z - td], [x - tw, th, z - td]], '#8e1b2c');
+      fillPoly([[x - tw, th - 0.14, z - td - 0.005], [x + tw, th - 0.14, z - td - 0.005], [x + tw, th, z - td - 0.005], [x - tw, th, z - td - 0.005]], '#e8b04b');
+      for (var dd = 0; dd < 14; dd++) { var dq = P(lerp(x - tw + 0.06, x + tw - 0.06, dd / 13), th * 0.45 + (dd % 2) * 0.12, z - td - 0.01); if (dq && dq.s > 8) { g.fillStyle = 'rgba(255,246,230,.85)'; g.beginPath(); g.arc(dq.x, dq.y, Math.max(0.6, dq.s * 0.012), 0, TAU); g.fill(); } }
+      // Laptop: the lid faces you, with a small garbo on it; the screen lights the DJ from below
+      var l0 = P(x - 0.34, th, z + 0.02), l1 = P(x + 0.1, th, z + 0.02), l2 = P(x + 0.1, th + 0.27, z + 0.08), l3 = P(x - 0.34, th + 0.27, z + 0.08);
+      if (l0 && l1 && l2 && l3) {
+        g.fillStyle = '#2b2d33'; g.beginPath(); g.moveTo(l0.x, l0.y); g.lineTo(l1.x, l1.y); g.lineTo(l2.x, l2.y); g.lineTo(l3.x, l3.y); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(190,210,255,' + 0.5 * bright + ')'; g.lineWidth = 1; g.beginPath(); g.moveTo(l3.x, l3.y); g.lineTo(l2.x, l2.y); g.stroke();
+        var lc = P(x - 0.12, th + 0.14, z + 0.05); if (lc) { var r0 = Math.max(1.5, lc.s * 0.035); g.fillStyle = '#b8562a'; g.beginPath(); g.arc(lc.x, lc.y + r0 * 0.3, r0, 0, TAU); g.fill(); glow(lc.x, lc.y - r0 * 0.9, r0 * 0.5, '#ffcf7a', 0.9 * bright); }
+      }
+      // Controller with pads that light on the beat
+      var c0 = P(x + 0.18, th + 0.02, z - 0.12), c1 = P(x + 0.62, th + 0.02, z - 0.12);
+      if (c0 && c1) { g.fillStyle = '#121216'; g.fillRect(c0.x, c0.y - c0.s * 0.05, c1.x - c0.x, c0.s * 0.06); for (var pd = 0; pd < 4; pd++) { var pp0 = P(x + 0.26 + pd * 0.1, th + 0.05, z - 0.13); if (pp0) glow(pp0.x, pp0.y, Math.max(0.6, pp0.s * 0.02), 'rgb(' + TH.beams[pd % TH.beams.length] + ')', Math.floor(BEAT * 2) % 4 === pd ? 1 : 0.25); } }
+      // A steel jug of chhas and a stack of paper cups at the end of the table
+      var jg = P(x - 0.62, th, z - 0.05), jt = P(x - 0.62, th + 0.2, z - 0.05);
+      if (jg && jt) { var jw = jg.s * 0.07; var jgr = g.createLinearGradient(jg.x - jw, 0, jg.x + jw, 0); jgr.addColorStop(0, '#6f7378'); jgr.addColorStop(0.45, '#e6e9ec'); jgr.addColorStop(1, '#7c8086'); g.fillStyle = jgr; g.beginPath(); g.moveTo(jg.x - jw, jg.y); g.lineTo(jg.x + jw, jg.y); g.lineTo(jt.x + jw * 0.75, jt.y); g.lineTo(jt.x - jw * 0.75, jt.y); g.closePath(); g.fill(); }
+      var cs = P(x - 0.45, th, z - 0.18), ct2 = P(x - 0.45, th + 0.14, z - 0.18);
+      if (cs && ct2) { var cw = cs.s * 0.035; g.fillStyle = '#f4efe4'; g.beginPath(); g.moveTo(cs.x - cw * 0.8, cs.y); g.lineTo(cs.x + cw * 0.8, cs.y); g.lineTo(ct2.x + cw, ct2.y); g.lineTo(ct2.x - cw, ct2.y); g.closePath(); g.fill(); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 0.7; for (var cl = 1; cl < 4; cl++) { var cy = lerp(cs.y, ct2.y, cl / 4); g.beginPath(); g.moveTo(cs.x - cw * 0.9, cy); g.lineTo(cs.x + cw * 0.9, cy); g.stroke(); } }
     }
     function speakerPole(x, z, h) {
       var b = P(x, 0, z), t0 = P(x, h, z); if (!b || !t0) return;
@@ -1265,7 +1311,7 @@
       if (!d.sitting) y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
       if (d.stander && !reduce) x += Math.sin(T * 0.8 + d.sway) * h * 0.02;
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
-      FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, ((st.listener === 'stage' ? p.z - 21.5 : p.z + cam.z - 9)) / 55));
+      FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, ((st.listener === 'stage' || st.dj ? p.z - 21.5 : p.z + cam.z - 9)) / 55));
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
       // Light falls off away from the garbo: people out at the edges are a shade darker than those by the lamp
@@ -1354,6 +1400,13 @@
       var shy = y - h * 0.76, L = [x - h * 0.08, shy], R = [x + h * 0.08, shy], le, lh, re, rh;
       if (d.role === 'singer') { le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09]; re = [x + h * 0.16, shy + h * 0.02 - sw * h * 0.04]; rh = [x + h * 0.24, shy - h * 0.1 - sw * h * 0.08]; }
       else if (d.role === 'dhol') { var hit = Math.max(0, sw); le = [x - h * 0.16, shy + h * 0.1]; lh = [x - h * 0.22, shy + h * (0.2 - 0.06 * hit)]; re = [x + h * 0.16, shy + h * 0.1]; rh = [x + h * 0.22, shy + h * (0.2 - 0.06 * Math.max(0, -sw))]; }
+      else if (d.role === 'dj') {
+        // One hand on the laptop; the other holds a cup of chhas and brings it up for a sip every few seconds
+        var sp = reduce ? 0 : Math.max(0, Math.sin(((T + d.ph * 10) % 7) / 7 * TAU * 1 - 1.2)), sip = sp > 0.6 ? Math.min(1, (sp - 0.6) / 0.3) : 0;
+        le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.06 + sw * h * 0.015, shy + h * 0.24];
+        re = [x + h * 0.15, shy + h * (0.13 - 0.1 * sip)]; rh = [x + h * lerp(0.14, 0.035, sip), shy + h * lerp(0.1, -0.06, sip)];
+        d.cupAt = rh;
+      }
       else if (d.role === 'benjo') { le = [x - h * 0.15, shy + h * 0.12]; lh = [x - h * 0.2, shy + h * 0.2]; re = [x + h * 0.14, shy + h * 0.12]; rh = [x + h * 0.16, shy + h * (0.2 + 0.03 * sw)]; }
       else if (d.role === 'keys') { le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.1 + sw * h * 0.02, shy + h * 0.26]; re = [x + h * 0.14, shy + h * 0.14]; rh = [x + h * 0.1 - sw * h * 0.02, shy + h * 0.26]; }
       else if (d.stander && d.phone) { le = [x - h * 0.13, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.1, shy - h * 0.06]; rh = [x + h * 0.06, shy - h * 0.2]; }
@@ -1368,6 +1421,15 @@
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
       if (d.stander && d.phone) { g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = 'rgba(200,225,255,.9)'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (st.on) glow(rh[0], rh[1] - h * 0.02, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
       if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
+      if (d.role === 'dj' && d.cupAt) {
+        // Headphones round the neck, and the paper cup of chhas
+        g.strokeStyle = '#111'; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.arc(x, y - h * 0.8, h * 0.07, 0.1 * Math.PI, 0.9 * Math.PI); g.stroke();
+        g.fillStyle = '#1a1a1a'; g.beginPath(); g.arc(x - h * 0.07, y - h * 0.79, h * 0.03, 0, TAU); g.arc(x + h * 0.07, y - h * 0.79, h * 0.03, 0, TAU); g.fill();
+        var cx0 = d.cupAt[0], cy0 = d.cupAt[1], cw0 = h * 0.03, ch0 = h * 0.075;
+        g.fillStyle = 'rgba(248,246,238,.95)'; g.beginPath(); g.moveTo(cx0 - cw0 * 0.75, cy0 + ch0 * 0.35); g.lineTo(cx0 + cw0 * 0.75, cy0 + ch0 * 0.35); g.lineTo(cx0 + cw0, cy0 - ch0 * 0.65); g.lineTo(cx0 - cw0, cy0 - ch0 * 0.65); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(0,0,0,.2)'; g.lineWidth = Math.max(0.6, h * 0.006); g.stroke();
+        g.fillStyle = '#fbfaf3'; g.beginPath(); g.ellipse(cx0, cy0 - ch0 * 0.65, cw0, cw0 * 0.3, 0, 0, TAU); g.fill();
+      }
       if (d.role === 'singer') { g.strokeStyle = tint('#222222', dk); g.lineWidth = Math.max(1, h * 0.025); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lh[0] + h * 0.02, lh[1] + h * 0.08); g.stroke(); }
       if (st.style === 'dandiya' && !d.walker && !d.role) {
         // On the beat the two sticks cross and strike; between beats they are held out, swinging with the step
@@ -1623,7 +1685,7 @@
     }
 
     /* ---------- frame ---------- */
-    var camVenue = null, camNow = [0, 4.4, -12.5], horNow = 0.3, camSettled = true;
+    var camVenue = null, camNow = [0, 4.4, -12.5], horNow = 0.3, camSettled = true, walk = null, camKeyNow = '';
     var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null, lightAt = null;
     function frame(ms) {
       if (!running) return;
@@ -1633,11 +1695,25 @@
       TH = THEMES[st.theme] || THEMES.traditional;
       var bb = opts.beats && opts.beats(); BEAT = bb ? ((t - bb.anchor) / bb.period) % 2 : T * 1.8;
       var target = st.listener === 'far' ? 1 : 0;
-      // The camera eases between the three places you can stand; a new venue starts in place
-      var ct = (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = { circle: 0.3, far: 0.4, stage: 0.44 }[st.listener] || 0.3;
-      if (camVenue !== st.venue || reduce) { camVenue = st.venue; camNow = ct.slice(); horNow = hf; }
-      var ek = Math.min(1, dt * 2.4);
-      camNow[0] += (ct[0] - camNow[0]) * ek; camNow[1] += (ct[1] - camNow[1]) * ek; camNow[2] += (ct[2] - camNow[2]) * ek; horNow += (hf - horNow) * ek;
+      // You walk between the places you can stand: a second or two along an eased path, lifted over the crowd on
+      // a long walk, with a step in it. A new venue starts in place.
+      var ct = st.dj ? djCam(st.venue) : (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = st.dj ? 0.2 : { circle: 0.3, far: 0.4, stage: 0.44 }[st.listener] || 0.3;
+      // On a wide screen the DJ stands right of centre, leaving the left for the laptop's song list
+      if (st.dj && W > H * 1.1) ct[0] -= 0.95;
+      var camKey = st.venue + '/' + (st.dj ? 'dj' : st.listener);
+      if (camVenue !== st.venue || reduce) { camVenue = st.venue; camNow = ct.slice(); horNow = hf; walk = null; camKeyNow = camKey; }
+      else if (camKey !== camKeyNow) { camKeyNow = camKey; var wd = Math.hypot(ct[0] - camNow[0], ct[1] - camNow[1], ct[2] - camNow[2]); walk = { from: camNow.slice(), h0: horNow, t: 0, dur: Math.min(1.8, 0.8 + wd / 45), lift: Math.min(2.6, wd * 0.06) }; }
+      if (walk) {
+        walk.t += dt;
+        var wp = Math.min(1, walk.t / walk.dur), we = wp < 0.5 ? 2 * wp * wp : 1 - Math.pow(-2 * wp + 2, 2) / 2, arc = Math.sin(wp * Math.PI);
+        for (var ci0 = 0; ci0 < 3; ci0++) camNow[ci0] = walk.from[ci0] + (ct[ci0] - walk.from[ci0]) * we;
+        camNow[1] += arc * walk.lift + Math.sin(wp * Math.PI * 7) * 0.05 * arc; camNow[0] += Math.sin(wp * Math.PI * 3.5) * 0.06 * arc;
+        horNow = walk.h0 + (hf - walk.h0) * we;
+        if (wp >= 1) walk = null;
+      } else {
+        var ek = Math.min(1, dt * 2.4);
+        camNow[0] += (ct[0] - camNow[0]) * ek; camNow[1] += (ct[1] - camNow[1]) * ek; camNow[2] += (ct[2] - camNow[2]) * ek; horNow += (hf - horNow) * ek;
+      }
       camSettled = Math.abs(ct[0] - camNow[0]) + Math.abs(ct[1] - camNow[1]) + Math.abs(ct[2] - camNow[2]) < 0.02;
       view.k += (target - view.k) * Math.min(1, dt * (reduce ? 60 : 2.6));
       var ce = CAMS[st.venue] || CAMS.outdoors, e = ease(Math.max(0, Math.min(1, view.k)));
@@ -1680,7 +1756,7 @@
           if (d.atHome) home++;
           var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z); d._px = p ? p.x : null;
           var fd = p ? Math.max(0, Math.min(1, (p.z - 3) / 4)) : 0;
-          if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: fd, you: !!d.coupleRole && d.coupleRole === (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5, partner: !!d.coupleRole && d.coupleRole !== (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5 });
+          if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: fd, you: !!d.coupleRole && d.coupleRole === (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5 && !st.dj, partner: !!d.coupleRole && d.coupleRole !== (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5 && !st.dj });
         });
         c.present = home / c.dancers.length;
         // Raas: neighbours pair up and strike each other's sticks, so each turns toward the other on the beat
@@ -1692,6 +1768,7 @@
       L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
       L.trees.forEach(function (tr) { if (tr.z >= 44) return; var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
+      if (DJ[st.venue]) { var djb = DJ[st.venue], djp = P(djb.x, 0, djb.z); if (djp && djp.z > 1 && djp.x > -80 && djp.x < W + 80) items.push({ z: djp.z + 0.3, kind: 'dj', b: djb }); }
       L.props.forEach(function (o) { var p = P(o.x, 0, o.z); if (p && p.z > 2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'prop', o: o }); });
       L.gallery.forEach(function (ga) {
         if (ga.kind === 'runner') { ga.x = (ga.cx || 0) + Math.sin(T * (ga.sp || 0.5) + (ga.ph || 0)) * (ga.amp || 8); ga.who.step = T * 9 + (ga.ph || 0); ga.who.moving = true; }
@@ -1705,13 +1782,14 @@
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
       // Depth: veils of night air laid between layers of the crowd, thicker the further back, so the circle round
       // the garbo stays crisp and everything behind it recedes instead of piling into one cluster
-      var D0 = -cam.z, FOG = [{ z: st.listener === 'stage' ? 60 : D0 + 40, a: 0.42 }], fi = 0;
+      var D0 = -cam.z, FOG = [{ z: st.listener === 'stage' || st.dj ? 60 : D0 + 40, a: 0.42 }], fi = 0;
       items.forEach(function (it) {
         while (fi < FOG.length && it.z < FOG[fi].z) fogBand(FOG[fi++]);
         if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
         else if (it.kind === 'tree') drawTree(it.tr, t);
         else if (it.kind === 'prop') prop(it.o, t);
+        else if (it.kind === 'dj') djBooth(it.b, t);
         else if (it.kind === 'gallery') galleryItem(it.ga, it.p, T);
         else if (it.kind === 'seat') { if (!it.se.kind) chair(it.se); if (it.se.who) figure(it.p, it.se.who, T, false, beatPh, it.fade); }
         else { if (it.you || it.partner) followSpot(it.p, it.d); figure(it.p, it.d, T, it.you, beatPh, it.you || it.partner ? 1 : it.fade); if (it.partner) partnerMark(it.p, it.d); }
