@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v32`;
+const CACHE_NAME = `${CACHE_PREFIX}v33`;
 const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 const STAGING_READY_URL = new URL('./__garba_staging_ready__', self.location.href).toString();
@@ -27,6 +27,7 @@ const CORE_SHELL = [
   './assets/runtime/garba-circle.js',
   './assets/runtime/garba-circle-controller.js',
   './assets/runtime/qr-code.js',
+  './assets/runtime/live-sync.js',
   './assets/audio/courtyard-night.ogg',
   './assets/audio/festival-crowd.ogg',
   './assets/audio/ground-applause.ogg',
@@ -76,6 +77,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/assets/runtime/garba-circle.js',
   '/assets/runtime/garba-circle-controller.js',
   '/assets/runtime/qr-code.js',
+  '/assets/runtime/live-sync.js',
 ];
 
 async function stagingCacheExists() {

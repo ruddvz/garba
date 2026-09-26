@@ -4,8 +4,9 @@ import './assets/runtime/morphicons.js';
 import './assets/runtime/live-station.js';
 import { normalizeSearchText, rankSearchRecords } from './assets/runtime/search-core.js';
 import { initMorphicons } from './assets/runtime/morphicons.js';
-import { getLiveBroadcastState, getNextLiveTrack } from './assets/runtime/live-station.js';
+import { getNextLiveTrack } from './assets/runtime/live-station.js';
 import { createCircleController } from './assets/runtime/garba-circle-controller.js';
+import { createLiveSync } from './assets/runtime/live-sync.js';
 const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -706,6 +707,7 @@ async function selectSong(songId, options = {}) {
   else if (!options.preserveContext && !options.initial) state.liveMode = false;
   if (options.circleMode) state.liveMode = false;
   else if (!options.initial) circle.leave();
+  if (!state.liveMode) liveSync.stop();
 
   const previousSongId = state.songId;
   if (previousSongId && previousSongId !== song.id && !options.initial && !options.fromHistory) {
@@ -1160,6 +1162,7 @@ function toggleShuffle() {
 async function toggleLiveStation() {
   if (state.liveMode) {
     state.liveMode = false;
+    liveSync.stop();
     els.app.removeAttribute('data-live-mode');
     els.liveStationButton?.setAttribute('aria-pressed', 'false');
     renderPlayer();
@@ -1167,7 +1170,7 @@ async function toggleLiveStation() {
     return;
   }
 
-  const liveState = getLiveBroadcastState(state.songs, Date.now());
+  const liveState = liveSync.broadcastAt();
   if (!liveState || !liveState.song) {
     showToast('24/7 Live Radio is tuning in...');
     return;
@@ -1180,23 +1183,8 @@ async function toggleLiveStation() {
   state.morphs?.get('live')?.pulse();
   showToast(`Tuned into 24/7 Live Garba Radio · ${liveState.song.title}`);
 
-  await selectSong(liveState.song.id, {
-    restoreElapsed: liveState.seekSeconds,
-    preservePlayback: true,
-    liveMode: true,
-    animate: false,
-  });
-
-  if (window.GARBA_YOUTUBE_PLAYER?.open) {
-    try {
-      await window.GARBA_YOUTUBE_PLAYER.open(liveState.song, {
-        autoplay: true,
-        resume: liveState.seekSeconds > 0,
-        startSeconds: liveState.seekSeconds,
-      });
-    } catch { /* autoplay handling */ }
-  }
-
+  // Opens the broadcast song at the broadcast position and keeps this device on it.
+  liveSync.start();
 }
 
 function changeSong(direction) {
@@ -1204,6 +1192,7 @@ function changeSong(direction) {
     circle.handleChangeSong();
     return;
   }
+  if (state.liveMode && liveSync.handleChangeSong()) return;
 
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
@@ -1318,6 +1307,17 @@ async function playCircleSong(song, offsetSeconds) {
     return;
   }
   await selectSong(song.id, { circleMode: true, keepSheet: true, preservePlayback: false, restoreElapsed: offsetSeconds, animate: false });
+}
+
+// Live Radio playback: same ordering rule as playCircleSong, so the title never disagrees with the player.
+async function playLiveSong(song, offsetSeconds) {
+  window.GARBA_YOUTUBE_PLAYER?.openAt?.(song, offsetSeconds).catch(() => {});
+  if (song.id === state.songId) {
+    state.elapsed = offsetSeconds;
+    renderPlayer();
+    return;
+  }
+  await selectSong(song.id, { liveMode: true, keepSheet: true, preservePlayback: false, restoreElapsed: offsetSeconds, animate: false });
 }
 
 function circleHostElapsedSeconds() {
@@ -2220,6 +2220,13 @@ const circle = createCircleController({
   trigger: () => els.circleButton,
 });
 
+const liveSync = createLiveSync({
+  songs: () => state.songs,
+  isLive: () => state.liveMode,
+  playLiveSong,
+  showToast,
+});
+
 applyExploreHandoff();
 placeFavourite();
 syncSheetChrome();
@@ -2235,6 +2242,7 @@ window.GARBA_APP = Object.freeze({
   getCurrentSong: () => currentSong(),
   getState: () => state,
   getCircle: () => circle.diagnostics(),
+  getLiveSync: () => liveSync.diagnostics(),
 });
 
 window.GARBA_SHARE = Object.freeze({

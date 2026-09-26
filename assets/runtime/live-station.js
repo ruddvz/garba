@@ -80,11 +80,12 @@ export function buildLiveSchedule(songs = []) {
 }
 
 /**
- * Compute the active broadcast track and seek position at a given millisecond timestamp
+ * Build the looping broadcast timeline once, so callers that read the position often (Live Radio
+ * drift correction) do not rebuild the schedule on every read.
  * @param {Array} songs Catalogue songs
- * @param {number} timestampMs Date.now()
+ * @returns {null | { totalDuration: number, segments: Array, at: (timestampMs: number) => object }}
  */
-export function getLiveBroadcastState(songs = [], timestampMs = Date.now()) {
+export function createLiveTimeline(songs = []) {
   const schedule = buildLiveSchedule(songs);
   if (!schedule.length) return null;
 
@@ -111,37 +112,52 @@ export function getLiveBroadcastState(songs = [], timestampMs = Date.now()) {
 
   if (totalDuration <= 0) return null;
 
-  // Universal current broadcast second (modulo timeline loop)
-  const epochSecond = Math.floor(Math.max(0, timestampMs) / 1000);
-  const currentTimelineSecond = epochSecond % totalDuration;
+  const at = (timestampMs) => {
+    // Universal broadcast position (modulo timeline loop), kept to the millisecond so devices
+    // with aligned clocks land on the same moment rather than the same whole second.
+    const timelineSeconds = (Math.max(0, Number(timestampMs) || 0) / 1000) % totalDuration;
 
-  // Binary or linear search to find current segment
-  let currentSegment = segments[0];
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i];
-    if (currentTimelineSecond >= seg.startSecond && currentTimelineSecond < seg.endSecond) {
-      currentSegment = seg;
-      break;
+    // Binary search for the current segment
+    let low = 0;
+    let high = segments.length - 1;
+    while (low < high) {
+      const mid = (low + high + 1) >> 1;
+      if (segments[mid].startSecond <= timelineSeconds) low = mid;
+      else high = mid - 1;
     }
-  }
+    const currentSegment = segments[low];
 
-  const seekSeconds = Math.max(0, currentTimelineSecond - currentSegment.startSecond);
-  const remainingSeconds = Math.max(0, currentSegment.duration - seekSeconds);
-  const nextIndex = (currentSegment.index + 1) % segments.length;
-  const nextSong = segments[nextIndex].song;
+    const offsetSeconds = Math.max(0, timelineSeconds - currentSegment.startSecond);
+    const nextIndex = (currentSegment.index + 1) % segments.length;
+    const nextSong = segments[nextIndex].song;
 
-  return {
-    song: currentSegment.song,
-    songId: currentSegment.songId,
-    seekSeconds,
-    duration: currentSegment.duration,
-    remainingSeconds,
-    totalScheduleDuration: totalDuration,
-    trackIndex: currentSegment.index,
-    totalTracks: segments.length,
-    nextSongId: nextSong.id,
-    nextSong,
+    return {
+      song: currentSegment.song,
+      songId: currentSegment.songId,
+      // Whole seconds, as before; offsetSeconds keeps the fraction.
+      seekSeconds: Math.floor(offsetSeconds),
+      offsetSeconds,
+      duration: currentSegment.duration,
+      remainingSeconds: Math.max(0, currentSegment.duration - Math.floor(offsetSeconds)),
+      remainingExactSeconds: Math.max(0, currentSegment.duration - offsetSeconds),
+      totalScheduleDuration: totalDuration,
+      trackIndex: currentSegment.index,
+      totalTracks: segments.length,
+      nextSongId: nextSong.id,
+      nextSong,
+    };
   };
+
+  return { totalDuration, segments, at };
+}
+
+/**
+ * Compute the active broadcast track and seek position at a given millisecond timestamp
+ * @param {Array} songs Catalogue songs
+ * @param {number} timestampMs Date.now()
+ */
+export function getLiveBroadcastState(songs = [], timestampMs = Date.now()) {
+  return createLiveTimeline(songs)?.at(timestampMs) || null;
 }
 
 /**
@@ -159,6 +175,7 @@ if (typeof window !== 'undefined') {
   window.GARBA_LIVE_STATION = {
     isLivePlayable,
     buildLiveSchedule,
+    createLiveTimeline,
     getLiveBroadcastState,
     getNextLiveTrack,
   };
