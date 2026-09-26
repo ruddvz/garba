@@ -64,11 +64,14 @@ for (const marker of [
 
 // Garba Circle modules are imported by app.js from assets/runtime, which Pages copies whole.
 const appSource = await read('app.js');
-for (const file of ['assets/runtime/garba-circle.js', 'assets/runtime/garba-circle-controller.js', 'assets/runtime/qr-code.js']) {
+for (const file of ['assets/runtime/garba-circle.js', 'assets/runtime/garba-circle-controller.js', 'assets/runtime/qr-code.js', 'assets/runtime/live-sync.js', 'assets/runtime/playable-order.js', 'assets/runtime/my-songs.js']) {
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
   if (!sw.includes(`'/${file}'`)) fail(`PWA fresh-runtime list does not include ${file}`);
 }
 if (!appSource.includes("from './assets/runtime/garba-circle-controller.js'")) fail('app.js must load the Garba Circle controller from assets/runtime');
+for (const module of ['live-sync.js', 'playable-order.js', 'my-songs.js']) {
+  if (!appSource.includes(`from './assets/runtime/${module}'`)) fail(`app.js must load ${module} from assets/runtime`);
+}
 if (!pages.includes('cp -R assets data _site/')) fail('Pages must ship assets/runtime for app.js module imports');
 
 const q90Pack = 'garba15-2048-q90.zip';
@@ -337,7 +340,7 @@ if (failed) process.exit(1);
 console.log('✓ Pages ships every direct and transitive playback runtime file');
 console.log('✓ fast bootstrap contains production interaction hardening without adding another runtime request');
 console.log('✓ PWA precache contains the YouTube engine and split playback runtime');
-console.log('✓ Garba Circle modules ship with assets/runtime and are precached network-first');
+console.log('✓ Garba Circle, Live Radio sync, playable-first ordering and Add a song modules ship with assets/runtime and are precached network-first');
 console.log('✓ provider route safety loads before the YouTube controllable engine');
 console.log('✓ split playback runtime stays network-first across installed-app upgrades');
 console.log('✓ Pages prefers the checksum-pinned Q90 visual pack and keeps legacy packs as fallback only');

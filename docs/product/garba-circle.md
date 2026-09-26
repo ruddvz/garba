@@ -42,6 +42,16 @@ These are best-case numbers. Real phones on mobile networks will be less precise
 - **Catalogue versions.** Everyone must be on the same catalogue version. A mismatch is detected and explained, not silently joined.
 - **Songs.** Only YouTube recordings with a verified duration can be played in a circle. A song without one cannot start a circle. While a refused recording's slot is being filled, the following songs play a second time when their own slots come up.
 
+## 24/7 Live Radio uses the same sync
+
+Live Radio is a broadcast computed from the time, so it only matches across devices if the devices agree on the time. It now uses the same pieces as a circle (`assets/runtime/live-sync.js`):
+
+- When Live Radio is turned on, playback starts at once on the phone's own clock, and the server-aligned clock is measured in the background. The next alignment moves the phone onto the broadcast. A measured clock is reused for ten minutes.
+- The broadcast position keeps milliseconds (`createLiveTimeline` in `assets/runtime/live-station.js`). Which song plays, and its whole-second position, are unchanged.
+- Each song opens at its exact broadcast position, and the same drift loop as a circle seeks back when the phone is more than 0.35 seconds off.
+- At a song boundary the phone goes to wherever the broadcast is now, instead of starting the next song from 0. If a recording ends before its broadcast slot, the phone waits for the slot to end.
+- Next and Previous do not skip the broadcast. They explain that Live Radio plays the same moment for everyone.
+
 ## Privacy
 
 There is no backend and no telemetry. Nobody is counted or listed. The link carries only the seed, the start time, the first song and the fingerprint. The clock probes are ordinary `HEAD` requests to the same site that served the page.
