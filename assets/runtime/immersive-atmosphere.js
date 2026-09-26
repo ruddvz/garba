@@ -695,7 +695,155 @@
     };
   }
 
-  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, buildClap, HANDS, VENUES, LISTENERS, PATTERNS, PREVIEW_BPM };
+  // ---------------------------------------------------------------------------
+  // Following the song's beat through the microphone.
+  // The song plays inside YouTube's player, which a page can't read. With the listener's permission the
+  // microphone hears it from the speaker instead. Only the low end is used (dhol and bass sit below ~180 Hz,
+  // our own claps are bright), energy is measured every ~12 ms, and once a second the last 8 seconds give a
+  // tempo and the time of the latest beat. Nothing is recorded or sent anywhere.
+
+  // frames: [[time, energy], ...] at a steady hop. Returns { bpm, lastBeat, confidence } or null.
+  function estimateBeat(frames, { minBpm = 70, maxBpm = 180, preferBpm = 120 } = {}) {
+    const n = frames.length;
+    if (n < 200) return null;
+    const hop = (frames[n - 1][0] - frames[0][0]) / (n - 1);
+    if (!(hop > 0.002 && hop < 0.05)) return null;
+    // Onset strength: how much the level jumps above the last few frames, in decibels, rises only
+    const db = frames.map((f) => 10 * Math.log10(f[1] + 1e-10));
+    const onset = new Float64Array(n);
+    for (let i = 3; i < n; i += 1) onset[i] = Math.max(0, db[i] - (db[i - 1] + db[i - 2] + db[i - 3]) / 3);
+    let mean = 0; for (let i = 0; i < n; i += 1) mean += onset[i]; mean /= n;
+    if (!(mean > 0.05)) return null;
+    for (let i = 0; i < n; i += 1) onset[i] = Math.max(0, onset[i] - mean);
+    // Tempo: autocorrelation over the beat lengths a garba can have, leaning towards a middle tempo so that
+    // double and half time don't win on a close call
+    const minLag = Math.max(2, Math.floor(60 / maxBpm / hop)), maxLag = Math.min(n - 2, Math.ceil(60 / minBpm / hop));
+    const r = new Float64Array(maxLag + 2);
+    let zero = 0; for (let i = 0; i < n; i += 1) zero += onset[i] * onset[i];
+    if (!(zero > 0)) return null;
+    let bestLag = 0, bestScore = -1, sum = 0, count = 0;
+    for (let lag = minLag; lag <= maxLag + 1; lag += 1) {
+      let acc = 0; for (let i = lag; i < n; i += 1) acc += onset[i] * onset[i - lag];
+      r[lag] = acc / (n - lag);
+    }
+    for (let lag = minLag; lag <= maxLag; lag += 1) {
+      const bpm = 60 / (lag * hop), prior = Math.exp(-0.5 * (Math.log2(bpm / preferBpm) / 0.9) ** 2);
+      const score = r[lag] * (0.55 + 0.45 * prior);
+      sum += r[lag]; count += 1;
+      if (score > bestScore) { bestScore = score; bestLag = lag; }
+    }
+    if (!bestLag) return null;
+    // Sub-frame lag from the neighbours
+    const a = r[bestLag - 1] || 0, b = r[bestLag], c = r[bestLag + 1] || 0, den = a - 2 * b + c;
+    const lag = den < 0 ? bestLag + 0.5 * (a - c) / den : bestLag;
+    const period = lag * hop, bpmOut = 60 / period;
+    const confidence = b / Math.max(1e-9, sum / Math.max(1, count));
+    // Phase: slide a comb of beats back from the newest frame and keep the offset that lands on the most onsets
+    let bestPhase = 0, bestPhaseScore = -1;
+    const steps = Math.max(1, Math.round(lag));
+    for (let ph = 0; ph < steps; ph += 1) {
+      let acc = 0;
+      for (let k = 0; ; k += 1) {
+        const idx = Math.round(n - 1 - ph - k * lag);
+        if (idx < 1) break;
+        // The newest beats count most: a garba speeding up leaves its older beats further apart
+        acc += Math.max(onset[idx], onset[idx - 1] * 0.8, (onset[idx + 1] || 0) * 0.8) * Math.pow(0.8, k);
+        if (k > 10) break;
+      }
+      if (acc > bestPhaseScore) { bestPhaseScore = acc; bestPhase = ph; }
+    }
+    const lastBeat = frames[n - 1][0] - bestPhase * hop;
+    return { bpm: bpmOut, period, lastBeat, confidence };
+  }
+
+  const BEAT_WORKLET = `class GarbaBeatEnergy extends AudioWorkletProcessor {
+    constructor() { super(); this.sum = 0; this.count = 0; this.start = null; }
+    process(inputs) {
+      const ch = inputs[0] && inputs[0][0];
+      if (ch) {
+        if (this.start === null) this.start = currentTime;
+        for (let i = 0; i < ch.length; i += 1) this.sum += ch[i] * ch[i];
+        this.count += ch.length;
+        if (this.count >= 512) { this.port.postMessage({ t: this.start, e: this.sum / this.count }); this.sum = 0; this.count = 0; this.start = null; }
+      }
+      return true;
+    }
+  }
+  registerProcessor('garba-beat-energy', GarbaBeatEnergy);`;
+
+  // onBeat({ bpm, anchor, confidence }) is called about once a second once the beat is clear: `anchor` is on the
+  // audio clock, placed so that a clap scheduled there is heard with the song's beat. onState(state) reports
+  // 'starting', 'listening', 'following', 'denied', 'unavailable' or 'off'.
+  function createBeatFollower(ctx, { onBeat = () => {}, onState = () => {}, getUserMedia } = {}) {
+    let stream = null, nodes = [], timer = 0, frames = [], smoothBpm = null, agree = 0, status = 'off', inLatency = 0.03, analyser = null, poll = 0;
+    const setStatus = (next) => { if (status !== next) { status = next; onState(next); } };
+    function push(t, e) { frames.push([t, e]); if (frames.length > 720) frames.splice(0, frames.length - 720); }
+    function update() {
+      const est = estimateBeat(frames);
+      if (!est || est.confidence < 1.6) { agree = Math.max(0, agree - 1); if (agree === 0 && status === 'following' && frames.length >= 700) setStatus('listening'); return; }
+      if (smoothBpm && Math.abs(est.bpm - smoothBpm) / smoothBpm < 0.06) { smoothBpm += (est.bpm - smoothBpm) * 0.5; agree = Math.min(4, agree + 1); }
+      else if (smoothBpm && Math.abs(est.bpm * 2 - smoothBpm) / smoothBpm < 0.06) return;
+      else if (smoothBpm && Math.abs(est.bpm / 2 - smoothBpm) / smoothBpm < 0.06) return;
+      else { smoothBpm = est.bpm; agree = 1; }
+      if (agree < 2) return;
+      const outLatency = ctx.outputLatency || ctx.baseLatency || 0;
+      onBeat({ bpm: smoothBpm, anchor: est.lastBeat - inLatency - outLatency, confidence: est.confidence });
+      setStatus('following');
+    }
+    async function start() {
+      if (stream) return true;
+      const gum = getUserMedia || (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices));
+      if (!gum) { setStatus('unavailable'); return false; }
+      setStatus('starting');
+      try {
+        stream = await gum({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      } catch (error) {
+        stream = null;
+        setStatus(error && (error.name === 'NotAllowedError' || error.name === 'SecurityError') ? 'denied' : 'unavailable');
+        return false;
+      }
+      try { inLatency = Number(stream.getAudioTracks()[0].getSettings().latency) || 0.03; } catch { inLatency = 0.03; }
+      const source = ctx.createMediaStreamSource(stream);
+      const low = ctx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 180; low.Q.value = 0.7;
+      const hush = ctx.createGain(); hush.gain.value = 0;
+      nodes = [source, low, hush];
+      source.connect(low);
+      let worklet = null;
+      if (ctx.audioWorklet && typeof AudioWorkletNode === 'function') {
+        try {
+          const url = URL.createObjectURL(new Blob([BEAT_WORKLET], { type: 'text/javascript' }));
+          await ctx.audioWorklet.addModule(url);
+          URL.revokeObjectURL(url);
+          worklet = new AudioWorkletNode(ctx, 'garba-beat-energy', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+          worklet.port.onmessage = (event) => push(event.data.t, event.data.e);
+          low.connect(worklet).connect(hush).connect(ctx.destination);
+          nodes.push(worklet);
+        } catch { worklet = null; }
+      }
+      if (!worklet) {
+        // Older browsers: read the level on a short timer instead
+        analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+        const buf = new Float32Array(analyser.fftSize);
+        low.connect(analyser); nodes.push(analyser);
+        poll = setInterval(() => { analyser.getFloatTimeDomainData(buf); let acc = 0; for (let i = 0; i < buf.length; i += 1) acc += buf[i] * buf[i]; push(ctx.currentTime - buf.length / ctx.sampleRate / 2, acc / buf.length); }, 12);
+      }
+      frames = []; smoothBpm = null; agree = 0;
+      timer = setInterval(update, 1000);
+      setStatus('listening');
+      return true;
+    }
+    function stop() {
+      clearInterval(timer); clearInterval(poll); timer = 0; poll = 0;
+      nodes.forEach((node) => { try { node.disconnect(); } catch { /* already gone */ } });
+      nodes = []; analyser = null;
+      if (stream) stream.getTracks().forEach((track) => track.stop());
+      stream = null; frames = []; smoothBpm = null; agree = 0;
+      setStatus('off');
+    }
+    return { start, stop, get status() { return status; }, get bpm() { return smoothBpm; } };
+  }
+
+  window.GARBA_ATMOSPHERE_ENGINE = { createEngine, buildImpulse, buildClap, HANDS, VENUES, LISTENERS, PATTERNS, PREVIEW_BPM, estimateBeat, createBeatFollower };
 
   // ---------------------------------------------------------------------------
   // Player integration and panel
@@ -746,6 +894,8 @@
     pattern: PATTERNS[stored?.pattern] ? stored.pattern : 'beat',
     level: clamp(Number(stored?.level ?? 0.45), 0.05, 1),
     taps: [],
+    follower: null,
+    listenStatus: 'off',
     tapTimer: 0,
     schedulerTimer: 0,
     idleTimer: 0,
@@ -831,6 +981,12 @@
       .atmosphere-tap{justify-self:center;display:grid;place-items:center;width:104px;height:104px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--accent) 75%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 28%,transparent),color-mix(in srgb,var(--accent) 8%,transparent));color:#fff;font:700 14px/1.15 var(--sans,system-ui);cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:transform 90ms ease,box-shadow 160ms ease}
       .atmosphere-tap:active,.atmosphere-tap.is-hit{transform:scale(.92);box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 16%,transparent)}
       .atmosphere-tap[data-locked="true"]{border-color:#f2c230}
+      .atmosphere-listen{justify-self:center;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);background:transparent;color:#f6ecd7;font:600 13px/1.2 var(--sans,system-ui);cursor:pointer}
+      .atmosphere-listen::before{content:"";width:8px;height:8px;border-radius:50%;background:rgba(246,236,215,.35)}
+      .atmosphere-listen[aria-pressed="true"]{border-color:#f2c230;background:color-mix(in srgb,var(--accent) 16%,transparent)}
+      .atmosphere-listen[aria-pressed="true"]::before{background:#e0473b;box-shadow:0 0 0 3px rgba(224,71,59,.25)}
+      .atmosphere-listen:disabled{opacity:.4;cursor:default}
+      .atmosphere-listen-note{font-size:12px;opacity:.75}
       .atmosphere-bpm{margin:0;font:700 26px/1 var(--sans,system-ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em;min-height:26px}
       .atmosphere-bpm span{font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(246,236,215,.6);margin-left:4px}
       .atmosphere-dots{display:flex;justify-content:center;gap:7px;min-height:10px}
@@ -936,6 +1092,8 @@
         <section class="atmosphere-section atmosphere-beat" aria-labelledby="atmosphereBeatTitle">
           <h3 id="atmosphereBeatTitle">Beat</h3>
           <button class="atmosphere-tap" type="button" aria-describedby="atmosphereTempo">Tap the beat</button>
+          <button class="atmosphere-listen" type="button" aria-pressed="false" aria-describedby="atmosphereListenNote">Follow the song's beat</button>
+          <p class="atmosphere-desc atmosphere-listen-note" id="atmosphereListenNote">Uses your microphone to hear the beat from your speaker, so the claps stay with the song as it speeds up. Nothing is recorded or sent.</p>
           <div class="atmosphere-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <p class="atmosphere-bpm" aria-hidden="true"></p>
           <p class="atmosphere-desc atmosphere-tempo" id="atmosphereTempo" aria-live="polite"></p>
@@ -1003,6 +1161,7 @@
     const close = panel.querySelector('.atmosphere-close');
     const test = panel.querySelector('.atmosphere-test');
     const tap = panel.querySelector('.atmosphere-tap');
+    const listen = panel.querySelector('.atmosphere-listen');
     const slider = panel.querySelector('#atmosphereLevel');
     const output = panel.querySelector('output');
     const levelWrap = panel.querySelector('.atmosphere-level');
@@ -1018,6 +1177,7 @@
     power.addEventListener('click', () => setEnabled(state.mode === 'off'));
     // Taps are timed on pointerdown for accuracy. Screen readers only send click, so accept those too.
     tap.addEventListener('pointerdown', (event) => { event.preventDefault(); registerTap(); });
+    listen.addEventListener('click', () => { void toggleListening(); });
     tap.addEventListener('click', (event) => { if (event.detail === 0 && !state.tapKeyed) registerTap(); state.tapKeyed = false; });
     tap.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) { event.preventDefault(); state.tapKeyed = true; registerTap(); } });
     slider.addEventListener('input', () => {
@@ -1060,6 +1220,7 @@
     state.output = output;
     state.test = test;
     state.tap = tap;
+    state.listen = listen;
     state.power = power;
     state.body = panel.querySelector('.atmosphere-body');
     state.modeDesc = panel.querySelector('.atmosphere-mode-desc');
@@ -1103,6 +1264,10 @@
     if (!profile.claps) return 'Choose Claps or Full circle to add the circle clapping in time.';
     const what = currentStyle() === 'dandiya' ? 'Dandiya sticks' : 'Claps';
     if (tempo && state.tempoSource === 'taps') return `${what} follow your taps. Tap again if the rhythm changes.`;
+    if (tempo && state.tempoSource === 'mic') return `${what} follow the song's beat through the microphone, and keep up as it speeds up.`;
+    if (state.listenStatus === 'listening' || state.listenStatus === 'starting') return 'Listening for the beat. Play the song out loud; it takes a few seconds.';
+    if (state.listenStatus === 'denied') return 'The microphone is blocked for this site. Tap the beat instead, or allow the microphone in your browser settings.';
+    if (state.listenStatus === 'unavailable') return "This browser can't use the microphone here. Tap the beat instead.";
     if (state.taps.length) return `Keep going: ${Math.max(0, 4 - state.taps.length)} more ${4 - state.taps.length === 1 ? 'tap' : 'taps'}.`;
     return `Tap 4 times in time with the song. ${what} join in once they know the tempo.`;
   }
@@ -1111,7 +1276,7 @@
 
   function waitingForBeat() {
     const profile = MODES[state.mode] || MODES.off;
-    return Boolean(profile.claps) && state.playbackActive && state.tempoSource !== 'taps';
+    return Boolean(profile.claps) && state.playbackActive && state.tempoSource !== 'taps' && state.tempoSource !== 'mic';
   }
 
   function syncUi() {
@@ -1151,11 +1316,17 @@
     if (state.venueDesc) state.venueDesc.textContent = VENUES[state.venue].desc;
     if (state.listenerDesc) state.listenerDesc.textContent = LISTENERS[state.listener].desc;
     const tempo = state.engine?.tempo;
-    const locked = Boolean(tempo && state.tempoSource === 'taps');
+    const locked = Boolean(tempo && (state.tempoSource === 'taps' || state.tempoSource === 'mic'));
     if (state.tap) {
       state.tap.disabled = off || !profile.claps;
       state.tap.dataset.locked = String(locked);
       state.tap.textContent = locked ? 'Tap to adjust' : 'Tap the beat';
+    }
+    if (state.listen) {
+      const on = state.listenStatus !== 'off' && state.listenStatus !== 'denied' && state.listenStatus !== 'unavailable';
+      state.listen.disabled = off || !profile.claps;
+      state.listen.setAttribute('aria-pressed', String(on));
+      state.listen.textContent = on ? (state.listenStatus === 'following' ? 'Following the beat · stop' : 'Listening… · stop') : "Follow the song's beat";
     }
     if (state.bpmText) state.bpmText.innerHTML = locked ? `${Math.round(tempo.bpm)}<span>BPM</span>` : '';
     if (state.dots) state.dots.forEach((dot, i) => dot.classList.toggle('on', locked || i < state.taps.length));
@@ -1326,7 +1497,7 @@
     state.engine.setStyle(currentStyle());
     await startBeds(profile);
     if (generation !== state.generation) return;
-    if (state.previewActive && !state.playbackActive && state.tempoSource !== 'taps') {
+    if (state.previewActive && !state.playbackActive && state.tempoSource !== 'taps' && state.tempoSource !== 'mic') {
       state.engine.setTempo(PREVIEW_BPM, state.context.currentTime + 0.35);
       state.tempoSource = 'preview';
     }
@@ -1342,9 +1513,10 @@
 
   function scheduleIdleSuspend() {
     clearTimeout(state.idleTimer);
-    if (state.previewActive || state.playbackActive || state.mode === 'off') return;
+    // The microphone follower needs the audio running, even before the song starts
+    if (state.previewActive || state.playbackActive || state.follower || state.mode === 'off') return;
     state.idleTimer = setTimeout(() => {
-      if (state.previewActive || state.playbackActive) return;
+      if (state.previewActive || state.playbackActive || state.follower) return;
       clearScene();
       if (state.context?.state === 'running') state.context.suspend().catch(() => {});
     }, 2400);
@@ -1411,6 +1583,8 @@
     // Stamp the tap on the page clock before anything async, so waking the audio on the
     // first tap cannot delay it and shorten the first interval.
     const tappedAt = performance.now() / 1000;
+    // Tapping takes over from the microphone
+    if (state.follower) stopListening();
     if (!await ensureContext()) return;
     const ctx = state.context;
     const last = state.taps[state.taps.length - 1];
@@ -1442,6 +1616,38 @@
     syncUi();
   }
 
+  // The microphone beat follower: on only when the listener asks, off with Atmosphere or when they tap
+  async function toggleListening() {
+    if (state.follower) { stopListening(); return; }
+    if (!await ensureContext()) return;
+    const engineApi = window.GARBA_ATMOSPHERE_ENGINE;
+    state.follower = engineApi.createBeatFollower(state.context, {
+      onState: (next) => { state.listenStatus = next; if (next === 'denied' || next === 'unavailable') state.follower = null; syncUi(); },
+      onBeat: ({ bpm, anchor }) => {
+        if (!state.engine || state.tempoSource === 'taps') return;
+        state.engine.setTempo(bpm, anchor);
+        const first = state.tempoSource !== 'mic';
+        state.tempoSource = 'mic';
+        if (first) {
+          if (!state.sceneReady && (state.playbackActive || state.previewActive)) void buildScene({ smooth: false });
+          dispatchChange('tempo');
+        }
+        syncUi();
+      },
+    });
+    const ok = await state.follower?.start();
+    if (!ok && state.follower) state.follower = null;
+    syncUi();
+  }
+  function stopListening() {
+    const follower = state.follower;
+    state.follower = null;
+    follower?.stop();
+    state.listenStatus = 'off';
+    if (state.tempoSource === 'mic') { state.engine?.clearTempo(); state.tempoSource = null; }
+    syncUi();
+  }
+
   function clearTaps() {
     state.taps = [];
     if (state.tempoSource === 'taps') { state.engine?.clearTempo(); state.tempoSource = null; }
@@ -1457,6 +1663,7 @@
     syncUi();
     dispatchChange('mode');
     if (mode === 'off') {
+      if (state.follower) stopListening();
       applyMasterLevel({ quick: true });
       await sleep(100);
       clearScene();
@@ -1541,6 +1748,7 @@
   if (songSheet) new MutationObserver(() => { if (state.panelOpen && songSheet.getAttribute('aria-hidden') === 'false') setPanelOpen(false); }).observe(songSheet, { attributes: true, attributeFilter: ['aria-hidden'] });
 
   window.addEventListener('pagehide', () => {
+    if (state.follower) stopListening();
     stopPreview({ announce: false });
     state.playbackActive = false;
     applyMasterLevel({ quick: true });
