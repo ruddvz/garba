@@ -843,10 +843,14 @@
     // Figures are drawn from the feet up in units of their height. near (0 to 1) darkens a figure that passes
     // right in front of the camera into a silhouette, so it frames the view instead of blocking it.
     var SKIN = ['#c99a72', '#b98563', '#d9b48c', '#a8744f', '#c08a60'];
+    // Colours are darkened towards shadow (f) and faded into the night haze with distance (FOGF), cached by value
+    var tintCache = {}, FOGF = 0;
     function tint(hex, f) {
-      if (!f) return hex;
-      var n = parseInt(hex.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, bb = n & 255;
-      return 'rgb(' + Math.round(lerp(r, 16, f)) + ',' + Math.round(lerp(gg, 10, f)) + ',' + Math.round(lerp(bb, 8, f)) + ')';
+      if (!f && !FOGF) return hex;
+      var q = Math.round((f || 0) * 20), qf = Math.round(FOGF * 20), key = hex + q + '/' + qf, hit = tintCache[key]; if (hit) return hit;
+      var n = parseInt(hex.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, bb = n & 255, ff = q / 20, fg = qf / 20;
+      r = lerp(lerp(r, 16, ff), 26, fg); gg = lerp(lerp(gg, 10, ff), 20, fg); bb = lerp(lerp(bb, 8, ff), 38, fg);
+      return (tintCache[key] = 'rgb(' + Math.round(r) + ',' + Math.round(gg) + ',' + Math.round(bb) + ')');
     }
     // Four kinds of dandiya: lacquered spiral stripes, maroon with mirror work, gold gota with a tassel, bright bands
     var STICKS = [
@@ -876,6 +880,7 @@
       var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || dancing || playing ? Math.sin(ph) : 0;
       y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
+      FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, (p.z - (-cam.z) - 9) / 55));
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
       // Light falls off away from the garbo: people out at the edges are a shade darker than those by the lamp
@@ -984,7 +989,7 @@
       }
     }
     function fogBand(f) {
-      var s0 = F / f.z, yG = HOR + cam.y * s0, yT = Math.max(0, HOR + (cam.y - 18) * s0), yB = Math.min(H, yG + (yG - HOR) * 0.25 + 6);
+      var s0 = F / f.z, yG = HOR + cam.y * s0, yT = Math.max(0, HOR + (cam.y - 11) * s0), yB = Math.min(H, yG + (yG - HOR) * 0.25 + 6);
       if (yG < 0 || yT >= H) return;
       var col = st.venue === 'stadium' ? '26,19,28' : st.venue === 'sheri' ? '22,17,32' : '20,15,30';
       var gr = g.createLinearGradient(0, yT, 0, yB);
@@ -1242,7 +1247,7 @@
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
       // Depth: veils of night air laid between layers of the crowd, thicker the further back, so the circle round
       // the garbo stays crisp and everything behind it recedes instead of piling into one cluster
-      var D0 = -cam.z, FOG = [{ z: D0 + 58, a: 0.5 }, { z: D0 + 40, a: 0.36 }, { z: D0 + 25, a: 0.24 }, { z: D0 + 13, a: 0.1 }], fi = 0;
+      var D0 = -cam.z, FOG = [{ z: D0 + 40, a: 0.42 }], fi = 0;
       items.forEach(function (it) {
         while (fi < FOG.length && it.z < FOG[fi].z) fogBand(FOG[fi++]);
         if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; if (st.venue !== 'sheri') mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (st.venue !== 'sheri') mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
@@ -1254,6 +1259,7 @@
       });
 
       while (fi < FOG.length) fogBand(FOG[fi++]);
+      FOGF = 0;
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       // Your label always sits on top, so you can find yourself in the crowd
       if (partnerLabel && youLabel && Math.abs(partnerLabel.x - youLabel.x) < 70 && Math.abs(partnerLabel.y - youLabel.y) < 24) partnerLabel.y = youLabel.y - 26;
