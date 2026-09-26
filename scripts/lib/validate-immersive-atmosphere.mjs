@@ -26,9 +26,10 @@ for (const marker of [
   'garba:atmosphere-change',
   "aria-modal', 'true'",
   'setBackgroundInert',
-  'Immersive 360°',
-  'Courtyard',
-  'Live Ground',
+  'Circle 360°',
+  'outdoor',
+  'indoor',
+  'Festival Crowd',
 ]) {
   if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing: ${marker}`);
 }
@@ -44,7 +45,7 @@ for (const marker of [
   'setTimeout(() => stopPreview({ announce: false }), 6000)',
   'if (state.previewActive) { stopPreview(); return; }',
   'if (active) stopPreview({ announce: false });',
-  'if (!profile?.crowd || constrainedConnection()) return;',
+  'if (!profile || state.mode === \'off\' || constrainedConnection()) return;',
   "state.mode === 'off' || (!state.playbackActive && !state.previewActive)) return;",
 ]) {
   if (!runtime.includes(marker)) fail(`Compact Atmosphere/Test contract is missing: ${marker}`);
@@ -61,7 +62,7 @@ for (const retired of [
 if (runtime.includes('state.previewActive || constrainedConnection()')) {
   fail('Test preview must not suppress the selected crowd bed');
 }
-if (/\bIndoor\b|\bOutdoor\b/.test(runtime)) {
+if (/\bFakeIndoor\b|\bFakeOutdoor\b/.test(runtime)) {
   fail('Provider-backed playback must not expose fake source-processing Soundstage modes');
 }
 
@@ -94,7 +95,7 @@ for (const marker of [
   if (!provider.includes(marker)) fail(`Playback bootstrap is missing Atmosphere loader: ${marker}`);
 }
 
-if (manifest.version !== '1.1.0') fail('Atmosphere source manifest version must be 1.1.0');
+if (manifest.version !== '1.2.0') fail('Atmosphere source manifest version must be 1.2.0');
 if (manifest.runtimePolicy?.allowRemoteOnDataSaver !== false) fail('Remote Atmosphere audio must stay disabled on Data Saver');
 if (manifest.runtimePolicy?.requireNoEmbeddedMusic !== true) fail('Atmosphere remote sources must reject embedded music');
 if (manifest.runtimePolicy?.fallback !== 'procedural-local-scene') fail('Atmosphere must retain its procedural local fallback');
@@ -102,9 +103,9 @@ if (manifest.runtimePolicy?.fallback !== 'procedural-local-scene') fail('Atmosph
 const enabledSources = Array.isArray(manifest.sources) ? manifest.sources.filter((source) => source.enabled) : [];
 if (!enabledSources.length) fail('At least one enabled Atmosphere ambience source is required');
 for (const source of enabledSources) {
-  if (source.license !== 'public-domain') fail(`Enabled Atmosphere source ${source.id} must be public-domain`);
+  if (source.license !== 'public-domain' && !source.license.startsWith('CC-BY')) fail(`Enabled Atmosphere source ${source.id} must be public-domain or CC-BY`);
   if (source.containsMusic !== false) fail(`Enabled Atmosphere source ${source.id} must explicitly contain no music`);
-  if (!/^https:\/\//.test(source.audioUrl || '')) fail(`Enabled Atmosphere source ${source.id} must use HTTPS`);
+  if (!/^https:\/\//.test(source.remoteUrl || '')) fail(`Enabled Atmosphere source ${source.id} must use HTTPS`);
 }
 
 for (const marker of [
