@@ -89,6 +89,38 @@
     return Number.isFinite(next) ? next : null;
   }
 
+  // How long a track plays. A cut from a longer recording runs exactly to where the next cut starts, whatever length
+  // the catalogue gives it, so no audio is skipped and none repeats; together the cuts play as one recording. A song
+  // that is the whole programme (its length runs well past the next cut) keeps its full length.
+  function trackLength(song, next, start) {
+    const stored = Math.max(0, Number(song.durationSeconds || 0));
+    if (!next) return stored;
+    const gap = next - start;
+    return stored > gap + 60 ? stored : gap;
+  }
+
+  // Fades between different recordings: the last ten seconds fade out, and the next song fades in over its first
+  // ten seconds (four when the listener picked it). The level follows the playback position, so seeking stays right.
+  // Cuts of one recording run straight on. Browsers that don't allow a page to set the level (iPhone) play at full.
+  const FADE_SECONDS = 10;
+  let fadeInSeconds = 0;
+  let fadeOutTail = true;
+  let nextOpenIsAuto = false;
+  let lastVolume = -1;
+  function applyFade(current, total) {
+    if (!player?.setVolume) return;
+    let level = 1;
+    if (fadeInSeconds > 0 && current < fadeInSeconds) level = Math.min(level, Math.max(0, current / fadeInSeconds));
+    if (fadeOutTail && total > FADE_SECONDS * 2) {
+      const left = total - current;
+      if (left < FADE_SECONDS) level = Math.min(level, Math.max(0, left / FADE_SECONDS));
+    }
+    const volume = Math.round(level * 100);
+    if (volume === lastVolume) return;
+    lastVolume = volume;
+    try { player.setVolume(volume); } catch { /* level control is optional */ }
+  }
+
   function currentBootSong() {
     return currentSongFrom(bootSongs());
   }
@@ -390,6 +422,7 @@
     const current = elapsed();
     const total = duration();
     setProgressState(current, total);
+    applyFade(current, total);
     persistPosition(current);
 
     if ('mediaSession' in navigator && total > 0) {
@@ -706,7 +739,10 @@
     activeSong = song;
     baseStart = start;
     const next = laterSliceStart(song, id, start);
-    trackDuration = Math.max(0, Number(song.durationSeconds || 0)) || (next ? next - start : 0);
+    trackDuration = trackLength(song, next, start);
+    fadeInSeconds = 0;
+    fadeOutTail = !(next && trackDuration === next - start);
+    nextOpenIsAuto = false;
     lastPersistedSecond = -1;
     lastMediaSessionPositionKey = '';
     advanceLock = false;
@@ -731,7 +767,11 @@
     activeSong = song;
     baseStart = Math.max(0, Number(song.youtubeStartSeconds || 0));
     const nextSliceStart = laterSliceStart(song, id, baseStart);
-    trackDuration = Math.max(0, Number(song.durationSeconds || 0)) || (nextSliceStart ? nextSliceStart - baseStart : 0);
+    trackDuration = trackLength(song, nextSliceStart, baseStart);
+    fadeInSeconds = nextOpenIsAuto ? FADE_SECONDS : 4;
+    fadeOutTail = !(nextSliceStart && trackDuration === nextSliceStart - baseStart);
+    nextOpenIsAuto = false;
+    lastVolume = -1;
     playerState = -1;
     lastPersistedSecond = -1;
     lastMediaSessionPositionKey = '';
@@ -762,6 +802,8 @@
       const request = { videoId: id, startSeconds };
       if (Number.isFinite(endSeconds) && endSeconds > startSeconds) request.endSeconds = endSeconds;
 
+      // Start quiet when the song fades in from its beginning
+      try { readyPlayer.setVolume?.(logicalStart < fadeInSeconds ? 0 : 100); lastVolume = logicalStart < fadeInSeconds ? 0 : 100; } catch { /* level control is optional */ }
       if (autoplay) readyPlayer.loadVideoById(request);
       else readyPlayer.cueVideoById(request);
       // A sync correction may have left the previous recording slightly fast or slow.
@@ -837,6 +879,7 @@
   function advance() {
     if (!activeSong || advanceLock) return;
     advanceLock = true;
+    nextOpenIsAuto = true;
     continueAfterNavigation = true;
     $('nextButton')?.click();
   }
