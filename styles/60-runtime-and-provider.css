@@ -325,3 +325,187 @@ body {
        (display-mode: window-controls-overlay) {
   .install-banner { display: none !important; }
 }
+
+/* ---------------------------------------------------------------------------------------
+   Garba Circle: topbar toggle state and the Circle dialog (native <dialog>, top layer).
+   The dialog carries its own dark panel so it stays legible over light and dark artwork.
+   --------------------------------------------------------------------------------------- */
+html body .app .utilities #circleButton[aria-pressed="true"] {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.circle-dialog {
+  width: min(400px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - max(32px, var(--safe-top) + var(--safe-bottom)));
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ivory);
+  font-family: var(--sans);
+  overflow: visible;
+}
+.circle-dialog::backdrop {
+  background: rgba(5, 7, 16, .64);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.circle-sheet {
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(246, 236, 215, .12);
+  border-radius: 24px;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .52);
+}
+.circle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.circle-header h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.circle-dialog .circle-close {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  color: rgba(246, 236, 215, .78);
+}
+.circle-dialog .circle-close:focus-visible { outline-offset: -4px; }
+.circle-lede,
+.circle-message,
+.circle-status,
+.circle-next {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.circle-lede { color: var(--muted); }
+.circle-message {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  color: var(--ivory);
+}
+.circle-message[hidden],
+.circle-invite[hidden],
+.circle-next[hidden],
+.circle-dialog button[hidden] { display: none; }
+.circle-invite { margin-top: 16px; }
+.circle-qr {
+  width: min(216px, 62vw);
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ivory);
+}
+.circle-qr svg { display: block; width: 100%; height: auto; }
+.circle-link {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: all;
+  -webkit-user-select: all;
+}
+.circle-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.circle-primary,
+.circle-secondary,
+.circle-leave {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
+}
+.circle-primary {
+  border: 0;
+  background: var(--accent);
+  color: #17131b;
+}
+.circle-dialog > .circle-sheet > .circle-primary { width: 100%; margin-top: 16px; }
+.circle-primary:disabled { opacity: .6; cursor: progress; }
+.circle-secondary,
+.circle-leave {
+  border: 1px solid rgba(246, 236, 215, .2);
+  background: transparent;
+  color: var(--ivory);
+}
+.circle-leave {
+  width: 100%;
+  margin-top: 16px;
+  color: rgba(246, 236, 215, .8);
+  font-weight: 550;
+}
+.circle-primary:active,
+.circle-secondary:active,
+.circle-leave:active { transform: scale(.98); }
+.circle-status { color: rgba(246, 236, 215, .8); font-size: 13px; }
+.circle-next { color: var(--muted); font-size: 13px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .circle-dialog[open] { animation: circle-dialog-in 220ms var(--ease); }
+  @keyframes circle-dialog-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (max-width: 700px) {
+  /* Bottom sheet on phones, clear of the home indicator. */
+  .circle-dialog {
+    width: 100%;
+    max-height: calc(100dvh - max(24px, var(--safe-top)));
+    margin: auto 0 0;
+  }
+  .circle-sheet {
+    padding: 14px max(18px, env(safe-area-inset-right)) max(20px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* The Circle button makes four topbar utilities. On the narrowest phones use the compact 38px
+   utility size (as short landscape screens do) so the controls stay clear of the brand. */
+@media (max-width: 340px) {
+  html body .app .topbar .brand { font-size: 23px !important; }
+  html body .app .topbar .utilities { max-width: none; }
+  html body .app .topbar .utilities .icon-button {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 6px !important;
+  }
+  html body .app .topbar .utilities .icon-button svg { width: 21px !important; height: 21px !important; }
+}
+
+@media (forced-colors: active) {
+  .circle-sheet { border: 1px solid CanvasText; }
+  .circle-primary, .circle-secondary, .circle-leave { border: 1px solid ButtonText; }
+}
