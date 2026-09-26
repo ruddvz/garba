@@ -343,6 +343,7 @@
     nodes.bus.connect(nodes.send);
 
     const impulses = {};
+    const circles = new Map();
     const sticks = Array.from({ length: 8 }, () => buildStick(ctx, rand));
 
     const state = {
@@ -396,6 +397,8 @@
         input.connect(panner).connect(nodes.bus);
         return { input, panner, angle };
       });
+      const key = `${state.venue}|${state.listener}`;
+      if (circles.has(key)) { state.clappers = circles.get(key); return; }
       state.clappers = Array.from({ length: venue.clappers }, (_, i) => {
         const d = near + (farEdge - near) * rand();
         return {
@@ -411,6 +414,7 @@
           keen: 0.8 + rand() * 0.2,
         };
       });
+      circles.set(key, state.clappers);
     }
 
     // Everyone's hands sound a little different, and stay the same all night.
@@ -708,9 +712,9 @@
 
   const MODES = {
     off: { label: 'Off', desc: 'No atmosphere', crowd: 0, night: 0, claps: 0, spatial: false },
-    crowd: { label: 'Crowd', desc: 'The ground around you, without claps', crowd: 1, night: 1, claps: 0, spatial: false },
-    clapping: { label: 'Claps', desc: 'The circle clapping with you, locked to your taps', crowd: 0.35, night: 0.6, claps: 1, spatial: false },
-    immersive: { label: 'Full circle', desc: 'Crowd and claps all around you, best on headphones', crowd: 0.85, night: 1, claps: 0.9, spatial: true },
+    crowd: { label: 'Crowd', desc: 'The ground around you: people, chatter and the night air. No claps.', crowd: 1, night: 1, claps: 0, spatial: false },
+    clapping: { label: 'Claps', desc: 'The circle clapping in time with the song, with a quieter crowd.', crowd: 0.35, night: 0.6, claps: 1, spatial: false },
+    immersive: { label: 'Full circle', desc: 'The crowd and the claps all around you. Best on headphones.', crowd: 0.85, night: 1, claps: 0.9, spatial: true },
   };
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -735,6 +739,7 @@
     engine: null,
     manifest: null,
     mode: initialMode,
+    lastMode: MODES[stored?.lastMode] && stored.lastMode !== 'off' ? stored.lastMode : (initialMode !== 'off' ? initialMode : 'immersive'),
     venue: initialVenue,
     listener: LISTENERS[stored?.listener] ? stored.listener : 'circle',
     pattern: PATTERNS[stored?.pattern] ? stored.pattern : 'beat',
@@ -756,7 +761,7 @@
 
   function persist() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, venue: state.venue, listener: state.listener, pattern: state.pattern, level: state.level }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: state.mode, lastMode: state.lastMode, venue: state.venue, listener: state.listener, pattern: state.pattern, level: state.level }));
     } catch { /* storage unavailable */ }
   }
 
@@ -787,52 +792,72 @@
       .atmosphere-button[aria-pressed="true"]{color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,rgba(8,10,18,.22))}
       .atmosphere-button::after{content:"";position:absolute;right:6px;top:6px;width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0;transform:scale(.6);transition:opacity 160ms ease,transform 180ms ease;box-shadow:0 0 0 2px rgba(8,10,18,.54)}
       .atmosphere-button[aria-pressed="true"]::after{opacity:1;transform:scale(1)}
+      .atmosphere-button[data-waiting="true"]::after{background:#f2c230;animation:atmosphere-wait 1.4s ease-in-out infinite}
+      @keyframes atmosphere-wait{50%{transform:scale(1.5);opacity:.55}}
       .atmosphere-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
       .atmosphere-backdrop{position:fixed;z-index:89;inset:0;border:0;padding:0;background:rgba(3,5,10,.26);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
-      .atmosphere-backdrop[hidden],.atmosphere-panel[hidden]{display:none!important}
-      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(360px,calc(100vw - 28px));max-height:calc(100dvh - 96px);overflow-y:auto;box-sizing:border-box;padding:16px 18px 18px;color:#f6ecd7;border:1px solid rgba(246,236,215,.14);border-radius:22px;background:rgba(12,14,25,.965);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
-      .atmosphere-panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-      .atmosphere-heading{display:flex;align-items:center;gap:9px;min-width:0}
-      .atmosphere-panel h2{margin:0;font:600 17px/1.15 var(--sans,system-ui);letter-spacing:-.01em}
-      .atmosphere-test,.atmosphere-close{display:inline-grid;place-items:center;border:1px solid rgba(246,236,215,.12);color:inherit;background:rgba(246,236,215,.05);cursor:pointer}
-      .atmosphere-test{width:30px;height:30px;border-radius:999px}
+      .atmosphere-backdrop[hidden],.atmosphere-panel[hidden],.atmosphere-tip[hidden]{display:none!important}
+      .atmosphere-panel{position:fixed;z-index:90;top:max(76px,calc(env(safe-area-inset-top) + 58px));right:max(14px,env(safe-area-inset-right));width:min(384px,calc(100vw - 28px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding:14px 18px 20px;color:#f6ecd7;text-align:center;border:1px solid rgba(246,236,215,.14);border-radius:24px;background:rgba(12,14,25,.97);box-shadow:0 28px 90px rgba(0,0,0,.52);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);animation:atmosphere-rise 220ms cubic-bezier(.2,.8,.2,1)}
+      @keyframes atmosphere-rise{from{transform:translateY(12px);opacity:.4}}
+      .atmosphere-panel-header{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:8px}
+      .atmosphere-panel h2{margin:0;font:600 19px/1.2 var(--serif,var(--sans,system-ui));letter-spacing:-.01em}
+      .atmosphere-test,.atmosphere-close{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid rgba(246,236,215,.12);color:inherit;background:rgba(246,236,215,.05);cursor:pointer;padding:0}
       .atmosphere-test[aria-pressed="true"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 52%,rgba(246,236,215,.14));background:color-mix(in srgb,var(--accent) 13%,rgba(246,236,215,.04))}
-      .atmosphere-test svg{width:14px;height:14px;fill:currentColor}
-      .atmosphere-close{width:32px;height:32px;border-radius:999px;font:300 20px/1 var(--sans,system-ui)}
-      .atmosphere-note{margin:8px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62)}
-      .atmosphere-section-label{margin:14px 0 7px;font:600 10.5px/1.2 var(--sans,system-ui);letter-spacing:.06em;text-transform:uppercase;color:rgba(246,236,215,.55)}
-      .atmosphere-modes,.atmosphere-venues,.atmosphere-patterns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-      .atmosphere-venues,.atmosphere-patterns{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .atmosphere-test svg{width:15px;height:15px;fill:currentColor}
+      .atmosphere-close{font:300 22px/1 var(--sans,system-ui)}
+      .atmosphere-power{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;margin:14px 0 2px;padding:14px 16px;border-radius:18px;border:1px solid rgba(246,236,215,.12);background:rgba(246,236,215,.05);color:inherit;cursor:pointer;text-align:left;font:inherit}
+      .atmosphere-power[aria-checked="true"]{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 12%,rgba(246,236,215,.03))}
+      .atmosphere-power strong{display:block;font:600 16px/1.25 var(--sans,system-ui)}
+      .atmosphere-power small{display:block;margin-top:2px;font:400 13px/1.35 var(--sans,system-ui);color:rgba(246,236,215,.66)}
+      .atmosphere-knob{flex:0 0 auto;position:relative;width:50px;height:30px;border-radius:15px;background:rgba(246,236,215,.18);transition:background 160ms ease}
+      .atmosphere-knob::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#f6ecd7;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:transform 180ms cubic-bezier(.2,.8,.2,1)}
+      .atmosphere-power[aria-checked="true"] .atmosphere-knob{background:var(--accent)}
+      .atmosphere-power[aria-checked="true"] .atmosphere-knob::after{transform:translateX(20px)}
+      .atmosphere-body{transition:opacity 180ms ease}
+      .atmosphere-body[data-off="true"]{opacity:.42}
+      .atmosphere-section{display:grid;gap:10px;margin-top:22px}
+      .atmosphere-section h3{margin:0;font:600 16px/1.2 var(--sans,system-ui);letter-spacing:-.005em;text-align:center;color:#f6ecd7}
+      .atmosphere-desc{margin:0;font:400 13.5px/1.45 var(--sans,system-ui);color:rgba(246,236,215,.68);text-align:center;text-wrap:balance;min-height:39px}
+      .atmosphere-modes,.atmosphere-venues,.atmosphere-patterns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
       .atmosphere-listeners{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-      .atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern{min-height:38px;padding:8px 8px;border:1px solid rgba(246,236,215,.11);border-radius:12px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 12px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 160ms ease,border-color 160ms ease,transform 160ms ease,opacity 160ms ease}
+      .atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern{min-height:46px;padding:8px 6px;border:1px solid rgba(246,236,215,.11);border-radius:14px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 14px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background 160ms ease,border-color 160ms ease,transform 120ms ease,opacity 160ms ease}
       .atmosphere-mode:hover,.atmosphere-venue:hover,.atmosphere-listener:hover,.atmosphere-pattern:hover{background:rgba(246,236,215,.08)}
-      .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-listener:active,.atmosphere-pattern:active{transform:scale(.985)}
-      .atmosphere-mode[aria-pressed="true"],.atmosphere-venue[aria-pressed="true"],.atmosphere-listener[aria-pressed="true"],.atmosphere-pattern[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 15%,rgba(246,236,215,.05));color:#fff}
-      .atmosphere-venue:disabled,.atmosphere-listener:disabled,.atmosphere-mode:disabled,.atmosphere-pattern:disabled,.atmosphere-tap:disabled{opacity:.32;cursor:default;pointer-events:none}
-      .atmosphere-venue-desc,.atmosphere-listener-desc{margin:7px 0 0;font:400 12px/1.4 var(--sans,system-ui);color:rgba(246,236,215,.62);min-height:34px}
-      .atmosphere-headphone-icon{display:inline-block;width:13px;height:13px;vertical-align:-1px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-      .atmosphere-beat{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
-      .atmosphere-tap{width:64px;height:64px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--accent) 70%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:#fff;font:700 12px/1.1 var(--sans,system-ui);cursor:pointer;touch-action:manipulation;transition:transform 90ms ease,background 120ms ease}
-      .atmosphere-tap:active,.atmosphere-tap.is-hit{transform:scale(.92);background:color-mix(in srgb,var(--accent) 34%,transparent)}
-      .atmosphere-tempo{font:600 13px/1.35 var(--sans,system-ui)}
-      .atmosphere-tempo span{display:block;font-weight:400;font-size:12px;color:rgba(246,236,215,.62)}
-      .atmosphere-patterns{margin-top:9px}
-      .atmosphere-level{margin-top:16px}
-      .atmosphere-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-      .atmosphere-level label{font:600 12px/1 var(--sans,system-ui)}
-      .atmosphere-level output{opacity:.9;transition:opacity 140ms ease;color:rgba(246,236,215,.68);font:600 11px/1 var(--sans,system-ui)}
-      .atmosphere-level input{--fill:${Math.round(state.level * 100)}%;appearance:none;-webkit-appearance:none;width:100%;height:22px;margin:0;background:transparent;cursor:pointer}
+      .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-listener:active,.atmosphere-pattern:active{transform:scale(.97)}
+      .atmosphere-mode[aria-pressed="true"],.atmosphere-venue[aria-pressed="true"],.atmosphere-listener[aria-pressed="true"],.atmosphere-pattern[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 62%,rgba(246,236,215,.15));background:color-mix(in srgb,var(--accent) 16%,rgba(246,236,215,.05));color:#fff}
+      .atmosphere-venue:disabled,.atmosphere-listener:disabled,.atmosphere-mode:disabled,.atmosphere-pattern:disabled,.atmosphere-tap:disabled{opacity:.4;cursor:default;pointer-events:none}
+      .atmosphere-panel .atmosphere-local-background{display:flex;justify-content:center;margin-top:22px}
+      .atmosphere-headphone-icon{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:2px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .atmosphere-tap{justify-self:center;display:grid;place-items:center;width:104px;height:104px;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--accent) 75%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 28%,transparent),color-mix(in srgb,var(--accent) 8%,transparent));color:#fff;font:700 14px/1.15 var(--sans,system-ui);cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;transition:transform 90ms ease,box-shadow 160ms ease}
+      .atmosphere-tap:active,.atmosphere-tap.is-hit{transform:scale(.92);box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 16%,transparent)}
+      .atmosphere-tap[data-locked="true"]{border-color:#f2c230}
+      .atmosphere-bpm{margin:0;font:700 26px/1 var(--sans,system-ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em;min-height:26px}
+      .atmosphere-bpm span{font-size:13px;font-weight:600;letter-spacing:.04em;color:rgba(246,236,215,.6);margin-left:4px}
+      .atmosphere-dots{display:flex;justify-content:center;gap:7px;min-height:10px}
+      .atmosphere-dots i{width:9px;height:9px;border-radius:50%;background:rgba(246,236,215,.16);transition:background 120ms ease}
+      .atmosphere-dots i.on{background:var(--accent)}
+      .atmosphere-level{display:grid;gap:8px}
+      .atmosphere-level output{font:600 13px/1 var(--sans,system-ui);color:rgba(246,236,215,.7)}
+      .atmosphere-level input{--fill:${Math.round(state.level * 100)}%;appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:pointer}
       .atmosphere-level input::-webkit-slider-runnable-track{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--accent) 0 var(--fill),rgba(246,236,215,.14) var(--fill) 100%)}
-      .atmosphere-level input::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;margin-top:-5.5px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
+      .atmosphere-level input::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-8px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
       .atmosphere-level input::-moz-range-track{height:6px;border-radius:999px;background:rgba(246,236,215,.14)}
       .atmosphere-level input::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
-      .atmosphere-level input::-moz-range-thumb{width:16px;height:16px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent),0 3px 10px rgba(0,0,0,.35)}
-      .atmosphere-level input:disabled{opacity:.32;cursor:default}
+      .atmosphere-level input::-moz-range-thumb{width:20px;height:20px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7}
+      .atmosphere-level input:disabled{opacity:.4;cursor:default}
+      .atmosphere-note{margin:22px 0 0;padding-top:14px;border-top:1px solid rgba(246,236,215,.1);font:400 12.5px/1.45 var(--sans,system-ui);color:rgba(246,236,215,.55);text-align:center;text-wrap:balance}
       .atmosphere-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-      .atmosphere-panel :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-      @media(max-width:700px){.atmosphere-backdrop{background:rgba(3,5,10,.42)}.atmosphere-panel{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));left:max(10px,env(safe-area-inset-left));width:auto;border-radius:24px;padding:16px}}
-      @media(max-width:390px){.atmosphere-panel{left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom))}.atmosphere-modes{grid-template-columns:1fr 1fr}}
-      @media(prefers-reduced-motion: reduce){.atmosphere-button::after,.atmosphere-mode,.atmosphere-venue,.atmosphere-pattern,.atmosphere-tap,.atmosphere-level output{transition:none}}
+      .atmosphere-panel :focus-visible,.atmosphere-tip :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+      .atmosphere-tip{position:fixed;z-index:88;width:min(280px,calc(100vw - 24px));box-sizing:border-box;padding:14px 16px;border-radius:18px;color:#f6ecd7;text-align:left;background:rgba(12,14,25,.97);border:1px solid color-mix(in srgb,var(--accent) 45%,rgba(246,236,215,.14));box-shadow:0 18px 50px rgba(0,0,0,.5);animation:atmosphere-rise 240ms cubic-bezier(.2,.8,.2,1)}
+      .atmosphere-tip::before{content:"";position:absolute;top:-7px;right:var(--arrow,22px);width:12px;height:12px;background:inherit;border-left:inherit;border-top:inherit;transform:rotate(45deg)}
+      .atmosphere-tip strong{display:block;font:600 15px/1.25 var(--sans,system-ui)}
+      .atmosphere-tip strong em{font-style:normal;color:var(--accent);margin-right:6px}
+      .atmosphere-tip p{margin:4px 0 12px;font:400 13.5px/1.45 var(--sans,system-ui);color:rgba(246,236,215,.72)}
+      .atmosphere-tip-actions{display:flex;gap:8px;justify-content:flex-end}
+      .atmosphere-tip-actions button{min-height:38px;padding:0 14px;border-radius:19px;border:1px solid rgba(246,236,215,.16);background:transparent;color:inherit;font:600 13.5px/1 var(--sans,system-ui);cursor:pointer}
+      .atmosphere-tip-actions .primary{background:var(--accent);border-color:var(--accent);color:#1b1108}
+      @media(max-width:700px){.atmosphere-backdrop{background:rgba(3,5,10,.42)}.atmosphere-panel{top:auto;right:max(10px,env(safe-area-inset-right));bottom:max(10px,calc(env(safe-area-inset-bottom) + 8px));left:max(10px,env(safe-area-inset-left));width:auto;max-height:calc(100dvh - 70px);border-radius:26px;padding:12px 16px 18px}}
+      @media(max-width:360px){.atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern{font-size:13px}.atmosphere-tap{width:92px;height:92px}}
+      @media(prefers-reduced-motion: reduce){.atmosphere-button::after,.atmosphere-panel,.atmosphere-tip,.atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern,.atmosphere-tap,.atmosphere-knob,.atmosphere-knob::after,.atmosphere-body{transition:none;animation:none}}
     `;
     document.head.append(style);
   }
@@ -880,45 +905,59 @@
     panel.setAttribute('aria-labelledby', 'atmosphereTitle');
     panel.innerHTML = `
       <div class="atmosphere-panel-header">
-        <div class="atmosphere-heading">
-          <h2 id="atmosphereTitle">Garba Atmosphere</h2>
-          <button class="atmosphere-test" type="button" aria-label="Test Garba Atmosphere" aria-pressed="false" title="Test atmosphere">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.4v13.2L18.5 12 8 5.4Z"></path></svg>
-          </button>
-        </div>
+        <button class="atmosphere-test" type="button" aria-label="Test Garba Atmosphere" aria-pressed="false" title="Test atmosphere">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.4v13.2L18.5 12 8 5.4Z"></path></svg>
+        </button>
+        <h2 id="atmosphereTitle">Garba Atmosphere</h2>
         <button class="atmosphere-close" type="button" aria-label="Close Garba Atmosphere">×</button>
       </div>
-      <p class="atmosphere-note">Plays a Garba night around the song. The song itself plays as YouTube sends it.</p>
-      <div class="atmosphere-section-label">Around the music</div>
-      <div class="atmosphere-modes"></div>
-      <div class="atmosphere-section-label">Venue</div>
-      <div class="atmosphere-venues"></div>
-      <p class="atmosphere-venue-desc" aria-live="polite"></p>
-      <div class="atmosphere-section-label">Where you are</div>
-      <div class="atmosphere-listeners"></div>
-      <p class="atmosphere-listener-desc" aria-live="polite"></p>
-      <div class="atmosphere-section-label">Beat</div>
-      <div class="atmosphere-beat">
-        <button class="atmosphere-tap" type="button" aria-describedby="atmosphereTempo">Tap the beat</button>
-        <p class="atmosphere-tempo" id="atmosphereTempo" aria-live="polite"></p>
-      </div>
-      <div class="atmosphere-patterns" role="group" aria-label="Clap pattern"></div>
-      <div class="atmosphere-level">
-        <div class="atmosphere-level-row"><label for="atmosphereLevel">Intensity</label><output for="atmosphereLevel">${Math.round(state.level * 100)}%</output></div>
-        <input id="atmosphereLevel" type="range" min="5" max="100" step="5" value="${Math.round(state.level * 100)}" />
+      <button class="atmosphere-power" type="button" role="switch" aria-checked="false">
+        <span><strong>Atmosphere is off</strong><small>A Garba night around your music: the crowd, the claps and the venue.</small></span>
+        <i class="atmosphere-knob" aria-hidden="true"></i>
+      </button>
+      <div class="atmosphere-body">
+        <section class="atmosphere-section" aria-labelledby="atmosphereModesTitle">
+          <h3 id="atmosphereModesTitle">Around the music</h3>
+          <div class="atmosphere-modes"></div>
+          <p class="atmosphere-desc atmosphere-mode-desc" aria-live="polite"></p>
+        </section>
+        <section class="atmosphere-section" aria-labelledby="atmosphereVenueTitle">
+          <h3 id="atmosphereVenueTitle">Venue</h3>
+          <div class="atmosphere-venues"></div>
+          <p class="atmosphere-desc atmosphere-venue-desc" aria-live="polite"></p>
+        </section>
+        <section class="atmosphere-section" aria-labelledby="atmosphereWhereTitle">
+          <h3 id="atmosphereWhereTitle">Where you are</h3>
+          <div class="atmosphere-listeners"></div>
+          <p class="atmosphere-desc atmosphere-listener-desc" aria-live="polite"></p>
+        </section>
+        <section class="atmosphere-section atmosphere-beat" aria-labelledby="atmosphereBeatTitle">
+          <h3 id="atmosphereBeatTitle">Beat</h3>
+          <button class="atmosphere-tap" type="button" aria-describedby="atmosphereTempo">Tap the beat</button>
+          <div class="atmosphere-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="atmosphere-bpm" aria-hidden="true"></p>
+          <p class="atmosphere-desc atmosphere-tempo" id="atmosphereTempo" aria-live="polite"></p>
+          <div class="atmosphere-patterns" role="group" aria-label="Clap pattern"></div>
+        </section>
+        <section class="atmosphere-section atmosphere-level">
+          <h3><label for="atmosphereLevel">Intensity</label></h3>
+          <input id="atmosphereLevel" type="range" min="5" max="100" step="5" value="${Math.round(state.level * 100)}" />
+          <output for="atmosphereLevel">${Math.round(state.level * 100)}%</output>
+        </section>
       </div>
       <p class="atmosphere-status" role="status" aria-live="polite"></p>
+      <p class="atmosphere-note">Plays a Garba night around the song. The song itself plays as YouTube sends it.</p>
     `;
     document.body.append(panel);
 
     const modes = panel.querySelector('.atmosphere-modes');
     for (const [id, profile] of Object.entries(MODES)) {
+      if (id === 'off') continue;
       const mode = document.createElement('button');
       mode.type = 'button';
       mode.className = 'atmosphere-mode';
       mode.dataset.mode = id;
-      const headphone = id === 'immersive' ? '<svg class="atmosphere-headphone-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"></path><path d="M4 14h3v6H5.5A1.5 1.5 0 0 1 4 18.5V14ZM20 14h-3v6h1.5a1.5 1.5 0 0 0 1.5-1.5V14Z"></path></svg>' : '';
-      mode.innerHTML = `${profile.label}${headphone}`;
+      mode.textContent = profile.label;
       mode.title = profile.desc;
       mode.addEventListener('click', () => setMode(id, { userGesture: true }));
       modes.append(mode);
@@ -965,6 +1004,7 @@
     const slider = panel.querySelector('#atmosphereLevel');
     const output = panel.querySelector('output');
     const levelWrap = panel.querySelector('.atmosphere-level');
+    const power = panel.querySelector('.atmosphere-power');
 
     const syncSliderFill = () => slider.style.setProperty('--fill', `${slider.value}%`);
     const endAdjust = () => levelWrap.classList.remove('is-adjusting');
@@ -973,8 +1013,11 @@
     backdrop.addEventListener('click', () => setPanelOpen(false));
     close.addEventListener('click', () => setPanelOpen(false));
     test.addEventListener('click', () => togglePreview());
+    power.addEventListener('click', () => setEnabled(state.mode === 'off'));
+    // Taps are timed on pointerdown for accuracy. Screen readers only send click, so accept those too.
     tap.addEventListener('pointerdown', (event) => { event.preventDefault(); registerTap(); });
-    tap.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) { event.preventDefault(); registerTap(); } });
+    tap.addEventListener('click', (event) => { if (event.detail === 0 && !state.tapKeyed) registerTap(); state.tapKeyed = false; });
+    tap.addEventListener('keydown', (event) => { if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) { event.preventDefault(); state.tapKeyed = true; registerTap(); } });
     slider.addEventListener('input', () => {
       state.level = clamp(Number(slider.value) / 100, 0.05, 1);
       output.value = `${Math.round(state.level * 100)}%`;
@@ -1015,6 +1058,11 @@
     state.output = output;
     state.test = test;
     state.tap = tap;
+    state.power = power;
+    state.body = panel.querySelector('.atmosphere-body');
+    state.modeDesc = panel.querySelector('.atmosphere-mode-desc');
+    state.bpmText = panel.querySelector('.atmosphere-bpm');
+    state.dots = [...panel.querySelectorAll('.atmosphere-dots i')];
     state.tempoText = panel.querySelector('.atmosphere-tempo');
     state.venueDesc = panel.querySelector('.atmosphere-venue-desc');
     state.listenerDesc = panel.querySelector('.atmosphere-listener-desc');
@@ -1033,7 +1081,8 @@
       state.backdrop.hidden = false;
       state.button.setAttribute('aria-expanded', 'true');
       setBackgroundInert(true);
-      requestAnimationFrame(() => state.panel.querySelector('.atmosphere-mode[aria-pressed="true"]')?.focus({ preventScroll: true }));
+      hideIntro({ remember: true });
+      requestAnimationFrame(() => (state.panel.querySelector('.atmosphere-mode[aria-pressed="true"]') || state.power)?.focus({ preventScroll: true }));
     } else {
       state.panel.hidden = true;
       state.backdrop.hidden = true;
@@ -1048,47 +1097,113 @@
   function tempoLabel() {
     const tempo = state.engine?.tempo;
     const profile = MODES[state.mode] || MODES.off;
-    if (!profile.claps) return 'Claps are off in this mode.';
+    if (state.mode === 'off') return 'Turn Atmosphere on, then tap along with the song.';
+    if (!profile.claps) return 'Choose Claps or Full circle to add the circle clapping in time.';
     const what = currentStyle() === 'dandiya' ? 'Dandiya sticks' : 'Claps';
-    if (tempo && state.tempoSource === 'taps') return `${Math.round(tempo.bpm)} BPM<span>${what} follow your taps. Tap again if the rhythm changes.</span>`;
-    if (state.taps.length) return `Keep tapping…<span>${Math.max(0, 4 - state.taps.length)} more</span>`;
-    return `Tap 4 times on the beat<span>${what} join in once they know the tempo.</span>`;
+    if (tempo && state.tempoSource === 'taps') return `${what} follow your taps. Tap again if the rhythm changes.`;
+    if (state.taps.length) return `Keep going: ${Math.max(0, 4 - state.taps.length)} more ${4 - state.taps.length === 1 ? 'tap' : 'taps'}.`;
+    return `Tap 4 times in time with the song. ${what} join in once they know the tempo.`;
+  }
+
+  const HEADPHONES = '<svg class="atmosphere-headphone-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"></path><path d="M4 14h3v6H5.5A1.5 1.5 0 0 1 4 18.5V14ZM20 14h-3v6h1.5a1.5 1.5 0 0 0 1.5-1.5V14Z"></path></svg> ';
+
+  function waitingForBeat() {
+    const profile = MODES[state.mode] || MODES.off;
+    return Boolean(profile.claps) && state.playbackActive && state.tempoSource !== 'taps';
   }
 
   function syncUi() {
     const profile = MODES[state.mode] || MODES.off;
+    const off = state.mode === 'off';
     if (!state.button) return;
-    state.button.setAttribute('aria-pressed', String(state.mode !== 'off'));
-    state.button.setAttribute('aria-label', `Garba Atmosphere: ${profile.label}`);
-    state.button.title = `Garba Atmosphere: ${profile.label}`;
+    const waiting = waitingForBeat();
+    state.button.setAttribute('aria-pressed', String(!off));
+    state.button.dataset.waiting = String(waiting);
+    const label = off ? 'Garba Atmosphere: off' : waiting ? `Garba Atmosphere: ${profile.label}. Tap the beat to start the claps` : `Garba Atmosphere: ${profile.label}`;
+    state.button.setAttribute('aria-label', label);
+    state.button.title = label;
+    if (state.power) {
+      state.power.setAttribute('aria-checked', String(!off));
+      state.power.querySelector('strong').textContent = off ? 'Atmosphere is off' : 'Atmosphere is on';
+    }
+    if (state.body) state.body.dataset.off = String(off);
     state.panel?.querySelectorAll('.atmosphere-mode').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.mode === state.mode));
     });
     state.panel?.querySelectorAll('.atmosphere-venue').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.venue === state.venue));
-      control.disabled = state.mode === 'off';
+      control.disabled = off;
     });
     state.panel?.querySelectorAll('.atmosphere-pattern').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.pattern === state.pattern));
-      control.disabled = state.mode === 'off' || !profile.claps;
+      control.disabled = off || !profile.claps;
     });
     state.panel?.querySelectorAll('.atmosphere-listener').forEach((control) => {
       control.setAttribute('aria-pressed', String(control.dataset.listener === state.listener));
-      control.disabled = state.mode === 'off';
+      control.disabled = off;
     });
+    if (state.modeDesc) {
+      const shown = off ? state.lastMode || 'immersive' : state.mode;
+      state.modeDesc.innerHTML = (shown === 'immersive' ? HEADPHONES : '') + MODES[shown].desc;
+    }
     if (state.venueDesc) state.venueDesc.textContent = VENUES[state.venue].desc;
     if (state.listenerDesc) state.listenerDesc.textContent = LISTENERS[state.listener].desc;
-    if (state.tap) state.tap.disabled = state.mode === 'off' || !profile.claps;
-    if (state.tempoText) state.tempoText.innerHTML = tempoLabel();
-    if (state.slider) state.slider.disabled = state.mode === 'off';
+    const tempo = state.engine?.tempo;
+    const locked = Boolean(tempo && state.tempoSource === 'taps');
+    if (state.tap) {
+      state.tap.disabled = off || !profile.claps;
+      state.tap.dataset.locked = String(locked);
+      state.tap.textContent = locked ? 'Tap to adjust' : 'Tap the beat';
+    }
+    if (state.bpmText) state.bpmText.innerHTML = locked ? `${Math.round(tempo.bpm)}<span>BPM</span>` : '';
+    if (state.dots) state.dots.forEach((dot, i) => dot.classList.toggle('on', locked || i < state.taps.length));
+    if (state.tempoText) state.tempoText.textContent = tempoLabel();
+    if (state.slider) state.slider.disabled = off;
     if (state.test) {
-      state.test.disabled = state.mode === 'off';
+      state.test.disabled = off;
       state.test.setAttribute('aria-pressed', String(state.previewActive));
       state.test.setAttribute('aria-label', state.previewActive ? 'Stop atmosphere test' : 'Test Garba Atmosphere');
       state.test.title = state.previewActive ? 'Stop test' : 'Test atmosphere';
       const path = state.test.querySelector('path');
       if (path) path.setAttribute('d', state.previewActive ? 'M7 6h4v12H7V6Zm6 0h4v12h-4V6Z' : 'M8 5.4v13.2L18.5 12 8 5.4Z');
     }
+  }
+
+  // A one-time pointer to Atmosphere for people who have never opened it.
+  const INTRO_KEY = 'garba:atmosphere-intro';
+  function introSeen() { try { return localStorage.getItem(INTRO_KEY) === 'seen'; } catch { return true; } }
+  function showIntro() {
+    if (introSeen() || state.mode !== 'off' || state.panelOpen || state.tip || document.hidden) return;
+    const rect = state.button.getBoundingClientRect();
+    if (!rect.width) return;
+    const tip = document.createElement('div');
+    tip.className = 'atmosphere-tip';
+    tip.setAttribute('role', 'note');
+    tip.innerHTML = `
+      <strong><em>New</em>Garba Atmosphere</strong>
+      <p>Hear a Garba night around your music: the crowd, the circle clapping in time, and the venue.</p>
+      <div class="atmosphere-tip-actions"><button type="button" data-tip="later">Not now</button><button class="primary" type="button" data-tip="try">Try it</button></div>
+    `;
+    document.body.append(tip);
+    const width = tip.offsetWidth;
+    const left = Math.max(12, Math.min(window.innerWidth - width - 12, rect.right - width + 8));
+    tip.style.left = `${left}px`;
+    tip.style.top = `${rect.bottom + 12}px`;
+    tip.style.setProperty('--arrow', `${Math.max(14, left + width - (rect.left + rect.width / 2) - 6)}px`);
+    tip.addEventListener('click', (event) => {
+      const action = event.target.closest('[data-tip]')?.dataset.tip;
+      if (!action) return;
+      hideIntro({ remember: true });
+      if (action === 'try') setPanelOpen(true);
+    });
+    state.tip = tip;
+    state.tipTimer = setTimeout(() => hideIntro({ remember: true }), 14000);
+  }
+  function hideIntro({ remember = false } = {}) {
+    clearTimeout(state.tipTimer);
+    state.tip?.remove();
+    state.tip = null;
+    if (remember) { try { localStorage.setItem(INTRO_KEY, 'seen'); } catch { /* storage unavailable */ } }
   }
 
   function setStatus(message = '') {
@@ -1332,6 +1447,7 @@
     if (!MODES[mode]) return;
     stopPreview({ announce: false });
     state.mode = mode;
+    if (mode !== 'off') state.lastMode = mode;
     persist();
     syncUi();
     dispatchChange('mode');
@@ -1348,10 +1464,17 @@
     else scheduleIdleSuspend();
   }
 
+  function setEnabled(on) {
+    hideIntro({ remember: true });
+    return setMode(on ? (state.lastMode || 'immersive') : 'off', { userGesture: true });
+  }
+
   function syncPlaybackState() {
     const active = playbackIsActive();
     if (active === state.playbackActive && !(active && state.mode !== 'off' && !state.sceneReady)) return;
     state.playbackActive = active;
+    syncUi();
+    if (active && !introSeen()) { clearTimeout(state.introTimer); state.introTimer = setTimeout(() => { if (state.playbackActive) showIntro(); }, 4000); }
     if (active) stopPreview({ announce: false });
     dispatchChange(active ? 'play' : 'pause');
     if (state.mode === 'off') return;
@@ -1449,6 +1572,7 @@
     setVenue,
     setListener,
     setPattern,
+    setEnabled,
     tap: registerTap,
     preview() { return previewCurrentMode(); },
     stopPreview,

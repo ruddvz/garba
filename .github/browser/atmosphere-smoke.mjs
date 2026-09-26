@@ -79,7 +79,12 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
 
     await button.click();
     await waitFor(page, () => !document.querySelector('#atmospherePanel')?.hidden, `${name}: panel did not open`);
-    await waitFor(page, () => document.activeElement?.matches('.atmosphere-mode[aria-pressed="true"]'), `${name}: selected mode did not receive initial focus`);
+    await waitFor(page, () => document.activeElement?.matches('.atmosphere-power'), `${name}: the on/off switch did not receive initial focus while off`);
+    assert.equal(await page.locator('.atmosphere-power').getAttribute('aria-checked'), 'false', `${name}: switch must start off`);
+    await page.locator('.atmosphere-power').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode !== 'off' && document.querySelector('.atmosphere-power')?.getAttribute('aria-checked') === 'true', `${name}: switch did not turn Atmosphere on`);
+    await page.locator('.atmosphere-power').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'off', `${name}: switch did not turn Atmosphere off`);
     assert.equal(await button.getAttribute('aria-expanded'), 'true', `${name}: trigger did not expose open state`);
     assert.equal(await page.locator('#app').evaluate((node) => node.hasAttribute('inert')), true, `${name}: background app was not made inert`);
 
