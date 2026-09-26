@@ -15,9 +15,8 @@
 <body>
   <!--
     Standalone prototype for the Garbo player direction (issue #1649).
-    Playback is simulated with a clock. Titles, artists, releases, durations and Nonstop
-    chapters come from sample.json, which scripts/lib/build-garbo-prototype-data.mjs
-    copies from the canonical catalogue. Nothing here is loaded by the production player.
+    Standalone playback is simulated with a clock and sample.json. In live-site mode, the
+    embedded frame follows the production player's catalogue and playback state instead.
   -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
@@ -144,6 +143,7 @@
       <button class="ib" type="button" data-close aria-label="Close Explore"><svg><use href="#i-close"/></svg></button>
     </header>
     <label class="search"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" enterkeyhint="search" aria-label="Search songs or artists"></label>
+    <p class="note explore-count" id="exploreCount" role="status" aria-live="polite"></p>
     <div class="tabs" role="tablist" aria-label="Browse">
       <button role="tab" id="tabSongs" aria-selected="true" aria-controls="panelSongs" type="button">Songs</button>
       <button role="tab" id="tabNonstop" aria-selected="false" aria-controls="panelNonstop" type="button" tabindex="-1">Nonstop</button>
@@ -176,6 +176,7 @@
     <header class="sheet-head"><h2 id="moreTitle">More</h2><button class="ib" type="button" data-close aria-label="Close More"><svg><use href="#i-close"/></svg></button></header>
     <div class="sheet-body">
       <div class="tiles">
+        <button class="tile" type="button" id="circleBridge" aria-pressed="false" hidden><span class="tile-ic"><svg aria-hidden="true"><use href="#i-ring"/></svg></span><strong>Garba Circle</strong><small>Open the listening circle</small></button>
         <button class="tile tile-wide" type="button" id="livesOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-live"/></svg></span><strong>Lives</strong><small>Host your own live with your songs, or go back to one you joined</small></button>
         <button class="tile" type="button" id="shareOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-share"/></svg></span><strong>Share this song</strong><small>A card with the lit garbo</small></button>
         <button class="tile" type="button" id="aboutOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-book"/></svg></span><strong>What is Garba?</strong><small>The lamp, the circle, the nights</small></button>
