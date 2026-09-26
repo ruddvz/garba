@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import process from 'node:process'
 
-import { validateDirectAudioManifest } from './validate-direct-audio-rights.mjs'
+import { validateDirectAudioManifest, validateDirectAudioRights } from './validate-direct-audio-rights.mjs'
 
 const canonical = new Set(['song-1', 'song-2'])
 
@@ -160,6 +160,36 @@ check('shared proof with conflicting rights claims is rejected', () => {
 check('malformed tracks container fails closed', () => {
   expectError({ version: '1.0.0', tracks: [] }, 'must be an object keyed by canonical song ID')
 })
+
+
+check('validateDirectAudioRights - true when redistributionAuthorized is true and no territory restrictions', () => {
+  assert.equal(validateDirectAudioRights(validEntry().rights, 'US'), true)
+})
+
+check('validateDirectAudioRights - true when requestTerritory is in territories', () => {
+  const rights = { ...validEntry().rights, territories: ['US', 'CA'] }
+  assert.equal(validateDirectAudioRights(rights, 'US'), true)
+})
+
+check('validateDirectAudioRights - false when requestTerritory is not in territories', () => {
+  const rights = { ...validEntry().rights, territories: ['US', 'CA'] }
+  assert.equal(validateDirectAudioRights(rights, 'GB'), false)
+})
+
+check('validateDirectAudioRights - true when no requestTerritory is provided', () => {
+  const rights = { ...validEntry().rights, territories: ['US', 'CA'] }
+  assert.equal(validateDirectAudioRights(rights, null), true)
+})
+
+check('validateDirectAudioRights - false when redistributionAuthorized is false', () => {
+  const rights = { ...validEntry().rights, redistributionAuthorized: false }
+  assert.equal(validateDirectAudioRights(rights, 'US'), false)
+})
+
+check('validateDirectAudioRights - false when rights is missing', () => {
+  assert.equal(validateDirectAudioRights(null, 'US'), false)
+})
+
 
 if (failed) process.exitCode = 1
 else console.log(`Direct-audio rights tests passed (${checks} checks).`)

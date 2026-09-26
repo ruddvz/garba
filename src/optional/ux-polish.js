@@ -329,10 +329,11 @@ async function loadCatalogueContext() {
       state.songs = new Map(songs.map((song) => [song.id, song]));
     }
 
-    for (const response of [sourceA, sourceB]) {
-      if (!response?.ok) continue;
-      const manifest = await response.json();
-      Object.assign(state.sources, manifest?.songSources || {});
+    const manifests = await Promise.all(
+      [sourceA, sourceB].map((response) => (response?.ok ? response.json() : null))
+    );
+    for (const manifest of manifests) {
+      if (manifest) Object.assign(state.sources, manifest.songSources || {});
     }
   } catch {
     // The timeout below provides a truthful retry state if the shell remains stuck.

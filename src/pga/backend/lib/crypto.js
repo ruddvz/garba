@@ -14,7 +14,7 @@ function decodeJwtPart(value) {
 }
 export async function hmacPseudonym(secret, value, prefix = '') {
   if (!secret || typeof secret !== 'string') throw new Error('PGA_HMAC_SECRET is required')
-  if (!value || typeof value !== 'string') return ''
+  if (!value || typeof value !== 'string') return null
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
   const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(`${prefix}${value}`))
   return bytesToHex(new Uint8Array(signed)).slice(0, 32)

@@ -999,3 +999,50 @@ main[aria-busy="true"] #catalogueSections:empty::before {
 @media (max-width:350px) {
   .collection-card--taxonomy .collection-copy span { display:none; }
 }
+
+
+/* Issue #771 catalogue sort control */
+.section-heading-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+.catalogue-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: .72rem;
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+.catalogue-sort[hidden] { display: none; }
+.catalogue-sort select {
+  min-height: 42px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--text);
+  background-color: rgba(9, 9, 13, .78);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 15px) 18px, calc(100% - 10px) 18px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  font: inherit;
+  color-scheme: dark;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.catalogue-sort select:hover { border-color: rgba(255, 255, 255, .3); }
+.catalogue-sort select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.catalogue-sort select:disabled { cursor: default; opacity: .58; }
+
+@media (max-width: 560px) {
+  .songs-section .section-heading { align-items: flex-start; }
+  .section-heading-actions { align-items: flex-end; flex-direction: column; gap: 8px; }
+  .catalogue-sort { gap: 7px; }
+  .catalogue-sort select { min-height: 44px; }
+}

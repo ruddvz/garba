@@ -20,6 +20,7 @@ import { replaceDailyMetrics } from '../lib/d1.js'
 import { searchDemandSql } from '../lib/search-analytics.js'
 import { istDateKey, istDayBounds, previousClosedIstDate, shiftIstDate } from '../lib/time.js'
 import { normalizeEdgeDimensions, sanitizeSearchTerm, validateBatch, validateEvent } from '../lib/validation.js'
+import { MAX_BODY_BYTES } from '../lib/constants.js'
 import { handleIngest } from '../ingest-worker.js'
 import { handleAdmin } from '../admin-worker.js'
 import { rollupDay } from '../rollup-worker.js'
@@ -152,6 +153,11 @@ test('redacts email, phone and URL-like search input', () => {
   assert.equal(sanitizeSearchTerm('  nonstop   garba  '), 'nonstop garba')
 })
 
+test('rejects empty batches', () => {
+  assert.throws(() => validateBatch([], { nowMs: NOW }), /invalid_batch_size/)
+  assert.throws(() => validateBatch({ events: [] }, { nowMs: NOW }), /invalid_batch_size/)
+})
+
 test('rejects mixed-browser batches', () => {
   assert.throws(() => validateBatch([
     baseEvent({ event_id: 'one', browser_id: 'one' }),
@@ -180,6 +186,31 @@ test('HMAC pseudonyms are deterministic, scoped and bounded', async () => {
   assert.notEqual(a, 'same')
 })
 
+test('HMAC pseudonyms handle empty and invalid inputs gracefully', async () => {
+  assert.equal(await hmacPseudonym('secret', ''), null)
+  assert.equal(await hmacPseudonym('secret', null), null)
+  assert.equal(await hmacPseudonym('secret', undefined), null)
+  assert.equal(await hmacPseudonym('secret', 123), null)
+  assert.equal(await hmacPseudonym('secret', {}), null)
+
+  await assert.rejects(
+    async () => hmacPseudonym('', 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(null, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(undefined, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+  await assert.rejects(
+    async () => hmacPseudonym(123, 'value'),
+    { message: 'PGA_HMAC_SECRET is required' }
+  )
+})
+
 test('storage data points stay within Analytics Engine field limits', async () => {
   const event = validateEvent(baseEvent(), { nowMs: NOW })
   const stored = await normaliseForStorage(event, { PGA_HMAC_SECRET: 'secret' }, { country: 'IN', region: 'GJ', device: 'mobile', os: 'iOS', browser: 'Safari', bot: false }, NOW)
@@ -190,6 +221,23 @@ test('storage data points stay within Analytics Engine field limits', async () =
   assert.equal(product.indexes.length, 1)
   assert.ok(presence.blobs.length <= 20)
   assert.equal(presence.indexes.length, 1)
+})
+
+test('normaliseForStorage throws when crypto dependency fails', async () => {
+  const originalSign = globalThis.crypto.subtle.sign
+  try {
+    globalThis.crypto.subtle.sign = async () => {
+      throw new Error('crypto_transient_failure')
+    }
+    const event = validateEvent(baseEvent(), { nowMs: NOW })
+    const edge = { country: 'IN', region: 'GJ', device: 'mobile', os: 'iOS', browser: 'Safari', bot: false }
+    await assert.rejects(
+      normaliseForStorage(event, { PGA_HMAC_SECRET: 'secret' }, edge, NOW),
+      /crypto_transient_failure/
+    )
+  } finally {
+    globalThis.crypto.subtle.sign = originalSign
+  }
 })
 
 test('IST day bounds remain fixed regardless of founder timezone', () => {
@@ -251,6 +299,51 @@ test('precision metadata becomes estimated when source rows were sampled', () =>
   assert.deepEqual(precisionFromRows([{ max_sample_interval: 4 }]), { sampled: true, precision: 'estimated' })
 })
 
+test('ingestion enforces the maximum body size limit precisely', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+
+  const exactBuffer = new Uint8Array(MAX_BODY_BYTES)
+  exactBuffer.fill(32) // spaces, invalid JSON but structurally within limits
+  const exactStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(exactBuffer)
+      controller.close()
+    },
+  })
+  const requestExact = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: exactStream,
+    duplex: 'half',
+  })
+  const resExact = await handleIngest(requestExact, env, { nowMs: NOW })
+  // 400 because it's invalid JSON (not 413 body too large)
+  assert.equal(resExact.status, 400)
+
+  const overBuffer = new Uint8Array(MAX_BODY_BYTES + 1)
+  overBuffer.fill(32)
+  const overStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(overBuffer)
+      controller.close()
+    },
+  })
+  const requestOver = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: overStream,
+    duplex: 'half',
+  })
+  const resOver = await handleIngest(requestOver, env, { nowMs: NOW })
+  // 413 because it exceeds MAX_BODY_BYTES
+  assert.equal(resOver.status, 413)
+})
+
 test('ingestion rejects foreign origins', async () => {
   const request = new Request('https://events.playgarba.com/v1/events', {
     method: 'POST',
@@ -302,6 +395,25 @@ test('ingestion fails closed when the browser rate limit is exceeded', async () 
   assert.equal(response.status, 429)
 })
 
+
+test('Access verifier rejects missing environment configuration', async () => {
+  const fixture = await accessFixture()
+  const result1 = await verifyAccessJwt(fixture.request, {}, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result1, { ok: false, reason: 'access_config_missing' })
+
+  const result2 = await verifyAccessJwt(fixture.request, { TEAM_DOMAIN: fixture.env.TEAM_DOMAIN }, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result2, { ok: false, reason: 'access_config_missing' })
+})
+
+test('Access verifier rejects malformed JWTs', async () => {
+  const env = { TEAM_DOMAIN: 'https://example.cloudflareaccess.com', POLICY_AUD: 'pga-aud' }
+  const req1 = new Request('https://pga.playgarba.com/api/home', { headers: { 'cf-access-jwt-assertion': 'not.a.jwt' } })
+  assert.deepEqual(await verifyAccessJwt(req1, env), { ok: false, reason: 'malformed_access_jwt' })
+
+  const req2 = new Request('https://pga.playgarba.com/api/home', { headers: { 'cf-access-jwt-assertion': 'a.b.c' } })
+  assert.deepEqual(await verifyAccessJwt(req2, env), { ok: false, reason: 'malformed_access_jwt' })
+})
+
 test('Access verifier denies missing JWT assertions', async () => {
   const result = await verifyAccessJwt(new Request('https://pga.playgarba.com/api/home'), {
     TEAM_DOMAIN: 'https://example.cloudflareaccess.com',
@@ -316,6 +428,27 @@ test('Access verifier validates a signed RS256 application assertion against the
   assert.equal(result.ok, true)
   assert.equal(result.payload.sub, 'founder')
   assert.equal(result.payload.type, 'app')
+})
+
+
+test('Access verifier rejects tokens with unsupported algorithms or missing Key IDs', async () => {
+  const env = { TEAM_DOMAIN: 'https://example.cloudflareaccess.com', POLICY_AUD: 'pga-aud' }
+  const payloadBase64 = Buffer.from(JSON.stringify({ iss: env.TEAM_DOMAIN, aud: [env.POLICY_AUD] })).toString('base64url')
+
+  const headerHS256 = Buffer.from(JSON.stringify({ alg: 'HS256', kid: 'test-key' })).toString('base64url')
+  const req1 = new Request('https://pga.playgarba.com', { headers: { 'cf-access-jwt-assertion': `${headerHS256}.${payloadBase64}.signature` } })
+  assert.deepEqual(await verifyAccessJwt(req1, env), { ok: false, reason: 'unsupported_access_jwt' })
+
+  const headerNoKid = Buffer.from(JSON.stringify({ alg: 'RS256' })).toString('base64url')
+  const req2 = new Request('https://pga.playgarba.com', { headers: { 'cf-access-jwt-assertion': `${headerNoKid}.${payloadBase64}.signature` } })
+  assert.deepEqual(await verifyAccessJwt(req2, env), { ok: false, reason: 'unsupported_access_jwt' })
+})
+
+test('Access verifier rejects tokens that are not yet valid', async () => {
+  const futureNbf = Math.floor(NOW / 1000) + 60
+  const fixture = await accessFixture('/api/live', { nbf: futureNbf })
+  const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'not_yet_valid' })
 })
 
 test('Access verifier rejects signed non-application token classes', async () => {
@@ -348,6 +481,40 @@ test('Access verifier preserves issuer, audience and expiry rejection precedence
     await verifyAccessJwt(expired.request, expired.env, { nowMs: NOW, fetchImpl: expired.fetchImpl }),
     { ok: false, reason: 'expired' },
   )
+})
+
+
+test('Access verifier rejects tokens signed with unknown keys', async () => {
+  const fixture = await accessFixture()
+  const originalToken = fixture.request.headers.get('cf-access-jwt-assertion')
+  const parts = originalToken.split('.')
+  const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'))
+  header.kid = 'unknown-key'
+  const newHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
+  const modifiedToken = `${newHeader}.${parts[1]}.${parts[2]}`
+  const request = new Request('https://pga.playgarba.com/api/live', { headers: { 'cf-access-jwt-assertion': modifiedToken } })
+
+  const result = await verifyAccessJwt(request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'unknown_signing_key' })
+})
+
+test('Access verifier rejects tokens with invalid signatures', async () => {
+  const fixture = await accessFixture()
+  const originalToken = fixture.request.headers.get('cf-access-jwt-assertion')
+  const parts = originalToken.split('.')
+  const modifiedToken = `${parts[0]}.${parts[1]}.invalidsignature`
+  const request = new Request('https://pga.playgarba.com/api/live', { headers: { 'cf-access-jwt-assertion': modifiedToken } })
+
+  const result = await verifyAccessJwt(request, fixture.env, { nowMs: NOW, fetchImpl: fixture.fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'invalid_signature' })
+})
+
+test('Access verifier fails safely on JWKS fetch errors', async () => {
+  const fixture = await accessFixture()
+  const fetchImpl = async () => { throw new Error('Network error') }
+
+  const result = await verifyAccessJwt(fixture.request, fixture.env, { nowMs: NOW, fetchImpl })
+  assert.deepEqual(result, { ok: false, reason: 'access_verification_failed' })
 })
 
 test('protected Live API returns aggregate data with no-store caching', async () => {
@@ -396,4 +563,40 @@ test('rollup day stores additive metrics and a daily unique-browser snapshot wit
   assert.equal(result.metrics.sessions, 5)
   assert.equal(result.metrics.unique_browsers_daily, 4)
   assert.equal(db.batches.length, 1)
+})
+
+test('ingestion rejects overly large bodies', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+  const request = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json', 'content-length': '33000' },
+    body: 'x'.repeat(33000),
+  })
+  const response = await handleIngest(request, env, { nowMs: NOW })
+  assert.equal(response.status, 413)
+  const body = await response.json()
+  assert.equal(body.error, 'body_too_large')
+})
+
+test('ingestion rejects invalid json', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+  const request = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: '{ invalid json ',
+  })
+  const response = await handleIngest(request, env, { nowMs: NOW })
+  assert.equal(response.status, 400)
+  const body = await response.json()
+  assert.equal(body.error, 'invalid_json')
 })

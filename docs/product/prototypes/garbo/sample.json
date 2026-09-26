@@ -1,0 +1,1012 @@
+{
+  "purpose": "Presentation sample for the standalone Garbo prototype (issue #1649). Not a catalogue source.",
+  "generatedBy": "scripts/lib/build-garbo-prototype-data.mjs",
+  "catalogueVersion": "0.29.9",
+  "genres": [
+    {
+      "id": "traditional",
+      "name": "Traditional",
+      "label": "Traditional Garba"
+    },
+    {
+      "id": "dandiya",
+      "name": "Dandiya",
+      "label": "Dandiya Raas"
+    },
+    {
+      "id": "devotional",
+      "name": "Devotional",
+      "label": "Devotional Garba"
+    },
+    {
+      "id": "folk",
+      "name": "Folk",
+      "label": "Gujarati Folk"
+    },
+    {
+      "id": "sanedo",
+      "name": "Sanedo",
+      "label": "Sanedo"
+    },
+    {
+      "id": "fusion",
+      "name": "Fusion",
+      "label": "Modern Fusion Garba"
+    }
+  ],
+  "songs": [
+    {
+      "id": "aavi-nav-navratri-re-kinjal-2022",
+      "title": "Aavi Nav Navratri Re",
+      "artist": "Kinjal Dave",
+      "genre": "traditional",
+      "durationSeconds": 135,
+      "release": {
+        "id": "killol-2-kinjal-dave-2022",
+        "title": "Killol 2.0",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-3taali-continuous-2025",
+      "title": "Navratri 3.0 (3 Taali Garba)",
+      "artist": "Alpa Patel, Maulik Mehta",
+      "genre": "traditional",
+      "durationSeconds": 2386,
+      "release": {
+        "id": "alpa-navratri-3-3taali-continuous-2025",
+        "title": "Navratri 3.0 (3 Taali Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-ek-daav-taro",
+      "title": "Ek Daav Taro Ne Ek Daav Maro",
+      "artist": "Alpa Patel",
+      "genre": "traditional",
+      "durationSeconds": 125,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-eke-chhande-bije-chhande",
+      "title": "Eke Chhande Bije Chhande",
+      "artist": "Alpa Patel",
+      "genre": "traditional",
+      "durationSeconds": 178,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-jumkhadu",
+      "title": "Jumkhadu",
+      "artist": "Alpa Patel",
+      "genre": "traditional",
+      "durationSeconds": 82,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-me-to-vavyo-champo",
+      "title": "Me To Vavyo Champo Ne Vavyo Mogro",
+      "artist": "Alpa Patel",
+      "genre": "traditional",
+      "durationSeconds": 131,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-sapakharu",
+      "title": "Sapakharu",
+      "artist": "Alpa Patel",
+      "genre": "traditional",
+      "durationSeconds": 113,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "atul-amba-no-darbar-2022-02",
+      "title": "Bheete Chitreli Vasaladi Ma",
+      "artist": "Atul Purohit, Himali Vora, Kairavi Buch",
+      "genre": "traditional",
+      "durationSeconds": 985,
+      "release": {
+        "id": "atul-amba-no-darbar-2022",
+        "title": "અંબા નો દરબાર",
+        "script": "gu",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "balraj-he-ranglo-2016",
+      "title": "He Ranglo",
+      "artist": "Balraj Shastri",
+      "genre": "dandiya",
+      "durationSeconds": 222,
+      "release": {
+        "id": "balraj-kum-kum-na-pagla-2016",
+        "title": "Kum Kum Na Pagla",
+        "script": "latn",
+        "year": 2016
+      },
+      "playable": true
+    },
+    {
+      "id": "bollywood-dandiya-2014-01-non-stop-bollywood-dandiya-garbe-ki-raat-hai-2014",
+      "title": "Non Stop Bollywood Dandiya Garbe Ki Raat Hai 2014",
+      "artist": "Pankaj Bhatt",
+      "genre": "dandiya",
+      "durationSeconds": null,
+      "release": {
+        "id": "bollywood-dandiya-2014",
+        "title": "Nonstop Bollywood Dandiya Garbe Ki Raat Hai 2014",
+        "script": "latn",
+        "year": 2014
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-03-mathe-matu-mahini-gujarati-garba-song",
+      "title": "Mathe Matu Mahini (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 194,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-05-kaun-halave-limbdi-gujarati-garba-song",
+      "title": "Kaun Halave Limbdi (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 131,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-08-hadke-pepdo-gujarati-garba-song",
+      "title": "Hadke Pepdo (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 86,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-09-sora-chayo-chayo-gayoto-gujarati-garba-song",
+      "title": "Sora Chayo Chayo Gayoto (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 90,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-10-nadi-kinare-naliyeri-gujarati-garba-song",
+      "title": "Nadi Kinare Naliyeri (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 142,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "de-taali-1999-11-he-ji-re-riddhi-de-siddhi-de-gujarati-garba-song",
+      "title": "He Ji Re Riddhi De Siddhi De (Gujarati Garba Song)",
+      "artist": "Various Artists",
+      "genre": "dandiya",
+      "durationSeconds": 110,
+      "release": {
+        "id": "de-taali-1999",
+        "title": "De Taali (26 Nonstop Dandia Hits)",
+        "script": "latn",
+        "year": 1999
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-aaje-saune-jay-mataji",
+      "title": "Aaje Saune Jay Mataji",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 109,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-dam-dam-damru",
+      "title": "Dam Dam Damru Vage Bholanath Nu",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 172,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-kagvad-dham",
+      "title": "Kagvad Dham Ma Maa No Ugamno Darbar",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 124,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-khel-khel-re-bhavani",
+      "title": "Khel Khel Re Bhavani Maa",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 101,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-khodiyar-maa-mateliye",
+      "title": "Khodiyar Maa Mateliye",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 132,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-maa-no-garbo-re-rame",
+      "title": "Maa No Garbo Re Rame",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 148,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-mane-devu-hoy",
+      "title": "Mane Devu Hoy To Dai De Kana",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 113,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-mogal-chhe-machhrali",
+      "title": "Mogal Chhe Machhrali Khamma",
+      "artist": "Alpa Patel",
+      "genre": "devotional",
+      "durationSeconds": 113,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-gediyano-raja",
+      "title": "Gediyano Raja Jya Utare Tya Danko",
+      "artist": "Alpa Patel",
+      "genre": "folk",
+      "durationSeconds": 116,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-pritam-ni-preet",
+      "title": "Pritam Ni Preet Ma Bandhani",
+      "artist": "Alpa Patel",
+      "genre": "folk",
+      "durationSeconds": 146,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "alpa-navratri3-vanra-te-vanma",
+      "title": "Vanra Te Vanma Mor Pankhi Bole",
+      "artist": "Alpa Patel",
+      "genre": "folk",
+      "durationSeconds": 128,
+      "release": {
+        "id": "alpa-navratri-3-garba-2025",
+        "title": "Navratri 3.0 (Garba)",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "amber-gaje-2024-10-bhala-bhanejada-sarovar-javu",
+      "title": "Bhala Bhanejada Sarovar Javu",
+      "artist": "Aditya Gadhvi & Shruti Ahir",
+      "genre": "folk",
+      "durationSeconds": 175,
+      "release": {
+        "id": "amber-gaje-aditya-shruti-2024",
+        "title": "Amber Gaje",
+        "script": "latn",
+        "year": 2024
+      },
+      "playable": true
+    },
+    {
+      "id": "balraj-pankhida-2016",
+      "title": "Pankhida",
+      "artist": "Balraj Shastri",
+      "genre": "folk",
+      "durationSeconds": 300,
+      "release": {
+        "id": "balraj-kum-kum-na-pagla-2016",
+        "title": "Kum Kum Na Pagla",
+        "script": "latn",
+        "year": 2016
+      },
+      "playable": true
+    },
+    {
+      "id": "balraj-va-vayane-vadal-2016",
+      "title": "Va Vayane Vadal",
+      "artist": "Balraj Shastri",
+      "genre": "folk",
+      "durationSeconds": 205,
+      "release": {
+        "id": "balraj-kum-kum-na-pagla-2016",
+        "title": "Kum Kum Na Pagla",
+        "script": "latn",
+        "year": 2016
+      },
+      "playable": true
+    },
+    {
+      "id": "charan-kanya-aditya-gadhvi-2022",
+      "title": "Charan Kanya - Swarotsav 2019",
+      "artist": "Aditya Gadhvi",
+      "genre": "folk",
+      "durationSeconds": null,
+      "release": {
+        "id": "charan-kanya-aditya-gadhvi-2022",
+        "title": "Charan Kanya",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "dhara-rankar-2025-06-hu-to-patansher-ni",
+      "title": "Hu To Patansher Ni",
+      "artist": "Dhara Shah",
+      "genre": "folk",
+      "durationSeconds": 120,
+      "release": {
+        "id": "dhara-rankar-2025",
+        "title": "Rankar",
+        "script": "latn",
+        "year": 2025
+      },
+      "playable": true
+    },
+    {
+      "id": "gaman-kajal-jordar-01-gogo-gujarat-ni-dharti-no-goam-dhani-2022",
+      "title": "Gogo Gujarat Ni Dharti No Goam Dhani",
+      "artist": "Gaman Santhal, Kajal Maheriya",
+      "genre": "fusion",
+      "durationSeconds": 237,
+      "release": {
+        "id": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+        "title": "Jordar DJ Garba Nonstop",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "gaman-kajal-jordar-07-ler-karave-bhai-2022",
+      "title": "Ler Karave Bhai",
+      "artist": "Gaman Santhal, Kajal Maheriya",
+      "genre": "fusion",
+      "durationSeconds": 175,
+      "release": {
+        "id": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+        "title": "Jordar DJ Garba Nonstop",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "gaman-kajal-jordar-11-ray-ranchhod-ji-2022",
+      "title": "Ray Ranchhod Ji",
+      "artist": "Gaman Santhal, Kajal Maheriya",
+      "genre": "fusion",
+      "durationSeconds": 142,
+      "release": {
+        "id": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+        "title": "Jordar DJ Garba Nonstop",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "gaman-kajal-jordar-23-mara-kala-megha-ni-deepo-2022",
+      "title": "Mara Kala Megha Ni Deepo",
+      "artist": "Gaman Santhal, Kajal Maheriya",
+      "genre": "fusion",
+      "durationSeconds": 186,
+      "release": {
+        "id": "jordar-dj-garba-nonstop-gaman-kajal-2022",
+        "title": "Jordar DJ Garba Nonstop",
+        "script": "latn",
+        "year": 2022
+      },
+      "playable": true
+    },
+    {
+      "id": "instrumental-dhamal-v1-1990-02-mahisagar-gujarati-folk-instrumental",
+      "title": "Mahisagar (Gujarati Folk) (Instrumental)",
+      "artist": "Sanjay Sarkar, Ashish Sarkar & Bappi Sarkar",
+      "genre": "fusion",
+      "durationSeconds": 219,
+      "release": {
+        "id": "instrumental-dhamal-v1-1990",
+        "title": "Instrumental — Nonstop Dhamal Disco Dandia, Vol. 1",
+        "script": "latn",
+        "year": 1990
+      },
+      "playable": true
+    },
+    {
+      "id": "instrumental-dhamal-v2-1990-03-jai-aadhya-shakti-aarti-instrumental",
+      "title": "Jai Aadhya Shakti (Aarti) (Instrumental)",
+      "artist": "Sanjay Sarkar, Ashish Sarkar & Bappi Sarkar",
+      "genre": "fusion",
+      "durationSeconds": 213,
+      "release": {
+        "id": "instrumental-dhamal-v2-1990",
+        "title": "Instrumental — Nonstop Dhamal Disco Dandia, Vol. 2",
+        "script": "latn",
+        "year": 1990
+      },
+      "playable": true
+    },
+    {
+      "id": "khalasi-coke-studio-bharat-2023",
+      "title": "Khalasi | Coke Studio Bharat",
+      "artist": "Aditya Gadhvi, Achint",
+      "genre": "fusion",
+      "durationSeconds": 258,
+      "release": {
+        "id": "khalasi-coke-studio-bharat-2023",
+        "title": "Khalasi",
+        "script": "latn",
+        "year": 2023
+      },
+      "playable": true
+    },
+    {
+      "id": "khamma-2-2024-01-khamma-2-hiphop-garba",
+      "title": "Khamma 2 (HipHop Garba)",
+      "artist": "Aghori Muzik, Geeta Rabari, Anushka Pandit & Dharmesh Barot",
+      "genre": "fusion",
+      "durationSeconds": 3377,
+      "release": {
+        "id": "khamma-2-2024",
+        "title": "Khamma 2",
+        "script": "latn",
+        "year": 2024
+      },
+      "playable": true
+    },
+    {
+      "id": "atul-amba-no-darbar-2022-01",
+      "title": "Oh Vhalam Tari Ankhaldi",
+      "artist": "Atul Purohit, Himali Vora, Kairavi Buch",
+      "genre": "traditional",
+      "durationSeconds": 810,
+      "release": {
+        "id": "atul-amba-no-darbar-2022",
+        "title": "અંબા નો દરબાર",
+        "script": "gu",
+        "year": 2022
+      },
+      "playable": false
+    },
+    {
+      "id": "praful-navdurgani-2001-12-han-han-re-gokulni-govalani-re-folk-song-gujarati-garba",
+      "title": "Han Han Re Gokulni Govalani Re - Folk Song (Gujarati Garba)",
+      "artist": "Traditional & Praful Dave",
+      "genre": "traditional",
+      "durationSeconds": 180,
+      "release": {
+        "id": "praful-navdurgani-2001",
+        "title": "Navdurgani Navratri (Nonstop Garba)",
+        "script": "latn",
+        "year": 2001
+      },
+      "playable": true
+    }
+  ],
+  "nonstopSets": [
+    {
+      "id": "set-aditya-ochhav-2023",
+      "title": "Ochhav | Non-Stop Gujarati Garba & Lok Geet 2023",
+      "artists": [
+        "Aditya Gadhvi"
+      ],
+      "year": 2023,
+      "durationSeconds": null,
+      "chapters": [
+        {
+          "title": "Ochhav Theme",
+          "startSeconds": 0
+        },
+        {
+          "title": "Ganesh Deva",
+          "startSeconds": 79
+        },
+        {
+          "title": "Partham Samru",
+          "startSeconds": 217
+        },
+        {
+          "title": "Birdaali",
+          "startSeconds": 411
+        },
+        {
+          "title": "Aavjo Mavadiyu",
+          "startSeconds": 535
+        },
+        {
+          "title": "Mogal Maadi",
+          "startSeconds": 683
+        },
+        {
+          "title": "Kutch Ma Anjar Mota Sher",
+          "startSeconds": 850
+        },
+        {
+          "title": "Kanuda Na Baag Ma",
+          "startSeconds": 968
+        },
+        {
+          "title": "Aavad Ne Bheliyo",
+          "startSeconds": 1135
+        },
+        {
+          "title": "Sona Indhoni",
+          "startSeconds": 1280
+        },
+        {
+          "title": "Aabh Ma Jhini Jhabuke",
+          "startSeconds": 1430
+        },
+        {
+          "title": "Jobaniyu",
+          "startSeconds": 1551
+        },
+        {
+          "title": "Amba Abhay Pad Dayani",
+          "startSeconds": 1675
+        },
+        {
+          "title": "Koi Kejo Kanuda Ne Jai",
+          "startSeconds": 1776
+        },
+        {
+          "title": "Ek Patan Sher Ni",
+          "startSeconds": 1892
+        },
+        {
+          "title": "Nav Laakhaai Lobadiyaliyu",
+          "startSeconds": 1986
+        },
+        {
+          "title": "Krushna Bhagwan Haalya",
+          "startSeconds": 2092
+        },
+        {
+          "title": "Aaj Vagdaavo Vagdaavo",
+          "startSeconds": 2170
+        },
+        {
+          "title": "Dhanya Dhanya Mogal Tara Naam Ne",
+          "startSeconds": 2251
+        },
+        {
+          "title": "Chotile Dakla",
+          "startSeconds": 2338
+        },
+        {
+          "title": "Vaa Vaaya Ne Vaadal",
+          "startSeconds": 2428
+        },
+        {
+          "title": "Ghor Andhari Re",
+          "startSeconds": 2518
+        },
+        {
+          "title": "Kanudo Maagyo Deno",
+          "startSeconds": 2637
+        },
+        {
+          "title": "Helo Maro Saambhlo",
+          "startSeconds": 2740
+        },
+        {
+          "title": "Ram Stuti",
+          "startSeconds": 2832
+        }
+      ]
+    },
+    {
+      "id": "set-alpa-navratri3-2025",
+      "title": "Navratri 3.0 - Non Stop Garba",
+      "artists": [
+        "Alpa Patel"
+      ],
+      "year": 2025,
+      "durationSeconds": 2386,
+      "chapters": [
+        {
+          "title": "Sapakharu",
+          "startSeconds": 8
+        },
+        {
+          "title": "Sathiya Puravo Dware",
+          "startSeconds": 121
+        },
+        {
+          "title": "Maa No Garbo Re Rame",
+          "startSeconds": 295
+        },
+        {
+          "title": "Khodiyar Maa Mateliye",
+          "startSeconds": 443
+        },
+        {
+          "title": "Me To Vavyo Champo Ne Vavyo Mogro",
+          "startSeconds": 575
+        },
+        {
+          "title": "Eke Chhande Bije Chhande",
+          "startSeconds": 706
+        },
+        {
+          "title": "Ek Daav Taro Ne Ek Daav Maro",
+          "startSeconds": 884
+        },
+        {
+          "title": "Vanra Te Vanma Mor Pankhi Bole",
+          "startSeconds": 1009
+        },
+        {
+          "title": "Kagvad Dham Ma Maa No Ugamno Darbar",
+          "startSeconds": 1137
+        },
+        {
+          "title": "Gediyano Raja Jya Utare Tya Danko",
+          "startSeconds": 1261
+        },
+        {
+          "title": "Rumzum Karti Aave Mari Maa",
+          "startSeconds": 1377
+        },
+        {
+          "title": "Dam Dam Damru Vage Bholanath Nu",
+          "startSeconds": 1550
+        },
+        {
+          "title": "Pritam Ni Preet Ma Bandhani",
+          "startSeconds": 1722
+        },
+        {
+          "title": "Mane Devu Hoy To Dai De Kana",
+          "startSeconds": 1868
+        },
+        {
+          "title": "Mogal Chhe Machhrali Khamma",
+          "startSeconds": 1981
+        },
+        {
+          "title": "Jumkhadu",
+          "startSeconds": 2094
+        },
+        {
+          "title": "Khel Khel Re Bhavani Maa",
+          "startSeconds": 2176
+        },
+        {
+          "title": "Aaje Saune Jay Mataji",
+          "startSeconds": 2277
+        }
+      ]
+    },
+    {
+      "id": "set-chalo-ramiye-2021",
+      "title": "Chalo Ramiye - NonStop Garba",
+      "artists": [
+        "Divya Kumar",
+        "Priya Saraiya",
+        "Jigardan Gadhavi",
+        "Ishani Dave"
+      ],
+      "year": 2021,
+      "durationSeconds": null,
+      "chapters": [
+        {
+          "title": "Kum Kum Na Pagla Padya",
+          "startSeconds": 0
+        },
+        {
+          "title": "Maa Tu Kali Ne Kalyani",
+          "startSeconds": 231
+        },
+        {
+          "title": "Ame Mahiyara",
+          "startSeconds": 317
+        },
+        {
+          "title": "Krishna Bhagwan Halya",
+          "startSeconds": 455
+        },
+        {
+          "title": "Paavli Laine",
+          "startSeconds": 556
+        },
+        {
+          "title": "Indhana Vinwa",
+          "startSeconds": 642
+        },
+        {
+          "title": "Mor Bani Thanghat Kare",
+          "startSeconds": 761
+        },
+        {
+          "title": "Mahisagar Ne Aare",
+          "startSeconds": 898
+        },
+        {
+          "title": "Jhanjharwadi",
+          "startSeconds": 1010
+        },
+        {
+          "title": "Vitthal Vitthal",
+          "startSeconds": 1112
+        },
+        {
+          "title": "Dummar Vagya",
+          "startSeconds": 1226
+        },
+        {
+          "title": "Chotile Dakla Vagya",
+          "startSeconds": 1326
+        },
+        {
+          "title": "Kanudo Mangyo Dene",
+          "startSeconds": 1400
+        },
+        {
+          "title": "Mathura Ma Khel Kheli Aavya",
+          "startSeconds": 1480
+        },
+        {
+          "title": "Jhino Jhino",
+          "startSeconds": 1561
+        },
+        {
+          "title": "Rangtaali",
+          "startSeconds": 1644
+        },
+        {
+          "title": "Duha",
+          "startSeconds": 1704
+        },
+        {
+          "title": "Haalaji Tara",
+          "startSeconds": 1748
+        }
+      ]
+    },
+    {
+      "id": "set-dhara-rankar-2025",
+      "title": "Rankar - Navratri 2025 Nonstop Garba",
+      "artists": [
+        "Dhara Shah"
+      ],
+      "year": 2025,
+      "durationSeconds": null,
+      "chapters": [
+        {
+          "title": "Jini Jini Maa Ni Jhanjariyu",
+          "startSeconds": 0
+        },
+        {
+          "title": "Odhani",
+          "startSeconds": 93
+        },
+        {
+          "title": "Aavi Aasoni Radhiyali Raat",
+          "startSeconds": 308
+        },
+        {
+          "title": "Ha Re Maa Arasur Thi",
+          "startSeconds": 456
+        },
+        {
+          "title": "He Rude Garbe Rame Chhe Devi Ambika",
+          "startSeconds": 595
+        },
+        {
+          "title": "Kanudo Kamangaro",
+          "startSeconds": 719
+        },
+        {
+          "title": "Tara Vina Shyam",
+          "startSeconds": 840
+        },
+        {
+          "title": "Patan Thi Patola",
+          "startSeconds": 928
+        },
+        {
+          "title": "Saibo Re Govaliyo",
+          "startSeconds": 1053
+        },
+        {
+          "title": "Hu To Patan Sherni Nari",
+          "startSeconds": 1160
+        },
+        {
+          "title": "Chhogala Tara",
+          "startSeconds": 1279
+        },
+        {
+          "title": "Navlakhay Lobdiyaliyu",
+          "startSeconds": 1341
+        },
+        {
+          "title": "Tari Paghadiye",
+          "startSeconds": 1404
+        },
+        {
+          "title": "Kanaiya Morliwala Re",
+          "startSeconds": 1467
+        },
+        {
+          "title": "Ramva Aave Madi Ramva Aave",
+          "startSeconds": 1522
+        },
+        {
+          "title": "Vichhudo",
+          "startSeconds": 1678
+        },
+        {
+          "title": "Khel Re Khel Re Bhavani Maa",
+          "startSeconds": 1752
+        },
+        {
+          "title": "Rangtaali",
+          "startSeconds": 1798
+        },
+        {
+          "title": "Ghor Andhari Re",
+          "startSeconds": 1838
+        },
+        {
+          "title": "Khamma Khamma Pir Ne Jaji Khamma",
+          "startSeconds": 1912
+        },
+        {
+          "title": "Mare Mahisagar Ne Aare Dhol",
+          "startSeconds": 1987
+        },
+        {
+          "title": "Maro Helo Sambhlo",
+          "startSeconds": 2093
+        },
+        {
+          "title": "Chhand - Sar Sar Par Sadhar",
+          "startSeconds": 2154
+        }
+      ]
+    }
+  ]
+}
