@@ -926,9 +926,16 @@
   $('livesOpen').addEventListener('click', function () { needLives().then(function () { showSheet('livesSheet', 'hostNew'); }, function () { toast("Lives couldn't load. Check your connection."); }); });
 
   /* ---------- Singer faces ---------- */
-  // Faces are listed by artist slug, e.g. window.GARBO_SINGERS = { 'geeta-rabari': { file: 'geeta-rabari.webp', man: false } }.
-  // Until any exist the list is empty and nothing is requested.
-  var SINGER_BASE = window.GARBO_SINGER_BASE || '../../../../assets/singers/', SINGERS = window.GARBO_SINGERS || null;
+  // Singer heads: cut-out portraits (face and hair on transparency) in singers/, listed by artist slug. `man` picks which
+  // stage costume the head goes on. singers/roster.json records the reference photos each portrait was drawn from.
+  // A page can replace the list with window.GARBO_SINGERS and the folder with window.GARBO_SINGER_BASE.
+  var SINGER_HEADS = { women: ['aishwarya-majmudar', 'bhoomi-trivedi', 'falguni-pathak', 'geeta-rabari', 'ishani-dave', 'jahnvi-shrimankar', 'kairavi-buch', 'kinjal-dave', 'purva-mantri', 'rutvi-pandya', 'sabhiben-ahir', 'santvani-trivedi'], men: ['aditya-gadhvi', 'atul-purohit', 'jigardan-gadhavi', 'jignesh-barot', 'kirtidan-gadhvi', 'osman-mir', 'parth-bharat-thakkar', 'parth-oza', 'rajesh-ahir', 'umesh-barot'] };
+  var SINGER_BASE = window.GARBO_SINGER_BASE || 'singers/', SINGERS = window.GARBO_SINGERS || (function () {
+    var out = {};
+    SINGER_HEADS.women.forEach(function (id) { out[id] = { file: id + '.webp', man: false }; });
+    SINGER_HEADS.men.forEach(function (id) { out[id] = { file: id + '.webp', man: true }; });
+    return out;
+  })();
   function slugify(t) { return String(t).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
   /* ---------- Atmosphere sheet ---------- */
