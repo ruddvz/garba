@@ -45,7 +45,7 @@
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     var cam = { x: 0, y: 4, z: -15 };
     var TH = THEMES.traditional, BEAT = 0, band = {};
-    var st = { theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
+    var st = { youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
@@ -101,10 +101,17 @@
       for (var k in extra) d[k] = extra[k];
       return d;
     }
-    function makeCircle(x, z, R, main, parent) {
-      var n = Math.max(5, Math.min(60, Math.round(TAU * R / (parent ? 1.15 : 1.08)))), c = { x0: x, z0: z, R: R, main: main, parent: parent || null, dancers: [], ph: [rnd() * TAU, rnd() * TAU, rnd() * TAU, rnd() * TAU], w: (0.95 + rnd() * 0.35) / R, spin: main ? 0 : rnd() * TAU, wob: parent ? 1.6 : 1 };
+    function makeCircle(x, z, R, main, parent, force) {
+      var n = force || Math.max(5, Math.min(60, Math.round(TAU * R / (parent ? 1.15 : 1.08)))), c = { x0: x, z0: z, R: R, main: main, parent: parent || null, dancers: [], ph: [rnd() * TAU, rnd() * TAU, rnd() * TAU, rnd() * TAU], w: (0.95 + rnd() * 0.35) / R, spin: main ? 0 : rnd() * TAU, wob: parent ? 1.6 : 1 };
       for (var i = 0; i < n; i++) {
-        c.dancers.push(person({ a0: -Math.PI / 2 + i / n * TAU, delay: rnd() * 1.8, speed: 2.6 + rnd() * 1.2, lag: rnd() * 0.02, clapAt: 0 }));
+        var d0 = person({ a0: -Math.PI / 2 + i / n * TAU, delay: rnd() * 1.8, speed: 2.6 + rnd() * 1.2, lag: rnd() * 0.02, clapAt: 0 });
+        if (main && i < 2) {
+          // You and your partner: she in a maroon chaniya with a heavy gold border, he in ivory with a maroon pagdi and a gold stole
+          if (i === 0) { d0.man = false; d0.coupleRole = 'w'; d0.col = '#8e1b2c'; d0.top = '#d6a24a'; d0.tier = '#e8b04b'; d0.odhni = '#f3e6d0'; d0.h = 1.62; d0.stick = 2; }
+          else { d0.man = true; d0.coupleRole = 'm'; d0.col = '#f3e6d0'; d0.top = '#f3e6d0'; d0.legs = '#7a1a2e'; d0.pagdi = '#8e1b2c'; d0.stole = '#e8b04b'; d0.moustache = true; d0.h = 1.76; d0.stick = 2; }
+          d0.a0 = -Math.PI / 2 + (i === 0 ? -0.5 : 0.5) / n * TAU; d0.delay = 0.2 + i * 0.2; d0.ph = 1.3; d0.lag = 0;
+        }
+        c.dancers.push(d0);
       }
       return c;
     }
@@ -126,7 +133,14 @@
           if (ok) circles.push(makeCircle(x, z, R, false));
         }
       }
+      // Around the edges: pairs spinning together and a few dancing alone
+      var nPairs = id === 'outdoors' ? 9 : id === 'stadium' ? 6 : 3, bx0 = BOUNDS[id], ptries = 0, placed = 0;
+      while (placed < nPairs && ptries++ < 400) {
+        var solo = rnd() < 0.3, pr = solo ? 0.3 : 0.55, px = lerp(bx0[0] + 1, bx0[1] - 1, rnd()), pz = lerp(Math.max(bx0[2], 1), bx0[3] - 1, rnd());
+        if (circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
+      }
       var L = { circles: circles, houses: id === 'sheri' ? houses() : null, stands: id === 'stadium' ? stands() : null, stalls: stallsFor(id) };
+      L.kids = []; for (var ki = 0; ki < (id === 'sheri' ? 7 : 12); ki++) { var ks = freeSpot(id, L); L.kids.push(person({ x: ks.x, z: ks.z, tx: ks.x, tz: ks.z, wait: rnd() * 2, speed: 3 + rnd() * 1.4, step: 0, walker: true, kid: true, h: 0.9 + rnd() * 0.3 })); }
       L.walkers = walkersFor(id, L);
       L.seats = seatsFor(id);
       L.watchers = watchersFor(id);
@@ -168,6 +182,25 @@
         out.push(w);
       }
       return out;
+    }
+    // Children: tag in the empty middle while the music is off; once it plays they run round the edges, and now and then straight through a circle
+    function moveKids(L, id, dt) {
+      var bx = BOUNDS[id];
+      L.kids.forEach(function (k) {
+        if (k.wait > 0) { k.wait -= dt; k.moving = false; return; }
+        var dx = k.tx - k.x, dz = k.tz - k.z, d = Math.hypot(dx, dz);
+        if (d < 0.3) {
+          k.moving = false; k.wait = rnd() * 0.8;
+          if (!st.on) { var a = rnd() * TAU, r = rnd() * (id === 'sheri' ? 4 : 9); k.tx = Math.max(bx[0], Math.min(bx[1], Math.cos(a) * r)); k.tz = Math.max(bx[2], Math.sin(a) * r * (id === 'sheri' ? 3 : 1) + (id === 'sheri' ? 12 : 4)); k.through = false; }
+          else if (rnd() < 0.3) { var c = L.circles[Math.floor(rnd() * Math.min(3, L.circles.length))], a2 = rnd() * TAU; k.tx = c.x0 + Math.cos(a2) * (c.R + 3); k.tz = Math.max(bx[2], c.z0 + Math.sin(a2) * (c.R + 3)); k.through = true; }
+          else { var p = freeSpot(id, L); k.tx = p.x; k.tz = p.z; k.through = false; }
+          return;
+        }
+        var vx = dx / d, vz = dz / d;
+        if (st.on && !k.through) L.circles.forEach(function (c) { var cx = k.x - c.x0, cz = k.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.2; if (cd < keep + 1.5 && cd > 0.01) { var push = (keep + 1.5 - cd) / 1.5; vx += cx / cd * push; vz += cz / cd * push; } });
+        var vl = Math.hypot(vx, vz) || 1, sp = k.speed * (st.on && !k.through ? 0.8 : 1);
+        k.x += vx / vl * sp * dt; k.z += vz / vl * sp * dt; k.step = (k.step || 0) + dt * sp * 6; k.moving = true;
+      });
     }
     function moveWalkers(L, id, dt) {
       L.walkers.forEach(function (w) {
@@ -366,7 +399,7 @@
       var L = layout(id);
       if (!L.marks) { L.marks = []; for (var i = 0; i < 260; i++) L.marks.push([lerp(-30, 30, rnd()), lerp(-14, 44, rnd()), rnd()]); }
       for (var j = 0; j < L.marks.length; j++) {
-        var m = L.marks[j], p = P(m[0], 0, m[1]); if (!p || p.x < 0 || p.x > W) continue;
+        var m = L.marks[j], p = P(m[0], 0, m[1]); if (!p || p.x < 0 || p.x > W || p.s < 4) continue;
         g.fillStyle = m[2] < 0.5 ? 'rgba(255,220,170,.05)' : 'rgba(0,0,0,.18)';
         g.beginPath(); g.ellipse(p.x, p.y, Math.max(0.6, p.s * (0.12 + m[2] * 0.25)), Math.max(0.3, p.s * 0.04), 0, 0, TAU); g.fill();
       }
@@ -685,23 +718,54 @@
     /* ---------- the mandvi: a small decorated canopy over the central garbo ---------- */
     function mandvi(ctr, part, t) {
       var cx = ctr.x, cz = ctr.z, r = 1.0, top = 2.85, posts = [[-r, -r], [r, -r], [r, r], [-r, r]];
+      // Carved pillars in red and gold bands, front pair drawn after the garbo
       posts.forEach(function (q) {
         var front = q[1] < 0; if ((part === 'front') !== front) return;
-        var a = P(cx + q[0], 0, cz + q[1]), b = P(cx + q[0], top, cz + q[1]); if (!a || !b) return;
-        g.strokeStyle = '#7a1a14'; g.lineWidth = Math.max(1, a.s * 0.09); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
-        g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(0.6, a.s * 0.03); g.stroke();
+        for (var sgi = 0; sgi < 6; sgi++) {
+          var a = P(cx + q[0], top * sgi / 6, cz + q[1]), b = P(cx + q[0], top * (sgi + 1) / 6, cz + q[1]); if (!a || !b) continue;
+          g.strokeStyle = sgi % 2 ? '#e8b04b' : '#8e1b1b'; g.lineWidth = Math.max(1, a.s * (sgi === 0 ? 0.13 : 0.09)); g.lineCap = 'butt'; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+        }
       });
-      if (part !== 'front') return;
-      // Roof: a shallow dome with a kalash on top, bulbs round the edge and a fringe of toran
-      var c = P(cx, top, cz), apex = P(cx, top + 1.05, cz); if (!c || !apex) return;
-      var ex = P(cx + r * 1.12, top, cz); var rx = ex ? Math.abs(ex.x - c.x) : c.s * r, ry = rx * Math.max(0.12, (cam.y - top) / Math.max(4, c.z) * 0.9 + 0.08);
-      g.fillStyle = '#6b1a14'; g.beginPath(); g.ellipse(c.x, c.y, rx, Math.abs(ry), 0, 0, TAU); g.fill();
-      g.beginPath(); g.moveTo(c.x - rx, c.y); g.quadraticCurveTo(c.x - rx * 0.2, apex.y - (c.y - apex.y) * 0.1, c.x, apex.y); g.quadraticCurveTo(c.x + rx * 0.2, apex.y - (c.y - apex.y) * 0.1, c.x + rx, c.y); g.closePath();
-      var dg = g.createLinearGradient(0, apex.y, 0, c.y); dg.addColorStop(0, '#e8b04b'); dg.addColorStop(1, '#9b1f1a'); g.fillStyle = dg; g.fill();
-      g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(c.x, apex.y - c.s * 0.12, Math.max(1, c.s * 0.13), 0, TAU); g.fill();
-      for (var k = 0; k < 14; k++) {
-        var an = k / 14 * TAU, bx = c.x + Math.cos(an) * rx, by = c.y + Math.sin(an) * Math.abs(ry);
-        if (Math.sin(an) > -0.2) { var fs = Math.max(1, c.s * 0.1); g.fillStyle = TH.flags[k % TH.flags.length]; g.beginPath(); g.moveTo(bx - fs, by); g.lineTo(bx + fs, by); g.lineTo(bx, by + fs * 1.8); g.closePath(); g.fill(); }
+      if (part === 'back') {
+        // A framed image of the goddess, glowing behind the garbo, draped in red cloth
+        var fb = P(cx, 0.55, cz + 0.75), ft = P(cx, 1.55, cz + 0.75);
+        if (fb && ft) {
+          var fw = (fb.y - ft.y) * 0.72, fh = fb.y - ft.y;
+          glow(fb.x, ft.y + fh / 2, fw * 0.6, 'rgba(255,180,90,1)', 0.35 * bright);
+          g.fillStyle = '#e8b04b'; g.fillRect(fb.x - fw / 2, ft.y, fw, fh);
+          var ig = g.createLinearGradient(0, ft.y, 0, fb.y); ig.addColorStop(0, '#f6c35a'); ig.addColorStop(1, '#c0392b');
+          g.fillStyle = ig; g.fillRect(fb.x - fw * 0.4, ft.y + fh * 0.08, fw * 0.8, fh * 0.84);
+          g.fillStyle = 'rgba(255,240,200,.7)'; g.beginPath(); g.arc(fb.x, ft.y + fh * 0.38, fw * 0.22, 0, TAU); g.fill();
+          g.fillStyle = '#9b1f1a'; g.beginPath(); g.moveTo(fb.x - fw * 0.6, ft.y); g.quadraticCurveTo(fb.x, ft.y + fh * 0.25, fb.x + fw * 0.6, ft.y); g.lineTo(fb.x + fw * 0.6, ft.y + fh * 0.5); g.quadraticCurveTo(fb.x + fw * 0.45, ft.y + fh * 0.2, fb.x + fw * 0.35, ft.y + fh * 0.1); g.lineTo(fb.x - fw * 0.35, ft.y + fh * 0.1); g.quadraticCurveTo(fb.x - fw * 0.45, ft.y + fh * 0.2, fb.x - fw * 0.6, ft.y + fh * 0.5); g.closePath(); g.fill();
+        }
+        return;
+      }
+      // Marigold garlands swinging between the front pillars and round the sides
+      [[[-r, -r], [r, -r]], [[-r, -r], [-r, r]], [[r, -r], [r, r]]].forEach(function (pair, gi) {
+        var A = [cx + pair[0][0], top - 0.1, cz + pair[0][1]], B = [cx + pair[1][0], top - 0.1, cz + pair[1][1]];
+        for (var k = 0; k <= 12; k++) { var q = sag(A, B, 0.55, k / 12), pp = P(q[0], q[1], q[2]); if (pp) { g.fillStyle = k % 2 ? '#f29a2e' : '#f6c342'; g.beginPath(); g.arc(pp.x, pp.y, Math.max(0.8, pp.s * 0.07), 0, TAU); g.fill(); } }
+      });
+      // Tiered roof: a scalloped dome, a smaller dome above it, a kalash and a red flag
+      var c = P(cx, top, cz), apex = P(cx, top + 0.9, cz), apex2 = P(cx, top + 1.45, cz); if (!c || !apex || !apex2) return;
+      var ex = P(cx + r * 1.15, top, cz); var rx = ex ? Math.abs(ex.x - c.x) : c.s * r, ry = rx * Math.max(0.12, (cam.y - top) / Math.max(4, c.z) * 0.9 + 0.08);
+      g.fillStyle = '#5a1510'; g.beginPath(); g.ellipse(c.x, c.y, rx, Math.abs(ry), 0, 0, TAU); g.fill();
+      function dome(cy, ay, w, c1, c2) { g.beginPath(); g.moveTo(cx0 - w, cy); g.quadraticCurveTo(cx0 - w * 0.25, ay - (cy - ay) * 0.1, cx0, ay); g.quadraticCurveTo(cx0 + w * 0.25, ay - (cy - ay) * 0.1, cx0 + w, cy); g.closePath(); var dg = g.createLinearGradient(0, ay, 0, cy); dg.addColorStop(0, c1); dg.addColorStop(1, c2); g.fillStyle = dg; g.fill(); }
+      var cx0 = c.x;
+      dome(c.y, apex.y, rx, '#f0c24b', '#9b1f1a');
+      g.strokeStyle = 'rgba(255,230,170,.6)'; g.lineWidth = Math.max(0.6, c.s * 0.02);
+      for (var rb = -2; rb <= 2; rb++) { g.beginPath(); g.moveTo(cx0 + rb * rx * 0.38, c.y); g.quadraticCurveTo(cx0 + rb * rx * 0.2, apex.y + (c.y - apex.y) * 0.3, cx0, apex.y); g.stroke(); }
+      dome(apex.y + (c.y - apex.y) * 0.15, apex2.y, rx * 0.35, '#f6d27a', '#c0392b');
+      g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(cx0, apex2.y - c.s * 0.1, Math.max(1, c.s * 0.11), 0, TAU); g.fill();
+      var fp0 = apex2.y - c.s * 0.15, fp1 = apex2.y - c.s * 0.75, wave = reduce ? 0 : Math.sin(t * 4) * c.s * 0.06;
+      g.strokeStyle = '#3a2413'; g.lineWidth = Math.max(0.7, c.s * 0.025); g.beginPath(); g.moveTo(cx0, fp0); g.lineTo(cx0, fp1); g.stroke();
+      g.fillStyle = '#d8453a'; g.beginPath(); g.moveTo(cx0, fp1); g.lineTo(cx0 + c.s * 0.42, fp1 + c.s * 0.12 + wave); g.lineTo(cx0, fp1 + c.s * 0.26); g.closePath(); g.fill();
+      // Scalloped edge with bulbs, a toran fringe and small bells
+      for (var k = 0; k < 18; k++) {
+        var an = k / 18 * TAU, bx = cx0 + Math.cos(an) * rx, by = c.y + Math.sin(an) * Math.abs(ry);
+        if (Math.sin(an) > -0.25) {
+          var fs = Math.max(1, c.s * 0.1); g.fillStyle = TH.flags[k % TH.flags.length]; g.beginPath(); g.moveTo(bx - fs, by); g.lineTo(bx + fs, by); g.lineTo(bx, by + fs * 1.8); g.closePath(); g.fill();
+          if (k % 3 === 0) { g.strokeStyle = '#8a6a2a'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx, by + c.s * 0.35); g.stroke(); g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(bx, by + c.s * 0.4, Math.max(0.8, c.s * 0.05), 0, TAU); g.fill(); }
+        }
         glow(bx, by, Math.max(0.7, Math.min(2.2, c.s * 0.05)), TH.bulbs[k % TH.bulbs.length], (0.7 + 0.3 * Math.sin(t * 3 + k) + pulse * 0.2) * bright);
       }
     }
@@ -719,6 +783,13 @@
       var inner = []; for (var m = 0; m < 16; m++) { var a1 = m / 16 * TAU; inner.push([ctr.x + Math.cos(a1) * 0.5, ctr.z + Math.sin(a1) * 0.5]); }
       blob(inner, '#f6c342', 0.9);
       for (var d = 0; d < 20; d++) { var a2 = d / 20 * TAU, q = P(ctr.x + Math.cos(a2) * 1.45, 0.01, ctr.z + Math.sin(a2) * 1.45); if (q) { g.fillStyle = '#fff3d6'; g.beginPath(); g.arc(q.x, q.y, Math.max(0.5, q.s * 0.04), 0, TAU); g.fill(); } }
+      // Diyas round the rangoli, flickering
+      for (var dy = 0; dy < 12; dy++) {
+        var a3 = (dy + 0.5) / 12 * TAU, qd = P(ctr.x + Math.cos(a3) * 1.85, 0, ctr.z + Math.sin(a3) * 1.85); if (!qd) continue;
+        g.fillStyle = '#7a3b1a'; g.beginPath(); g.ellipse(qd.x, qd.y, Math.max(1, qd.s * 0.09), Math.max(0.5, qd.s * 0.035), 0, 0, TAU); g.fill();
+        var fl = reduce ? 1 : 0.75 + 0.25 * Math.sin(t * 9 + dy * 1.7);
+        glow(qd.x, qd.y - qd.s * 0.07, Math.max(0.6, qd.s * 0.035 * fl), '#ffd27a', (st.on ? 0.95 : 0.6) * fl);
+      }
     }
 
     /* ---------- the garbo ---------- */
@@ -760,6 +831,11 @@
       return { x: c.x0 + d * 0.7 * Math.sin(T * 0.09 + c.ph[0]), z: c.z0 + d * 0.6 * Math.sin(T * 0.07 + c.ph[1]) };
     }
     function dancerWorld(c, d, T, ctr) {
+      // You and your partner keep your own place just inside the front of the circle, dancing together as the ring goes round you
+      if (d.coupleRole) {
+        var sd = d.coupleRole === 'w' ? -1 : 1, sway = reduce ? 0 : Math.sin(T * 0.9) * 0.18;
+        return { x: ctr.x + sd * 0.5 + sway, z: ctr.z - (c.R - 0.85) + (reduce ? 0 : Math.sin(T * 0.6) * 0.12), a: -Math.PI / 2 };
+      }
       var a = d.a0 + c.spin + (reduce ? 0 : 0.06 * Math.sin(T * 0.5 + d.ph2));
       var rr = c.R * (1 + c.wob * (0.07 * Math.sin(2 * a + c.ph[2] + T * 0.15) + 0.045 * Math.sin(3 * a + c.ph[3] - T * 0.11))) + (reduce ? 0 : 0.22 * Math.sin(T * 0.8 + d.ph));
       return { x: ctr.x + Math.cos(a) * rr, z: ctr.z + Math.sin(a) * rr, a: a };
@@ -802,10 +878,10 @@
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
-      if (!near) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
-      var skin = tint(SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], dk), main = tint(isYou ? '#f3e6d0' : d.col, dk), top = tint(isYou ? '#d6b06f' : d.top, dk), gold = tint('#e8b04b', dk);
-      var fine = h > 26 && !near, lw = Math.max(0.8, h * 0.034);
-      if (h < 11 && !isYou) {
+      if (!near && h > 16) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
+      var skin = tint(SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], dk), main = tint(d.col, dk), top = tint(d.top, dk), gold = tint('#e8b04b', dk);
+      var fine = (h > 26 || (d.coupleRole && h > 12)) && !near, lw = Math.max(0.8, h * 0.034);
+      if (h < 11 && !isYou && !d.coupleRole) {
         // Far away: a few shapes read as a person and keep a big crowd cheap to draw
         if (d.man) { g.fillStyle = tint('#efe6d6', dk); g.fillRect(x - h * 0.07, y - h * 0.44, h * 0.14, h * 0.44); g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.09, y - h * 0.8); g.lineTo(x + h * 0.09, y - h * 0.8); g.lineTo(x + h * 0.2, y - h * 0.42); g.lineTo(x - h * 0.2, y - h * 0.42); g.fill(); }
         else { var fl0 = h * (0.25 + 0.12 * tw); g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.56); g.lineTo(x + h * 0.08, y - h * 0.56); g.lineTo(x + fl0, y); g.lineTo(x - fl0, y); g.fill(); g.fillStyle = top; g.fillRect(x - h * 0.075, y - h * 0.79, h * 0.15, h * 0.24); }
@@ -817,7 +893,7 @@
       g.lineCap = 'round'; g.lineJoin = 'round';
       if (d.man) {
         // Churidar legs and mojari
-        g.strokeStyle = tint('#efe6d6', dk); g.lineWidth = Math.max(1, h * 0.055);
+        g.strokeStyle = tint(d.legs || '#efe6d6', dk); g.lineWidth = Math.max(1, h * 0.055);
         var lx = walking ? sw * h * 0.06 : sw * h * 0.03;
         g.beginPath(); g.moveTo(x - h * 0.045, y - h * 0.44); g.lineTo(x - h * 0.06 - lx, y - h * 0.02); g.moveTo(x + h * 0.045, y - h * 0.44); g.lineTo(x + h * 0.06 + lx, y - h * 0.02); g.stroke();
         g.fillStyle = tint('#3a1f12', dk); g.beginPath(); g.ellipse(x - h * 0.07 - lx, y, h * 0.04, h * 0.018, 0, 0, TAU); g.ellipse(x + h * 0.07 + lx, y, h * 0.04, h * 0.018, 0, 0, TAU); g.fill();
@@ -848,18 +924,26 @@
         g.fillStyle = skin; g.fillRect(x - h * 0.06, y - h * 0.6, h * 0.12, h * 0.06);
         g.fillStyle = top; g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.07, y - h * 0.6); g.lineTo(x - h * 0.07, y - h * 0.6); g.closePath(); g.fill();
         // Odhni over one shoulder, falling behind
-        g.strokeStyle = tint(isYou ? '#d6b06f' : d.odhni || d.top, dk); g.globalAlpha *= 0.85; g.lineWidth = Math.max(1, h * 0.04);
+        g.strokeStyle = tint(d.odhni || d.top, dk); g.globalAlpha *= 0.85; g.lineWidth = Math.max(1, h * 0.04);
         g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.78); g.quadraticCurveTo(x + h * 0.02, y - h * 0.62, x + h * 0.09, y - h * 0.56); g.quadraticCurveTo(x + h * (0.16 + 0.04 * sw + 0.1 * tw), y - h * 0.48, x + h * (0.18 + 0.05 * sw + 0.14 * tw), y - h * 0.3); g.stroke();
         g.globalAlpha /= 0.85;
         if (fine) { g.fillStyle = 'rgba(255,248,225,.75)'; [0.25, 0.5, 0.75].forEach(function (u) { var ox = lerp(x - h * 0.08, x + h * 0.09, u), oy = lerp(y - h * 0.78, y - h * 0.56, u); g.beginPath(); g.arc(ox, oy, Math.max(0.6, h * 0.009), 0, TAU); g.fill(); }); }
       }
+      // The couple's finery: her heavy gold hem and necklace, his gold stole and pagdi band
+      if (d.coupleRole === 'w' && fine) {
+        g.strokeStyle = gold; g.lineWidth = Math.max(1.2, h * 0.05); g.beginPath(); g.moveTo(x - flare * 0.95, hem - h * 0.05); g.quadraticCurveTo(x, hem - h * 0.01, x + flare * 0.95, hem - h * 0.05); g.stroke();
+        g.strokeStyle = gold; g.lineWidth = Math.max(0.8, h * 0.012); g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.785); g.quadraticCurveTo(x + h * 0.02, y - h * 0.63, x + h * 0.09, y - h * 0.565); g.stroke();
+      }
+      if (d.coupleRole === 'm') { g.strokeStyle = tint(d.stole, dk); g.lineWidth = Math.max(1, h * 0.035); g.beginPath(); g.moveTo(x + h * 0.08, y - h * 0.8); g.quadraticCurveTo(x - h * 0.02, y - h * 0.62, x - h * 0.12, y - h * 0.44); g.stroke(); }
       // Neck and head
       g.fillStyle = skin; g.fillRect(x - h * 0.022, y - h * 0.83, h * 0.044, h * 0.05);
       g.beginPath(); g.arc(x, y - h * 0.885, h * 0.068, 0, TAU); g.fill();
+      if (d.coupleRole === 'w' && fine) { g.strokeStyle = gold; g.lineWidth = Math.max(0.8, h * 0.014); g.beginPath(); g.arc(x, y - h * 0.83, h * 0.05, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
       if (d.man) {
         if (fine && d.moustache) { g.strokeStyle = tint('#1f130d', dk); g.lineWidth = Math.max(0.8, h * 0.012); g.beginPath(); g.moveTo(x - h * 0.03, y - h * 0.862); g.quadraticCurveTo(x, y - h * 0.872, x + h * 0.03, y - h * 0.862); g.stroke(); }
-        g.fillStyle = tint(isYou ? '#d6b06f' : d.older ? '#f3e6d0' : d.pagdi || '#b8312b', dk);
+        g.fillStyle = tint(d.older ? '#f3e6d0' : d.pagdi || '#b8312b', dk);
         g.beginPath(); g.ellipse(x, y - h * 0.935, h * 0.078, h * 0.052, 0, Math.PI, 0); g.lineTo(x + h * 0.078, y - h * 0.925); g.lineTo(x - h * 0.078, y - h * 0.925); g.fill();
+        if (d.coupleRole === 'm') { g.strokeStyle = gold; g.lineWidth = Math.max(0.8, h * 0.012); g.beginPath(); g.moveTo(x - h * 0.078, y - h * 0.93); g.lineTo(x + h * 0.078, y - h * 0.93); g.stroke(); }
         if (fine) { g.beginPath(); g.moveTo(x + h * 0.06, y - h * 0.94); g.quadraticCurveTo(x + h * 0.13, y - h * 0.9, x + h * 0.1, y - h * 0.84); g.lineWidth = Math.max(1, h * 0.02); g.strokeStyle = g.fillStyle; g.stroke(); }
       } else {
         g.fillStyle = tint(d.older ? '#9a948c' : '#1f130d', dk); g.beginPath(); g.ellipse(x, y - h * 0.905, h * 0.074, h * 0.05, 0, Math.PI, 0); g.fill();
@@ -897,12 +981,23 @@
         youLabel = { x: Math.max(28, Math.min(W - 28, x)), y: Math.max(26, y - h * 1.14), h: h };
       }
     }
-    function label(text, x, y, h) {
-      var fs = Math.max(11, Math.min(14, h * 0.2));
+    // A soft warm follow-spot on you and your partner
+    function followSpot(p, d) {
+      var h = d.h * p.s, cy = p.y - h * 0.5, r = h * 0.9;
+      var sg = g.createRadialGradient(p.x, cy, h * 0.05, p.x, cy, r); sg.addColorStop(0, 'rgba(255,214,150,' + (0.3 + 0.2 * youGlow) + ')'); sg.addColorStop(1, 'rgba(255,214,150,0)');
+      g.fillStyle = sg; g.beginPath(); g.arc(p.x, cy, r, 0, TAU); g.fill();
+    }
+    function partnerMark(p, d) {
+      var h = d.h * p.s;
+      g.fillStyle = 'rgba(214,176,111,.22)'; g.beginPath(); g.ellipse(p.x, p.y, h * 0.3, h * 0.08, 0, 0, TAU); g.fill();
+      partnerLabel = { x: Math.max(34, Math.min(W - 34, p.x)), y: Math.max(26, p.y - h * 1.14), h: h * 0.85 };
+    }
+    function label(text, x, y, h, soft) {
+      var fs = Math.max(soft ? 10 : 11, Math.min(soft ? 12.5 : 14, h * 0.2));
       g.font = '700 ' + fs + 'px system-ui, -apple-system, sans-serif'; g.textAlign = 'center';
       var w = g.measureText(text).width + 12;
       g.fillStyle = 'rgba(11,6,5,.72)'; roundRect(x - w / 2, y - fs - 4, w, fs + 8, (fs + 8) / 2); g.fill();
-      g.fillStyle = '#f3e6d0'; g.fillText(text, x, y + 0.5);
+      g.fillStyle = soft ? '#e8c98f' : '#f3e6d0'; g.fillText(text, x, y + 0.5);
     }
     function roundRect(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 
@@ -944,11 +1039,17 @@
       g.beginPath(); g.arc(x, y - 33 * u, 7.5 * u, 0, TAU); g.fill();
     }
     function seated(x, y, u) {
+      // Your partner sits beside you
+      var px = x + 28 * u;
+      g.fillStyle = '#d6a24a';
+      g.beginPath(); g.moveTo(px - 10 * u, y); g.quadraticCurveTo(px - 11 * u, y - 22 * u, px, y - 24 * u); g.quadraticCurveTo(px + 11 * u, y - 22 * u, px + 10 * u, y); g.closePath(); g.fill();
+      g.beginPath(); g.arc(px, y - 30.5 * u, 7 * u, 0, TAU); g.fill();
+
       g.fillStyle = 'rgba(214,176,111,' + (0.22 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, y - 18 * u, 24 * u * (1 + youGlow * 0.2), 30 * u * (1 + youGlow * 0.2), 0, 0, TAU); g.fill();
       g.fillStyle = '#f3e6d0';
       g.beginPath(); g.moveTo(x - 11 * u, y); g.quadraticCurveTo(x - 12 * u, y - 24 * u, x, y - 26 * u); g.quadraticCurveTo(x + 12 * u, y - 24 * u, x + 11 * u, y); g.closePath(); g.fill();
       g.beginPath(); g.arc(x, y - 33 * u, 7.5 * u, 0, TAU); g.fill();
-      label('You', x, y - 46 * u, 60 * u);
+      label('You and partner', x + 14 * u, y - 46 * u, 60 * u);
     }
 
     /* ---------- echoes: where they come from in each venue ---------- */
@@ -975,7 +1076,7 @@
     var V = 80; // how fast the waves cross the ground on screen, in metres per second (slowed so you can watch them)
     function listenerPos(L, T) {
       if (st.listener === 'far') return { x: cam.x, z: cam.z + 3 };
-      var d0 = L.circles[0].dancers[0];
+      var d0 = L.circles[0].dancers[st.youAs === 'man' ? 1 : 0];
       if (d0.x != null) return { x: d0.x, z: d0.z };
       var c = L.circles[0], w = dancerWorld(c, d0, T, circleCentre(c, T));
       return { x: w.x, z: w.z };
@@ -983,6 +1084,7 @@
     // When the music stops the dancers drift off to rest: to the sides, the stalls and the water, or to sit on an
     // otla. When it starts they walk back, one by one, and the circles form again.
     function restSpot(id, L, d) {
+      if (d.coupleRole) { var cs = d.coupleRole === 'w' ? -0.35 : 0.35; return id === 'sheri' ? { x: -6.85, z: -1 + cs * 2, y: 0.45, sit: true } : { x: -7.5 + cs, z: -3.2, sit: false }; }
       var r = rnd(), side = rnd() < 0.5 ? -1 : 1;
       if (id === 'sheri') {
         if (r < 0.6) return { x: side * 6.85, z: lerp(-4, 56, rnd()), y: 0.45, sit: true };
@@ -1015,7 +1117,7 @@
         firstT0 = Math.min(firstT0, t0);
         var share = 0.5 + 0.45 * st.level;
         c.dancers.forEach(function (d, di) { if (d.atHome && ((ci === 0 && di === 0 && !far) || rnd() < share)) d.clapAt = t0 + d.lag; if (d.atHome && !(ci === 0 && di === 0) && rnd() < 0.04) d.twirl = 1; });
-        if ((c.present || 0) < 0.15) return;
+        if ((c.present || 0) < 0.15 || c.small) return;
         waves.push({ kind: 'front', c: c, t0: t0, a: (c.main ? 0.6 : 0.42) * (far ? 1.1 : 1) * Math.min(1, (c.present || 0) * 1.2), col: col, lim: Math.max(10, dd + 3) });
       });
       arrivals.push({ t: bt, g: 1 });
@@ -1061,7 +1163,7 @@
     }
 
     /* ---------- frame ---------- */
-    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null;
+    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null;
     function frame(ms) {
       if (!running) return;
       var dt = Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0.016); lastMs = ms;
@@ -1109,11 +1211,12 @@
           if (d.atHome) home++;
           var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z);
           var fd = p ? Math.max(0, Math.min(1, (p.z - 3) / 4)) : 0;
-          if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: fd, you: ci === 0 && di === 0 && st.listener === 'circle' && view.k < 0.5 });
+          if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: fd, you: !!d.coupleRole && d.coupleRole === (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5, partner: !!d.coupleRole && d.coupleRole !== (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5 });
         });
         c.present = home / c.dancers.length;
       });
-      if (!reduce) moveWalkers(L, st.venue, dt);
+      if (!reduce) { moveWalkers(L, st.venue, dt); moveKids(L, st.venue, dt); }
+      L.kids.forEach(function (k) { var p = P(k.x, 0, k.z); if (p && p.z > 2.5 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: k, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
       L.trees.forEach(function (tr) { var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
@@ -1121,7 +1224,7 @@
       L.seats.forEach(function (se) { var p = P(se.x, 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.watchers.forEach(function (wt) { if (wt.clapAt && t >= wt.clapAt) { wt.flash = 1; wt.clapAt = 0; } wt.flash *= Math.exp(-dt * 3); var p = P(wt.x, 0, wt.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: wt, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       items.sort(function (a, b2) { return b2.z - a.z; });
-      youLabel = null;
+      youLabel = null; partnerLabel = null;
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
       items.forEach(function (it) {
         if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; if (st.venue !== 'sheri') mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (st.venue !== 'sheri') mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
@@ -1129,11 +1232,13 @@
         else if (it.kind === 'tree') drawTree(it.tr, t);
         else if (it.kind === 'prop') prop(it.o, t);
         else if (it.kind === 'seat') { chair(it.se); if (it.se.who) figure(it.p, it.se.who, T, false, beatPh, it.fade); }
-        else figure(it.p, it.d, T, it.you, beatPh, it.you ? 1 : it.fade);
+        else { if (it.you || it.partner) followSpot(it.p, it.d); figure(it.p, it.d, T, it.you, beatPh, it.you || it.partner ? 1 : it.fade); if (it.partner) partnerMark(it.p, it.d); }
       });
 
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       // Your label always sits on top, so you can find yourself in the crowd
+      if (partnerLabel && youLabel && Math.abs(partnerLabel.x - youLabel.x) < 70 && Math.abs(partnerLabel.y - youLabel.y) < 24) partnerLabel.y = youLabel.y - 26;
+      if (partnerLabel) label('Partner', partnerLabel.x, partnerLabel.y, partnerLabel.h, true);
       if (youLabel) label('You', youLabel.x, youLabel.y, youLabel.h);
 
       // Dust and moths drifting up through the light

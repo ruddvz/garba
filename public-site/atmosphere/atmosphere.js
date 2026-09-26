@@ -26,7 +26,7 @@
     fusion: { label: 'Fusion', desc: 'Neon blue and violet washes, the fastest moving lights on the night.' }
   };
   var scene = null, lampPos = { x: -1, y: -1 };
-  var st = { theme: 'traditional', night: 0, mode: 'immersive', venue: 'outdoors', listener: 'circle', style: 'claps', pattern: 'beat', bpm: 112, level: 0.6, dhol: false, on: false, ctx: null, engine: null, timer: 0, taps: [], keyed: false, dholNext: 0, dholStep: 0, dholGain: null };
+  var st = { youAs: 'woman', theme: 'traditional', night: 0, mode: 'immersive', venue: 'outdoors', listener: 'circle', style: 'claps', pattern: 'beat', bpm: 112, level: 0.6, dhol: false, on: false, ctx: null, engine: null, timer: 0, taps: [], keyed: false, dholNext: 0, dholStep: 0, dholGain: null };
 
   /* ---------------- controls ---------------- */
   function segment(el, items, current, onPick) {
@@ -55,6 +55,7 @@
   segment($('venues'), E.VENUES, st.venue, function (id) { st.venue = id; if (st.engine) st.engine.setVenue(id); readout(); });
   segment($('listeners'), E.LISTENERS, st.listener, function (id) { st.listener = id; if (st.engine) st.engine.setListener(id); readout(); });
   segment($('styles'), STYLES, st.style, function (id) { st.style = id; if (st.engine) st.engine.setStyle(id); sceneSync(); });
+  segment($('youAs'), { woman: 'Woman', man: 'Man' }, st.youAs, function (id) { st.youAs = id; sceneSync(); });
   segment($('themes'), THEMES, st.theme, function (id) {
     st.theme = id;
     // Dandiya nights are danced with sticks; switching away returns to claps
@@ -240,7 +241,7 @@
       if (x !== lampPos.x || y !== lampPos.y) { lampPos = { x: x, y: y }; lamp.style.left = x + 'px'; lamp.style.top = y + 'px'; }
     }
   });
-  function sceneSync() { if (scene) scene.set({ venue: st.venue, listener: st.listener, style: st.style, mode: st.mode, on: st.on, level: st.level, theme: st.theme, density: 0.45 + 0.55 * st.level, moonAge: st.night ? st.night + 0.2 : null }); }
+  function sceneSync() { if (scene) scene.set({ venue: st.venue, listener: st.listener, style: st.style, mode: st.mode, on: st.on, level: st.level, youAs: st.youAs, theme: st.theme, density: 0.45 + 0.55 * st.level, moonAge: st.night ? st.night + 0.2 : null }); }
   sceneSync();
 
   // Navratri runs from the day after a new moon, so each night has its own moon. Night 0 shows tonight's real moon.
