@@ -92,11 +92,19 @@
     function sag(a, b, drop, u) { return [lerp(a[0], b[0], u), lerp(a[1], b[1], u) - drop * 4 * u * (1 - u), lerp(a[2], b[2], u)]; }
 
     /* ---------- layouts: the circles on the ground, re-drawn at random each visit ---------- */
+    function person(extra) {
+      var man = rnd() < 0.4, d = {
+        man: man, col: SKIRTS[Math.floor(rnd() * SKIRTS.length)], top: TOPS[Math.floor(rnd() * TOPS.length)], tier: TOPS[Math.floor(rnd() * TOPS.length)],
+        odhni: TOPS[Math.floor(rnd() * TOPS.length)], pagdi: ['#b8312b', '#e67e22', '#f0c24b', '#c2185b', '#f3e6d0', '#2f8f5b'][Math.floor(rnd() * 6)],
+        moustache: man && rnd() < 0.55, stick: Math.floor(rnd() * 4), ph: rnd() * TAU, ph2: rnd() * TAU, h: 1.52 + rnd() * 0.22 + (man ? 0.1 : 0), flash: 0, twirl: 0
+      };
+      for (var k in extra) d[k] = extra[k];
+      return d;
+    }
     function makeCircle(x, z, R, main, parent) {
-      var n = Math.max(5, Math.min(44, Math.round(TAU * R / 1.3))), c = { x0: x, z0: z, R: R, main: main, parent: parent || null, dancers: [], ph: [rnd() * TAU, rnd() * TAU, rnd() * TAU, rnd() * TAU], w: (0.95 + rnd() * 0.35) / R, spin: main ? 0 : rnd() * TAU, wob: parent ? 1.6 : 1 };
+      var n = Math.max(5, Math.min(60, Math.round(TAU * R / (parent ? 1.15 : 1.08)))), c = { x0: x, z0: z, R: R, main: main, parent: parent || null, dancers: [], ph: [rnd() * TAU, rnd() * TAU, rnd() * TAU, rnd() * TAU], w: (0.95 + rnd() * 0.35) / R, spin: main ? 0 : rnd() * TAU, wob: parent ? 1.6 : 1 };
       for (var i = 0; i < n; i++) {
-        var man = rnd() < 0.36;
-        c.dancers.push({ a0: -Math.PI / 2 + i / n * TAU, delay: rnd() * 1.8, speed: 2.6 + rnd() * 1.2, man: man, stick: Math.floor(rnd() * 4), pagdi: ['#b8312b', '#e67e22', '#f0c24b', '#c2185b', '#f3e6d0'][Math.floor(rnd() * 5)], odhni: TOPS[Math.floor(rnd() * TOPS.length)], col: SKIRTS[Math.floor(rnd() * SKIRTS.length)], top: TOPS[Math.floor(rnd() * TOPS.length)], ph: rnd() * TAU, ph2: rnd() * TAU, lag: rnd() * 0.02, h: 1.55 + rnd() * 0.2 + (man ? 0.1 : 0), flash: 0, clapAt: 0 });
+        c.dancers.push(person({ a0: -Math.PI / 2 + i / n * TAU, delay: rnd() * 1.8, speed: 2.6 + rnd() * 1.2, lag: rnd() * 0.02, clapAt: 0 }));
       }
       return c;
     }
@@ -105,17 +113,26 @@
       // One garbo at the centre of the venue. Rings grow around it, and people start their own circles anywhere.
       var main = makeCircle(0, 0, id === 'sheri' ? 4.4 : 5.6, true), circles = [main];
       if (id !== 'sheri') circles.push(makeCircle(0, 0, 9.4, false, main));
-      if (id === 'sheri') circles.push(makeCircle(lerp(-0.8, 0.8, rnd()), 18 + rnd() * 3, 3 + rnd() * 0.6, false));
-      else {
-        var want = id === 'outdoors' ? 4 + Math.floor(rnd() * 3) : 3 + Math.floor(rnd() * 2), box = id === 'outdoors' ? [-24, 24, 2, 38] : [-19, 19, 4, 31], tries = 0;
-        while (circles.length < want + 2 && tries++ < 600) {
+      if (id === 'outdoors') circles.push(makeCircle(0, 0, 13.2, false, main));
+      if (id === 'sheri') {
+        circles.push(makeCircle(lerp(-0.8, 0.8, rnd()), 17 + rnd() * 2, 3 + rnd() * 0.5, false));
+        circles.push(makeCircle(lerp(-1, 1, rnd()), 29 + rnd() * 2, 2.6 + rnd() * 0.5, false));
+        circles.push(makeCircle(lerp(-1, 1, rnd()), 41 + rnd() * 3, 2.8 + rnd() * 0.5, false));
+      } else {
+        var base = circles.length, want = id === 'outdoors' ? 7 + Math.floor(rnd() * 3) : 5 + Math.floor(rnd() * 2), box = id === 'outdoors' ? [-25, 25, -2, 40] : [-20, 20, 2, 32], tries = 0;
+        while (circles.length < want + base && tries++ < 900) {
           var R = rnd() < 0.4 ? 1.6 + rnd() * 1.2 : 2.8 + rnd() * (id === 'outdoors' ? 3 : 2), x = lerp(box[0] + R, box[1] - R, rnd()), z = lerp(box[2] + R, box[3] - R, rnd());
-          var ok = circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + R + 2.8; });
+          var ok = circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + R + 2.4; });
           if (ok) circles.push(makeCircle(x, z, R, false));
         }
       }
       var L = { circles: circles, houses: id === 'sheri' ? houses() : null, stands: id === 'stadium' ? stands() : null, stalls: stallsFor(id) };
       L.walkers = walkersFor(id, L);
+      L.seats = seatsFor(id);
+      L.watchers = watchersFor(id);
+      L.trees = treesFor(id);
+      L.props = propsFor(id, L);
+      L.motes = []; for (var mi = 0; mi < 80; mi++) L.motes.push([lerp(-26, 26, rnd()), rnd() * 9, lerp(-6, 46, rnd()), 0.1 + rnd() * 0.25, rnd() * TAU]);
       layouts[id] = L; return L;
     }
     // Food stalls: where they stand, which way they face (u runs along the counter, v into the stall)
@@ -143,20 +160,22 @@
       return { x: bx[0], z: bx[3] };
     }
     function walkersFor(id, L) {
-      var n = { outdoors: 16, stadium: 10, sheri: 7 }[id], out = [];
+      var n = { outdoors: 32, stadium: 18, sheri: 14 }[id], out = [];
       for (var i = 0; i < n; i++) {
-        var p = freeSpot(id, L), man = rnd() < 0.5;
-        var w = { x: p.x, z: p.z, tx: p.x, tz: p.z, wait: rnd() * 4, speed: 0.9 + rnd() * 0.6, man: man, col: SKIRTS[Math.floor(rnd() * SKIRTS.length)], top: TOPS[Math.floor(rnd() * TOPS.length)], ph: rnd() * TAU, ph2: 0, h: 1.5 + rnd() * 0.3 + (man ? 0.1 : 0), flash: 0, step: rnd() * TAU, walker: true };
+        var p = freeSpot(id, L), kid = rnd() < 0.22, photo = !kid && rnd() < 0.14;
+        var w = person({ x: p.x, z: p.z, tx: p.x, tz: p.z, wait: rnd() * 4, speed: kid ? 1.7 + rnd() * 0.9 : 0.9 + rnd() * 0.6, step: rnd() * TAU, walker: true, kid: kid, photo: photo, snap: 0 });
+        if (kid) w.h = 0.95 + rnd() * 0.3;
         out.push(w);
       }
       return out;
     }
     function moveWalkers(L, id, dt) {
       L.walkers.forEach(function (w) {
-        if (w.wait > 0) { w.wait -= dt; w.moving = false; return; }
+        w.snap = Math.max(0, (w.snap || 0) - dt * 4);
+        if (w.wait > 0) { w.wait -= dt; w.moving = false; if (w.photo && st.on && Math.random() < dt * 0.5) w.snap = 1; return; }
         var dx = w.tx - w.x, dz = w.tz - w.z, d = Math.hypot(dx, dz);
         if (d < 0.3) {
-          w.moving = false; w.wait = 2 + rnd() * 6;
+          w.moving = false; w.wait = w.kid ? 0.5 + rnd() * 2 : 2 + rnd() * 6;
           var target = L.stalls.length && rnd() < 0.35 ? L.stalls[Math.floor(rnd() * L.stalls.length)].front : freeSpot(id, L);
           w.tx = target.x + (rnd() - 0.5) * 1.2; w.tz = target.z + (rnd() - 0.5) * 1.2; return;
         }
@@ -169,6 +188,101 @@
         var vl = Math.hypot(vx, vz) || 1;
         w.x += vx / vl * w.speed * dt; w.z += vz / vl * w.speed * dt; w.step += dt * w.speed * 5.5; w.moving = true;
       });
+    }
+    // Rows of plastic chairs along the sides of an open ground, most of them taken by the older folk watching
+    function seatsFor(id) {
+      var out = [];
+      if (id !== 'outdoors') return out;
+      [-1, 1].forEach(function (sd) {
+        [[-4, 8.5], [32, 41]].forEach(function (span) {
+          for (var z = span[0]; z <= span[1]; z += 1.05) {
+            var taken = rnd() < 0.72, older = rnd() < 0.6;
+            out.push({ x: sd * (24.3 + (Math.round(z) % 2) * 0.1), z: z, side: sd, col: ['#b73a2e', '#2f6fa8', '#d9d2c5', '#2f8f5b'][Math.floor(rnd() * 4)], who: taken ? person({ sitting: true, older: older, rest: { y: 0.45 } }) : null });
+          }
+        });
+      });
+      return out;
+    }
+    // People standing at the barrier in the stadium, cheering now and then
+    function watchersFor(id) {
+      var out = [];
+      if (id !== 'stadium') return out;
+      [-1, 1].forEach(function (sd) { for (var z = -6; z <= 32; z += 0.7 + rnd() * 0.9) out.push(person({ x: sd * (23.9 - rnd() * 0.5), z: z, watcher: true })); });
+      return out;
+    }
+    // Neem and peepal trees ring the open ground; some are wrapped in fairy lights
+    function treesFor(id) {
+      var out = [];
+      if (id !== 'outdoors') return out;
+      function tree(x, z, big) { var n = 5 + Math.floor(rnd() * 3), blobs = []; for (var i = 0; i < n; i++) blobs.push([(rnd() - 0.5) * 4.2, 5 + rnd() * 3.2, (rnd() - 0.5) * 1.5, 1.8 + rnd() * 1.6]); out.push({ x: x, z: z, s: big ? 1.25 : 0.8 + rnd() * 0.4, blobs: blobs, fairy: rnd() < 0.55, hue: Math.floor(rnd() * 6), tone: Math.floor(rnd() * 3) }); }
+      for (var x = -48; x <= 48; x += 6 + rnd() * 4) tree(x, 56 + rnd() * 14, rnd() < 0.3);
+      [-1, 1].forEach(function (sd) { for (var z = -14; z < 56; z += 7 + rnd() * 5) tree(sd * (33 + rnd() * 9), z, rnd() < 0.3); });
+      tree(-29.5, -7, true); tree(30.5, -9.5, true);
+      return out;
+    }
+    function drawTree(tr, t) {
+      var base = P(tr.x, 0, tr.z), top = P(tr.x, 4.6 * tr.s, tr.z); if (!base || !top) return;
+      g.strokeStyle = '#1c130c'; g.lineCap = 'round'; g.lineWidth = Math.max(1.2, base.s * 0.5 * tr.s); g.beginPath(); g.moveTo(base.x, base.y); g.lineTo(top.x, top.y); g.stroke();
+      g.lineWidth = Math.max(0.8, base.s * 0.2 * tr.s); g.beginPath(); g.moveTo(lerp(base.x, top.x, 0.6), lerp(base.y, top.y, 0.6)); g.lineTo(top.x - base.s * 1.3 * tr.s, top.y - base.s * 0.6); g.moveTo(lerp(base.x, top.x, 0.75), lerp(base.y, top.y, 0.75)); g.lineTo(top.x + base.s * 1.2 * tr.s, top.y - base.s * 0.8); g.stroke();
+      var greens = [['#0f1d12', '#1a2c18'], ['#12200f', '#20321a'], ['#0d1a14', '#1a2b22']][tr.tone];
+      tr.blobs.forEach(function (bl, i) {
+        var c = P(tr.x + bl[0] * tr.s, bl[1] * tr.s, tr.z + bl[2] * tr.s); if (!c) return;
+        var r = c.s * bl[3] * tr.s;
+        var gr = g.createRadialGradient(c.x - r * 0.3, c.y - r * 0.4, r * 0.1, c.x, c.y, r); gr.addColorStop(0, greens[1]); gr.addColorStop(1, greens[0]);
+        g.fillStyle = gr; g.beginPath(); g.arc(c.x, c.y, r, 0, TAU); g.fill();
+        // Warm light from the ground catches the underside of the leaves
+        g.fillStyle = 'rgba(' + TH.glowTint + ',' + 0.08 * bright + ')'; g.beginPath(); g.arc(c.x, c.y + r * 0.35, r * 0.7, 0, Math.PI); g.fill();
+      });
+      if (tr.fairy) for (var k = 0; k < 26; k++) {
+        var bl2 = tr.blobs[k % tr.blobs.length], an = k * 2.4, rr = bl2[3] * 0.8 * ((k * 37) % 10) / 10;
+        var q = P(tr.x + (bl2[0] + Math.cos(an) * rr) * tr.s, (bl2[1] + Math.sin(an) * rr * 0.8) * tr.s, tr.z + bl2[2] * tr.s - 0.5); if (!q) continue;
+        glow(q.x, q.y, Math.max(0.5, Math.min(1.8, q.s * 0.05)), TH.bulbs[(tr.hue + k) % TH.bulbs.length], (0.5 + 0.5 * Math.sin(t * 2.2 + k * 1.3)) * bright);
+      }
+    }
+    // Things at the edges that a wide screen shows: parked scooters, a shamiyana, water tanks, tulsi pots, a cow
+    function propsFor(id, L) {
+      var out = [];
+      var cols = ['#b73a2e', '#2f6fa8', '#d9d2c5', '#1c1c1c', '#e8a33d', '#6c8fa3'];
+      if (id === 'outdoors') {
+        [-1, 1].forEach(function (sd) { for (var z = -8; z < 40; z += 1.1) if (rnd() < 0.7) out.push({ kind: 'scooter', x: sd * (30 + rnd() * 1.2), z: z, col: cols[Math.floor(rnd() * cols.length)], side: sd }); });
+        out.push({ kind: 'tent', x: -37, z: 44, col: '#b8312b' }); out.push({ kind: 'tent', x: 37, z: 46, col: '#e8a33d' });
+      } else if (id === 'sheri') {
+        [-1, 1].forEach(function (sd) { for (var z = -6; z < 60; z += 3 + rnd() * 5) { var r = rnd(); out.push(r < 0.45 ? { kind: 'scooter', x: sd * 6.4, z: z, col: cols[Math.floor(rnd() * cols.length)], side: sd } : r < 0.8 ? { kind: 'tulsi', x: sd * 7.05, z: z } : { kind: 'none' }); } });
+        out.push({ kind: 'cow', x: 5.2, z: 23 + rnd() * 6 });
+      }
+      return out.filter(function (o) { return o.kind !== 'none'; });
+    }
+    function prop(o, t) {
+      var p = P(o.x, 0, o.z); if (!p) return;
+      var s = p.s;
+      if (o.kind === 'scooter') {
+        g.fillStyle = '#111'; g.beginPath(); g.arc(p.x - s * 0.5, p.y - s * 0.2, s * 0.2, 0, TAU); g.arc(p.x + s * 0.5, p.y - s * 0.2, s * 0.2, 0, TAU); g.fill();
+        g.fillStyle = o.col; g.beginPath(); g.moveTo(p.x - s * 0.7, p.y - s * 0.35); g.lineTo(p.x + s * 0.2, p.y - s * 0.35); g.lineTo(p.x + s * 0.45, p.y - s * 0.85); g.lineTo(p.x + s * 0.6, p.y - s * 0.85); g.lineTo(p.x + s * 0.55, p.y - s * 0.3); g.lineTo(p.x + s * 0.75, p.y - s * 0.25); g.lineTo(p.x - s * 0.1, p.y - s * 0.6); g.lineTo(p.x - s * 0.7, p.y - s * 0.6); g.closePath(); g.fill();
+        g.fillStyle = '#222'; g.fillRect(p.x - s * 0.62, p.y - s * 0.7, s * 0.55, s * 0.12);
+      } else if (o.kind === 'tent') {
+        var a = P(o.x - 4, 0, o.z), b = P(o.x + 4, 0, o.z), ta = P(o.x - 4, 3.2, o.z), tb = P(o.x + 4, 3.2, o.z), apex = P(o.x, 4.6, o.z); if (!a || !b || !ta || !tb || !apex) return;
+        g.fillStyle = 'rgba(255,200,130,' + 0.14 * bright + ')'; g.fillRect(ta.x, ta.y, tb.x - ta.x, a.y - ta.y);
+        for (var k = 0; k < 8; k++) { var u0 = k / 8, u1 = (k + 1) / 8; g.fillStyle = k % 2 ? '#f3e6d0' : o.col; g.beginPath(); g.moveTo(apex.x, apex.y); g.lineTo(lerp(ta.x, tb.x, u0), ta.y); g.lineTo(lerp(ta.x, tb.x, u1), ta.y); g.closePath(); g.fill(); }
+        g.strokeStyle = '#2a1a10'; g.lineWidth = Math.max(1, a.s * 0.1); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(ta.x, ta.y); g.moveTo(b.x, b.y); g.lineTo(tb.x, tb.y); g.stroke();
+        for (var q = 0; q <= 8; q++) glow(lerp(ta.x, tb.x, q / 8), ta.y + 2, Math.max(0.7, a.s * 0.06), TH.bulbs[q % TH.bulbs.length], 0.8 * bright);
+      } else if (o.kind === 'tulsi') {
+        g.fillStyle = '#8a4b22'; g.fillRect(p.x - s * 0.2, p.y - s * 0.5, s * 0.4, s * 0.5);
+        g.fillStyle = '#e8b04b'; g.fillRect(p.x - s * 0.2, p.y - s * 0.42, s * 0.4, s * 0.05);
+        g.fillStyle = '#2f6b33'; g.beginPath(); g.arc(p.x, p.y - s * 0.72, s * 0.28, 0, TAU); g.arc(p.x - s * 0.15, p.y - s * 0.6, s * 0.18, 0, TAU); g.arc(p.x + s * 0.16, p.y - s * 0.62, s * 0.18, 0, TAU); g.fill();
+        glow(p.x + s * 0.3, p.y - s * 0.05, Math.max(0.6, s * 0.05), '#ffcf7a', (0.7 + 0.3 * Math.sin(t * 8 + o.z)) * bright);
+      } else if (o.kind === 'cow') {
+        g.fillStyle = '#ece3d3'; g.beginPath(); g.ellipse(p.x, p.y - s * 0.45, s * 0.95, s * 0.42, 0, 0, TAU); g.fill();
+        g.fillStyle = '#d9cdb8'; g.beginPath(); g.ellipse(p.x - s * 0.95, p.y - s * 0.72, s * 0.28, s * 0.22, -0.3, 0, TAU); g.fill();
+        g.strokeStyle = '#e8d9b0'; g.lineWidth = Math.max(1, s * 0.06); g.beginPath(); g.moveTo(p.x - s * 1.05, p.y - s * 0.9); g.quadraticCurveTo(p.x - s * 1.2, p.y - s * 1.15, p.x - s * 1.0, p.y - s * 1.2); g.moveTo(p.x - s * 0.85, p.y - s * 0.9); g.quadraticCurveTo(p.x - s * 0.7, p.y - s * 1.15, p.x - s * 0.9, p.y - s * 1.2); g.stroke();
+        g.fillStyle = '#b8312b'; g.beginPath(); g.arc(p.x - s * 0.8, p.y - s * 0.55, s * 0.07, 0, TAU); g.fill();
+        g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(p.x, p.y, s * 1.1, s * 0.12, 0, 0, TAU); g.fill();
+      }
+    }
+    function chair(se) {
+      var sd = se.side, x = se.x, z = se.z, o = sd * 0.22;
+      fillPoly([[x - o, 0.45, z - 0.22], [x + o, 0.45, z - 0.22], [x + o, 0.45, z + 0.22], [x - o, 0.45, z + 0.22]], se.col);
+      fillPoly([[x + o, 0.45, z - 0.22], [x + o, 0.95, z - 0.22], [x + o, 0.95, z + 0.22], [x + o, 0.45, z + 0.22]], se.col);
+      var a = P(x - o, 0, z), b = P(x - o, 0.45, z); if (a && b) { g.strokeStyle = se.col; g.lineWidth = Math.max(0.7, a.s * 0.04); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); }
     }
     function houses() {
       var list = [], cols = ['#3a4468', '#5e4526', '#5c3040', '#28524f', '#5b5241', '#4a3a5e'];
@@ -363,6 +477,54 @@
       // Wooden floor boards running away from you
       g.strokeStyle = 'rgba(255,220,170,.035)'; g.lineWidth = 1;
       for (var fx = -24; fx <= 24; fx += 1.6) { var f0 = P(fx, 0, Math.max(cam.z + 1.5, -14)), f1 = P(fx, 0, 42); if (f0 && f1) { g.beginPath(); g.moveTo(f0.x, f0.y); g.lineTo(f1.x, f1.y); g.stroke(); } }
+      // Roof, risers and the seated crowd only change when the camera moves, so they are cached while the view is still
+      standsLayer(L);
+      // LED ribbon along the front of the stands
+      var hue = TH.hues[0];
+      [[[-28, 0.2, 41.9], [28, 0.2, 41.9]], [[-24.9, 0.2, -34], [-24.9, 0.2, 41.9]], [[24.9, 0.2, -34], [24.9, 0.2, 41.9]]].forEach(function (seg, si) {
+        var a0 = seg[0], b0 = seg[1];
+        if (poly([[a0[0], 0.2, a0[2]], [b0[0], 0.2, b0[2]], [b0[0], 1.2, b0[2]], [a0[0], 1.2, a0[2]]])) {
+          var pa = P(a0[0], 0.7, Math.max(a0[2], cam.z + 1)), pb = P(b0[0], 0.7, b0[2]);
+          if (pa && pb) { var lg = g.createLinearGradient(pa.x, pa.y, pb.x, pb.y); for (var k = 0; k <= 5; k++) lg.addColorStop(k / 5, 'hsl(' + (TH.hues[(k + si) % TH.hues.length] + 20 * Math.sin(t * TH.speed + k)) + ',' + TH.sat + '%,' + (30 + 12 * bright + 8 * pulse) + '%)'); g.fillStyle = lg; g.fill(); }
+        }
+      });
+      // Phone lights twinkle over the cached crowd
+      for (i = 0; i < L.stands.length; i++) {
+        var pp = L.stands[i]; if (pp.p < 0 || !st.on || Math.sin(t * 1.7 + pp.p) <= 0.55) continue;
+        var p = pp.side === 0 ? P(pp.u, 1.3 + pp.row * 0.95 + 0.35, 42 + pp.row * 1.5 + 0.4) : P(pp.side * (25 + pp.row * 1.5 + 0.4), 1.3 + pp.row * 0.95 + 0.35, pp.u);
+        if (!p || p.x < -4 || p.x > W + 4) continue;
+        var sz = Math.max(1, p.s * 0.34); glow(p.x, p.y - sz, Math.max(0.8, sz * 0.4), '#f4f7ff', 0.9);
+      }
+      stage({ x0: -8, x1: 8, z: 35.5, h: 1.4, screenTop: 6.8, truss: 8.4, arrays: 10 }, t, 'stadium');
+      // Banners hanging over the stands, exit signs by the aisles, and big screens up in the corners
+      [-1, 1].forEach(function (sd) {
+        for (var bz = -24; bz <= 36; bz += 10) {
+          var bx = sd * 25.1, col = TH.flags[((bz + 40) / 10 + (sd > 0 ? 1 : 0)) % TH.flags.length];
+          fillPoly([[bx, 5.5, bz - 1.1], [bx, 5.5, bz + 1.1], [bx, 2.4, bz + 1.1], [bx, 1.8, bz], [bx, 2.4, bz - 1.1]], col);
+          fillPoly([[bx - sd * 0.01, 5.1, bz - 0.8], [bx - sd * 0.01, 5.1, bz + 0.8], [bx - sd * 0.01, 4.9, bz + 0.8], [bx - sd * 0.01, 4.9, bz - 0.8]], '#e8b04b');
+          var ex = P(sd * 25.05, 1.9, bz + 5); if (ex) { var es = Math.max(2, ex.s * 0.5); g.fillStyle = '#1f8f4b'; g.fillRect(ex.x - es / 2, ex.y - es * 0.3, es, es * 0.6); }
+        }
+        if (poly([[sd * 34, 11, 44], [sd * 22, 11, 44], [sd * 22, 17, 44], [sd * 34, 17, 44]])) {
+          var sc = P(sd * 28, 14, 44), sw = P(sd * 34, 14, 44);
+          var lg = g.createLinearGradient(sw.x, 0, sc.x, 0); lg.addColorStop(0, 'hsl(' + TH.hues[0] + ',' + TH.sat + '%,' + (14 + 6 * bright) + '%)'); lg.addColorStop(1, 'hsl(' + TH.hues[TH.hues.length - 1] + ',' + TH.sat + '%,' + (20 + 10 * pulse) + '%)');
+          g.fillStyle = lg; g.fill();
+          if (sc) { g.strokeStyle = 'rgba(255,236,200,' + (0.25 + 0.3 * pulse) + ')'; g.lineWidth = 1; g.beginPath(); g.arc(sc.x, sc.y, sc.s * 1.8, 0, TAU); g.stroke(); }
+        }
+      });
+    }
+    var standsCache = null, standsKey = '';
+    function standsLayer(L) {
+      var settled = Math.abs(view.k - (st.listener === 'far' ? 1 : 0)) < 0.002;
+      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), st.density.toFixed(2)].join('|');
+      if (settled && standsCache && standsKey === key) { g.drawImage(standsCache, 0, 0, W, H); return; }
+      if (!settled) { drawStands(L); return; }
+      standsCache = standsCache || document.createElement('canvas');
+      standsCache.width = canvas.width; standsCache.height = canvas.height;
+      var live = g, cg = standsCache.getContext('2d'); cg.setTransform(DPR, 0, 0, DPR, 0, 0); cg.clearRect(0, 0, W, H);
+      g = cg; drawStands(L); g = live; standsKey = key;
+      g.drawImage(standsCache, 0, 0, W, H);
+    }
+    function drawStands(L) {
       // Roof trusses
       g.strokeStyle = 'rgba(140,125,160,.18)'; g.lineWidth = 1;
       for (var z = -30; z <= 60; z += 10) { var a = P(-40, 22, z), b = P(40, 22, z); if (a && b) { g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); } }
@@ -375,28 +537,16 @@
       [-1, 1].forEach(function (s) {
         for (var row = 8; row >= 0; row--) { var xr = s * (25 + row * 1.5), y = 1.3 + row * 0.95; fillPoly([[xr, y - 0.95, -34], [xr, y - 0.95, 42], [xr, y, 42], [xr, y, -34]], 'rgb(' + (22 + row) + ',' + (19 + row) + ',' + (30 + row) + ')'); }
       });
-      // LED ribbon along the front of the stands
-      var hue = TH.hues[0];
-      [[[-28, 0.2, 41.9], [28, 0.2, 41.9]], [[-24.9, 0.2, -34], [-24.9, 0.2, 41.9]], [[24.9, 0.2, -34], [24.9, 0.2, 41.9]]].forEach(function (seg, si) {
-        var a0 = seg[0], b0 = seg[1];
-        if (poly([[a0[0], 0.2, a0[2]], [b0[0], 0.2, b0[2]], [b0[0], 1.2, b0[2]], [a0[0], 1.2, a0[2]]])) {
-          var pa = P(a0[0], 0.7, Math.max(a0[2], cam.z + 1)), pb = P(b0[0], 0.7, b0[2]);
-          if (pa && pb) { var lg = g.createLinearGradient(pa.x, pa.y, pb.x, pb.y); for (var k = 0; k <= 5; k++) lg.addColorStop(k / 5, 'hsl(' + (TH.hues[(k + si) % TH.hues.length] + 20 * Math.sin(t * TH.speed + k)) + ',' + TH.sat + '%,' + (30 + 12 * bright + 8 * pulse) + '%)'); g.fillStyle = lg; g.fill(); }
-        }
-      });
-      // Crowd in the stands, with phone lights here and there
       var cols = ['#c9a37a', '#b76b5a', '#8f7aa8', '#d4b58c', '#6c8fa3', '#caa0b8'];
-      for (i = 0; i < L.stands.length; i++) {
+      for (var i = 0; i < L.stands.length; i++) {
         var pp = L.stands[i], p;
         if (pp.c / 6 + (i % 7) / 42 > 0.25 + st.density) continue;
         if (pp.side === 0) p = P(pp.u, 1.3 + pp.row * 0.95 + 0.35, 42 + pp.row * 1.5 + 0.4);
         else p = P(pp.side * (25 + pp.row * 1.5 + 0.4), 1.3 + pp.row * 0.95 + 0.35, pp.u);
         if (!p || p.x < -4 || p.x > W + 4 || p.y < -4 || p.y > H) continue;
         var sz = Math.max(1, p.s * 0.34);
-        if (pp.p >= 0 && st.on && Math.sin(t * 1.7 + pp.p) > 0.55) glow(p.x, p.y - sz, Math.max(0.8, sz * 0.4), '#f4f7ff', 0.9);
-        else { g.fillStyle = cols[pp.c]; g.globalAlpha = 0.75; g.fillRect(p.x - sz / 2, p.y - sz, sz, sz); g.globalAlpha = 1; }
+        g.fillStyle = cols[pp.c]; g.globalAlpha = 0.75; g.fillRect(p.x - sz / 2, p.y - sz, sz, sz); g.globalAlpha = 1;
       }
-      stage({ x0: -8, x1: 8, z: 35.5, h: 1.4, screenTop: 6.8, truss: 8.4, arrays: 10 }, t, 'stadium');
     }
     function stadiumOver(t) {
       // Bunting across the hall, then hanging lanterns, then moving spotlights
@@ -481,6 +631,8 @@
       if (h.bulbs) for (var cq = h.z1 + 0.6; cq < h.z2 - 0.3; cq += 1.1) for (var cy2 = h.h - 0.8; cy2 > 1.2; cy2 -= 0.9) { var cp = P(X - h.side * 0.05, cy2, cq); if (cp && cp.x > -10 && cp.x < W + 10) glow(cp.x, cp.y, Math.min(1.6, Math.max(0.5, cp.s * 0.04)), TH.bulbs[(h.hue + Math.round(cy2)) % TH.bulbs.length], (0.55 + 0.35 * Math.sin(t * 3 + cq + cy2 * 2) + pulse * 0.2) * bright); }
       if (h.bulbs) for (var q = h.z1 + 0.3; q < h.z2; q += 0.7) { var bp = P(X, h.h - 0.1, q); if (bp) glow(bp.x, bp.y, Math.min(2.4, Math.max(0.6, bp.s * 0.06)), TH.bulbs[h.hue % TH.bulbs.length], (0.75 + pulse * 0.25) * bright); }
       if (h.rangoli) { var rp = P(X - h.side * 1.4, 0, (h.z1 + h.z2) / 2); if (rp) rangoli(rp, h.hue); }
+      if (h.hue % 2 === 0) { var tz = (h.z1 + h.z2) / 2, tk = P(X + h.side * 1.4, h.h, tz), tk2 = P(X + h.side * 1.4, h.h + 1.2, tz); if (tk && tk2) { var tw2 = Math.max(2, tk.s * 0.6); g.fillStyle = '#16141a'; g.fillRect(tk.x - tw2 / 2, tk2.y, tw2, tk.y - tk2.y); g.fillStyle = '#1f1d24'; g.beginPath(); g.ellipse(tk.x, tk2.y, tw2 / 2, tw2 * 0.12, 0, 0, TAU); g.fill(); } }
+      if (h.hue % 3 === 1) { var az = h.z1 + 1, a0 = P(X + h.side * 0.5, h.h, az), a1 = P(X + h.side * 0.5, h.h + 1.6, az); if (a0 && a1) { g.strokeStyle = 'rgba(30,26,34,.9)'; g.lineWidth = 1; g.beginPath(); g.moveTo(a0.x, a0.y); g.lineTo(a1.x, a1.y); g.moveTo(a1.x - a1.s * 0.4, a1.y + a1.s * 0.2); g.lineTo(a1.x + a1.s * 0.4, a1.y + a1.s * 0.2); g.stroke(); } }
     }
     function archWindow(X, y, z, hw, hh, col) {
       var a = P(X, y, z - hw), b = P(X, y, z + hw), c = P(X, y + hh * 0.7, z + hw), d = P(X, y + hh * 0.7, z - hw), top = P(X, y + hh * 1.12, z);
@@ -528,6 +680,45 @@
           g.fillStyle = '#ffd58a'; g.fillText(sl.sign, sp.x, sp.y + fs * 0.12);
         }
       }
+    }
+
+    /* ---------- the mandvi: a small decorated canopy over the central garbo ---------- */
+    function mandvi(ctr, part, t) {
+      var cx = ctr.x, cz = ctr.z, r = 1.0, top = 2.85, posts = [[-r, -r], [r, -r], [r, r], [-r, r]];
+      posts.forEach(function (q) {
+        var front = q[1] < 0; if ((part === 'front') !== front) return;
+        var a = P(cx + q[0], 0, cz + q[1]), b = P(cx + q[0], top, cz + q[1]); if (!a || !b) return;
+        g.strokeStyle = '#7a1a14'; g.lineWidth = Math.max(1, a.s * 0.09); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+        g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(0.6, a.s * 0.03); g.stroke();
+      });
+      if (part !== 'front') return;
+      // Roof: a shallow dome with a kalash on top, bulbs round the edge and a fringe of toran
+      var c = P(cx, top, cz), apex = P(cx, top + 1.05, cz); if (!c || !apex) return;
+      var ex = P(cx + r * 1.12, top, cz); var rx = ex ? Math.abs(ex.x - c.x) : c.s * r, ry = rx * Math.max(0.12, (cam.y - top) / Math.max(4, c.z) * 0.9 + 0.08);
+      g.fillStyle = '#6b1a14'; g.beginPath(); g.ellipse(c.x, c.y, rx, Math.abs(ry), 0, 0, TAU); g.fill();
+      g.beginPath(); g.moveTo(c.x - rx, c.y); g.quadraticCurveTo(c.x - rx * 0.2, apex.y - (c.y - apex.y) * 0.1, c.x, apex.y); g.quadraticCurveTo(c.x + rx * 0.2, apex.y - (c.y - apex.y) * 0.1, c.x + rx, c.y); g.closePath();
+      var dg = g.createLinearGradient(0, apex.y, 0, c.y); dg.addColorStop(0, '#e8b04b'); dg.addColorStop(1, '#9b1f1a'); g.fillStyle = dg; g.fill();
+      g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(c.x, apex.y - c.s * 0.12, Math.max(1, c.s * 0.13), 0, TAU); g.fill();
+      for (var k = 0; k < 14; k++) {
+        var an = k / 14 * TAU, bx = c.x + Math.cos(an) * rx, by = c.y + Math.sin(an) * Math.abs(ry);
+        if (Math.sin(an) > -0.2) { var fs = Math.max(1, c.s * 0.1); g.fillStyle = TH.flags[k % TH.flags.length]; g.beginPath(); g.moveTo(bx - fs, by); g.lineTo(bx + fs, by); g.lineTo(bx, by + fs * 1.8); g.closePath(); g.fill(); }
+        glow(bx, by, Math.max(0.7, Math.min(2.2, c.s * 0.05)), TH.bulbs[k % TH.bulbs.length], (0.7 + 0.3 * Math.sin(t * 3 + k) + pulse * 0.2) * bright);
+      }
+    }
+    // Rangoli under the garbo: petals, a ring of dots and a bright centre, laid on the ground in perspective
+    function rangoliAt(ctr, t) {
+      var cols = [TH.flags[0], '#f4a261', '#2a9d8f', TH.flags[2 % TH.flags.length], '#e9c46a'];
+      function blob(pts, col, a) { var first = true; g.beginPath(); for (var i = 0; i < pts.length; i++) { var q = P(pts[i][0], 0.01, pts[i][1]); if (!q) return; if (first) { g.moveTo(q.x, q.y); first = false; } else g.lineTo(q.x, q.y); } g.closePath(); g.globalAlpha = a; g.fillStyle = col; g.fill(); g.globalAlpha = 1; }
+      var ring = []; for (var k = 0; k < 24; k++) { var a0 = k / 24 * TAU; ring.push([ctr.x + Math.cos(a0) * 1.6, ctr.z + Math.sin(a0) * 1.6]); }
+      blob(ring, '#3a1d12', 0.55);
+      for (var pt = 0; pt < 8; pt++) {
+        var an = pt / 8 * TAU, pts = [];
+        for (var j = 0; j <= 10; j++) { var u = j / 10 * TAU, px = Math.cos(u) * 0.55 + 0.75, pz = Math.sin(u) * 0.24; pts.push([ctr.x + Math.cos(an) * px - Math.sin(an) * pz, ctr.z + Math.sin(an) * px + Math.cos(an) * pz]); }
+        blob(pts, cols[pt % cols.length], 0.85);
+      }
+      var inner = []; for (var m = 0; m < 16; m++) { var a1 = m / 16 * TAU; inner.push([ctr.x + Math.cos(a1) * 0.5, ctr.z + Math.sin(a1) * 0.5]); }
+      blob(inner, '#f6c342', 0.9);
+      for (var d = 0; d < 20; d++) { var a2 = d / 20 * TAU, q = P(ctr.x + Math.cos(a2) * 1.45, 0.01, ctr.z + Math.sin(a2) * 1.45); if (q) { g.fillStyle = '#fff3d6'; g.beginPath(); g.arc(q.x, q.y, Math.max(0.5, q.s * 0.04), 0, TAU); g.fill(); } }
     }
 
     /* ---------- the garbo ---------- */
@@ -604,7 +795,7 @@
     }
     function figure(p, d, T, isYou, beatPh, fade) {
       var s = p.s, x = p.x, y = p.y, h = d.h * s, up = d.flash > 0.25;
-      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = !d.walker && !d.role && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce;
+      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = !d.walker && !d.role && !d.watcher && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
       if (d.sitting) h *= 0.64;
       var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || dancing || playing ? Math.sin(ph) : 0;
       y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
@@ -614,6 +805,15 @@
       if (!near) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
       var skin = tint(SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], dk), main = tint(isYou ? '#f3e6d0' : d.col, dk), top = tint(isYou ? '#d6b06f' : d.top, dk), gold = tint('#e8b04b', dk);
       var fine = h > 26 && !near, lw = Math.max(0.8, h * 0.034);
+      if (h < 11 && !isYou) {
+        // Far away: a few shapes read as a person and keep a big crowd cheap to draw
+        if (d.man) { g.fillStyle = tint('#efe6d6', dk); g.fillRect(x - h * 0.07, y - h * 0.44, h * 0.14, h * 0.44); g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.09, y - h * 0.8); g.lineTo(x + h * 0.09, y - h * 0.8); g.lineTo(x + h * 0.2, y - h * 0.42); g.lineTo(x - h * 0.2, y - h * 0.42); g.fill(); }
+        else { var fl0 = h * (0.25 + 0.12 * tw); g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.56); g.lineTo(x + h * 0.08, y - h * 0.56); g.lineTo(x + fl0, y); g.lineTo(x - fl0, y); g.fill(); g.fillStyle = top; g.fillRect(x - h * 0.075, y - h * 0.79, h * 0.15, h * 0.24); }
+        g.fillStyle = skin; g.beginPath(); g.arc(x, y - h * 0.885, h * 0.078, 0, TAU); g.fill();
+        if (up || dancing || tw > 0.3) { g.strokeStyle = skin; g.lineWidth = Math.max(0.6, h * 0.05); g.beginPath(); var ay = up ? 0.27 : 0.14 + 0.1 * sw; g.moveTo(x - h * 0.08, y - h * 0.76); g.lineTo(x - h * 0.18, y - h * (0.76 + ay)); g.moveTo(x + h * 0.08, y - h * 0.76); g.lineTo(x + h * 0.18, y - h * (0.76 + (up ? 0.27 : 0.14 - 0.1 * sw))); g.stroke(); }
+        if (d.flash > 0.05) glow(x, y - h * 1.03, Math.max(0.8, h * 0.05), '#fff0d0', d.flash);
+        g.globalAlpha = 1; return;
+      }
       g.lineCap = 'round'; g.lineJoin = 'round';
       if (d.man) {
         // Churidar legs and mojari
@@ -627,13 +827,19 @@
         g.moveTo(x - h * 0.08, y - h * 0.8); g.lineTo(x + h * 0.08, y - h * 0.8); g.lineTo(x + h * 0.085, y - h * 0.62);
         g.quadraticCurveTo(x + fl * 0.8, y - h * 0.52, x + fl, y - h * 0.42); g.quadraticCurveTo(x, y - h * 0.38, x - fl, y - h * 0.42);
         g.quadraticCurveTo(x - fl * 0.8, y - h * 0.52, x - h * 0.085, y - h * 0.62); g.closePath(); g.fill();
+        if (fine) { g.fillStyle = gold; for (var em = -2; em <= 2; em++) { g.beginPath(); g.arc(x + em * h * 0.032, y - h * 0.7 + Math.abs(em) * h * 0.012, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); } }
         if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(x - fl, y - h * 0.425); g.quadraticCurveTo(x, y - h * 0.385, x + fl, y - h * 0.425); g.stroke(); g.beginPath(); g.moveTo(x, y - h * 0.8); g.lineTo(x, y - h * 0.63); g.stroke(); }
       } else {
         // Chaniya with a bordered hem, then the choli and a strip of waist
-        var flare = h * (0.25 + (dancing ? 0.045 * sw : walking ? 0.01 * sw : 0)), hem = y - h * 0.01;
+        var flare = h * (0.25 + (dancing ? 0.045 * sw : walking ? 0.01 * sw : 0) + 0.16 * tw), hem = y - h * 0.01 - h * 0.03 * tw;
         g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.075, y - h * 0.55); g.lineTo(x + h * 0.075, y - h * 0.55);
         g.quadraticCurveTo(x + flare * 0.75, y - h * 0.22, x + flare, hem); g.quadraticCurveTo(x, hem + h * 0.05, x - flare, hem); g.quadraticCurveTo(x - flare * 0.75, y - h * 0.22, x - h * 0.075, y - h * 0.55); g.fill();
         g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.035); g.beginPath(); g.moveTo(x - flare * 0.97, hem - h * 0.015); g.quadraticCurveTo(x, hem + h * 0.035, x + flare * 0.97, hem - h * 0.015); g.stroke();
+        if (fine) {
+          var ty = y - h * 0.3, tfl = h * 0.075 + (flare - h * 0.075) * 0.55;
+          g.strokeStyle = tint(d.tier || d.top, dk); g.lineWidth = Math.max(1, h * 0.028); g.beginPath(); g.moveTo(x - tfl, ty); g.quadraticCurveTo(x, ty + h * 0.03, x + tfl, ty); g.stroke();
+          if (dancing || walking) { g.fillStyle = tint('#7a1a14', dk); var fx = sw * h * 0.04; g.beginPath(); g.ellipse(x - h * 0.06 + fx, y + h * 0.01, h * 0.035, h * 0.014, 0, 0, TAU); g.ellipse(x + h * 0.06 - fx, y + h * 0.01, h * 0.035, h * 0.014, 0, 0, TAU); g.fill(); }
+        }
         if (fine) {
           g.strokeStyle = 'rgba(0,0,0,.14)'; g.lineWidth = 1;
           for (var pl = -2; pl <= 2; pl++) { g.beginPath(); g.moveTo(x + pl * h * 0.02, y - h * 0.5); g.lineTo(x + pl * flare * 0.33, hem); g.stroke(); }
@@ -643,32 +849,37 @@
         g.fillStyle = top; g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.07, y - h * 0.6); g.lineTo(x - h * 0.07, y - h * 0.6); g.closePath(); g.fill();
         // Odhni over one shoulder, falling behind
         g.strokeStyle = tint(isYou ? '#d6b06f' : d.odhni || d.top, dk); g.globalAlpha *= 0.85; g.lineWidth = Math.max(1, h * 0.04);
-        g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.78); g.quadraticCurveTo(x + h * 0.02, y - h * 0.62, x + h * 0.09, y - h * 0.56); g.quadraticCurveTo(x + h * (0.16 + 0.04 * sw), y - h * 0.48, x + h * (0.18 + 0.05 * sw), y - h * 0.3); g.stroke();
+        g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.78); g.quadraticCurveTo(x + h * 0.02, y - h * 0.62, x + h * 0.09, y - h * 0.56); g.quadraticCurveTo(x + h * (0.16 + 0.04 * sw + 0.1 * tw), y - h * 0.48, x + h * (0.18 + 0.05 * sw + 0.14 * tw), y - h * 0.3); g.stroke();
         g.globalAlpha /= 0.85;
+        if (fine) { g.fillStyle = 'rgba(255,248,225,.75)'; [0.25, 0.5, 0.75].forEach(function (u) { var ox = lerp(x - h * 0.08, x + h * 0.09, u), oy = lerp(y - h * 0.78, y - h * 0.56, u); g.beginPath(); g.arc(ox, oy, Math.max(0.6, h * 0.009), 0, TAU); g.fill(); }); }
       }
       // Neck and head
       g.fillStyle = skin; g.fillRect(x - h * 0.022, y - h * 0.83, h * 0.044, h * 0.05);
       g.beginPath(); g.arc(x, y - h * 0.885, h * 0.068, 0, TAU); g.fill();
       if (d.man) {
-        g.fillStyle = tint(isYou ? '#d6b06f' : d.pagdi || '#b8312b', dk);
+        if (fine && d.moustache) { g.strokeStyle = tint('#1f130d', dk); g.lineWidth = Math.max(0.8, h * 0.012); g.beginPath(); g.moveTo(x - h * 0.03, y - h * 0.862); g.quadraticCurveTo(x, y - h * 0.872, x + h * 0.03, y - h * 0.862); g.stroke(); }
+        g.fillStyle = tint(isYou ? '#d6b06f' : d.older ? '#f3e6d0' : d.pagdi || '#b8312b', dk);
         g.beginPath(); g.ellipse(x, y - h * 0.935, h * 0.078, h * 0.052, 0, Math.PI, 0); g.lineTo(x + h * 0.078, y - h * 0.925); g.lineTo(x - h * 0.078, y - h * 0.925); g.fill();
         if (fine) { g.beginPath(); g.moveTo(x + h * 0.06, y - h * 0.94); g.quadraticCurveTo(x + h * 0.13, y - h * 0.9, x + h * 0.1, y - h * 0.84); g.lineWidth = Math.max(1, h * 0.02); g.strokeStyle = g.fillStyle; g.stroke(); }
       } else {
-        g.fillStyle = tint('#1f130d', dk); g.beginPath(); g.ellipse(x, y - h * 0.905, h * 0.074, h * 0.05, 0, Math.PI, 0); g.fill();
+        g.fillStyle = tint(d.older ? '#9a948c' : '#1f130d', dk); g.beginPath(); g.ellipse(x, y - h * 0.905, h * 0.074, h * 0.05, 0, Math.PI, 0); g.fill();
         g.beginPath(); g.arc(x, y - h * 0.965, h * 0.034, 0, TAU); g.fill();
-        if (fine) { g.fillStyle = '#c0392b'; g.beginPath(); g.arc(x, y - h * 0.9, Math.max(0.6, h * 0.008), 0, TAU); g.fill(); g.fillStyle = gold; g.beginPath(); g.arc(x - h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.arc(x + h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); }
+        if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(0.6, h * 0.008); g.beginPath(); g.moveTo(x, y - h * 0.955); g.lineTo(x, y - h * 0.925); g.stroke(); g.fillStyle = gold; g.beginPath(); g.arc(x, y - h * 0.922, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.fillStyle = '#c0392b'; g.beginPath(); g.arc(x, y - h * 0.9, Math.max(0.6, h * 0.008), 0, TAU); g.fill(); g.fillStyle = gold; g.beginPath(); g.arc(x - h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.arc(x + h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); }
       }
       // Arms: shoulder, elbow, hand
       var shy = y - h * 0.76, L = [x - h * 0.08, shy], R = [x + h * 0.08, shy], le, lh, re, rh;
       if (d.role === 'singer') { le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09]; re = [x + h * 0.16, shy + h * 0.02 - sw * h * 0.04]; rh = [x + h * 0.24, shy - h * 0.1 - sw * h * 0.08]; }
       else if (d.role === 'dhol') { var hit = Math.max(0, sw); le = [x - h * 0.16, shy + h * 0.1]; lh = [x - h * 0.22, shy + h * (0.2 - 0.06 * hit)]; re = [x + h * 0.16, shy + h * 0.1]; rh = [x + h * 0.22, shy + h * (0.2 - 0.06 * Math.max(0, -sw))]; }
       else if (d.role === 'keys') { le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.1 + sw * h * 0.02, shy + h * 0.26]; re = [x + h * 0.14, shy + h * 0.14]; rh = [x + h * 0.1 - sw * h * 0.02, shy + h * 0.26]; }
+      else if (d.photo && !walking) { le = [x - h * 0.12, shy + h * 0.06]; lh = [x - h * 0.04, shy - h * 0.1]; re = [x + h * 0.12, shy + h * 0.06]; rh = [x + h * 0.04, shy - h * 0.1]; }
+      else if (tw > 0.3) { le = [x - h * 0.17, shy - h * 0.1]; lh = [x - h * 0.24, shy - h * 0.24]; re = [x + h * 0.17, shy - h * 0.1]; rh = [x + h * 0.24, shy - h * 0.24]; }
       else if (up) { le = [x - h * 0.13, shy - h * 0.12]; lh = [x - h * 0.012, shy - h * 0.27]; re = [x + h * 0.13, shy - h * 0.12]; rh = [x + h * 0.012, shy - h * 0.27]; }
       else if (dancing) { le = [x - h * 0.18, shy + h * (0.02 - 0.06 * sw)]; lh = [x - h * 0.22, shy - h * (0.1 + 0.14 * sw)]; re = [x + h * 0.18, shy + h * (0.02 + 0.06 * sw)]; rh = [x + h * 0.22, shy - h * (0.1 - 0.14 * sw)]; }
       else { var a1 = walking ? sw * 0.05 : 0; le = [x - h * 0.11, shy + h * 0.15]; lh = [x - h * (0.12 + a1), shy + h * 0.3]; re = [x + h * 0.11, shy + h * 0.15]; rh = [x + h * (0.12 - a1), shy + h * 0.3]; }
       g.strokeStyle = skin; g.lineWidth = lw;
       g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(le[0], le[1]); g.lineTo(lh[0], lh[1]); g.moveTo(R[0], R[1]); g.lineTo(re[0], re[1]); g.lineTo(rh[0], rh[1]); g.stroke();
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
+      if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
       if (d.role === 'singer') { g.strokeStyle = tint('#222222', dk); g.lineWidth = Math.max(1, h * 0.025); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lh[0] + h * 0.02, lh[1] + h * 0.08); g.stroke(); }
       if (st.style === 'dandiya' && !d.walker && !d.role) {
         // On the beat the two sticks cross and strike; between beats they are held out, swinging with the step
@@ -683,7 +894,7 @@
       g.globalAlpha = 1;
       if (isYou) {
         g.fillStyle = 'rgba(214,176,111,' + (0.25 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, p.y, h * (0.32 + youGlow * 0.12), h * 0.09, 0, 0, TAU); g.fill();
-        label('You', Math.max(28, Math.min(W - 28, x)), Math.max(26, y - h * 1.14), h);
+        youLabel = { x: Math.max(28, Math.min(W - 28, x)), y: Math.max(26, y - h * 1.14), h: h };
       }
     }
     function label(text, x, y, h) {
@@ -699,7 +910,7 @@
     function seat(k) {
       if (k < 0.02) return;
       g.save(); g.translate(BX, BY); g.globalAlpha = Math.min(1, k * 1.4);
-      var W = BW, H = BH, yb = H, u = W / 380, v = st.venue, x0 = W * 0.5;
+      var W = BW, H = BH, yb = H, u = Math.min(1.45, W / 380), v = st.venue, x0 = W * 0.5;
       if (v === 'stadium') {
         for (var r = 0; r < 2; r++) {
           var yy = yb - H * 0.05 - r * H * 0.075;
@@ -711,9 +922,11 @@
         seated(x0, yb - H * 0.13, u);
       } else if (v === 'outdoors') {
         g.fillStyle = 'rgba(12,8,6,.8)'; g.fillRect(0, yb - H * 0.07, W, H * 0.07);
-        for (var c = 0; c < 6; c++) { var cx = W * (0.1 + c * 0.16); g.fillStyle = ['#b73a2e', '#2f6fa8', '#d9d2c5'][c % 3]; roundRect(cx - 17 * u, yb - H * 0.11, 34 * u, 7 * u, 3 * u); g.fill(); g.fillRect(cx - 15 * u, yb - H * 0.11 - 26 * u, 30 * u, 5 * u); g.fillRect(cx - 14 * u, yb - H * 0.11, 3 * u, H * 0.06); g.fillRect(cx + 11 * u, yb - H * 0.11, 3 * u, H * 0.06); }
-        [0, 1, 4, 5].forEach(function (c) { spectator(W * (0.1 + c * 0.16), yb - H * 0.11, u, c); });
-        seated(W * (0.1 + 2 * 0.16) + 8 * u, yb - H * 0.11, u);
+        // A row of plastic chairs as wide as the screen, most taken, with you on one near the middle
+        var nC = Math.max(6, Math.round(W / (62 * u))), mine = Math.floor(nC / 2) - (nC % 2 ? 0 : 1);
+        for (var c = 0; c < nC; c++) { var cx = W * (c + 0.5) / nC; g.fillStyle = ['#b73a2e', '#2f6fa8', '#d9d2c5'][c % 3]; roundRect(cx - 17 * u, yb - H * 0.11, 34 * u, 7 * u, 3 * u); g.fill(); g.fillRect(cx - 15 * u, yb - H * 0.11 - 26 * u, 30 * u, 5 * u); g.fillRect(cx - 14 * u, yb - H * 0.11, 3 * u, H * 0.06); g.fillRect(cx + 11 * u, yb - H * 0.11, 3 * u, H * 0.06); }
+        for (var sc2 = 0; sc2 < nC; sc2++) if (sc2 !== mine && (sc2 * 7) % 5 !== 2) spectator(W * (sc2 + 0.5) / nC, yb - H * 0.11, u, sc2);
+        seated(W * (mine + 0.5) / nC, yb - H * 0.11, u);
       } else {
         g.fillStyle = '#2a2330'; g.fillRect(0, yb - H * 0.1, W * 0.78, H * 0.1);
         g.fillStyle = '#3a3140'; g.fillRect(0, yb - H * 0.1, W * 0.78, 5 * u);
@@ -801,11 +1014,12 @@
         var ctr = circleCentre(c, T), dd = Math.max(0, Math.hypot(you.x - ctr.x, you.z - ctr.z) - c.R), t0 = bt - dd / V;
         firstT0 = Math.min(firstT0, t0);
         var share = 0.5 + 0.45 * st.level;
-        c.dancers.forEach(function (d, di) { if (d.atHome && ((ci === 0 && di === 0 && !far) || rnd() < share)) d.clapAt = t0 + d.lag; });
+        c.dancers.forEach(function (d, di) { if (d.atHome && ((ci === 0 && di === 0 && !far) || rnd() < share)) d.clapAt = t0 + d.lag; if (d.atHome && !(ci === 0 && di === 0) && rnd() < 0.04) d.twirl = 1; });
         if ((c.present || 0) < 0.15) return;
         waves.push({ kind: 'front', c: c, t0: t0, a: (c.main ? 0.6 : 0.42) * (far ? 1.1 : 1) * Math.min(1, (c.present || 0) * 1.2), col: col, lim: Math.max(10, dd + 3) });
       });
       arrivals.push({ t: bt, g: 1 });
+      L.watchers.forEach(function (wt) { if (rnd() < 0.12) wt.clapAt = bt; });
       reflectors(you).forEach(function (r) {
         var dr = Math.hypot(you.x - r.x, you.z - r.z), s0 = Math.max(firstT0, bt + r.d - dr / V);
         waves.push({ kind: 'echo', x: r.x, y: r.y, z: r.z, t0: s0, a: Math.min(0.5, 0.1 + r.l), lim: dr * 1.05, aim: Math.atan2(you.z - r.z, you.x - r.x) });
@@ -847,7 +1061,7 @@
     }
 
     /* ---------- frame ---------- */
-    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 };
+    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null;
     function frame(ms) {
       if (!running) return;
       var dt = Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0.016); lastMs = ms;
@@ -886,11 +1100,11 @@
       L.circles.forEach(function (c, ci) {
         if (ci > 1 && (ci - 1) / L.circles.length > st.density) return;
         var ctr = circleCentre(c, T);
-        if (c.main) { progressRing(ctr, c.R + 0.7, t); var lp = P(ctr.x, 0, ctr.z); if (lp) items.push({ z: lp.z, kind: 'lamp', p: lp, main: true }); }
+        if (c.main) { rangoliAt(ctr, t); progressRing(ctr, c.R + 0.7, t); var lp = P(ctr.x, 0, ctr.z); if (lp) items.push({ z: lp.z, kind: 'lamp', p: lp, main: true, ctr: ctr }); }
         var home = 0;
         c.dancers.forEach(function (d, di) {
           if (d.clapAt && t >= d.clapAt) { d.flash = 1; d.clapAt = 0; }
-          d.flash *= Math.exp(-dt * 7);
+          d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2);
           var slot = dancerWorld(c, d, T, ctr), w = travel(d, slot, dt);
           if (d.atHome) home++;
           var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z);
@@ -902,15 +1116,37 @@
       if (!reduce) moveWalkers(L, st.venue, dt);
       L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
+      L.trees.forEach(function (tr) { var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
+      L.props.forEach(function (o) { var p = P(o.x, 0, o.z); if (p && p.z > 2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'prop', o: o }); });
+      L.seats.forEach(function (se) { var p = P(se.x, 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
+      L.watchers.forEach(function (wt) { if (wt.clapAt && t >= wt.clapAt) { wt.flash = 1; wt.clapAt = 0; } wt.flash *= Math.exp(-dt * 3); var p = P(wt.x, 0, wt.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: wt, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       items.sort(function (a, b2) { return b2.z - a.z; });
+      youLabel = null;
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
       items.forEach(function (it) {
-        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
+        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; if (st.venue !== 'sheri') mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (st.venue !== 'sheri') mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
+        else if (it.kind === 'tree') drawTree(it.tr, t);
+        else if (it.kind === 'prop') prop(it.o, t);
+        else if (it.kind === 'seat') { chair(it.se); if (it.se.who) figure(it.p, it.se.who, T, false, beatPh, it.fade); }
         else figure(it.p, it.d, T, it.you, beatPh, it.you ? 1 : it.fade);
       });
 
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
+      // Your label always sits on top, so you can find yourself in the crowd
+      if (youLabel) label('You', youLabel.x, youLabel.y, youLabel.h);
+
+      // Dust and moths drifting up through the light
+      if (!reduce && st.venue !== 'sheri') {
+        g.save(); g.globalCompositeOperation = 'lighter';
+        L.motes.forEach(function (m) {
+          m[1] += m[3] * dt; if (m[1] > 9) m[1] = 0.3;
+          var q = P(m[0] + Math.sin(T * 0.4 + m[4]) * 0.4, m[1], m[2]); if (!q || q.x < 0 || q.x > W) return;
+          g.fillStyle = 'rgba(' + TH.glowTint + ',' + 0.35 * bright * (0.6 + 0.4 * Math.sin(T * 2 + m[4])) + ')';
+          g.fillRect(q.x, q.y, Math.max(1, q.s * 0.03), Math.max(1, q.s * 0.03));
+        });
+        g.restore();
+      }
 
       // Waves
       for (var i = waves.length - 1; i >= 0; i--) {
