@@ -275,7 +275,7 @@
         out.push({ x: -10.6, y: 7.1, z: -30.9, kind: 'stand', who: person({ stander: true, phone: true, sway: 1 }) });
         out.push({ x: 10.4, y: 7.1, z: -31, kind: 'stand', who: person({ stander: true, sway: 2 }) });
         out.push({ x: 0, y: 6.2, z: -30.1, kind: 'runner', who: person({ kid: true, h: 1.05, walker: true, moving: true, step: 0 }) });
-      } else {
+      } else if (id === 'sheri') {
         out.push({ x: -3, y: 0.45, z: -19.2, kind: 'benchPlank', w: 2 });
         sitter(-3.35, 0.45, -19.2, 'bench', 'w'); sitter(-2.6, 0.45, -19.2, 'bench', 'm'); sitter(-4.15, 0.45, -19.2, 'bench', null);
         out.push({ x: -1.2, y: 0, z: -18.6, kind: 'stand', who: person({ stander: true, phone: true, sway: 0.5 }) });
@@ -396,8 +396,12 @@
         return;
       }
       if (ga.kind === 'chair') fillPoly([[ga.x - 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z + 0.22], [ga.x - 0.22, 0.45, ga.z + 0.22]], ga.col);
-      if (ga.who) ga.who.backWord = ga.who.seatRole && (ga.view || 'far') === st.listener ? coupleWord(ga.who.seatRole === (st.youAs === 'man' ? 'm' : 'w'), ga.who.man) : null;
+      if (ga.who) { ga.who.backWord = null; ga.who.headAt = null; }
       if (ga.who) backFigure(ga.kind === 'stand' || ga.kind === 'runner' ? P(ga.x, ga.y, ga.z) : p, ga.who, T0, ga.kind === 'runner');
+      if (ga.who && ga.who.seatRole && (ga.view || 'far') === st.listener && ga.who.headAt) {
+        var youSeat = ga.who.seatRole === (st.youAs === 'man' ? 'm' : 'w'), lab = { x: ga.who.headAt.x, y: ga.who.headAt.y, h: ga.who.h * p.s, man: ga.who.man, hx: ga.who.headAt.x, hy: ga.who.headAt.y };
+        if (youSeat) youLabel = lab; else partnerLabel = lab;
+      }
       if (ga.kind === 'chair') {
         // The chair back sits between you and the sitter, so only their shoulders and head show above it
         fillPoly([[ga.x - 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.98, ga.z - 0.25], [ga.x - 0.22, 0.98, ga.z - 0.25]], ga.col);
@@ -451,6 +455,7 @@
       // Neck and the back of the head
       g.fillStyle = skin; g.fillRect(x - h * 0.022, sh - h * 0.05, h * 0.044, h * 0.05);
       var hy = sh - h * 0.105;
+      d.headAt = { x: x, y: hy - h * 0.085 };
       if (d.man) { g.fillStyle = skin; g.beginPath(); g.arc(x, hy, h * 0.066, 0, TAU); g.fill(); g.fillStyle = d.older ? '#f3e6d0' : d.pagdi || '#b8312b'; g.beginPath(); g.ellipse(x, hy - h * 0.025, h * 0.078, h * 0.058, 0, Math.PI, 0); g.lineTo(x + h * 0.078, hy - h * 0.005); g.lineTo(x - h * 0.078, hy - h * 0.005); g.fill(); }
       else { g.fillStyle = hair; g.beginPath(); g.arc(x, hy, h * 0.07, 0, TAU); g.fill(); g.beginPath(); g.arc(x, hy + h * 0.055, h * 0.036, 0, TAU); g.fill(); g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(x, hy + h * 0.055, Math.max(0.6, h * 0.012), 0, TAU); g.fill(); }
     }
@@ -1235,7 +1240,7 @@
       g.globalAlpha = 1;
       if (isYou) {
         g.fillStyle = 'rgba(214,176,111,' + (0.25 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, p.y, h * (0.32 + youGlow * 0.12), h * 0.09, 0, 0, TAU); g.fill();
-        youLabel = { x: Math.max(16, Math.min(W - 16, x)), y: Math.max(30, y - h * 1.08), h: h, man: d.coupleRole === 'm' };
+        youLabel = { x: x, y: y - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: x, hy: y - h * 0.97 };
       }
     }
     function fogBand(f) {
@@ -1258,10 +1263,13 @@
     // In Gujarati: તું (you) over you, and તારો or તારી (yours) over your partner, on a small leaf-shaped tag
     var GU_FONT = '"Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", FreeSerif, system-ui, sans-serif';
     function coupleWord(you, man) { return you ? 'તું' : man ? 'તારો' : 'તારી'; }
-    function tag(x, y, h, you, man, T0) {
-      var text = coupleWord(you, man), fs = Math.max(12, Math.min(17, h * 0.15));
+    function tagSize(h, compact) { var fs = compact ? Math.max(10, Math.min(13, h * 0.08)) : Math.max(12, Math.min(17, h * 0.15)); return { fs: fs, hh: fs * 1.55, tip: fs * 0.55 }; }
+    function tag(x, y, h, you, man, T0, compact, lead) {
+      var text = coupleWord(you, man), z = tagSize(h, compact), fs = z.fs;
       g.font = '700 ' + fs + 'px ' + GU_FONT; g.textAlign = 'center';
-      var w = Math.max(fs * 1.9, g.measureText(text).width + fs * 1.1), hh = fs * 1.55, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 2, top = y - hh - fs * 0.7 + bob;
+      var w = Math.max(fs * 1.9, g.measureText(text).width + fs * 1.1), hh = z.hh, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 1.5, top = y - hh - z.tip - 3 + bob;
+      x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x));
+      if (lead) { g.strokeStyle = you ? 'rgba(232,176,75,.8)' : 'rgba(243,230,208,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, top + hh + z.tip); g.lineTo(lead.x, lead.y); g.stroke(); }
       if (you) glow(x, top + hh * 0.5, hh * 0.5, 'rgba(255,210,130,1)', 0.2 + youGlow * 0.35);
       g.beginPath(); g.moveTo(x - w / 2, top + hh * 0.35); g.quadraticCurveTo(x - w / 2, top, x - w / 2 + hh * 0.35, top); g.lineTo(x + w / 2 - hh * 0.35, top); g.quadraticCurveTo(x + w / 2, top, x + w / 2, top + hh * 0.35);
       g.lineTo(x + w / 2, top + hh * 0.7); g.quadraticCurveTo(x + w / 2, top + hh, x + w / 2 - hh * 0.3, top + hh); g.lineTo(x + fs * 0.35, top + hh); g.lineTo(x, top + hh + fs * 0.55); g.lineTo(x - fs * 0.35, top + hh); g.lineTo(x - w / 2 + hh * 0.3, top + hh); g.quadraticCurveTo(x - w / 2, top + hh, x - w / 2, top + hh * 0.7); g.closePath();
@@ -1292,7 +1300,8 @@
     function partnerMark(p, d) {
       var h = d.h * p.s;
       g.fillStyle = 'rgba(214,176,111,.22)'; g.beginPath(); g.ellipse(p.x, p.y, h * 0.3, h * 0.08, 0, 0, TAU); g.fill();
-      partnerLabel = { x: Math.max(16, Math.min(W - 16, p.x)), y: Math.max(30, p.y - h * 1.06), h: h, man: d.coupleRole === 'm' };
+      var by = p.y - (st.on && !reduce ? Math.abs(Math.sin(BEAT * Math.PI + d.ph)) * 0.05 * p.s : 0);
+      partnerLabel = { x: p.x, y: by - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: p.x, hy: by - h * 0.97 };
     }
     function label(text, x, y, h, soft) {
       var fs = Math.max(soft ? 10 : 11, Math.min(soft ? 12.5 : 14, h * 0.2));
@@ -1567,10 +1576,14 @@
       FOGF = 0;
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       // Your label always sits on top, so you can find yourself in the crowd
-      // You dance side by side, so keep the two tags from overlapping
-      if (partnerLabel && youLabel) { var gap = 50, dxl = partnerLabel.x - youLabel.x; if (Math.abs(dxl) < gap && Math.abs(partnerLabel.y - youLabel.y) < 40) { var push = (gap - Math.abs(dxl)) / 2, sgn = dxl >= 0 ? 1 : -1; partnerLabel.x += sgn * push; youLabel.x -= sgn * push; } }
-      if (partnerLabel) tag(partnerLabel.x, partnerLabel.y, partnerLabel.h, false, partnerLabel.man, T);
-      if (youLabel) tag(youLabel.x, youLabel.y, youLabel.h, true, youLabel.man, T);
+      // Each tag rests on its own head. If the two would overlap, your partner's is lifted above yours with a line down to their head.
+      var compact = st.listener !== 'circle', lead = null;
+      if (partnerLabel && youLabel) {
+        var zs = tagSize(youLabel.h, compact), need = zs.hh + zs.tip + 6, wide = zs.fs * 2.6;
+        if (Math.abs(partnerLabel.x - youLabel.x) < wide && Math.abs(partnerLabel.y - youLabel.y) < need) { lead = { x: partnerLabel.hx, y: partnerLabel.y - 2 }; partnerLabel.y = Math.min(partnerLabel.y, youLabel.y) - need; }
+      }
+      if (partnerLabel) tag(partnerLabel.x, partnerLabel.y, partnerLabel.h, false, partnerLabel.man, T, compact, lead);
+      if (youLabel) tag(youLabel.x, youLabel.y, youLabel.h, true, youLabel.man, T, compact, null);
 
       // Dust and moths drifting up through the light
       if (!reduce && st.venue !== 'sheri') {
