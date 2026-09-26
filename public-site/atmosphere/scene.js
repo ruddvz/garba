@@ -56,6 +56,8 @@
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
     var waves = [], arrivals = [], haze = 0, youGlow = 0, pulse = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
+    // Render quality steps down on its own when frames run slow: first fewer pixels, then a smaller crowd
+    var PIXELS = 2.4e6, QP = 1, QD = 1, slowFor = 0, frameMs = 16;
     var reduce = !!opts.reduceMotion;
     var clock = opts.clock || function () { return performance.now() / 1000; };
     var venues = opts.venues || {};
@@ -390,17 +392,17 @@
       }
       return out.filter(function (o) { return o.kind !== 'none'; });
     }
-    // The near end of the lane, as you see it from the bench: the house on your right is purple with a white van
+    // Up the lane from the bench: the house on your right is purple with a white van
     // parked in front of it, and a motorbike and an Activa stand across the lane edges
     function sheriStreet(L) {
-      var zc = -7.5, right = L.houses.filter(function (h) { return h.side > 0 && h.z1 <= zc && h.z2 >= zc; })[0];
+      var zc = 1.5, right = L.houses.filter(function (h) { return h.side > 0 && h.z1 <= zc && h.z2 >= zc; })[0];
       if (right) right.col = '#7a4f9e';
       var vz0 = zc - 1.9, vz1 = zc + 1.9;
       L.props = L.props.filter(function (o) { return !(o.x > 3 && o.z > vz0 - 1 && o.z < vz1 + 1) && !(o.z > -14.5 && o.z < -9 && Math.abs(o.x) > 4); });
       L.seats = L.seats.filter(function (se) { return !(se.x > 3 && se.z > vz0 - 1 && se.z < vz1 + 1); });
       L.props.push({ kind: 'van', x: 5.3, z: zc });
       L.props.push({ kind: 'bike', x: -5.5, z: -12.2, side: -1, col: '#1c1c1c' });
-      L.props.push({ kind: 'activa', x: -5.55, z: -7.8, side: -1, col: '#e9e7e1' });
+      L.props.push({ kind: 'activa', x: -5.55, z: 3.2, side: -1, col: '#e9e7e1' });
       L.props.push({ kind: 'activa', x: 5.55, z: -12.4, side: 1, col: '#2f6fa8' });
       L.props.push({ kind: 'bike', x: -5.4, z: 12.5, side: -1, col: '#8e1b2c' });
     }
@@ -646,9 +648,15 @@
       // Light towers with floodlights, and the pools of light they throw
       [-31, 31].forEach(function (x) {
         var pool = P(x * 0.55, 0, 14); if (pool) { var pr = pool.s * 9, pg = g.createRadialGradient(pool.x, pool.y, 1, pool.x, pool.y, pr); pg.addColorStop(0, 'rgba(' + TH.glowTint + ',' + 0.12 * bright + ')'); pg.addColorStop(1, 'rgba(' + TH.glowTint + ',0)'); g.fillStyle = pg; g.beginPath(); g.ellipse(pool.x, pool.y, pr, pr * 0.3, 0, 0, TAU); g.fill(); }
-        var base = P(x, 0, 16), top = P(x, 15, 16); if (!base || !top) return;
+        var base = P(x, 0, 16), top = P(x, 11, 16); if (!base || !top) return;
         g.strokeStyle = '#1c1511'; g.lineWidth = Math.max(1, base.s * 0.3); g.beginPath(); g.moveTo(base.x, base.y); g.lineTo(top.x, top.y); g.stroke();
-        for (var k = 0; k < 4; k++) glow(top.x + (k - 1.5) * top.s * 0.7, top.y, Math.max(1.2, Math.min(4, top.s * 0.28)), '#fff4dc', bright);
+        // The lamp head: a dark frame of four lamps angled down at the ground, with the light falling from it
+        var hw = top.s * 1.6, hh = top.s * 0.9, hx = top.x - hw / 2, hy = top.y - hh;
+        var beam = g.createLinearGradient(top.x, top.y, pool ? pool.x : top.x, pool ? pool.y : top.y + 200);
+        beam.addColorStop(0, 'rgba(255,240,210,' + 0.1 * bright + ')'); beam.addColorStop(1, 'rgba(255,240,210,0)');
+        if (pool) { g.fillStyle = beam; g.beginPath(); g.moveTo(hx, top.y); g.lineTo(hx + hw, top.y); g.lineTo(pool.x + pool.s * 6, pool.y); g.lineTo(pool.x - pool.s * 6, pool.y); g.closePath(); g.fill(); }
+        g.fillStyle = '#16110e'; g.fillRect(hx - 1, hy - 1, hw + 2, hh + 2);
+        for (var k = 0; k < 4; k++) glow(hx + hw * (k % 2 ? 0.72 : 0.28), hy + hh * (k < 2 ? 0.3 : 0.72), Math.max(1, Math.min(3.4, top.s * 0.22)), '#fff4dc', 0.35 + 0.65 * bright);
       });
       // Trees beyond the stage go behind it; the rest are sorted in with the crowd
       layout('outdoors').trees.filter(function (tr) { return tr.z >= 44; }).sort(function (a, b) { return b.z - a.z; }).forEach(function (tr) { drawTree(tr, t); });
@@ -850,7 +858,7 @@
       L.circles.forEach(function (c) { if (!c.shown) return; c.dancers.forEach(function (d) { if (d.wx == null) return; dot(d.wx, d.wz, d.col, d.man ? dr * 0.85 : dr * (1 + 0.4 * (d.twirl || 0)), d.man ? d.pagdi || '#b8312b' : '#1f130d', d.flash || 0, d.twirl || 0); }); });
       var sm = dr * 0.72;
       L.standers.forEach(function (p) { dot(p.x, p.z, p.top || p.col, sm, '#1f130d', 0); });
-      L.walkers.forEach(function (p, i) { if (i / L.walkers.length <= st.density) dot(p.x, p.z, p.top || p.col, sm, '#1f130d', 0); });
+      L.walkers.forEach(function (p, i) { if (i / L.walkers.length <= (st.density * QD)) dot(p.x, p.z, p.top || p.col, sm, '#1f130d', 0); });
       L.kids.forEach(function (p) { dot(p.x, p.z, p.top || p.col, sm * 0.75, '#1f130d', 0); });
       L.gallery.forEach(function (ga) { if (ga.who && ga.view === 'stage') dot(ga.x, ga.z, ga.who.top || ga.who.col, sm, ga.who.man ? ga.who.pagdi || '#b8312b' : '#1f130d', 0); });
       // A shot, not a map: the corners fall off into shadow
@@ -1232,7 +1240,7 @@
     var standsCache = null, standsKey = '';
     function standsLayer(L) {
       var settled = camSettled;
-      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), st.density.toFixed(2)].join('|');
+      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), (st.density * QD).toFixed(2)].join('|');
       if (settled && standsCache && standsKey === key) { g.drawImage(standsCache, 0, 0, W, H); return; }
       if (!settled) { drawStands(L); return; }
       standsCache = standsCache || document.createElement('canvas');
@@ -1257,7 +1265,7 @@
       var cols = ['#c9a37a', '#b76b5a', '#8f7aa8', '#d4b58c', '#6c8fa3', '#caa0b8'];
       for (var i = 0; i < L.stands.length; i++) {
         var pp = L.stands[i], p;
-        if (pp.c / 6 + (i % 7) / 42 > 0.25 + st.density) continue;
+        if (pp.c / 6 + (i % 7) / 42 > 0.25 + (st.density * QD)) continue;
         if (pp.side === 0) p = P(pp.u, 1.3 + pp.row * 0.95 + 0.35, 42 + pp.row * 1.5 + 0.4);
         else p = P(pp.side * (25 + pp.row * 1.5 + 0.4), 1.3 + pp.row * 0.95 + 0.35, pp.u);
         if (!p || p.x < -4 || p.x > W + 4 || p.y < -4 || p.y > H) continue;
@@ -2026,7 +2034,7 @@
       }
     }
 
-    /* ---------- the song's progress, traced counterclockwise from the front of the main circle ---------- */
+    /* ---------- the song's progress, traced counterclockwise round the garbo, just outside its rangoli ---------- */
     function progressRing(ctr, r, t) {
       var start = -Math.PI / 2;
       g.lineCap = 'round';
@@ -2049,7 +2057,13 @@
     var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null, lightAt = null;
     function frame(ms) {
       if (!running) return;
-      var dt = Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0.016); lastMs = ms;
+      var dt = Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0.016);
+      if (lastMs && !document.hidden) {
+        var gap = ms - lastMs; if (gap < 250) frameMs += (gap - frameMs) * 0.05;
+        slowFor = frameMs > 28 ? slowFor + gap : 0;
+        if (slowFor > 2500 && (QP > 0.5 || QD > 0.55)) { if (QP > 0.5) { QP = Math.max(0.5, QP - 0.25); resize(); } else QD = Math.max(0.55, QD - 0.2); slowFor = 0; frameMs = 20; }
+      }
+      lastMs = ms;
       var t = clock();
       if (!reduce) T += dt;
       TH = THEMES[st.theme] || THEMES.traditional;
@@ -2103,10 +2117,10 @@
       var items = [], beatPh = 0, b = opts.beats && opts.beats();
       if (b) beatPh = ((t - b.anchor) / b.period) % 2; else beatPh = T * 1.8;
       L.circles.forEach(function (c, ci) {
-        c.shown = !(ci > 1 && (ci - 1) / L.circles.length > st.density);
+        c.shown = !(ci > 1 && (ci - 1) / L.circles.length > (st.density * QD));
         if (!c.shown) return;
         var ctr = circleCentre(c, T);
-        if (c.main) { rangoliAt(ctr, t); progressRing(ctr, c.R + 0.7, t); var lp = P(ctr.x, 0, ctr.z); if (lp) items.push({ z: lp.z, kind: 'lamp', p: lp, main: true, ctr: ctr }); }
+        if (c.main) { rangoliAt(ctr, t); progressRing(ctr, 2.25, t); var lp = P(ctr.x, 0, ctr.z); if (lp) items.push({ z: lp.z, kind: 'lamp', p: lp, main: true, ctr: ctr }); }
         var home = 0;
         c.dancers.forEach(function (d, di) {
           if (d.clapAt && t >= d.clapAt) { d.flash = 1; d.clapAt = 0; }
@@ -2126,7 +2140,7 @@
       L.standers.forEach(function (sd0) { if (sd0.clapAt && t >= sd0.clapAt) { sd0.flash = 1; sd0.clapAt = 0; } sd0.flash *= Math.exp(-dt * 4); var p = P(sd0.x, 0, sd0.z); if (p && p.z > (st.dj ? 3 : 2.5) && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: sd0, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       var nearCut = st.dj ? 3 : 2.5;
       L.kids.forEach(function (k) { var p = P(k.x, 0, k.z); if (p && p.z > nearCut && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: k, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
-      L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.z > nearCut && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
+      L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > (st.density * QD)) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.z > nearCut && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
       L.trees.forEach(function (tr) { if (tr.z >= 44) return; var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
       if (DJ[st.venue]) { var djb = DJ[st.venue], djp = P(djb.x, 0, djb.z); if (djp && djp.z > 1 && djp.x > -80 && djp.x < W + 80) items.push({ z: djp.z + 0.3, kind: 'dj', b: djb }); }
@@ -2219,8 +2233,9 @@
 
     function resize() {
       var r = canvas.getBoundingClientRect();
-      DPR = Math.min(2, window.devicePixelRatio || 1);
       W = Math.max(1, r.width); H = Math.max(1, r.height);
+      // At most about 2.4 million pixels a frame: phones keep full sharpness, big screens draw a little softer
+      DPR = Math.max(0.75, Math.min(2, window.devicePixelRatio || 1, Math.sqrt(PIXELS * QP * QP / (W * H))));
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
       layoutBox(); statics = {}; fade = null;
     }
