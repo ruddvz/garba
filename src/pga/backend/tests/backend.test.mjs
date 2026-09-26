@@ -20,6 +20,7 @@ import { replaceDailyMetrics } from '../lib/d1.js'
 import { searchDemandSql } from '../lib/search-analytics.js'
 import { istDateKey, istDayBounds, previousClosedIstDate, shiftIstDate } from '../lib/time.js'
 import { normalizeEdgeDimensions, sanitizeSearchTerm, validateBatch, validateEvent } from '../lib/validation.js'
+import { MAX_BODY_BYTES } from '../lib/constants.js'
 import { handleIngest } from '../ingest-worker.js'
 import { handleAdmin } from '../admin-worker.js'
 import { rollupDay } from '../rollup-worker.js'
@@ -249,6 +250,51 @@ test('search demand SQL enforces the minimum-volume privacy threshold', () => {
 test('precision metadata becomes estimated when source rows were sampled', () => {
   assert.deepEqual(precisionFromRows([{ max_sample_interval: 1 }]), { sampled: false, precision: 'exact' })
   assert.deepEqual(precisionFromRows([{ max_sample_interval: 4 }]), { sampled: true, precision: 'estimated' })
+})
+
+test('ingestion enforces the maximum body size limit precisely', async () => {
+  const env = {
+    PGA_HMAC_SECRET: 'server-secret',
+    EVENTS: { writeDataPoint() {} },
+    PRESENCE: { writeDataPoint() {} },
+    BROWSER_RATE_LIMITER: { limit: async () => ({ success: true }) },
+  }
+
+  const exactBuffer = new Uint8Array(MAX_BODY_BYTES)
+  exactBuffer.fill(32) // spaces, invalid JSON but structurally within limits
+  const exactStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(exactBuffer)
+      controller.close()
+    },
+  })
+  const requestExact = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: exactStream,
+    duplex: 'half',
+  })
+  const resExact = await handleIngest(requestExact, env, { nowMs: NOW })
+  // 400 because it's invalid JSON (not 413 body too large)
+  assert.equal(resExact.status, 400)
+
+  const overBuffer = new Uint8Array(MAX_BODY_BYTES + 1)
+  overBuffer.fill(32)
+  const overStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(overBuffer)
+      controller.close()
+    },
+  })
+  const requestOver = new Request('https://events.playgarba.com/v1/events', {
+    method: 'POST',
+    headers: { origin: 'https://playgarba.com', 'content-type': 'application/json' },
+    body: overStream,
+    duplex: 'half',
+  })
+  const resOver = await handleIngest(requestOver, env, { nowMs: NOW })
+  // 413 because it exceeds MAX_BODY_BYTES
+  assert.equal(resOver.status, 413)
 })
 
 test('ingestion rejects foreign origins', async () => {
