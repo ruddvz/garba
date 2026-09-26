@@ -696,19 +696,22 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 .utilities { position: relative; }
 .utilities > .view-switch {
   position: absolute; top: calc(100% + 5px); right: 0; z-index: 70;
-  display: flex; align-items: center; gap: 7px; padding: 3px 8px; border: 1px solid rgba(214,176,111,.28); border-radius: 999px;
+  display: flex; align-items: center; padding: 2px; border: 1px solid rgba(214,176,111,.34); border-radius: 999px;
   background: rgba(16,12,10,.88); color: var(--ivory); box-shadow: 0 8px 22px rgba(0,0,0,.22);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
 .utilities > .view-switch button {
-  min-width: 48px; min-height: 44px; display: grid; place-items: center; padding: 0 8px; border: 0; border-radius: 999px;
-  background: rgba(246,236,215,.16); color: inherit; cursor: pointer;
+  position: relative; width: 76px; min-width: 76px; height: 44px; min-height: 44px; display: block; padding: 0; border: 0; border-radius: 999px;
+  background: rgba(246,236,215,.08); color: inherit; cursor: pointer; touch-action: manipulation;
 }
-.utilities > .view-switch > span { color: var(--muted); font: 600 11px/1 var(--sans); }
-.view-switch-control > span { width: 20px; height: 20px; border-radius: 50%; background: var(--ivory); transition: transform .18s var(--ease), background .18s var(--ease); }
-.view-switch-control[aria-checked="true"] { background: var(--accent) !important; }
-.view-switch-control[aria-checked="true"] > span { transform: translateX(8px); background: #17131b; }
+.view-switch-control .view-switch-detail { position: absolute; left: 10px; top: 50%; width: 7px; height: 7px; border-radius: 50%; transform: translateY(-50%); background: #df554c; box-shadow: 0 0 9px rgba(223,85,76,.52); }
+.view-switch-icon { position: absolute; top: 50%; left: 27px; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); transition: left .18s var(--ease), color .18s var(--ease); }
+.view-switch-icon-immersive { opacity: 0; }
+.view-switch-control[aria-checked="true"] .view-switch-icon-simple { opacity: 0; }
+.view-switch-control[aria-checked="true"] .view-switch-icon-immersive { left: 49px; opacity: 1; color: var(--accent); }
 .utilities > .view-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .view-switch-icon { transition: none; } }
+@media (forced-colors: active) { .utilities > .view-switch, .utilities > .view-switch button { border: 1px solid ButtonText; } .view-switch-control .view-switch-detail { background: ButtonText; box-shadow: none; } }
 
 /* The More card: a small panel from the top right, no dimmed backdrop */
 .more-card {

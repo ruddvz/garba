@@ -86,9 +86,11 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.4"></circle><circle cx="12" cy="12" r="1.4"></circle><circle cx="18.5" cy="12" r="1.4"></circle></svg>
           </button>
           <div class="view-switch" role="group" aria-label="Player view">
-            <span>Simple</span>
-            <button type="button" class="view-switch-control" role="switch" aria-label="Immersive view" aria-checked="false" data-view-switch><span></span></button>
-            <span>Immersive</span>
+            <button type="button" class="view-switch-control" role="switch" aria-label="Immersive view" aria-checked="false" data-view-switch>
+              <span class="view-switch-detail" aria-hidden="true"></span>
+              <svg class="view-switch-icon view-switch-icon-simple" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="view-switch-icon view-switch-icon-immersive" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
         </nav>
       </header>
