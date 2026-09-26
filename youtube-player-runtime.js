@@ -68,6 +68,27 @@
     return currentSongFrom(safeSongs);
   }
 
+  // Tracks cut from one long recording (a nonstop album on one YouTube video) share its video. A track with no
+  // duration of its own runs until the next track in that video starts.
+  let slicesFor = null;
+  let slicesIndex = new Map();
+  function laterSliceStart(song, id, start) {
+    if (slicesFor !== safeSongs) {
+      slicesFor = safeSongs;
+      slicesIndex = new Map();
+      for (const entry of safeSongs) {
+        if (!entry?.youtubeId || !(Number(entry.youtubeStartSeconds) >= 0)) continue;
+        const key = String(entry.youtubeId).trim();
+        if (!slicesIndex.has(key)) slicesIndex.set(key, []);
+        slicesIndex.get(key).push(Number(entry.youtubeStartSeconds));
+      }
+    }
+    const starts = slicesIndex.get(id) || [];
+    let next = Infinity;
+    for (const value of starts) if (value > start + 1 && value < next) next = value;
+    return Number.isFinite(next) ? next : null;
+  }
+
   function currentBootSong() {
     return currentSongFrom(bootSongs());
   }
@@ -665,9 +686,43 @@
     }
   }
 
+  // The next track of the same recording, already playing at its first second: keep playing and only change what
+  // the player shows, so a nonstop album cut into tracks runs without a gap between them.
+  function continueSameRecording(song, id, { resume = true, retry = false } = {}) {
+    if (retry || !player || !activeSong || activeSong.id === song.id || activeVideoId !== id) return false;
+    if (String(song.id || '').startsWith('nonstop:') || String(activeSong.id || '').startsWith('nonstop:')) return false;
+    if (playerState !== states().PLAYING && playerState !== states().BUFFERING) return false;
+    if (startOverride?.songId === song.id) return false;
+    const start = Math.max(0, Number(song.youtubeStartSeconds || 0));
+    let now = 0;
+    try {
+      if (String(player.getVideoData?.()?.video_id || '').trim() !== id) return false;
+      now = Number(player.getCurrentTime?.() || 0);
+    } catch {
+      return false;
+    }
+    if (!(now > start - 3 && now < start + 5)) return false;
+    if (resume && restoreElapsed(song) > 3) return false;
+    activeSong = song;
+    baseStart = start;
+    const next = laterSliceStart(song, id, start);
+    trackDuration = Math.max(0, Number(song.durationSeconds || 0)) || (next ? next - start : 0);
+    lastPersistedSecond = -1;
+    lastMediaSessionPositionKey = '';
+    advanceLock = false;
+    prepareStageForSong(song, id);
+    setPlaying(true);
+    setProgressState(Math.max(0, now - start), trackDuration);
+    window.dispatchEvent(new CustomEvent('garba:playback-state-change', {
+      detail: Object.freeze({ playing: true, loading: false, songId: song.id }),
+    }));
+    return true;
+  }
+
   async function open(song, { autoplay = true, resume = true, retry = false } = {}) {
     if (!canControl(song)) return false;
     const id = videoId(song);
+    if (autoplay && continueSameRecording(song, id, { resume, retry })) return true;
     const token = ++openToken;
     if (!retry) retryCount = 0;
 
@@ -675,7 +730,8 @@
     stopPolling();
     activeSong = song;
     baseStart = Math.max(0, Number(song.youtubeStartSeconds || 0));
-    trackDuration = Math.max(0, Number(song.durationSeconds || 0));
+    const nextSliceStart = laterSliceStart(song, id, baseStart);
+    trackDuration = Math.max(0, Number(song.durationSeconds || 0)) || (nextSliceStart ? nextSliceStart - baseStart : 0);
     playerState = -1;
     lastPersistedSecond = -1;
     lastMediaSessionPositionKey = '';
@@ -700,7 +756,9 @@
       if (token !== openToken || activeRequestGeneration !== token || activeSong?.id !== song.id) return false;
 
       const startSeconds = baseStart + logicalStart;
-      const endSeconds = trackDuration > 0 ? baseStart + trackDuration : undefined;
+      // When another track of this recording follows, the video keeps running past this one's end; the progress
+      // check moves to the next track at the boundary and the video plays straight on into it
+      const endSeconds = trackDuration > 0 && !nextSliceStart ? baseStart + trackDuration : undefined;
       const request = { videoId: id, startSeconds };
       if (Number.isFinite(endSeconds) && endSeconds > startSeconds) request.endSeconds = endSeconds;
 
