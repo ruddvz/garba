@@ -104,6 +104,7 @@ const expectedScriptEntrypoints = [
   'audit-youtube-health.mjs',
   'build-catalogue.mjs',
   'build-vercel-site.mjs',
+  'enforce-protected-main.mjs',
   'enrich-runtime-songs.mjs',
   'generate-licensing-request.mjs',
   'match-vendor-catalogue.mjs',
