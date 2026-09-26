@@ -65,7 +65,7 @@
     ensureFrame(); overlay.hidden = false;
     closeCard(false);
     app.setAttribute('aria-hidden', 'true'); app.inert = true;
-    if (!frame.src) frame.src = new URL('./garbo/prototype/?live=1&embed=1', location.href).href;
+    if (!frame.src) frame.src = new URL('./garbo/prototype/?live=1&embed=1&v=20260926-3', location.href).href;
     window.addEventListener('message', onMessage);
     sendSnapshot(true);
     clearInterval(syncTimer);
