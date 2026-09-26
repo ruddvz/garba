@@ -1282,56 +1282,69 @@
     }
   }
 
-  function renderBrowser() {
-    const sets = state.allSets || getProgressiveSets();
-    if (!sets || !$('nonstopBrowser')) return;
-    const list = $('nonstopBrowserList');
-    if (!sets.length && !state.allSets) {
-      if (list) {
-        list.setAttribute('aria-busy', 'true');
-        list.innerHTML = '<div class="nonstop-browser-empty">Loading Nonstop Garba…</div>';
-      }
-      return;
-    }
-
-    const searched = searchSets(sets, state.browserQuery);
-    const categoryFiltered = searched.filter((set) => matchesCategory(set, state.browserCategory));
-    const filtered = state.browserQuery.trim()
-      ? categoryFiltered
-      : sortForView(categoryFiltered, state.browserCategory);
-
+  function renderCategoryNav(searched) {
     const categoryNav = $('nonstopBrowserCategories');
-    if (categoryNav) {
-      if (categoryNav.children.length === categoryDefinitions.length) {
-        categoryDefinitions.forEach(([id, label], index) => {
-          const button = categoryNav.children[index];
-          const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
-          const text = `${label} ${count}`;
-          if (button.textContent !== text) button.textContent = text;
-          const active = state.browserCategory === id;
-          button.classList.toggle('active', active);
-          button.setAttribute('aria-pressed', String(active));
+    if (!categoryNav) return;
+
+    if (categoryNav.children.length === categoryDefinitions.length) {
+      categoryDefinitions.forEach(([id, label], index) => {
+        const button = categoryNav.children[index];
+        const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
+        const text = `${label} ${count}`;
+        if (button.textContent !== text) button.textContent = text;
+        const active = state.browserCategory === id;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+    } else {
+      categoryNav.replaceChildren(...categoryDefinitions.map(([id, label]) => {
+        const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `nonstop-category${state.browserCategory === id ? ' active' : ''}`;
+        button.textContent = `${label} ${count}`;
+        button.setAttribute('aria-pressed', String(state.browserCategory === id));
+        button.addEventListener('click', () => {
+          state.browserCategory = id;
+          renderBrowser();
+          button.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
         });
-      } else {
-        categoryNav.replaceChildren(...categoryDefinitions.map(([id, label]) => {
-          const count = id === 'all' ? searched.length : searched.filter((set) => matchesCategory(set, id)).length;
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = `nonstop-category${state.browserCategory === id ? ' active' : ''}`;
-          button.textContent = `${label} ${count}`;
-          button.setAttribute('aria-pressed', String(state.browserCategory === id));
-          button.addEventListener('click', () => {
-            state.browserCategory = id;
-            renderBrowser();
-            button.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-          });
-          return button;
-        }));
-      }
+        return button;
+      }));
     }
+  }
 
-    renderChapterNavigation();
+  function createSetButton(set) {
+    const button = document.createElement('button');
+    const active = state.activeSet?.id === set.id;
+    const starting = state.startingSetId === set.id;
+    const meta = [set.artistsText, set.year || null].filter(Boolean).join(' · ');
+    const duration = formatTime(set.durationSeconds);
+    button.type = 'button';
+    button.className = `nonstop-set${active ? ' active' : ''}`;
+    button.setAttribute('aria-label', [active ? 'Currently playing' : 'Play', set.title, meta || null, duration || null].filter(Boolean).join(', '));
+    button.setAttribute('aria-pressed', String(active));
+    if (starting) {
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+    }
+    button.innerHTML = `
+      <span class="nonstop-set-copy">
+        <span class="nonstop-set-title"></span>
+        <span class="nonstop-set-meta"></span>
+      </span>
+      <span class="nonstop-set-duration" aria-hidden="true"></span>`;
+    button.querySelector('.nonstop-set-title').textContent = set.title;
+    button.querySelector('.nonstop-set-meta').textContent = meta;
+    button.querySelector('.nonstop-set-duration').textContent = duration;
+    button.addEventListener('click', async () => {
+      const played = await startNonstop(set.id);
+      if (played) closeBrowser();
+    });
+    return button;
+  }
 
+  function renderSetsList(list, filtered) {
     if (!list) return;
     if (state.allSets) {
       list.removeAttribute('aria-busy');
@@ -1372,35 +1385,7 @@
       return;
     }
 
-    const rows = filtered.map((set) => {
-      const button = document.createElement('button');
-      const active = state.activeSet?.id === set.id;
-      const starting = state.startingSetId === set.id;
-      const meta = [set.artistsText, set.year || null].filter(Boolean).join(' · ');
-      const duration = formatTime(set.durationSeconds);
-      button.type = 'button';
-      button.className = `nonstop-set${active ? ' active' : ''}`;
-      button.setAttribute('aria-label', [active ? 'Currently playing' : 'Play', set.title, meta || null, duration || null].filter(Boolean).join(', '));
-      button.setAttribute('aria-pressed', String(active));
-      if (starting) {
-        button.disabled = true;
-        button.setAttribute('aria-busy', 'true');
-      }
-      button.innerHTML = `
-        <span class="nonstop-set-copy">
-          <span class="nonstop-set-title"></span>
-          <span class="nonstop-set-meta"></span>
-        </span>
-        <span class="nonstop-set-duration" aria-hidden="true"></span>`;
-      button.querySelector('.nonstop-set-title').textContent = set.title;
-      button.querySelector('.nonstop-set-meta').textContent = meta;
-      button.querySelector('.nonstop-set-duration').textContent = duration;
-      button.addEventListener('click', async () => {
-        const played = await startNonstop(set.id);
-        if (played) closeBrowser();
-      });
-      return button;
-    });
+    const rows = filtered.map(createSetButton);
 
     if (partialFailureCount) {
       list.replaceChildren(makePartialStatus(), ...rows);
@@ -1409,6 +1394,29 @@
     } else {
       list.replaceChildren(...rows);
     }
+  }
+
+  function renderBrowser() {
+    const sets = state.allSets || getProgressiveSets();
+    if (!sets || !$('nonstopBrowser')) return;
+    const list = $('nonstopBrowserList');
+    if (!sets.length && !state.allSets) {
+      if (list) {
+        list.setAttribute('aria-busy', 'true');
+        list.innerHTML = '<div class="nonstop-browser-empty">Loading Nonstop Garba…</div>';
+      }
+      return;
+    }
+
+    const searched = searchSets(sets, state.browserQuery);
+    const categoryFiltered = searched.filter((set) => matchesCategory(set, state.browserCategory));
+    const filtered = state.browserQuery.trim()
+      ? categoryFiltered
+      : sortForView(categoryFiltered, state.browserCategory);
+
+    renderCategoryNav(searched);
+    renderChapterNavigation();
+    renderSetsList(list, filtered);
   }
 
   function focusableElements() {
