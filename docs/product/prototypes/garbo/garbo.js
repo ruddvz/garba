@@ -215,6 +215,7 @@
 
   function setGenre(id, keepPlaying) {
     S.genre = id;
+    if (typeof atmoRender === 'function' && $('atmoPower')) atmoRender();
     renderDial();
     if (id === 'nonstop') { S.queue = []; loadSet(S.data.nonstopSets[0], 0, keepPlaying); return; }
     S.queue = playableIn(id);
@@ -639,7 +640,10 @@
       $('atmoListenerDesc').textContent = E.LISTENERS[A.listener].desc;
     }
     $('atmoBpm').textContent = Math.round(A.bpm);
-    if (scene.atmosphere) scene.atmosphere({ venue: A.venue, listener: A.listener, style: 'claps', mode: A.sound ? A.mode : 'off', level: 0.6 });
+    var theme = S.nonstop ? 'nonstop' : S.genre, style = theme === 'dandiya' ? 'dandiya' : 'claps';
+    if (A.engine && A.style !== style) A.engine.setStyle(style);
+    A.style = style;
+    if (scene.atmosphere) scene.atmosphere({ venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
   }
   function atmoLoadBed(ctx) {
     var beds = window.GARBO_ATMO_BEDS || {
@@ -662,7 +666,7 @@
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* unsupported */ }
     A.ctx = new Ctor({ latencyHint: 'playback' });
     A.engine = E.createEngine(A.ctx, { loadBed: atmoLoadBed(A.ctx) });
-    A.engine.setVenue(A.venue, { ramp: 0.05 }); A.engine.setListener(A.listener, { ramp: 0.05 }); A.engine.setPattern(A.pattern);
+    A.engine.setVenue(A.venue, { ramp: 0.05 }); A.engine.setListener(A.listener, { ramp: 0.05 }); A.engine.setPattern(A.pattern); A.engine.setStyle(A.style || 'claps');
     return true;
   }
   // Sound follows the player: it plays only while the song plays and Atmosphere sound is on.

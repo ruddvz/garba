@@ -296,3 +296,21 @@ button { font: inherit; color: inherit; }
 .atmo-bpm b { font: 700 30px/1 var(--ui); color: var(--ivory); font-variant-numeric: tabular-nums; margin-right: 4px; }
 .atmo-note { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ivory-3); text-align: center; }
 .atmo-note a { display: block; margin-top: 6px; color: var(--brass); font-weight: 600; }
+.atmo-beat-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; width: 100%; }
+.atmo-beat-read { display: grid; gap: 8px; justify-items: start; text-align: left; }
+.atmo-beat-read .atmo-desc { margin: 0; max-width: none; text-wrap: pretty; }
+
+/* ---------- More ---------- */
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 4px 0 18px; }
+.tile { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 14px 14px 15px; border-radius: 18px; border: 1px solid var(--line); background: linear-gradient(160deg, var(--ink-3), var(--ink-2)); color: var(--ivory); cursor: pointer; font: inherit; min-height: 122px; transition: border-color .15s ease, transform .12s ease; }
+.tile:hover { border-color: rgba(214, 176, 111, .45); }
+.tile:active { transform: scale(.98); }
+.tile-ic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(214, 176, 111, .14); color: var(--brass); margin-bottom: 6px; }
+.tile-ic svg { width: 20px; height: 20px; }
+.tile strong { font: 600 15.5px/1.25 var(--ui); }
+.tile small { font-size: 12.5px; line-height: 1.35; color: var(--ivory-3); }
+.proto-states { border-top: 1px solid var(--line); padding-top: 12px; }
+.proto-states summary { cursor: pointer; font: 600 14px/1.4 var(--ui); color: var(--ivory-2); list-style: none; display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
+.proto-states summary::-webkit-details-marker { display: none; }
+.proto-states summary::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--ivory-3); border-bottom: 2px solid var(--ivory-3); transform: rotate(45deg); transition: transform .15s ease; margin-right: 6px; }
+.proto-states[open] summary::after { transform: rotate(-135deg); }
