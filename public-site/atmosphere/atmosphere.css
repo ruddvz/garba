@@ -43,6 +43,9 @@ a { color: var(--brass); }
 .lamp span { font: 700 13px/1 var(--ui); color: var(--ivory); background: rgba(11, 6, 5, .72); padding: 6px 10px; border-radius: 12px; border: 1px solid rgba(214, 176, 111, .5); white-space: nowrap; }
 .stage.on .lamp span { opacity: .0; }
 .stage.on .lamp:hover span, .stage.on .lamp:focus-visible span { opacity: 1; }
+.swap { position: absolute; left: 12px; bottom: 12px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(243, 230, 208, .18); background: rgba(11, 6, 5, .55); color: rgba(243, 230, 208, .7); cursor: pointer; display: grid; place-items: center; padding: 0; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.swap svg { width: 22px; height: 22px; fill: currentColor; }
+.swap:hover, .swap:focus-visible { color: var(--brass); border-color: rgba(214, 176, 111, .6); }
 .readout { position: absolute; left: 0; right: 0; top: 14px; margin: 0; text-align: center; font: 600 13px/1.3 var(--ui); color: var(--ivory); text-shadow: 0 1px 8px #000, 0 0 2px #000; pointer-events: none; padding-inline: 14px; }
 .readout span { color: var(--ivory-2); font-weight: 500; }
 

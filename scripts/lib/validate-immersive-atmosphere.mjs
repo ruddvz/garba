@@ -36,6 +36,7 @@ for (const marker of [
   'Sheri',
   'In the circle',
   'Far away',
+  'By the stage',
   'function setListener(',
   'function setEnabled(',
   'role="switch"',

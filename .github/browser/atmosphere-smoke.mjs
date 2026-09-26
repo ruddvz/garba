@@ -101,7 +101,7 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
     await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'crowd', `${name}: Crowd mode did not apply`);
     await page.locator('.atmosphere-venue[data-venue="stadium"]').click();
     await waitFor(page, () => window.GARBA_ATMOSPHERE?.venue === 'stadium', `${name}: Indoor stadium venue did not apply`);
-    assert.equal(await page.locator('.atmosphere-listener').count(), 2, `${name}: two listening positions must be offered`);
+    assert.equal(await page.locator('.atmosphere-listener').count(), 3, `${name}: three listening positions must be offered`);
     await page.locator('.atmosphere-listener[data-listener="far"]').click();
     await waitFor(page, () => window.GARBA_ATMOSPHERE?.listener === 'far', `${name}: Far away position did not apply`);
     assert.equal(await page.locator('.atmosphere-tap').isDisabled(), true, `${name}: Crowd mode has no claps, so Tap must be disabled`);

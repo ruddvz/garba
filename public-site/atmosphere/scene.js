@@ -34,9 +34,9 @@
 
   // Where the camera stands, in metres. The main circle's garbo is at the origin and Z runs away from you.
   var CAMS = {
-    outdoors: { circle: [0, 4.4, -12.5], far: [0, 5.5, -26] },
-    stadium: { circle: [0, 4.6, -12.5], far: [0, 9.5, -37] },
-    sheri: { circle: [0, 4, -11.5], far: [-3, 3, -23] }
+    outdoors: { circle: [0, 4.4, -12.5], far: [0, 5.5, -26], stage: [0, 3.7, 35.2] },
+    stadium: { circle: [0, 4.6, -12.5], far: [0, 9.5, -37], stage: [0, 3.7, 25.2] },
+    sheri: { circle: [0, 4, -11.5], far: [-3, 3, -23], stage: [0, 3.3, 56.2] }
   };
 
   function create(canvas, opts) {
@@ -111,6 +111,7 @@
           else { d0.man = true; d0.coupleRole = 'm'; d0.col = '#f3e6d0'; d0.top = '#f3e6d0'; d0.legs = '#7a1a2e'; d0.pagdi = '#8e1b2c'; d0.stole = '#e8b04b'; d0.moustache = true; d0.h = 1.76; d0.stick = 2; }
           d0.a0 = -Math.PI / 2 + (i === 0 ? -0.5 : 0.5) / n * TAU; d0.delay = 0.2 + i * 0.2; d0.ph = 1.3; d0.lag = 0;
         }
+        if (d0.coupleRole) d0.alt = person({ man: d0.man, h: d0.h });
         c.dancers.push(d0);
       }
       return c;
@@ -139,7 +140,23 @@
         var solo = rnd() < 0.3, pr = solo ? 0.3 : 0.55, px = lerp(bx0[0] + 1, bx0[1] - 1, rnd()), pz = lerp(Math.max(bx0[2], 1), bx0[3] - 1, rnd());
         if (circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
       }
-      var L = { circles: circles, houses: id === 'sheri' ? houses() : null, stands: id === 'stadium' ? stands() : null, stalls: stallsFor(id) };
+      // Life around the dancing: people stopped at the edge of a circle to watch, clusters chatting further off,
+      // and phones held up to record
+      var standers = [];
+      circles.forEach(function (c, ci) {
+        if (c.small || ci === 1) return;
+        var n = ci === 0 ? 0 : 1 + Math.floor(rnd() * 3), outer = ci === 0 && circles[1] && circles[1].parent ? (circles[2] && circles[2].parent ? circles[2].R : circles[1].R) : c.R;
+        if (ci === 0) n = id === 'sheri' ? 4 : 10;
+        for (var k = 0; k < n; k++) { var a = rnd() * TAU, rr = outer + 1.6 + rnd() * 1.6, sx = c.x0 + Math.cos(a) * rr, sz = c.z0 + Math.sin(a) * rr; if (sz < BOUNDS[id][2] - 2 || Math.abs(sx) > (id === 'sheri' ? 6.4 : 26)) continue; standers.push(person({ x: sx, z: sz, stander: true, phone: rnd() < 0.3, sway: rnd() * TAU })); }
+      });
+      for (var gi = 0; gi < (id === 'sheri' ? 3 : 7); gi++) {
+        var bx1 = BOUNDS[id], gx = lerp(bx1[0] + 2, bx1[1] - 2, rnd()), gz = lerp(Math.max(bx1[2], 0), bx1[3] - 2, rnd());
+        if (!circles.every(function (c) { return Math.hypot(c.x0 - gx, c.z0 - gz) > c.R + 2.4; })) continue;
+        var m = 2 + Math.floor(rnd() * 3);
+        for (var j = 0; j < m; j++) { var aj = j / m * TAU + rnd() * 0.5; standers.push(person({ x: gx + Math.cos(aj) * 0.7, z: gz + Math.sin(aj) * 0.55, stander: true, chat: true, phone: rnd() < 0.15, sway: rnd() * TAU, kid: rnd() < 0.15 })); }
+      }
+      var L = { circles: circles, houses: id === 'sheri' ? houses() : null, stands: id === 'stadium' ? stands() : null, stalls: stallsFor(id), standers: standers };
+      L.gallery = galleryFor(id);
       L.kids = []; for (var ki = 0; ki < (id === 'sheri' ? 7 : 12); ki++) { var ks = freeSpot(id, L); L.kids.push(person({ x: ks.x, z: ks.z, tx: ks.x, tz: ks.z, wait: rnd() * 2, speed: 3 + rnd() * 1.4, step: 0, walker: true, kid: true, h: 0.9 + rnd() * 0.3 })); }
       L.walkers = walkersFor(id, L);
       L.seats = seatsFor(id);
@@ -151,12 +168,12 @@
     }
     // Food stalls: where they stand, which way they face (u runs along the counter, v into the stall)
     function stallsFor(id) {
-      var list = id === 'outdoors' ? [[-26.5, 11, 'Chai', '#b8312b'], [-26.5, 18.5, 'Dabeli', '#2f6fa8'], [-26.5, 26, 'Pani puri', '#2f8f5b'], [26.5, 14, 'Water', '#2f6fa8'], [26.5, 22, 'Ice cream', '#8e44ad'], [26.5, 30, 'Snacks', '#e67e22']]
-        : id === 'stadium' ? [[-20.5, 33.5, 'Chai', '#b8312b'], [20.5, 33.5, 'Snacks', '#e67e22']]
-          : [[-6.2, 9, 'Pani puri', '#2f8f5b']];
+      var list = id === 'outdoors' ? [[-26.5, 11, 'ચા', '#b8312b', 'Chai'], [-26.5, 18.5, 'દાબેલી', '#2f6fa8', 'Dabeli'], [-26.5, 26, 'પાણીપુરી', '#2f8f5b', 'Pani puri'], [26.5, 14, 'પાણી', '#2f6fa8', 'Water'], [26.5, 22, 'આઈસ્ક્રીમ', '#8e44ad', 'Ice cream'], [26.5, 30, 'નાસ્તો', '#e67e22', 'Snacks']]
+        : id === 'stadium' ? [[-20.5, 33.5, 'ચા', '#b8312b', 'Chai'], [20.5, 33.5, 'નાસ્તો', '#e67e22', 'Snacks']]
+          : [[-6.2, 9, 'પાણીપુરી', '#2f8f5b', 'Pani puri']];
       return list.map(function (a) {
         var side = a[0] < 0 ? -1 : 1, facing = id === 'stadium' ? 'camera' : 'inward';
-        var st0 = { x: a[0], z: a[1], sign: a[2], col: a[3], w: id === 'sheri' ? 1.8 : 3.4, depth: id === 'sheri' ? 0.9 : 2.2, cart: id === 'sheri' };
+        var st0 = { x: a[0], z: a[1], sign: a[2], col: a[3], en: a[4], w: id === 'sheri' ? 1.8 : 3.4, depth: id === 'sheri' ? 0.9 : 2.2, cart: id === 'sheri' };
         if (facing === 'camera') { st0.U = [1, 0]; st0.V = [0, 1]; } else { st0.U = [0, -side]; st0.V = [side, 0]; }
         st0.front = { x: st0.x - st0.V[0] * 1.3, z: st0.z - st0.V[1] * 1.3 };
         st0.vendor = { man: rnd() < 0.6, col: SKIRTS[Math.floor(rnd() * SKIRTS.length)], top: TOPS[Math.floor(rnd() * TOPS.length)], ph: rnd() * TAU, ph2: 0, h: 1.65, flash: 0 };
@@ -184,6 +201,12 @@
       return out;
     }
     // Children: tag in the empty middle while the music is off; once it plays they run round the edges, and now and then straight through a circle
+    // The mandvi, rangoli and diyas sit in a clear space nobody walks through
+    var KEEP_OUT = 2.9;
+    function clearOfCentre(o) {
+      var d = Math.hypot(o.x, o.z);
+      if (d < KEEP_OUT) { var k = d > 0.01 ? KEEP_OUT / d : 1; o.x = d > 0.01 ? o.x * k : KEEP_OUT; o.z = d > 0.01 ? o.z * k : 0; }
+    }
     function moveKids(L, id, dt) {
       var bx = BOUNDS[id];
       L.kids.forEach(function (k) {
@@ -191,15 +214,15 @@
         var dx = k.tx - k.x, dz = k.tz - k.z, d = Math.hypot(dx, dz);
         if (d < 0.3) {
           k.moving = false; k.wait = rnd() * 0.8;
-          if (!st.on) { var a = rnd() * TAU, r = rnd() * (id === 'sheri' ? 4 : 9); k.tx = Math.max(bx[0], Math.min(bx[1], Math.cos(a) * r)); k.tz = Math.max(bx[2], Math.sin(a) * r * (id === 'sheri' ? 3 : 1) + (id === 'sheri' ? 12 : 4)); k.through = false; }
-          else if (rnd() < 0.3) { var c = L.circles[Math.floor(rnd() * Math.min(3, L.circles.length))], a2 = rnd() * TAU; k.tx = c.x0 + Math.cos(a2) * (c.R + 3); k.tz = Math.max(bx[2], c.z0 + Math.sin(a2) * (c.R + 3)); k.through = true; }
+          if (!st.on) { var a = rnd() * TAU, r = KEEP_OUT + 0.6 + rnd() * (id === 'sheri' ? 2 : 6); k.tx = Math.max(bx[0], Math.min(bx[1], Math.cos(a) * r)); k.tz = Math.max(bx[2], Math.sin(a) * r * (id === 'sheri' ? 3 : 1) + (id === 'sheri' ? 12 : 4)); k.through = false; }
+          else if (rnd() < 0.3 && L.circles.length > 3) { var c = L.circles[3 + Math.floor(rnd() * (L.circles.length - 3))], a2 = rnd() * TAU; k.tx = c.x0 + Math.cos(a2) * (c.R + 3); k.tz = Math.max(bx[2], c.z0 + Math.sin(a2) * (c.R + 3)); k.through = true; }
           else { var p = freeSpot(id, L); k.tx = p.x; k.tz = p.z; k.through = false; }
           return;
         }
         var vx = dx / d, vz = dz / d;
         if (st.on && !k.through) L.circles.forEach(function (c) { var cx = k.x - c.x0, cz = k.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.2; if (cd < keep + 1.5 && cd > 0.01) { var push = (keep + 1.5 - cd) / 1.5; vx += cx / cd * push; vz += cz / cd * push; } });
         var vl = Math.hypot(vx, vz) || 1, sp = k.speed * (st.on && !k.through ? 0.8 : 1);
-        k.x += vx / vl * sp * dt; k.z += vz / vl * sp * dt; k.step = (k.step || 0) + dt * sp * 6; k.moving = true;
+        k.x += vx / vl * sp * dt; k.z += vz / vl * sp * dt; clearOfCentre(k); k.step = (k.step || 0) + dt * sp * 6; k.moving = true;
       });
     }
     function moveWalkers(L, id, dt) {
@@ -219,12 +242,60 @@
           if (cd < keep + 2 && cd > 0.01) { var push = (keep + 2 - cd) / 2; vx += cx / cd * push - cz / cd * push * 0.6; vz += cz / cd * push + cx / cd * push * 0.6; }
         });
         var vl = Math.hypot(vx, vz) || 1;
-        w.x += vx / vl * w.speed * dt; w.z += vz / vl * w.speed * dt; w.step += dt * w.speed * 5.5; w.moving = true;
+        w.x += vx / vl * w.speed * dt; w.z += vz / vl * w.speed * dt; clearOfCentre(w); w.step += dt * w.speed * 5.5; w.moving = true;
       });
     }
     // Rows of plastic chairs along the sides of an open ground, most of them taken by the older folk watching
+    // Where you sit when you watch from far away: a row of chairs, the stadium's stepped benches, a bench in the lane.
+    // You and your partner sit among neighbours, seen from behind as the camera looks over your shoulders.
+    function galleryFor(id) {
+      var out = [];
+      function sitter(x, y, z, kind, role, view) { var d = role ? person({ man: role === 'm', sitting: true, rest: { y: y } }) : rnd() < 0.8 ? person({ sitting: true, older: rnd() < 0.3, rest: { y: y } }) : null; if (role) { d.seatRole = role; if (role === 'w') { d.col = '#8e1b2c'; d.top = '#d6a24a'; d.odhni = '#f3e6d0'; d.h = 1.62; } else { d.col = '#f3e6d0'; d.top = '#f3e6d0'; d.pagdi = '#8e1b2c'; d.h = 1.76; } } out.push({ x: x, y: y, z: z, kind: kind, who: d, view: view || 'far', col: ['#b73a2e', '#2f6fa8', '#d9d2c5', '#2f8f5b'][Math.floor(rnd() * 4)] }); }
+      if (id === 'outdoors') {
+        [-18.4, -17.2, -16].forEach(function (z, row) { for (var x = -5.2 + (row % 2) * 0.4; x <= 5.2; x += 0.8) { var role = row === 0 && Math.abs(x + 0.4) < 0.05 ? 'w' : row === 0 && Math.abs(x - 0.4) < 0.05 ? 'm' : null; sitter(x, 0.45, z, 'chair', role); } });
+        [-1, 1].forEach(function (sd) { for (var k = 0; k < 3; k++) out.push({ x: sd * (6.2 + k * 0.5), y: 0, z: -17.6 + k * 0.4, kind: 'stand', who: person({ stander: true, phone: k === 1, sway: rnd() * TAU }) }); });
+      }
+      // By the stage: a standing crowd seen from behind, lots of phones up, and the two of you at the front
+      var sz0 = { outdoors: 46, stadium: 35.5, sheri: 64.5 }[id], hw = id === 'sheri' ? 5.5 : 8;
+      for (var rz = 0; rz < 4; rz++) for (var cx0 = -hw; cx0 <= hw; cx0 += 0.62 + rnd() * 0.3) {
+        var zz = sz0 - 2.3 - rz * 0.9 + (rnd() - 0.5) * 0.3, role2 = rz === 0 && Math.abs(cx0 + 0.3) < 0.31 ? 'w' : rz === 0 && Math.abs(cx0 - 0.35) < 0.31 ? 'm' : null;
+        if (!role2 && (rnd() < 0.25 || (rz === 0 && Math.abs(cx0) < 1.2))) continue;
+        var pp2 = person({ stander: true, phone: rnd() < 0.3, sway: rnd() * TAU, kid: rnd() < 0.06 });
+        if (role2) { pp2.seatRole = role2; pp2.man = role2 === 'm'; pp2.phone = false; if (role2 === 'w') { pp2.col = '#8e1b2c'; pp2.top = '#d6a24a'; pp2.odhni = '#f3e6d0'; pp2.h = 1.62; } else { pp2.col = '#f3e6d0'; pp2.top = '#f3e6d0'; pp2.pagdi = '#8e1b2c'; pp2.stole = '#e8b04b'; pp2.h = 1.76; } zz = sz0 - 2.1; cx0 = role2 === 'w' ? -0.3 : 0.35; }
+        out.push({ x: cx0, y: 0, z: zz, kind: 'stand', who: pp2, view: 'stage' });
+      }
+      if (id === 'stadium') {
+        // Shallow steps so you look down over the rows in front to the floor
+        for (var k = 0; k < 5; k++) {
+          var z = -32.4 + k * 1.15, y = 7.6 - k * 0.42;
+          out.push({ x: 0, y: y, z: z + 0.45, kind: 'step', w: 11 });
+          for (var x = -9.6 + (k % 2) * 0.3; x <= 9.6; x += 0.62) { var role = k === 0 && Math.abs(x + 0.29) < 0.2 ? 'w' : k === 0 && Math.abs(x - 0.33) < 0.2 ? 'm' : null; if (role || rnd() < (k === 0 ? 0.45 : 0.72)) sitter(x, y, z, 'bench', role); }
+        }
+        [-33.6, -34.8].forEach(function (z, i) { out.push({ x: 0, y: 7.6 + (i + 1) * 0.42, z: z + 0.45, kind: 'step', w: 11 }); });
+        out.push({ x: -10.6, y: 7.1, z: -30.9, kind: 'stand', who: person({ stander: true, phone: true, sway: 1 }) });
+        out.push({ x: 10.4, y: 7.1, z: -31, kind: 'stand', who: person({ stander: true, sway: 2 }) });
+        out.push({ x: 0, y: 6.2, z: -30.1, kind: 'runner', who: person({ kid: true, h: 1.05, walker: true, moving: true, step: 0 }) });
+      } else {
+        out.push({ x: -3, y: 0.45, z: -19.2, kind: 'benchPlank', w: 2 });
+        sitter(-3.35, 0.45, -19.2, 'bench', 'w'); sitter(-2.6, 0.45, -19.2, 'bench', 'm'); sitter(-4.15, 0.45, -19.2, 'bench', null);
+        out.push({ x: -1.2, y: 0, z: -18.6, kind: 'stand', who: person({ stander: true, phone: true, sway: 0.5 }) });
+        out.push({ x: -0.5, y: 0, z: -18.1, kind: 'stand', who: person({ stander: true, sway: 1.5 }) });
+      }
+      return out;
+    }
     function seatsFor(id) {
       var out = [];
+      if (id === 'sheri') {
+        [-1, 1].forEach(function (sd) {
+          for (var z = -22; z < 60; z += 1.6 + rnd() * 3.2) {
+            var r = rnd(), older = rnd() < 0.55;
+            if (r < 0.55) out.push({ kind: 'otla', x: sd * 6.95, y: 0.45, z: z, side: sd, who: person({ sitting: true, older: older, rest: { y: 0.45 } }) });
+            else if (r < 0.75) out.push({ x: sd * 6.35, y: 0.45, z: z, side: sd, col: ['#b73a2e', '#2f6fa8', '#d9d2c5', '#2f8f5b'][Math.floor(rnd() * 4)], who: person({ sitting: true, older: true, rest: { y: 0.45 } }) });
+            else out.push({ kind: 'ground', x: sd * (5.6 + rnd() * 0.6), y: 0, z: z, side: sd, who: person({ sitting: true, kid: rnd() < 0.5, h: 1.2 + rnd() * 0.4, rest: { y: 0 } }) });
+          }
+        });
+        return out;
+      }
       if (id !== 'outdoors') return out;
       [-1, 1].forEach(function (sd) {
         [[-4, 8.5], [32, 41]].forEach(function (span) {
@@ -248,7 +319,7 @@
       var out = [];
       if (id !== 'outdoors') return out;
       function tree(x, z, big) { var n = 5 + Math.floor(rnd() * 3), blobs = []; for (var i = 0; i < n; i++) blobs.push([(rnd() - 0.5) * 4.2, 5 + rnd() * 3.2, (rnd() - 0.5) * 1.5, 1.8 + rnd() * 1.6]); out.push({ x: x, z: z, s: big ? 1.25 : 0.8 + rnd() * 0.4, blobs: blobs, fairy: rnd() < 0.55, hue: Math.floor(rnd() * 6), tone: Math.floor(rnd() * 3) }); }
-      for (var x = -48; x <= 48; x += 6 + rnd() * 4) tree(x, 56 + rnd() * 14, rnd() < 0.3);
+      for (var x = -48; x <= 48; x += 6 + rnd() * 4) tree(x, 58 + rnd() * 12, rnd() < 0.3);
       [-1, 1].forEach(function (sd) { for (var z = -14; z < 56; z += 7 + rnd() * 5) tree(sd * (33 + rnd() * 9), z, rnd() < 0.3); });
       tree(-29.5, -7, true); tree(30.5, -9.5, true);
       return out;
@@ -310,6 +381,78 @@
         g.fillStyle = '#b8312b'; g.beginPath(); g.arc(p.x - s * 0.8, p.y - s * 0.55, s * 0.07, 0, TAU); g.fill();
         g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(p.x, p.y, s * 1.1, s * 0.12, 0, 0, TAU); g.fill();
       }
+    }
+    function galleryItem(ga, p, T0) {
+      if (ga.kind === 'step') {
+        // A concrete bench step: its top, with a worn edge
+        fillPoly([[ga.x - ga.w, ga.y, ga.z - 1.0], [ga.x + ga.w, ga.y, ga.z - 1.0], [ga.x + ga.w, ga.y, ga.z + 0.1], [ga.x - ga.w, ga.y, ga.z + 0.1]], '#2c2636');
+        fillPoly([[ga.x - ga.w, ga.y, ga.z + 0.1], [ga.x + ga.w, ga.y, ga.z + 0.1], [ga.x + ga.w, ga.y - 0.42, ga.z + 0.12], [ga.x - ga.w, ga.y - 0.42, ga.z + 0.12]], '#1e1a26');
+        fillPoly([[ga.x - ga.w, ga.y - 0.02, ga.z + 0.08], [ga.x + ga.w, ga.y - 0.02, ga.z + 0.08], [ga.x + ga.w, ga.y + 0.04, ga.z + 0.1], [ga.x - ga.w, ga.y + 0.04, ga.z + 0.1]], '#5a5068');
+        return;
+      }
+      if (ga.kind === 'benchPlank') {
+        fillPoly([[ga.x - ga.w / 2 - 0.2, 0.45, ga.z - 0.22], [ga.x + ga.w / 2 + 0.2, 0.45, ga.z - 0.22], [ga.x + ga.w / 2 + 0.2, 0.45, ga.z + 0.22], [ga.x - ga.w / 2 - 0.2, 0.45, ga.z + 0.22]], '#6b3f1f');
+        [-1, 1].forEach(function (sd) { var a = P(ga.x + sd * ga.w / 2, 0, ga.z - 0.2), b = P(ga.x + sd * ga.w / 2, 0.45, ga.z - 0.2); if (a && b) { g.strokeStyle = '#3b2213'; g.lineWidth = Math.max(1, a.s * 0.08); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); } });
+        return;
+      }
+      if (ga.kind === 'chair') fillPoly([[ga.x - 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z + 0.22], [ga.x - 0.22, 0.45, ga.z + 0.22]], ga.col);
+      if (ga.who) ga.who.backWord = ga.who.seatRole && (ga.view || 'far') === st.listener ? coupleWord(ga.who.seatRole === (st.youAs === 'man' ? 'm' : 'w'), ga.who.man) : null;
+      if (ga.who) backFigure(ga.kind === 'stand' || ga.kind === 'runner' ? P(ga.x, ga.y, ga.z) : p, ga.who, T0, ga.kind === 'runner');
+      if (ga.kind === 'chair') {
+        // The chair back sits between you and the sitter, so only their shoulders and head show above it
+        fillPoly([[ga.x - 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.45, ga.z - 0.22], [ga.x + 0.22, 0.98, ga.z - 0.25], [ga.x - 0.22, 0.98, ga.z - 0.25]], ga.col);
+        var lg = P(ga.x - 0.2, 0, ga.z - 0.22), lt = P(ga.x - 0.2, 0.45, ga.z - 0.22), rg = P(ga.x + 0.2, 0, ga.z - 0.22), rt = P(ga.x + 0.2, 0.45, ga.z - 0.22);
+        if (lg && lt && rg && rt) { g.strokeStyle = ga.col; g.lineWidth = Math.max(1, lg.s * 0.05); g.beginPath(); g.moveTo(lg.x, lg.y); g.lineTo(lt.x, lt.y); g.moveTo(rg.x, rg.y); g.lineTo(rt.x, rt.y); g.stroke(); }
+      }
+
+    }
+    // Someone seen from behind: back of the head, hair or pagdi, the choli or kediyu, the odhni falling down the back
+    function backFigure(p, d, T0, running) {
+      FOGF = 0;
+      var s = p.s, x = p.x, y = p.y, h = d.h * s, sit = !!d.sitting, hip = sit ? y - h * 0.02 : y - h * 0.5;
+      if (h < 3) return;
+      var skin = SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], top = d.top, main = d.col, hair = d.older ? '#9a948c' : '#1f130d';
+      if (h < 14 && !d.backWord) {
+        // Far off: a couple of shapes are enough
+        g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
+        g.fillStyle = sit || d.man ? top : main; g.fillRect(x - h * 0.1, hip - h * 0.26, h * 0.2, sit ? h * 0.26 : h * 0.26 + (y - hip));
+        g.fillStyle = d.man ? d.pagdi || '#b8312b' : hair; g.beginPath(); g.arc(x, hip - h * 0.365, h * 0.075, 0, TAU); g.fill();
+        g.globalAlpha = 1; return;
+      }
+      if (d.stander && !reduce) x += Math.sin(T0 * 0.8 + (d.sway || 0)) * h * 0.02;
+      if (running) y -= Math.abs(Math.sin(d.step || 0)) * h * 0.05;
+      g.lineCap = 'round';
+      if (!sit) {
+        if (d.man) { g.strokeStyle = d.legs || '#efe6d6'; g.lineWidth = Math.max(1, h * 0.055); var lx = running ? Math.sin(d.step) * h * 0.06 : 0; g.beginPath(); g.moveTo(x - h * 0.045, hip + h * 0.06); g.lineTo(x - h * 0.06 - lx, y); g.moveTo(x + h * 0.045, hip + h * 0.06); g.lineTo(x + h * 0.06 + lx, y); g.stroke(); }
+        else { g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.075, hip - h * 0.03); g.lineTo(x + h * 0.075, hip - h * 0.03); g.quadraticCurveTo(x + h * 0.19, y - h * 0.22, x + h * 0.24, y); g.quadraticCurveTo(x, y + h * 0.04, x - h * 0.24, y); g.quadraticCurveTo(x - h * 0.19, y - h * 0.22, x - h * 0.075, hip - h * 0.03); g.fill(); g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, h * 0.03); g.beginPath(); g.moveTo(x - h * 0.23, y - h * 0.01); g.quadraticCurveTo(x, y + h * 0.03, x + h * 0.23, y - h * 0.01); g.stroke(); }
+      } else if (!d.man) { g.fillStyle = main; g.beginPath(); g.ellipse(x, hip, h * 0.2, h * 0.07, 0, Math.PI, 0); g.fill(); }
+      // Back: a choli with a strip of skin above the waist, or the back of a kediyu
+      var sh = hip - h * 0.26;
+      if (d.man) { g.fillStyle = top; g.beginPath(); g.moveTo(x - h * 0.09, sh); g.lineTo(x + h * 0.09, sh); g.lineTo(x + h * 0.13, hip + (sit ? 0 : h * 0.1)); g.lineTo(x - h * 0.13, hip + (sit ? 0 : h * 0.1)); g.closePath(); g.fill(); }
+      else { g.fillStyle = skin; g.fillRect(x - h * 0.07, sh + h * 0.12, h * 0.14, h * 0.13); g.fillStyle = top; g.fillRect(x - h * 0.085, sh, h * 0.17, h * 0.13); g.fillStyle = main; g.fillRect(x - h * 0.08, hip - h * 0.03, h * 0.16, h * 0.04); }
+      // Arms resting at the sides (or one raised with a phone)
+      g.strokeStyle = skin; g.lineWidth = Math.max(0.8, h * 0.034);
+      g.beginPath(); g.moveTo(x - h * 0.085, sh + h * 0.02); g.lineTo(x - h * 0.12, hip - h * 0.02);
+      if (d.phone) { g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(x + h * 0.1, sh - h * 0.16); } else { g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(x + h * 0.12, hip - h * 0.02); }
+      g.stroke();
+      if (d.phone) { g.fillStyle = 'rgba(200,225,255,.95)'; g.fillRect(x + h * 0.075, sh - h * 0.25, h * 0.05, h * 0.09); glow(x + h * 0.1, sh - h * 0.2, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
+      // Odhni falling from one shoulder down the back
+      if (!d.man) { g.strokeStyle = d.odhni || d.top; g.globalAlpha = 0.85; g.lineWidth = Math.max(1, h * 0.045); g.beginPath(); g.moveTo(x + h * 0.08, sh); g.quadraticCurveTo(x, sh + h * 0.12, x - h * 0.09, hip + (sit ? -h * 0.02 : h * 0.15)); g.stroke(); g.globalAlpha = 1; }
+      if (d.man && d.stole) { g.strokeStyle = d.stole; g.lineWidth = Math.max(1, h * 0.03); g.beginPath(); g.moveTo(x - h * 0.08, sh); g.lineTo(x + h * 0.06, hip); g.stroke(); }
+      // Your word printed on your back, so it never covers the view
+      if (d.backWord) {
+        var you0 = d.backWord === 'તું', fs0 = Math.max(9, Math.min(22, h * 0.075));
+        if (you0) glow(x, sh + h * 0.1, h * 0.16, 'rgba(255,210,130,1)', 0.25 + youGlow * 0.3);
+        g.font = '700 ' + fs0 + 'px ' + GU_FONT; g.textAlign = 'center';
+        var pw = Math.max(fs0 * 1.8, g.measureText(d.backWord).width + fs0 * 0.8), ph = fs0 * 1.4;
+        g.fillStyle = you0 ? '#e8b04b' : 'rgba(243,230,208,.95)'; roundRect(x - pw / 2, sh + h * 0.035, pw, ph, fs0 * 0.3); g.fill();
+        g.fillStyle = you0 ? '#2a1208' : '#6b1420'; g.fillText(d.backWord, x, sh + h * 0.035 + ph * 0.72);
+      }
+      // Neck and the back of the head
+      g.fillStyle = skin; g.fillRect(x - h * 0.022, sh - h * 0.05, h * 0.044, h * 0.05);
+      var hy = sh - h * 0.105;
+      if (d.man) { g.fillStyle = skin; g.beginPath(); g.arc(x, hy, h * 0.066, 0, TAU); g.fill(); g.fillStyle = d.older ? '#f3e6d0' : d.pagdi || '#b8312b'; g.beginPath(); g.ellipse(x, hy - h * 0.025, h * 0.078, h * 0.058, 0, Math.PI, 0); g.lineTo(x + h * 0.078, hy - h * 0.005); g.lineTo(x - h * 0.078, hy - h * 0.005); g.fill(); }
+      else { g.fillStyle = hair; g.beginPath(); g.arc(x, hy, h * 0.07, 0, TAU); g.fill(); g.beginPath(); g.arc(x, hy + h * 0.055, h * 0.036, 0, TAU); g.fill(); g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(x, hy + h * 0.055, Math.max(0.6, h * 0.012), 0, TAU); g.fill(); }
     }
     function chair(se) {
       var sd = se.side, x = se.x, z = se.z, o = sd * 0.22;
@@ -390,6 +533,8 @@
         g.strokeStyle = '#1c1511'; g.lineWidth = Math.max(1, base.s * 0.3); g.beginPath(); g.moveTo(base.x, base.y); g.lineTo(top.x, top.y); g.stroke();
         for (var k = 0; k < 4; k++) glow(top.x + (k - 1.5) * top.s * 0.7, top.y, Math.max(1.2, Math.min(4, top.s * 0.28)), '#fff4dc', bright);
       });
+      // Trees beyond the stage go behind it; the rest are sorted in with the crowd
+      layout('outdoors').trees.filter(function (tr) { return tr.z >= 44; }).sort(function (a, b) { return b.z - a.z; }).forEach(function (tr) { drawTree(tr, t); });
       stage({ x0: -11, x1: 11, z: 46, h: 1.6, screenTop: 8.5, truss: 10.5, arrays: 13 }, t, 'outdoors');
       // Delay speaker towers halfway down the ground, so the back of the crowd hears the band on time
       [-21, 21].forEach(function (x) { speakerPole(x, 16, 6); });
@@ -466,6 +611,12 @@
         g.fillStyle = spot; g.beginPath(); g.arc(p.x, p.y - p.s, p.s * 1.6, 0, TAU); g.fill();
         if (m.role === 'keys') fillPoly([[m.x - 0.6, y + 0.85, bz - 0.3], [m.x + 0.6, y + 0.85, bz - 0.3], [m.x + 0.6, y + 0.95, bz - 0.3], [m.x - 0.6, y + 0.95, bz - 0.3]], '#111');
         figure(p, m, 0, false, BEAT, 1);
+        // The lead singer can wear a face picture for the song's artist, drawn as a round, slightly oversized head
+        if (singer.img && singer.img.complete && singer.img.naturalWidth && m.role === 'singer' && (singer.man ? m.man : !m.man)) {
+          var hh = m.h * p.s, hr = hh * 0.13, hx = p.x, hy = p.y - hh * 0.9;
+          g.save(); g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.clip(); g.drawImage(singer.img, hx - hr, hy - hr, hr * 2, hr * 2); g.restore();
+          g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, hr * 0.08); g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.stroke();
+        }
         if (m.role === 'dhol') { var dp = P(m.x, y + 0.9, bz - 0.25); if (dp) { g.fillStyle = '#7a3b1a'; g.beginPath(); g.ellipse(dp.x, dp.y, dp.s * 0.34, dp.s * 0.2, 0, 0, TAU); g.fill(); g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(0.8, dp.s * 0.03); g.stroke(); } }
         if (m.role === 'singer') { var ms = P(m.x - 0.25, y, bz - 0.35), mt = P(m.x - 0.25, y + 1.45, bz - 0.35); if (ms && mt) { g.strokeStyle = '#1a1a1a'; g.lineWidth = Math.max(0.8, ms.s * 0.03); g.beginPath(); g.moveTo(ms.x, ms.y); g.lineTo(mt.x, mt.y); g.stroke(); } }
       });
@@ -476,7 +627,22 @@
       fillPoly([[x - 0.45, h, z], [x + 0.45, h, z], [x + 0.45, h + 1.2, z], [x - 0.45, h + 1.2, z]], '#0b0909');
       var cone = P(x, h + 0.6, z - 0.01); if (cone) { g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1; g.beginPath(); g.arc(cone.x, cone.y, cone.s * 0.3, 0, TAU); g.stroke(); }
     }
+    // Chhatris: mirror-work umbrellas hung over the circles, turning slowly
+    function chhatri(x, y, z, t, i) {
+      var top = P(x, y + 2.2, z), c = P(x, y, z); if (!top || !c || c.z < 4) return;
+      var r = Math.min(40, c.s * 1.1), ry = r * Math.max(0.18, Math.min(0.5, (cam.y - y) / c.z * 0.9 + 0.25)), rot = reduce ? 0 : t * 0.25 + i;
+      g.strokeStyle = 'rgba(90,70,50,.6)'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(top.x, top.y); g.lineTo(c.x, c.y - ry * 1.4); g.stroke();
+      var cols = [TH.flags[0], '#f6c342', TH.flags[2 % TH.flags.length], '#2f8f5b', TH.flags[1 % TH.flags.length], '#3b4cc0'];
+      for (var k = 0; k < 12; k++) {
+        var a0 = rot + k / 12 * TAU, a1 = rot + (k + 1) / 12 * TAU;
+        g.fillStyle = cols[k % cols.length]; g.beginPath(); g.moveTo(c.x, c.y - ry * 1.4); g.lineTo(c.x + Math.cos(a0) * r, c.y + Math.sin(a0) * ry); g.lineTo(c.x + Math.cos(a1) * r, c.y + Math.sin(a1) * ry); g.closePath(); g.fill();
+      }
+      for (var m = 0; m < 12; m++) { var am = rot + (m + 0.5) / 12 * TAU, mx = c.x + Math.cos(am) * r * 0.6, my = c.y - ry * 0.45 + Math.sin(am) * ry * 0.55; g.fillStyle = 'rgba(255,250,235,' + (0.55 + 0.4 * Math.sin(t * 3 + m)) + ')'; g.beginPath(); g.arc(mx, my, Math.max(0.6, r * 0.04), 0, TAU); g.fill(); }
+      for (var q = 0; q < 12; q++) { var aq = rot + q / 12 * TAU, qx = c.x + Math.cos(aq) * r, qy = c.y + Math.sin(aq) * ry; if (Math.sin(aq) < -0.3) continue; g.strokeStyle = cols[(q + 2) % cols.length]; g.lineWidth = Math.max(0.7, r * 0.04); g.beginPath(); g.moveTo(qx, qy); g.lineTo(qx, qy + r * 0.28); g.stroke(); g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(qx, qy + r * 0.3, Math.max(0.6, r * 0.035), 0, TAU); g.fill(); }
+    }
+    function chhatris(y, t) { for (var i = 0; i < 6; i++) { var a = i / 6 * TAU + 0.3; chhatri(Math.cos(a) * 8.5, y, 4 + Math.sin(a) * 8.5, t, i); } }
     function outdoorsOver(t) {
+      chhatris(7.2, t);
       // Poles with strings of bulbs and bunting crossing the ground
       var zs = [-10, 5, 20, 35], X = 24, h = 7.4;
       zs.forEach(function (z) { [-X, X].forEach(function (x) { var b = P(x, 0, z), tp = P(x, h, z); if (b && tp) { g.strokeStyle = '#22180f'; g.lineWidth = Math.max(1, b.s * 0.12); g.beginPath(); g.moveTo(b.x, b.y); g.lineTo(tp.x, tp.y); g.stroke(); } }); });
@@ -547,7 +713,7 @@
     }
     var standsCache = null, standsKey = '';
     function standsLayer(L) {
-      var settled = Math.abs(view.k - (st.listener === 'far' ? 1 : 0)) < 0.002;
+      var settled = camSettled;
       var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), st.density.toFixed(2)].join('|');
       if (settled && standsCache && standsKey === key) { g.drawImage(standsCache, 0, 0, W, H); return; }
       if (!settled) { drawStands(L); return; }
@@ -582,6 +748,18 @@
       }
     }
     function stadiumOver(t) {
+      chhatris(8.2, t);
+      // Marigold curtains falling from the truss either side of the stage
+      [-1, 1].forEach(function (sd) {
+        for (var k = 0; k < 6; k++) {
+          var x = sd * (9.2 + k * 0.35), a = P(x, 8.2, 35.2 - k * 0.05), b = P(x, 2.4, 35.2 - k * 0.05); if (!a || !b) continue;
+          var dot = Math.max(1.2, a.s * 0.14), gap = Math.max(1, a.s * 0.18);
+          g.lineCap = 'round'; g.lineWidth = dot;
+          g.setLineDash([0.01, gap + dot]); g.strokeStyle = '#f29a2e'; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+          g.lineDashOffset = -(gap + dot) / 2; g.strokeStyle = '#f6c342'; g.stroke();
+          g.setLineDash([]); g.lineDashOffset = 0;
+        }
+      });
       // Bunting across the hall, then hanging lanterns, then moving spotlights
       [2, 18, 32].forEach(function (z, i) { drawStrand([-24, 11, z], [24, 11, z], 1.6, 'flags', t, i); });
       var lc = ['#ff9f5a', '#ff6fa3', '#7fe0a0', '#ffd58a'], n = 0;
@@ -601,16 +779,47 @@
       g.restore();
     }
 
+    var layerCache = {};
+    function cachedLayer(name, draw) {
+      var settled = camSettled;
+      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2)].join('|'), c = layerCache[name];
+      if (settled && c && c.key === key) { g.drawImage(c.cv, 0, 0, W, H); return; }
+      if (!settled) { draw(true); return; }
+      c = layerCache[name] = layerCache[name] || { cv: document.createElement('canvas') };
+      c.cv.width = canvas.width; c.cv.height = canvas.height;
+      var live = g, cg = c.cv.getContext('2d'); cg.setTransform(DPR, 0, 0, DPR, 0, 0); cg.clearRect(0, 0, W, H);
+      g = cg; draw(false); g = live; c.key = key; g.drawImage(c.cv, 0, 0, W, H);
+    }
+    function drawPaving(quick) {
+      var r3 = seeded(5), z0 = Math.max(Math.floor(cam.z + 1.5), -24);
+      for (var z = z0; z < 72; z += 1.3) {
+        var off = (Math.round(z / 1.3) % 2) * 0.6;
+        for (var x = -7 + off; x < 7; x += 1.2) {
+          var tone = 30 + Math.floor(r3() * 14), x1 = Math.min(7, x + 1.14), xa = Math.max(-7, x);
+          if (quick && (Math.round(z) % 3)) continue;
+          fillPoly([[xa, 0, z], [x1, 0, z], [x1, 0, z + 1.24], [xa, 0, z + 1.24]], 'rgb(' + (tone + 8) + ',' + (tone - 2) + ',' + (tone - 10) + ')');
+        }
+      }
+      // A worn, slightly glossy strip down the middle where most feet go
+      var m0 = P(0, 0, z0 + 1), m1 = P(0, 0, 72); if (m0 && m1) { var gr = g.createLinearGradient(0, m1.y, 0, m0.y); gr.addColorStop(0, 'rgba(255,210,150,0)'); gr.addColorStop(1, 'rgba(255,210,150,.06)'); if (poly([[-2.4, 0.005, z0 + 1], [2.4, 0.005, z0 + 1], [1.2, 0.005, 72], [-1.2, 0.005, 72]])) { g.fillStyle = gr; g.fill(); } }
+    }
     function sheriBack(t) {
       var L = layout('sheri');
-      // Stone paving: courses across the lane and joints along it, with a gutter by each otla
-      g.strokeStyle = 'rgba(255,220,170,.05)'; g.lineWidth = 1;
-      for (var z = -30; z < 72; z += 1.4) { var a = P(-7.2, 0, z), b = P(7.2, 0, z); if (a && b) { g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); } }
-      for (var jx = -6; jx <= 6; jx += 2) { var j0 = P(jx, 0, Math.max(cam.z + 1.5, -30)), j1 = P(jx, 0, 72); if (j0 && j1) { g.beginPath(); g.moveTo(j0.x, j0.y); g.lineTo(j1.x, j1.y); g.stroke(); } }
+      // Stone paving: laid in courses, each stone a slightly different tone, kept as an image while the view is still
+      cachedLayer('sheriPaving', drawPaving);
       [-1, 1].forEach(function (sd) {
         fillPoly([[sd * 7.2, 0.01, Math.max(cam.z + 1, -40)], [sd * 6.9, 0.01, Math.max(cam.z + 1, -40)], [sd * 6.9, 0.01, 72], [sd * 7.2, 0.01, 72]], 'rgba(0,0,0,.35)');
         fillPoly([[sd * 7.25, 0, Math.max(cam.z + 1, -40)], [sd * 7.25, 0.45, Math.max(cam.z + 1, -40)], [sd * 7.25, 0.45, 72], [sd * 7.25, 0, 72]], '#3a3040');
       });
+      // A temple spire rising behind the end of the lane, outlined in bulbs
+      var sb = P(0, 12, 78), st2 = P(0, 22, 78), sw0 = P(3.2, 12, 78);
+      if (sb && st2 && sw0) {
+        var hw = sw0.x - sb.x;
+        g.fillStyle = '#231a2c'; g.beginPath(); g.moveTo(sb.x - hw, sb.y); g.bezierCurveTo(sb.x - hw * 0.95, sb.y - (sb.y - st2.y) * 0.6, sb.x - hw * 0.35, st2.y + (sb.y - st2.y) * 0.1, sb.x, st2.y); g.bezierCurveTo(sb.x + hw * 0.35, st2.y + (sb.y - st2.y) * 0.1, sb.x + hw * 0.95, sb.y - (sb.y - st2.y) * 0.6, sb.x + hw, sb.y); g.closePath(); g.fill();
+        for (var tb = 0; tb <= 14; tb++) { var u = tb / 14, bx2 = sb.x - hw + hw * 2 * u, by2 = sb.y - (sb.y - st2.y) * Math.sin(u * Math.PI) * 0.98; glow(bx2, by2, Math.max(0.6, sb.s * 0.06), TH.bulbs[tb % TH.bulbs.length], 0.8 * bright); }
+        g.strokeStyle = '#3a2413'; g.lineWidth = 1; g.beginPath(); g.moveTo(sb.x, st2.y); g.lineTo(sb.x, st2.y - sb.s * 1.6); g.stroke();
+        g.fillStyle = '#d8453a'; g.beginPath(); g.moveTo(sb.x, st2.y - sb.s * 1.6); g.lineTo(sb.x + sb.s * 1.1, st2.y - sb.s * 1.3 + (reduce ? 0 : Math.sin(t * 4) * sb.s * 0.1)); g.lineTo(sb.x, st2.y - sb.s * 1.0); g.fill();
+      }
       // House at the end of the lane with a small shrine
       fillPoly([[-8.2, 0, 72], [8.2, 0, 72], [8.2, 12, 72], [-8.2, 12, 72]], '#2c2338');
       var sh = P(0, 0, 71.8);
@@ -633,7 +842,11 @@
       });
       // Musicians by the shrine, with a speaker on a stand each side
       [-4.6, 4.6].forEach(function (x) { speakerPole(x, 64, 1.8); });
-      bandOn('sheri', 0, 64.5, { x0: -3.2, x1: 3.2 });
+      // A low wooden takht for the musicians by the shrine
+      fillPoly([[-3.4, 0, 63.9], [3.4, 0, 63.9], [3.4, 0.6, 63.9], [-3.4, 0.6, 63.9]], '#4a2a16');
+      fillPoly([[-3.4, 0.6, 63.9], [3.4, 0.6, 63.9], [3.4, 0.6, 66], [-3.4, 0.6, 66]], '#6b3f1f');
+      fillPoly([[-3.4, 0.45, 63.88], [3.4, 0.45, 63.88], [3.4, 0.6, 63.88], [-3.4, 0.6, 63.88]], '#9b1f1a');
+      bandOn('sheri', 0.6, 64.5, { x0: -3.2, x1: 3.2 });
     }
     function house(h, t) {
       var X = h.side * 8;
@@ -650,7 +863,9 @@
           var zc = h.z1 + w * (c + 0.5) / cols, door = f === 0 && c === Math.floor(cols / 2);
           var ww = door ? 0.75 : 0.5, wh = door ? 2.3 : 1.5, yb = door ? 0 : y0;
           var lit = ((h.lit * 10 + f * 3 + c) % 3) < 1.6;
+          if (door) archWindow(X, yb, zc, ww + 0.14, wh + 0.16, '#7a4a22');
           archWindow(X, yb, zc, ww, wh, door ? '#3a1f12' : lit ? 'rgba(255,186,96,.8)' : 'rgba(22,16,34,.95)');
+          if (!door && f > 0) [-1, 1].forEach(function (sd2) { fillPoly([[X - h.side * 0.02, yb, zc + sd2 * ww], [X - h.side * 0.02, yb, zc + sd2 * (ww + 0.34)], [X - h.side * 0.02, yb + wh * 0.72, zc + sd2 * (ww + 0.34)], [X - h.side * 0.02, yb + wh * 0.72, zc + sd2 * ww]], ['#2f5d4a', '#3a4f7a', '#6b3a1c'][h.hue % 3]); });
           if (door) {
             // Toran over the door and marigold strands
             for (var k = 0; k < 7; k++) { var tp = P(X, 2.7, zc - 0.9 + k * 0.3); if (tp) { var fs = tp.s * 0.12; g.fillStyle = ['#f08a24', '#2f8f5b', '#c2185b', '#ffc861'][k % 4]; g.beginPath(); g.moveTo(tp.x - fs, tp.y); g.lineTo(tp.x + fs, tp.y); g.lineTo(tp.x, tp.y + fs * 2); g.closePath(); g.fill(); } }
@@ -664,6 +879,12 @@
       if (h.bulbs) for (var cq = h.z1 + 0.6; cq < h.z2 - 0.3; cq += 1.1) for (var cy2 = h.h - 0.8; cy2 > 1.2; cy2 -= 0.9) { var cp = P(X - h.side * 0.05, cy2, cq); if (cp && cp.x > -10 && cp.x < W + 10) glow(cp.x, cp.y, Math.min(1.6, Math.max(0.5, cp.s * 0.04)), TH.bulbs[(h.hue + Math.round(cy2)) % TH.bulbs.length], (0.55 + 0.35 * Math.sin(t * 3 + cq + cy2 * 2) + pulse * 0.2) * bright); }
       if (h.bulbs) for (var q = h.z1 + 0.3; q < h.z2; q += 0.7) { var bp = P(X, h.h - 0.1, q); if (bp) glow(bp.x, bp.y, Math.min(2.4, Math.max(0.6, bp.s * 0.06)), TH.bulbs[h.hue % TH.bulbs.length], (0.75 + pulse * 0.25) * bright); }
       if (h.rangoli) { var rp = P(X - h.side * 1.4, 0, (h.z1 + h.z2) / 2); if (rp) rangoli(rp, h.hue); }
+      if (h.hue === 3 && h.z2 - h.z1 > 5.5) {
+        // A small kariyana shop: a painted board over the shutter
+        var zm = (h.z1 + h.z2) / 2 + 1.4;
+        fillPoly([[X - h.side * 0.03, 2.55, zm - 1.3], [X - h.side * 0.03, 2.55, zm + 1.3], [X - h.side * 0.03, 3.15, zm + 1.3], [X - h.side * 0.03, 3.15, zm - 1.3]], '#b8312b');
+        var tp2 = P(X - h.side * 0.05, 2.85, zm); if (tp2 && tp2.s > 6) { var fs2 = Math.min(13, tp2.s * 0.32); g.font = '700 ' + fs2 + 'px "Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", system-ui, sans-serif'; g.textAlign = 'center'; g.fillStyle = '#ffe9b8'; g.fillText('કરિયાણા', tp2.x, tp2.y + fs2 * 0.35); }
+      }
       if (h.hue % 2 === 0) { var tz = (h.z1 + h.z2) / 2, tk = P(X + h.side * 1.4, h.h, tz), tk2 = P(X + h.side * 1.4, h.h + 1.2, tz); if (tk && tk2) { var tw2 = Math.max(2, tk.s * 0.6); g.fillStyle = '#16141a'; g.fillRect(tk.x - tw2 / 2, tk2.y, tw2, tk.y - tk2.y); g.fillStyle = '#1f1d24'; g.beginPath(); g.ellipse(tk.x, tk2.y, tw2 / 2, tw2 * 0.12, 0, 0, TAU); g.fill(); } }
       if (h.hue % 3 === 1) { var az = h.z1 + 1, a0 = P(X + h.side * 0.5, h.h, az), a1 = P(X + h.side * 0.5, h.h + 1.6, az); if (a0 && a1) { g.strokeStyle = 'rgba(30,26,34,.9)'; g.lineWidth = 1; g.beginPath(); g.moveTo(a0.x, a0.y); g.lineTo(a1.x, a1.y); g.moveTo(a1.x - a1.s * 0.4, a1.y + a1.s * 0.2); g.lineTo(a1.x + a1.s * 0.4, a1.y + a1.s * 0.2); g.stroke(); } }
     }
@@ -678,6 +899,22 @@
       g.globalAlpha = 1;
     }
     function sheriOver(t) {
+      // Electric wires sagging across and along the lane
+      g.strokeStyle = 'rgba(12,10,14,.75)'; g.lineWidth = 0.8;
+      [[-8, 9, 6, 8, 8.5, 20], [-8, 8.2, 26, 8, 9, 14], [-8, 9.2, 40, 8, 8, 48], [-8, 8.6, 2, 8, 8.8, -4], [-7.8, 9.4, -6, -7.8, 9.4, 60], [7.8, 9, -6, 7.8, 9, 60]].forEach(function (wv) {
+        var st0 = false; g.beginPath();
+        for (var i = 0; i <= 24; i++) { var q = sag([wv[0], wv[1], wv[2]], [wv[3], wv[4], wv[5]], 0.6, i / 24), pq = P(q[0], q[1], q[2]); if (!pq) { st0 = false; continue; } if (st0) g.lineTo(pq.x, pq.y); else { g.moveTo(pq.x, pq.y); st0 = true; } }
+        g.stroke();
+      });
+      // Fabric canopies (chandarvo) across the lane, printed in triangles
+      [12, 21, 34].forEach(function (z, ci) {
+        var cols = [TH.flags[ci % TH.flags.length], '#f6c342', '#2f8f5b', '#b8312b'];
+        for (var k = 0; k < 10; k++) {
+          var u0 = k / 10, u1 = (k + 1) / 10, a = sag([-8, 7.6, z], [8, 7.6, z], 0.9, u0), b = sag([-8, 7.6, z], [8, 7.6, z], 0.9, u1);
+          fillPoly([[a[0], a[1], a[2]], [b[0], b[1], b[2]], [b[0], b[1] - 0.2, b[2] + 1.6], [a[0], a[1] - 0.2, a[2] + 1.6]], cols[k % cols.length]);
+          var tq = P((a[0] + b[0]) / 2, a[1] - 0.05, a[2]); if (tq) { var fs3 = Math.max(1, tq.s * 0.18); g.fillStyle = cols[(k + 1) % cols.length]; g.beginPath(); g.moveTo(tq.x - fs3, tq.y); g.lineTo(tq.x + fs3, tq.y); g.lineTo(tq.x, tq.y + fs3 * 1.6); g.fill(); }
+        }
+      });
       var zs = [60, 50, 41, 32, 24, 16, 8, 0, -8], lc = ['#ff9f5a', '#ff6fa3', '#7fe0a0', '#ffd58a'];
       zs.forEach(function (z, i) {
         if (i % 3 === 0) { drawStrand([-8, 6.8, z], [8, 6.8, z + 2], 1.1, 'bulbs', t, i); drawStrand([-8, 6.8, z + 2], [8, 6.8, z], 1.1, 'bulbs', t, i + 3); }
@@ -706,18 +943,19 @@
       if (sp) {
         var fs = Math.min(14, sp.s * 0.4);
         if (fs >= 6) {
-          g.font = '700 ' + fs + 'px system-ui, -apple-system, sans-serif'; g.textAlign = 'center';
-          var tw = g.measureText(sl.sign).width + fs;
-          g.fillStyle = 'rgba(24,12,6,.9)'; roundRect(sp.x - tw / 2, sp.y - fs * 0.95, tw, fs * 1.4, fs * 0.3); g.fill();
+          g.font = '700 ' + fs + 'px "Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", system-ui, sans-serif'; g.textAlign = 'center';
+          var tw = g.measureText(sl.sign).width + fs, fe = fs * 0.55;
+          g.fillStyle = 'rgba(24,12,6,.9)'; roundRect(sp.x - tw / 2, sp.y - fs * 1.05, tw, fs * 1.55 + (fe >= 6 ? fe : 0), fs * 0.3); g.fill();
           g.strokeStyle = sl.col; g.lineWidth = 1; g.stroke();
           g.fillStyle = '#ffd58a'; g.fillText(sl.sign, sp.x, sp.y + fs * 0.12);
+          if (fe >= 6) { g.font = '600 ' + fe + 'px system-ui, sans-serif'; g.fillStyle = 'rgba(255,230,190,.75)'; g.fillText(sl.en, sp.x, sp.y + fs * 0.12 + fe * 1.15); }
         }
       }
     }
 
     /* ---------- the mandvi: a small decorated canopy over the central garbo ---------- */
     function mandvi(ctr, part, t) {
-      var cx = ctr.x, cz = ctr.z, r = 1.0, top = 2.85, posts = [[-r, -r], [r, -r], [r, r], [-r, r]];
+      var small = st.venue === 'sheri', cx = ctr.x, cz = ctr.z, r = small ? 0.78 : 1.0, top = small ? 2.4 : 2.85, posts = [[-r, -r], [r, -r], [r, r], [-r, r]];
       // Carved pillars in red and gold bands, front pair drawn after the garbo
       posts.forEach(function (q) {
         var front = q[1] < 0; if ((part === 'front') !== front) return;
@@ -827,15 +1065,12 @@
     /* ---------- dancers ---------- */
     function circleCentre(c, T) {
       if (c.parent) return circleCentre(c.parent, T);
+      // The garbo and its mandvi stand exactly at the centre; only the smaller circles drift
+      if (c.main) return { x: c.x0, z: c.z0 };
       var d = reduce ? 0 : 1;
       return { x: c.x0 + d * 0.7 * Math.sin(T * 0.09 + c.ph[0]), z: c.z0 + d * 0.6 * Math.sin(T * 0.07 + c.ph[1]) };
     }
     function dancerWorld(c, d, T, ctr) {
-      // You and your partner keep your own place just inside the front of the circle, dancing together as the ring goes round you
-      if (d.coupleRole) {
-        var sd = d.coupleRole === 'w' ? -1 : 1, sway = reduce ? 0 : Math.sin(T * 0.9) * 0.18;
-        return { x: ctr.x + sd * 0.5 + sway, z: ctr.z - (c.R - 0.85) + (reduce ? 0 : Math.sin(T * 0.6) * 0.12), a: -Math.PI / 2 };
-      }
       var a = d.a0 + c.spin + (reduce ? 0 : 0.06 * Math.sin(T * 0.5 + d.ph2));
       var rr = c.R * (1 + c.wob * (0.07 * Math.sin(2 * a + c.ph[2] + T * 0.15) + 0.045 * Math.sin(3 * a + c.ph[3] - T * 0.11))) + (reduce ? 0 : 0.22 * Math.sin(T * 0.8 + d.ph));
       return { x: ctr.x + Math.cos(a) * rr, z: ctr.z + Math.sin(a) * rr, a: a };
@@ -874,18 +1109,21 @@
       if (sd.tassel) { g.strokeStyle = tint(sd.tassel, dk); g.lineWidth = Math.max(0.7, w * 0.45); g.beginPath(); for (var k = -1; k <= 1; k++) { g.moveTo(x1, y1); g.lineTo(x1 + k * w * 0.9, y1 + len * 0.16); } g.stroke(); }
     }
     function figure(p, d, T, isYou, beatPh, fade) {
+      if (d.coupleRole && st.listener !== 'circle' && d.alt) { var a0 = d.alt; ['flash', 'twirl', 'atHome', 'walking', 'step', 'sitting', 'rest', 'ph'].forEach(function (k) { a0[k] = d[k]; }); d = a0; }
       var s = p.s, x = p.x, y = p.y, h = d.h * s, up = d.flash > 0.25;
-      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = !d.walker && !d.role && !d.watcher && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
-      if (d.sitting) h *= 0.64;
+      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = !d.walker && !d.role && !d.watcher && !d.stander && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
+      var groundY = null;
+      if (d.sitting) { groundY = p.y + ((d.rest && d.rest.y) || 0) * s; y = p.y + 0.48 * h; }
       var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || dancing || playing ? Math.sin(ph) : 0;
-      y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
+      if (!d.sitting) y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
+      if (d.stander && !reduce) x += Math.sin(T * 0.8 + d.sway) * h * 0.02;
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
       FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, (p.z - (-cam.z) - 9) / 55));
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
       // Light falls off away from the garbo: people out at the edges are a shade darker than those by the lamp
       if (!near && !isYou && !d.coupleRole && !d.role && lightAt) { var ld = Math.hypot(p.x - lightAt.x, (p.y - lightAt.y) * 2.2) / Math.max(1, W * 0.9); dk = Math.max(dk, Math.min(0.42, ld * 0.5) * (st.on ? 0.8 : 1)); }
-      if (!near && h > 16) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
+      if (!near && h > 16) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, groundY != null ? groundY : p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
       var skin = tint(SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], dk), main = tint(d.col, dk), top = tint(d.top, dk), gold = tint('#e8b04b', dk);
       var fine = (h > 26 || (d.coupleRole && h > 12)) && !near, lw = Math.max(0.8, h * 0.034);
       if (h < 11 && !isYou && !d.coupleRole) {
@@ -902,8 +1140,16 @@
         // Churidar legs and mojari
         g.strokeStyle = tint(d.legs || '#efe6d6', dk); g.lineWidth = Math.max(1, h * 0.055);
         var lx = walking ? sw * h * 0.06 : sw * h * 0.03;
+        if (d.sitting && groundY - (y - h * 0.44) < h * 0.1) {
+          // Sitting cross-legged on the ground
+          g.fillStyle = tint(d.legs || '#efe6d6', dk); g.beginPath(); g.ellipse(x, groundY - h * 0.03, h * 0.2, h * 0.05, 0, 0, TAU); g.fill();
+        } else if (d.sitting) {
+          g.beginPath(); g.moveTo(x - h * 0.05, y - h * 0.44); g.lineTo(x - h * 0.08, groundY - h * 0.01); g.moveTo(x + h * 0.05, y - h * 0.44); g.lineTo(x + h * 0.08, groundY - h * 0.01); g.stroke();
+          g.fillStyle = tint('#3a1f12', dk); g.beginPath(); g.ellipse(x - h * 0.09, groundY, h * 0.04, h * 0.018, 0, 0, TAU); g.ellipse(x + h * 0.09, groundY, h * 0.04, h * 0.018, 0, 0, TAU); g.fill();
+        } else {
         g.beginPath(); g.moveTo(x - h * 0.045, y - h * 0.44); g.lineTo(x - h * 0.06 - lx, y - h * 0.02); g.moveTo(x + h * 0.045, y - h * 0.44); g.lineTo(x + h * 0.06 + lx, y - h * 0.02); g.stroke();
         g.fillStyle = tint('#3a1f12', dk); g.beginPath(); g.ellipse(x - h * 0.07 - lx, y, h * 0.04, h * 0.018, 0, 0, TAU); g.ellipse(x + h * 0.07 + lx, y, h * 0.04, h * 0.018, 0, 0, TAU); g.fill();
+        }
         // Kediyu: fitted at the chest, flared frill below
         var fl = h * (0.2 + (dancing ? 0.04 * sw : 0));
         g.fillStyle = main; g.beginPath();
@@ -914,7 +1160,7 @@
         if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(x - fl, y - h * 0.425); g.quadraticCurveTo(x, y - h * 0.385, x + fl, y - h * 0.425); g.stroke(); g.beginPath(); g.moveTo(x, y - h * 0.8); g.lineTo(x, y - h * 0.63); g.stroke(); }
       } else {
         // Chaniya with a bordered hem, then the choli and a strip of waist
-        var flare = h * (0.25 + (dancing ? 0.045 * sw : walking ? 0.01 * sw : 0) + 0.16 * tw), hem = y - h * 0.01 - h * 0.03 * tw;
+        var flare = h * (0.25 + (dancing ? 0.045 * sw : walking ? 0.01 * sw : 0) + 0.16 * tw + (d.sitting ? 0.06 : 0)), hem = d.sitting ? groundY : y - h * 0.01 - h * 0.03 * tw;
         g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.075, y - h * 0.55); g.lineTo(x + h * 0.075, y - h * 0.55);
         g.quadraticCurveTo(x + flare * 0.75, y - h * 0.22, x + flare, hem); g.quadraticCurveTo(x, hem + h * 0.05, x - flare, hem); g.quadraticCurveTo(x - flare * 0.75, y - h * 0.22, x - h * 0.075, y - h * 0.55); g.fill();
         g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.035); g.beginPath(); g.moveTo(x - flare * 0.97, hem - h * 0.015); g.quadraticCurveTo(x, hem + h * 0.035, x + flare * 0.97, hem - h * 0.015); g.stroke();
@@ -962,6 +1208,8 @@
       if (d.role === 'singer') { le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09]; re = [x + h * 0.16, shy + h * 0.02 - sw * h * 0.04]; rh = [x + h * 0.24, shy - h * 0.1 - sw * h * 0.08]; }
       else if (d.role === 'dhol') { var hit = Math.max(0, sw); le = [x - h * 0.16, shy + h * 0.1]; lh = [x - h * 0.22, shy + h * (0.2 - 0.06 * hit)]; re = [x + h * 0.16, shy + h * 0.1]; rh = [x + h * 0.22, shy + h * (0.2 - 0.06 * Math.max(0, -sw))]; }
       else if (d.role === 'keys') { le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.1 + sw * h * 0.02, shy + h * 0.26]; re = [x + h * 0.14, shy + h * 0.14]; rh = [x + h * 0.1 - sw * h * 0.02, shy + h * 0.26]; }
+      else if (d.stander && d.phone) { le = [x - h * 0.13, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.1, shy - h * 0.06]; rh = [x + h * 0.06, shy - h * 0.2]; }
+      else if (d.stander && d.chat && Math.sin(T * 1.3 + d.sway) > 0.4) { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.16, shy + h * 0.12]; rh = [x + h * 0.22, shy + h * (0.02 + 0.04 * Math.sin(T * 5 + d.sway))]; }
       else if (d.photo && !walking) { le = [x - h * 0.12, shy + h * 0.06]; lh = [x - h * 0.04, shy - h * 0.1]; re = [x + h * 0.12, shy + h * 0.06]; rh = [x + h * 0.04, shy - h * 0.1]; }
       else if (tw > 0.3) { le = [x - h * 0.17, shy - h * 0.1]; lh = [x - h * 0.24, shy - h * 0.24]; re = [x + h * 0.17, shy - h * 0.1]; rh = [x + h * 0.24, shy - h * 0.24]; }
       else if (up) { le = [x - h * 0.13, shy - h * 0.12]; lh = [x - h * 0.012, shy - h * 0.27]; re = [x + h * 0.13, shy - h * 0.12]; rh = [x + h * 0.012, shy - h * 0.27]; }
@@ -970,22 +1218,24 @@
       g.strokeStyle = skin; g.lineWidth = lw;
       g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(le[0], le[1]); g.lineTo(lh[0], lh[1]); g.moveTo(R[0], R[1]); g.lineTo(re[0], re[1]); g.lineTo(rh[0], rh[1]); g.stroke();
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
+      if (d.stander && d.phone) { g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = 'rgba(200,225,255,.9)'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (st.on) glow(rh[0], rh[1] - h * 0.02, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
       if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
       if (d.role === 'singer') { g.strokeStyle = tint('#222222', dk); g.lineWidth = Math.max(1, h * 0.025); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lh[0] + h * 0.02, lh[1] + h * 0.08); g.stroke(); }
       if (st.style === 'dandiya' && !d.walker && !d.role) {
         // On the beat the two sticks cross and strike; between beats they are held out, swinging with the step
         var len = h * 0.3, la, ra;
-        if (up) { la = -Math.PI / 2 + 0.55; ra = -Math.PI / 2 - 0.55; }
+        if (up && d.strikeDir && !d.walker) { var toward = d.strikeDir > 0 ? -0.5 : -Math.PI + 0.5; la = toward - 0.18; ra = toward + 0.18; }
+        else if (up) { la = -Math.PI / 2 + 0.55; ra = -Math.PI / 2 - 0.55; }
         else { la = -Math.PI / 2 - 0.35 - 0.25 * sw; ra = -Math.PI / 2 + 0.35 - 0.25 * sw; }
         dandiya(lh[0], lh[1], la, len, d.stick || 0, dk, fine);
         dandiya(rh[0], rh[1], ra, len, d.stick || 0, dk, fine);
-        if (up && d.flash > 0.4) glow(x, lh[1] - len * 0.62, Math.max(1, h * 0.03), '#fff3c4', d.flash);
+        if (up && d.flash > 0.4) glow(x + (d.strikeDir || 0) * h * 0.28, lh[1] - len * (d.strikeDir ? 0.35 : 0.62), Math.max(1, h * 0.035), '#fff3c4', d.flash);
       }
       if (d.flash > 0.05) glow(x, shy - h * 0.27, Math.max(1, h * 0.03 * (1 + d.flash)), '#fff0d0', d.flash);
       g.globalAlpha = 1;
       if (isYou) {
         g.fillStyle = 'rgba(214,176,111,' + (0.25 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, p.y, h * (0.32 + youGlow * 0.12), h * 0.09, 0, 0, TAU); g.fill();
-        youLabel = { x: Math.max(28, Math.min(W - 28, x)), y: Math.max(26, y - h * 1.14), h: h };
+        youLabel = { x: Math.max(16, Math.min(W - 16, x)), y: Math.max(30, y - h * 1.08), h: h, man: d.coupleRole === 'm' };
       }
     }
     function fogBand(f) {
@@ -1005,10 +1255,44 @@
       var sg = g.createRadialGradient(p.x, cy, h * 0.05, p.x, cy, r); sg.addColorStop(0, 'rgba(255,214,150,' + (0.3 + 0.2 * youGlow) + ')'); sg.addColorStop(1, 'rgba(255,214,150,0)');
       g.fillStyle = sg; g.beginPath(); g.arc(p.x, cy, r, 0, TAU); g.fill();
     }
+    // In Gujarati: તું (you) over you, and તારો or તારી (yours) over your partner, on a small leaf-shaped tag
+    var GU_FONT = '"Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", FreeSerif, system-ui, sans-serif';
+    function coupleWord(you, man) { return you ? 'તું' : man ? 'તારો' : 'તારી'; }
+    function tag(x, y, h, you, man, T0) {
+      var text = coupleWord(you, man), fs = Math.max(12, Math.min(17, h * 0.15));
+      g.font = '700 ' + fs + 'px ' + GU_FONT; g.textAlign = 'center';
+      var w = Math.max(fs * 1.9, g.measureText(text).width + fs * 1.1), hh = fs * 1.55, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 2, top = y - hh - fs * 0.7 + bob;
+      if (you) glow(x, top + hh * 0.5, hh * 0.5, 'rgba(255,210,130,1)', 0.2 + youGlow * 0.35);
+      g.beginPath(); g.moveTo(x - w / 2, top + hh * 0.35); g.quadraticCurveTo(x - w / 2, top, x - w / 2 + hh * 0.35, top); g.lineTo(x + w / 2 - hh * 0.35, top); g.quadraticCurveTo(x + w / 2, top, x + w / 2, top + hh * 0.35);
+      g.lineTo(x + w / 2, top + hh * 0.7); g.quadraticCurveTo(x + w / 2, top + hh, x + w / 2 - hh * 0.3, top + hh); g.lineTo(x + fs * 0.35, top + hh); g.lineTo(x, top + hh + fs * 0.55); g.lineTo(x - fs * 0.35, top + hh); g.lineTo(x - w / 2 + hh * 0.3, top + hh); g.quadraticCurveTo(x - w / 2, top + hh, x - w / 2, top + hh * 0.7); g.closePath();
+      g.fillStyle = you ? '#e8b04b' : 'rgba(243,230,208,.94)'; g.fill();
+      g.strokeStyle = you ? '#fff1c2' : 'rgba(142,27,44,.5)'; g.lineWidth = 1; g.stroke();
+      g.fillStyle = you ? '#2a1208' : '#6b1420'; g.fillText(text, x, top + hh * 0.7);
+    }
+    // Pictograms over the two of you, like the signs on a door: a woman in a dress and a man. Yours glows gold.
+    function marker(x, y, h, you, T0, man) {
+      var r = Math.max(8, Math.min(13, h * 0.11)) * (you ? 1 : 0.85), bob = reduce ? 0 : Math.sin(T0 * 2.4 + (you ? 0 : 1.2)) * r * 0.25, cy = y - r * 2.4 + bob;
+      var col = you ? '#f3c766' : 'rgba(243,230,208,.9)';
+      if (you) glow(x, cy + r * 0.1, r * 0.8, 'rgba(255,210,130,1)', 0.18 + youGlow * 0.3);
+      // A small round badge so the sign reads against the lit crowd
+      g.fillStyle = 'rgba(11,6,5,.72)'; g.beginPath(); g.arc(x, cy + r * 0.12, r * 1.55, 0, TAU); g.fill();
+      g.strokeStyle = you ? '#e8b04b' : 'rgba(243,230,208,.35)'; g.lineWidth = you ? 1.6 : 1; g.stroke();
+      g.fillStyle = 'rgba(11,6,5,.72)'; g.beginPath(); g.moveTo(x - r * 0.35, cy + r * 1.55); g.lineTo(x + r * 0.35, cy + r * 1.55); g.lineTo(x, cy + r * 2.05); g.closePath(); g.fill();
+      r *= 0.72; cy += r * 0.2;
+      g.fillStyle = col;
+      g.beginPath(); g.arc(x, cy - r * 0.95, r * 0.36, 0, TAU); g.fill();
+      if (man) {
+        roundRect(x - r * 0.42, cy - r * 0.5, r * 0.84, r * 1.05, r * 0.2); g.fill();
+        g.fillRect(x - r * 0.36, cy + r * 0.45, r * 0.3, r * 0.95); g.fillRect(x + r * 0.06, cy + r * 0.45, r * 0.3, r * 0.95);
+      } else {
+        g.beginPath(); g.moveTo(x - r * 0.24, cy - r * 0.52); g.lineTo(x + r * 0.24, cy - r * 0.52); g.lineTo(x + r * 0.62, cy + r * 0.72); g.lineTo(x - r * 0.62, cy + r * 0.72); g.closePath(); g.fill();
+        g.fillRect(x - r * 0.3, cy + r * 0.7, r * 0.22, r * 0.72); g.fillRect(x + r * 0.08, cy + r * 0.7, r * 0.22, r * 0.72);
+      }
+    }
     function partnerMark(p, d) {
       var h = d.h * p.s;
       g.fillStyle = 'rgba(214,176,111,.22)'; g.beginPath(); g.ellipse(p.x, p.y, h * 0.3, h * 0.08, 0, 0, TAU); g.fill();
-      partnerLabel = { x: Math.max(34, Math.min(W - 34, p.x)), y: Math.max(26, p.y - h * 1.14), h: h * 0.85 };
+      partnerLabel = { x: Math.max(16, Math.min(W - 16, p.x)), y: Math.max(30, p.y - h * 1.06), h: h, man: d.coupleRole === 'm' };
     }
     function label(text, x, y, h, soft) {
       var fs = Math.max(soft ? 10 : 11, Math.min(soft ? 12.5 : 14, h * 0.2));
@@ -1067,7 +1351,7 @@
       g.fillStyle = '#f3e6d0';
       g.beginPath(); g.moveTo(x - 11 * u, y); g.quadraticCurveTo(x - 12 * u, y - 24 * u, x, y - 26 * u); g.quadraticCurveTo(x + 12 * u, y - 24 * u, x + 11 * u, y); g.closePath(); g.fill();
       g.beginPath(); g.arc(x, y - 33 * u, 7.5 * u, 0, TAU); g.fill();
-      label('You and partner', x + 14 * u, y - 46 * u, 60 * u);
+      var youMan = st.youAs === 'man'; marker(x, y - 44 * u, 70 * u, true, clock(), youMan); marker(x + 28 * u, y - 40 * u, 64 * u, false, clock(), !youMan);
     }
 
     /* ---------- echoes: where they come from in each venue ---------- */
@@ -1102,7 +1386,7 @@
     // When the music stops the dancers drift off to rest: to the sides, the stalls and the water, or to sit on an
     // otla. When it starts they walk back, one by one, and the circles form again.
     function restSpot(id, L, d) {
-      if (d.coupleRole) { var cs = d.coupleRole === 'w' ? -0.35 : 0.35; return id === 'sheri' ? { x: -6.85, z: -1 + cs * 2, y: 0.45, sit: true } : { x: -7.5 + cs, z: -3.2, sit: false }; }
+      if (d.coupleRole) { var cs = d.coupleRole === 'w' ? -0.35 : 0.35; return id === 'sheri' ? { x: -2.6 + cs, z: -2.2 } : { x: -3.4 + cs, z: -3.8 }; }
       var r = rnd(), side = rnd() < 0.5 ? -1 : 1;
       if (id === 'sheri') {
         if (r < 0.6) return { x: side * 6.85, z: lerp(-4, 56, rnd()), y: 0.45, sit: true };
@@ -1120,7 +1404,12 @@
       if (d.wantHome !== goHome) { d.wantHome = goHome; d.wait = d.delay; }
       var target = goHome ? slot : d.rest, dx = target.x - d.x, dz = target.z - d.z, dist = Math.hypot(dx, dz);
       if (d.wait > 0) d.wait -= dt;
-      else if (dist > 0.2) { var step = Math.min(dist, d.speed * dt * (goHome && dist < 2 ? 0.6 + dist * 0.2 : 1)); d.x += dx / dist * step; d.z += dz / dist * step; d.step = (d.step || 0) + step * 5.5; }
+      else if (dist > 0.2) {
+        var step = Math.min(dist, d.speed * dt * (goHome && dist < 2 ? 0.6 + dist * 0.2 : 1)), mx = dx / dist, mz = dz / dist, rc = Math.hypot(d.x, d.z);
+        // Walk round the centre rather than across it
+        if (rc < KEEP_OUT + 2 && (d.x * mx + d.z * mz) < 0) { var tx0 = -d.z / (rc || 1), tz0 = d.x / (rc || 1), side = (tx0 * dx + tz0 * dz) >= 0 ? 1 : -1; mx = mx * 0.3 + tx0 * side; mz = mz * 0.3 + tz0 * side; var ml = Math.hypot(mx, mz) || 1; mx /= ml; mz /= ml; }
+        d.x += mx * step; d.z += mz * step; clearOfCentre(d); d.step = (d.step || 0) + step * 5.5;
+      }
       if (goHome && dist < 0.35) { d.x = slot.x; d.z = slot.z; }
       d.walking = dist > 0.35 && d.wait <= 0 && !reduce;
       d.atHome = goHome && dist < 0.35;
@@ -1140,6 +1429,7 @@
       });
       arrivals.push({ t: bt, g: 1 });
       L.watchers.forEach(function (wt) { if (rnd() < 0.12) wt.clapAt = bt; });
+      L.standers.forEach(function (sd0) { if (!sd0.phone && rnd() < 0.1) sd0.clapAt = bt; });
       reflectors(you).forEach(function (r) {
         var dr = Math.hypot(you.x - r.x, you.z - r.z), s0 = Math.max(firstT0, bt + r.d - dr / V);
         waves.push({ kind: 'echo', x: r.x, y: r.y, z: r.z, t0: s0, a: Math.min(0.5, 0.1 + r.l), lim: dr * 1.05, aim: Math.atan2(you.z - r.z, you.x - r.x) });
@@ -1181,6 +1471,7 @@
     }
 
     /* ---------- frame ---------- */
+    var camVenue = null, camNow = [0, 4.4, -12.5], horNow = 0.3, camSettled = true;
     var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null, lightAt = null;
     function frame(ms) {
       if (!running) return;
@@ -1190,10 +1481,16 @@
       TH = THEMES[st.theme] || THEMES.traditional;
       var bb = opts.beats && opts.beats(); BEAT = bb ? ((t - bb.anchor) / bb.period) % 2 : T * 1.8;
       var target = st.listener === 'far' ? 1 : 0;
+      // The camera eases between the three places you can stand; a new venue starts in place
+      var ct = (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = { circle: 0.3, far: 0.4, stage: 0.3 }[st.listener] || 0.3;
+      if (camVenue !== st.venue || reduce) { camVenue = st.venue; camNow = ct.slice(); horNow = hf; }
+      var ek = Math.min(1, dt * 2.4);
+      camNow[0] += (ct[0] - camNow[0]) * ek; camNow[1] += (ct[1] - camNow[1]) * ek; camNow[2] += (ct[2] - camNow[2]) * ek; horNow += (hf - horNow) * ek;
+      camSettled = Math.abs(ct[0] - camNow[0]) + Math.abs(ct[1] - camNow[1]) + Math.abs(ct[2] - camNow[2]) < 0.02;
       view.k += (target - view.k) * Math.min(1, dt * (reduce ? 60 : 2.6));
       var ce = CAMS[st.venue] || CAMS.outdoors, e = ease(Math.max(0, Math.min(1, view.k)));
-      HOR = BY + BH * lerp(0.3, 0.4, e);
-      cam.x = lerp(ce.circle[0], ce.far[0], e); cam.y = lerp(ce.circle[1], ce.far[1], e); cam.z = lerp(ce.circle[2], ce.far[2], e);
+      HOR = BY + BH * horNow;
+      cam.x = camNow[0]; cam.y = camNow[1]; cam.z = camNow[2];
       bright += ((st.on ? 1 : 0.55) - bright) * Math.min(1, dt * 3);
       pulse *= Math.exp(-dt * 5);
       var L = layout(st.venue);
@@ -1227,19 +1524,26 @@
           d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2);
           var slot = dancerWorld(c, d, T, ctr), w = travel(d, slot, dt);
           if (d.atHome) home++;
-          var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z);
+          var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z); d._px = p ? p.x : null;
           var fd = p ? Math.max(0, Math.min(1, (p.z - 3) / 4)) : 0;
           if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: fd, you: !!d.coupleRole && d.coupleRole === (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5, partner: !!d.coupleRole && d.coupleRole !== (st.youAs === 'man' ? 'm' : 'w') && st.listener === 'circle' && view.k < 0.5 });
         });
         c.present = home / c.dancers.length;
+        // Raas: neighbours pair up and strike each other's sticks, so each turns toward the other on the beat
+        for (var pi = 0; pi + 1 < c.dancers.length; pi += 2) { var da = c.dancers[pi], db = c.dancers[pi + 1]; if (da._px != null && db._px != null) { da.strikeDir = db._px >= da._px ? 1 : -1; db.strikeDir = -da.strikeDir; } else { da.strikeDir = db.strikeDir = 0; } }
       });
       if (!reduce) { moveWalkers(L, st.venue, dt); moveKids(L, st.venue, dt); }
+      L.standers.forEach(function (sd0) { if (sd0.clapAt && t >= sd0.clapAt) { sd0.flash = 1; sd0.clapAt = 0; } sd0.flash *= Math.exp(-dt * 4); var p = P(sd0.x, 0, sd0.z); if (p && p.z > 2.5 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: sd0, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.kids.forEach(function (k) { var p = P(k.x, 0, k.z); if (p && p.z > 2.5 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: k, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
-      L.trees.forEach(function (tr) { var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
+      L.trees.forEach(function (tr) { if (tr.z >= 44) return; var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
       L.props.forEach(function (o) { var p = P(o.x, 0, o.z); if (p && p.z > 2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'prop', o: o }); });
-      L.seats.forEach(function (se) { var p = P(se.x, 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
+      L.gallery.forEach(function (ga) {
+        if (ga.kind === 'runner') { ga.x = Math.sin(T * 0.5) * 8; ga.who.step = T * 9; ga.who.moving = true; }
+        var p = P(ga.x, ga.y, ga.z); if (p && p.z > 0.9 && p.x > -60 && p.x < W + 60) items.push({ z: p.z + (ga.kind === 'step' ? 0.6 : 0), kind: 'gallery', ga: ga, p: p });
+      });
+      L.seats.forEach(function (se) { var p = P(se.x, se.y != null ? se.y : 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.watchers.forEach(function (wt) { if (wt.clapAt && t >= wt.clapAt) { wt.flash = 1; wt.clapAt = 0; } wt.flash *= Math.exp(-dt * 3); var p = P(wt.x, 0, wt.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: wt, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       items.sort(function (a, b2) { return b2.z - a.z; });
       var lc0 = P(circleCentre(L.circles[0], T).x, 1, circleCentre(L.circles[0], T).z); lightAt = lc0 ? { x: lc0.x, y: lc0.y } : null;
@@ -1250,11 +1554,12 @@
       var D0 = -cam.z, FOG = [{ z: D0 + 40, a: 0.42 }], fi = 0;
       items.forEach(function (it) {
         while (fi < FOG.length && it.z < FOG[fi].z) fogBand(FOG[fi++]);
-        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; if (st.venue !== 'sheri') mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (st.venue !== 'sheri') mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
+        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
         else if (it.kind === 'tree') drawTree(it.tr, t);
         else if (it.kind === 'prop') prop(it.o, t);
-        else if (it.kind === 'seat') { chair(it.se); if (it.se.who) figure(it.p, it.se.who, T, false, beatPh, it.fade); }
+        else if (it.kind === 'gallery') galleryItem(it.ga, it.p, T);
+        else if (it.kind === 'seat') { if (!it.se.kind) chair(it.se); if (it.se.who) figure(it.p, it.se.who, T, false, beatPh, it.fade); }
         else { if (it.you || it.partner) followSpot(it.p, it.d); figure(it.p, it.d, T, it.you, beatPh, it.you || it.partner ? 1 : it.fade); if (it.partner) partnerMark(it.p, it.d); }
       });
 
@@ -1262,9 +1567,10 @@
       FOGF = 0;
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       // Your label always sits on top, so you can find yourself in the crowd
-      if (partnerLabel && youLabel && Math.abs(partnerLabel.x - youLabel.x) < 70 && Math.abs(partnerLabel.y - youLabel.y) < 24) partnerLabel.y = youLabel.y - 26;
-      if (partnerLabel) label('Partner', partnerLabel.x, partnerLabel.y, partnerLabel.h, true);
-      if (youLabel) label('You', youLabel.x, youLabel.y, youLabel.h);
+      // You dance side by side, so keep the two tags from overlapping
+      if (partnerLabel && youLabel) { var gap = 50, dxl = partnerLabel.x - youLabel.x; if (Math.abs(dxl) < gap && Math.abs(partnerLabel.y - youLabel.y) < 40) { var push = (gap - Math.abs(dxl)) / 2, sgn = dxl >= 0 ? 1 : -1; partnerLabel.x += sgn * push; youLabel.x -= sgn * push; } }
+      if (partnerLabel) tag(partnerLabel.x, partnerLabel.y, partnerLabel.h, false, partnerLabel.man, T);
+      if (youLabel) tag(youLabel.x, youLabel.y, youLabel.h, true, youLabel.man, T);
 
       // Dust and moths drifting up through the light
       if (!reduce && st.venue !== 'sheri') {
@@ -1300,7 +1606,6 @@
       for (var j = arrivals.length - 1; j >= 0; j--) if (arrivals[j].t <= t) { youGlow = Math.max(youGlow, arrivals[j].g); arrivals.splice(j, 1); }
       youGlow *= Math.exp(-dt * 6);
 
-      seat(view.k);
 
       // Soft vignette, then the fade from the previous venue
       var vg = g.createRadialGradient(W / 2, H * 0.55, H * 0.25, W / 2, H * 0.55, H * 0.85); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.5)');
@@ -1322,7 +1627,13 @@
       BX = box ? box.x : 0; BY = box ? box.y : 0; BW = box ? box.w : W; BH = box ? box.h : H;
       HOR = BY + BH * 0.3; F = Math.min(BW, BH * 1.05) * 0.95;
     }
+    var singer = { img: null, man: false, url: '' };
     function set(patch) {
+      if (patch.singerFace !== undefined) {
+        var sf = patch.singerFace || {}, url = sf.url || '';
+        if (url !== singer.url) { singer.url = url; singer.img = null; if (url) { var im = new Image(); im.decoding = 'async'; im.onload = function () { if (singer.url === url) singer.img = im; }; im.src = url; } }
+        singer.man = !!sf.man;
+      }
       if (patch.venue && patch.venue !== st.venue && W > 1) {
         fade = fade || document.createElement('canvas'); fade.width = canvas.width; fade.height = canvas.height;
         fade.getContext('2d').drawImage(canvas, 0, 0); fadeA = 1; waves = []; arrivals = [];

@@ -88,6 +88,7 @@
   const LISTENERS = {
     circle: { label: 'In the circle', desc: 'You are dancing, with clappers all around you.', dry: 1, wet: 1, dryCut: 20000, wetCut: 20000, width: 1 },
     far: { label: 'Far away', desc: 'You are watching from the far edge. The circle sounds distant, softer and more echoey.', dry: 0.26, wet: 0.95, dryCut: 2000, wetCut: 4200, width: 0.3 },
+    stage: { label: 'By the stage', desc: 'You are up front by the band, with the circle clapping behind you.', dry: 0.55, wet: 0.8, dryCut: 6000, wetCut: 7500, width: 0.65 },
   };
 
   // Claps land on these beats of each round, counted from the first tap.
@@ -819,7 +820,7 @@
       .atmosphere-section h3{margin:0;font:600 16px/1.2 var(--sans,system-ui);letter-spacing:-.005em;text-align:center;color:#f6ecd7}
       .atmosphere-desc{margin:0;font:400 13.5px/1.45 var(--sans,system-ui);color:rgba(246,236,215,.68);text-align:center;text-wrap:balance;min-height:39px}
       .atmosphere-modes,.atmosphere-venues,.atmosphere-patterns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-      .atmosphere-listeners{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+      .atmosphere-listeners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
       .atmosphere-mode,.atmosphere-venue,.atmosphere-listener,.atmosphere-pattern{min-height:46px;padding:8px 6px;border:1px solid rgba(246,236,215,.11);border-radius:14px;color:inherit;background:rgba(246,236,215,.045);cursor:pointer;font:600 14px/1.2 var(--sans,system-ui);text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background 160ms ease,border-color 160ms ease,transform 120ms ease,opacity 160ms ease}
       .atmosphere-mode:hover,.atmosphere-venue:hover,.atmosphere-listener:hover,.atmosphere-pattern:hover{background:rgba(246,236,215,.08)}
       .atmosphere-mode:active,.atmosphere-venue:active,.atmosphere-listener:active,.atmosphere-pattern:active{transform:scale(.97)}

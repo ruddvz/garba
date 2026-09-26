@@ -55,7 +55,11 @@
   segment($('venues'), E.VENUES, st.venue, function (id) { st.venue = id; if (st.engine) st.engine.setVenue(id); readout(); });
   segment($('listeners'), E.LISTENERS, st.listener, function (id) { st.listener = id; if (st.engine) st.engine.setListener(id); readout(); });
   segment($('styles'), STYLES, st.style, function (id) { st.style = id; if (st.engine) st.engine.setStyle(id); sceneSync(); });
-  segment($('youAs'), { woman: 'Woman', man: 'Man' }, st.youAs, function (id) { st.youAs = id; sceneSync(); });
+  // A quiet switch on the stage: which of the couple is you
+  $('swap').addEventListener('click', function () {
+    st.youAs = st.youAs === 'man' ? 'woman' : 'man'; sceneSync();
+    this.setAttribute('aria-label', st.youAs === 'man' ? 'You are the man. Switch to dancing as the woman.' : 'You are the woman. Switch to dancing as the man.');
+  });
   segment($('themes'), THEMES, st.theme, function (id) {
     st.theme = id;
     // Dandiya nights are danced with sticks; switching away returns to claps
