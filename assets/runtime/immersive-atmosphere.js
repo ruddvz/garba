@@ -844,6 +844,7 @@
       .atmosphere-level input::-moz-range-progress{height:6px;border-radius:999px;background:var(--accent)}
       .atmosphere-level input::-moz-range-thumb{width:20px;height:20px;border:2px solid rgba(12,14,25,.95);border-radius:50%;background:#f6ecd7}
       .atmosphere-level input:disabled{opacity:.4;cursor:default}
+      .atmosphere-note a{display:block;margin-top:8px;color:#d6b06f;font-weight:600;text-decoration:underline;text-underline-offset:3px}
       .atmosphere-note{margin:22px 0 0;padding-top:14px;border-top:1px solid rgba(246,236,215,.1);font:400 12.5px/1.45 var(--sans,system-ui);color:rgba(246,236,215,.55);text-align:center;text-wrap:balance}
       .atmosphere-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
       .atmosphere-panel :focus-visible,.atmosphere-tip :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -946,7 +947,7 @@
         </section>
       </div>
       <p class="atmosphere-status" role="status" aria-live="polite"></p>
-      <p class="atmosphere-note">Plays a Garba night around the song. The song itself plays as YouTube sends it.</p>
+      <p class="atmosphere-note">Plays a Garba night around the song. The song itself plays as YouTube sends it. <a class="atmosphere-room" href="./atmosphere/">Open the listening room</a></p>
     `;
     document.body.append(panel);
 

@@ -163,5 +163,19 @@ for (const match of sw.matchAll(/'\.\/(assets\/audio\/[^']+)'/g)) {
   if (!await exists(match[1])) fail(`sw.js precaches a missing Atmosphere file: ${match[1]}`);
 }
 
+// Listening room: a public page that runs the same engine, linked from the panel and deployed by Pages.
+const [room, roomScript, pages] = await Promise.all([
+  read('public-site/atmosphere/index.html'),
+  read('public-site/atmosphere/atmosphere.js'),
+  read('.github/workflows/pages.yml'),
+]);
+if (!runtime.includes('href="./atmosphere/"')) fail('Atmosphere panel must link to the listening room');
+if (!pages.includes('public-site/atmosphere \\')) fail('Pages must deploy public-site/atmosphere');
+for (const marker of ['<script src="../assets/runtime/immersive-atmosphere.js"></script>', 'role="switch"', 'id="tap"']) {
+  if (!room.includes(marker)) fail(`Listening room is missing: ${marker}`);
+}
+if (!roomScript.includes('GARBA_ATMOSPHERE_ENGINE')) fail('Listening room must use the shared Atmosphere engine');
+if (!room.includes("never the song itself")) fail('Listening room must say the song itself is not processed');
+
 if (failed) process.exit(1);
 console.log('✓ Garba Atmosphere venues, listening position, beat-locked claps, truthful copy, public-domain sources and PWA packaging are coherent');
