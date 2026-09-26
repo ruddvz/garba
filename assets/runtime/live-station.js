@@ -12,6 +12,8 @@ const DEFAULT_SONG_DURATION = 180;
  */
 export function isLivePlayable(s) {
   if (!s || !s.id) return false;
+  // Songs a listener added live on one device only; a shared broadcast must not include them.
+  if (s.userAdded || s.playbackSourceType === 'user-added') return false;
   if (s.audioUrl) return false;
   if (s.playbackSearchOnly) return false;
   if (s.playbackSourceType === 'verified-release-track-reference' || s.playbackSourceType === 'verified-unchaptered-youtube-release') return false;

@@ -7,7 +7,9 @@ import { initMorphicons } from './assets/runtime/morphicons.js';
 import { getNextLiveTrack } from './assets/runtime/live-station.js';
 import { createCircleController } from './assets/runtime/garba-circle-controller.js';
 import { createLiveSync } from './assets/runtime/live-sync.js';
-const { routeReadiness, canExecuteSong } = window.GARBA_ROUTE_READINESS;
+import { createPlayableOrder, PLAYABLE_TIER } from './assets/runtime/playable-order.js';
+import { createMySongs } from './assets/runtime/my-songs.js';
+const { routeReadiness, canExecuteSong, youtubeVideoId } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
   buildSongShareUrl,
@@ -151,6 +153,35 @@ const formatDuration = (seconds) => {
 const currentSong = () => state.songs.find((song) => song.id === state.songId) || null;
 const currentGenre = () => state.genres.find((genre) => genre.id === state.genreId) || null;
 const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId);
+
+// Playable-first ordering, rebuilt whenever the song list itself changes.
+let playableOrderCache = { songs: null, order: null };
+function playableOrder() {
+  if (playableOrderCache.songs !== state.songs) {
+    playableOrderCache = {
+      songs: state.songs,
+      order: createPlayableOrder(state.songs, { canExecute: canExecuteSong, videoIdOf: youtubeVideoId }),
+    };
+  }
+  return playableOrderCache.order;
+}
+
+// Songs a listener added from YouTube live on this device only and sit after the catalogue.
+// A link to a video the catalogue already has as a complete song plays the catalogue song instead.
+let catalogueSongs = [];
+function withMySongs(songs, { reload = false } = {}) {
+  catalogueSongs = songs;
+  const mine = reload ? mySongs.load(new Set(state.genres.map((genre) => genre.id))) : mySongs.songs;
+  const catalogueOrder = createPlayableOrder(songs, { canExecute: canExecuteSong, videoIdOf: youtubeVideoId });
+  const catalogueVideos = new Set(songs.filter((song) => catalogueOrder.tier(song) === PLAYABLE_TIER.FULL).map(youtubeVideoId));
+  return [...songs, ...mine.filter((song) => !catalogueVideos.has(song.youtubeId))];
+}
+
+function findSongByVideoId(videoId) {
+  return state.songs.find((song) => song.userAdded && song.youtubeId === videoId)
+    || state.songs.find((song) => youtubeVideoId(song) === videoId && playableOrder().tier(song) === PLAYABLE_TIER.FULL)
+    || null;
+}
 
 const numericTrackNumber = (song) => {
   const value = Number(song?.trackNumber);
@@ -798,11 +829,14 @@ function selectGenre(genreId) {
     syncGenreStrips();
     updateQueueBadge();
     updateUrl();
+    // Tapping the genre that is already playing shows its songs.
+    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.genreStrip });
     return;
   }
 
-  const next = songsForGenre(genreId)[0];
-  if (next) selectSong(next.id, { keepSheet: true });
+  // A genre tap starts playing straight away: a complete song not heard recently, when there is one.
+  const next = playableOrder().pickFresh(songsForGenre(genreId), { recentIds: getRecentPlayedSongs().slice(-40) });
+  if (next) selectSong(next.id, { keepSheet: true, preservePlayback: true, forceAutoplay: true });
   else {
     state.genreId = genreId;
     state.sheetFilter = genreId;
@@ -842,7 +876,7 @@ function getSheetSongs() {
   let songs;
 
   if (state.sheetMode === 'favourites') {
-    songs = state.songs.filter((song) => state.favourites.has(song.id));
+    songs = state.songs.filter((song) => state.favourites.has(song.id) || song.userAdded);
   } else if (state.sheetMode === 'queue') {
     songs = getUpNextSongs();
   } else if (state.sheetMode === 'search') {
@@ -856,6 +890,8 @@ function getSheetSongs() {
   }
 
   if (query) songs = rankPlayerSongs(songs, rawQuery);
+  // Songs that can play right now come first (complete songs, then chapters), in every list but the queue.
+  if (state.sheetMode !== 'queue') songs = playableOrder().order(songs);
   state.sheetMatchCount = songs.length;
   if (state.sheetMode === 'search' && songs.length > SEARCH_RESULT_LIMIT) return songs.slice(0, SEARCH_RESULT_LIMIT);
   return songs;
@@ -878,6 +914,15 @@ function renderSheet() {
   const query = els.searchInput.value.trim();
   const songs = getSheetSongs();
   els.songList.innerHTML = '';
+  if (state.sheetMode === 'all' || state.sheetMode === 'favourites') {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'add-song-row';
+    add.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg><span></span>';
+    add.querySelector('span').textContent = 'Add a song from YouTube';
+    add.addEventListener('click', () => mySongs.open({ genre: state.sheetMode === 'all' ? state.sheetFilter : state.genreId }));
+    els.songList.append(add);
+  }
 
   if (els.sheetSummary) {
     if (state.sheetMode === 'search') {
@@ -919,6 +964,7 @@ function renderSheet() {
   const fragment = document.createDocumentFragment();
   const queuedIds = new Set(state.manualQueue);
   let continuationLabelAdded = false;
+  let unavailableLabelAdded = false;
   if (state.sheetMode === 'queue' && state.manualQueue.length) {
     const toolbar = document.createElement('div');
     toolbar.className = 'queue-toolbar';
@@ -941,8 +987,16 @@ function renderSheet() {
       label.textContent = 'Continue playing';
       fragment.append(label);
     }
+    const unavailable = state.sheetMode !== 'queue' && playableOrder().tier(song) === PLAYABLE_TIER.UNAVAILABLE;
+    if (unavailable && !unavailableLabelAdded) {
+      unavailableLabelAdded = true;
+      const label = document.createElement('div');
+      label.className = 'queue-section-label song-section-unavailable';
+      label.textContent = 'Not playable here yet';
+      fragment.append(label);
+    }
     const row = document.createElement('div');
-    row.className = `song-row${song.id === state.songId ? ' current' : ''}`;
+    row.className = `song-row${song.id === state.songId ? ' current' : ''}${unavailable ? ' song-row--unavailable' : ''}`;
     row.role = 'listitem';
 
     const idx = document.createElement('span');
@@ -956,7 +1010,7 @@ function renderSheet() {
     const title = document.createElement('strong');
     title.textContent = song.title;
     const artist = document.createElement('small');
-    artist.textContent = song.artist;
+    artist.textContent = song.userAdded && song.artist !== 'Added by you' ? `${song.artist} · Added by you` : song.artist;
     copy.append(title, artist);
     const releaseContinuation = state.sheetMode === 'queue'
       && !queued
@@ -1319,6 +1373,95 @@ async function playLiveSong(song, offsetSeconds) {
   }
   await selectSong(song.id, { liveMode: true, keepSheet: true, preservePlayback: false, restoreElapsed: offsetSeconds, animate: false });
 }
+
+/* ----------------------------- Explore overlay ----------------------------- */
+// The full Explore page (/explore/) opens in a frame over the player, so playback keeps going.
+// It talks back through explore-continuity-bridge.js (version 1): ready, close and listen.
+const EXPLORE_BRIDGE_TYPE = 'playgarba:explore-continuity';
+const EXPLORE_BRIDGE_VERSION = 1;
+window.__PLAYGARBA_EXPLORE_CONTINUITY_PARENT__ = Object.freeze({ version: EXPLORE_BRIDGE_VERSION });
+const exploreOverlay = { open: false, root: null, frame: null, trigger: null };
+
+function buildExploreOverlay() {
+  const root = document.createElement('div');
+  root.className = 'explore-overlay';
+  root.id = 'exploreOverlay';
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-label', 'Explore PlayGarba');
+  root.hidden = true;
+  const frame = document.createElement('iframe');
+  frame.className = 'explore-frame';
+  frame.title = 'Explore PlayGarba';
+  root.append(frame);
+  document.body.append(root);
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeExplore();
+  });
+  exploreOverlay.root = root;
+  exploreOverlay.frame = frame;
+}
+
+function openExplore() {
+  if (!exploreOverlay.root) buildExploreOverlay();
+  if (exploreOverlay.open) return;
+  const href = els.browseButton?.getAttribute('href') || './explore/';
+  const target = new URL(href, location.href);
+  // Load once and keep the page (scroll, open collection) between visits.
+  if (!exploreOverlay.frame.src) exploreOverlay.frame.src = target.toString();
+  exploreOverlay.trigger = document.activeElement instanceof HTMLElement ? document.activeElement : els.browseButton;
+  exploreOverlay.open = true;
+  exploreOverlay.root.hidden = false;
+  document.documentElement.classList.add('explore-open');
+  els.browseButton?.setAttribute('aria-expanded', 'true');
+  const entry = { ...(history.state || {}), garbaSheet: false, garbaExplore: true };
+  if (history.state?.garbaSheet) history.replaceState(entry, '', location.href);
+  else history.pushState(entry, '', location.href);
+  exploreOverlay.frame.focus({ preventScroll: true });
+}
+
+function closeExplore({ fromHistory = false, restoreFocus = true } = {}) {
+  if (!exploreOverlay.open) return Promise.resolve();
+  exploreOverlay.open = false;
+  exploreOverlay.root.hidden = true;
+  document.documentElement.classList.remove('explore-open');
+  els.browseButton?.setAttribute('aria-expanded', 'false');
+  const leaving = !fromHistory && history.state?.garbaExplore;
+  if (restoreFocus && exploreOverlay.trigger?.isConnected) exploreOverlay.trigger.focus({ preventScroll: true });
+  if (!leaving) return Promise.resolve();
+  // Resolve once the Explore history entry is gone, so the next URL update lands on the right entry.
+  return new Promise((resolve) => {
+    const done = () => {
+      clearTimeout(timer);
+      window.removeEventListener('popstate', done);
+      resolve();
+    };
+    const timer = setTimeout(done, 400);
+    window.addEventListener('popstate', done);
+    history.back();
+  });
+}
+
+async function playFromExplore({ songId, releaseId } = {}) {
+  const song = state.songs.find((entry) => entry.id === songId);
+  if (!song) return;
+  await closeExplore({ restoreFocus: false });
+  const inRelease = typeof releaseId === 'string' && releaseId && setReleaseContext(releaseId, song.id);
+  selectSong(song.id, {
+    preservePlayback: true,
+    forceAutoplay: true,
+    preserveReleaseContext: Boolean(inRelease),
+    syncReleaseAnchor: Boolean(inRelease),
+  });
+}
+
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin || !exploreOverlay.frame || event.source !== exploreOverlay.frame.contentWindow) return;
+  const message = event.data;
+  if (!message || message.type !== EXPLORE_BRIDGE_TYPE || message.version !== EXPLORE_BRIDGE_VERSION) return;
+  if (message.action === 'close') closeExplore();
+  else if (message.action === 'listen') playFromExplore(message.payload || {});
+});
 
 function circleHostElapsedSeconds() {
   const player = window.GARBA_YOUTUBE_PLAYER;
@@ -1704,9 +1847,13 @@ function wireEvents() {
   els.miniNext.addEventListener('click', () => changeSong(1));
 
   els.browseButton?.addEventListener('click', (event) => {
-    event?.preventDefault?.();
-    if (state.sheetSnap === 'closed' || state.sheetSnap === 'collapsed') openSheet('all', { trigger: els.browseButton });
-    else closeSheet();
+    // Plain clicks open the full Explore page over the player, so the music keeps playing.
+    // Modified clicks (new tab, new window) keep the ordinary link behaviour.
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    // Hand the song sheet's history entry to Explore instead of racing a Back navigation.
+    if (state.sheetSnap !== 'closed') closeSheet({ fromHistory: true });
+    openExplore();
   });
   els.sheetClose.addEventListener('click', closeSheet);
   els.sheetBackdrop?.addEventListener('click', () => closeSheet());
@@ -1795,6 +1942,10 @@ function wireEvents() {
     if (document.visibilityState === 'visible' && Date.now() - state.catalogueLoadedAt > 5 * 60 * 1000) refreshCatalogue({ quiet: true });
   });
   window.addEventListener('popstate', () => {
+    if (exploreOverlay.open) {
+      closeExplore({ fromHistory: true });
+      return;
+    }
     if (state.sheetSnap !== 'closed') {
       closeSheet({ fromHistory: true });
     }
@@ -1853,7 +2004,7 @@ async function refreshCatalogue({ quiet = false } = {}) {
     const signature = makeCatalogueSignature(next.genres, next.songs);
     const changed = state.catalogueSignature && signature !== state.catalogueSignature;
     state.genres = next.genres;
-    state.songs = next.songs;
+    state.songs = withMySongs(next.songs, { reload: true });
     state.presentationRedirects = next.presentationRedirects;
     if (state.releaseContextId && !releaseContextMatch(state.releaseContextId, state.releaseContextSongId || state.songId)) {
       clearReleaseContext();
@@ -2009,11 +2160,11 @@ async function init() {
   try {
     const catalogue = await fetchCatalogue();
     state.genres = catalogue.genres;
-    state.songs = catalogue.songs;
+    state.songs = withMySongs(catalogue.songs, { reload: true });
     state.presentationRedirects = catalogue.presentationRedirects;
     reconcilePresentationFavourites();
     sanitiseManualQueue();
-    state.catalogueSignature = makeCatalogueSignature(state.genres, state.songs);
+    state.catalogueSignature = makeCatalogueSignature(state.genres, catalogue.songs);
     state.catalogueLoadedAt = Date.now();
     const initial = resolveInitialState();
     const circleCode = new URLSearchParams(location.search).get('circle');
@@ -2218,6 +2369,20 @@ const circle = createCircleController({
     updateUrl();
   },
   trigger: () => els.circleButton,
+});
+
+const mySongs = createMySongs({
+  genres: () => state.genres,
+  findByVideoId: findSongByVideoId,
+  onChange: () => {
+    const playing = currentSong();
+    state.songs = withMySongs(catalogueSongs);
+    // A removed song that is still playing stays until the listener moves on.
+    if (playing?.userAdded && !state.songs.includes(playing)) state.songs = [...state.songs, playing];
+    renderSheet();
+  },
+  play: (song) => selectSong(song.id, { preservePlayback: true, forceAutoplay: true }),
+  showToast,
 });
 
 const liveSync = createLiveSync({
