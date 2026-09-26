@@ -782,7 +782,7 @@
     // but lets their movement make the gathering readable instead of drawing its circles for them.
     function aerial(id, rx, ry, rw, rh, t) {
       var L = layout(id), c0 = L.circles[0], ctr = circleCentre(c0, T), sheri = id === 'sheri';
-      var span = sheri ? 20 : 30;
+      var baseSpan = sheri ? 20 : 30;
       var groups = L.circles.filter(function (c) { return !c.small && !c.parent && c.shown; });
       groups.sort(function (a, b) { return a.z0 - b.z0; });
       var near = groups[1] || c0, far = groups[2] || groups[groups.length - 1] || c0;
@@ -799,7 +799,7 @@
       var aShot = keyframes[shot], bShot = keyframes[shot + 1];
       var move = ease(Math.max(0, Math.min(1, (cycle - aShot.at) / (bShot.at - aShot.at))));
       var spanZoom = lerp(aShot.zoom, bShot.zoom, move);
-      var span = span / spanZoom;
+      var span = baseSpan / spanZoom;
       var rot = sheri ? Math.PI / 2 : 0.4;
       if (!reduce) rot += 0.075 * Math.sin(t * 0.12) + t * 0.012;
       var fx = lerp(aShot.x, bShot.x, move), fz = lerp(aShot.z, bShot.z, move);
@@ -831,7 +831,7 @@
       for (var pe = 0; pe < 16; pe++) { var an = rot + pe / 16 * TAU; g.fillStyle = 'hsl(' + TH.hues[pe % TH.hues.length] + ',' + TH.sat + '%,' + (40 + 10 * bright) + '%)'; g.beginPath(); g.ellipse(mc[0] + Math.cos(an) * 1.5 * k, mc[1] + Math.sin(an) * 1.5 * k, 0.9 * k, 0.32 * k, an, 0, TAU); g.fill(); }
       glow(mc[0], mc[1], Math.max(2, 0.7 * k), '#ffcf7a', 0.9 * lit + 0.1);
       // People from above: individual skirts, kediyus and small flashes on claps and turns.
-      var dr = Math.max(1.1, 0.34 * k);
+      var dr = Math.max(1.4, 0.4 * k);
       function dot(x, z, col, rr, head, fl, turn) {
         var m = M(x, z); if (m[0] < rx - 4 || m[0] > rx + rw + 4 || m[1] < ry - 4 || m[1] > ry + rh + 4) return;
         g.save(); g.translate(m[0], m[1]);
