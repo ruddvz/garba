@@ -211,7 +211,8 @@
       }
       return out;
     }
-    // Children: tag in the empty middle while the music is off; once it plays they run round the edges, and now and then straight through a circle
+    // Children: run between open spots round the ground (never ringing the garbo), and once the music plays now and then
+    // straight through a circle. Anyone who can't reach a spot in a few seconds picks another, so nobody gets stuck
     // The mandvi, rangoli and diyas sit in a clear space nobody walks through
     var KEEP_OUT = 2.9;
     function clearOfCentre(o) {
@@ -234,16 +235,17 @@
       L.kids.forEach(function (k) {
         if (k.wait > 0) { k.wait -= dt; k.moving = false; return; }
         var dx = k.tx - k.x, dz = k.tz - k.z, d = Math.hypot(dx, dz);
-        if (d < 0.3) {
-          k.moving = false; k.wait = rnd() * 0.8; k.around = 0;
-          if (!st.on) { var a = rnd() * TAU, r = KEEP_OUT + 0.6 + rnd() * (id === 'sheri' ? 2 : 6); k.tx = Math.max(bx[0], Math.min(bx[1], Math.cos(a) * r)); k.tz = Math.max(bx[2], Math.sin(a) * r * (id === 'sheri' ? 3 : 1) + (id === 'sheri' ? 12 : 4)); k.through = false; var kt = { x: k.tx, z: k.tz }; clearOfCentre(kt); k.tx = kt.x; k.tz = kt.z; }
+        k.tt = (k.tt || 0) + dt;
+        if (d < 0.3 || k.tt > 12) {
+          k.moving = false; k.wait = rnd() * 0.8; k.around = 0; k.tt = 0;
+          if (!st.on || L.circles.length <= 3) { var p0 = freeSpot(id, L); k.tx = p0.x; k.tz = p0.z; k.through = false; }
           else if (rnd() < 0.3 && L.circles.length > 3) { var c = L.circles[3 + Math.floor(rnd() * (L.circles.length - 3))], a2 = rnd() * TAU; k.tx = c.x0 + Math.cos(a2) * (c.R + 3); k.tz = Math.max(bx[2], c.z0 + Math.sin(a2) * (c.R + 3)); k.through = true; }
           else { var p = freeSpot(id, L); k.tx = p.x; k.tz = p.z; k.through = false; }
           return;
         }
         var vx = dx / d, vz = dz / d, bo = DJ[id];
         if (bo) { var bx0 = k.x - bo.x, bz0 = k.z - (bo.z - 1.2), bd = Math.hypot(bx0, bz0); if (bd < 4.5 && bd > 0.01) { var bp = (4.5 - bd) / 1.5; vx += bx0 / bd * bp; vz += bz0 / bd * bp; } }
-        if (st.on && !k.through) L.circles.forEach(function (c) { var cx = k.x - c.x0, cz = k.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.2; if (cd < keep + 1.5 && cd > 0.01) { var push = (keep + 1.5 - cd) / 1.5; vx += cx / cd * push; vz += cz / cd * push; } });
+        if (st.on && !k.through) L.circles.forEach(function (c) { var cx = k.x - c.x0, cz = k.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.2; if (cd < keep + 1.5 && cd > 0.01) { var push = (keep + 1.5 - cd) / 1.5 * Math.min(1, d / 3); vx += cx / cd * push; vz += cz / cd * push; } });
         var vl0 = Math.hypot(vx, vz) || 1, rk = roundCentre(k, vx / vl0, vz / vl0, dx, dz); vx = rk[0]; vz = rk[1];
         var vl = 1, sp = k.speed * (st.on && !k.through ? 0.8 : 1);
         k.x += vx / vl * sp * dt; k.z += vz / vl * sp * dt; clearOfCentre(k); k.step = (k.step || 0) + dt * sp * 6; k.moving = true;
@@ -254,8 +256,9 @@
         w.snap = Math.max(0, (w.snap || 0) - dt * 4);
         if (w.wait > 0) { w.wait -= dt; w.moving = false; if (w.photo && st.on && Math.random() < dt * 0.5) w.snap = 1; return; }
         var dx = w.tx - w.x, dz = w.tz - w.z, d = Math.hypot(dx, dz);
-        if (d < 0.3) {
-          w.moving = false; w.wait = w.kid ? 0.5 + rnd() * 2 : 2 + rnd() * 6;
+        w.tt = (w.tt || 0) + dt;
+        if (d < 0.3 || w.tt > 18) {
+          w.moving = false; w.tt = 0; w.wait = w.kid ? 0.5 + rnd() * 2 : 2 + rnd() * 6;
           var target = L.stalls.length && rnd() < 0.35 ? L.stalls[Math.floor(rnd() * L.stalls.length)].front : freeSpot(id, L);
           w.tx = target.x + (rnd() - 0.5) * 1.2; w.tz = target.z + (rnd() - 0.5) * 1.2; w.around = 0; return;
         }
@@ -264,7 +267,7 @@
         if (bo) { var bx0 = w.x - bo.x, bz0 = w.z - (bo.z - 1.2), bd = Math.hypot(bx0, bz0); if (bd < 4.5 && bd > 0.01) { var bp = (4.5 - bd) / 1.5; vx += bx0 / bd * bp; vz += bz0 / bd * bp; } }
         L.circles.forEach(function (c) {
           var cx = w.x - c.x0, cz = w.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.6;
-          if (cd < keep + 2 && cd > 0.01) { var push = (keep + 2 - cd) / 2; vx += cx / cd * push - cz / cd * push * 0.6; vz += cz / cd * push + cx / cd * push * 0.6; }
+          if (cd < keep + 2 && cd > 0.01) { var push = (keep + 2 - cd) / 2 * Math.min(1, d / 3); vx += cx / cd * push - cz / cd * push * 0.6; vz += cz / cd * push + cx / cd * push * 0.6; }
         });
         var vl0 = Math.hypot(vx, vz) || 1, rw = roundCentre(w, vx / vl0, vz / vl0, dx, dz); vx = rw[0]; vz = rw[1];
         var vl = 1;
@@ -795,25 +798,32 @@
       groups.sort(function (a, b) { return a.z0 - b.z0; });
       var near = groups[1] || c0, far = groups[2] || groups[groups.length - 1] || c0;
       var nearAt = circleCentre(near, T), farAt = circleCentre(far, T);
-      var keyframes = [
-        { at: 0, x: ctr.x, z: ctr.z, zoom: 0.94 },
-        { at: 0.25, x: ctr.x, z: ctr.z, zoom: 1.02 },
-        { at: 0.52, x: nearAt.x, z: nearAt.z, zoom: 1.2 },
-        { at: 0.76, x: farAt.x, z: farAt.z, zoom: 1.04 },
-        { at: 1, x: ctr.x, z: ctr.z, zoom: 0.94 }
+      // The drone's shots, one after another: the whole ground, a low orbit of the ring round the garbo, a child who
+      // cuts straight through a circle, the couple marked તું and તારો, then a tilted fly-over from one ring to the next
+      var you = null; c0.dancers.forEach(function (d) { if (d.coupleRole === 'w' && d.wx != null) you = d; });
+      var runner = null; L.kids.forEach(function (kd) { if (!runner && kd.through && kd.moving) runner = kd; });
+      if (!runner) runner = L.kids.filter(function (kd) { return kd.moving; })[0] || L.kids[0];
+      var SHOTS = [
+        { dur: 9, at: function () { return { x: ctr.x, z: ctr.z, zoom: 0.94, tilt: 0, spin: 0.012 }; } },
+        { dur: 8, at: function (u) { return { x: ctr.x, z: ctr.z, zoom: 2.3 + 0.3 * u, tilt: 0.35, spin: 0.09 }; } },
+        { dur: 8, at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 3, tilt: 0.25, spin: 0.02 } : { x: nearAt.x, z: nearAt.z, zoom: 1.3, tilt: 0, spin: 0.02 }; } },
+        { dur: 7, at: function (u) { return you ? { x: you.wx, z: you.wz, zoom: 3.4 - 0.4 * u, tilt: 0.3, spin: 0.03 } : { x: ctr.x, z: ctr.z, zoom: 1.6, tilt: 0.2, spin: 0.03 }; } },
+        { dur: 9, at: function (u) { return { x: lerp(nearAt.x, farAt.x, u), z: lerp(nearAt.z, farAt.z, u), zoom: 1.45, tilt: 0.6, spin: 0.015 }; } }
       ];
-      var cycle = reduce ? 0 : (t % 48) / 48, shot = 0;
-      while (shot < keyframes.length - 2 && cycle > keyframes[shot + 1].at) shot++;
-      var aShot = keyframes[shot], bShot = keyframes[shot + 1];
-      var move = ease(Math.max(0, Math.min(1, (cycle - aShot.at) / (bShot.at - aShot.at))));
-      var spanZoom = lerp(aShot.zoom, bShot.zoom, move);
-      var span = baseSpan / spanZoom;
+      var total = SHOTS.reduce(function (n, sh) { return n + sh.dur; }, 0), tc = reduce ? 0 : t % total, si = 0;
+      while (si < SHOTS.length - 1 && tc >= SHOTS[si].dur) { tc -= SHOTS[si].dur; si++; }
+      var cur = SHOTS[si].at(tc / SHOTS[si].dur);
+      // Each new shot flies over from where the last one ended
+      var fly = reduce ? 1 : ease(Math.min(1, tc / 1.8));
+      if (fly < 1) { var prevS = SHOTS[(si + SHOTS.length - 1) % SHOTS.length], was = prevS.at(1); ['x', 'z', 'zoom', 'tilt'].forEach(function (key) { cur[key] = lerp(was[key], cur[key], fly); }); }
+      var span = baseSpan / cur.zoom, tilt = cur.tilt;
       var rot = sheri ? Math.PI / 2 : 0.4;
-      if (!reduce) rot += 0.075 * Math.sin(t * 0.12) + t * 0.012;
-      var fx = lerp(aShot.x, bShot.x, move), fz = lerp(aShot.z, bShot.z, move);
+      if (!reduce) rot += 0.075 * Math.sin(t * 0.12) + t * cur.spin;
+      var fx = cur.x, fz = cur.z;
       if (!reduce && sheri) fz += 1.2 * Math.sin(t * 0.09);
       var k = rh / span, cx = rx + rw / 2, cy = ry + rh * 0.56, cr = Math.cos(rot), sr = Math.sin(rot);
-      function M(x, z) { var dx = x - fx, dz = z - fz; return [cx + (dx * cr - dz * sr) * k, cy - (dx * sr + dz * cr) * k]; }
+      // A tilted shot looks across the ground: depth squeezes, and the near side opens out a little
+      function M(x, z) { var dx = x - fx, dz = z - fz, u = (dx * cr - dz * sr) * k, v = (dx * sr + dz * cr) * k, pf = 1 - tilt * 0.3 * Math.max(-1, Math.min(1, v / (rh * 0.6))); return [cx + u * pf, cy - v * (1 - tilt * 0.45)]; }
       function quad(pts, col) { g.fillStyle = col; g.beginPath(); pts.forEach(function (q, i) { var m = M(q[0], q[1]); if (i) g.lineTo(m[0], m[1]); else g.moveTo(m[0], m[1]); }); g.closePath(); g.fill(); }
       // Ground, and the venue around it
       g.fillStyle = id === 'stadium' ? '#3b2717' : sheri ? '#2a2430' : '#2b1e14'; g.fillRect(rx, ry, rw, rh);
@@ -864,6 +874,15 @@
       // A shot, not a map: the corners fall off into shadow
       var vg = g.createRadialGradient(cx, ry + rh / 2, rh * 0.35, cx, ry + rh / 2, Math.max(rw, rh) * 0.62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); g.fillStyle = vg; g.fillRect(rx, ry, rw, rh);
       g.fillStyle = 'rgba(' + TH.glowTint + ',' + 0.06 * pulse + ')'; g.fillRect(rx, ry, rw, rh);
+      // A small drone-feed tag in the corner, its light blinking
+      var tf = Math.max(7, Math.min(13, rh * 0.06));
+      if (rw > 150) {
+        g.save(); g.font = '600 ' + tf.toFixed(1) + 'px system-ui, sans-serif'; g.textBaseline = 'middle'; g.fillStyle = 'rgba(246,236,215,.78)';
+        var tx0 = rx + rw - tf * 7.4, ty0 = ry + rh - tf * 1.3;
+        if (reduce || (t % 1.2) < 0.8) { g.fillStyle = '#e0473b'; g.beginPath(); g.arc(tx0, ty0, tf * 0.3, 0, TAU); g.fill(); }
+        g.fillStyle = 'rgba(246,236,215,.78)'; g.fillText('DRONE', tx0 + tf * 0.7, ty0);
+        g.restore();
+      }
     }
     // The band: a lead singer and a second voice at the front, dhol and keys behind them
     function bandOn(id, y, z, o) {
