@@ -66,6 +66,9 @@
         <a href="./" class="brand" aria-label="PlayGarba home">PlayGarba</a>
         <nav class="utilities" aria-label="Player tools">
           <span class="network-status" id="networkStatus" aria-hidden="true"></span>
+          <button class="icon-button" id="linkSongButton" type="button" aria-label="Play YouTube link" title="Play YouTube link" aria-haspopup="dialog" aria-expanded="false" aria-controls="linkSongCard">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
           <button class="icon-button" id="searchButton" type="button" aria-label="Search songs" title="Search songs (/)" aria-keyshortcuts="/">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
           </button>
@@ -168,6 +171,24 @@
           <button type="button" data-proxy="shareButton" class="more-row"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.25"></circle><circle cx="6" cy="12" r="2.25"></circle><circle cx="18" cy="19" r="2.25"></circle><path d="m8 11 7.8-4.6M8 13l7.8 4.6"></path></svg><span>Share this song</span></button>
           <a class="more-row more-row-idea" href="https://tally.so/r/0QXgY9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z"></path></svg><span>Ask for a feature</span></a>
         </div>
+      </section>
+
+      <section class="more-card link-song-card" id="linkSongCard" role="dialog" aria-labelledby="linkSongTitle" hidden>
+        <header class="more-card-head">
+          <h2 id="linkSongTitle">Play YouTube link</h2>
+          <button class="icon-button more-card-close" id="linkSongClose" type="button" aria-label="Close Play YouTube link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+        </header>
+        <form class="link-song-form" id="linkSongForm">
+          <p class="link-song-desc">Paste any YouTube song or video link to play it directly.</p>
+          <label class="link-song-label" for="linkSongInput">
+            <span>YouTube link</span>
+            <input id="linkSongInput" type="url" inputmode="url" placeholder="https://youtu.be/… or watch?v=…" autocomplete="off" spellcheck="false" required />
+          </label>
+          <p class="link-song-status" id="linkSongStatus" role="status" aria-live="polite"></p>
+          <div class="link-song-actions">
+            <button type="submit" class="link-song-submit" id="linkSongSubmit">Play now</button>
+          </div>
+        </form>
       </section>
       <p class="visually-hidden" id="immersiveViewStatus" aria-live="polite"></p>
 

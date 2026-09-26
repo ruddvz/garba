@@ -749,3 +749,25 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
 .more-badge:empty { display: none; }
 .more-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #1b1408; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
 @media (prefers-reduced-motion: reduce) { .more-card { animation: none; } }
+
+.link-song-card { right: calc(var(--safe-right) + 48px); }
+@media (max-width: 480px) { .link-song-card { right: var(--safe-right); } }
+.link-song-desc { margin: 0 4px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.link-song-form { display: grid; gap: 12px; }
+.link-song-label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.link-song-label input {
+  height: 42px; padding: 0 12px; border-radius: 12px;
+  border: 1px solid var(--faint); background: rgba(246, 236, 215, .05); color: var(--ivory);
+  font: 14px/1.3 var(--sans);
+}
+.link-song-label input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.link-song-status:empty { display: none; }
+.link-song-status { margin: 0 4px; font-size: 13px; line-height: 1.4; color: var(--accent); }
+.link-song-actions { display: flex; justify-content: flex-end; margin-top: 2px; }
+.link-song-submit {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px;
+  border: 0; border-radius: 12px; background: var(--accent); color: #1b1408; font: 600 15px/1.2 var(--sans); cursor: pointer;
+  box-shadow: 0 4px 12px rgba(214, 176, 111, .25);
+}
+.link-song-submit:hover { filter: brightness(1.08); }
+

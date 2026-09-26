@@ -8,7 +8,13 @@ import { getNextLiveTrack } from './assets/runtime/live-station.js';
 import { createCircleController } from './assets/runtime/garba-circle-controller.js';
 import { createLiveSync } from './assets/runtime/live-sync.js';
 import { createPlayableOrder, PLAYABLE_TIER } from './assets/runtime/playable-order.js';
-import { createMySongs } from './assets/runtime/my-songs.js';
+import {
+  createMySongs,
+  parseYouTubeLink,
+  makeUserSong,
+  cleanVideoTitle,
+  fetchVideoDetails,
+} from './assets/runtime/my-songs.js';
 const { routeReadiness, canExecuteSong, youtubeVideoId } = window.GARBA_ROUTE_READINESS;
 const {
   parseShareTimestamp,
@@ -139,6 +145,12 @@ const els = {
   installText: $('installText'),
   installButton: $('installButton'),
   installDismiss: $('installDismiss'),
+  linkSongButton: $('linkSongButton'),
+  linkSongCard: $('linkSongCard'),
+  linkSongClose: $('linkSongClose'),
+  linkSongForm: $('linkSongForm'),
+  linkSongInput: $('linkSongInput'),
+  linkSongStatus: $('linkSongStatus'),
 };
 
 const mobileQuery = window.matchMedia('(max-width: 700px)');
@@ -1855,6 +1867,98 @@ async function handleShareCurrentSong() {
   return null;
 }
 
+function openLinkSongCard() {
+  if (!els.linkSongCard || !els.linkSongButton) return;
+  const moreCard = $('moreCard');
+  if (moreCard && !moreCard.hidden) {
+    const moreClose = document.querySelector('[data-more-close]');
+    moreClose?.click();
+  }
+  els.linkSongCard.hidden = false;
+  els.linkSongButton.setAttribute('aria-expanded', 'true');
+  if (els.linkSongStatus) els.linkSongStatus.textContent = '';
+  setTimeout(() => els.linkSongInput?.focus(), 30);
+}
+
+function closeLinkSongCard(restore = true) {
+  if (!els.linkSongCard || !els.linkSongButton || els.linkSongCard.hidden) return;
+  els.linkSongCard.hidden = true;
+  els.linkSongButton.setAttribute('aria-expanded', 'false');
+  if (els.linkSongInput) els.linkSongInput.value = '';
+  if (els.linkSongStatus) els.linkSongStatus.textContent = '';
+  if (restore) els.linkSongButton.focus({ preventScroll: true });
+}
+
+async function playYouTubeUrl(value) {
+  const videoId = parseYouTubeLink(value);
+  if (!videoId) {
+    if (els.linkSongStatus) els.linkSongStatus.textContent = 'Please enter a valid YouTube link or video ID.';
+    return false;
+  }
+  if (els.linkSongStatus) els.linkSongStatus.textContent = '';
+  closeLinkSongCard();
+
+  const existing = findSongByVideoId(videoId);
+  if (existing) {
+    showToast(`Playing “${existing.title}”`);
+    await selectSong(existing.id, { preservePlayback: true, forceAutoplay: true });
+    return true;
+  }
+
+  const newSong = makeUserSong({
+    videoId,
+    title: 'YouTube Track',
+    artist: 'Custom track',
+    genre: state.genreId || 'traditional',
+    addedAt: Date.now(),
+  });
+
+  if (!newSong) {
+    showToast('Could not load track from YouTube link.');
+    return false;
+  }
+
+  try {
+    const raw = localStorage.getItem('garba:my-songs:v1') || '[]';
+    const list = JSON.parse(raw);
+    const updated = [
+      { videoId: newSong.youtubeId, title: newSong.title, artist: newSong.artist, genre: newSong.genre, addedAt: newSong.addedAt },
+      ...list.filter((entry) => entry?.videoId !== newSong.youtubeId),
+    ].slice(0, 200);
+    localStorage.setItem('garba:my-songs:v1', JSON.stringify(updated));
+  } catch {}
+
+  state.songs = withMySongs(catalogueSongs, { reload: true });
+  if (!state.songs.some((s) => s.id === newSong.id)) {
+    state.songs = [...state.songs, newSong];
+  }
+
+  showToast('Playing YouTube track');
+  await selectSong(newSong.id, { preservePlayback: true, forceAutoplay: true });
+
+  fetchVideoDetails(videoId).then((details) => {
+    if (details?.title) {
+      const clean = cleanVideoTitle(details.title, details.channel);
+      newSong.title = clean.title || details.title;
+      if (clean.artist) newSong.artist = clean.artist;
+      try {
+        const raw = localStorage.getItem('garba:my-songs:v1') || '[]';
+        const list = JSON.parse(raw);
+        const entry = list.find((e) => e?.videoId === videoId);
+        if (entry) {
+          entry.title = newSong.title;
+          entry.artist = newSong.artist;
+          localStorage.setItem('garba:my-songs:v1', JSON.stringify(list));
+        }
+      } catch {}
+      if (state.songId === newSong.id) renderPlayer();
+      renderSheet();
+    }
+  }).catch(() => {});
+
+  return true;
+}
+
 function wireEvents() {
   let searchTimer = null;
   els.playButton.addEventListener('click', togglePlay);
@@ -1882,6 +1986,16 @@ function wireEvents() {
   els.favouritesButton.addEventListener('click', () => openSheet('favourites', { trigger: els.favouritesButton }));
   els.queueButton.addEventListener('click', () => openSheet('queue', { trigger: els.queueButton }));
   els.searchButton.addEventListener('click', () => openSheet('search', { trigger: els.searchButton }));
+  els.linkSongButton?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (els.linkSongCard && !els.linkSongCard.hidden) closeLinkSongCard(true);
+    else openLinkSongCard();
+  });
+  els.linkSongClose?.addEventListener('click', () => closeLinkSongCard(true));
+  els.linkSongForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    playYouTubeUrl(els.linkSongInput?.value);
+  });
   els.shareButton?.addEventListener('click', handleShareCurrentSong);
 
   els.searchInput.addEventListener('input', () => {
@@ -1936,6 +2050,11 @@ function wireEvents() {
     if (event.key === 's' || event.key === 'S') { event.preventDefault(); toggleShuffle(); }
     if (event.key === 'l' || event.key === 'L') { event.preventDefault(); toggleLiveStation(); }
     if (event.code === 'Escape' || event.key === 'Escape') {
+      if (els.linkSongCard && !els.linkSongCard.hidden) {
+        event.preventDefault();
+        closeLinkSongCard(true);
+        return;
+      }
       const stage = document.querySelector('#providerStage.open[aria-hidden="false"]');
       if (stage) {
         event.preventDefault();
@@ -1953,6 +2072,11 @@ function wireEvents() {
   });
 
   document.addEventListener('click', closeProviderOutside);
+  document.addEventListener('click', (event) => {
+    if (els.linkSongCard && !els.linkSongCard.hidden && !els.linkSongCard.contains(event.target) && event.target !== els.linkSongButton && !els.linkSongButton?.contains(event.target)) {
+      closeLinkSongCard(false);
+    }
+  });
 
   window.addEventListener('offline', () => showToast('You’re offline. Catalogue browsing is available, but music playback requires an internet connection.'));
   window.addEventListener('online', () => {
@@ -2630,6 +2754,12 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       case 'nonstop':
         if (typeof value !== 'string' || !value) return false;
         return Boolean(window.GARBA_NONSTOP?.play?.(value));
+      case 'play-youtube':
+        if (typeof value === 'string' && value.trim()) {
+          playYouTubeUrl(value.trim());
+          return true;
+        }
+        return false;
       default: return false;
     }
   },

@@ -974,18 +974,78 @@
     if (openSheet) closeSheet(true);
     var c = $(id); c.hidden = false; openCardId = id;
     document.querySelectorAll('.rail-btn').forEach(function (b) { b.setAttribute('aria-expanded', String(b.dataset.card === id)); });
+    if (id === 'linkCard') {
+      $('linkSongBtn')?.setAttribute('aria-expanded', 'true');
+      var s = $('linkSongStatus'); if (s) { s.style.display = 'none'; s.textContent = ''; }
+      setTimeout(function () { $('linkSongInput')?.focus(); }, 30);
+    }
     if (id === 'ideaCard') loadScript('ideas.js').catch(function () { $('ideaNote').textContent = "The idea box couldn't load. Check your connection."; });
     setTimeout(function () { var f = c.querySelector('[aria-pressed="true"], textarea, button:not([data-card-close])'); (f || c).focus(); }, 30);
   }
   function closeCard(silent) {
     if (!openCardId) return;
     var id = openCardId; $(id).hidden = true; openCardId = null;
-    var btn = document.querySelector('.rail-btn[data-card="' + id + '"]'); if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) btn.focus(); }
+    var btn = document.querySelector('.rail-btn[data-card="' + id + '"]') || (id === 'linkCard' ? $('linkSongBtn') : null);
+    if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) btn.focus(); }
   }
   document.querySelectorAll('.rail-btn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
+  $('linkSongBtn')?.addEventListener('click', function (e) { e.stopPropagation(); openCard('linkCard'); });
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-card-close]')) { closeCard(); return; }
-    if (openCardId && !e.target.closest('.side-card') && !e.target.closest('.rail')) closeCard(true);
+    if (openCardId && !e.target.closest('.side-card') && !e.target.closest('.rail') && e.target !== $('linkSongBtn') && !$('linkSongBtn')?.contains(e.target)) closeCard(true);
+  });
+
+  function parseYtId(val) {
+    var text = String(val || '').trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(text)) return text;
+    var m = text.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  function submitLinkSong() {
+    var input = $('linkSongInput');
+    var val = (input ? input.value : '').trim();
+    var vid = parseYtId(val);
+    var status = $('linkSongStatus');
+    if (!vid) {
+      if (status) {
+        status.textContent = 'Please enter a valid YouTube link or video ID.';
+        status.style.display = 'block';
+      }
+      return;
+    }
+    if (status) {
+      status.style.display = 'none';
+      status.textContent = '';
+    }
+    if (LIVE_SITE) {
+      requestLiveAction('play-youtube', val);
+      closeCard();
+      return;
+    }
+    var existing = S.data && Array.isArray(S.data.songs) ? S.data.songs.find(function (s) { return s.videoId === vid; }) : null;
+    if (existing) {
+      loadSong(existing, true);
+    } else {
+      var customSong = {
+        id: 'yt-' + vid,
+        title: 'YouTube Track',
+        artist: 'Custom track',
+        genre: S.genre || 'traditional',
+        videoId: vid,
+        playable: true,
+        durationSeconds: 0
+      };
+      loadSong(customSong, true);
+    }
+    closeCard();
+  }
+  $('linkSongGo')?.addEventListener('click', submitLinkSong);
+  $('linkSongInput')?.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitLinkSong();
+    }
   });
 
   /* Ideas: the words go to the project exactly as written */

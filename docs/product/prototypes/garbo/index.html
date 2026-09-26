@@ -66,6 +66,7 @@
       <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
       <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
       <symbol id="i-offline" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 4-2.4M19 12.9a10 10 0 0 0-3.2-2.1M2 9.3a15 15 0 0 1 4.3-2.8M22 9.3A15 15 0 0 0 11 5.1"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></symbol>
     </defs>
   </svg>
@@ -76,6 +77,7 @@
     <header class="topbar">
       <a class="brand" href="../../../../" aria-label="PlayGarba"><svg aria-hidden="true"><use href="#mark"/></svg><span>PlayGarba</span></a>
       <nav class="tools" aria-label="Player tools">
+        <button class="ib" id="linkSongBtn" type="button" aria-label="Play YouTube link"><svg><use href="#i-link"/></svg></button>
         <button class="ib" id="searchBtn" type="button" aria-label="Search songs"><svg><use href="#i-search"/></svg></button>
         <button class="ib" id="tonightBtn" type="button" aria-label="Tonight"><svg><use href="#i-moon"/></svg></button>
         <button class="ib" id="moreBtn" type="button" aria-label="More"><svg><use href="#i-more"/></svg></button>
@@ -262,6 +264,17 @@
         <button class="secondary" type="button" id="linkCopy">Copy link</button>
       </div>
       <p class="note">Anyone with the link hears the same song at the same moment as you. If you change the playlist, share the new link so everyone follows.</p>
+    </div>
+  </section>
+
+  <section class="side-card" id="linkCard" role="dialog" aria-labelledby="linkCardT" hidden>
+    <header class="card-head"><span class="card-badge" aria-hidden="true"><svg><use href="#i-link"/></svg></span><h2 id="linkCardT">Play YouTube link</h2><p class="card-sub">Paste any YouTube track</p><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="card-body" style="padding: 16px 20px 20px; display: grid; gap: 12px;">
+      <p class="atmo-desc" style="margin: 0;">Paste any YouTube song or video link to play it directly.</p>
+      <label class="sr-only" for="linkSongInput">YouTube link</label>
+      <input class="host-input" id="linkSongInput" type="url" inputmode="url" placeholder="https://youtu.be/… or watch?v=…" autocomplete="off" spellcheck="false">
+      <p class="atmo-desc" id="linkSongStatus" aria-live="polite" style="color: var(--gold, #d6b06f); margin: 0; display: none;"></p>
+      <button class="primary" type="button" id="linkSongGo">Play now</button>
     </div>
   </section>
 

@@ -559,7 +559,7 @@
       if (d.man && d.stole) { g.strokeStyle = d.stole; g.lineWidth = Math.max(1, h * 0.03); g.beginPath(); g.moveTo(x - h * 0.08, sh); g.lineTo(x + h * 0.06, hip); g.stroke(); }
       // Your word printed on your back, so it never covers the view
       if (d.backWord) {
-        var you0 = d.backWord === 'તું', fs0 = Math.max(9, Math.min(22, h * 0.075));
+        var you0 = d.backWord === 'you' || d.backWord === 'તું', fs0 = Math.max(9, Math.min(22, h * 0.075));
         if (you0) glow(x, sh + h * 0.1, h * 0.16, 'rgba(255,210,130,1)', 0.25 + youGlow * 0.3);
         g.font = '700 ' + fs0 + 'px ' + GU_FONT; g.textAlign = 'center';
         var pw = Math.max(fs0 * 1.8, g.measureText(d.backWord).width + fs0 * 0.8), ph = fs0 * 1.4;
@@ -799,7 +799,7 @@
       var near = groups[1] || c0, far = groups[2] || groups[groups.length - 1] || c0;
       var nearAt = circleCentre(near, T), farAt = circleCentre(far, T);
       // The drone's shots, one after another: the whole ground, a low orbit of the ring round the garbo, a child who
-      // cuts straight through a circle, the couple marked તું and તારો, then a tilted fly-over from one ring to the next
+      // cuts straight through a circle, the couple marked you and yours, then a tilted fly-over from one ring to the next
       var you = null; c0.dancers.forEach(function (d) { if (d.coupleRole === 'w' && d.wx != null) you = d; });
       var runner = null; L.kids.forEach(function (kd) { if (!runner && kd.through && kd.moving) runner = kd; });
       if (!runner) runner = L.kids.filter(function (kd) { return kd.moving; })[0] || L.kids[0];
@@ -1938,9 +1938,9 @@
       var sg = g.createRadialGradient(p.x, cy, h * 0.05, p.x, cy, r); sg.addColorStop(0, 'rgba(255,214,150,' + (0.3 + 0.2 * youGlow) + ')'); sg.addColorStop(1, 'rgba(255,214,150,0)');
       g.fillStyle = sg; g.beginPath(); g.arc(p.x, cy, r, 0, TAU); g.fill();
     }
-    // In Gujarati: તું (you) over you, and તારો or તારી (yours) over your partner, on a small leaf-shaped tag
-    var GU_FONT = '"Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", FreeSerif, system-ui, sans-serif';
-    function coupleWord(you, man) { return you ? 'તું' : man ? 'તારો' : 'તારી'; }
+    // You over you, and yours over your partner, on a small leaf-shaped tag
+    var GU_FONT = 'var(--sans, system-ui), "Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", FreeSerif, system-ui, sans-serif';
+    function coupleWord(you, man) { return you ? 'you' : 'yours'; }
     function tagSize(h, compact) { var fs = compact ? Math.max(10, Math.min(13, h * 0.08)) : Math.max(12, Math.min(17, h * 0.15)); return { fs: fs, hh: fs * 1.55, tip: fs * 0.55 }; }
     function tag(x, y, h, you, man, T0, compact, lead) {
       var text = coupleWord(you, man), z = tagSize(h, compact), fs = z.fs;
