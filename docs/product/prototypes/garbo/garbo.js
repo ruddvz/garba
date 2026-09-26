@@ -17,8 +17,8 @@
     clapping: { label: 'Claps', profile: { crowd: 0.35, night: 0.6, claps: 1, spatial: false } },
     immersive: { label: 'Full circle', profile: { crowd: 0.85, night: 1, claps: 0.9, spatial: true } }
   };
-  var A = { sound: false, mode: 'immersive', venue: 'outdoors', listener: 'circle', pattern: 'beat', bpm: 112, ctx: null, engine: null, timer: 0, taps: [], running: false };
-  try { var savedAtmo = JSON.parse(localStorage.getItem('garbo-proto-atmosphere') || '{}'); ['mode', 'venue', 'listener', 'pattern'].forEach(function (k) { if (savedAtmo[k]) A[k] = savedAtmo[k]; }); } catch (e) { /* storage unavailable */ }
+  var A = { youAs: 'woman', styleChoice: null, sound: false, mode: 'immersive', venue: 'outdoors', listener: 'circle', pattern: 'beat', bpm: 112, ctx: null, engine: null, timer: 0, taps: [], running: false };
+  try { var savedAtmo = JSON.parse(localStorage.getItem('garbo-proto-atmosphere') || '{}'); ['mode', 'venue', 'listener', 'pattern', 'youAs'].forEach(function (k) { if (savedAtmo[k]) A[k] = savedAtmo[k]; }); } catch (e) { /* storage unavailable */ }
   if (E && (!E.VENUES[A.venue] || !E.LISTENERS[A.listener])) { A.venue = 'outdoors'; A.listener = 'circle'; }
 
   var scene = VENUE_SCENE ? new window.GarboScene.VenueStage($('scene'), {
@@ -215,6 +215,7 @@
 
   function setGenre(id, keepPlaying) {
     S.genre = id;
+    A.styleChoice = null;
     if (typeof atmoRender === 'function' && $('atmoPower')) atmoRender();
     renderDial();
     if (id === 'nonstop') { S.queue = []; loadSet(S.data.nonstopSets[0], 0, keepPlaying); return; }
@@ -621,11 +622,11 @@
   $('atmoTop').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
 
   /* ---------- Atmosphere sheet ---------- */
-  function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern })); } catch (e) { /* storage unavailable */ } }
+  function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
   function atmoSegment(elId, items, current, pick) {
     var box = $(elId); box.textContent = '';
     Object.keys(items).forEach(function (id) {
-      var b = el('button', null, items[id].label); b.type = 'button';
+      var b = el('button', null, items[id].label); b.type = 'button'; b.dataset.id = id;
       b.setAttribute('aria-pressed', String(id === current));
       b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
       box.appendChild(b);
@@ -640,10 +641,13 @@
       $('atmoListenerDesc').textContent = E.LISTENERS[A.listener].desc;
     }
     $('atmoBpm').textContent = Math.round(A.bpm);
-    var theme = S.nonstop ? 'nonstop' : S.genre, style = theme === 'dandiya' ? 'dandiya' : 'claps';
+    // Dandiya Raas brings sticks by default; picking claps or sticks yourself wins until the genre changes
+    var theme = S.nonstop ? 'nonstop' : S.genre, style = A.styleChoice || (theme === 'dandiya' ? 'dandiya' : 'claps');
+    document.querySelectorAll('#atmoStyles button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.id === style)); });
+    $('atmoStyleDesc').textContent = style === 'dandiya' ? 'Everyone strikes dandiya sticks on the beat.' : 'The circle claps on the beat.';
     if (A.engine && A.style !== style) A.engine.setStyle(style);
     A.style = style;
-    if (scene.atmosphere) scene.atmosphere({ venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
+    if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
   }
   function atmoLoadBed(ctx) {
     var beds = window.GARBO_ATMO_BEDS || {
@@ -694,6 +698,8 @@
 
   atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
   atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
+  atmoSegment('atmoYou', { woman: { label: 'Woman' }, man: { label: 'Man' } }, A.youAs, function (id) { A.youAs = id; atmoSave(); atmoRender(); });
+  atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
   atmoSegment('atmoModes', ATMO_MODES, A.mode, function (id) { A.mode = id; if (A.engine && A.running) A.engine.setProfile(ATMO_MODES[id].profile); atmoSave(); atmoRender(); });
   atmoSegment('atmoPatterns', E ? E.PATTERNS : {}, A.pattern, function (id) { A.pattern = id; if (A.engine) A.engine.setPattern(id); atmoSave(); });
   $('atmoPower').addEventListener('click', function () {
