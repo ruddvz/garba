@@ -72,7 +72,17 @@
       <section class="songs-section">
         <div class="section-heading">
           <div><p class="eyebrow">Songs</p><h3 id="songSectionTitle">All songs</h3></div>
-          <span id="songCount"></span>
+          <div class="section-heading-actions">
+            <label class="catalogue-sort" id="catalogueSortField">
+              <span>Sort</span>
+              <select id="catalogueSort" aria-label="Sort catalogue songs">
+                <option value="playable-first">Playable first</option>
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+              </select>
+            </label>
+            <span id="songCount"></span>
+          </div>
         </div>
         <div class="song-list" id="catalogueSongList" role="list"></div>
       </section>
@@ -91,6 +101,7 @@
     </button>
   </template>
 
+  <script src="../assets/runtime/catalogue-ordering.js"></script>
   <script type="module" src="catalogue.js"></script>
   <script type="module" src="explore-continuity-bridge.js"></script>
   <script type="module" src="listening-library.js"></script>

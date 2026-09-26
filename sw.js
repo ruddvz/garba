@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v31`;
+const CACHE_NAME = `${CACHE_PREFIX}v35`;
 const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 const STAGING_READY_URL = new URL('./__garba_staging_ready__', self.location.href).toString();
@@ -24,6 +24,13 @@ const CORE_SHELL = [
   './assets/runtime/immersive-atmosphere.js',
   './assets/runtime/morphicons.js',
   './assets/runtime/live-station.js',
+  './assets/runtime/garba-circle.js',
+  './assets/runtime/garba-circle-controller.js',
+  './assets/runtime/qr-code.js',
+  './assets/runtime/live-sync.js',
+  './assets/runtime/sync-correction.js',
+  './assets/runtime/playable-order.js',
+  './assets/runtime/my-songs.js',
   './assets/audio/courtyard-night.ogg',
   './assets/audio/festival-crowd.ogg',
   './assets/audio/ground-applause.ogg',
@@ -70,6 +77,13 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/assets/runtime/immersive-atmosphere.js',
   '/assets/runtime/morphicons.js',
   '/assets/runtime/live-station.js',
+  '/assets/runtime/garba-circle.js',
+  '/assets/runtime/garba-circle-controller.js',
+  '/assets/runtime/qr-code.js',
+  '/assets/runtime/live-sync.js',
+  '/assets/runtime/sync-correction.js',
+  '/assets/runtime/playable-order.js',
+  '/assets/runtime/my-songs.js',
 ];
 
 async function stagingCacheExists() {
@@ -127,10 +141,10 @@ self.addEventListener('activate', (event) => {
     await caches.delete(CACHE_NAME);
     const live = await caches.open(CACHE_NAME);
     try {
-      for (const request of promotableRequests) {
+      await Promise.all(promotableRequests.map(async (request) => {
         const response = await staged.match(request);
         if (response) await live.put(request, response);
-      }
+      }));
     } catch (error) {
       await caches.delete(CACHE_NAME);
       throw error;

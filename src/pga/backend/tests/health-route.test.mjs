@@ -131,6 +131,25 @@ test('protected Health API returns only the bounded canonical presentation and f
   assert.equal(collectorArgs.observations.rollups.payload.data.rollups[0].status, 'complete')
 })
 
+test('omitted configuration uses empty array and object for collector arguments', async () => {
+  const fixture = await accessFixture()
+  delete fixture.env.PGA_HEALTH_REQUIRED_CHECKS_JSON
+  delete fixture.env.PGA_HEALTH_FRESHNESS_BUDGETS_JSON
+  let collectorArgs = null
+
+  await handleAdmin(fixture.request, fixture.env, {
+    nowMs: NOW,
+    fetchImpl: fixture.authFetch,
+    collectHealthSnapshot: async (args) => {
+      collectorArgs = args
+      return { schemaVersion: 'pga-health-snapshot/v1' }
+    },
+  })
+
+  assert.deepEqual(collectorArgs.requiredChecks, [])
+  assert.deepEqual(collectorArgs.freshnessBudgets, {})
+})
+
 test('missing D1 binding stays unknown evidence and makes the transport envelope partial without blocking other Health collection', async () => {
   const fixture = await accessFixture()
   delete fixture.env.DB

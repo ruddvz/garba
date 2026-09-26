@@ -133,10 +133,11 @@
 
     const run = async () => {
       const visible = candidateFor(requestedGenre());
-      for (const url of allAssets) {
-        if (url === visible || warmed.has(url)) continue;
+      const promises = allAssets.map(async (url) => {
+        if (url === visible || warmed.has(url)) return;
         await warmImage(url, { background: true });
-      }
+      });
+      await Promise.all(promises);
     };
 
     const afterLoad = () => {

@@ -6,11 +6,27 @@ import { fileURLToPath } from 'node:url'
 const MANIFEST_FIELDS = new Set(['version', 'tracks', 'notes'])
 const TRACK_FIELDS = new Set(['audioUrl', 'mimeType', 'rights'])
 const RIGHTS_FIELDS = new Set([
+  'territories',
   'redistributionAuthorized',
   'rightsHolder',
   'licenseName',
   'proofUrl',
 ])
+
+
+export function validateDirectAudioRights(rights, requestTerritory) {
+  if (!rights || rights.redistributionAuthorized !== true) {
+    return false;
+  }
+  if (!requestTerritory) {
+    return true;
+  }
+  if (Array.isArray(rights.territories)) {
+    return rights.territories.includes(requestTerritory);
+  }
+  return true;
+}
+
 
 const ALLOWED_AUDIO_MIME_TYPES = new Set([
   'audio/aac',

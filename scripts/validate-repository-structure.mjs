@@ -34,6 +34,7 @@ const requiredRootFiles = new Set([
   'sitemap.xml',
   'styles.css',
   'sw.js',
+  'vercel.json',
   'youtube-player-runtime.js',
 ]);
 const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
@@ -102,6 +103,7 @@ const expectedScriptEntrypoints = [
   'audit-direct-host-health.mjs',
   'audit-youtube-health.mjs',
   'build-catalogue.mjs',
+  'build-vercel-site.mjs',
   'enforce-protected-main.mjs',
   'enrich-runtime-songs.mjs',
   'generate-licensing-request.mjs',
@@ -274,8 +276,6 @@ for (const marker of [
   'https://playgarba.com/',
 ]) if (!publicIndex.includes(marker)) fail(`Public homepage missing production marker: ${marker}`);
 
-if (await exists('vercel.json')) fail('vercel.json must not remain in a Pages-only production source');
-
 const pages = await read('.github/workflows/pages.yml');
 if (pages.includes('cp index.html *.js')) fail('Pages deployment must not copy JavaScript through a root glob');
 for (const file of expectedRootJs) if (!pages.includes(file)) fail(`Pages workflow does not explicitly account for runtime file: ${file}`);
@@ -303,4 +303,5 @@ ok('catalogue is one crawlable page with in-page collection, release and song st
 ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
 ok('standalone song/release SEO page generation is retired and guarded against');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
+ok('Vercel preview configuration is repository-approved while Pages remains canonical');
 ok('single Pages artifact serves the player at the apex with legacy compatibility paths');
