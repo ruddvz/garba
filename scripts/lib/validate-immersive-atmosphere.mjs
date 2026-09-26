@@ -178,5 +178,25 @@ for (const marker of ['<script src="../assets/runtime/immersive-atmosphere.js"><
 if (!roomScript.includes('GARBA_ATMOSPHERE_ENGINE')) fail('Listening room must use the shared Atmosphere engine');
 if (!room.includes("never the song itself")) fail('Listening room must say the song itself is not processed');
 
+// The microphone beat follower: opt-in, hears the speaker (echo cancellation off), and its estimator finds a
+// steady 120 BPM beat in a synthetic low-end signal to within 1.5 BPM and 25 ms
+for (const marker of ['function createBeatFollower(', 'echoCancellation: false', 'function estimateBeat(', 'createBeatFollower };', "Follow the song's beat", 'Nothing is recorded or sent.']) {
+  if (!runtime.includes(marker)) fail(`Atmosphere runtime is missing the beat follower marker: ${marker}`);
+}
+{
+  const body = runtime.slice(runtime.indexOf('function estimateBeat('), runtime.indexOf('const BEAT_WORKLET'));
+  const estimateBeat = new Function(`${body}; return estimateBeat;`)();
+  const hop = 512 / 44100, beats = [], frames = [];
+  for (let t = 0.4; t < 8; t += 0.5) beats.push(t);
+  for (let f = 0; f * hop < 8; f += 1) {
+    const t = f * hop; let e = 0.01 * (1 + ((f * 7919) % 13) / 13);
+    for (const b of beats) { const d = t - b; if (d >= 0 && d < 0.2) e += Math.exp(-d / 0.04); }
+    frames.push([t, e]);
+  }
+  const est = estimateBeat(frames);
+  const nearest = est ? beats.reduce((m, b) => (Math.abs(b - est.lastBeat) < Math.abs(m - est.lastBeat) ? b : m), 0) : 0;
+  if (!est || Math.abs(est.bpm - 120) > 1.5 || Math.abs(est.lastBeat - nearest) > 0.025) fail(`Beat estimator missed a steady 120 BPM beat: ${JSON.stringify(est)}`);
+}
+
 if (failed) process.exit(1);
 console.log('✓ Garba Atmosphere venues, listening position, beat-locked claps, truthful copy, public-domain sources and PWA packaging are coherent');
