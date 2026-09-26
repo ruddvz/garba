@@ -79,7 +79,12 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
 
     await button.click();
     await waitFor(page, () => !document.querySelector('#atmospherePanel')?.hidden, `${name}: panel did not open`);
-    await waitFor(page, () => document.activeElement?.matches('.atmosphere-mode[aria-pressed="true"]'), `${name}: selected mode did not receive initial focus`);
+    await waitFor(page, () => document.activeElement?.matches('.atmosphere-power'), `${name}: the on/off switch did not receive initial focus while off`);
+    assert.equal(await page.locator('.atmosphere-power').getAttribute('aria-checked'), 'false', `${name}: switch must start off`);
+    await page.locator('.atmosphere-power').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode !== 'off' && document.querySelector('.atmosphere-power')?.getAttribute('aria-checked') === 'true', `${name}: switch did not turn Atmosphere on`);
+    await page.locator('.atmosphere-power').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'off', `${name}: switch did not turn Atmosphere off`);
     assert.equal(await button.getAttribute('aria-expanded'), 'true', `${name}: trigger did not expose open state`);
     assert.equal(await page.locator('#app').evaluate((node) => node.hasAttribute('inert')), true, `${name}: background app was not made inert`);
 
@@ -89,8 +94,17 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
     assert.ok(bounds.x + bounds.width <= viewport.width + 0.5, `${name}: panel overflows viewport horizontally`);
     assert.ok(bounds.y + bounds.height <= viewport.height + 0.5, `${name}: panel overflows viewport vertically`);
 
-    await page.locator('.atmosphere-mode[data-mode="courtyard"]').click();
-    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'courtyard', `${name}: Courtyard mode did not apply`);
+    assert.match(await panel.innerText(), /The song itself plays as YouTube sends it\./, `${name}: panel must say the song is not processed`);
+    assert.equal(await page.locator('.atmosphere-venue').count(), 3, `${name}: three venues must be offered`);
+
+    await page.locator('.atmosphere-mode[data-mode="crowd"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'crowd', `${name}: Crowd mode did not apply`);
+    await page.locator('.atmosphere-venue[data-venue="stadium"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.venue === 'stadium', `${name}: Indoor stadium venue did not apply`);
+    assert.equal(await page.locator('.atmosphere-listener').count(), 3, `${name}: three listening positions must be offered`);
+    await page.locator('.atmosphere-listener[data-listener="far"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.listener === 'far', `${name}: Far away position did not apply`);
+    assert.equal(await page.locator('.atmosphere-tap').isDisabled(), true, `${name}: Crowd mode has no claps, so Tap must be disabled`);
     assert.equal(await slider.isDisabled(), false, `${name}: enabled mode must enable intensity`);
     assert.equal(await test.getAttribute('aria-pressed'), 'false', `${name}: selecting a mode must not auto-start Test`);
     assert.equal(await page.evaluate(() => window.GARBA_ATMOSPHERE.active), false, `${name}: paused mode selection must remain silent`);
@@ -111,6 +125,18 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
     await page.evaluate(() => document.querySelector('#app')?.classList.remove('is-playing'));
     await waitFor(page, () => window.GARBA_ATMOSPHERE?.playbackSynced === false && window.GARBA_ATMOSPHERE?.active === false, `${name}: pause did not silence normal Atmosphere`);
 
+    await page.locator('.atmosphere-mode[data-mode="clapping"]').click();
+    await waitFor(page, () => window.GARBA_ATMOSPHERE?.mode === 'clapping', `${name}: Claps mode did not apply`);
+    const tap = page.locator('.atmosphere-tap');
+    assert.equal(await tap.isDisabled(), false, `${name}: Claps mode must enable Tap the beat`);
+    for (let i = 0; i < 5; i += 1) {
+      await tap.dispatchEvent('pointerdown');
+      await page.waitForTimeout(500);
+    }
+    await waitFor(page, () => typeof window.GARBA_ATMOSPHERE?.bpm === 'number', `${name}: tapping did not set a tempo`);
+    const bpm = await page.evaluate(() => window.GARBA_ATMOSPHERE.bpm);
+    assert.ok(bpm > 95 && bpm < 150, `${name}: five taps 500 ms apart should read near 120 BPM, got ${bpm}`);
+
     if (verifyAutoStop) {
       await test.click();
       await waitFor(page, () => document.querySelector('.atmosphere-test')?.getAttribute('aria-pressed') === 'true', `${name}: auto-stop Test did not start`);
@@ -123,6 +149,9 @@ async function runFixture({ name, engine, viewport, verifyAutoStop = false }) {
     assert.ok(reasons.includes('preview-ended'), `${name}: preview-ended event missing`);
     assert.ok(reasons.includes('play'), `${name}: playback handoff event missing`);
     assert.ok(reasons.includes('pause'), `${name}: pause event missing`);
+    assert.ok(reasons.includes('venue'), `${name}: venue event missing`);
+    assert.ok(reasons.includes('listener'), `${name}: listener event missing`);
+    assert.ok(reasons.includes('tempo'), `${name}: tempo event missing`);
 
     await page.keyboard.press('Escape');
     await waitFor(page, () => document.querySelector('#atmospherePanel')?.hidden === true, `${name}: Escape did not close panel`);
