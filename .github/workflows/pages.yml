@@ -108,6 +108,7 @@ jobs:
 
           cp -R \
             public-site/about \
+            public-site/atmosphere \
             public-site/dandiya-raas \
             public-site/faq \
             public-site/garba-attire-and-craft \
