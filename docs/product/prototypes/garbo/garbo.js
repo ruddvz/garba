@@ -679,7 +679,7 @@
   document.querySelectorAll('.rail-btn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-card-close]')) { closeCard(); return; }
-    if (openCardId && !e.target.closest('.card') && !e.target.closest('.rail')) closeCard(true);
+    if (openCardId && !e.target.closest('.side-card') && !e.target.closest('.rail')) closeCard(true);
   });
 
   /* Ideas: the words go to the project exactly as written */
@@ -940,10 +940,17 @@
 
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
+  // Each choice gets its own icon; clap patterns show their beat as dots
+  var SEG_ICONS = { circle: 'i-ring', far: 'i-chair', stage: 'i-mic', stadium: 'i-stadium', outdoors: 'i-tree', sheri: 'i-houses', claps: 'i-hands', dandiya: 'i-sticks', crowd: 'i-crowd', clapping: 'i-hands', immersive: 'i-full' };
+  var SEG_DOTS = { beat: [1], 'be-tali': [0, 0, 1, 1], 'tran-tali': [0, 1, 1, 1] };
   function atmoSegment(elId, items, current, pick) {
     var box = $(elId); box.textContent = '';
+    box.style.setProperty('--n', String(Object.keys(items).length));
     Object.keys(items).forEach(function (id) {
-      var b = el('button', null, items[id].label); b.type = 'button'; b.dataset.id = id;
+      var b = el('button'); b.type = 'button'; b.dataset.id = id;
+      if (SEG_ICONS[id]) { var ic = el('span', 'seg-ic'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = '<svg><use href="#' + SEG_ICONS[id] + '"/></svg>'; b.append(ic); }
+      else if (SEG_DOTS[id]) { var dt = el('span', 'seg-dots'); dt.setAttribute('aria-hidden', 'true'); SEG_DOTS[id].forEach(function (on) { dt.append(el('i', on ? 'on' : null)); }); b.append(dt); }
+      b.append(el('span', 'seg-l', items[id].label));
       b.setAttribute('aria-pressed', String(id === current));
       b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
       box.appendChild(b);
@@ -1020,7 +1027,7 @@
   atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
   atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
   // A quiet switch for which of the couple is you
-  function swapText() { $('atmoSwap').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
+  function swapText() { $('atmoSwapLabel').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
   $('atmoSwap').addEventListener('click', function () { A.youAs = A.youAs === 'man' ? 'woman' : 'man'; swapText(); atmoSave(); atmoRender(); });
   swapText();
   atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
