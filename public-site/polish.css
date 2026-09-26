@@ -46,7 +46,27 @@ body.interior-page .site-header {
 }
 
 .wordmark {
-  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.wordmark::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 27px;
+  height: 27px;
+  background: url('/assets/garbo-mark.svg') center / contain no-repeat;
+}
+
+.wordmark::after {
+  content: 'PlayGarba';
+  color: var(--ivory);
+  font: 700 18px/1 var(--sans);
+  letter-spacing: -.025em;
 }
 
 .site-nav {

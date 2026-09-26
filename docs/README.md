@@ -42,6 +42,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour
 - [`product/player-release-acceptance.md`](product/player-release-acceptance.md): finite, evidence-backed player release gate and listening journeys
 - [`product/ux-polish-pass.md`](product/ux-polish-pass.md): product polish notes and remaining UX work
+- [`product/design-qa.md`](product/design-qa.md): visual review of the warm editorial guide pages across desktop and phone layouts
 
 ## Rights and partnerships
 
