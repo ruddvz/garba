@@ -341,6 +341,13 @@ function setPlaying(playing) {
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
 }
 
+function setPlayPending() {
+  els.playButton.classList.add('is-playing');
+  els.miniPlay.classList.add('is-playing');
+  state.morphs?.get('play')?.morphTo('pause');
+  state.morphs?.get('miniPlay')?.morphTo('pause');
+}
+
 function configureGenreButton(button, genre, activeId, onSelect) {
   if (button.dataset.genreBound !== 'true') {
     button.dataset.genreBound = 'true';
@@ -2356,8 +2363,86 @@ function setupInteractionHardening() {
 }
 
 window.addEventListener('garba:playback-state-change', (event) => {
-  const playing = Boolean(event.detail?.playing);
-  setPlaying(playing);
+  // While a recording is still loading, the buttons answer the tap straight away, but the player
+  // only counts as playing once YouTube confirms it (playback atomicity contract).
+  if (event.detail?.loading) {
+    setPlayPending();
+    return;
+  }
+  setPlaying(Boolean(event.detail?.playing));
+  if (event.detail?.playing) hideResumePrompt();
+});
+
+/* ----------------------------- Continue after the phone paused ----------------------------- */
+// Phones pause the YouTube player when the browser goes to the background or the screen locks,
+// and a web page cannot keep it playing. When the listener comes back, offer one tap to continue
+// (never resume on our own), and a link to the same recording in the YouTube app.
+const resumeState = { left: null, el: null, timer: null };
+
+function formatResumeTime(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+  const h = Math.floor(safe / 3600);
+  const m = Math.floor((safe % 3600) / 60);
+  const sec = String(safe % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+}
+
+function hideResumePrompt() {
+  clearTimeout(resumeState.timer);
+  if (resumeState.el) resumeState.el.hidden = true;
+}
+
+function showResumePrompt(song) {
+  const player = window.GARBA_YOUTUBE_PLAYER;
+  if (!resumeState.el) {
+    const el = document.createElement('div');
+    el.className = 'resume-prompt';
+    el.setAttribute('role', 'status');
+    el.hidden = true;
+    el.innerHTML = '<span class="resume-copy"></span><button type="button" class="resume-continue"></button><a class="resume-youtube" target="_blank" rel="noopener noreferrer">Open in YouTube</a><button type="button" class="resume-close" aria-label="Dismiss"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>';
+    el.querySelector('.resume-close').addEventListener('click', hideResumePrompt);
+    el.querySelector('.resume-continue').addEventListener('click', () => {
+      hideResumePrompt();
+      const current = currentSong();
+      if (current && window.GARBA_YOUTUBE_PLAYER?.toggle) window.GARBA_YOUTUBE_PLAYER.toggle(current);
+      else togglePlay();
+    });
+    document.body.append(el);
+    resumeState.el = el;
+  }
+  const elapsed = player?.activeSongId === song.id && Number.isFinite(player.elapsedSeconds) ? player.elapsedSeconds : state.elapsed;
+  const shared = state.liveMode ? 'Live Radio' : circle.active ? 'the circle' : '';
+  resumeState.el.querySelector('.resume-copy').textContent = shared ? 'Your phone paused the music.' : `Paused at ${formatResumeTime(elapsed)} when you left.`;
+  resumeState.el.querySelector('.resume-continue').textContent = shared ? `Rejoin ${shared}` : 'Continue';
+  const videoId = youtubeVideoId(song);
+  const link = resumeState.el.querySelector('.resume-youtube');
+  link.hidden = !videoId;
+  if (videoId) {
+    const at = Math.floor(Number(song.youtubeStartSeconds || 0) + Number(elapsed || 0));
+    link.href = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}${at > 0 ? `&t=${at}s` : ''}`;
+  }
+  resumeState.el.hidden = false;
+  clearTimeout(resumeState.timer);
+  resumeState.timer = setTimeout(hideResumePrompt, 60000);
+}
+
+document.addEventListener('visibilitychange', () => {
+  const player = window.GARBA_YOUTUBE_PLAYER;
+  if (document.visibilityState === 'hidden') {
+    const song = currentSong();
+    resumeState.left = song && (state.playing || player?.playing) ? { songId: song.id } : null;
+    return;
+  }
+  const left = resumeState.left;
+  resumeState.left = null;
+  if (!left) return;
+  // Give the player a moment to report its real state after the page wakes up.
+  setTimeout(() => {
+    const song = currentSong();
+    if (!song || window.GARBA_YOUTUBE_PLAYER?.playing) return;
+    if (song.id !== left.songId && !state.liveMode && !circle.active) return;
+    showResumePrompt(song);
+  }, 900);
 });
 
 const circle = createCircleController({
