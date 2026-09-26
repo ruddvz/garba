@@ -6,8 +6,34 @@
   var $ = function (id) { return document.getElementById(id); };
   var app = $('app');
   var reducedQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-  var scene = new window.GarboScene.Scene($('scene'));
   var mirrors = new window.GarboScene.MirrorBand($('mirrorBand'));
+
+  /* ---------- Atmosphere: the venue the player stands in, and the sound of the circle around the song ----------
+     The venue scene and the sound engine are the shared production files. When they are not available the
+     player falls back to the plain garbo scene and the Atmosphere sheet explains why. */
+  var E = window.GARBA_ATMOSPHERE_ENGINE, VENUE_SCENE = !!window.GarbaVenueScene && !!E;
+  var ATMO_MODES = {
+    crowd: { label: 'Crowd', profile: { crowd: 1, night: 1, claps: 0, spatial: false } },
+    clapping: { label: 'Claps', profile: { crowd: 0.35, night: 0.6, claps: 1, spatial: false } },
+    immersive: { label: 'Full circle', profile: { crowd: 0.85, night: 1, claps: 0.9, spatial: true } }
+  };
+  var A = { sound: false, mode: 'immersive', venue: 'outdoors', listener: 'circle', pattern: 'beat', bpm: 112, ctx: null, engine: null, timer: 0, taps: [], running: false };
+  try { var savedAtmo = JSON.parse(localStorage.getItem('garbo-proto-atmosphere') || '{}'); ['mode', 'venue', 'listener', 'pattern'].forEach(function (k) { if (savedAtmo[k]) A[k] = savedAtmo[k]; }); } catch (e) { /* storage unavailable */ }
+  if (E && (!E.VENUES[A.venue] || !E.LISTENERS[A.listener])) { A.venue = 'outdoors'; A.listener = 'circle'; }
+
+  var scene = VENUE_SCENE ? new window.GarboScene.VenueStage($('scene'), {
+    venues: E.VENUES,
+    reduce: reducedQuery.matches,
+    clock: function () { return A.ctx ? A.ctx.currentTime : performance.now() / 1000; },
+    beats: function () {
+      var tp = A.running && A.engine && A.engine.tempo;
+      if (!tp || !(ATMO_MODES[A.mode].profile.claps > 0)) return null;
+      var pat = E.PATTERNS[A.pattern];
+      return { anchor: tp.anchor, period: tp.period, cycle: pat.cycle, hits: pat.hits };
+    },
+    onLamp: function (l) { var hit = $('lampHit'), r = $('lampSlot').getBoundingClientRect(); hit.style.left = (l.x * window.innerWidth - r.left) + 'px'; hit.style.top = (l.y * window.innerHeight - r.top) + 'px'; }
+  }) : new window.GarboScene.Scene($('scene'));
+  if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
 
   var STEPS = [
     { name: 'Be tali', desc: 'Two claps in each round', claps: 2 },
@@ -149,6 +175,7 @@
     $('offlineBar').hidden = mode !== 'offline';
     $('liveBtn').setAttribute('aria-pressed', String(S.live));
     scene.set({ mode: mode === 'paused' ? 'ember' : mode === 'empty' ? 'unavailable' : mode });
+    if (typeof atmoSync === 'function') atmoSync();
   }
 
   function play() {
@@ -394,6 +421,7 @@
     opener = document.activeElement;
     var s = $(id); s.hidden = false; openSheet = s;
     if (id !== 'aboutPage') $('scrim').hidden = false;
+    $('scrim').classList.toggle('light', id === 'atmoSheet');
     app.inert = true;
     var target = focusId ? $(focusId) : s;
     setTimeout(function () { if (target) target.focus(); }, 30);
@@ -588,7 +616,114 @@
   $('shareOpen').addEventListener('click', function () { showSheet('shareSheet'); });
   $('aboutOpen').addEventListener('click', function () { showSheet('aboutPage'); });
   $('installBtn').addEventListener('click', function () { toast('Your browser shows its install prompt here.'); });
-  $('atmoBtn').addEventListener('click', function () { toast('The existing Atmosphere controls move here from the top bar.'); });
+  $('atmoBtn').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
+  $('atmoTop').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
+
+  /* ---------- Atmosphere sheet ---------- */
+  function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern })); } catch (e) { /* storage unavailable */ } }
+  function atmoSegment(elId, items, current, pick) {
+    var box = $(elId); box.textContent = '';
+    Object.keys(items).forEach(function (id) {
+      var b = el('button', null, items[id].label); b.type = 'button';
+      b.setAttribute('aria-pressed', String(id === current));
+      b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
+      box.appendChild(b);
+    });
+  }
+  function atmoRender() {
+    $('atmoPower').setAttribute('aria-checked', String(A.sound));
+    $('atmoPowerLabel').textContent = A.sound ? 'Sound is on' : 'Sound is off';
+    $('atmoTop').setAttribute('aria-pressed', String(A.sound));
+    if (E) {
+      $('atmoVenueDesc').textContent = E.VENUES[A.venue].desc;
+      $('atmoListenerDesc').textContent = E.LISTENERS[A.listener].desc;
+    }
+    $('atmoBpm').textContent = Math.round(A.bpm);
+    if (scene.atmosphere) scene.atmosphere({ venue: A.venue, listener: A.listener, style: 'claps', mode: A.sound ? A.mode : 'off', level: 0.6 });
+  }
+  function atmoLoadBed(ctx) {
+    var beds = window.GARBO_ATMO_BEDS || {
+      'ground-crowd': ['../../../../assets/audio/festival-crowd.m4a', '../../../../assets/audio/festival-crowd.ogg'],
+      'courtyard-bed': ['../../../../assets/audio/courtyard-night.m4a', '../../../../assets/audio/courtyard-night.ogg']
+    };
+    return function (role) {
+      var urls = beds[role] || [], i = 0;
+      function next() {
+        if (i >= urls.length) return Promise.resolve(null);
+        return fetch(urls[i++]).then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+          .then(function (d) { return new Promise(function (ok, bad) { var p = ctx.decodeAudioData(d, ok, bad); if (p && p.then) p.then(ok, bad); }); }).catch(next);
+      }
+      return next();
+    };
+  }
+  function atmoEnsure() {
+    if (A.ctx || !E) return !!A.ctx;
+    var Ctor = window.AudioContext || window.webkitAudioContext; if (!Ctor) return false;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* unsupported */ }
+    A.ctx = new Ctor({ latencyHint: 'playback' });
+    A.engine = E.createEngine(A.ctx, { loadBed: atmoLoadBed(A.ctx) });
+    A.engine.setVenue(A.venue, { ramp: 0.05 }); A.engine.setListener(A.listener, { ramp: 0.05 }); A.engine.setPattern(A.pattern);
+    return true;
+  }
+  // Sound follows the player: it plays only while the song plays and Atmosphere sound is on.
+  function atmoSync() {
+    var playing = S.mode === 'playing' || S.mode === 'live';
+    atmoRender();
+    if (!E) return;
+    if (A.sound && playing && atmoEnsure()) {
+      if (A.running) return;
+      A.running = true;
+      A.ctx.resume().then(function () { return A.engine.setProfile(ATMO_MODES[A.mode].profile); }).then(function () {
+        if (!A.running) return;
+        A.engine.setLevel(0.5, 0.3); A.engine.start();
+        if (!A.engine.tempo) A.engine.setTempo(A.bpm, A.ctx.currentTime + 0.3);
+        clearInterval(A.timer);
+        A.timer = setInterval(function () { A.engine.schedule(A.ctx.currentTime + (document.hidden ? 1.6 : 0.2)); }, 25);
+      }).catch(function () { A.running = false; });
+    } else if (A.running) {
+      A.running = false; clearInterval(A.timer);
+      if (A.engine) A.engine.stop({ fade: 0.3 });
+    }
+  }
+  // Browsers only start audio from a tap, so wake the audio on any tap while sound is on.
+  document.addEventListener('pointerdown', function () { if (A.sound && A.ctx && A.ctx.state !== 'running') A.ctx.resume(); }, true);
+
+  atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
+  atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
+  atmoSegment('atmoModes', ATMO_MODES, A.mode, function (id) { A.mode = id; if (A.engine && A.running) A.engine.setProfile(ATMO_MODES[id].profile); atmoSave(); atmoRender(); });
+  atmoSegment('atmoPatterns', E ? E.PATTERNS : {}, A.pattern, function (id) { A.pattern = id; if (A.engine) A.engine.setPattern(id); atmoSave(); });
+  $('atmoPower').addEventListener('click', function () {
+    A.sound = !A.sound;
+    if (A.sound) { atmoEnsure(); if (A.ctx) A.ctx.resume(); if (S.mode !== 'playing' && S.mode !== 'live') toast('Play a song to hear the circle around it.'); }
+    atmoSync();
+  });
+  if (!E) { $('atmoPower').disabled = true; $('atmoUnavailable').hidden = false; }
+
+  // Tap the beat: a least-squares fit over the taps, the same one the player's Atmosphere panel uses.
+  function atmoTapDots(n, locked) {
+    document.querySelectorAll('#atmoDots i').forEach(function (d, i) { d.classList.toggle('on', locked || i < n); });
+    $('atmoTap').textContent = locked ? 'Tap to adjust' : 'Tap the beat';
+  }
+  function atmoTap() {
+    var b = $('atmoTap'); b.classList.add('hit'); setTimeout(function () { b.classList.remove('hit'); }, 90);
+    if (!atmoEnsure()) return;
+    A.ctx.resume();
+    var heard = A.ctx.currentTime - (A.ctx.outputLatency || A.ctx.baseLatency || 0), last = A.taps[A.taps.length - 1];
+    if (last !== undefined && heard - last > 2) A.taps = [];
+    A.taps.push(heard); if (A.taps.length > 12) A.taps.shift();
+    if (A.taps.length < 4) { atmoTapDots(A.taps.length, false); $('atmoTapHint').textContent = 'Keep going: ' + (4 - A.taps.length) + ' more ' + (4 - A.taps.length === 1 ? 'tap.' : 'taps.'); return; }
+    var n = A.taps.length, mx = (n - 1) / 2, my = A.taps.reduce(function (x, y) { return x + y; }, 0) / n, num = 0, den = 0;
+    for (var i = 0; i < n; i++) { num += (i - mx) * (A.taps[i] - my); den += (i - mx) * (i - mx); }
+    var period = num / den, bpm = 60 / period;
+    if (bpm < 50 || bpm > 200) return;
+    A.bpm = bpm; A.engine.setTempo(bpm, my - mx * period);
+    atmoTapDots(4, true); $('atmoTapHint').textContent = 'Locked to your taps. The claps now land on the song\'s beat.';
+    atmoRender();
+  }
+  $('atmoTap').addEventListener('pointerdown', function (ev) { ev.preventDefault(); A.tapKeyed = false; atmoTap(); });
+  $('atmoTap').addEventListener('click', function (ev) { if (ev.detail === 0 && !A.tapKeyed) atmoTap(); A.tapKeyed = false; });
+  $('atmoTap').addEventListener('keydown', function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && !ev.repeat) { ev.preventDefault(); A.tapKeyed = true; atmoTap(); } });
+  atmoRender();
 
   /* ---------- layout + loop ---------- */
   function relayout() {
@@ -632,6 +767,8 @@
     if (h === 'nonstop-list') { showSheet('exploreSheet'); selectTab(1); }
     if (h === 'tonight-sheet') showSheet('tonightSheet');
     if (h === 'more') showSheet('moreSheet');
+    if (h === 'atmosphere') showSheet('atmoSheet', 'atmoPower');
+    ['outdoors', 'stadium', 'sheri'].forEach(function (v) { if (h === v || h === v + '-far') { A.venue = v; A.listener = h === v ? 'circle' : 'far'; if (A.engine) { A.engine.setVenue(v); A.engine.setListener(A.listener); } atmoRender(); } });
     if (h === 'about') showSheet('aboutPage');
     if (h === 'share') showSheet('shareSheet');
   }

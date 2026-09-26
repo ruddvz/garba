@@ -19,69 +19,64 @@
     return c;
   }
 
-  /* Shared drawing: used by the live scene and the share card. */
-  function drawPot(ctx, cx, cy, s, lit, t) {
-    var L = 0.42 + 0.58 * lit;
+  /* Shared drawing: the garbo on its low stand, used by the live scene and the share card.
+     x and base are the foot of the stand on the floor; m is pixels per metre. The pot is about
+     60 cm across, so it reads as a lamp at the centre of the circle, not a giant. */
+  function drawPot(ctx, x, base, m, lit, t) {
+    var L = 0.45 + 0.55 * lit, r = m * 0.3, cy = base - m * 0.9;
     ctx.save();
-    var halo = ctx.createRadialGradient(cx, cy, 8 * s, cx, cy, 170 * s);
-    halo.addColorStop(0, 'rgba(255,170,80,' + (0.34 * lit) + ')'); halo.addColorStop(1, 'rgba(255,170,80,0)');
-    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, 170 * s, 0, TAU); ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(cx - 17 * s, cy - 50 * s);
-    ctx.bezierCurveTo(cx - 20 * s, cy - 34 * s, cx - 52 * s, cy - 30 * s, cx - 50 * s, cy + 2 * s);
-    ctx.bezierCurveTo(cx - 48 * s, cy + 34 * s, cx - 26 * s, cy + 50 * s, cx, cy + 50 * s);
-    ctx.bezierCurveTo(cx + 26 * s, cy + 50 * s, cx + 48 * s, cy + 34 * s, cx + 50 * s, cy + 2 * s);
-    ctx.bezierCurveTo(cx + 52 * s, cy - 30 * s, cx + 20 * s, cy - 34 * s, cx + 17 * s, cy - 50 * s);
-    ctx.closePath();
-    var body = ctx.createRadialGradient(cx - 14 * s, cy - 10 * s, 5 * s, cx, cy, 64 * s);
-    body.addColorStop(0, 'rgb(' + Math.round(200 * L) + ',' + Math.round(104 * L) + ',' + Math.round(58 * L) + ')');
-    body.addColorStop(1, 'rgb(' + Math.round(92 * L) + ',' + Math.round(38 * L) + ',' + Math.round(19 * L) + ')');
-    ctx.fillStyle = body; ctx.fill();
-    ctx.clip();
-
-    var fl = 0.78 + 0.22 * Math.sin(t * 11) * Math.sin(t * 7.3);
-    var glowA = lit > 0.02 ? 0.22 + 0.78 * lit * fl : 0;
-    ctx.fillStyle = glowA ? 'rgba(255,' + Math.round(205 + 40 * fl) + ',125,' + glowA + ')' : '#2a120a';
-    ctx.shadowColor = 'rgba(255,190,90,' + lit + ')'; ctx.shadowBlur = 9 * s * lit;
-    var rows = [[-31, 5, 'd'], [-19, 7, 't'], [-5, 9, 'd'], [9, 8, 't'], [23, 7, 'd'], [36, 5, 't']];
-    for (var r = 0; r < rows.length; r++) {
-      var y = cy + rows[r][0] * s, n = rows[r][1], span = (80 - Math.abs(rows[r][0]) * 0.75) * s;
-      for (var j = 0; j < n; j++) {
-        var x = cx - span / 2 + span * (j + 0.5) / n;
+    if (lit > 0.02) {
+      var hr = m * 2.4, hg = ctx.createRadialGradient(x, cy, 1, x, cy, hr);
+      hg.addColorStop(0, 'rgba(255,180,90,' + 0.45 * lit + ')'); hg.addColorStop(1, 'rgba(255,180,90,0)');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(x, cy, hr, 0, TAU); ctx.fill();
+    }
+    // Low wooden stand draped in a red cloth with a gold border
+    ctx.fillStyle = '#3b2213'; ctx.fillRect(x - m * 0.34, base - m * 0.5, m * 0.07, m * 0.5); ctx.fillRect(x + m * 0.27, base - m * 0.5, m * 0.07, m * 0.5);
+    ctx.fillStyle = '#9b1f1a'; ctx.beginPath(); ctx.moveTo(x - m * 0.42, base - m * 0.56); ctx.lineTo(x + m * 0.42, base - m * 0.56); ctx.lineTo(x + m * 0.36, base - m * 0.3); ctx.lineTo(x, base - m * 0.18); ctx.lineTo(x - m * 0.36, base - m * 0.3); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#e8b04b'; ctx.lineWidth = Math.max(1, m * 0.02); ctx.stroke();
+    // Clay pot
+    var body = ctx.createRadialGradient(x - r * 0.35, cy - r * 0.3, r * 0.1, x, cy, r * 1.2);
+    body.addColorStop(0, 'rgb(' + Math.round(205 * L) + ',' + Math.round(110 * L) + ',' + Math.round(58 * L) + ')');
+    body.addColorStop(1, 'rgb(' + Math.round(96 * L) + ',' + Math.round(40 * L) + ',' + Math.round(20 * L) + ')');
+    ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(x, cy, r, r * 0.92, 0, 0, TAU); ctx.fill();
+    // Painted bands and perforations; light spills through when lit
+    ctx.strokeStyle = 'rgba(40,14,6,.45)'; ctx.lineWidth = Math.max(1, r * 0.03);
+    [-0.33, 0.36].forEach(function (b) { ctx.beginPath(); ctx.ellipse(x, cy + b * r, Math.sqrt(1 - b * b) * r, r * 0.08, 0, 0, Math.PI); ctx.stroke(); });
+    var fl = 0.8 + 0.2 * Math.sin(t * 11) * Math.sin(t * 7.3);
+    ctx.fillStyle = lit > 0.05 ? 'rgba(255,' + Math.round(210 + 30 * fl) + ',130,' + (0.25 + 0.75 * lit * fl) + ')' : 'rgba(40,16,8,.9)';
+    ctx.shadowColor = 'rgba(255,190,90,' + lit + ')'; ctx.shadowBlur = r * 0.15 * lit;
+    [[-0.52, 5], [-0.16, 7], [0.18, 7], [0.54, 5]].forEach(function (rw, ri) {
+      var yy = cy + rw[0] * r, span = Math.sqrt(1 - rw[0] * rw[0]) * r * 1.6;
+      for (var j = 0; j < rw[1]; j++) {
+        var xx = x - span / 2 + span * (j + 0.5) / rw[1];
         ctx.beginPath();
-        if (rows[r][2] === 'd') ctx.arc(x, y, 2.3 * s, 0, TAU);
-        else { ctx.moveTo(x, y - 4 * s); ctx.lineTo(x + 3.6 * s, y + 3 * s); ctx.lineTo(x - 3.6 * s, y + 3 * s); ctx.closePath(); }
+        if (ri % 2) { ctx.moveTo(xx, yy - r * 0.1); ctx.lineTo(xx + r * 0.08, yy + r * 0.07); ctx.lineTo(xx - r * 0.08, yy + r * 0.07); ctx.closePath(); }
+        else ctx.arc(xx, yy, r * 0.055, 0, TAU);
         ctx.fill();
       }
-    }
-    ctx.restore();
-
-    ctx.strokeStyle = 'rgba(40,14,6,.5)'; ctx.lineWidth = 1.2 * s;
-    [[-25, 72], [16, 92], [30, 82]].forEach(function (b) { ctx.beginPath(); ctx.ellipse(cx, cy + b[0] * s, (b[1] / 2 + 4) * s, 4 * s, 0, 0, Math.PI); ctx.stroke(); });
-    ctx.fillStyle = 'rgb(' + Math.round(112 * L) + ',' + Math.round(47 * L) + ',' + Math.round(22 * L) + ')';
-    ctx.beginPath(); ctx.ellipse(cx, cy - 50 * s, 21 * s, 5.5 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#1a0a05'; ctx.beginPath(); ctx.ellipse(cx, cy - 50 * s, 15 * s, 3.4 * s, 0, 0, TAU); ctx.fill();
-
+    });
+    ctx.shadowBlur = 0;
+    // Neck, a marigold garland, and the diya on the mouth
+    ctx.fillStyle = 'rgb(' + Math.round(120 * L) + ',' + Math.round(50 * L) + ',' + Math.round(24 * L) + ')';
+    ctx.beginPath(); ctx.ellipse(x, cy - r * 0.88, r * 0.42, r * 0.14, 0, 0, TAU); ctx.fill();
+    for (var k = 0; k < 9; k++) { var ma = Math.PI * (k / 8); ctx.fillStyle = k % 2 ? '#f29a2e' : '#f6c342'; ctx.beginPath(); ctx.arc(x - Math.cos(ma) * r * 0.5, cy - r * 0.78 + Math.sin(ma) * r * 0.16, r * 0.075, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#6a2c14'; ctx.beginPath(); ctx.ellipse(x, cy - r * 1.02, r * 0.26, r * 0.08, 0, 0, TAU); ctx.fill();
+    var mouth = cy - r * 1.05;
     if (lit > 0.3) {
-      var f = (lit - 0.3) / 0.7;
-      var h = (20 + 4 * Math.sin(t * 9) + 2 * Math.sin(t * 23)) * f * s, sway = Math.sin(t * 5) * 1.6 * s;
-      var base = cy - 51 * s;
-      var fg = ctx.createRadialGradient(cx, base - 8 * s, 1, cx, base - 8 * s, 40 * s);
-      fg.addColorStop(0, 'rgba(255,200,110,' + 0.55 * f + ')'); fg.addColorStop(1, 'rgba(255,160,60,0)');
-      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(cx, base - 8 * s, 40 * s, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(cx - 6 * s, base);
-      ctx.quadraticCurveTo(cx - 7 * s, base - h * 0.6, cx + sway, base - h);
-      ctx.quadraticCurveTo(cx + 7 * s, base - h * 0.6, cx + 6 * s, base);
-      ctx.closePath();
-      var ff = ctx.createLinearGradient(0, base - h, 0, base);
-      ff.addColorStop(0, 'rgba(255,242,195,' + f + ')'); ff.addColorStop(0.5, 'rgba(255,190,70,' + f + ')'); ff.addColorStop(1, 'rgba(230,90,30,' + f + ')');
+      var f = (lit - 0.3) / 0.7, fh = r * (0.55 + 0.08 * Math.sin(t * 9) + 0.04 * Math.sin(t * 23)) * f, sway = Math.sin(t * 5) * r * 0.04;
+      var fg = ctx.createRadialGradient(x, mouth - fh * 0.4, 1, x, mouth - fh * 0.4, r * 0.7);
+      fg.addColorStop(0, 'rgba(255,200,110,' + 0.5 * f + ')'); fg.addColorStop(1, 'rgba(255,160,60,0)');
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(x, mouth - fh * 0.4, r * 0.7, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - r * 0.1, mouth); ctx.quadraticCurveTo(x - r * 0.12, mouth - fh * 0.6, x + sway, mouth - fh); ctx.quadraticCurveTo(x + r * 0.12, mouth - fh * 0.6, x + r * 0.1, mouth); ctx.closePath();
+      var ff = ctx.createLinearGradient(0, mouth - fh, 0, mouth);
+      ff.addColorStop(0, 'rgba(255,244,200,' + f + ')'); ff.addColorStop(0.55, 'rgba(255,190,70,' + f + ')'); ff.addColorStop(1, 'rgba(230,90,30,' + f + ')');
       ctx.fillStyle = ff; ctx.fill();
     } else if (lit > 0.12) {
       // Ember: a small glowing wick while paused
-      ctx.fillStyle = 'rgba(255,140,60,' + (lit * 2.2) + ')';
-      ctx.beginPath(); ctx.arc(cx, cy - 52 * s, 2 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,140,60,' + Math.min(1, lit * 2.2) + ')';
+      ctx.beginPath(); ctx.arc(x, mouth - r * 0.04, r * 0.06, 0, TAU); ctx.fill();
     }
+    ctx.restore();
   }
 
   function drawDancer(ctx, x, y, sc, col, phase, moving, alpha) {
@@ -218,7 +213,7 @@
       }
     }
     ring(false);
-    drawPot(ctx, g.cx, g.cy, g.ps, lit, t);
+    drawPot(ctx, g.cx, g.fy, g.ps * 64, lit, t);
     ring(true);
 
     // Keep the controls legible over the light
@@ -253,10 +248,10 @@
       ctx.drawImage(glow, x - r, y - r, r * 2, r * 2);
     }
     ctx.globalAlpha = 1;
-    drawPot(ctx, W / 2, H * 0.4, 3.4, 1, 0.8);
+    drawPot(ctx, W / 2, H * 0.4 + 360, 400, 1, 0.8);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#d6b06f'; ctx.font = '700 30px "Anek Gujarati", system-ui, sans-serif';
-    ctx.fillText((info.eyebrow || '').toUpperCase().split('').join(String.fromCharCode(8202)), W / 2, H * 0.7);
+    ctx.fillText(info.eyebrow || '', W / 2, H * 0.7);
     ctx.fillStyle = '#f3e6d0'; ctx.font = '600 84px Rasa, Georgia, serif';
     wrap(ctx, info.title, W / 2, H * 0.7 + 100, W - 160, 88, 2);
     ctx.fillStyle = '#cdbca3'; ctx.font = '400 38px "Anek Gujarati", system-ui, sans-serif';
@@ -319,5 +314,58 @@
     }
   };
 
-  window.GarboScene = { Scene: Scene, MirrorBand: MirrorBand, drawCard: drawCard };
+  /* The venue stage: when the shared Garba venue scene has loaded, the player stands inside it (the
+     circles, the venue, the waves and the lamp). Same interface as Scene, so garbo.js can use either. */
+  function VenueStage(canvas, hooks) {
+    var self = this;
+    this.state = { mode: 'ember', progress: 0, chapters: null, chapterIndex: -1, live: false };
+    this.lit = 0.22; this.scrim = null; this.top = 0;
+    this.v = window.GarbaVenueScene.create(canvas, {
+      manual: true, lampScale: 1.35, venues: hooks.venues, clock: hooks.clock, beats: hooks.beats, reduceMotion: hooks.reduce,
+      overlay: function (g, W, H) { self.drawScrim(g, W, H); },
+      onFrame: hooks.onLamp
+    });
+  }
+  VenueStage.prototype.resize = function () { this.v.resize(); };
+  VenueStage.prototype.layout = function (slot, np) {
+    this.v.setBox({ x: slot.left, y: slot.top, w: slot.width, h: slot.height });
+    this.scrim = np.left >= slot.right - 10 ? { side: true, at: np.left } : { side: false, at: np.top };
+    this.top = slot.top;
+  };
+  VenueStage.prototype.set = function (patch) { for (var k in patch) this.state[k] = patch[k]; };
+  VenueStage.prototype.atmosphere = function (patch) { this.v.set(patch); };
+  VenueStage.prototype.frame = function (t, dt) {
+    var st = this.state;
+    var target = { playing: 1, live: 1, loading: 0.55, ember: 0.22, paused: 0.22, offline: 0.06, unavailable: 0.1 }[st.mode];
+    if (target == null) target = 0.22;
+    if (st.mode === 'loading' && !st.still) target += 0.18 * Math.sin(t * 13) * Math.sin(t * 5);
+    this.lit += (target - this.lit) * Math.min(1, dt * 2.4);
+    if (st.still) this.lit = target;
+    this.v.set({
+      on: st.mode === 'playing' || st.mode === 'live', lit: Math.max(0, Math.min(1, this.lit)),
+      progress: st.progress || 0, chapters: st.chapters, chapterIndex: st.chapterIndex, live: st.mode === 'live'
+    });
+    this.v.draw(performance.now());
+  };
+  // Keep the top bar and the controls legible over the venue
+  VenueStage.prototype.drawScrim = function (ctx, W, H) {
+    var tg = ctx.createLinearGradient(0, 0, 0, this.top + 40);
+    tg.addColorStop(0, 'rgba(11,6,5,.92)'); tg.addColorStop(Math.min(0.9, this.top / (this.top + 40)), 'rgba(11,6,5,.7)'); tg.addColorStop(1, 'rgba(11,6,5,0)');
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, this.top + 40);
+    if (!this.scrim) return;
+    var a = this.scrim.at - 40, sg;
+    if (this.scrim.side) {
+      sg = ctx.createLinearGradient(a, 0, a + 120, 0);
+      sg.addColorStop(0, 'rgba(11,6,5,0)'); sg.addColorStop(1, 'rgba(11,6,5,.9)');
+      ctx.fillStyle = sg; ctx.fillRect(a, 0, 120, H);
+      ctx.fillStyle = 'rgba(11,6,5,.9)'; ctx.fillRect(a + 120, 0, W, H);
+    } else {
+      sg = ctx.createLinearGradient(0, a, 0, a + 120);
+      sg.addColorStop(0, 'rgba(11,6,5,0)'); sg.addColorStop(1, 'rgba(11,6,5,.9)');
+      ctx.fillStyle = sg; ctx.fillRect(0, a, W, 120);
+      ctx.fillStyle = 'rgba(11,6,5,.9)'; ctx.fillRect(0, a + 120, W, H);
+    }
+  };
+
+  window.GarboScene = { Scene: Scene, VenueStage: VenueStage, MirrorBand: MirrorBand, drawCard: drawCard };
 })();

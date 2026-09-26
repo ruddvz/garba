@@ -37,6 +37,7 @@
       <symbol id="i-more" viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></g></symbol>
       <symbol id="i-heart" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M20.8 4.9a5.5 5.5 0 0 0-7.8 0L12 5.9l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.3 1-1a5.5 5.5 0 0 0 0-7.8Z"/></symbol>
       <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M16 4h4v4M4 19 20 4M20 16v4h-4M14.5 14.5 20 20M4 5l5 5"/></symbol>
+      <symbol id="i-headphones" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5.5A1.5 1.5 0 0 1 4 18.5V14ZM20 14h-3v6h1.5a1.5 1.5 0 0 0 1.5-1.5V14Z"/></g></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
       <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
@@ -52,6 +53,7 @@
       <nav class="tools" aria-label="Player tools">
         <button class="ib" id="searchBtn" type="button" aria-label="Search songs"><svg><use href="#i-search"/></svg></button>
         <button class="ib" id="tonightBtn" type="button" aria-label="Tonight"><svg><use href="#i-moon"/></svg></button>
+        <button class="ib atmo-top" id="atmoTop" type="button" aria-label="Atmosphere" aria-pressed="false"><svg><use href="#i-headphones"/></svg></button>
         <button class="ib" id="moreBtn" type="button" aria-label="More"><svg><use href="#i-more"/></svg></button>
       </nav>
     </header>
@@ -138,11 +140,34 @@
         <li><button type="button" id="shareOpen">Share this song<span>Makes a card with the lit garbo</span></button></li>
         <li><button type="button" id="aboutOpen">What is Garba?<span>The lamp, the circle and the nine nights</span></button></li>
         <li><button type="button" id="installBtn">Install PlayGarba<span>Keep the player one tap away</span></button></li>
-        <li><button type="button" id="atmoBtn">Atmosphere<span>Courtyard sounds around the music</span></button></li>
+        <li><button type="button" id="atmoBtn">Atmosphere<span>Choose the venue and hear the circle around the song</span></button></li>
       </ul>
       <h3 class="sub">Prototype states</h3>
       <p class="note">Jump to any state the player can be in. These only exist in the prototype.</p>
       <div class="states" id="stateGrid"></div>
+    </div>
+  </section>
+
+  <section class="sheet atmo-sheet" id="atmoSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="atmoTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="atmoTitle">Atmosphere</h2><button class="ib" type="button" data-close aria-label="Close Atmosphere"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body atmo-body">
+      <button class="atmo-power" id="atmoPower" type="button" role="switch" aria-checked="false">
+        <span><strong id="atmoPowerLabel">Sound is off</strong><small>Hear the circle around the song. Best on headphones.</small></span><i aria-hidden="true"></i>
+      </button>
+      <p class="atmo-desc" id="atmoUnavailable" hidden>The Atmosphere engine isn't loaded in this copy of the prototype, so only the look changes.</p>
+      <div class="atmo-row"><h3>Venue</h3><div class="atmo-seg" id="atmoVenues"></div><p class="atmo-desc" id="atmoVenueDesc"></p></div>
+      <div class="atmo-row"><h3>Where you are</h3><div class="atmo-seg" id="atmoListeners"></div><p class="atmo-desc" id="atmoListenerDesc"></p></div>
+      <div class="atmo-row"><h3>Around the music</h3><div class="atmo-seg" id="atmoModes"></div></div>
+      <div class="atmo-row atmo-beat">
+        <h3>Beat</h3>
+        <button class="atmo-tap" id="atmoTap" type="button">Tap the beat</button>
+        <div class="atmo-dots" id="atmoDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <p class="atmo-bpm"><b id="atmoBpm">112</b> BPM</p>
+        <p class="atmo-desc" id="atmoTapHint" aria-live="polite">Tap 4 times with the song so the claps land on its beat.</p>
+        <div class="atmo-seg" id="atmoPatterns" role="group" aria-label="Clap pattern"></div>
+      </div>
+      <p class="atmo-note">The song itself plays as YouTube sends it. Atmosphere adds the venue around it. <a href="../../../../public-site/atmosphere/">Open the listening room</a></p>
     </div>
   </section>
 
@@ -184,6 +209,9 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- Shared production files: the Atmosphere sound engine and the venue scene. Without them the prototype uses its plain garbo scene. -->
+  <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
+  <script src="../../../../public-site/atmosphere/scene.js"></script>
   <script src="scene.js"></script>
   <script src="garbo.js"></script>
 </body>
