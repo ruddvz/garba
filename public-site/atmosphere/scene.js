@@ -778,12 +778,33 @@
       }
       return ledPat || null;
     }
-    // The drone shot: the ground seen from straight above, turning slowly around the garbo. The same people as on the
-    // ground, in the same places: the circles going round, the kids running, the crowd by the stage.
+    // A quiet sequence of overhead drone shots. It follows the same people as the ground scene,
+    // but lets their movement make the gathering readable instead of drawing its circles for them.
     function aerial(id, rx, ry, rw, rh, t) {
       var L = layout(id), c0 = L.circles[0], ctr = circleCentre(c0, T), sheri = id === 'sheri';
-      var span = sheri ? 20 : 30, k = rh / span * (1 + (reduce ? 0 : 0.07 * Math.sin(t * 0.11))), rot = sheri ? Math.PI / 2 + (reduce ? 0 : 0.12 * Math.sin(t * 0.07)) : (reduce ? 0.4 : 0.4 + t * 0.045);
-      var fx = sheri ? ctr.x : ctr.x, fz = sheri ? ctr.z + 4 + (reduce ? 0 : 5 * Math.sin(t * 0.05)) : ctr.z, cx = rx + rw / 2, cy = ry + rh * 0.56, cr = Math.cos(rot), sr = Math.sin(rot);
+      var baseSpan = sheri ? 20 : 30;
+      var groups = L.circles.filter(function (c) { return !c.small && !c.parent && c.shown; });
+      groups.sort(function (a, b) { return a.z0 - b.z0; });
+      var near = groups[1] || c0, far = groups[2] || groups[groups.length - 1] || c0;
+      var nearAt = circleCentre(near, T), farAt = circleCentre(far, T);
+      var keyframes = [
+        { at: 0, x: ctr.x, z: ctr.z, zoom: 0.94 },
+        { at: 0.25, x: ctr.x, z: ctr.z, zoom: 1.02 },
+        { at: 0.52, x: nearAt.x, z: nearAt.z, zoom: 1.2 },
+        { at: 0.76, x: farAt.x, z: farAt.z, zoom: 1.04 },
+        { at: 1, x: ctr.x, z: ctr.z, zoom: 0.94 }
+      ];
+      var cycle = reduce ? 0 : (t % 48) / 48, shot = 0;
+      while (shot < keyframes.length - 2 && cycle > keyframes[shot + 1].at) shot++;
+      var aShot = keyframes[shot], bShot = keyframes[shot + 1];
+      var move = ease(Math.max(0, Math.min(1, (cycle - aShot.at) / (bShot.at - aShot.at))));
+      var spanZoom = lerp(aShot.zoom, bShot.zoom, move);
+      var span = baseSpan / spanZoom;
+      var rot = sheri ? Math.PI / 2 : 0.4;
+      if (!reduce) rot += 0.075 * Math.sin(t * 0.12) + t * 0.012;
+      var fx = lerp(aShot.x, bShot.x, move), fz = lerp(aShot.z, bShot.z, move);
+      if (!reduce && sheri) fz += 1.2 * Math.sin(t * 0.09);
+      var k = rh / span, cx = rx + rw / 2, cy = ry + rh * 0.56, cr = Math.cos(rot), sr = Math.sin(rot);
       function M(x, z) { var dx = x - fx, dz = z - fz; return [cx + (dx * cr - dz * sr) * k, cy - (dx * sr + dz * cr) * k]; }
       function quad(pts, col) { g.fillStyle = col; g.beginPath(); pts.forEach(function (q, i) { var m = M(q[0], q[1]); if (i) g.lineTo(m[0], m[1]); else g.moveTo(m[0], m[1]); }); g.closePath(); g.fill(); }
       // Ground, and the venue around it
@@ -803,20 +824,30 @@
       var sz = { outdoors: [46, -11, 11], stadium: [35.5, -8, 8], sheri: [63.9, -3.4, 3.4] }[id];
       quad([[sz[1], sz[0]], [sz[2], sz[0]], [sz[2], sz[0] + 2.2], [sz[1], sz[0] + 2.2]], '#161016');
       L.stalls.forEach(function (sl) { var hw = sl.w / 2, dp = sl.depth; quad([[sl.x - sl.U[0] * hw, sl.z - sl.U[1] * hw], [sl.x + sl.U[0] * hw, sl.z + sl.U[1] * hw], [sl.x + sl.U[0] * hw + sl.V[0] * dp, sl.z + sl.U[1] * hw + sl.V[1] * dp], [sl.x - sl.U[0] * hw + sl.V[0] * dp, sl.z - sl.U[1] * hw + sl.V[1] * dp]], sl.col); });
-      // Light pooled round the garbo, the rangoli under it, and the paths the rings dance on
+      // Keep the lamp and rangoli as a warm anchor while the camera drifts through the crowd.
       var mc = M(ctr.x, ctr.z), lit = st.lit != null ? st.lit : st.on ? 1 : 0.35, pr = (c0.R + 1) * k;
       var gl = g.createRadialGradient(mc[0], mc[1], 1, mc[0], mc[1], pr * 1.3); gl.addColorStop(0, 'rgba(255,190,110,' + (0.22 * lit + 0.1 * pulse) + ')'); gl.addColorStop(1, 'rgba(255,190,110,0)');
       g.fillStyle = gl; g.beginPath(); g.arc(mc[0], mc[1], pr * 1.3, 0, TAU); g.fill();
       for (var pe = 0; pe < 16; pe++) { var an = rot + pe / 16 * TAU; g.fillStyle = 'hsl(' + TH.hues[pe % TH.hues.length] + ',' + TH.sat + '%,' + (40 + 10 * bright) + '%)'; g.beginPath(); g.ellipse(mc[0] + Math.cos(an) * 1.5 * k, mc[1] + Math.sin(an) * 1.5 * k, 0.9 * k, 0.32 * k, an, 0, TAU); g.fill(); }
       glow(mc[0], mc[1], Math.max(2, 0.7 * k), '#ffcf7a', 0.9 * lit + 0.1);
-      g.strokeStyle = 'rgba(255,236,200,.12)'; g.lineWidth = Math.max(1, 0.4 * k);
-      L.circles.forEach(function (c) { if (c.small || !c.shown) return; var cc = circleCentre(c, T), m = M(cc.x, cc.z); g.beginPath(); g.arc(m[0], m[1], c.R * k, 0, TAU); g.stroke(); });
-      // Waves of claps rolling out from each ring
-      waves.forEach(function (w) { if (w.kind !== 'front') return; var age = t - w.t0, r = age * V; if (age < 0 || r > w.lim) return; var cc = circleCentre(w.c, T), m = M(cc.x, cc.z); g.strokeStyle = 'rgba(' + w.col + ',' + w.a * Math.pow(1 - r / w.lim, 1.2) + ')'; g.lineWidth = Math.max(1, 0.5 * k); g.beginPath(); g.arc(m[0], m[1], (w.c.R + r) * k, 0, TAU); g.stroke(); });
-      // People from above: a skirt or kediyu with a dark head in the middle; flashes on the claps
-      var dr = Math.max(1.1, 0.34 * k);
-      function dot(x, z, col, rr, head, fl) { var m = M(x, z); if (m[0] < rx - 4 || m[0] > rx + rw + 4 || m[1] < ry - 4 || m[1] > ry + rh + 4) return; g.fillStyle = col; g.beginPath(); g.arc(m[0], m[1], rr, 0, TAU); g.fill(); if (head) { g.fillStyle = head; g.beginPath(); g.arc(m[0], m[1], rr * 0.45, 0, TAU); g.fill(); } if (fl > 0.3) glow(m[0], m[1], rr * 1.4, '#fff0d0', fl * 0.8); }
-      L.circles.forEach(function (c) { if (!c.shown) return; c.dancers.forEach(function (d) { if (d.wx == null) return; dot(d.wx, d.wz, d.col, d.man ? dr * 0.85 : dr * (1 + 0.4 * (d.twirl || 0)), d.man ? d.pagdi || '#b8312b' : '#1f130d', d.flash || 0); }); });
+      // People from above: individual skirts, kediyus and small flashes on claps and turns.
+      var dr = Math.max(1.4, 0.4 * k);
+      function dot(x, z, col, rr, head, fl, turn) {
+        var m = M(x, z); if (m[0] < rx - 4 || m[0] > rx + rw + 4 || m[1] < ry - 4 || m[1] > ry + rh + 4) return;
+        g.save(); g.translate(m[0], m[1]);
+        g.fillStyle = col; g.beginPath();
+        g.moveTo(-rr * 0.42, -rr * 0.38); g.quadraticCurveTo(0, -rr * 0.62, rr * 0.42, -rr * 0.38);
+        g.lineTo(rr * 0.72, rr * 0.72); g.quadraticCurveTo(0, rr * 1.02, -rr * 0.72, rr * 0.72); g.closePath(); g.fill();
+        if (head) { g.fillStyle = head; g.beginPath(); g.arc(0, -rr * 0.62, rr * 0.3, 0, TAU); g.fill(); }
+        if (fl > 0.3) {
+          g.strokeStyle = 'rgba(255,239,207,' + Math.min(0.9, fl) + ')'; g.lineWidth = Math.max(0.55, rr * 0.15); g.lineCap = 'round';
+          g.beginPath(); g.moveTo(-rr * 0.32, -rr * 0.22); g.lineTo(-rr * 0.76, -rr * 0.68); g.moveTo(rr * 0.32, -rr * 0.22); g.lineTo(rr * 0.76, -rr * 0.68); g.stroke();
+        }
+        g.restore();
+        if (fl > 0.3) glow(m[0], m[1], rr * 1.4, '#fff0d0', fl * 0.8);
+        if (turn > 0.55) { g.strokeStyle = 'rgba(255,220,164,' + Math.min(0.38, turn * 0.28) + ')'; g.lineWidth = Math.max(0.55, rr * 0.12); g.beginPath(); g.arc(m[0], m[1], rr * 1.35, -0.7, 1.8); g.stroke(); }
+      }
+      L.circles.forEach(function (c) { if (!c.shown) return; c.dancers.forEach(function (d) { if (d.wx == null) return; dot(d.wx, d.wz, d.col, d.man ? dr * 0.85 : dr * (1 + 0.4 * (d.twirl || 0)), d.man ? d.pagdi || '#b8312b' : '#1f130d', d.flash || 0, d.twirl || 0); }); });
       var sm = dr * 0.72;
       L.standers.forEach(function (p) { dot(p.x, p.z, p.top || p.col, sm, '#1f130d', 0); });
       L.walkers.forEach(function (p, i) { if (i / L.walkers.length <= st.density) dot(p.x, p.z, p.top || p.col, sm, '#1f130d', 0); });
