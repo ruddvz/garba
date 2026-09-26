@@ -1,0 +1,259 @@
+{
+  "rosterSource": "data/discovery/artists-2026-01.json",
+  "rosterEntryCount": 25,
+  "humanPortraitCount": 22,
+  "excludedGroupActs": [
+    "Aghori Muzik",
+    "Bandish Projekt",
+    "Maati Baani"
+  ],
+  "imageFormat": "512×512 transparent WebP",
+  "style": "AI-reimagined realistic vector-style head-only portraits based on multiple reference images",
+  "artists": [
+    {
+      "artist": "Aditya Gadhvi",
+      "artistId": "aditya-gadhvi",
+      "tier": "core-current",
+      "songCount": 93,
+      "portrait": "aditya-gadhvi.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/movies/aditya-gadhavi-is-honing-his-culinary-skills-and-his-social-media-posts-are-a-proof/articleshow/75949877.cms",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/video-aditya-gadhvi-records-a-new-song/articleshow/98627641.cms",
+        "https://media.indulgexpress.com/indulgexpress/2024-10-11/y4qz6icy/202410113241037.jpeg"
+      ]
+    },
+    {
+      "artist": "Geeta Rabari",
+      "artistId": "geeta-rabari",
+      "tier": "core-current",
+      "songCount": 209,
+      "portrait": "geeta-rabari.webp",
+      "sourceReferences": [
+        "https://commons.wikimedia.org/wiki/File:Geeta-Rabari-pic.jpg",
+        "https://www.aajtak.in/india/gujarat/story/gujrat-top-singer-geeta-ben-rabari-met-prime-minister-modi-667183-2019-07-08"
+      ]
+    },
+    {
+      "artist": "Rajesh Ahir",
+      "artistId": "rajesh-ahir",
+      "tier": "core-current",
+      "songCount": 1,
+      "portrait": "rajesh-ahir.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/rajesh-ahir-on-the-release-of-dwarika-ni-sheriye-such-folk-songs-stay-evergreen-exclusive/articleshow/86782706.cms",
+        "https://open.spotify.com/artist/5pCm4zS3WzChwe92mm9kKO"
+      ]
+    },
+    {
+      "artist": "Sabhiben Ahir",
+      "artistId": "sabhiben-ahir",
+      "tier": "core-current",
+      "songCount": 1,
+      "portrait": "sabhiben-ahir.webp",
+      "sourceReferences": [
+        "https://open.spotify.com/artist/37qq7B8QoTb2PT9cGVu0aC",
+        "https://open.spotify.com/album/5CYSqoNtv6JM73AEv3wFv5"
+      ]
+    },
+    {
+      "artist": "Ishani Dave",
+      "artistId": "ishani-dave",
+      "tier": "core-current",
+      "songCount": 2,
+      "portrait": "ishani-dave.webp",
+      "sourceReferences": [
+        "https://commons.wikimedia.org/wiki/File:Ishani-dave.jpg",
+        "https://www.redbull.com/in-en/best-garba-songs"
+      ]
+    },
+    {
+      "artist": "Kairavi Buch",
+      "artistId": "kairavi-buch",
+      "tier": "core-current",
+      "songCount": 32,
+      "portrait": "kairavi-buch.webp",
+      "sourceReferences": [
+        "https://www.partymap.in/singer-kairavi-buch/",
+        "https://platinumlist.net/artist/1929/kairavi-buch/"
+      ]
+    },
+    {
+      "artist": "Jigardan Gadhavi",
+      "artistId": "jigardan-gadhavi",
+      "tier": "core-current",
+      "songCount": 38,
+      "portrait": "jigardan-gadhavi.webp",
+      "sourceReferences": [
+        "https://www.district.in/events/jigardan-gadhavi/artist",
+        "https://timesofindia.indiatimes.com/2021/ahmedabad/ahmedabad-most-desirable-men/jigardan-gadhavi/articleshow/88581644.cms",
+        "https://timesofindia.indiatimes.com/ahmedabad-times/most-desirable-men/jigardan-gadhavi/articleshow/72258160.cms"
+      ]
+    },
+    {
+      "artist": "Kinjal Dave",
+      "artistId": "kinjal-dave",
+      "tier": "core-current",
+      "songCount": 52,
+      "portrait": "kinjal-dave.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/city/ahmedabad/gujarati-singer-kinjal-dave-fined-1l-for-singing-char-bangadi-wali-gaadi-news/amp_articleshow/106912612.cms",
+        "https://open.spotify.com/artist/26qILArN7gTOjFRTbOTKbJ"
+      ]
+    },
+    {
+      "artist": "Santvani Trivedi",
+      "artistId": "santvani-trivedi",
+      "tier": "core-current",
+      "songCount": 33,
+      "portrait": "santvani-trivedi.webp",
+      "sourceReferences": [
+        "https://open.spotify.com/artist/3N43nYjyzU5Uj9ZFabgdpJ",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/santvani-trivedi-delights-fans-with-vichhudo-from-non-stop-garba-track/articleshow/113876578.cms",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/santvani-trivedi-looks-regal-in-a-pink-saree-sets-social-media-abuzz/articleshow/99962987.cms"
+      ]
+    },
+    {
+      "artist": "Umesh Barot",
+      "artistId": "umesh-barot",
+      "tier": "core-current",
+      "songCount": 23,
+      "portrait": "umesh-barot.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/did-you-know-gujarati-folk-singer-umesh-barot-is-an-actor-as-well/articleshow/77741030.cms",
+        "https://www.premiertickets.co/artist/umesh-barot/"
+      ]
+    },
+    {
+      "artist": "Jignesh Barot",
+      "artistId": "jignesh-barot",
+      "tier": "core-current",
+      "songCount": 1,
+      "portrait": "jignesh-barot.webp",
+      "sourceReferences": [
+        "https://www.desiticketwala.com/artist-detail/jignesh-barot",
+        "https://www.tring.co.in/jignesh-barot"
+      ]
+    },
+    {
+      "artist": "Bhoomi Trivedi",
+      "artistId": "bhoomi-trivedi",
+      "tier": "core",
+      "songCount": 47,
+      "portrait": "bhoomi-trivedi.webp",
+      "sourceReferences": [
+        "https://bookingagentinfo.com/celebrity/bhoomi-trivedi/",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/heres-what-singer-bhoomi-is-doing-this-navratri/articleshow/70293971.cms"
+      ]
+    },
+    {
+      "artist": "Aishwarya Majmudar",
+      "artistId": "aishwarya-majmudar",
+      "tier": "core",
+      "songCount": 98,
+      "portrait": "aishwarya-majmudar.webp",
+      "sourceReferences": [
+        "https://www.shazam.com/song/1597882272/nathni",
+        "https://starclinch.com/aishwarya-majmudar"
+      ]
+    },
+    {
+      "artist": "Kirtidan Gadhvi",
+      "artistId": "kirtidan-gadhvi",
+      "tier": "core",
+      "songCount": 140,
+      "portrait": "kirtidan-gadhvi.webp",
+      "sourceReferences": [
+        "https://commons.wikimedia.org/wiki/File:Kirtidan_Gadhavi.jpg",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/kirtidan-gadhvi-extends-dhanteras-wishes-to-his-fans-with-a-musical-performance/articleshow/87484070.cms"
+      ]
+    },
+    {
+      "artist": "Atul Purohit",
+      "artistId": "atul-purohit",
+      "tier": "legacy-core",
+      "songCount": 128,
+      "portrait": "atul-purohit.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/city/vadodara/gujarat-copyright-curbs-on-tara-vina-shyam/articleshow/94312854.cms",
+        "https://www.partymap.in/singer-atul-purohit/"
+      ]
+    },
+    {
+      "artist": "Falguni Pathak",
+      "artistId": "falguni-pathak",
+      "tier": "legacy-core",
+      "songCount": 66,
+      "portrait": "falguni-pathak.webp",
+      "sourceReferences": [
+        "https://commons.wikimedia.org/wiki/File:Falguni_Pathak_at_her_dandiya_show_in_Goregaon_Sports.jpg",
+        "https://www.viberate.com/artist/falguni-pathak/"
+      ]
+    },
+    {
+      "artist": "Parth Oza",
+      "artistId": "parth-oza",
+      "tier": "live-current",
+      "songCount": 2,
+      "portrait": "parth-oza.webp",
+      "sourceReferences": [
+        "https://open.spotify.com/artist/26USIc2MZPhDd5poifl0O1",
+        "https://timesofindia.indiatimes.com/entertainment/events/ahmedabad/singer-actor-parth-oza-to-speak-on-how-music-can-help-reduce-stress/articleshow/65091557.cms"
+      ]
+    },
+    {
+      "artist": "Purva Mantri",
+      "artistId": "purva-mantri",
+      "tier": "emerging-current",
+      "songCount": 5,
+      "portrait": "purva-mantri.webp",
+      "sourceReferences": [
+        "https://www.indulgexpress.com/culture/music/2024/Apr/13/music-is-like-oxygen-to-me-says-singer-purva-mantri",
+        "https://www.hindustantimes.com/lifestyle/brunch/get-to-know-purva-mantri-101749155566843.html"
+      ]
+    },
+    {
+      "artist": "Parth Bharat Thakkar",
+      "artistId": "parth-bharat-thakkar",
+      "tier": "current-collaborator",
+      "songCount": 1,
+      "portrait": "parth-bharat-thakkar.webp",
+      "sourceReferences": [
+        "https://x.com/parthmusic",
+        "https://open.spotify.com/artist/0NilspPVgbgzAJrUgLRgt5"
+      ]
+    },
+    {
+      "artist": "Rutvi Pandya",
+      "artistId": "rutvi-pandya",
+      "tier": "emerging-current",
+      "songCount": 65,
+      "portrait": "rutvi-pandya.webp",
+      "sourceReferences": [
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/watch-singer-rutvi-pandya-sets-the-stage-on-fire-as-she-croons-ek-jaad-maathe-jhumakdu/articleshow/100957058.cms",
+        "https://www.district.in/events/rutvi-pandya/artist"
+      ]
+    },
+    {
+      "artist": "Osman Mir",
+      "artistId": "osman-mir",
+      "tier": "core",
+      "songCount": 41,
+      "portrait": "osman-mir.webp",
+      "sourceReferences": [
+        "https://www.partymap.in/how-to-contact-singer-osman-mir/",
+        "https://www.district.in/events/osman-mir/artist"
+      ]
+    },
+    {
+      "artist": "Jahnvi Shrimankar",
+      "artistId": "jahnvi-shrimankar",
+      "tier": "current",
+      "songCount": 1,
+      "portrait": "jahnvi-shrimankar.webp",
+      "sourceReferences": [
+        "https://open.spotify.com/artist/6HWLgNliaSzF438T7Hk755",
+        "https://www.divyabhaskar.co.in/dvb-original/news/exclusive-interview-with-singer-jahnvi-shrimankar-who-made-his-bollywood-debut-by-singing-dholida-song-129471784.html"
+      ]
+    }
+  ]
+}
