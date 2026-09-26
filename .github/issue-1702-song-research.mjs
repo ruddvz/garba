@@ -62,6 +62,7 @@ function walk(node, key, out = []) {
 const text = (t) => (t?.simpleText ?? (t?.runs || []).map((r) => r.text).join('')) || '';
 
 export const norm = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  .replace(/\.(wav|mp3|m4a|flac)$/i, '')
   .replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/[^a-z0-9઀-૿]+/g, ' ').trim();
 // Looser form for Gujarati transliteration drift (aa/a, ee/i, oo/u, h after consonants, doubled letters)
 export const loose = (s) => norm(s).replace(/aa/g, 'a').replace(/ee|ii/g, 'i').replace(/oo|uu/g, 'u')
@@ -155,9 +156,14 @@ for (const [releaseId, list] of targets) {
     const entry = { songId: song.id, title: song.title, artist: song.artist, trackNumber: song.trackNumber, durationSeconds: song.durationSeconds, candidates: [] };
     let cands = [...pool.values()].filter((v) => loose(v.title) === loose(song.title) || loose(v.title).startsWith(loose(song.title)));
     if (!cands.length) {
-      const s = await search(`${song.title} ${release.title} ${leadArtist}`);
+      let s = await search(`${song.title} ${release.title} ${leadArtist}`);
       await sleep(400);
       cands = s.videos.slice(0, 8).filter((v) => / - Topic$/.test(v.channel) || loose(v.title).includes(loose(song.title))).slice(0, 4).map((v) => ({ ...v, via: 'search' }));
+      if (!cands.length) {
+        s = await search(`${song.title} ${release.title}`);
+        await sleep(400);
+        cands = s.videos.slice(0, 8).filter((v) => / - Topic$/.test(v.channel) || loose(v.title).includes(loose(song.title))).slice(0, 4).map((v) => ({ ...v, via: 'search-release' }));
+      }
     }
     for (const c of cands.slice(0, 4)) {
       const w = await watchOnce(c.videoId);

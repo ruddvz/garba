@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+      - name: Build catalogue data
+        run: npm run catalogue
       - name: Search YouTube for official album tracks
         env:
           ONLY: sanedo-sanedo-2007,jay-ho-vol9-2002,dhara-rankar-2025,saybo-nonstop-garba-2022
