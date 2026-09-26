@@ -227,6 +227,9 @@
     if (snapshot.song) {
       var song = songById[snapshot.song.id] || snapshot.song;
       if (!songById[song.id]) songById[song.id] = song;
+      if (Number.isFinite(snapshot.durationSeconds) && snapshot.durationSeconds > 0) {
+        song = Object.assign({}, song, { durationSeconds: snapshot.durationSeconds });
+      }
       S.track = { kind: 'song', song: song };
     }
     S.genre = snapshot.genreId || (snapshot.song && snapshot.song.genre) || S.genre;

@@ -50,7 +50,15 @@
     if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
     var message = event.data;
     if (!message || message.channel !== CHANNEL) return;
-    if (message.type === 'ready') { catalogueSent = false; sendSnapshot(true); }
+    if (message.type === 'ready') {
+      catalogueSent = false;
+      sendSnapshot(true);
+      if (typeof window.GARBA_IMMERSIVE_PLAYER.syncCatalogue === 'function') {
+        window.GARBA_IMMERSIVE_PLAYER.syncCatalogue().then(function () {
+          if (view === 'immersive') sendSnapshot(true);
+        });
+      }
+    }
     else if (message.type === 'action' && typeof message.action === 'string') {
       if (message.action === 'circle') setView('simple', true);
       window.GARBA_IMMERSIVE_PLAYER.action(message.action, message.value);
