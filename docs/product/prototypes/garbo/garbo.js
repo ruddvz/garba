@@ -6,6 +6,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var app = $('app');
   var LIVE_SITE = new URLSearchParams(location.search).get('live') === '1' && window.parent !== window;
+  var prototypeStates = document.querySelector('.proto-states');
+  if (prototypeStates) prototypeStates.hidden = LIVE_SITE;
   var LIVE_STATE_READY = false;
   var LIVE_CHANNEL = 'playgarba:immersive-prototype';
   var LIVE_NONSTOP_TITLE = '';
