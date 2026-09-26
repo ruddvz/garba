@@ -706,6 +706,8 @@
 
       if (autoplay) readyPlayer.loadVideoById(request);
       else readyPlayer.cueVideoById(request);
+      // A sync correction may have left the previous recording slightly fast or slow.
+      try { readyPlayer.setPlaybackRate?.(1); } catch { /* rate control is optional */ }
 
       stage.classList.remove('is-loading');
       return true;
@@ -956,5 +958,24 @@
     get ended() { return playerState === states().ENDED; },
     // Logical seconds into the active recording, or null while another video is still loading.
     get elapsedSeconds() { return currentElapsedSeconds(); },
+    // Playback-rate control for sync corrections (Garba Circle, Live Radio). Empty when unsupported.
+    getAvailablePlaybackRates() {
+      try {
+        const rates = player?.getAvailablePlaybackRates?.();
+        return Array.isArray(rates) ? rates.map(Number).filter((rate) => Number.isFinite(rate) && rate > 0) : [];
+      } catch {
+        return [];
+      }
+    },
+    setPlaybackRate(rate) {
+      const value = Number(rate);
+      if (!player || !Number.isFinite(value) || value <= 0) return false;
+      try {
+        player.setPlaybackRate?.(value);
+        return true;
+      } catch {
+        return false;
+      }
+    },
   };
 })();
