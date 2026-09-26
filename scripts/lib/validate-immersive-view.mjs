@@ -63,6 +63,9 @@ for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'
 if (!prototypeHtml.includes('id="exploreCount"')) fail('The canonical prototype page must expose the live Explore result count');
 if (!prototypeHtml.includes('class="proto-states"')) fail('The standalone prototype must keep its prototype-state picker');
 if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototypeJs.includes('prototypeStates.hidden = LIVE_SITE')) fail('Prototype-state controls must be hidden in embedded live mode and remain available standalone');
+const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
+if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
+if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
 for (const marker of ['href="garbo.css?v=20260926-1"', 'src="garbo.js?v=20260926-2"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
