@@ -41,7 +41,8 @@
 
   // The DJ's booth beside the stage, where you walk to pick the next song. The camera stands in front of the table.
   var DJ = { outdoors: { x: 19.5, z: 22 }, stadium: { x: 15.5, z: 17 }, sheri: { x: 4.4, z: 60.6 } };
-  function clearOfBooth(id, x, z, r) { var b = DJ[id]; return !b || Math.hypot(b.x - x, b.z - z) > r + 3.2; }
+  // The booth and the space in front of it, where you stand to pick songs, stay clear
+  function clearOfBooth(id, x, z, r) { var b = DJ[id]; return !b || (Math.hypot(b.x - x, b.z - z) > r + 3.2 && Math.hypot(b.x - x, b.z - 2.4 - z) > r + 2.6); }
   function djCam(id) { var b = DJ[id] || DJ.outdoors; return [b.x, 1.62, b.z - 2.35]; }
 
   function create(canvas, opts) {
@@ -50,7 +51,7 @@
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     var cam = { x: 0, y: 4, z: -15 };
     var TH = THEMES.traditional, BEAT = 0, band = {};
-    var st = { dj: false, youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
+    var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
@@ -224,7 +225,8 @@
           else { var p = freeSpot(id, L); k.tx = p.x; k.tz = p.z; k.through = false; }
           return;
         }
-        var vx = dx / d, vz = dz / d;
+        var vx = dx / d, vz = dz / d, bo = DJ[id];
+        if (bo) { var bx0 = k.x - bo.x, bz0 = k.z - (bo.z - 1.2), bd = Math.hypot(bx0, bz0); if (bd < 4.5 && bd > 0.01) { var bp = (4.5 - bd) / 1.5; vx += bx0 / bd * bp; vz += bz0 / bd * bp; } }
         if (st.on && !k.through) L.circles.forEach(function (c) { var cx = k.x - c.x0, cz = k.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.2; if (cd < keep + 1.5 && cd > 0.01) { var push = (keep + 1.5 - cd) / 1.5; vx += cx / cd * push; vz += cz / cd * push; } });
         var vl = Math.hypot(vx, vz) || 1, sp = k.speed * (st.on && !k.through ? 0.8 : 1);
         k.x += vx / vl * sp * dt; k.z += vz / vl * sp * dt; clearOfCentre(k); k.step = (k.step || 0) + dt * sp * 6; k.moving = true;
@@ -240,8 +242,9 @@
           var target = L.stalls.length && rnd() < 0.35 ? L.stalls[Math.floor(rnd() * L.stalls.length)].front : freeSpot(id, L);
           w.tx = target.x + (rnd() - 0.5) * 1.2; w.tz = target.z + (rnd() - 0.5) * 1.2; return;
         }
-        // Head for the target and step around the circles on the way
-        var vx = dx / d, vz = dz / d;
+        // Head for the target and step around the circles and the DJ's booth on the way
+        var vx = dx / d, vz = dz / d, bo = DJ[id];
+        if (bo) { var bx0 = w.x - bo.x, bz0 = w.z - (bo.z - 1.2), bd = Math.hypot(bx0, bz0); if (bd < 4.5 && bd > 0.01) { var bp = (4.5 - bd) / 1.5; vx += bx0 / bd * bp; vz += bz0 / bd * bp; } }
         L.circles.forEach(function (c) {
           var cx = w.x - c.x0, cz = w.z - c.z0, cd = Math.hypot(cx, cz), keep = c.R + 1.6;
           if (cd < keep + 2 && cd > 0.01) { var push = (keep + 2 - cd) / 2; vx += cx / cd * push - cz / cd * push * 0.6; vz += cz / cd * push + cx / cd * push * 0.6; }
@@ -774,8 +777,19 @@
     // The DJ's booth: a table draped in bandhani, a laptop, a controller that blinks on the beat, a steel jug of chhas
     // and a stack of cups. The DJ sits behind it on a stool, headphones round the neck, sipping chhas from a paper cup.
     var djMan = { role: 'dj', man: true, sitting: true, rest: { y: 0.8 }, col: '#1d1b26', top: '#1d1b26', pagdi: '#1f130d', stole: '#d8453a', legs: '#2a2733', h: 1.74, ph: 0.45, flash: 0, moustache: true };
+    var djTalk = { text: '', t: 0 };
     function djBooth(b, t) {
       var x = b.x, z = b.z, tw = 0.8, th = 0.74, td = 0.34;
+      if (st.djSay !== djTalk.text) { djTalk.text = st.djSay; djTalk.t0 = performance.now(); }
+      djTalk.t = (performance.now() - (djTalk.t0 || 0)) / 1000; djMan.talking = !!djTalk.text && djTalk.t < 1.6;
+      // Speakers on stands at each end of the table
+      [-1, 1].forEach(function (sd) {
+        var sx = x + sd * 1.25, sb0 = P(sx, 0, z + 0.2), sb1 = P(sx, 1.25, z + 0.2); if (!sb0 || !sb1) return;
+        g.strokeStyle = '#1b1814'; g.lineWidth = Math.max(1, sb0.s * 0.03); g.beginPath(); g.moveTo(sb0.x - sb0.s * 0.2, sb0.y); g.lineTo(sb1.x, sb1.y); g.lineTo(sb0.x + sb0.s * 0.2, sb0.y); g.stroke();
+        fillPoly([[sx - 0.22, 1.2, z + 0.2], [sx + 0.22, 1.2, z + 0.2], [sx + 0.22, 1.8, z + 0.2], [sx - 0.22, 1.8, z + 0.2]], '#0d0c0c');
+        var cone = P(sx, 1.42, z + 0.19), tweet = P(sx, 1.68, z + 0.19);
+        if (cone && tweet) { var kick = 1 + 0.06 * pulse; g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1; g.beginPath(); g.arc(cone.x, cone.y, cone.s * 0.13 * kick, 0, TAU); g.stroke(); g.fillStyle = 'rgba(255,255,255,.1)'; g.beginPath(); g.arc(tweet.x, tweet.y, tweet.s * 0.04, 0, TAU); g.fill(); }
+      });
       // A string of bulbs on two poles behind, so the booth reads from far away
       var pl = P(x - 1.1, 0, z + 0.9), plt = P(x - 1.1, 2.3, z + 0.9), pr = P(x + 1.1, 0, z + 0.9), prt = P(x + 1.1, 2.3, z + 0.9);
       if (pl && plt && pr && prt) {
@@ -794,7 +808,17 @@
       fillPoly([[x - tw, th, z - td], [x + tw, th, z - td], [x + tw, th, z + td], [x - tw, th, z + td]], '#3b2416');
       fillPoly([[x - tw, 0, z - td], [x + tw, 0, z - td], [x + tw, th, z - td], [x - tw, th, z - td]], '#8e1b2c');
       fillPoly([[x - tw, th - 0.14, z - td - 0.005], [x + tw, th - 0.14, z - td - 0.005], [x + tw, th, z - td - 0.005], [x - tw, th, z - td - 0.005]], '#e8b04b');
-      for (var dd = 0; dd < 14; dd++) { var dq = P(lerp(x - tw + 0.06, x + tw - 0.06, dd / 13), th * 0.45 + (dd % 2) * 0.12, z - td - 0.01); if (dq && dq.s > 8) { g.fillStyle = 'rgba(255,246,230,.85)'; g.beginPath(); g.arc(dq.x, dq.y, Math.max(0.6, dq.s * 0.012), 0, TAU); g.fill(); } }
+      for (var dd = 0; dd < 14; dd++) { var dq = P(lerp(x - tw + 0.06, x + tw - 0.06, dd / 13), th * 0.3 + (dd % 2) * 0.08, z - td - 0.01); if (dq && dq.s > 8) { g.fillStyle = 'rgba(255,246,230,.85)'; g.beginPath(); g.arc(dq.x, dq.y, Math.max(0.6, dq.s * 0.012), 0, TAU); g.fill(); } }
+      // A marigold string scalloped along the front edge
+      for (var mg = 0; mg <= 24; mg++) { var mu = mg / 24, mq = P(lerp(x - tw, x + tw, mu), th - 0.16 - Math.abs(Math.sin(mu * Math.PI * 4)) * 0.07, z - td - 0.02); if (mq && mq.s > 6) { g.fillStyle = mg % 3 ? '#f08a24' : '#f6c342'; g.beginPath(); g.arc(mq.x, mq.y, Math.max(0.8, mq.s * 0.028), 0, TAU); g.fill(); } }
+      // A little neon DJ sign on the cloth, pulsing with the beat
+      var ns = P(x, th * 0.55, z - td - 0.02);
+      if (ns && ns.s > 10) {
+        var nf = Math.max(8, ns.s * 0.16), nc = 'rgb(' + TH.beams[0] + ')';
+        g.save(); g.font = '800 ' + nf + 'px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.shadowColor = nc; g.shadowBlur = nf * (0.5 + 0.4 * pulse); g.fillStyle = '#fff6e6'; g.fillText('DJ', ns.x, ns.y);
+        g.restore();
+      }
       // Laptop: the lid faces you, with a small garbo on it; the screen lights the DJ from below
       var l0 = P(x - 0.34, th, z + 0.02), l1 = P(x + 0.1, th, z + 0.02), l2 = P(x + 0.1, th + 0.27, z + 0.08), l3 = P(x - 0.34, th + 0.27, z + 0.08);
       if (l0 && l1 && l2 && l3) {
@@ -809,7 +833,23 @@
       var jg = P(x - 0.62, th, z - 0.05), jt = P(x - 0.62, th + 0.2, z - 0.05);
       if (jg && jt) { var jw = jg.s * 0.07; var jgr = g.createLinearGradient(jg.x - jw, 0, jg.x + jw, 0); jgr.addColorStop(0, '#6f7378'); jgr.addColorStop(0.45, '#e6e9ec'); jgr.addColorStop(1, '#7c8086'); g.fillStyle = jgr; g.beginPath(); g.moveTo(jg.x - jw, jg.y); g.lineTo(jg.x + jw, jg.y); g.lineTo(jt.x + jw * 0.75, jt.y); g.lineTo(jt.x - jw * 0.75, jt.y); g.closePath(); g.fill(); }
       var cs = P(x - 0.45, th, z - 0.18), ct2 = P(x - 0.45, th + 0.14, z - 0.18);
+      if (djTalk.text && djTalk.t < 3.2) djBubble(dp, djTalk);
       if (cs && ct2) { var cw = cs.s * 0.035; g.fillStyle = '#f4efe4'; g.beginPath(); g.moveTo(cs.x - cw * 0.8, cs.y); g.lineTo(cs.x + cw * 0.8, cs.y); g.lineTo(ct2.x + cw, ct2.y); g.lineTo(ct2.x - cw, ct2.y); g.closePath(); g.fill(); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 0.7; for (var cl = 1; cl < 4; cl++) { var cy = lerp(cs.y, ct2.y, cl / 4); g.beginPath(); g.moveTo(cs.x - cw * 0.9, cy); g.lineTo(cs.x + cw * 0.9, cy); g.stroke(); } }
+    }
+    // What the DJ says, in a speech bubble that pops up by his head and fades after a few seconds
+    function djBubble(dp, talk) {
+      if (!dp) return;
+      var h = djMan.h * dp.s, hx = dp.x, hy = dp.y + 0.48 * h - h * 0.95;
+      var pop = reduce ? 1 : Math.min(1, talk.t / 0.18), fadeOut = Math.max(0, Math.min(1, (3.2 - talk.t) / 0.4)), k = 0.6 + 0.4 * pop;
+      var fs = Math.max(14, Math.min(30, h * 0.075)) * k;
+      g.save(); g.globalAlpha = fadeOut; g.font = '700 ' + fs + 'px ' + GU_FONT; g.textAlign = 'center'; g.textBaseline = 'middle';
+      var tw0 = g.measureText(talk.text).width, bw = tw0 + fs * 1.4, bh = fs * 1.9, bx = Math.min(W - bw - 8, hx - h * 0.1 - bw), by = Math.max(8, hy - bh - h * 0.08);
+      if (bx < 8) bx = Math.min(W - bw - 8, hx + h * 0.12);
+      g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 10; g.fillStyle = '#fff8ec'; roundRect(bx, by, bw, bh, bh * 0.45); g.fill(); g.shadowBlur = 0;
+      var tx = bx + bw > hx ? Math.max(bx + bh * 0.4, Math.min(bx + bw - bh * 0.4, hx - h * 0.05)) : bx + bw - bh * 0.5;
+      g.beginPath(); g.moveTo(tx - fs * 0.35, by + bh - 1); g.lineTo(tx + fs * 0.35, by + bh - 1); g.lineTo(hx - h * 0.02, hy - h * 0.02); g.closePath(); g.fill();
+      g.fillStyle = '#6b1420'; g.fillText(talk.text, bx + bw / 2, by + bh * 0.54);
+      g.restore();
     }
     function speakerPole(x, z, h) {
       var b = P(x, 0, z), t0 = P(x, h, z); if (!b || !t0) return;
@@ -1402,7 +1442,7 @@
       else if (d.role === 'dhol') { var hit = Math.max(0, sw); le = [x - h * 0.16, shy + h * 0.1]; lh = [x - h * 0.22, shy + h * (0.2 - 0.06 * hit)]; re = [x + h * 0.16, shy + h * 0.1]; rh = [x + h * 0.22, shy + h * (0.2 - 0.06 * Math.max(0, -sw))]; }
       else if (d.role === 'dj') {
         // One hand on the laptop; the other holds a cup of chhas and brings it up for a sip every few seconds
-        var sp = reduce ? 0 : Math.max(0, Math.sin(((T + d.ph * 10) % 7) / 7 * TAU * 1 - 1.2)), sip = sp > 0.6 ? Math.min(1, (sp - 0.6) / 0.3) : 0;
+        var sp = reduce ? 0 : Math.max(0, Math.sin(((T + d.ph * 10) % 7) / 7 * TAU * 1 - 1.2)), sip = sp > 0.6 && !d.talking ? Math.min(1, (sp - 0.6) / 0.3) : 0;
         le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.06 + sw * h * 0.015, shy + h * 0.24];
         re = [x + h * 0.15, shy + h * (0.13 - 0.1 * sip)]; rh = [x + h * lerp(0.14, 0.035, sip), shy + h * lerp(0.1, -0.06, sip)];
         d.cupAt = rh;
@@ -1421,6 +1461,15 @@
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
       if (d.stander && d.phone) { g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = 'rgba(200,225,255,.9)'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (st.on) glow(rh[0], rh[1] - h * 0.02, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
       if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
+      if (d.role === 'dj' && h > 50) {
+        // Up close the DJ has a face: eyes, brows, and a grin that opens when he talks
+        var fy = y - h * 0.885, ink = '#1f130d';
+        g.fillStyle = ink; g.beginPath(); g.arc(x - h * 0.024, fy - h * 0.006, Math.max(1, h * 0.0085), 0, TAU); g.arc(x + h * 0.024, fy - h * 0.006, Math.max(1, h * 0.0085), 0, TAU); g.fill();
+        g.strokeStyle = ink; g.lineWidth = Math.max(1, h * 0.006); g.beginPath(); g.moveTo(x - h * 0.038, fy - h * 0.024); g.lineTo(x - h * 0.012, fy - h * 0.028); g.moveTo(x + h * 0.012, fy - h * 0.028); g.lineTo(x + h * 0.038, fy - h * 0.024); g.stroke();
+        var talkOpen = d.talking && !reduce ? Math.abs(Math.sin(T * 14)) : 0;
+        g.fillStyle = '#7a2418'; g.beginPath(); g.ellipse(x, fy + h * 0.036, h * 0.02, h * (0.005 + 0.012 * talkOpen), 0, 0, TAU); g.fill();
+        g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, h * 0.008); g.beginPath(); g.arc(x, y - h * 0.8, h * 0.05, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+      }
       if (d.role === 'dj' && d.cupAt) {
         // Headphones round the neck, and the paper cup of chhas
         g.strokeStyle = '#111'; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.arc(x, y - h * 0.8, h * 0.07, 0.1 * Math.PI, 0.9 * Math.PI); g.stroke();
@@ -1699,7 +1748,7 @@
       // a long walk, with a step in it. A new venue starts in place.
       var ct = st.dj ? djCam(st.venue) : (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = st.dj ? 0.2 : { circle: 0.3, far: 0.4, stage: 0.44 }[st.listener] || 0.3;
       // On a wide screen the DJ stands right of centre, leaving the left for the laptop's song list
-      if (st.dj && W > H * 1.1) ct[0] -= 0.95;
+      if (st.dj && W > H * 1.1) { ct[0] -= 1.35; ct[1] += 0.12; ct[2] -= 1.3; }
       var camKey = st.venue + '/' + (st.dj ? 'dj' : st.listener);
       if (camVenue !== st.venue || reduce) { camVenue = st.venue; camNow = ct.slice(); horNow = hf; walk = null; camKeyNow = camKey; }
       else if (camKey !== camKeyNow) { camKeyNow = camKey; var wd = Math.hypot(ct[0] - camNow[0], ct[1] - camNow[1], ct[2] - camNow[2]); walk = { from: camNow.slice(), h0: horNow, t: 0, dur: Math.min(1.8, 0.8 + wd / 45), lift: Math.min(2.6, wd * 0.06) }; }
@@ -1763,9 +1812,10 @@
         for (var pi = 0; pi + 1 < c.dancers.length; pi += 2) { var da = c.dancers[pi], db = c.dancers[pi + 1]; if (da._px != null && db._px != null) { da.strikeDir = db._px >= da._px ? 1 : -1; db.strikeDir = -da.strikeDir; } else { da.strikeDir = db.strikeDir = 0; } }
       });
       if (!reduce) { moveWalkers(L, st.venue, dt); moveKids(L, st.venue, dt); }
-      L.standers.forEach(function (sd0) { if (sd0.clapAt && t >= sd0.clapAt) { sd0.flash = 1; sd0.clapAt = 0; } sd0.flash *= Math.exp(-dt * 4); var p = P(sd0.x, 0, sd0.z); if (p && p.z > 2.5 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: sd0, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
-      L.kids.forEach(function (k) { var p = P(k.x, 0, k.z); if (p && p.z > 2.5 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: k, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
-      L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
+      L.standers.forEach(function (sd0) { if (sd0.clapAt && t >= sd0.clapAt) { sd0.flash = 1; sd0.clapAt = 0; } sd0.flash *= Math.exp(-dt * 4); var p = P(sd0.x, 0, sd0.z); if (p && p.z > (st.dj ? 3 : 2.5) && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: sd0, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
+      var nearCut = st.dj ? 3 : 2.5;
+      L.kids.forEach(function (k) { var p = P(k.x, 0, k.z); if (p && p.z > nearCut && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: k, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
+      L.walkers.forEach(function (w, wi) { if (wi / L.walkers.length > st.density) return; var p = P(w.x, 0, w.z), fd = p ? Math.max(0, Math.min(1, (p.z - 4) / 3)) : 0; if (p && fd > 0 && p.z > nearCut && p.x > -40 && p.x < W + 40) items.push({ z: p.z, kind: 'dancer', p: p, d: w, fade: fd }); });
       L.stalls.forEach(function (sl) { var p = P(sl.x, 0, sl.z); if (p) items.push({ z: p.z + 1.5, kind: 'stall', sl: sl, p: p }); });
       L.trees.forEach(function (tr) { if (tr.z >= 44) return; var p = P(tr.x, 0, tr.z); if (p && p.z > 1.5) items.push({ z: p.z, kind: 'tree', tr: tr }); });
       if (DJ[st.venue]) { var djb = DJ[st.venue], djp = P(djb.x, 0, djb.z); if (djp && djp.z > 1 && djp.x > -80 && djp.x < W + 80) items.push({ z: djp.z + 0.3, kind: 'dj', b: djb }); }
