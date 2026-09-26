@@ -124,6 +124,16 @@ jobs:
             public-site/navratri-and-garba \
             public-site/what-is-garba \
             _site/
+          # The Immersive view: the Garbo player, hosted by assets/runtime/immersive-view.js. Its page is renamed so
+          # /immersive/ is never an entry point of its own; the host reads the markup from garbo.html.
+          mkdir -p _site/immersive
+          cp docs/product/prototypes/garbo/garbo.css docs/product/prototypes/garbo/garbo.js docs/product/prototypes/garbo/scene.js \
+            docs/product/prototypes/garbo/lives.js docs/product/prototypes/garbo/ideas.js _site/immersive/
+          cp docs/product/prototypes/garbo/index.html _site/immersive/garbo.html
+          cp -R docs/product/prototypes/garbo/singers _site/immersive/singers
+          for file in garbo.html garbo.css garbo.js scene.js lives.js ideas.js singers/roster.json; do
+            test -f "_site/immersive/$file" || { echo "Missing Immersive view file: $file"; exit 1; }
+          done
           cp \
             public-site/editorial.css \
             public-site/pages.css \

@@ -2501,6 +2501,17 @@ window.GARBA_APP = Object.freeze({
   getState: () => state,
   getCircle: () => circle.diagnostics(),
   getLiveSync: () => liveSync.diagnostics(),
+  // Used by the Immersive view, which draws its own controls over this player
+  getSongs: () => state.songs,
+  getGenres: () => state.genres,
+  canPlay: (song) => Boolean(song && (window.GARBA_YOUTUBE_PLAYER?.canPlay?.(song) || song.audioUrl)),
+  isFavourite: (songId = state.songId) => state.favourites.has(songId),
+  toggleFavourite: (songId = state.songId) => toggleFavourite(songId),
+  selectSong: (songId, { autoplay = true } = {}) => {
+    state.hasExplicitNavigation = true;
+    return selectSong(songId, { forceAutoplay: autoplay });
+  },
+  selectGenre: (genreId) => selectGenre(genreId),
 });
 
 window.GARBA_SHARE = Object.freeze({

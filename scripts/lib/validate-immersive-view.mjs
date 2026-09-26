@@ -18,11 +18,13 @@ const [runtime, html, css, sw, pages, agents] = await Promise.all([
 let failed = false;
 const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
-for (const marker of ["var view = 'simple'", "VIEW_KEY = 'garba:view'", "SCENE_SRC = 'atmosphere/scene.js'", "classList.toggle('view-immersive'", 'window.GARBA_IMMERSIVE_VIEW', "setView('simple', true)"]) {
+for (const marker of ["var view = 'simple'", "VIEW_KEY = 'garba:view'", "BASE = 'immersive/'", "attachShadow", 'window.GARBO_HOST = bridge', 'window.GARBA_IMMERSIVE_VIEW']) {
   if (!runtime.includes(marker)) fail(`immersive-view.js is missing ${marker}`);
 }
-// The scene is fetched only after the listener chooses Immersive
-if (/<script[^>]+atmosphere\/scene\.js/.test(html)) fail('index.html must not load the venue scene up front');
+// Garbo is fetched only after the listener chooses Immersive
+if (/<script[^>]+(atmosphere\/scene\.js|immersive\/)/.test(html)) fail('index.html must not load Garbo or the venue scene up front');
+if (!html.includes('id="immersiveSwitch"')) fail('index.html is missing the Immersive switch under More');
+if (!pages.includes('_site/immersive/garbo.html')) fail('Pages must publish the Garbo player to /immersive/');
 if (!html.includes('<script src="assets/runtime/immersive-view.js" defer></script>')) fail('index.html must load assets/runtime/immersive-view.js with defer');
 if (html.indexOf('assets/runtime/immersive-view.js') < html.indexOf('src="app.js"')) fail('immersive-view.js must load after app.js');
 
@@ -36,7 +38,7 @@ for (const id of ['atmosphereButton', 'circleButton', 'favouritesButton', 'share
 if (!html.includes('class="world')) fail('index.html must keep the courtyard artwork world');
 // Up next is a stable player anchor, so it stays in the bar at every size
 if (/#queueButton[^{]*\{\s*display:\s*none/.test(css)) fail('Up next must stay in the top bar at every size');
-for (const marker of ['.immersive-stage', '.app.view-immersive .world-layer', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
+for (const marker of ['.immersive-switch', '.garbo-host', 'body.garba-immersive #youtubeStage', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
   if (!css.includes(marker)) fail(`styles/60-runtime-and-provider.css is missing ${marker}`);
 }
 if (!sw.includes("'./assets/runtime/immersive-view.js'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache and refresh immersive-view.js');

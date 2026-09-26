@@ -675,14 +675,31 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 /* Immersive view and the More card.
    Simple view, the courtyard artwork, is the default and is untouched here. */
 
-/* The venue fills the world layer; the artwork steps aside only while Immersive view is on */
-.immersive-stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.immersive-stage.is-backdrop { opacity: .42; }
-.app.view-immersive .world-layer { opacity: 0 !important; transition: opacity .6s var(--ease); }
-/* A scrim under the song and the controls keeps them readable over a moving scene */
-.app.view-immersive .world-vignette {
-  background: linear-gradient(180deg, rgba(5, 7, 16, .55) 0, rgba(5, 7, 16, 0) 13%, rgba(5, 7, 16, 0) 36%, rgba(5, 7, 16, .6) 52%, rgba(5, 7, 16, .86) 100%);
+/* The Immersive switch sits under More, where Garbo's rail starts, so switching keeps it in the same place */
+.immersive-switch {
+  position: fixed; z-index: 9;
+  top: calc(env(safe-area-inset-top, 0px) + 72px); right: max(8px, env(safe-area-inset-right, 0px));
+  width: 46px; min-height: 48px; padding: 5px 0;
+  display: grid; justify-items: center; align-content: center; gap: 2px;
+  border: 1px solid rgba(246, 236, 215, .16); border-radius: 14px;
+  background: rgba(11, 6, 5, .55); color: rgba(246, 236, 215, .86);
+  font: 600 10px/1 var(--sans); cursor: pointer;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
+.immersive-switch svg { width: 20px; height: 20px; fill: currentColor; }
+.immersive-switch span { font-size: 8.5px; letter-spacing: -.01em; }
+.immersive-switch:hover { color: #fff; border-color: rgba(214, 176, 111, .45); }
+.immersive-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.garba-immersive-loading .immersive-switch { color: var(--accent); animation: immersive-wait 1s ease-in-out infinite alternate; }
+@keyframes immersive-wait { to { opacity: .5; } }
+/* In the simple view the YouTube player moves down past the switch */
+body:not(.garba-immersive) #youtubeStage.youtube-dock { margin-top: 60px; }
+
+/* Immersive view: Garbo covers the page; the player underneath keeps playing, and YouTube stays visible on the left */
+.garbo-host { position: fixed; inset: 0; z-index: 18; }
+.garbo-host[hidden] { display: none; }
+body.garba-immersive #app { visibility: hidden !important; }
+body.garba-immersive #youtubeStage.youtube-dock { left: max(8px, env(safe-area-inset-left, 0px)) !important; right: auto !important; top: calc(env(safe-area-inset-top, 0px) + 60px) !important; bottom: auto !important; }
 
 /* The top bar keeps only what each screen needs; the rest lives in More.
    Phones and iPad: Search, Up next and More. Desktop: Search, Garba Circle, My Garba, Up next and More. */
@@ -730,4 +747,4 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 .more-row span:first-of-type { flex: 1; }
 .more-badge:empty { display: none; }
 .more-badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #1b1408; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
-@media (prefers-reduced-motion: reduce) { .more-card { animation: none; } .app.view-immersive .world-layer { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .more-card { animation: none; } .garba-immersive-loading .immersive-switch { animation: none; } }

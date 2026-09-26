@@ -1,5 +1,5 @@
 /* Garbo player prototype. One layer, token-driven. !important only for [hidden] and reduced motion. */
-:root {
+:root, :host {
   color-scheme: dark;
   --ink: #0b0605;
   --ink-2: #160e0b;
@@ -24,8 +24,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--ink); color: var(--ivory); overflow: hidden; }
-body { font: 16px/1.5 var(--ui); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+html, body, .garbo-frame { margin: 0; height: 100%; background: var(--ink); color: var(--ivory); overflow: hidden; }
+body, .garbo-frame { font: 16px/1.5 var(--ui); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
 [hidden] { display: none !important; }
@@ -494,3 +494,9 @@ button { font: inherit; color: inherit; }
 .lamp-tip { position: absolute; left: 50%; top: 82%; z-index: 2; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: 14px; white-space: nowrap; pointer-events: none; font: 600 13px/1.2 var(--ui); color: var(--brass); background: rgba(11, 6, 5, .62); box-shadow: 0 0 0 1px rgba(214, 176, 111, .3); animation: tip-breathe 2.4s ease-in-out infinite; }
 @keyframes tip-breathe { 50% { opacity: .65; } }
 @media (prefers-reduced-motion: reduce) { .lamp-tip { animation: none; } }
+
+/* On playgarba.com the page hosts this player as the Immersive view: the frame stands in for the page body, and
+   the rail gains the switch back to the simple view at its top */
+.garbo-frame { position: fixed; inset: 0; }
+.rail-btn.view-switch span { font-size: 8.5px; letter-spacing: -.01em; }
+.rail-btn.view-switch[aria-pressed="true"] { color: var(--ink); background: var(--brass); border-color: var(--brass); }
