@@ -218,6 +218,23 @@ test('storage data points stay within Analytics Engine field limits', async () =
   assert.equal(presence.indexes.length, 1)
 })
 
+test('normaliseForStorage throws when crypto dependency fails', async () => {
+  const originalSign = globalThis.crypto.subtle.sign
+  try {
+    globalThis.crypto.subtle.sign = async () => {
+      throw new Error('crypto_transient_failure')
+    }
+    const event = validateEvent(baseEvent(), { nowMs: NOW })
+    const edge = { country: 'IN', region: 'GJ', device: 'mobile', os: 'iOS', browser: 'Safari', bot: false }
+    await assert.rejects(
+      normaliseForStorage(event, { PGA_HMAC_SECRET: 'secret' }, edge, NOW),
+      /crypto_transient_failure/
+    )
+  } finally {
+    globalThis.crypto.subtle.sign = originalSign
+  }
+})
+
 test('IST day bounds remain fixed regardless of founder timezone', () => {
   const bounds = istDayBounds('2026-09-10')
   assert.equal(new Date(bounds.startUtcMs).toISOString(), '2026-09-09T18:30:00.000Z')
