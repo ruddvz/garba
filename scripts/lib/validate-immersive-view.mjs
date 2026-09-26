@@ -33,6 +33,10 @@ for (const marker of ['id="moreButton"', 'aria-controls="moreCard"', 'id="moreCa
 }
 if (html.indexOf('class="view-switch"') < html.indexOf('id="moreButton"') || html.indexOf('class="view-switch"') > html.indexOf('id="moreCard"')) fail('The Simple/Immersive switch must sit below More and outside its menu');
 if (!html.includes('role="switch"') || !html.includes('aria-checked="false"')) fail('The Simple view must expose an accessible Immersive switch in the off state');
+for (const marker of ['class="view-switch-detail"', 'class="view-switch-icon view-switch-icon-simple"', 'class="view-switch-icon view-switch-icon-immersive"']) {
+  if (!html.includes(marker)) fail(`index.html is missing the icon-only view switch element ${marker}`);
+}
+if (html.includes('>Simple<') || html.includes('>Immersive<')) fail('The Simple/Immersive pill must use icons rather than visible text labels');
 if (html.slice(html.indexOf('id="moreCard"'), html.indexOf('id="immersiveViewStatus"')).includes('data-view-switch')) fail('The More card must not contain the player view switch');
 for (const id of ['atmosphereButton', 'circleButton', 'favouritesButton', 'shareButton']) {
   if (!html.includes(`data-proxy="${id}"`)) fail(`More card has no row for #${id}`);
@@ -41,7 +45,7 @@ for (const id of ['atmosphereButton', 'circleButton', 'favouritesButton', 'share
 if (!html.includes('class="world')) fail('index.html must keep the courtyard artwork for Simple view');
 // Up next is a stable player anchor, so it stays in the bar at every size
 if (/#queueButton[^{]*\{\s*display:\s*none/.test(css)) fail('Up next must stay in the top bar at every size');
-for (const marker of ['.garbo-prototype-overlay', '.garbo-prototype-frame', '.view-switch', '.utilities > .view-switch', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
+for (const marker of ['.garbo-prototype-overlay', '.garbo-prototype-frame', '.view-switch', '.utilities > .view-switch', '.view-switch-detail', '.view-switch-icon-simple', '.view-switch-icon-immersive', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)', 'prefers-reduced-motion: reduce', 'forced-colors: active']) {
   if (!css.includes(marker)) fail(`styles/60-runtime-and-provider.css is missing ${marker}`);
 }
 if (!sw.includes("'./assets/runtime/immersive-view.js'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache and refresh immersive-view.js');
@@ -65,6 +69,11 @@ for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
 if (!/Garbo player prototype/i.test(prototypeHtml) || !prototypeJs.includes("get('live') === '1'")) fail('The canonical prototype page must support live-site mode');
 if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expose the live Garba Circle action');
 if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('role="switch"') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');
+for (const marker of ['class="view-switch-detail"', 'class="view-switch-icon view-switch-icon-simple"', 'class="view-switch-icon view-switch-icon-immersive"']) {
+  if (!prototypeHtml.includes(marker)) fail(`The embedded prototype is missing the icon-only view switch element ${marker}`);
+}
+if (prototypeHtml.includes('>Simple<') || prototypeHtml.includes('>Immersive<')) fail('The embedded prototype mode pill must not render visible text labels');
+if (!prototypeJs.includes("viewSwitch.closest('.view-switch').hidden = false")) fail('Live Immersive mode must reveal the switch itself, not only its parent toolbar');
 if (!prototypeCss.includes('.lamp-tip') || !prototypeCss.includes('.side-card')) fail('The canonical prototype must include its full player presentation');
 
 if (failed) process.exit(1);

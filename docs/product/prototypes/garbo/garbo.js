@@ -211,7 +211,7 @@
 
   var viewSwitch = document.querySelector('[data-view-switch]');
   if (viewSwitch && LIVE_SITE) {
-    viewSwitch.parentElement.hidden = false;
+    viewSwitch.closest('.view-switch').hidden = false;
     viewSwitch.addEventListener('click', function () {
       window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'view', view: 'simple' }, location.origin);
     });
