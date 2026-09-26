@@ -45,6 +45,9 @@
       <symbol id="i-share" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5v6A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-6"/></g></symbol>
       <symbol id="i-book" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5Z"/><path d="M12 6.5v13"/></g></symbol>
       <symbol id="i-install" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.8" width="12" height="18.4" rx="2.6"/><path d="M12 7.5v7M9 11.5l3 3 3-3M10.5 18h3"/></g></symbol>
+      <symbol id="i-live" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M8.2 15.8a5.4 5.4 0 0 1 0-7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.3 18.7a9.5 9.5 0 0 1 0-13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/></g></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 15 6-6 6 6"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></symbol>
       <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
       <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
@@ -148,6 +151,7 @@
     <header class="sheet-head"><h2 id="moreTitle">More</h2><button class="ib" type="button" data-close aria-label="Close More"><svg><use href="#i-close"/></svg></button></header>
     <div class="sheet-body">
       <div class="tiles">
+        <button class="tile tile-wide" type="button" id="livesOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-live"/></svg></span><strong>Lives</strong><small>Host your own live with your songs, or go back to one you joined</small></button>
         <button class="tile" type="button" id="atmoBtn"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-headphones"/></svg></span><strong>Atmosphere</strong><small>Pick the venue and hear the circle</small></button>
         <button class="tile" type="button" id="shareOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-share"/></svg></span><strong>Share this song</strong><small>A card with the lit garbo</small></button>
         <button class="tile" type="button" id="aboutOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-book"/></svg></span><strong>What is Garba?</strong><small>The lamp, the circle, the nights</small></button>
@@ -158,6 +162,70 @@
         <p class="note">Jump to any state the player can be in. These only exist in the prototype.</p>
         <div class="states" id="stateGrid"></div>
       </details>
+    </div>
+  </section>
+
+  <section class="sheet" id="livesSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="livesTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="livesTitle">Lives</h2><button class="ib" type="button" data-close aria-label="Close Lives"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body lives-body">
+      <button class="live-card station" type="button" id="stationRow"><span class="live-dot" aria-hidden="true"></span><span><strong>24/7 Live</strong><small>PlayGarba's own station. Everyone hears the same moment.</small></span></button>
+      <button class="primary" type="button" id="hostNew">Host a live</button>
+      <h3 class="lives-h" id="mineHead" hidden>Your lives</h3>
+      <ul class="lives-list" id="mineList" aria-labelledby="mineHead"></ul>
+      <h3 class="lives-h" id="joinedHead" hidden>Lives you joined</h3>
+      <ul class="lives-list" id="joinedList" aria-labelledby="joinedHead"></ul>
+      <p class="note">A live reaches people through its link. When you open someone's link, their live is kept here so you can go back to it.</p>
+    </div>
+  </section>
+
+  <section class="sheet host-sheet" id="hostSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="hostTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="hostTitle">Host a live</h2><button class="ib" type="button" data-close aria-label="Close Host a live"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body host-body">
+      <div class="host-row">
+        <h3 id="avatarHead">Your avatar</h3>
+        <div class="avatar-grid" id="avatarGrid" role="radiogroup" aria-labelledby="avatarHead"></div>
+      </div>
+      <div class="host-row">
+        <h3><label for="hostName">Your name</label></h3>
+        <input class="host-input" id="hostName" type="text" maxlength="24" autocomplete="nickname" placeholder="Shown on your live">
+      </div>
+      <div class="host-row" id="startRow">
+        <h3 id="startHead">Starts</h3>
+        <div class="atmo-seg" id="startSeg" role="group" aria-labelledby="startHead"></div>
+      </div>
+      <div class="host-row">
+        <h3 id="plHead">Playlist <span class="pl-sum" id="plSum"></span></h3>
+        <ol class="pl" id="plList" aria-labelledby="plHead"></ol>
+        <p class="pl-empty" id="plEmpty">Add songs from below. They play in this order and start again from the top.</p>
+      </div>
+      <div class="host-row">
+        <h3><label for="addSearch">Add songs</label></h3>
+        <div class="search in-sheet"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="addSearch" type="search" placeholder="Songs or artists" autocomplete="off"></div>
+        <div class="chips" id="addChips" role="group" aria-label="Filter by genre"></div>
+        <ul class="rows add-rows" id="addRows"></ul>
+      </div>
+      <div class="host-go">
+        <button class="primary" type="button" id="hostGo" disabled>Go live</button>
+        <button class="text-btn" type="button" id="hostEnd" hidden>Remove this live</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="linkSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="linkTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="linkTitle">Your live is on</h2><button class="ib" type="button" data-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body link-body">
+      <div class="link-host" id="linkHost"></div>
+      <p class="lead" id="linkLead"></p>
+      <label class="link-label" for="linkField">Link to your live</label>
+      <input class="host-input link-field" id="linkField" type="text" readonly>
+      <div class="link-actions">
+        <button class="primary" type="button" id="linkShare">Share link</button>
+        <button class="secondary" type="button" id="linkCopy">Copy link</button>
+      </div>
+      <p class="note">Anyone with the link hears the same song at the same moment as you. If you change the playlist, share the new link so everyone follows.</p>
     </div>
   </section>
 
@@ -232,6 +300,7 @@
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
   <script src="../../../../public-site/atmosphere/scene.js"></script>
   <script src="scene.js"></script>
+  <script src="lives.js"></script>
   <script src="garbo.js"></script>
 </body>
 </html>
