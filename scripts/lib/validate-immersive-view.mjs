@@ -1,5 +1,5 @@
-// Immersive view contract: the courtyard artwork stays the default, and the full prototype
-// follows the mounted production player through a same-origin message bridge.
+// Two-view contract: the courtyard artwork and the full Garbo prototype are exclusive renderers;
+// playback stays mounted in the production player and reaches the prototype through a same-origin bridge.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -28,24 +28,28 @@ for (const marker of ["var view = 'simple'", "VIEW_KEY = 'garba:view'", "./garbo
 if (!html.includes('<script src="assets/runtime/immersive-view.js" defer></script>')) fail('index.html must load assets/runtime/immersive-view.js with defer');
 if (html.indexOf('assets/runtime/immersive-view.js') < html.indexOf('src="app.js"')) fail('immersive-view.js must load after app.js');
 
-for (const marker of ['id="moreButton"', 'aria-controls="moreCard"', 'id="moreCard"', 'data-view="simple"', 'data-view="immersive"', 'id="immersiveViewStatus"']) {
+for (const marker of ['id="moreButton"', 'aria-controls="moreCard"', 'id="moreCard"', 'data-view-switch', 'id="immersiveViewStatus"']) {
   if (!html.includes(marker)) fail(`index.html is missing ${marker}`);
 }
+if (html.indexOf('class="view-switch"') < html.indexOf('id="moreButton"') || html.indexOf('class="view-switch"') > html.indexOf('id="moreCard"')) fail('The Simple/Immersive switch must sit below More and outside its menu');
+if (!html.includes('role="switch"') || !html.includes('aria-checked="false"')) fail('The Simple view must expose an accessible Immersive switch in the off state');
+if (html.slice(html.indexOf('id="moreCard"'), html.indexOf('id="immersiveViewStatus"')).includes('data-view-switch')) fail('The More card must not contain the player view switch');
 for (const id of ['atmosphereButton', 'circleButton', 'favouritesButton', 'shareButton']) {
   if (!html.includes(`data-proxy="${id}"`)) fail(`More card has no row for #${id}`);
 }
-// The artwork layers stay in the page; Immersive only fades them
-if (!html.includes('class="world')) fail('index.html must keep the courtyard artwork world');
+// The Simple renderer keeps its courtyard artwork while Immersive uses a separate full-screen frame.
+if (!html.includes('class="world')) fail('index.html must keep the courtyard artwork for Simple view');
 // Up next is a stable player anchor, so it stays in the bar at every size
 if (/#queueButton[^{]*\{\s*display:\s*none/.test(css)) fail('Up next must stay in the top bar at every size');
-for (const marker of ['.garbo-prototype-overlay', '.garbo-prototype-frame', '.app.view-immersive .world-layer', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
+for (const marker of ['.garbo-prototype-overlay', '.garbo-prototype-frame', '.view-switch', '.utilities > .view-switch', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
   if (!css.includes(marker)) fail(`styles/60-runtime-and-provider.css is missing ${marker}`);
 }
 if (!sw.includes("'./assets/runtime/immersive-view.js'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache and refresh immersive-view.js');
 if (!pages.includes('public-site/atmosphere')) fail('Pages must publish public-site/atmosphere so /atmosphere/scene.js exists');
+if (!pages.includes("s#../../../../public-site/atmosphere/scene.js#../../atmosphere/scene.js#")) fail('Pages must rewrite the canonical source scene URL for the deployed prototype location');
 if (!pages.includes('public-site/garbo')) fail('Pages must publish the complete public Garbo prototype for immersive mode');
 if (!pages.includes('60-runtime-and-provider.css')) fail('Pages must bundle styles/60-runtime-and-provider.css');
-if (!/Immersive view/.test(agents)) fail('AGENTS.md invariant 1 must describe the opt-in Immersive view');
+if (!/Distinct Player Views/.test(agents) || !agents.includes('never combine the two visual renderers')) fail('AGENTS.md invariant 1 must describe the distinct Simple and Immersive renderers');
 for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', 'syncCatalogue()', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
   if (!app.includes(marker)) fail(`app.js is missing the immersive player API marker ${marker}`);
 }
@@ -60,7 +64,8 @@ for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
 }
 if (!/Garbo player prototype/i.test(prototypeHtml) || !prototypeJs.includes("get('live') === '1'")) fail('The canonical prototype page must support live-site mode');
 if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expose the live Garba Circle action');
+if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('role="switch"') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');
 if (!prototypeCss.includes('.lamp-tip') || !prototypeCss.includes('.side-card')) fail('The canonical prototype must include its full player presentation');
 
 if (failed) process.exit(1);
-console.log('✓ Immersive view is opt-in, the artwork stays the default, and the More card reaches every top-bar action');
+console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More, and the deployed Garbo scene path resolves');

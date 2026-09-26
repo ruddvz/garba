@@ -44,6 +44,22 @@ button { font: inherit; color: inherit; }
 .brand { display: flex; align-items: center; gap: 8px; color: var(--ivory); text-decoration: none; font: 600 21px/1 var(--display); letter-spacing: -.01em; }
 .brand svg { width: 26px; height: 26px; }
 .tools { display: flex; }
+.tools { position: relative; }
+.view-switch {
+  position: absolute; top: calc(100% + 2px); right: 0; z-index: 20;
+  display: flex; align-items: center; gap: 7px; padding: 3px 8px; border: 1px solid rgba(214,176,111,.35); border-radius: 999px;
+  background: rgba(11,6,5,.9); color: var(--ivory); box-shadow: 0 8px 22px rgba(0,0,0,.3);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.view-switch button {
+  min-width: 48px; min-height: 44px; display: grid; place-items: center; padding: 0 8px; border: 0; border-radius: 999px;
+  background: rgba(246,236,215,.16); color: inherit; cursor: pointer;
+}
+.view-switch > span { color: var(--ivory-3); font: 600 11px/1 var(--ui); }
+.view-switch-control > span { width: 20px; height: 20px; border-radius: 50%; background: var(--ivory); transition: transform .18s ease, background .18s ease; }
+.view-switch-control[aria-checked="true"] { background: var(--brass) !important; }
+.view-switch-control[aria-checked="true"] > span { transform: translateX(8px); background: #17100a; }
+.view-switch button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .ib { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; padding: 0; border-radius: 50%; cursor: pointer; color: var(--ivory); }
 .ib svg { width: 22px; height: 22px; }
 .ib:active, .tb:active, .pp:active { transform: scale(.93); }
