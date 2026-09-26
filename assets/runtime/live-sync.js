@@ -1,21 +1,19 @@
 /**
  * PlayGarba Live Radio sync
- * Keeps 24/7 Live Radio on the same broadcast moment on every device.
+ * Tunes 24/7 Live Radio into the shared broadcast moment once per join.
  *
  * The broadcast position is a pure function of time (`live-station.js`), so devices agree as long
  * as they agree on the time. Phone clocks do not, so this uses the same server-aligned clock as
- * Garba Circle (the HTTP `Date` header of the site itself), opens each song at its exact broadcast
- * position, and nudges the YouTube player back whenever it drifts (loads, buffering, ads, resume).
+ * Garba Circle (the HTTP `Date` header of the site itself), then opens one song at the broadcast
+ * position. Once playback starts, the listener's player runs locally without repeated correction.
  */
 
 import { createLiveTimeline } from './live-station.js';
 import { measureClockOffset, createDateHeaderProbe } from './garba-circle.js';
 import { createSyncCorrector } from './sync-correction.js';
 
-const DRIFT_INTERVAL_MS = 2000;
 const DRIFT_READS = 10;
 const DRIFT_READ_GAP_MS = 50;
-const SETTLE_AFTER_PLAY_MS = 700;
 const BOUNDARY_WINDOW_SECONDS = 1.5;
 // A measured clock is reused for this long before Live Radio measures it again on tune-in.
 const CLOCK_TTL_MS = 10 * 60 * 1000;
@@ -79,12 +77,11 @@ export function createLiveSync(app) {
     clockPromise: null,
     timeline: null,
     timelineSongs: null,
-    driftTimer: null,
     boundaryTimer: null,
-    settleTimer: null,
     measuring: false,
     wasPlaying: false,
     lastDriftSeconds: null,
+    generation: 0,
   };
 
   const syncedNow = () => localNow() + (sync.clock?.offsetMs || 0);
@@ -119,11 +116,7 @@ export function createLiveSync(app) {
 
   function clearTimers() {
     clearTimeout(sync.boundaryTimer);
-    clearTimeout(sync.settleTimer);
-    clearInterval(sync.driftTimer);
     sync.boundaryTimer = null;
-    sync.settleTimer = null;
-    sync.driftTimer = null;
   }
 
   function stillLive() {
@@ -206,58 +199,30 @@ export function createLiveSync(app) {
     }
   }
 
-  function onPlaybackStateChange(event) {
-    if (!sync.active || event.detail?.loading) return;
-    const playing = Boolean(event.detail?.playing) && player()?.playing === true;
-    if (playing && !sync.wasPlaying) {
-      // First frames after a load, seek or resume: realign soon, with a finer threshold.
-      clearTimeout(sync.settleTimer);
-      corrector.resumed();
-      sync.settleTimer = setTimeout(alignOnce, SETTLE_AFTER_PLAY_MS);
-    }
-    sync.wasPlaying = playing;
-  }
-
-  async function resync() {
-    if (!stillLive()) return;
-    await syncClock();
-    if (!stillLive()) return;
-    corrector.resumed();
-    alignOnce();
-  }
-
   /**
-   * Turn Live Radio sync on and tune into the broadcast now. Playback starts right away on the
-   * best clock available; once the server clock is measured, the next alignment corrects it.
+   * Join the broadcast once. When the clock is stale, measure it before opening the player so a
+   * clock correction never causes a second load or seek over already-playing audio.
    */
-  function start() {
-    const wasActive = sync.active;
+  async function start() {
+    if (sync.active) return null;
     sync.active = true;
     sync.wasPlaying = false;
     sync.lastDriftSeconds = null;
-    if (!wasActive) {
-      clearInterval(sync.driftTimer);
-      sync.driftTimer = setInterval(alignOnce, DRIFT_INTERVAL_MS);
-    }
+    const generation = ++sync.generation;
     const fresh = sync.clock?.reliable && localNow() - sync.clockAt < CLOCK_TTL_MS;
     if (!fresh) {
-      syncClock().then(() => {
-        if (!stillLive()) return;
-        // The first load used the unmeasured clock; its error is not load latency to learn from.
-        corrector.discardPending();
-        corrector.resumed();
-        // If the unmeasured clock picked the wrong song, switch now rather than after it plays.
-        const onBroadcastSong = broadcastAt()?.song?.id === player()?.activeSongId;
-        if (onBroadcastSong) alignOnce();
-        else goLive();
-      });
+      await syncClock();
     }
+    if (generation !== sync.generation || !stillLive()) return null;
+    corrector.discardPending();
+    corrector.resumed();
     return goLive();
   }
 
   function stop() {
     if (!sync.active) return;
     sync.active = false;
+    sync.generation += 1;
     clearTimers();
     corrector.reset();
   }
@@ -279,14 +244,6 @@ export function createLiveSync(app) {
     else if (step.action === 'wait') waitForBoundary(step.waitSeconds);
     else if (step.action === 'hold') app.showToast(LIVE_SYNC_COPY.together);
     return true;
-  }
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('garba:playback-state-change', onPlaybackStateChange);
-    window.addEventListener('online', resync);
-  }
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') resync(); });
   }
 
   return Object.freeze({
