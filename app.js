@@ -2516,6 +2516,35 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
     await refreshCatalogue({ quiet: true });
     return this.snapshot({ includeCatalogue: true });
   },
+  async loadNonstopCatalogue() {
+    const listSets = window.GARBA_NONSTOP?.list;
+    if (typeof listSets !== 'function') throw new Error('Nonstop catalogue is unavailable');
+    const sets = await listSets();
+    if (!Array.isArray(sets)) throw new Error('Nonstop catalogue is invalid');
+    return sets.map((set) => {
+      const segments = Array.isArray(set.segments) ? set.segments : [];
+      const chapters = segments
+        .filter((segment) => typeof segment?.title === 'string'
+          && segment.title.trim()
+          && Number.isFinite(segment.startSeconds)
+          && segment.startSeconds >= 0)
+        .map((segment) => ({ title: segment.title, startSeconds: segment.startSeconds }));
+      const lastEnd = segments.reduce((duration, segment) => (
+        Number.isFinite(segment?.endSeconds) && segment.endSeconds > duration ? segment.endSeconds : duration
+      ), 0);
+      const durationSeconds = Number.isFinite(set.durationSeconds) && set.durationSeconds > 0
+        ? set.durationSeconds
+        : lastEnd;
+      return {
+        id: set.id,
+        title: set.title,
+        artists: Array.isArray(set.artists) ? set.artists : [],
+        year: Number.isFinite(set.year) ? set.year : null,
+        durationSeconds: durationSeconds || null,
+        chapters,
+      };
+    }).filter((set) => typeof set.id === 'string' && set.id && typeof set.title === 'string' && set.chapters.length);
+  },
   snapshot({ includeCatalogue = false } = {}) {
     const song = currentSong();
     const player = window.GARBA_YOUTUBE_PLAYER;
@@ -2545,14 +2574,23 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
     };
     if (includeCatalogue) {
       snapshot.genres = state.genres.map(({ id, name, label }) => ({ id, name, label }));
-      snapshot.songs = state.songs.map((item) => ({
-        id: item.id,
-        title: item.title,
-        artist: item.artist,
-        genre: item.genre,
-        durationSeconds: Number.isFinite(item.durationSeconds) ? item.durationSeconds : null,
-        playable: canExecuteSong(item),
-      }));
+      const order = playableOrder();
+      const ordered = order ? order.order(state.songs) : state.songs;
+      snapshot.songs = ordered.map((item) => {
+        const vid = youtubeVideoId(item);
+        const tier = order ? order.tier(item) : PLAYABLE_TIER.UNAVAILABLE;
+        return {
+          id: item.id,
+          title: item.title,
+          artist: item.artist,
+          genre: item.genre,
+          durationSeconds: Number.isFinite(item.durationSeconds) ? item.durationSeconds : null,
+          playable: canExecuteSong(item),
+          videoId: vid || null,
+          startSeconds: Number(item.youtubeStartSeconds || 0) || 0,
+          isChapter: tier === PLAYABLE_TIER.CHAPTER,
+        };
+      });
     }
     return snapshot;
   },

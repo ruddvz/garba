@@ -54,11 +54,15 @@ if (!pages.includes("s#../../../../public-site/atmosphere/scene.js#../../atmosph
 if (!pages.includes('public-site/garbo')) fail('Pages must publish the complete public Garbo prototype for immersive mode');
 if (!pages.includes('60-runtime-and-provider.css')) fail('Pages must bundle styles/60-runtime-and-provider.css');
 if (!/Distinct Player Views/.test(agents) || !agents.includes('never combine the two visual renderers')) fail('AGENTS.md invariant 1 must describe the distinct Simple and Immersive renderers');
-for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', 'syncCatalogue()', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
+for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', 'syncCatalogue()', 'loadNonstopCatalogue()', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
   if (!app.includes(marker)) fail(`app.js is missing the immersive player API marker ${marker}`);
 }
-for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'circle'", "slice(0, 160)"]) {
+for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'circle'", 'nonstopSetsStatus', 'visibleSongCount', 'visibleSetCount', 'appendMoreRow']) {
   if (!prototypeJs.includes(marker)) fail(`The canonical prototype runtime is missing ${marker}`);
+}
+if (prototypeJs.includes('matches.slice(0, 160)')) fail('Explore must provide progressive access to every song match rather than stopping at 160');
+for (const marker of ['loadNonstopCatalogue', 'nonstopSetsStatus', 'snapshot.nonstopSets']) {
+  if (!runtime.includes(marker)) fail(`immersive-view.js is missing the full Nonstop handoff marker ${marker}`);
 }
 if (!prototypeHtml.includes('id="exploreCount"')) fail('The canonical prototype page must expose the live Explore result count');
 if (!prototypeHtml.includes('class="proto-states"')) fail('The standalone prototype must keep its prototype-state picker');
