@@ -742,6 +742,7 @@ html.explore-open, html.explore-open body { overflow: hidden; }
   display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 8px 10px; border: 0; border-radius: 12px; cursor: pointer;
   background: none; color: var(--ivory); font: 500 15px/1.2 var(--sans); text-align: left;
 }
+a.more-row { text-decoration: none; box-sizing: border-box; }
 .more-row:hover { background: rgba(246, 236, 215, .06); }
 .more-row[aria-pressed="true"] svg { color: var(--accent); }
 .more-row span:first-of-type { flex: 1; }
