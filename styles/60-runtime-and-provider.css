@@ -325,3 +325,349 @@ body {
        (display-mode: window-controls-overlay) {
   .install-banner { display: none !important; }
 }
+
+/* ---------------------------------------------------------------------------------------
+   Garba Circle: topbar toggle state and the Circle dialog (native <dialog>, top layer).
+   The dialog carries its own dark panel so it stays legible over light and dark artwork.
+   --------------------------------------------------------------------------------------- */
+html body .app .utilities #circleButton[aria-pressed="true"] {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.circle-dialog {
+  width: min(400px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - max(32px, var(--safe-top) + var(--safe-bottom)));
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ivory);
+  font-family: var(--sans);
+  overflow: visible;
+}
+.circle-dialog::backdrop {
+  background: rgba(5, 7, 16, .64);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.circle-sheet {
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(246, 236, 215, .12);
+  border-radius: 24px;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .52);
+}
+.circle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.circle-header h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.circle-dialog .circle-close {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  color: rgba(246, 236, 215, .78);
+}
+.circle-dialog .circle-close:focus-visible { outline-offset: -4px; }
+.circle-lede,
+.circle-message,
+.circle-status,
+.circle-next {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.circle-lede { color: var(--muted); }
+.circle-message {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  color: var(--ivory);
+}
+.circle-message[hidden],
+.circle-invite[hidden],
+.circle-next[hidden],
+.circle-dialog button[hidden] { display: none; }
+.circle-invite { margin-top: 16px; }
+.circle-qr {
+  width: min(216px, 62vw);
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ivory);
+}
+.circle-qr svg { display: block; width: 100%; height: auto; }
+.circle-link {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+  user-select: all;
+  -webkit-user-select: all;
+}
+.circle-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.circle-primary,
+.circle-secondary,
+.circle-leave {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
+}
+.circle-primary {
+  border: 0;
+  background: var(--accent);
+  color: #17131b;
+}
+.circle-dialog > .circle-sheet > .circle-primary { width: 100%; margin-top: 16px; }
+.circle-primary:disabled { opacity: .6; cursor: progress; }
+.circle-secondary,
+.circle-leave {
+  border: 1px solid rgba(246, 236, 215, .2);
+  background: transparent;
+  color: var(--ivory);
+}
+.circle-leave {
+  width: 100%;
+  margin-top: 16px;
+  color: rgba(246, 236, 215, .8);
+  font-weight: 550;
+}
+.circle-primary:active,
+.circle-secondary:active,
+.circle-leave:active { transform: scale(.98); }
+.circle-status { color: rgba(246, 236, 215, .8); font-size: 13px; }
+.circle-next { color: var(--muted); font-size: 13px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .circle-dialog[open] { animation: circle-dialog-in 220ms var(--ease); }
+  @keyframes circle-dialog-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (max-width: 700px) {
+  /* Bottom sheet on phones, clear of the home indicator. */
+  .circle-dialog {
+    width: 100%;
+    max-height: calc(100dvh - max(24px, var(--safe-top)));
+    margin: auto 0 0;
+  }
+  .circle-sheet {
+    padding: 14px max(18px, env(safe-area-inset-right)) max(20px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* The Circle button makes four topbar utilities. On the narrowest phones use the compact 38px
+   utility size (as short landscape screens do) so the controls stay clear of the brand. */
+@media (max-width: 340px) {
+  html body .app .topbar .brand { font-size: 23px !important; }
+  html body .app .topbar .utilities { max-width: none; }
+  html body .app .topbar .utilities .icon-button {
+    flex-basis: 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 6px !important;
+  }
+  html body .app .topbar .utilities .icon-button svg { width: 21px !important; height: 21px !important; }
+}
+
+@media (forced-colors: active) {
+  .circle-sheet { border: 1px solid CanvasText; }
+  .circle-primary, .circle-secondary, .circle-leave { border: 1px solid ButtonText; }
+}
+
+/* Song lists: songs that cannot play here yet sit below the playable ones */
+.song-row--unavailable { opacity: .5; }
+.song-section-unavailable { margin-top: 10px; }
+
+/* Add a song from YouTube */
+.add-song-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  margin: 4px 0 6px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 1px solid rgba(246, 236, 215, .065);
+  background: transparent;
+  color: color-mix(in srgb, var(--accent) 80%, var(--ivory));
+  font: 600 15px/1.2 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.add-song-row svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.add-song-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.my-song-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - max(32px, var(--safe-top) + var(--safe-bottom)));
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ivory);
+  font-family: var(--sans);
+}
+.my-song-dialog::backdrop { background: rgba(5, 7, 16, .64); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.my-song-sheet {
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 20px;
+  border: 1px solid rgba(246, 236, 215, .12);
+  border-radius: 24px;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .52);
+}
+.my-song-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.my-song-header h2 { margin: 0; font: 600 22px/1.2 var(--serif); }
+.my-song-lede, .my-song-note { margin: 10px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.my-song-note:empty { display: none; }
+.my-song-field { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.my-song-field input, .my-song-field select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid rgba(246, 236, 215, .18);
+  border-radius: 12px;
+  background: rgba(246, 236, 215, .06);
+  color: var(--ivory);
+  font: 16px/1.2 var(--sans);
+}
+.my-song-field select option { color: #17131b; }
+.my-song-field input:focus-visible, .my-song-field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.my-song-primary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #17131b;
+  font: 600 16px/1 var(--sans);
+  cursor: pointer;
+}
+.my-song-list { margin-top: 22px; }
+.my-song-list h3 { margin: 0 0 6px; font: 600 14px/1.3 var(--sans); color: var(--muted); }
+.my-song-list ul { margin: 0; padding: 0; list-style: none; }
+.my-song-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 10px 0; border-top: 1px solid rgba(246, 236, 215, .08); }
+.my-song-item { flex: 1 1 100%; display: grid; gap: 2px; padding: 0; border: 0; background: transparent; color: var(--ivory); text-align: left; cursor: pointer; min-height: 40px; }
+.my-song-item strong { font-size: 15px; }
+.my-song-item small { color: var(--muted); font-size: 13px; }
+.my-song-link { padding: 6px 0; border: 0; background: transparent; color: color-mix(in srgb, var(--accent) 80%, var(--ivory)); font: 500 13px/1.2 var(--sans); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+@media (max-width: 640px) {
+  .my-song-dialog { width: 100%; max-height: calc(100dvh - max(24px, var(--safe-top))); margin: auto 0 0; }
+  .my-song-sheet {
+    padding: 14px max(18px, env(safe-area-inset-right)) max(20px, calc(env(safe-area-inset-bottom) + 12px)) max(18px, env(safe-area-inset-left));
+    border-width: 1px 0 0;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* Full Explore over the player: the music keeps playing underneath */
+.explore-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--panel-solid);
+}
+.explore-overlay[hidden] { display: none; }
+.explore-frame { display: block; width: 100%; height: 100%; border: 0; background: var(--panel-solid); }
+html.explore-open, html.explore-open body { overflow: hidden; }
+
+@media (forced-colors: active) {
+  .my-song-sheet { border: 1px solid CanvasText; }
+  .my-song-primary { border: 1px solid ButtonText; }
+}
+
+/* Continue after the phone paused playback */
+.resume-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
+  z-index: 120;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  width: min(460px, calc(100vw - 32px));
+  padding: 12px 14px 12px 16px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(246, 236, 215, .14);
+  border-radius: 18px;
+  background: var(--panel-solid);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, .5);
+  color: var(--ivory);
+  font: 14px/1.35 var(--sans);
+}
+.resume-prompt[hidden] { display: none; }
+.resume-copy { flex: 1 1 100%; color: var(--muted); padding-right: 28px; }
+.resume-continue {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #17131b;
+  font: 600 15px/1 var(--sans);
+  cursor: pointer;
+}
+.resume-youtube { color: color-mix(in srgb, var(--accent) 80%, var(--ivory)); font-weight: 500; text-underline-offset: 3px; }
+.resume-youtube[hidden] { display: none; }
+.resume-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.resume-close svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.resume-continue:focus-visible, .resume-youtube:focus-visible, .resume-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (forced-colors: active) {
+  .resume-prompt { border: 1px solid CanvasText; }
+  .resume-continue { border: 1px solid ButtonText; }
+}

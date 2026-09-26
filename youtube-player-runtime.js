@@ -31,6 +31,7 @@
   let advanceLock = false;
   let bypassNextPlay = false;
   let retryCount = 0;
+  let startOverride = null;
   const MAX_RECOVERY_RETRIES = 2;
 
   const states = () => window.YT?.PlayerState || { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 };
@@ -251,7 +252,7 @@
   function resetPlaybackState(song, id, generation, { resume = true } = {}) {
     activeRequestGeneration = generation;
     activeVideoId = id;
-    const logicalStart = resume ? restoreElapsed(song) : 0;
+    const logicalStart = takeStartOverride(song) ?? (resume ? restoreElapsed(song) : 0);
     setPlaying(false);
     setProgressState(logicalStart, Math.max(0, Number(song?.durationSeconds || 0)));
     try {
@@ -272,6 +273,14 @@
     try { observedVideoId = String(expectedPlayer.getVideoData?.().video_id || '').trim(); }
     catch { return false; }
     return Boolean(observedVideoId) && observedVideoId === activeVideoId;
+  }
+
+  function takeStartOverride(song) {
+    const override = startOverride;
+    startOverride = null;
+    if (!override || override.songId !== song?.id) return null;
+    const max = Number(song.durationSeconds || 0);
+    return max > 0 ? Math.min(override.seconds, Math.max(0, max - 0.5)) : override.seconds;
   }
 
   function elapsed() {
@@ -493,6 +502,12 @@
     setPlaying(false);
     stopPolling();
     const code = Number(event.data || 0);
+    const token = openToken;
+    window.dispatchEvent(new CustomEvent('garba:youtube-error', {
+      detail: Object.freeze({ code, songId: activeSong?.id || null }),
+    }));
+    // A listener (Garba Circle) may already have opened a replacement; keep its dock state.
+    if (token !== openToken) return;
     if (code === 101 || code === 150) {
       showRecovery('This recording cannot play inside PlayGarba. Open the exact recording on YouTube or choose another recording.', { retry: false });
       return;
@@ -708,6 +723,24 @@
     }
   }
 
+  // Open a recording at an exact logical position (Garba Circle), bypassing the saved session.
+  function openAt(song, logicalSeconds) {
+    if (!canControl(song)) return Promise.resolve(false);
+    const seconds = Number(logicalSeconds);
+    startOverride = Number.isFinite(seconds) && seconds >= 0 ? { songId: song.id, seconds } : null;
+    return open(song, { autoplay: true, resume: false });
+  }
+
+  function currentElapsedSeconds() {
+    if (!player || !activeSong) return null;
+    try {
+      if (String(player.getVideoData?.()?.video_id || '').trim() !== activeVideoId) return null;
+    } catch {
+      return null;
+    }
+    return elapsed();
+  }
+
   function toggle(song = currentSafeSong()) {
     if (!canControl(song)) return false;
     if (activeSong?.id !== song.id || !player) {
@@ -911,6 +944,7 @@
   window.GARBA_YOUTUBE_PLAYER = {
     canPlay: canControl,
     open,
+    openAt,
     close,
     seekTo,
     toggle,
@@ -919,5 +953,8 @@
     get activeSongId() { return activeSong?.id || null; },
     get requestGeneration() { return activeRequestGeneration; },
     get playing() { return playerState === states().PLAYING; },
+    get ended() { return playerState === states().ENDED; },
+    // Logical seconds into the active recording, or null while another video is still loading.
+    get elapsedSeconds() { return currentElapsedSeconds(); },
   };
 })();
