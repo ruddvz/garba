@@ -613,6 +613,12 @@
       // Front edge of the stage with a line of bulbs
       for (var fb = 0; fb <= 16; fb++) { var fp = P(lerp(o.x0, o.x1, fb / 16), o.h, zF - 0.02); if (fp) glow(fp.x, fp.y, Math.max(0.7, Math.min(2.2, fp.s * 0.07)), TH.bulbs[fb % TH.bulbs.length], (0.8 + 0.2 * pulse) * bright); }
       if (st.listener === 'stage') {
+        // Cables snaking across the deck to the mic stands and the players
+        g.strokeStyle = 'rgba(8,8,10,.9)';
+        [-0.3, -0.12, 0.08, 0.22, 0.36].forEach(function (u, ci) {
+          var a0 = P(u * (o.x1 - o.x0), o.h + 0.01, zF + 0.3), a1 = P(u * (o.x1 - o.x0) + (ci % 2 ? 0.9 : -0.7), o.h + 0.01, zF + 0.9), a2 = P(u * (o.x1 - o.x0) + (ci % 2 ? 0.3 : -0.2), o.h + 0.01, zB - 0.05);
+          if (a0 && a1 && a2) { g.lineWidth = Math.max(1, a0.s * 0.02); g.beginPath(); g.moveTo(a0.x, a0.y); g.quadraticCurveTo(a1.x, a1.y, a2.x, a2.y); g.stroke(); }
+        });
         // Up close: wedge monitors along the front of the deck, low haze rolling off it, and beams sweeping down from the truss
         [-0.18, 0.18, -0.36, 0.36].forEach(function (u) { var mx = u * (o.x1 - o.x0); fillPoly([[mx - 0.35, o.h, zF + 0.15], [mx + 0.35, o.h, zF + 0.15], [mx + 0.3, o.h + 0.32, zF + 0.4], [mx - 0.3, o.h + 0.32, zF + 0.4]], '#0c0a0a'); });
         if (st.on) {
@@ -630,15 +636,15 @@
       }
       bandOn(id, o.h, zF + 0.6, o);
     }
-    // The big screen behind the band. From the circle or far away it shows a mandala that breathes with the beat;
-    // by the stage it carries a live aerial shot of the ground, as if a drone were circling over the garbo.
-    // PlayGarba.com runs along the top either way.
+    // The big screen behind the band carries a live aerial shot of the ground, as if a drone were circling over
+    // the garbo. When it's too small to read it shows a mandala that breathes with the beat instead.
+    // PlayGarba.com sits at the top in the same lettering as the page's own logo, with nothing behind it.
     function screenPanel(x0, x1, y0, y1, z, t, id) {
       if (!poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]])) return;
       var a = P(x0, y0, z), b2 = P(x1, y0, z), tp = P(x0, y1, z), c = P((x0 + x1) / 2, (y0 + y1) / 2, z); if (!a || !b2 || !tp || !c) return;
       var rx = a.x, ry = tp.y, rw = b2.x - a.x, rh = a.y - tp.y;
       g.save(); g.clip();
-      if (st.listener === 'stage' && rh > 30) aerial(id, rx, ry, rw, rh, t);
+      if (rh > 34 && rw > 60) aerial(id, rx, ry, rw, rh, t);
       else {
         var lg = g.createLinearGradient(a.x, 0, b2.x, 0);
         TH.hues.forEach(function (hh, i) { lg.addColorStop(i / Math.max(1, TH.hues.length - 1), 'hsl(' + (hh + 15 * Math.sin(t * TH.speed + i)) + ',' + TH.sat + '%,' + (14 + 8 * bright) + '%)'); });
@@ -651,16 +657,34 @@
       }
       // The panel's LED grid, then the name across the top
       if (rh > 24) { g.fillStyle = ledGrid() || 'rgba(0,0,0,0)'; g.globalAlpha = 0.5; g.fillRect(rx, ry, rw, rh); g.globalAlpha = 1; }
-      // Sized to the part of the screen you can see, and kept clear of the readout along the top of the view
-      var fs = Math.max(6, Math.min(rh * 0.12, rw * 0.06, W * 0.075, 34)), top0 = Math.max(ry + fs * 0.2, Math.min(ry + rh * 0.35, 42));
-      if (fs >= 6) {
-        g.font = '800 ' + fs + 'px system-ui, -apple-system, "Segoe UI", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-        var ty = top0 + fs * 1.05, bw = g.measureText('PlayGarba.com').width + fs * 1.2;
-        g.fillStyle = 'rgba(12,6,4,.55)'; roundRect(rx + rw / 2 - bw / 2, top0, bw, fs * 1.4, fs * 0.3); g.fill();
-        g.shadowColor = 'rgba(' + TH.glowTint + ',.9)'; g.shadowBlur = fs * 0.6;
-        g.fillStyle = '#fff4e0'; g.fillText('PlayGarba.com', rx + rw / 2, ty);
-        g.shadowBlur = 0; g.shadowColor = 'transparent';
+      // Sized like the page's logo, fitted to the part of the screen you can see, and kept below the readout
+      var fs = Math.min(W < 700 ? 26 : 32, rh * 0.15, rw * 0.075);
+      if (fs >= 7) {
+        var top0 = Math.max(ry + fs * 0.35, Math.min(ry + rh * 0.3, 44));
+        brandMark(rx + rw / 2, top0 + fs * 0.95, fs);
       }
+      g.restore();
+    }
+    // The logo as the page draws it: by default the site's serif wordmark; a page can pass its own lettering and mark
+    var BRAND = opts.brand || {}, markPaths = null;
+    function brandMark(cx, base, fs) {
+      var text = BRAND.text || 'PlayGarba.com', font = (BRAND.font || '400 {s}px "Iowan Old Style", "Palatino Linotype", Baskerville, Georgia, "Times New Roman", serif').replace('{s}', fs.toFixed(1));
+      g.save(); g.font = font; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      try { g.letterSpacing = (BRAND.spacing != null ? BRAND.spacing : 0.018) * fs + 'px'; } catch (e) { /* older canvas */ }
+      var tw0 = g.measureText(text).width, ms = BRAND.mark ? fs * 1.15 : 0, gap = BRAND.mark ? fs * 0.32 : 0, x0 = cx - (tw0 + ms + gap) / 2;
+      g.shadowColor = 'rgba(3,4,10,.85)'; g.shadowBlur = fs * 0.35; g.shadowOffsetY = fs * 0.05;
+      if (BRAND.mark) drawMark(x0, base - fs * 0.92, ms);
+      g.fillStyle = '#f6ecd7'; g.fillText(text, x0 + ms + gap, base);
+      g.restore();
+    }
+    // The garbo mark from the player's logo, from the same drawing
+    function drawMark(x, y, size) {
+      if (!markPaths) {
+        try { markPaths = [['M16 1.4c1.9 2.2 3 4 3 5.8 0 1.8-1.3 3-3 3s-3-1.2-3-3c0-1.8 1.1-3.6 3-5.8Z', '#ffb347'], ['M16 5.2c.8 1 1.2 1.8 1.2 2.5 0 .8-.5 1.3-1.2 1.3s-1.2-.5-1.2-1.3c0-.7.4-1.5 1.2-2.5Z', '#fff6dc'], ['M12.1 10.4h7.8a1.1 1.1 0 0 1 0 2.2h-7.8a1.1 1.1 0 0 1 0-2.2Z', '#e8b04b'], ['M11.8 12.4C7.9 14 5.4 17.2 5.4 21c0 5.2 4.8 9.3 10.6 9.3s10.6-4.1 10.6-9.3c0-3.8-2.5-7-6.4-8.6Z', '#a8461f'], ['M10.4 20.3l1.5 2.6h-3Zm5.6 0l1.5 2.6h-3Zm5.6 0l1.5 2.6h-3Z', '#ffd27a']].map(function (p) { return [new Path2D(p[0]), p[1]]; }); } catch (e) { markPaths = []; }
+      }
+      g.save(); g.translate(x, y); g.scale(size / 32, size / 32);
+      markPaths.forEach(function (p) { g.fillStyle = p[1]; g.fill(p[0]); });
+      g.strokeStyle = '#e8b04b'; g.lineWidth = 1.1; g.lineCap = 'round'; g.beginPath(); g.moveTo(7.6, 17.2); g.bezierCurveTo(9.9, 18.2, 12.8, 18.7, 16, 18.7); g.bezierCurveTo(19.2, 18.7, 22.1, 18.2, 24.4, 17.2); g.stroke();
       g.restore();
     }
     var ledPat = null;
@@ -727,23 +751,37 @@
           { role: 'singer', x: o.x0 + w * 0.42, man: false, col: '#c2185b', top: '#f0c24b', odhni: '#f0c24b', h: 1.62, ph: 1.1, flash: 0 },
           { role: 'singer', x: o.x0 + w * 0.58, man: true, col: '#f0c24b', top: '#8e44ad', pagdi: '#b8312b', h: 1.74, ph: 2.2, flash: 0 },
           { role: 'keys', x: o.x0 + w * 0.8, man: true, col: '#2f8f5b', top: '#2f8f5b', pagdi: '#f3e6d0', h: 1.7, ph: 0.8, flash: 0 },
-          { role: 'benjo', x: o.x0 + w * 0.67, man: true, col: '#f3e6d0', top: '#3b4cc0', pagdi: '#f0c24b', h: 1.7, ph: 1.7, flash: 0, near: true }
+          { role: 'benjo', x: o.x0 + w * 0.67, man: true, col: '#f3e6d0', top: '#3b4cc0', pagdi: '#f0c24b', h: 1.7, ph: 1.7, flash: 0, near: true },
+          { role: 'tabla', x: o.x0 + w * 0.3, man: true, sitting: true, rest: { y: 0 }, col: '#f3e6d0', top: '#d8453a', pagdi: '#f3e6d0', h: 1.7, ph: 2.6, flash: 0, near: true, older: true }
         ];
       }
       // By the stage you see the players properly: the singers sway, the dhol sticks come down on the beat, the benjo player strums
-      var close = st.listener === 'stage' && st.on && !reduce, bs = Math.sin(BEAT * Math.PI);
+      var close = (st.listener === 'stage' || st.dj) && st.on && !reduce, bs = Math.sin(BEAT * Math.PI), used = [];
+      var roam = Math.min(0.9, (o.x1 - o.x0) * 0.045);
       band[id].forEach(function (m, i) {
         if (m.near && st.listener !== 'stage') return;
-        var bz = m.role === 'singer' ? z - 0.3 : z + 0.4, mx = m.x + (close && m.role === 'singer' ? Math.sin(BEAT * Math.PI * 0.5 + m.ph) * 0.12 : 0), p = P(mx, y, bz); if (!p) return;
+        // Singers don't stand still: they wander along the front, turn to the crowd with a hand up, and every so
+        // often break into a few garba steps with a turn
+        var wander = 0; m.dancing = false; m.cheer = 0; m.twirl = 0;
+        if (m.role === 'singer' && st.on && !reduce) {
+          wander = (Math.sin(T * 0.11 + m.ph * 3) * 0.75 + Math.sin(T * 0.27 + m.ph) * 0.25) * roam;
+          var cyc = (T + m.ph * 7) % 17, dance = cyc > 12 && cyc < 16 ? Math.sin((cyc - 12) / 4 * Math.PI) : 0;
+          m.dancing = dance > 0.15; m.twirl = dance * 0.9; wander += dance * Math.sin(T * 2.2) * 0.25;
+          if (!m.dancing && ((T * 0.5 + m.ph * 2) % 9) < 1.3) m.cheer = 1;
+        }
+        var bz = m.role === 'singer' ? z - 0.3 : z + 0.4, mx = m.x + wander + (close && m.role === 'singer' ? Math.sin(BEAT * Math.PI * 0.5 + m.ph) * 0.1 : 0), p = P(mx, y, bz); if (!p) return;
         var spot = g.createRadialGradient(p.x, p.y - p.s, 1, p.x, p.y - p.s, p.s * 1.6); spot.addColorStop(0, 'rgba(' + TH.beams[i % TH.beams.length] + ',' + 0.35 * bright + ')'); spot.addColorStop(1, 'rgba(0,0,0,0)');
         g.fillStyle = spot; g.beginPath(); g.arc(p.x, p.y - p.s, p.s * 1.6, 0, TAU); g.fill();
         if (m.role === 'keys') fillPoly([[m.x - 0.6, y + 0.85, bz - 0.3], [m.x + 0.6, y + 0.85, bz - 0.3], [m.x + 0.6, y + 0.95, bz - 0.3], [m.x - 0.6, y + 0.95, bz - 0.3]], '#111');
         figure(p, m, 0, false, BEAT, 1);
-        // The lead singer can wear a face picture for the song's artist, drawn as a round, slightly oversized head
-        if (singer.img && singer.img.complete && singer.img.naturalWidth && m.role === 'singer' && (singer.man ? m.man : !m.man)) {
-          var hh = m.h * p.s, hr = hh * 0.13, hx = p.x, hy = p.y - hh * 0.9;
-          g.save(); g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.clip(); g.drawImage(singer.img, hx - hr, hy - hr, hr * 2, hr * 2); g.restore();
-          g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, hr * 0.08); g.beginPath(); g.arc(hx, hy, hr, 0, TAU); g.stroke();
+        // Each singer can wear the song's artist as a cut-out head (face and hair on a transparent background),
+        // a little oversized, the way a figurine's head is. A duet puts each artist on the singer of the same sex.
+        if (m.role === 'singer') {
+          var fc = null; for (var fi2 = 0; fi2 < faces.length; fi2++) { var f0 = faces[fi2]; if (used.indexOf(fi2) < 0 && f0.img && f0.man === !!m.man) { fc = f0; used.push(fi2); break; } }
+          if (fc) {
+            var hh = m.h * p.s, ih = hh * 0.3, iw = ih * (fc.img.naturalWidth && fc.img.naturalHeight ? fc.img.naturalWidth / fc.img.naturalHeight : 1), hy0 = p.y - hh * (m.dancing ? 0.9 : 0.885) - Math.abs(Math.sin(BEAT * Math.PI)) * hh * 0.01;
+            g.drawImage(fc.img, p.x - iw / 2, hy0 - ih * 0.58, iw, ih);
+          }
         }
         if (m.role === 'dhol') {
           var dp = P(m.x, y + 0.9, bz - 0.25);
@@ -759,6 +797,10 @@
             if (hitL > 0.85) glow(dp.x - hw0, dp.y, dp.s * 0.12, '#ffe7b0', (hitL - 0.85) * 5);
             if (hitR > 0.85) glow(dp.x + hw0, dp.y, dp.s * 0.1, '#ffe7b0', (hitR - 0.85) * 5);
           } else if (dp) { g.fillStyle = '#7a3b1a'; g.beginPath(); g.ellipse(dp.x, dp.y, dp.s * 0.34, dp.s * 0.2, 0, 0, TAU); g.fill(); g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(0.8, dp.s * 0.03); g.stroke(); }
+        }
+        if (m.role === 'tabla') {
+          // A pair of tabla in front of him on the deck
+          [-1, 1].forEach(function (sd) { var tp = P(m.x + sd * 0.13, y + (sd < 0 ? 0.2 : 0.17), bz - 0.3); if (!tp) return; var tr = tp.s * (sd < 0 ? 0.1 : 0.08); g.fillStyle = sd < 0 ? '#9aa0a6' : '#6b3b1c'; g.fillRect(tp.x - tr, tp.y, tr * 2, tr * 1.6); g.fillStyle = '#e9dcc0'; g.beginPath(); g.ellipse(tp.x, tp.y, tr, tr * 0.35, 0, 0, TAU); g.fill(); g.fillStyle = '#222'; g.beginPath(); g.ellipse(tp.x, tp.y, tr * 0.4, tr * 0.14, 0, 0, TAU); g.fill(); });
         }
         if (m.role === 'benjo') {
           // A benjo across the lap: a long box with typewriter keys and strings, the right hand strumming
@@ -1438,7 +1480,8 @@
       }
       // Arms: shoulder, elbow, hand
       var shy = y - h * 0.76, L = [x - h * 0.08, shy], R = [x + h * 0.08, shy], le, lh, re, rh;
-      if (d.role === 'singer') { le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09]; re = [x + h * 0.16, shy + h * 0.02 - sw * h * 0.04]; rh = [x + h * 0.24, shy - h * 0.1 - sw * h * 0.08]; }
+      if (d.role === 'singer' && !d.dancing) { le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09]; if (d.cheer) { re = [x + h * 0.15, shy - h * 0.13]; rh = [x + h * 0.2, shy - h * 0.32]; } else { re = [x + h * 0.16, shy + h * 0.02 - sw * h * 0.04]; rh = [x + h * 0.24, shy - h * 0.1 - sw * h * 0.08]; } }
+      else if (d.role === 'tabla') { var tk = reduce ? 0 : Math.sin(T * 9 + d.ph); le = [x - h * 0.15, shy + h * 0.14]; lh = [x - h * 0.13, shy + h * (0.28 - 0.04 * Math.max(0, tk))]; re = [x + h * 0.15, shy + h * 0.14]; rh = [x + h * 0.13, shy + h * (0.29 - 0.04 * Math.max(0, -tk))]; }
       else if (d.role === 'dhol') { var hit = Math.max(0, sw); le = [x - h * 0.16, shy + h * 0.1]; lh = [x - h * 0.22, shy + h * (0.2 - 0.06 * hit)]; re = [x + h * 0.16, shy + h * 0.1]; rh = [x + h * 0.22, shy + h * (0.2 - 0.06 * Math.max(0, -sw))]; }
       else if (d.role === 'dj') {
         // One hand on the laptop; the other holds a cup of chhas and brings it up for a sip every few seconds
@@ -1448,7 +1491,7 @@
         d.cupAt = rh;
       }
       else if (d.role === 'benjo') { le = [x - h * 0.15, shy + h * 0.12]; lh = [x - h * 0.2, shy + h * 0.2]; re = [x + h * 0.14, shy + h * 0.12]; rh = [x + h * 0.16, shy + h * (0.2 + 0.03 * sw)]; }
-      else if (d.role === 'keys') { le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.1 + sw * h * 0.02, shy + h * 0.26]; re = [x + h * 0.14, shy + h * 0.14]; rh = [x + h * 0.1 - sw * h * 0.02, shy + h * 0.26]; }
+      else if (d.role === 'keys') { var rip = reduce ? 0 : Math.sin(T * 7 + d.ph) * h * 0.02; le = [x - h * 0.14, shy + h * 0.14]; lh = [x - h * 0.1 + sw * h * 0.02 + rip, shy + h * 0.26]; re = [x + h * 0.14, shy + h * 0.14]; rh = [x + h * 0.1 - sw * h * 0.02 + rip * 0.7, shy + h * 0.26]; }
       else if (d.stander && d.phone) { le = [x - h * 0.13, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.1, shy - h * 0.06]; rh = [x + h * 0.06, shy - h * 0.2]; }
       else if (d.stander && d.chat && Math.sin(T * 1.3 + d.sway) > 0.4) { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.16, shy + h * 0.12]; rh = [x + h * 0.22, shy + h * (0.02 + 0.04 * Math.sin(T * 5 + d.sway))]; }
       else if (d.photo && !walking) { le = [x - h * 0.12, shy + h * 0.06]; lh = [x - h * 0.04, shy - h * 0.1]; re = [x + h * 0.12, shy + h * 0.06]; rh = [x + h * 0.04, shy - h * 0.1]; }
@@ -1913,13 +1956,19 @@
       BX = box ? box.x : 0; BY = box ? box.y : 0; BW = box ? box.w : W; BH = box ? box.h : H;
       HOR = BY + BH * 0.3; F = Math.min(BW, BH * 1.05) * 0.95;
     }
-    var singer = { img: null, man: false, url: '' };
+    var faces = [];
+    function loadFaces(list) {
+      var next = (list || []).filter(function (f) { return f && f.url; }).slice(0, 4);
+      faces = next.map(function (f) {
+        var old = faces.filter(function (o) { return o.url === f.url; })[0];
+        if (old) { old.man = !!f.man; return old; }
+        var rec = { url: f.url, man: !!f.man, img: null }, im = new Image(); im.decoding = 'async'; im.onload = function () { rec.img = im; }; im.src = f.url; return rec;
+      });
+    }
     function set(patch) {
-      if (patch.singerFace !== undefined) {
-        var sf = patch.singerFace || {}, url = sf.url || '';
-        if (url !== singer.url) { singer.url = url; singer.img = null; if (url) { var im = new Image(); im.decoding = 'async'; im.onload = function () { if (singer.url === url) singer.img = im; }; im.src = url; } }
-        singer.man = !!sf.man;
-      }
+      // Singer heads for the song's artists: singerFaces is a list, singerFace a single one
+      if (patch.singerFaces !== undefined) loadFaces(patch.singerFaces);
+      else if (patch.singerFace !== undefined) loadFaces(patch.singerFace ? [patch.singerFace] : []);
       if (patch.venue && patch.venue !== st.venue && W > 1) {
         fade = fade || document.createElement('canvas'); fade.width = canvas.width; fade.height = canvas.height;
         fade.getContext('2d').drawImage(canvas, 0, 0); fadeA = 1; waves = []; arrivals = [];
