@@ -18,7 +18,7 @@ There is no per-song popularity data yet. The catalogue only has artist tiers an
 
 ## Explore over the player
 
-The Explore control opens the full Explore page (`/explore/`) over the player instead of the small song sheet. The music keeps playing underneath. Explore talks to the player through `src/catalogue/explore-continuity-bridge.js`: **Listen** plays the song in the player (keeping its release context when it has one), and **Close** returns to the player. The browser Back button also closes Explore. Opening the link in a new tab or window still opens Explore as its own page.
+The Explore control opens the full Explore page (`/explore/`) instead of the small song sheet. When nothing is playing, it is an ordinary link to that page. While music is playing, it opens the same page over the player so the music keeps playing underneath. Explore talks to the player through `src/catalogue/explore-continuity-bridge.js`: **Listen** plays the song in the player (keeping its release context when it has one), and **Close** returns to the player. The browser Back button also closes Explore. Opening the link in a new tab or window still opens Explore as its own page.
 
 ## Add a song
 

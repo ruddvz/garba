@@ -1847,9 +1847,12 @@ function wireEvents() {
   els.miniNext.addEventListener('click', () => changeSong(1));
 
   els.browseButton?.addEventListener('click', (event) => {
-    // Plain clicks open the full Explore page over the player, so the music keeps playing.
-    // Modified clicks (new tab, new window) keep the ordinary link behaviour.
+    // Explore is its own page (/explore/). While music is playing, a plain click opens that page over
+    // the player instead, so the song keeps going; otherwise the link navigates as usual.
+    // Modified clicks (new tab, new window) always keep the ordinary link behaviour.
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const playing = state.playing || window.GARBA_YOUTUBE_PLAYER?.playing === true || els.app?.classList.contains('is-playing');
+    if (!playing) return;
     event.preventDefault();
     // Hand the song sheet's history entry to Explore instead of racing a Back navigation.
     if (state.sheetSnap !== 'closed') closeSheet({ fromHistory: true });
