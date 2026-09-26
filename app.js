@@ -2506,6 +2506,10 @@ window.GARBA_APP = Object.freeze({
 // A small same-page contract for the isolated Garbo prototype. Playback stays owned by this app;
 // the prototype receives a read-only snapshot and sends actions back through existing controls.
 window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
+  async syncCatalogue() {
+    await refreshCatalogue({ quiet: true });
+    return this.snapshot({ includeCatalogue: true });
+  },
   snapshot({ includeCatalogue = false } = {}) {
     const song = currentSong();
     const player = window.GARBA_YOUTUBE_PLAYER;

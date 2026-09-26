@@ -46,7 +46,7 @@ if (!pages.includes('public-site/atmosphere')) fail('Pages must publish public-s
 if (!pages.includes('public-site/garbo')) fail('Pages must publish the complete public Garbo prototype for immersive mode');
 if (!pages.includes('60-runtime-and-provider.css')) fail('Pages must bundle styles/60-runtime-and-provider.css');
 if (!/Immersive view/.test(agents)) fail('AGENTS.md invariant 1 must describe the opt-in Immersive view');
-for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
+for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', 'syncCatalogue()', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
   if (!app.includes(marker)) fail(`app.js is missing the immersive player API marker ${marker}`);
 }
 for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'circle'", "slice(0, 160)"]) {
