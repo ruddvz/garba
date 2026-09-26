@@ -321,7 +321,9 @@
     this.state = { mode: 'ember', progress: 0, chapters: null, chapterIndex: -1, live: false };
     this.lit = 0.22; this.scrim = null; this.top = 0;
     this.v = window.GarbaVenueScene.create(canvas, {
-      manual: true, lampScale: 1.35, venues: hooks.venues, clock: hooks.clock, beats: hooks.beats, reduceMotion: hooks.reduce,
+      manual: true, lampScale: 1.35, venues: hooks.venues,
+      // The stage screen uses the same lettering and garbo mark as this player's top-left logo
+      brand: { text: 'PlayGarba.com', font: '600 {s}px Rasa, "Iowan Old Style", Georgia, serif', mark: true, spacing: -0.01 }, clock: hooks.clock, beats: hooks.beats, reduceMotion: hooks.reduce,
       overlay: function (g, W, H) { self.drawScrim(g, W, H); },
       onFrame: hooks.onLamp
     });

@@ -957,10 +957,10 @@
     $('atmoStyleDesc').textContent = style === 'dandiya' ? 'Everyone strikes dandiya sticks on the beat.' : 'The circle claps on the beat.';
     if (A.engine && A.style !== style) A.engine.setStyle(style);
     A.style = style;
-    // The lead singer wears the artist's face when assets/singers/index.json has one for them
-    var artist = S.track && S.track.song ? String(S.track.song.artist || '').split(/,|&/)[0].trim() : S.nonstop ? String((S.nonstop.artists || [])[0] || '') : '';
-    var face = SINGERS && SINGERS[slugify(artist)];
-    if (scene.atmosphere) scene.atmosphere({ singerFace: face ? { url: SINGER_BASE + face.file, man: !!face.man } : null });
+    // The singers wear the song's artists as cut-out heads, when there's one for them in window.GARBO_SINGERS
+    var artists = S.track && S.track.song ? String(S.track.song.artist || '').split(/,|&| and /) : S.nonstop ? (S.nonstop.artists || []) : [];
+    var heads = artists.map(function (a) { var f = SINGERS && SINGERS[slugify(String(a).trim())]; return f ? { url: SINGER_BASE + f.file, man: !!f.man } : null; }).filter(Boolean);
+    if (scene.atmosphere) scene.atmosphere({ singerFaces: heads });
     if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
   }
   function atmoLoadBed(ctx) {
