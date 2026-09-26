@@ -31,7 +31,12 @@
       var pat = E.PATTERNS[A.pattern];
       return { anchor: tp.anchor, period: tp.period, cycle: pat.cycle, hits: pat.hits };
     },
-    onLamp: function (l) { var hit = $('lampHit'), r = $('lampSlot').getBoundingClientRect(); hit.style.left = (l.x * window.innerWidth - r.left) + 'px'; hit.style.top = (l.y * window.innerHeight - r.top) + 'px'; }
+    onLamp: function (l) {
+      var hit = $('lampHit'), tip = $('lampTip'), r = $('lampSlot').getBoundingClientRect(), lx = l.x * window.innerWidth - r.left, ly = l.y * window.innerHeight - r.top;
+      hit.style.left = lx + 'px'; hit.style.top = ly + 'px';
+      // The first-time tip sits just below the garbo, wherever the scene puts it
+      if (tip && !tip.hidden) { tip.style.left = lx + 'px'; tip.style.top = (ly + Math.max(30, l.r * window.innerWidth * 1.6)) + 'px'; }
+    }
   }) : new window.GarboScene.Scene($('scene'));
   if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
 
@@ -85,7 +90,7 @@
     if (t.kind === 'empty') return { eyebrow: t.eyebrow, title: t.title, artist: t.artist, from: null };
     if (t.kind === 'chapter') {
       var set = t.set;
-      return { eyebrow: 'Nonstop Garba · chapter ' + (t.chapterIndex + 1) + ' of ' + set.chapters.length, title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
+      return { eyebrow: '', title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
     }
     var g = genreInfo(t.song.genre);
     var eyebrow = S.hosted ? '' : S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length : '';
@@ -166,7 +171,7 @@
 
   /* ---------- modes ---------- */
   var HINTS = {
-    ember: 'Tap the garbo to light it',
+    ember: '',
     paused: 'Paused',
     loading: 'Lighting the lamp…',
     playing: 'Swipe the genres below for more',
@@ -187,13 +192,18 @@
     $('playBtn').disabled = blocked;
     $('lampHit').disabled = blocked;
     $('hint').textContent = HINTS[mode] || '';
+    renderTip();
     $('offlineBar').hidden = mode !== 'offline';
     $('liveBtn').setAttribute('aria-pressed', String(S.live || !!S.hosted));
     scene.set({ mode: mode === 'paused' ? 'ember' : mode === 'empty' ? 'unavailable' : mode });
     if (typeof atmoSync === 'function') atmoSync();
   }
 
+  // "Tap the garbo to light it" shows under the garbo until the first time it's lit, then never again
+  var tipSeen = false; try { tipSeen = localStorage.getItem('garbo-proto-lit') === '1'; } catch (e) { /* storage unavailable */ }
+  function renderTip() { var tip = $('lampTip'); if (tip) tip.hidden = tipSeen || S.mode !== 'ember'; }
   function play() {
+    if (!tipSeen) { tipSeen = true; try { localStorage.setItem('garbo-proto-lit', '1'); } catch (e) { /* storage unavailable */ } renderTip(); }
     if (S.offline || !S.track) return;
     if (S.track.kind === 'song' && !S.track.song.playable) { setMode('unavailable'); return; }
     if (S.track.kind === 'empty') return;
