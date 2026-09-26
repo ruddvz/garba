@@ -31,7 +31,12 @@
       var pat = E.PATTERNS[A.pattern];
       return { anchor: tp.anchor, period: tp.period, cycle: pat.cycle, hits: pat.hits };
     },
-    onLamp: function (l) { var hit = $('lampHit'), r = $('lampSlot').getBoundingClientRect(); hit.style.left = (l.x * window.innerWidth - r.left) + 'px'; hit.style.top = (l.y * window.innerHeight - r.top) + 'px'; }
+    onLamp: function (l) {
+      var hit = $('lampHit'), tip = $('lampTip'), r = $('lampSlot').getBoundingClientRect(), lx = l.x * window.innerWidth - r.left, ly = l.y * window.innerHeight - r.top;
+      hit.style.left = lx + 'px'; hit.style.top = ly + 'px';
+      // The first-time tip sits just below the garbo, wherever the scene puts it
+      if (tip && !tip.hidden) { tip.style.left = lx + 'px'; tip.style.top = (ly + Math.max(30, l.r * window.innerWidth * 1.6)) + 'px'; }
+    }
   }) : new window.GarboScene.Scene($('scene'));
   if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
 
@@ -85,7 +90,7 @@
     if (t.kind === 'empty') return { eyebrow: t.eyebrow, title: t.title, artist: t.artist, from: null };
     if (t.kind === 'chapter') {
       var set = t.set;
-      return { eyebrow: 'Nonstop Garba · chapter ' + (t.chapterIndex + 1) + ' of ' + set.chapters.length, title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
+      return { eyebrow: '', title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
     }
     var g = genreInfo(t.song.genre);
     var eyebrow = S.hosted ? '' : S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length : '';
@@ -166,7 +171,7 @@
 
   /* ---------- modes ---------- */
   var HINTS = {
-    ember: 'Tap the garbo to light it',
+    ember: '',
     paused: 'Paused',
     loading: 'Lighting the lamp…',
     playing: 'Swipe the genres below for more',
@@ -187,13 +192,18 @@
     $('playBtn').disabled = blocked;
     $('lampHit').disabled = blocked;
     $('hint').textContent = HINTS[mode] || '';
+    renderTip();
     $('offlineBar').hidden = mode !== 'offline';
     $('liveBtn').setAttribute('aria-pressed', String(S.live || !!S.hosted));
     scene.set({ mode: mode === 'paused' ? 'ember' : mode === 'empty' ? 'unavailable' : mode });
     if (typeof atmoSync === 'function') atmoSync();
   }
 
+  // "Tap the garbo to light it" shows under the garbo until the first time it's lit, then never again
+  var tipSeen = false; try { tipSeen = localStorage.getItem('garbo-proto-lit') === '1'; } catch (e) { /* storage unavailable */ }
+  function renderTip() { var tip = $('lampTip'); if (tip) tip.hidden = tipSeen || S.mode !== 'ember'; }
   function play() {
+    if (!tipSeen) { tipSeen = true; try { localStorage.setItem('garbo-proto-lit', '1'); } catch (e) { /* storage unavailable */ } renderTip(); }
     if (S.offline || !S.track) return;
     if (S.track.kind === 'song' && !S.track.song.playable) { setMode('unavailable'); return; }
     if (S.track.kind === 'empty') return;
@@ -679,7 +689,7 @@
   document.querySelectorAll('.rail-btn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-card-close]')) { closeCard(); return; }
-    if (openCardId && !e.target.closest('.card') && !e.target.closest('.rail')) closeCard(true);
+    if (openCardId && !e.target.closest('.side-card') && !e.target.closest('.rail')) closeCard(true);
   });
 
   /* Ideas: the words go to the project exactly as written */
@@ -940,10 +950,17 @@
 
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
+  // Each choice gets its own icon; clap patterns show their beat as dots
+  var SEG_ICONS = { circle: 'i-ring', far: 'i-chair', stage: 'i-mic', stadium: 'i-stadium', outdoors: 'i-tree', sheri: 'i-houses', claps: 'i-hands', dandiya: 'i-sticks', crowd: 'i-crowd', clapping: 'i-hands', immersive: 'i-full' };
+  var SEG_DOTS = { beat: [1], 'be-tali': [0, 0, 1, 1], 'tran-tali': [0, 1, 1, 1] };
   function atmoSegment(elId, items, current, pick) {
     var box = $(elId); box.textContent = '';
+    box.style.setProperty('--n', String(Object.keys(items).length));
     Object.keys(items).forEach(function (id) {
-      var b = el('button', null, items[id].label); b.type = 'button'; b.dataset.id = id;
+      var b = el('button'); b.type = 'button'; b.dataset.id = id;
+      if (SEG_ICONS[id]) { var ic = el('span', 'seg-ic'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = '<svg><use href="#' + SEG_ICONS[id] + '"/></svg>'; b.append(ic); }
+      else if (SEG_DOTS[id]) { var dt = el('span', 'seg-dots'); dt.setAttribute('aria-hidden', 'true'); SEG_DOTS[id].forEach(function (on) { dt.append(el('i', on ? 'on' : null)); }); b.append(dt); }
+      b.append(el('span', 'seg-l', items[id].label));
       b.setAttribute('aria-pressed', String(id === current));
       b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
       box.appendChild(b);
@@ -1020,7 +1037,7 @@
   atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
   atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
   // A quiet switch for which of the couple is you
-  function swapText() { $('atmoSwap').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
+  function swapText() { $('atmoSwapLabel').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
   $('atmoSwap').addEventListener('click', function () { A.youAs = A.youAs === 'man' ? 'woman' : 'man'; swapText(); atmoSave(); atmoRender(); });
   swapText();
   atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
