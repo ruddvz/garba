@@ -73,6 +73,9 @@ for (const module of ['live-sync.js', 'playable-order.js', 'my-songs.js']) {
   if (!appSource.includes(`from './assets/runtime/${module}'`)) fail(`app.js must load ${module} from assets/runtime`);
 }
 if (!pages.includes('cp -R assets data _site/')) fail('Pages must ship assets/runtime for app.js module imports');
+// The Immersive view runtime loads from index.html, not app.js; Pages ships it with assets/ and the PWA keeps it fresh.
+if (!sw.includes("'./assets/runtime/immersive-view.js'")) fail('PWA core shell does not cache assets/runtime/immersive-view.js');
+if (!sw.includes("'/assets/runtime/immersive-view.js'")) fail('PWA fresh-runtime list does not include assets/runtime/immersive-view.js');
 
 const q90Pack = 'garba15-2048-q90.zip';
 const q90Sha = '4690046d30ecd5400b3fc953a2a93f877d64921a69955d2b5dc6aa0bd65a769d';
