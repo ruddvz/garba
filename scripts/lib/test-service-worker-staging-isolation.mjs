@@ -4,11 +4,14 @@ import vm from 'node:vm'
 
 const ORIGIN = 'https://playgarba.example/'
 const WORKER_URL = `${ORIGIN}sw.js`
-const PREVIOUS_LIVE_CACHE = 'garba-live-v15'
-const LIVE_CACHE = 'garba-live-v16'
+const source = fs.readFileSync(new URL('../../sw.js', import.meta.url), 'utf8')
+// Follow the worker's own cache generation so a version bump in sw.js keeps this test meaningful
+const liveVersion = Number((source.match(/CACHE_NAME = `\$\{CACHE_PREFIX\}v(\d+)`/) || [])[1])
+assert.ok(liveVersion > 1, 'sw.js must declare its live cache generation as garba-live-v<N>')
+const PREVIOUS_LIVE_CACHE = `garba-live-v${liveVersion - 1}`
+const LIVE_CACHE = `garba-live-v${liveVersion}`
 const STAGING_CACHE = 'garba-live-staging'
 const READY_URL = `${ORIGIN}__garba_staging_ready__`
-const source = fs.readFileSync(new URL('../../sw.js', import.meta.url), 'utf8')
 
 class MockRequest {
   constructor(input) {

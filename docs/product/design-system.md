@@ -122,6 +122,15 @@ Outgoing and incoming text may animate inside a fixed measure. The surrounding p
 - The explicit YouTube control should be discoverable without turning the video into permanent visual clutter.
 - Never imitate, hide or bypass required YouTube player behaviour.
 
+### Views and the More card
+
+- **Simple view** (the courtyard artwork) is the default. **Immersive view** draws the live venue scene (garbo, dancers, stage, DJ) behind the same player and controls. Listeners choose it in the More card, and the choice is remembered on that device.
+- The venue scene loads only after Immersive is chosen. If it fails, the player returns to Simple view and says so.
+- The More card holds the less-used top-bar actions, so the bar stays short at every size:
+  - phone and tablet (up to 1023px): the bar shows Search, Up next and More;
+  - desktop (1024px and up): Garba Circle and My Garba also stay in the bar.
+- Each More row acts through the original button, so every feature keeps its own behaviour and pressed state.
+
 ## Explore and catalogue
 
 Explore is a listening interface, not a dashboard.
