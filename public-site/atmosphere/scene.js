@@ -664,7 +664,7 @@
       // Sized like the page's logo, fitted to the part of the screen you can see, and kept below the readout
       var fs = Math.min(W < 700 ? 26 : 32, rh * 0.15, rw * 0.075);
       if (fs >= 7) {
-        var top0 = Math.max(ry + fs * 0.35, Math.min(ry + rh * 0.3, 44));
+        var top0 = Math.max(ry + fs * 0.35, Math.min(ry + rh * 0.3, 62));
         brandMark(rx + rw / 2, top0 + fs * 0.95, fs);
       }
       g.restore();
