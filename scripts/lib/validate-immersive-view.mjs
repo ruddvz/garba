@@ -29,12 +29,14 @@ if (html.indexOf('assets/runtime/immersive-view.js') < html.indexOf('src="app.js
 for (const marker of ['id="moreButton"', 'aria-controls="moreCard"', 'id="moreCard"', 'data-view="simple"', 'data-view="immersive"', 'id="immersiveViewStatus"']) {
   if (!html.includes(marker)) fail(`index.html is missing ${marker}`);
 }
-for (const id of ['queueButton', 'atmosphereButton', 'circleButton', 'favouritesButton', 'shareButton']) {
+for (const id of ['atmosphereButton', 'circleButton', 'favouritesButton', 'shareButton']) {
   if (!html.includes(`data-proxy="${id}"`)) fail(`More card has no row for #${id}`);
 }
 // The artwork layers stay in the page; Immersive only fades them
 if (!html.includes('class="world')) fail('index.html must keep the courtyard artwork world');
-for (const marker of ['.immersive-stage', '.app.view-immersive .world-layer', '.more-card', '@media (max-width: 599px)', '@media (min-width: 1024px)']) {
+// Up next is a stable player anchor, so it stays in the bar at every size
+if (/#queueButton[^{]*\{\s*display:\s*none/.test(css)) fail('Up next must stay in the top bar at every size');
+for (const marker of ['.immersive-stage', '.app.view-immersive .world-layer', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)']) {
   if (!css.includes(marker)) fail(`styles/60-runtime-and-provider.css is missing ${marker}`);
 }
 if (!sw.includes("'./assets/runtime/immersive-view.js'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache and refresh immersive-view.js');

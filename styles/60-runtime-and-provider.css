@@ -677,6 +677,7 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 
 /* The venue fills the world layer; the artwork steps aside only while Immersive view is on */
 .immersive-stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.immersive-stage.is-backdrop { opacity: .42; }
 .app.view-immersive .world-layer { opacity: 0 !important; transition: opacity .6s var(--ease); }
 /* A scrim under the song and the controls keeps them readable over a moving scene */
 .app.view-immersive .world-vignette {
@@ -684,17 +685,13 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 }
 
 /* The top bar keeps only what each screen needs; the rest lives in More.
-   Phones: Search and More. iPad: Search, Up next and More. Desktop: Search, Garba Circle, My Garba, Up next and More. */
-@media (max-width: 599px) {
-  .utilities #shareButton, .utilities #circleButton, .utilities #favouritesButton, .utilities #queueButton, .utilities #atmosphereButton { display: none !important; }
-}
-@media (min-width: 600px) and (max-width: 1023px) {
+   Phones and iPad: Search, Up next and More. Desktop: Search, Garba Circle, My Garba, Up next and More. */
+@media (max-width: 1023px) {
   .utilities #shareButton, .utilities #circleButton, .utilities #favouritesButton, .utilities #atmosphereButton { display: none !important; }
-  .more-row-queue { display: none !important; }
 }
 @media (min-width: 1024px) {
   .utilities #shareButton, .utilities #atmosphereButton { display: none !important; }
-  .more-row-queue, .more-row-circle, .more-row-favourites { display: none !important; }
+  .more-row-circle, .more-row-favourites { display: none !important; }
 }
 
 .more-button[aria-expanded="true"] { color: var(--accent); }

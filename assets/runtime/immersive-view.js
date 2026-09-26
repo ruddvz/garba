@@ -55,7 +55,10 @@
     var title = document.getElementById('songTitle'), room = h * (w > h ? 0.46 : 0.36);
     // Keep the garbo and the dancers clear of the song title
     if (title && title.offsetParent) room = Math.min(room, title.getBoundingClientRect().top - top - 10);
-    scene.setBox({ x: 0, y: top, w: w, h: Math.max(160, room) });
+    // A short screen (a phone on its side) has no room above the song, so the venue becomes a dimmed backdrop
+    var backdrop = room < 150;
+    canvas.classList.toggle('is-backdrop', backdrop);
+    scene.setBox(backdrop ? { x: 0, y: 0, w: w, h: h } : { x: 0, y: top, w: w, h: room });
   }
   function sync() {
     if (!scene) return;
