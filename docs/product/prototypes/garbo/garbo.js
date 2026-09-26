@@ -705,18 +705,20 @@
     $('atmoTap').textContent = locked ? 'Tap to adjust' : 'Tap the beat';
   }
   function atmoTap() {
+    // Taps are stamped on the page clock, so waking the audio on the first tap cannot shorten the first interval.
+    var tappedAt = performance.now() / 1000;
     var b = $('atmoTap'); b.classList.add('hit'); setTimeout(function () { b.classList.remove('hit'); }, 90);
     if (!atmoEnsure()) return;
     A.ctx.resume();
-    var heard = A.ctx.currentTime - (A.ctx.outputLatency || A.ctx.baseLatency || 0), last = A.taps[A.taps.length - 1];
-    if (last !== undefined && heard - last > 2) A.taps = [];
-    A.taps.push(heard); if (A.taps.length > 12) A.taps.shift();
+    var last = A.taps[A.taps.length - 1];
+    if (last !== undefined && tappedAt - last > 2) A.taps = [];
+    A.taps.push(tappedAt); if (A.taps.length > 12) A.taps.shift();
     if (A.taps.length < 4) { atmoTapDots(A.taps.length, false); $('atmoTapHint').textContent = 'Keep going: ' + (4 - A.taps.length) + ' more ' + (4 - A.taps.length === 1 ? 'tap.' : 'taps.'); return; }
     var n = A.taps.length, mx = (n - 1) / 2, my = A.taps.reduce(function (x, y) { return x + y; }, 0) / n, num = 0, den = 0;
     for (var i = 0; i < n; i++) { num += (i - mx) * (A.taps[i] - my); den += (i - mx) * (i - mx); }
     var period = num / den, bpm = 60 / period;
     if (bpm < 50 || bpm > 200) return;
-    A.bpm = bpm; A.engine.setTempo(bpm, my - mx * period);
+    A.bpm = bpm; A.engine.setTempo(bpm, A.ctx.currentTime - (performance.now() / 1000 - (my - mx * period)) - (A.ctx.outputLatency || A.ctx.baseLatency || 0));
     atmoTapDots(4, true); $('atmoTapHint').textContent = 'Locked to your taps. The claps now land on the song\'s beat.';
     atmoRender();
   }
