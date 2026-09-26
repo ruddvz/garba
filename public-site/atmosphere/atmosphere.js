@@ -184,20 +184,22 @@
     $('tap').textContent = locked ? 'Tap to adjust' : 'Tap the beat';
   }
   function tap() {
+    // Stamp the tap on the page clock first, so starting the audio on the first tap cannot delay it.
+    var tappedAt = performance.now() / 1000;
     var btn = $('tap'); btn.classList.add('hit'); setTimeout(function () { btn.classList.remove('hit'); }, 90);
     var p = st.on ? Promise.resolve() : start();
     p.then(function () {
       if (!st.ctx) return;
-      var ctx = st.ctx, heard = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0);
+      var ctx = st.ctx;
       var lastTap = st.taps[st.taps.length - 1];
-      if (lastTap !== undefined && heard - lastTap > 2) st.taps = [];
-      st.taps.push(heard); if (st.taps.length > 12) st.taps.shift();
+      if (lastTap !== undefined && tappedAt - lastTap > 2) st.taps = [];
+      st.taps.push(tappedAt); if (st.taps.length > 12) st.taps.shift();
       if (st.taps.length < 4) { tapDots(st.taps.length, false); $('tapHint').textContent = 'Keep going: ' + (4 - st.taps.length) + ' more ' + (4 - st.taps.length === 1 ? 'tap.' : 'taps.'); return; }
       var n = st.taps.length, mx = (n - 1) / 2, my = st.taps.reduce(function (a, b) { return a + b; }, 0) / n, num = 0, den = 0;
       for (var i = 0; i < n; i++) { num += (i - mx) * (st.taps[i] - my); den += (i - mx) * (i - mx); }
       var period = num / den, bpm = 60 / period;
       if (bpm < 50 || bpm > 200) return;
-      setBpm(bpm, my - mx * period);
+      setBpm(bpm, ctx.currentTime - (performance.now() / 1000 - (my - mx * period)) - (ctx.outputLatency || ctx.baseLatency || 0));
       tapDots(4, true);
       $('tapHint').textContent = 'Locked to your taps. Tap again if the rhythm changes.';
     });

@@ -1407,12 +1407,14 @@
   // Tap tempo. Four taps set the tempo; each later tap refines it. A pause of more
   // than two seconds starts a new count. Beats are placed where the taps were heard.
   async function registerTap() {
+    // Stamp the tap on the page clock before anything async, so waking the audio on the
+    // first tap cannot delay it and shorten the first interval.
+    const tappedAt = performance.now() / 1000;
     if (!await ensureContext()) return;
     const ctx = state.context;
-    const heard = ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0);
     const last = state.taps[state.taps.length - 1];
-    if (last !== undefined && heard - last > 2) state.taps = [];
-    state.taps.push(heard);
+    if (last !== undefined && tappedAt - last > 2) state.taps = [];
+    state.taps.push(tappedAt);
     if (state.taps.length > 12) state.taps.shift();
     state.tap?.classList.add('is-hit');
     setTimeout(() => state.tap?.classList.remove('is-hit'), 90);
@@ -1427,7 +1429,8 @@
       const period = num / den;
       const bpm = 60 / period;
       if (bpm >= 50 && bpm <= 200) {
-        const firstBeat = my - mx * period;
+        // Move the fitted first beat from the page clock onto the audio clock, as the listener heard it.
+        const firstBeat = ctx.currentTime - (performance.now() / 1000 - (my - mx * period)) - (ctx.outputLatency || ctx.baseLatency || 0);
         // Keep the round counted from the first tap of this count.
         state.engine.setTempo(bpm, firstBeat);
         state.tempoSource = 'taps';
