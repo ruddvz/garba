@@ -258,4 +258,148 @@ assert.equal(VERSION, 1);
   }
 }
 
+
+{
+  const env = createEnvironment();
+  env.documentRef.addEventListener = undefined;
+  const controller = createFullscreenController(env);
+  const startResult = controller.start();
+  assert.equal(startResult.listening, false, 'start must not throw and remain non-listening when addEventListener is missing');
+}
+
+
+{
+  const env = createEnvironment();
+  const controller = createFullscreenController(env);
+
+  Object.defineProperty(env.target, 'requestFullscreen', {
+    get() {
+      if (this.called) return undefined;
+      this.called = true;
+      return async () => {};
+    },
+    configurable: true
+  });
+
+  const result = await controller.performAction();
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.action, 'enter');
+  assert.equal(result.reason, 'fullscreen-enter-unavailable');
+}
+
+
+{
+  const env = createEnvironment();
+  env.documentRef.fullscreenElement = env.target;
+  const controller = createFullscreenController(env);
+
+  Object.defineProperty(env.documentRef, 'exitFullscreen', {
+    get() {
+      if (this.called) return undefined;
+      this.called = true;
+      return async () => {};
+    },
+    configurable: true
+  });
+
+  const result = await controller.performAction();
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.action, 'exit');
+  assert.equal(result.reason, 'fullscreen-exit-unavailable');
+}
+
+
+{
+  const policyPath = require.resolve('../../src/navigation/fullscreen-policy.js');
+  const controllerPath = require.resolve('../../src/navigation/fullscreen-controller.js');
+
+  const originalPolicy = require.cache[policyPath];
+  const originalController = require.cache[controllerPath];
+
+  delete require.cache[controllerPath];
+
+  require.cache[policyPath] = {
+    id: policyPath,
+    filename: policyPath,
+    loaded: true,
+    exports: {
+      decideFullscreenControl() {
+        return {
+          visible: true,
+          action: 'unknown_action',
+          reason: null,
+        };
+      }
+    }
+  };
+
+  const { createFullscreenController: createMockedFullscreenController } = require('../../src/navigation/fullscreen-controller.js');
+
+  const env = createEnvironment();
+  const controller = createMockedFullscreenController(env);
+  const result = await controller.performAction();
+
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.reason, 'fullscreen-action-invalid');
+
+  require.cache[policyPath] = originalPolicy;
+  require.cache[controllerPath] = originalController;
+}
+
+
+{
+  const env = createEnvironment();
+  const controller = createFullscreenController(env);
+  env.target.requestFullscreen = async () => { throw "string error, not object"; };
+  const res = await controller.performAction();
+  assert.equal(res.status, 'rejected');
+  assert.equal(res.errorName, null);
+
+  env.target.requestFullscreen = async () => { throw { name: '   CustomError   ' }; };
+  const res2 = await controller.performAction();
+  assert.equal(res2.errorName, 'CustomError');
+
+  env.target.requestFullscreen = async () => { throw {}; };
+  const res3 = await controller.performAction();
+  assert.equal(res3.errorName, null);
+}
+
+
+{
+  const policyPath = require.resolve('../../src/navigation/fullscreen-policy.js');
+  const controllerPath = require.resolve('../../src/navigation/fullscreen-controller.js');
+
+  const originalPolicy = require.cache[policyPath];
+  const originalController = require.cache[controllerPath];
+
+  delete require.cache[controllerPath];
+
+  require.cache[policyPath] = {
+    id: policyPath,
+    filename: policyPath,
+    loaded: true,
+    exports: {
+      decideFullscreenControl() {
+        return {
+          visible: true,
+          action: null,
+          reason: null, // this will trigger the 'fullscreen-action-unavailable' fallback in performAction()
+        };
+      }
+    }
+  };
+
+  const { createFullscreenController: createMockedFullscreenController } = require('../../src/navigation/fullscreen-controller.js');
+
+  const env = createEnvironment();
+  const controller = createMockedFullscreenController(env);
+  const result = await controller.performAction();
+
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.reason, 'fullscreen-action-unavailable');
+
+  require.cache[policyPath] = originalPolicy;
+  require.cache[controllerPath] = originalController;
+}
+
 console.log('fullscreen controller: ok');
