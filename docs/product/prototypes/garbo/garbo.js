@@ -209,6 +209,14 @@
     return true;
   }
 
+  var viewSwitch = document.querySelector('[data-view-switch]');
+  if (viewSwitch && LIVE_SITE) {
+    viewSwitch.parentElement.hidden = false;
+    viewSwitch.addEventListener('click', function () {
+      window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'view', view: 'simple' }, location.origin);
+    });
+  }
+
   function applyLiveState(snapshot) {
     if (!LIVE_SITE || !S.data || !snapshot || typeof snapshot !== 'object') return;
     LIVE_STATE_READY = true;

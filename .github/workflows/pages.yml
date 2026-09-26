@@ -127,11 +127,16 @@ jobs:
 
           # Immersive mode embeds the complete Garbo prototype. Keep its runtime and
           # presentation in sync with the canonical source under docs/product.
+          # The canonical prototype source lives four directories below root, while its
+          # deployed copy lives at /garbo/prototype/. Rewrite the shared venue scene URL
+          # for that published location so Immersive never falls back to the plain scene.
+          sed 's#../../../../public-site/atmosphere/scene.js#../../atmosphere/scene.js#' \
+            docs/product/prototypes/garbo/index.html > _site/garbo/prototype/index.html
           cp \
-            docs/product/prototypes/garbo/index.html \
             docs/product/prototypes/garbo/garbo.js \
             docs/product/prototypes/garbo/garbo.css \
             _site/garbo/prototype/
+          grep -q 'src="../../atmosphere/scene.js"' _site/garbo/prototype/index.html || { echo 'Immersive venue scene path is invalid'; exit 1; }
           cp \
             public-site/editorial.css \
             public-site/pages.css \

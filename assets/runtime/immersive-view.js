@@ -1,12 +1,11 @@
 /*
  * PlayGarba Immersive view and the More card.
  *
- * Simple view, the courtyard artwork, stays the default. Immersive view opens the complete Garbo player
- * prototype in an isolated frame. The production player remains mounted and owns all playback.
+ * Simple and Immersive are complete, mutually exclusive player surfaces. The production player remains
+ * mounted as the playback owner while the complete Garbo prototype is shown in an isolated frame.
  *
- * The More card gathers the less-used top-bar actions (share, Garba Circle, My Garba, Atmosphere) with the
- * view switch, so each screen size keeps only what it needs in the bar. Rows act through the original
- * buttons, so every feature keeps its own behaviour.
+ * More gathers the less-used top-bar actions (share, Garba Circle, My Garba, Atmosphere). A separate
+ * switch below More chooses the player renderer. Proxy rows still act through the original buttons.
  */
 (function () {
   'use strict';
@@ -19,20 +18,16 @@
   try { if (localStorage.getItem(VIEW_KEY) === 'immersive') view = 'immersive'; } catch (e) { /* storage unavailable */ }
 
   /* ---------- complete embedded prototype ---------- */
-  var overlay = null, frame = null, closeButton = null, syncTimer = 0, catalogueSent = false, catalogueSignature = '';
+  var overlay = null, frame = null, syncTimer = 0, catalogueSent = false, catalogueSignature = '';
   var CHANNEL = 'playgarba:immersive-prototype';
   function ensureFrame() {
     if (overlay) return;
     overlay = document.createElement('section');
     overlay.className = 'garbo-prototype-overlay';
-    overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Garbo player'); overlay.hidden = true;
+    overlay.setAttribute('aria-label', 'Immersive Garbo player'); overlay.hidden = true;
     frame = document.createElement('iframe'); frame.className = 'garbo-prototype-frame';
-    frame.title = 'Garbo player prototype'; frame.allow = 'autoplay; clipboard-write; fullscreen';
-    closeButton = document.createElement('button'); closeButton.className = 'garbo-prototype-close';
-    closeButton.type = 'button'; closeButton.textContent = 'Back to player';
-    closeButton.addEventListener('click', function () { setView('simple'); });
-    overlay.append(frame, closeButton); document.body.appendChild(overlay);
+    frame.title = 'Garbo player prototype'; frame.allow = 'autoplay; clipboard-write; fullscreen'; frame.tabIndex = 0;
+    overlay.append(frame); document.body.appendChild(overlay);
     frame.addEventListener('load', function () { sendSnapshot(true); });
   }
   function sendSnapshot(includeCatalogue) {
@@ -50,6 +45,7 @@
     if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
     var message = event.data;
     if (!message || message.channel !== CHANNEL) return;
+    if (message.type === 'view') { setView(message.view); return; }
     if (message.type === 'ready') {
       catalogueSent = false;
       sendSnapshot(true);
@@ -74,7 +70,7 @@
     sendSnapshot(true);
     clearInterval(syncTimer);
     syncTimer = setInterval(function () { sendSnapshot(!catalogueSent); }, 500);
-    if (closeButton) closeButton.focus({ preventScroll: true });
+    frame.focus({ preventScroll: true });
   }
   function stopPrototype() {
     var wasOpen = overlay && !overlay.hidden;
@@ -83,7 +79,11 @@
     if (overlay) overlay.hidden = true;
     app.removeAttribute('aria-hidden'); app.inert = false;
     catalogueSent = false; catalogueSignature = '';
-    if (wasOpen && moreButton) moreButton.focus({ preventScroll: true });
+    if (wasOpen) {
+      var simpleSwitch = document.querySelector('[data-view-switch]');
+      if (simpleSwitch) simpleSwitch.focus({ preventScroll: true });
+      else if (moreButton) moreButton.focus({ preventScroll: true });
+    }
   }
 
   function setView(next, quiet) {
@@ -106,8 +106,7 @@
   var opener = null;
 
   function renderViewChoice() {
-    if (!card) return;
-    card.querySelectorAll('[data-view]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.view === view)); });
+    document.querySelectorAll('[data-view-switch]').forEach(function (b) { b.setAttribute('aria-checked', String(view === 'immersive')); });
   }
   // A row shows the state of the button it stands for, and only when that button exists on this page
   function renderRows() {
@@ -139,8 +138,6 @@
   if (moreButton && card) {
     moreButton.addEventListener('click', function (e) { e.stopPropagation(); if (card.hidden) openCard(); else closeCard(true); });
     card.addEventListener('click', function (e) {
-      var viewButton = e.target.closest('[data-view]');
-      if (viewButton) { setView(viewButton.dataset.view); return; }
       var row = e.target.closest('[data-proxy]');
       if (row) {
         var target = document.getElementById(row.dataset.proxy);
@@ -153,6 +150,11 @@
     document.addEventListener('click', function (e) { if (!card.hidden && !card.contains(e.target) && e.target !== moreButton && !moreButton.contains(e.target)) closeCard(false); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !card.hidden) { e.preventDefault(); closeCard(true); } });
   }
+
+  document.addEventListener('click', function (e) {
+    var button = e.target.closest('[data-view-switch]');
+    if (button) setView(view === 'immersive' ? 'simple' : 'immersive');
+  });
 
   /* ---------- wiring ---------- */
   window.addEventListener('garba:playback-state-change', function () { sendSnapshot(false); });
