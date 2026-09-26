@@ -885,6 +885,36 @@
       }
     }
     // The band: a lead singer and a second voice at the front, dhol and keys behind them
+    // The players each have a couple of flourishes of their own, at their own odd moments: the dhol player throws
+    // his sticks up and comes down in a flurry, the keys player throws a hand in the air, the benjo player leans into
+    // it, the tabla player rattles off a fast run. Now and then the whole band hits it together.
+    var FLAIRS = { dhol: ['raise', 'lean'], keys: ['handup', 'sway'], benjo: ['step', 'sway'], tabla: ['flurry', 'shake'] };
+    var burst = { at: -99, next: 30 };
+    function bandFlair(members) {
+      var now = T;
+      if (st.on && !reduce && now > burst.next) { burst.at = now; burst.next = now + 45 + rnd() * 60; }
+      var inBurst = now - burst.at < 3.2;
+      members.forEach(function (m) {
+        var list = FLAIRS[m.role];
+        if (!list) return;
+        if (m.flairNext == null) m.flairNext = now + 5 + rnd() * 12;
+        if (inBurst && m.flairT0 !== burst.at) { m.flair = list[0]; m.flairT0 = burst.at; m.flairDur = 3.2; }
+        else if (st.on && !reduce && now > m.flairNext) { m.flair = list[Math.floor(rnd() * list.length)]; m.flairT0 = now; m.flairDur = 1.6 + rnd() * 1.6; m.flairNext = now + m.flairDur + 7 + rnd() * 16; }
+        var u = m.flair ? (now - m.flairT0) / m.flairDur : 1;
+        m.fk = u >= 0 && u < 1 && st.on && !reduce ? Math.sin(Math.PI * u) : 0;
+      });
+      return inBurst ? Math.sin(Math.PI * (now - burst.at) / 3.2) : 0;
+    }
+    // Shift on a keyboard cues the singers: each press, the next move from a shuffled set, so every move comes round
+    var SINGER_MOVES = ['hop', 'spin', 'point', 'clapup', 'dance', 'wave'], moveBag = [];
+    function cueSingers() {
+      var ss = (band[st.venue] || []).filter(function (m) { return m.role === 'singer'; });
+      if (!ss.length || reduce) return false;
+      if (!moveBag.length) { moveBag = SINGER_MOVES.slice(); for (var i = moveBag.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), tmp = moveBag[i]; moveBag[i] = moveBag[j]; moveBag[j] = tmp; } }
+      var move = moveBag.pop();
+      ss.forEach(function (m, i) { m.cue = { act: move, at: T + i * 0.18 }; });
+      return move;
+    }
     function bandOn(id, y, z, o) {
       if (!band[id]) {
         var w = (o.x1 - o.x0);
@@ -900,6 +930,9 @@
       // By the stage you see the players properly: the singers sway, the dhol sticks come down on the beat, the benjo player strums
       var close = (st.listener === 'stage' || st.dj) && st.on && !reduce, bs = Math.sin(BEAT * Math.PI), used = [];
       var singers = band[id].filter(function (m) { return m.role === 'singer'; });
+      var hype = bandFlair(band[id]);
+      if (hype > 0.4) singers.forEach(function (m) { if (!m.cue && m.act !== 'wave' && m.act !== 'walk') { m.act = 'wave'; m.until = burst.at + 3.2; } });
+      if (hype > 0) pulse = Math.max(pulse, hype * 0.9);
       singers.forEach(function (m) { singerPlan(m, singers, o); });
       band[id].forEach(function (m, i) {
         if (m.near && st.listener !== 'stage') return;
@@ -1140,8 +1173,10 @@
       var lo = o.x0 + (o.x1 - o.x0) * 0.3, hi = o.x0 + (o.x1 - o.x0) * 0.7;
       if (m.cx == null) { m.cx = m.x; m.tx = m.x; m.act = 'sing'; m.until = now + 2 + rnd() * 3; }
       if (reduce) { m.cx = m.x; m.act = 'sing'; m.walking = false; m.dancing = false; m.cheer = 0; m.twirl = 0; return; }
-      if (now > m.until || (!st.on && m.act !== 'idle') || (st.on && m.act === 'idle')) {
-        var r = rnd();
+      var MOVE_LEN = { hop: 1.5, spin: 2.2, point: 2, clapup: 2.6, dance: 4, wave: 2.2 };
+      if (m.cue && now >= m.cue.at) { m.act = m.cue.act; m.t0 = now; m.until = now + MOVE_LEN[m.act]; m.cued = true; m.cue = null; }
+      if (now > m.until || (!m.cued && ((!st.on && m.act !== 'idle') || (st.on && m.act === 'idle')))) {
+        var r = rnd(); m.cued = false; m.t0 = now;
         if (!st.on) { m.act = 'idle'; m.until = now + 3 + rnd() * 4; }
         else if (r < 0.34) {
           // Pick a spot along the front that keeps a clear gap from the other singer
@@ -1149,8 +1184,12 @@
           do { tx = lerp(lo, hi, rnd()); } while (tries++ < 12 && others.some(function (x) { return Math.abs(x.tx - tx) < 1.3 || Math.abs(x.cx - tx) < 1.3; }));
           m.tx = tx; m.until = now + 6;
         }
-        else if (r < 0.52) { m.act = 'dance'; m.until = now + 3.5 + rnd() * 2.5; }
-        else if (r < 0.66) { m.act = 'wave'; m.until = now + 1.8 + rnd() * 1.5; }
+        else if (r < 0.46) { m.act = 'dance'; m.until = now + 3.5 + rnd() * 2.5; }
+        else if (r < 0.56) { m.act = 'wave'; m.until = now + 1.8 + rnd() * 1.5; }
+        else if (r < 0.62) { m.act = 'hop'; m.until = now + MOVE_LEN.hop; }
+        else if (r < 0.68) { m.act = 'spin'; m.until = now + MOVE_LEN.spin; }
+        else if (r < 0.74) { m.act = 'point'; m.until = now + MOVE_LEN.point; }
+        else if (r < 0.8) { m.act = 'clapup'; m.until = now + MOVE_LEN.clapup; }
         else { m.act = 'sing'; m.until = now + 3 + rnd() * 4; m.gest = rnd(); }
       }
       // Walking along the front at an easy pace, legs stepping
@@ -1165,6 +1204,12 @@
       m.flash = (m.flash || 0) * Math.exp(-dt * 6);
       m.cheer = m.act === 'wave' ? 1 : 0;
       m.idle = m.act === 'idle';
+      // A hop twice on the beat, a full twirl that flares the skirt, a point out to the crowd, a clap over the head
+      var mu = m.t0 != null && m.until > m.t0 ? Math.max(0, Math.min(1, (now - m.t0) / (m.until - m.t0))) : 1, env = Math.sin(Math.PI * mu);
+      m.hopK = m.act === 'hop' ? Math.abs(Math.sin(mu * Math.PI * 3)) * env : 0;
+      if (m.act === 'spin') { m.twirl = Math.max(m.twirl, env); m.spinK = env; } else m.spinK = 0;
+      m.pose = m.act === 'point' || m.act === 'clapup' ? m.act : null; m.poseK = m.pose ? Math.min(1, env * 1.6) : 0;
+      if (m.act === 'clapup') { var cb = Math.floor(BEAT); if (cb !== m.lastClap) { m.lastClap = cb; m.flash = 1; } }
       m.cx = Math.max(lo - 0.6, Math.min(hi + 0.6, m.cx));
     }
     function speakerPole(x, z, h) {
@@ -1666,6 +1711,8 @@
       if (!d.sitting) y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
       if (d.stander && !reduce) x += Math.sin(T * 0.8 + d.sway) * h * 0.02;
       if (d.role && !st.on && !reduce) { x += Math.sin(T * 0.6 + d.ph * 3) * h * 0.012; y -= Math.max(0, Math.sin(T * 1.1 + d.ph)) * h * 0.004; }
+      if (d.fk > 0.02) { if (d.flair === 'sway' || d.flair === 'step' || d.flair === 'lean') x += Math.sin(T * 3.4 + d.ph) * h * 0.06 * d.fk; if (d.flair === 'lean' || d.flair === 'raise') y -= Math.abs(Math.sin(T * 6.5 + d.ph)) * h * 0.025 * d.fk; if (d.flair === 'shake') x += Math.sin(T * 17) * h * 0.012 * d.fk; }
+      if (d.hopK) y -= d.hopK * h * 0.13;
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
       FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, ((st.listener === 'stage' || st.dj ? p.z - 21.5 : p.z + cam.z - 9)) / 55));
       if (h < 1.5) return;
@@ -1744,6 +1791,18 @@
         g.strokeStyle = gold; g.lineWidth = Math.max(1.2, h * 0.05); g.beginPath(); g.moveTo(x - flare * 0.95, hem - h * 0.05); g.quadraticCurveTo(x, hem - h * 0.01, x + flare * 0.95, hem - h * 0.05); g.stroke();
         g.strokeStyle = gold; g.lineWidth = Math.max(0.8, h * 0.012); g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.785); g.quadraticCurveTo(x + h * 0.02, y - h * 0.63, x + h * 0.09, y - h * 0.565); g.stroke();
       }
+      // The singers dress up: her chaniya has a mirror-work border that catches the lights, bandhani dots and a heavy
+      // gold hem; he wears a gold stole over the kediyu, and the tail of his safa falls behind
+      if (d.role === 'singer' && h > 18) {
+        if (!d.man) {
+          g.strokeStyle = gold; g.lineWidth = Math.max(1.2, h * 0.045); g.beginPath(); g.moveTo(x - flare * 0.95, hem - h * 0.05); g.quadraticCurveTo(x, hem - h * 0.01, x + flare * 0.95, hem - h * 0.05); g.stroke();
+          g.fillStyle = 'rgba(255,248,230,.55)';
+          for (var br = 0; br < 3; br++) for (var bc = -3; bc <= 3; bc++) { var bu = bc / 3.6, by2 = lerp(y - h * 0.46, hem - h * 0.12, br / 2.2), bw2 = lerp(h * 0.08, flare * 0.85, (by2 - (y - h * 0.55)) / Math.max(1, hem - (y - h * 0.55))); g.beginPath(); g.arc(x + bu * bw2, by2, Math.max(0.5, h * 0.007), 0, TAU); g.fill(); }
+          for (var mw = 0; mw < 9; mw++) { var mu2 = (mw + 0.5) / 9 * 2 - 1, gx2 = x + mu2 * flare * 0.9, gy2 = hem - h * 0.035 + Math.abs(mu2) * h * 0.02, tw2 = reduce ? 0.5 : 0.5 + 0.5 * Math.sin(T * 5 + mw * 1.7 + d.ph * 3); g.fillStyle = 'rgba(235,245,255,' + (0.45 + 0.5 * tw2) + ')'; g.beginPath(); g.arc(gx2, gy2, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); if (tw2 > 0.93) glow(gx2, gy2, Math.max(1, h * 0.028), '#ffffff', (tw2 - 0.93) * 9); }
+        } else {
+          g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.032); g.beginPath(); g.moveTo(x + h * 0.08, y - h * 0.8); g.quadraticCurveTo(x - h * 0.02, y - h * 0.62, x - h * 0.12, y - h * 0.44); g.stroke();
+        }
+      }
       if (d.coupleRole === 'm') { g.strokeStyle = tint(d.stole, dk); g.lineWidth = Math.max(1, h * 0.035); g.beginPath(); g.moveTo(x + h * 0.08, y - h * 0.8); g.quadraticCurveTo(x - h * 0.02, y - h * 0.62, x - h * 0.12, y - h * 0.44); g.stroke(); }
       // Neck and head
       g.fillStyle = skin; g.fillRect(x - h * 0.022, y - h * 0.83, h * 0.044, h * 0.05);
@@ -1760,6 +1819,11 @@
         g.fillStyle = tint(d.older ? '#9a948c' : '#1f130d', dk); g.beginPath(); g.ellipse(x, y - h * 0.905, h * 0.074, h * 0.05, 0, Math.PI, 0); g.fill();
         g.beginPath(); g.arc(x, y - h * 0.965, h * 0.034, 0, TAU); g.fill();
         if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(0.6, h * 0.008); g.beginPath(); g.moveTo(x, y - h * 0.955); g.lineTo(x, y - h * 0.925); g.stroke(); g.fillStyle = gold; g.beginPath(); g.arc(x, y - h * 0.922, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.fillStyle = '#c0392b'; g.beginPath(); g.arc(x, y - h * 0.9, Math.max(0.6, h * 0.008), 0, TAU); g.fill(); g.fillStyle = gold; g.beginPath(); g.arc(x - h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.arc(x + h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); }
+      }
+      // The singers' jewellery and his safa tail
+      if (d.role === 'singer' && h > 18) {
+        if (!d.man) { g.fillStyle = gold; [-1, 1].forEach(function (sd) { g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.862, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.84, Math.max(0.8, h * 0.016), 0, TAU); g.fill(); }); }
+        else { var tail = reduce ? 0 : Math.sin(T * 2.2 + d.ph) * h * 0.012; g.strokeStyle = tint(d.pagdi || '#b8312b', dk); g.lineWidth = Math.max(1, h * 0.028); g.beginPath(); g.moveTo(x - h * 0.06, y - h * 0.93); g.quadraticCurveTo(x - h * 0.13 + tail, y - h * 0.86, x - h * 0.11 + tail, y - h * 0.74); g.stroke(); }
       }
       // Arms: shoulder, elbow, hand
       var shy = y - h * 0.76, L = [x - h * 0.08, shy], R = [x + h * 0.08, shy], le, lh, re, rh;
@@ -1792,6 +1856,18 @@
       else if (up) { le = [x - h * 0.13, shy - h * 0.12]; lh = [x - h * 0.012, shy - h * 0.27]; re = [x + h * 0.13, shy - h * 0.12]; rh = [x + h * 0.012, shy - h * 0.27]; }
       else if (dancing) { le = [x - h * 0.18, shy + h * (0.02 - 0.06 * sw)]; lh = [x - h * 0.22, shy - h * (0.1 + 0.14 * sw)]; re = [x + h * 0.18, shy + h * (0.02 + 0.06 * sw)]; rh = [x + h * 0.22, shy - h * (0.1 - 0.14 * sw)]; }
       else { var a1 = walking ? sw * 0.05 : 0; le = [x - h * 0.11, shy + h * 0.15]; lh = [x - h * (0.12 + a1), shy + h * 0.3]; re = [x + h * 0.11, shy + h * 0.15]; rh = [x + h * (0.12 - a1), shy + h * 0.3]; }
+      // The flourishes and cued moves reshape the arms, easing in and out
+      if (d.fk > 0.02) {
+        var fk = d.fk;
+        if (d.flair === 'raise') { var fq0 = Math.sin(T * 14 + d.ph) * h * 0.03; le = [lerp(le[0], x - h * 0.15, fk), lerp(le[1], shy - h * 0.12, fk)]; lh = [lerp(lh[0], x - h * 0.13, fk), lerp(lh[1], shy - h * 0.32 + fq0, fk)]; re = [lerp(re[0], x + h * 0.15, fk), lerp(re[1], shy - h * 0.12, fk)]; rh = [lerp(rh[0], x + h * 0.13, fk), lerp(rh[1], shy - h * 0.32 - fq0, fk)]; }
+        if (d.flair === 'handup') { re = [lerp(re[0], x + h * 0.16, fk), lerp(re[1], shy - h * 0.12, fk)]; rh = [lerp(rh[0], x + h * 0.21, fk), lerp(rh[1], shy - h * 0.34 + Math.sin(T * 6) * h * 0.02, fk)]; }
+        if (d.flair === 'flurry') { var fq1 = Math.sin(T * 24 + d.ph); lh = [lh[0], lh[1] - Math.max(0, fq1) * h * 0.05 * fk]; rh = [rh[0], rh[1] - Math.max(0, -fq1) * h * 0.05 * fk]; }
+      }
+      if (d.pose && d.poseK > 0.02) {
+        var pk = d.poseK;
+        if (d.pose === 'point') { re = [lerp(re[0], x + h * 0.17, pk), lerp(re[1], shy - h * 0.03, pk)]; rh = [lerp(rh[0], x + h * 0.31, pk), lerp(rh[1], shy - h * 0.13, pk)]; }
+        else { var cl = reduce ? 0.5 : Math.abs(Math.sin(BEAT * Math.PI)); le = [lerp(le[0], x - h * 0.13, pk), lerp(le[1], shy - h * 0.15, pk)]; lh = [lerp(lh[0], x - h * (0.02 + 0.06 * cl), pk), lerp(lh[1], shy - h * 0.33, pk)]; re = [lerp(re[0], x + h * 0.13, pk), lerp(re[1], shy - h * 0.15, pk)]; rh = [lerp(rh[0], x + h * (0.02 + 0.06 * cl), pk), lerp(rh[1], shy - h * 0.33, pk)]; }
+      }
       g.strokeStyle = skin; g.lineWidth = lw;
       g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(le[0], le[1]); g.lineTo(lh[0], lh[1]); g.moveTo(R[0], R[1]); g.lineTo(re[0], re[1]); g.lineTo(rh[0], rh[1]); g.stroke();
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
@@ -2283,6 +2359,13 @@
       for (var k in patch) st[k] = patch[k];
     }
     if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas); else window.addEventListener('resize', resize);
+    // Shift on a keyboard cues the singers' next move, except while typing
+    if (opts.keys !== false) window.addEventListener('keydown', function (e) {
+      if (e.key !== 'Shift' || e.repeat || !running) return;
+      var tgt = e.composedPath ? e.composedPath()[0] : e.target;
+      if (tgt && tgt.closest && tgt.closest('input, textarea, select, [contenteditable]')) return;
+      cueSingers();
+    });
     resize();
     if (!opts.manual) requestAnimationFrame(frame);
     return {
@@ -2291,6 +2374,8 @@
       setBox: function (b) { box = b; layoutBox(); statics = {}; },
       draw: frame,
       lamp: function () { return lampAt; },
+      // The singers' next move, as Shift does it; returns the move's name
+      cueSingers: cueSingers,
       stop: function () { running = false; }
     };
   }
