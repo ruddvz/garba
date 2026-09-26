@@ -6,7 +6,7 @@ import process from 'node:process';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const read = (file) => readFile(path.join(root, file), 'utf8');
-const [runtime, html, css, sw, pages, agents, app, prototypeHtml, prototypeJs, publicHtml, publicJs, publicCss] = await Promise.all([
+const [runtime, html, css, sw, pages, agents, app, prototypeHtml, prototypeJs, prototypeCss] = await Promise.all([
   read('assets/runtime/immersive-view.js'),
   read('index.html'),
   read('styles/60-runtime-and-provider.css'),
@@ -16,9 +16,7 @@ const [runtime, html, css, sw, pages, agents, app, prototypeHtml, prototypeJs, p
   read('app.js'),
   read('docs/product/prototypes/garbo/index.html'),
   read('docs/product/prototypes/garbo/garbo.js'),
-  read('public-site/garbo/prototype/index.html'),
-  read('public-site/garbo/prototype/garbo.js'),
-  read('public-site/garbo/prototype/garbo.css'),
+  read('docs/product/prototypes/garbo/garbo.css'),
 ]);
 
 let failed = false;
@@ -51,15 +49,18 @@ if (!/Immersive view/.test(agents)) fail('AGENTS.md invariant 1 must describe th
 for (const marker of ['window.GARBA_IMMERSIVE_PLAYER', "case 'play'", "case 'seek'", "case 'song'", 'includeCatalogue']) {
   if (!app.includes(marker)) fail(`app.js is missing the immersive player API marker ${marker}`);
 }
-for (const [name, source] of [['standalone', prototypeJs], ['deployed', publicJs]]) {
-  for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'circle'", "slice(0, 160)"]) {
-    if (!source.includes(marker)) fail(`${name} prototype runtime is missing ${marker}`);
+for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'circle'", "slice(0, 160)"]) {
+  if (!prototypeJs.includes(marker)) fail(`The canonical prototype runtime is missing ${marker}`);
+}
+if (!prototypeHtml.includes('id="exploreCount"')) fail('The canonical prototype page must expose the live Explore result count');
+for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
+  if (!pages.includes(`docs/product/prototypes/garbo/${file}`) || !pages.includes(`_site/garbo/prototype/`)) {
+    fail(`Pages must deploy the canonical prototype ${file} to /garbo/prototype/`);
   }
 }
-if (!prototypeHtml.includes('id="exploreCount"') || !publicHtml.includes('id="exploreCount"')) fail('Both prototype pages must expose the live Explore result count');
-if (!/Garbo player prototype/i.test(publicHtml) || !publicJs.includes("get('live') === '1'")) fail('The deployed prototype page must support live-site mode');
-if (prototypeJs !== publicJs || (await read('docs/product/prototypes/garbo/garbo.css')) !== publicCss) fail('The deployed prototype runtime and styles must match their canonical prototype files');
-if (!prototypeHtml.includes('id="circleBridge"') || !publicHtml.includes('id="circleBridge"')) fail('Both prototype pages must expose the live Garba Circle action');
+if (!/Garbo player prototype/i.test(prototypeHtml) || !prototypeJs.includes("get('live') === '1'")) fail('The canonical prototype page must support live-site mode');
+if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expose the live Garba Circle action');
+if (!prototypeCss.includes('.lamp-tip') || !prototypeCss.includes('.side-card')) fail('The canonical prototype must include its full player presentation');
 
 if (failed) process.exit(1);
 console.log('✓ Immersive view is opt-in, the artwork stays the default, and the More card reaches every top-bar action');
