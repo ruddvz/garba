@@ -22,12 +22,17 @@ const storage = {
     try {
       const value = localStorage.getItem(key);
       return value == null ? fallback : JSON.parse(value);
-    } catch {
+    } catch (err) {
+      console.warn('localStorage get failed:', err);
       return fallback;
     }
   },
   set(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private mode / storage denied */ }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.warn('localStorage set failed:', err);
+    }
   },
 };
 
