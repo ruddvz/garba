@@ -907,6 +907,11 @@
     }
     // Shift on a keyboard cues the singers: each press, the next move from a shuffled set, so every move comes round
     var SINGER_MOVES = ['hop', 'spin', 'point', 'clapup', 'dance', 'wave'], moveBag = [];
+    function swapSingers() {
+      var ss = (band[st.venue] || []).filter(function (m) { return m.role === 'singer'; });
+      if (reduce) return;
+      ss.forEach(function (m, i) { m.cue = { act: 'swap', at: T + i * 0.5 }; });
+    }
     function cueSingers() {
       var ss = (band[st.venue] || []).filter(function (m) { return m.role === 'singer'; });
       if (!ss.length || reduce) return false;
@@ -1174,7 +1179,12 @@
       if (m.cx == null) { m.cx = m.x; m.tx = m.x; m.act = 'sing'; m.until = now + 2 + rnd() * 3; }
       if (reduce) { m.cx = m.x; m.act = 'sing'; m.walking = false; m.dancing = false; m.cheer = 0; m.twirl = 0; return; }
       var MOVE_LEN = { hop: 1.5, spin: 2.2, point: 2, clapup: 2.6, dance: 4, wave: 2.2 };
-      if (m.cue && now >= m.cue.at) { m.act = m.cue.act; m.t0 = now; m.until = now + MOVE_LEN[m.act]; m.cued = true; m.cue = null; }
+      if (m.cue && now >= m.cue.at) {
+        // Changing sides for a new song: each singer walks across to where the other stood, mirrored across the stage
+        if (m.cue.act === 'swap') { m.act = 'walk'; m.tx = Math.max(lo, Math.min(hi, lo + hi - m.cx)); m.t0 = now; m.until = now + 6; m.cued = true; }
+        else { m.act = m.cue.act; m.t0 = now; m.until = now + MOVE_LEN[m.act]; m.cued = true; }
+        m.cue = null;
+      }
       if (now > m.until || (!m.cued && ((!st.on && m.act !== 'idle') || (st.on && m.act === 'idle')))) {
         var r = rnd(); m.cued = false; m.t0 = now;
         if (!st.on) { m.act = 'idle'; m.until = now + 3 + rnd() * 4; }
@@ -2356,6 +2366,8 @@
         fade.getContext('2d').drawImage(canvas, 0, 0); fadeA = 1; waves = []; arrivals = [];
       }
       if (patch.listener && patch.listener !== st.listener) { waves = []; arrivals = []; }
+      // A new song: its progress starts again from the top, and the singers change sides for it
+      if (patch.progress != null) { if ((st.progress || 0) > 0.3 && patch.progress < 0.05) swapSingers(); }
       for (var k in patch) st[k] = patch[k];
     }
     if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas); else window.addEventListener('resize', resize);
