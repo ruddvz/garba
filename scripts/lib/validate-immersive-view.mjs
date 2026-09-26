@@ -61,6 +61,9 @@ for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'
   if (!prototypeJs.includes(marker)) fail(`The canonical prototype runtime is missing ${marker}`);
 }
 if (!prototypeHtml.includes('id="exploreCount"')) fail('The canonical prototype page must expose the live Explore result count');
+for (const marker of ['href="garbo.css?v=20260926-1"', 'src="garbo.js?v=20260926-1"']) {
+  if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
+}
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
   if (!pages.includes(`docs/product/prototypes/garbo/${file}`) || !pages.includes(`_site/garbo/prototype/`)) {
     fail(`Pages must deploy the canonical prototype ${file} to /garbo/prototype/`);
