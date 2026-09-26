@@ -144,7 +144,7 @@ for (let i = 0; i < 60; i += 1) {
 assert.ok(picks.size >= Math.min(20, fullInSource.length / 2), `picks vary (${picks.size} distinct of ${fullInSource.length})`);
 const recent = fullInSource.slice(0, fullInSource.length - 1);
 assert.equal(order.pickFresh(traditional, { recentIds: recent, random: () => 0 }).id, fullInSource.at(-1), 'recently heard songs are skipped');
-assert.equal(order.pickFresh(catalogue.filter((entry) => entry.genre === 'sanedo')), null, 'a genre with nothing playable returns null');
+assert.equal(order.pickFresh(catalogue.filter((entry) => !entry.youtubeId && !entry.audioUrl)), null, 'a pool with nothing playable returns null');
 pass(`playable-first ordering: ${count(PLAYABLE_TIER.FULL)} complete songs, then ${count(PLAYABLE_TIER.CHAPTER)} chapters, then ${count(PLAYABLE_TIER.UNAVAILABLE)} not playable yet; genre taps start a fresh complete song`);
 
 console.log('my songs tests passed');
