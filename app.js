@@ -1247,10 +1247,15 @@ async function toggleLiveStation() {
   els.app.dataset.liveMode = 'true';
   els.liveStationButton?.setAttribute('aria-pressed', 'true');
   state.morphs?.get('live')?.pulse();
-  showToast(`Tuned into 24/7 Live Garba Radio · ${liveState.song.title}`);
+  showToast('Tuning into 24/7 Live Garba Radio...');
 
-  // Opens the broadcast song at the broadcast position and keeps this device on it.
-  liveSync.start();
+  // Tune once after the server clock is measured; playback then progresses locally without
+  // repeated broadcast seeks or nudges.
+  liveSync.start().then((joinedState) => {
+    if (state.liveMode && joinedState?.song) {
+      showToast(`Tuned into 24/7 Live Garba Radio · ${joinedState.song.title}`);
+    }
+  });
 }
 
 function changeSong(direction) {
@@ -1258,7 +1263,16 @@ function changeSong(direction) {
     circle.handleChangeSong();
     return;
   }
-  if (state.liveMode && liveSync.handleChangeSong()) return;
+
+  if (state.liveMode) {
+    if (direction < 0) {
+      showToast('24/7 Live Radio follows its song order. Turn off Live to choose another song.');
+      return;
+    }
+    const nextLive = getNextLiveTrack(state.songs, state.songId);
+    if (nextLive) selectSong(nextLive.id, { keepSheet: true, preservePlayback: true, liveMode: true });
+    return;
+  }
 
   if (direction < 0 && state.listeningHistory.length) {
     const previousId = state.listeningHistory.pop();
@@ -1270,14 +1284,6 @@ function changeSong(direction) {
         preserveReleaseContext: true,
         syncReleaseAnchor: true,
       });
-      return;
-    }
-  }
-
-  if (state.liveMode) {
-    const nextLive = getNextLiveTrack(state.songs, state.songId);
-    if (nextLive) {
-      selectSong(nextLive.id, { keepSheet: true, preservePlayback: true, liveMode: true });
       return;
     }
   }
