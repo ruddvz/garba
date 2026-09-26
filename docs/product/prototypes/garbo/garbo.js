@@ -698,9 +698,13 @@
      Looking for songs walks you over to the DJ's table. Explore opens as his laptop, turned towards you in the
      corner, while he sips his chhas. Closing it walks you back to where you were. */
   var djTimer = 0;
-  function djSay(gu, en) { scene.atmosphere({ djSay: gu }); $('djSr').textContent = en; }
+  function djSay(gu, en) {
+    scene.atmosphere({ djSay: gu });
+    $('djBubbleTextWide').textContent = gu; $('djBubbleTextMobile').textContent = gu;
+    $('djSr').textContent = en;
+  }
   function djMode(on) {
-    if (!VENUE_SCENE || !scene.atmosphere) return;
+    if (!scene.atmosphere) return;
     clearTimeout(djTimer);
     document.documentElement.classList.toggle('dj-mode', on);
     scene.dj = on; scene.atmosphere({ dj: on, djSay: '' });
@@ -724,7 +728,7 @@
     opener = document.activeElement;
     var s = $(id); s.hidden = false; openSheet = s;
     if (id !== 'aboutPage') $('scrim').hidden = false;
-    $('scrim').classList.toggle('light', id === 'exploreSheet' && VENUE_SCENE);
+    $('scrim').classList.toggle('light', id === 'exploreSheet');
     closeCard(true);
     app.inert = true;
     var target = focusId ? $(focusId) : s;
@@ -942,8 +946,12 @@
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
   function atmoSegment(elId, items, current, pick) {
     var box = $(elId); box.textContent = '';
+    var icons = { outdoors: 'i-tent', stadium: 'i-speaker', sheri: 'i-home', circle: 'i-dance', far: 'i-chair', crowd: 'i-people', clapping: 'i-clap', immersive: 'i-sparkle', claps: 'i-clap', dandiya: 'i-sticks', beat: 'i-clap', beTali: 'i-clap', tranTali: 'i-clap' };
     Object.keys(items).forEach(function (id) {
-      var b = el('button', null, items[id].label); b.type = 'button'; b.dataset.id = id;
+      var b = el('button'); b.type = 'button'; b.dataset.id = id;
+      var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); icon.setAttribute('aria-hidden', 'true');
+      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', '#' + (items[id].icon || icons[id] || 'i-sparkle')); icon.appendChild(use);
+      var label = el('span', null, items[id].label); b.appendChild(icon); b.appendChild(label);
       b.setAttribute('aria-pressed', String(id === current));
       b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
       box.appendChild(b);
@@ -1020,7 +1028,7 @@
   atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
   atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
   // A quiet switch for which of the couple is you
-  function swapText() { $('atmoSwap').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
+  function swapText() { $('atmoSwap').querySelector('span').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
   $('atmoSwap').addEventListener('click', function () { A.youAs = A.youAs === 'man' ? 'woman' : 'man'; swapText(); atmoSave(); atmoRender(); });
   swapText();
   atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
@@ -1036,7 +1044,7 @@
   // Tap the beat: a least-squares fit over the taps, the same one the player's Atmosphere panel uses.
   function atmoTapDots(n, locked) {
     document.querySelectorAll('#atmoDots i').forEach(function (d, i) { d.classList.toggle('on', locked || i < n); });
-    $('atmoTap').textContent = locked ? 'Tap to adjust' : 'Tap the beat';
+    $('atmoTapLabel').textContent = locked ? 'Tap to adjust' : 'Tap the beat';
   }
   function atmoTap() {
     // Taps are stamped on the page clock, so waking the audio on the first tap cannot shorten the first interval.

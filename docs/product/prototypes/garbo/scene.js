@@ -132,6 +132,17 @@
   };
 
   Scene.prototype.set = function (patch) { for (var k in patch) this.state[k] = patch[k]; };
+  /* Match the shared venue scene's small interface so the complete DJ illustration still works
+     when the optional Atmosphere engine is not part of this standalone copy. */
+  Scene.prototype.atmosphere = function (patch) {
+    if (patch.dj != null) this.dj = !!patch.dj;
+    if (patch.djSay != null) {
+      ['djBubbleTextWide', 'djBubbleTextMobile'].forEach(function (id) {
+        var node = document.getElementById(id);
+        if (node) node.textContent = patch.djSay;
+      });
+    }
+  };
 
   Scene.prototype.frame = function (t, dt) {
     var st = this.state, g = this.geom, ctx = this.ctx, W = this.W, H = this.H;

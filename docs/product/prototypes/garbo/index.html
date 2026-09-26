@@ -55,10 +55,88 @@
       <symbol id="i-chev" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></symbol>
       <symbol id="i-yt" viewBox="0 0 24 24"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8Z"/><path fill="#fff" d="m9.5 15.6 6.3-3.6-6.3-3.6Z"/></symbol>
       <symbol id="i-offline" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M3 3l18 18M8.5 16.4a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 4-2.4M19 12.9a10 10 0 0 0-3.2-2.1M2 9.3a15 15 0 0 1 4.3-2.8M22 9.3A15 15 0 0 0 11 5.1"/><circle cx="12" cy="20" r="1.2" fill="currentColor"/></symbol>
+      <symbol id="i-dance" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2" fill="currentColor"/><path d="M10 8.2 7.2 11l2.1 2.1-1.4 6.4m5.6-11.3 3.4 2.4 2.4-1.8M11 12l3.1 2.3 1.8 5.2M7 20h2m6 0h2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-chair" viewBox="0 0 24 24"><path d="M7 4v9h11V8a2 2 0 0 0-2-2H9m9 7v3H7v-3m2 3v4m7-4v4M5 13h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-clap" viewBox="0 0 24 24"><path d="m4 13 5-7a1.5 1.5 0 0 1 2.5 1.7L9.7 11h7a2 2 0 0 1 2 2l-.8 5a2 2 0 0 1-2 1.7H9L4 17Zm13-8 2-2m2 5h-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-sticks" viewBox="0 0 24 24"><path d="m5 19 13-14M8 21 20 8M4 7l2-2m1 5L4 9m15 9 2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 2 1.5 7 6.5 3-6.5 2-1.5 8-2-8-7-2 7-3 2-7Zm8 13 .7 2.3L23 18l-2.3.7L20 21l-.7-2.3L17 18l2.3-.7L20 15Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 18-8-7 18-3-7-8-3Zm8 3 4-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H4V10m5 10v-6h6v6M2 21h20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4Zm12-1a6 6 0 0 1 0 8m2.5-10.5a9.5 9.5 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 19v-1a5.5 5.5 0 0 1 11 0v1Zm12-.5a4 4 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </defs>
   </svg>
 
   <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="dj-world" id="djWorld" aria-hidden="true">
+    <svg class="dj-art dj-art-wide" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" role="presentation">
+      <defs>
+        <linearGradient id="nightWide" x2="0" y2="1"><stop stop-color="#111b29"/><stop offset=".62" stop-color="#281d21"/><stop offset="1" stop-color="#70422a"/></linearGradient>
+        <linearGradient id="stallWide" x2="0" y2="1"><stop stop-color="#e9bd6a"/><stop offset="1" stop-color="#a94c28"/></linearGradient>
+        <linearGradient id="laptopEdge" x2="0" y2="1"><stop stop-color="#d6e0df"/><stop offset=".45" stop-color="#75868a"/><stop offset="1" stop-color="#313f43"/></linearGradient>
+        <radialGradient id="signGlow"><stop stop-color="#ffd88a" stop-opacity=".72"/><stop offset="1" stop-color="#ffc45f" stop-opacity="0"/></radialGradient>
+        <pattern id="grilleWide" width="8" height="8" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#0c0e11"/><circle cx="6" cy="6" r="1" fill="#0c0e11"/></pattern>
+        <g id="speakerWide"><rect x="0" y="0" width="92" height="190" rx="8" fill="#201a1b" stroke="#71665d" stroke-width="3"/><rect x="9" y="10" width="74" height="170" rx="5" fill="#171518" stroke="#41383a"/><circle cx="46" cy="62" r="24" fill="#100f12" stroke="#625a56" stroke-width="3"/><circle cx="46" cy="62" r="15" fill="url(#grilleWide)"/><circle cx="46" cy="137" r="35" fill="#111014" stroke="#625a56" stroke-width="3"/><circle cx="46" cy="137" r="27" fill="url(#grilleWide)"/><path d="M15 172h62" stroke="#d5a153" stroke-width="2" opacity=".7"/></g>
+        <g id="chairWide"><path d="M5 0v38h45V9q0-9-9-9H5Zm0 38h50v12H5m8 0v24m34-24v24" fill="#41535a" stroke="#a6b5b5" stroke-width="4" stroke-linejoin="round"/><path d="M8 5h34v27H8" fill="#536970" opacity=".75"/></g>
+        <g id="personWide"><circle cx="0" cy="0" r="15" fill="#a66e4c"/><path d="M-15-4q1-17 16-16 15 2 15 18-8-8-31-2" fill="#19151a"/><path d="M-20 21q20-14 40 0l15 50h-70Z" fill="var(--cloth,#b53e31)" stroke="#f0c578" stroke-width="2"/><path d="M-14 32h28m-26 10h24m-22 10h20" stroke="#f4ce83" stroke-width="2" opacity=".85"/><path d="M-20 28-35 48m55-20 15 20" fill="none" stroke="#b97959" stroke-width="7" stroke-linecap="round"/><path d="M-15 70-22 92m30-22 8 22" stroke="#342329" stroke-width="8" stroke-linecap="round"/></g>
+      </defs>
+      <path fill="url(#nightWide)" d="M0 0h1440v900H0z"/><path d="M0 608q245-80 492 0t480-5q242-71 468 5v292H0Z" fill="#56372a"/><path d="M0 668q280-55 560 4t880-4v232H0Z" fill="#6a4430" opacity=".64"/>
+      <path d="M0 238q180-68 360 0t360 0 360 0 360 0v42H0Z" fill="#19202a"/><path d="M0 252q180-61 360 0t360 0 360 0 360 0" fill="none" stroke="#d89e4e" stroke-width="4"/>
+      <g fill="#f4c567"><circle cx="32" cy="247" r="6"/><circle cx="105" cy="228" r="5"/><circle cx="180" cy="227" r="6"/><circle cx="258" cy="246" r="5"/><circle cx="338" cy="256" r="6"/><circle cx="418" cy="238" r="5"/><circle cx="502" cy="228" r="6"/><circle cx="590" cy="240" r="5"/><circle cx="680" cy="254" r="6"/><circle cx="774" cy="249" r="5"/><circle cx="866" cy="230" r="6"/><circle cx="956" cy="227" r="5"/><circle cx="1050" cy="242" r="6"/><circle cx="1144" cy="256" r="5"/><circle cx="1235" cy="248" r="6"/><circle cx="1330" cy="229" r="5"/><circle cx="1410" cy="239" r="6"/></g>
+      <g opacity=".75"><use href="#speakerWide" x="65" y="453"/><use href="#speakerWide" x="1278" y="446"/><use href="#chairWide" x="264" y="628"/><use href="#chairWide" x="1117" y="632"/><use href="#chairWide" x="1192" y="646"/></g>
+      <!-- Stall canopy and toran -->
+      <path d="M748 272h566l-36 48H784Z" fill="url(#stallWide)" stroke="#f4cf86" stroke-width="4"/><path d="M764 286h536" stroke="#7b3027" stroke-width="9" stroke-dasharray="28 15"/>
+      <path d="M784 320v244m511-244v244" stroke="#7b4027" stroke-width="15"/><path d="M770 324h535v245H770z" fill="#44251f" opacity=".8" stroke="#b76535" stroke-width="4"/>
+      <path d="M826 266q0 34 20 52 20-18 20-52m58 0q0 34 20 52 20-18 20-52m58 0q0 34 20 52 20-18 20-52m58 0q0 34 20 52 20-18 20-52m58 0q0 34 20 52 20-18 20-52" fill="#e9b24e" stroke="#802c24" stroke-width="5"/>
+      <ellipse cx="1032" cy="346" rx="146" ry="94" fill="url(#signGlow)"/><rect x="917" y="300" width="230" height="70" rx="10" fill="#3a201d" stroke="#e7c27d" stroke-width="4"/><text x="1032" y="346" text-anchor="middle" fill="#ffe5ab" font-family="Georgia,serif" font-size="31" letter-spacing="4">GARBA • રાસ</text>
+      <!-- Seated guests, tea and a friend checking the phone -->
+      <g transform="translate(340 590) scale(.92)" style="--cloth:#315c56"><use href="#personWide"/><path d="M-26 68h52v20h-52z" fill="#a44831"/><path d="M-20 88v42m40-42v42" stroke="#6c4330" stroke-width="7"/></g>
+      <g transform="translate(1160 584) scale(.9)" style="--cloth:#7a3842"><use href="#personWide"/><path d="M-26 68h52v20h-52z" fill="#a44831"/><path d="M-20 88v42m40-42v42" stroke="#6c4330" stroke-width="7"/><rect x="24" y="36" width="12" height="21" rx="2" fill="#202d39" stroke="#b7c5c1"/><path d="M-42 77h13l8 12h-29Z" fill="#ede0c7"/><path d="M-44 77q7-12 14 0" fill="#8b5530"/></g>
+      <!-- Dancing children -->
+      <g transform="translate(465 635) scale(.72)" style="--cloth:#c47b2b"><use href="#personWide"/><path d="m-35 47-19-15m71 15 22-17" stroke="#ddb273" stroke-width="6" stroke-linecap="round"/></g>
+      <g transform="translate(560 650) scale(.65)" style="--cloth:#5575a3"><use href="#personWide"/><path d="m-35 47-21-16m71 16 21-19" stroke="#ddb273" stroke-width="6" stroke-linecap="round"/></g>
+      <g transform="translate(970 635) scale(.7)" style="--cloth:#a33757"><use href="#personWide"/><path d="m-35 47-18-19m71 19 22-18" stroke="#ddb273" stroke-width="6" stroke-linecap="round"/></g>
+      <!-- DJ, detailed jacket, scarf and headset -->
+      <g transform="translate(1032 445)"><path d="M-77 22q77-44 154 0l38 154h-230Z" fill="#243c43" stroke="#e2b66b" stroke-width="5"/><path d="m-46 31 46 56 46-56-20 144h-52Z" fill="#a73d31"/><path d="M-65 91h130M-54 120h108M-43 149h86" stroke="#e2b66b" stroke-width="3"/><circle cx="0" cy="-39" r="52" fill="#a97453"/><path d="M-53-43q4-58 57-58 50 4 49 60-25-29-106-2" fill="#211921"/><path d="M-58-51q-24 4-15 33m130-33q24 4 15 33" fill="none" stroke="#d5bb88" stroke-width="8"/><circle cx="-73" cy="-17" r="11" fill="#243c43" stroke="#e2b66b" stroke-width="3"/><circle cx="73" cy="-17" r="11" fill="#243c43" stroke="#e2b66b" stroke-width="3"/><path d="M-16-31q16 10 32 0m-24 25q8 6 16 0" fill="none" stroke="#472b26" stroke-width="4" stroke-linecap="round"/><path d="M-75 72-110 104m185-32 33 26" stroke="#a97453" stroke-width="18" stroke-linecap="round"/><circle cx="0" cy="95" r="12" fill="#d4a85b"/></g>
+      <path d="M974 205h116q25 0 25 22v30h-93l-25 25v-25h-23Z" fill="#fff5de" stroke="#d3ad6c" stroke-width="4"/><text id="djBubbleTextWide" x="1032" y="241" text-anchor="middle" fill="#422c24" font-family="Anek Gujarati,sans-serif" font-size="22">શું જોઈએ?</text>
+      <!-- Controller, jog wheels, faders and knobs -->
+      <g transform="translate(1000 566)"><path d="M-204 32q0-18 20-18h368q20 0 20 18v110h-408Z" fill="#171b20" stroke="#bcc3c1" stroke-width="5"/><path d="M-185 38h370" stroke="#68747a" stroke-width="3"/><circle cx="-133" cy="86" r="42" fill="#262e34" stroke="#d4a95e" stroke-width="4"/><circle cx="-133" cy="86" r="27" fill="#10161a" stroke="#7d8b8d" stroke-width="3"/><circle cx="133" cy="86" r="42" fill="#262e34" stroke="#d4a95e" stroke-width="4"/><circle cx="133" cy="86" r="27" fill="#10161a" stroke="#7d8b8d" stroke-width="3"/><path d="M-54 53v67m37-67v67M-8 53v67M42 53v67M70 53v67" stroke="#aab6b6" stroke-width="3"/><path d="M-61 80h14m30 19h14M-15 69h14M35 94h14M63 74h14" stroke="#e8a33d" stroke-width="8" stroke-linecap="round"/><g fill="#d6b06f"><circle cx="-172" cy="48" r="5"/><circle cx="-150" cy="48" r="5"/><circle cx="150" cy="48" r="5"/><circle cx="172" cy="48" r="5"/></g></g>
+      <!-- Water cooler, drink crates, spare chairs and stones -->
+      <g transform="translate(706 568)"><path d="M5 34h60v87H5z" fill="#4a8590" stroke="#bdd7d0" stroke-width="4"/><path d="M14 34V15q0-12 20-12t20 12v19" fill="#75acaa" stroke="#c1ddd2" stroke-width="4"/><path d="M58 57h17v15H58" fill="#b8d7cf"/><path d="M11 88h48" stroke="#b3d7d0" stroke-width="3"/><path d="M22 125h28v11H22" fill="#40322a"/></g>
+      <g transform="translate(748 693)"><rect width="75" height="50" rx="4" fill="#a8422b" stroke="#dfaa65" stroke-width="3"/><path d="M7 8h16v33H7m25-33h16v33H32m25-33h11v33H57" fill="none" stroke="#e7bd77" stroke-width="3"/><rect x="85" y="4" width="74" height="46" rx="4" fill="#38755d" stroke="#b5c77b" stroke-width="3"/><path d="M93 10h18v32H93m27-32h18v32h-18" fill="none" stroke="#c6d58d" stroke-width="3"/></g>
+      <g fill="#827264"><ellipse cx="192" cy="733" rx="34" ry="13"/><ellipse cx="234" cy="754" rx="22" ry="9"/><ellipse cx="1250" cy="735" rx="31" ry="12"/><ellipse cx="1288" cy="755" rx="19" ry="8"/></g>
+      <!-- laptop behind the Explore interface: lid, lit edge and Gujarati dance sticker -->
+      <path d="M180 676 650 625l105 140-500 63Z" fill="#263236" stroke="url(#laptopEdge)" stroke-width="14"/><path d="M195 680 644 638l75 104-444 56Z" fill="#101a20" stroke="#91c1bb" stroke-width="5"/><path d="m271 822 479-62 64 31q9 6-4 10l-476 55q-13 2-22-7Z" fill="url(#laptopEdge)"/><path d="m310 836 450-55" stroke="#b6d8d0" stroke-width="3" opacity=".8"/><g transform="translate(619 701) rotate(-7)"><circle r="25" fill="#d8453a" stroke="#f5d486" stroke-width="3"/><text y="7" text-anchor="middle" fill="#fff1cf" font-size="18" font-family="Anek Gujarati,sans-serif">ગરબા</text></g>
+      <rect x="916" y="539" width="39" height="24" rx="8" fill="#f4e8cd"/><path d="M924 550h23m-23 5h15" stroke="#865a39" stroke-width="2"/><g transform="translate(866 555)"><path d="M0 0h30v40H0Z" fill="#405e53" stroke="#dbb86f" stroke-width="2"/><text x="15" y="25" text-anchor="middle" fill="#f6e4bc" font-size="12">TEA</text></g>
+    </svg>
+    <svg class="dj-art dj-art-mobile" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice" role="presentation">
+      <defs>
+        <linearGradient id="nightMobile" x2="0" y2="1"><stop stop-color="#111b29"/><stop offset=".65" stop-color="#2a1d21"/><stop offset="1" stop-color="#71462e"/></linearGradient>
+        <radialGradient id="warmMobile"><stop stop-color="#ffd27a" stop-opacity=".48"/><stop offset="1" stop-color="#ffc45f" stop-opacity="0"/></radialGradient>
+        <pattern id="grilleMobile" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#0c0e11"/><circle cx="5" cy="5" r="1" fill="#0c0e11"/></pattern>
+      </defs>
+      <path fill="url(#nightMobile)" d="M0 0h390v844H0z"/><path d="M0 292q90-31 190 0t200 0v552H0Z" fill="#62412f"/><path d="M0 337q95-22 195 0t195 0v507H0Z" fill="#754a32" opacity=".65"/>
+      <path d="M0 135q96-37 195 0t195 0" fill="none" stroke="#d8a14f" stroke-width="3"/><g fill="#f7cf78"><circle cx="15" cy="131" r="4"/><circle cx="71" cy="113" r="4"/><circle cx="130" cy="119" r="4"/><circle cx="193" cy="137" r="4"/><circle cx="255" cy="119" r="4"/><circle cx="320" cy="111" r="4"/><circle cx="379" cy="130" r="4"/></g>
+      <path d="M32 226h326l-22 30H53Z" fill="#c87b3e" stroke="#efc878" stroke-width="3"/><path d="M45 234h296" stroke="#792b29" stroke-width="6" stroke-dasharray="20 11"/><path d="M58 256v154m274-154v154" stroke="#78412c" stroke-width="11"/><path d="M58 263h274v143H58z" fill="#48251e" opacity=".75" stroke="#b86337" stroke-width="3"/>
+      <path d="M86 220q0 23 14 37 15-14 15-37m30 0q0 23 14 37 15-14 15-37m30 0q0 23 14 37 15-14 15-37m30 0q0 23 14 37 15-14 15-37" fill="#e5ad4f" stroke="#842f27" stroke-width="3"/><ellipse cx="195" cy="258" rx="103" ry="66" fill="url(#warmMobile)"/><rect x="112" y="230" width="166" height="49" rx="8" fill="#38201d" stroke="#e9c784" stroke-width="3"/><text x="195" y="261" text-anchor="middle" fill="#ffe5ab" font-family="Georgia,serif" font-size="19" letter-spacing="2">GARBA • રાસ</text>
+      <!-- Compact speaker stacks with visible drivers and perforated grilles -->
+      <g transform="translate(9 300)"><rect width="51" height="126" rx="5" fill="#211b1b" stroke="#8b7763" stroke-width="2"/><circle cx="25" cy="39" r="17" fill="#111" stroke="#75675b" stroke-width="2"/><circle cx="25" cy="39" r="11" fill="url(#grilleMobile)"/><circle cx="25" cy="91" r="24" fill="#111" stroke="#75675b" stroke-width="2"/><circle cx="25" cy="91" r="18" fill="url(#grilleMobile)"/></g>
+      <g transform="translate(330 300)"><rect width="51" height="126" rx="5" fill="#211b1b" stroke="#8b7763" stroke-width="2"/><circle cx="25" cy="39" r="17" fill="#111" stroke="#75675b" stroke-width="2"/><circle cx="25" cy="39" r="11" fill="url(#grilleMobile)"/><circle cx="25" cy="91" r="24" fill="#111" stroke="#75675b" stroke-width="2"/><circle cx="25" cy="91" r="18" fill="url(#grilleMobile)"/></g>
+      <!-- DJ with embroidered jacket, scarf and headset -->
+      <g transform="translate(195 387)"><path d="M-55 28q55-36 110 0l26 120H-81Z" fill="#244049" stroke="#e4b86b" stroke-width="4"/><path d="m-32 33 32 44 32-44-13 115h-38Z" fill="#a63c31"/><path d="M-42 88h84m-74 20h64m-52 19h40" stroke="#e6bf7d" stroke-width="2"/><circle cy="-36" r="38" fill="#a97756"/><path d="M-39-39q3-43 42-43 38 3 37 45-20-22-79-2" fill="#211921"/><path d="M-42-46q-17 3-11 25m92-25q17 3 11 25" fill="none" stroke="#d8bd89" stroke-width="6"/><circle cx="-53" cy="-21" r="8" fill="#263d43" stroke="#e4b86b" stroke-width="2"/><circle cx="53" cy="-21" r="8" fill="#263d43" stroke="#e4b86b" stroke-width="2"/><path d="m-10-30 7 4m16-4-7 4m-9 13q6 4 12 0" stroke="#442821" stroke-width="2.5" stroke-linecap="round"/><path d="M-51 76-78 101m102-25 28 21" stroke="#a97756" stroke-width="13" stroke-linecap="round"/></g>
+      <path d="M90 169h185q16 0 16 15v25h-160l-24 20v-20H90Z" fill="#fff5de" stroke="#d3ad6c" stroke-width="3"/><text id="djBubbleTextMobile" x="190" y="195" text-anchor="middle" fill="#422c24" font-family="Anek Gujarati,sans-serif" font-size="16">શું જોઈએ?</text>
+      <!-- Narrow controller face and lit laptop edge -->
+      <g transform="translate(195 489)"><path d="M-158 4q0-11 13-11h290q13 0 13 11v75h-316Z" fill="#171b20" stroke="#c0c8c3" stroke-width="3"/><circle cx="-105" cy="35" r="25" fill="#242d32" stroke="#d6b06f" stroke-width="3"/><circle cx="-105" cy="35" r="15" fill="#0c1217" stroke="#819091" stroke-width="2"/><circle cx="105" cy="35" r="25" fill="#242d32" stroke="#d6b06f" stroke-width="3"/><circle cx="105" cy="35" r="15" fill="#0c1217" stroke="#819091" stroke-width="2"/><path d="M-51 15v43m20-43v43m20-43v43m36-43v43m20-43v43" stroke="#9eacaa" stroke-width="2"/><path d="M-55 31h9m11 18h9m11-24h9m27 26h9m11-30h9" stroke="#eda94c" stroke-width="6" stroke-linecap="round"/><g fill="#e1b465"><circle cx="-130" cy="8" r="3"/><circle cx="-116" cy="8" r="3"/><circle cx="116" cy="8" r="3"/><circle cx="130" cy="8" r="3"/></g></g>
+      <path d="M20 613 142 557l217 123-156 62Z" fill="#202d32" stroke="#bccdca" stroke-width="7"/><path d="m33 615 111-48 189 109-139 54Z" fill="#111a20" stroke="#9cc9c2" stroke-width="3"/><path d="m130 754 156-73 55 29-155 79Z" fill="#78898b"/><g transform="translate(274 650) rotate(28)"><circle r="16" fill="#d8453a" stroke="#f5d486" stroke-width="2"/><text y="5" text-anchor="middle" fill="#fff1cf" font-size="11" font-family="Anek Gujarati,sans-serif">ગરબા</text></g>
+      <!-- Friend with phone, water cooler, drink crate and chairs around the edge -->
+      <g transform="translate(53 474)"><path d="M0 23h48v13H0m7 0v34m34-34v34M5 0v23h36V5q0-5-5-5Z" fill="#46646a" stroke="#b3c1b6" stroke-width="3"/><circle cx="23" cy="-10" r="13" fill="#a66e4c"/><path d="M10-12q0-15 14-15t13 17" fill="#211921"/><path d="M10 5q13-11 27 0l10 26H1Z" fill="#74414d" stroke="#e3bd75" stroke-width="2"/><rect x="38" y="8" width="8" height="14" rx="2" fill="#dce5df"/></g>
+      <g transform="translate(284 458)"><path d="M0 25h42v67H0z" fill="#4a8590" stroke="#bdd7d0" stroke-width="3"/><path d="M8 25V12Q8 1 21 1t13 11v13" fill="#75acaa" stroke="#c1ddd2" stroke-width="3"/><path d="M39 46h10v13H39" fill="#b8d7cf"/></g>
+      <g transform="translate(14 538)"><rect width="67" height="41" rx="4" fill="#a8422b" stroke="#dfaa65" stroke-width="3"/><path d="M8 7h14v27H8m22-27h14v27H30m22-27h9v27h-9" fill="none" stroke="#e7bd77" stroke-width="2"/></g>
+      <g fill="#827264"><ellipse cx="105" cy="641" rx="24" ry="10"/><ellipse cx="329" cy="615" rx="26" ry="11"/><ellipse cx="302" cy="633" rx="16" ry="7"/></g>
+      <g transform="translate(96 390) scale(.44)"><circle cy="-25" r="15" fill="#9b684a"/><path d="M-15-27q2-18 17-18 15 2 13 20" fill="#1d171b"/><path d="M-21-3q21-13 42 0l12 49h-66Z" fill="#bd4d37" stroke="#f0ca7b" stroke-width="3"/><path d="M-10 0v43m20-43v43" stroke="#f0ca7b" stroke-width="3"/></g>
+      <g transform="translate(294 398) scale(.42)"><circle cy="-25" r="15" fill="#9b684a"/><path d="M-15-27q2-18 17-18 15 2 13 20" fill="#1d171b"/><path d="M-21-3q21-13 42 0l12 49h-66Z" fill="#507783" stroke="#f0ca7b" stroke-width="3"/><path d="M-10 0v43m20-43v43" stroke="#f0ca7b" stroke-width="3"/></g>
+    </svg>
+  </div>
 
   <div class="app" id="app" data-state="ember">
     <header class="topbar">
@@ -247,7 +325,7 @@
     <header class="card-head"><h2 id="viewCardT">Where you are</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="atmo-seg card-seg" id="atmoListeners"></div>
     <p class="atmo-desc" id="atmoListenerDesc"></p>
-    <button class="atmo-swap" id="atmoSwap" type="button">Dance as the man instead</button>
+    <button class="atmo-swap" id="atmoSwap" type="button"><svg aria-hidden="true"><use href="#i-dance"/></svg><span>Dance as the man instead</span></button>
   </section>
 
   <section class="card" id="venueCard" role="dialog" aria-labelledby="venueCardT" hidden>
@@ -258,10 +336,10 @@
   </section>
 
   <section class="card" id="soundCard" role="dialog" aria-labelledby="soundCardT" hidden>
-    <header class="card-head"><h2 id="soundCardT">Sound</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <header class="card-head"><h2 id="soundCardT">Sound around the song</h2><button class="ib" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="card-body atmo-body">
       <button class="atmo-power" id="atmoPower" type="button" role="switch" aria-checked="false">
-        <span><strong id="atmoPowerLabel">Sound is off</strong><small>Hear the circle around the song. Best on headphones.</small></span><i aria-hidden="true"></i>
+        <span class="atmo-power-copy"><svg aria-hidden="true"><use href="#i-headphones"/></svg><span><strong id="atmoPowerLabel">Sound is off</strong><small>Hear the circle around the song. Best on headphones.</small></span></span><i aria-hidden="true"></i>
       </button>
       <p class="atmo-desc" id="atmoUnavailable" hidden>The Atmosphere engine isn't loaded in this copy of the prototype, so only the look changes.</p>
       <div class="atmo-row"><h3>Who keeps the beat</h3><div class="atmo-seg" id="atmoStyles"></div><p class="atmo-desc" id="atmoStyleDesc"></p></div>
@@ -269,7 +347,7 @@
       <div class="atmo-row atmo-beat">
         <h3>Beat</h3>
         <div class="atmo-beat-grid">
-          <button class="atmo-tap" id="atmoTap" type="button">Tap the beat</button>
+          <button class="atmo-tap" id="atmoTap" type="button"><svg aria-hidden="true"><use href="#i-clap"/></svg><span id="atmoTapLabel">Tap the beat</span></button>
           <div class="atmo-beat-read">
             <p class="atmo-bpm"><b id="atmoBpm">112</b> BPM</p>
             <div class="atmo-dots" id="atmoDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -290,7 +368,7 @@
       <textarea class="host-input idea-text" id="ideaText" rows="5" maxlength="2000" placeholder="I'd love to be able to…"></textarea>
       <label class="sr-only" for="ideaName">Your name, if you want to add it</label>
       <input class="host-input" id="ideaName" type="text" maxlength="40" autocomplete="nickname" placeholder="Your name (optional)">
-      <button class="primary" type="button" id="ideaSend" disabled>Send idea</button>
+      <button class="primary" type="button" id="ideaSend" disabled><svg aria-hidden="true"><use href="#i-send"/></svg><span>Send idea</span></button>
       <p class="atmo-desc idea-note" id="ideaNote" aria-live="polite"></p>
     </div>
   </section>
