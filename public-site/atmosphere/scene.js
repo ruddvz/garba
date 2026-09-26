@@ -116,7 +116,7 @@
 
     /* ---------- the fixed sky, cached ---------- */
     function sky(id) {
-      var key = id + W + 'x' + H + '@' + Math.round(HOR / 3); if (statics[key]) return statics[key];
+      var key = id + W + 'x' + H + '@' + Math.round(HOR / 3) + ':' + BX + ',' + BY; if (statics[key]) return statics[key];
       if (Object.keys(statics).length > 5) statics = {};
       var c = document.createElement('canvas'); c.width = Math.round(W * DPR); c.height = Math.round(H * DPR);
       var b = c.getContext('2d'); b.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -130,7 +130,7 @@
         var s = b.createLinearGradient(0, 0, 0, HOR); s.addColorStop(0, '#04051a'); s.addColorStop(0.62, '#140f33'); s.addColorStop(1, id === 'sheri' ? '#2a1b36' : '#3d1f1a');
         b.fillStyle = s; b.fillRect(0, 0, W, HOR + 1);
         for (i = 0; i < 120; i++) { b.fillStyle = 'rgba(255,245,225,' + (0.2 + r2() * 0.6) + ')'; b.fillRect(r2() * W, r2() * HOR * 0.92, 1.2, 1.2); }
-        b.fillStyle = 'rgba(255,240,215,.85)'; b.beginPath(); b.arc(W * 0.8, HOR * 0.22, W * 0.022, 0, TAU); b.fill();
+        b.fillStyle = 'rgba(255,240,215,.85)'; b.beginPath(); b.arc(BX + BW * 0.84, BY + (HOR - BY) * 0.28, BW * 0.022, 0, TAU); b.fill();
         b.fillStyle = id === 'sheri' ? '#140f10' : '#0d0913';
         if (id === 'outdoors') {
           for (var x = 0; x < W; x += W / 30) { var bh = HOR * (0.03 + r2() * 0.09); b.fillRect(x, HOR - bh, W / 31, bh + 1); for (var w = 0; w < 3; w++) if (r2() < 0.4) { b.fillStyle = 'rgba(255,196,120,.5)'; b.fillRect(x + r2() * W / 34, HOR - r2() * bh, 1.5, 1.5); b.fillStyle = '#0d0913'; } }
@@ -581,7 +581,7 @@
       items.sort(function (a, b2) { return b2.z - a.z; });
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
       items.forEach(function (it) {
-        if (it.kind === 'lamp') { garbo(it.p, it.main ? lit : lit * 0.8, t, it.main); if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
+        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else figure(it.p, it.d, T, it.you, beatPh);
       });
 
