@@ -2509,6 +2509,90 @@ window.GARBA_APP = Object.freeze({
   getLiveSync: () => liveSync.diagnostics(),
 });
 
+// A small same-page contract for the isolated Garbo prototype. Playback stays owned by this app;
+// the prototype receives a read-only snapshot and sends actions back through existing controls.
+window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
+  snapshot({ includeCatalogue = false } = {}) {
+    const song = currentSong();
+    const player = window.GARBA_YOUTUBE_PLAYER;
+    const circleState = circle.diagnostics();
+    const snapshot = {
+      song: song ? {
+        id: song.id,
+        title: song.title,
+        artist: song.artist,
+        genre: song.genre,
+        durationSeconds: song.durationSeconds || null,
+        playable: canExecuteSong(song),
+      } : null,
+      genreId: state.genreId,
+      playing: Boolean(state.playing || player?.playing),
+      elapsedSeconds: Number.isFinite(player?.elapsedSeconds) ? player.elapsedSeconds : state.elapsed,
+      durationSeconds: state.duration || song?.durationSeconds || null,
+      shuffle: state.shuffleMode,
+      live: state.liveMode,
+      favourite: song ? state.favourites.has(song.id) : false,
+      circle: Boolean(circleState?.active),
+      catalogueSignature: state.catalogueSignature,
+      nonstop: window.GARBA_NONSTOP?.activeSet ? {
+        id: window.GARBA_NONSTOP.activeSet.id,
+        title: window.GARBA_NONSTOP.activeSet.title,
+      } : null,
+    };
+    if (includeCatalogue) {
+      snapshot.genres = state.genres.map(({ id, name, label }) => ({ id, name, label }));
+      snapshot.songs = state.songs.map((item) => ({
+        id: item.id,
+        title: item.title,
+        artist: item.artist,
+        genre: item.genre,
+        durationSeconds: Number.isFinite(item.durationSeconds) ? item.durationSeconds : null,
+        playable: canExecuteSong(item),
+      }));
+    }
+    return snapshot;
+  },
+  action(name, value) {
+    switch (name) {
+      case 'play': els.playButton?.click(); return true;
+      case 'previous': els.prevButton?.click(); return true;
+      case 'next': els.nextButton?.click(); return true;
+      case 'shuffle': els.shuffleButton?.click(); return true;
+      case 'favourite': els.mobileFavourite?.click(); return true;
+      case 'live': els.liveStationButton?.click(); return true;
+      case 'circle': els.circleButton?.click(); return true;
+      case 'explore': els.browseButton?.click(); return true;
+      case 'seek': {
+        if (!Number.isFinite(value) || !state.duration) return false;
+        els.progress.value = String(Math.round(Math.max(0, Math.min(1, value)) * 1000));
+        els.progress.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+      }
+      case 'genre': {
+        if (value === 'nonstop') {
+          const button = document.getElementById('nonstopButton');
+          button?.click();
+          return Boolean(button);
+        }
+        const button = [...document.querySelectorAll('#genreStrip [data-genre]')].find((item) => item.dataset.genre === value);
+        if (!button) return false;
+        button.click();
+        return true;
+      }
+      case 'song': {
+        const song = state.songs.find((item) => item.id === value);
+        if (!song || !canExecuteSong(song)) return false;
+        selectSong(song.id, { preservePlayback: state.playing, keepSheet: true });
+        return true;
+      }
+      case 'nonstop':
+        if (typeof value !== 'string' || !value) return false;
+        return Boolean(window.GARBA_NONSTOP?.play?.(value));
+      default: return false;
+    }
+  },
+});
+
 window.GARBA_SHARE = Object.freeze({
   shareCurrent: handleShareCurrentSong,
 });

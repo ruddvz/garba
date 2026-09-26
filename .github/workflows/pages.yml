@@ -124,6 +124,14 @@ jobs:
             public-site/navratri-and-garba \
             public-site/what-is-garba \
             _site/
+
+          # Immersive mode embeds the complete Garbo prototype. Keep its runtime and
+          # presentation in sync with the canonical source under docs/product.
+          cp \
+            docs/product/prototypes/garbo/index.html \
+            docs/product/prototypes/garbo/garbo.js \
+            docs/product/prototypes/garbo/garbo.css \
+            _site/garbo/prototype/
           cp \
             public-site/editorial.css \
             public-site/pages.css \
