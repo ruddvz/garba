@@ -77,7 +77,7 @@
       return { eyebrow: 'Nonstop Garba · chapter ' + (t.chapterIndex + 1) + ' of ' + set.chapters.length, title: t.title, artist: set.artists.join(', '), from: { text: set.title, script: 'latn' } };
     }
     var g = genreInfo(t.song.genre);
-    var eyebrow = S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length + ' · ' + (g ? g.label : '') : (g ? g.label : '');
+    var eyebrow = S.live ? '24/7 Live' : S.tonight ? 'Tonight · ' + (S.tonight.part + 1) + ' of ' + TONIGHT.length : '';
     var rel = t.song.release;
     return { eyebrow: eyebrow, title: t.song.title, artist: t.song.artist, from: rel ? { text: rel.title, script: rel.script, year: rel.year } : null };
   }
@@ -154,7 +154,7 @@
     ember: 'Tap the garbo to light it',
     paused: 'Paused',
     loading: 'Lighting the lamp…',
-    playing: '',
+    playing: 'Swipe the genres below for more',
     live: '',
     offline: '',
     unavailable: 'No verified YouTube route yet',
@@ -224,7 +224,7 @@
     if (!S.queue.length) {
       var g = genreInfo(id);
       S.nonstop = null;
-      S.track = { kind: 'empty', eyebrow: g ? g.label : id, title: 'No ' + (g ? g.name : id) + ' songs to play yet', artist: 'No verified YouTube routes in this sample.' };
+      S.track = { kind: 'empty', eyebrow: '', title: 'No ' + (g ? g.name : id) + ' songs to play yet', artist: 'No verified YouTube routes in this sample.' };
       scene.set({ chapters: null, chapterIndex: -1 });
       clearTimeout(S.loadTimer);
       renderNP(true); setMode('empty');
@@ -298,10 +298,13 @@
     dial.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); moveDial(e.key === 'ArrowRight' ? 1 : -1); var cur = dial.querySelector('[aria-current="true"]'); if (cur) cur.focus(); }
     });
+    $('dialPrev').addEventListener('click', function (e) { e.stopPropagation(); moveDial(-1); });
+    $('dialNext').addEventListener('click', function (e) { e.stopPropagation(); moveDial(1); });
     dial.addEventListener('wheel', function (e) { if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 20) { e.preventDefault(); moveDial(e.deltaX > 0 ? 1 : -1); } }, { passive: false });
   }
   var dialTimer;
   function moveDial(dir) {
+    if (!S.dialUsed) { S.dialUsed = true; HINTS.playing = ''; $('hint').textContent = HINTS[S.mode] || ''; }
     var ids = dialButtons.map(function (b) { return b.dataset.genre; });
     var i = Math.max(0, Math.min(ids.length - 1, ids.indexOf(S.genre) + dir));
     if (ids[i] === S.genre) return;
@@ -312,7 +315,8 @@
   }
   function renderDial() {
     var ids = dialButtons.map(function (b) { return b.dataset.genre; }), cur = ids.indexOf(S.genre);
-    var half = ($('dial').clientWidth || 360) / 2, GAP = 26, arcR = half * 2.2;
+    $('dialPrev').disabled = cur <= 0; $('dialNext').disabled = cur >= ids.length - 1;
+    var half = ($('dial').clientWidth || 360) / 2, GAP = 26, arcR = half * (half > 250 ? 4.5 : 2.2);
     // Measure label text at its final size so positions don't depend on a running transition.
     var widths = dialButtons.map(function (b, i) {
       measureCtx.font = i === cur ? '600 16.5px "Anek Gujarati", system-ui, sans-serif' : '500 14px "Anek Gujarati", system-ui, sans-serif';
@@ -621,6 +625,12 @@
   $('atmoBtn').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
   $('atmoTop').addEventListener('click', function () { showSheet('atmoSheet', 'atmoPower'); });
 
+  /* ---------- Singer faces ---------- */
+  // Faces are listed by artist slug, e.g. window.GARBO_SINGERS = { 'geeta-rabari': { file: 'geeta-rabari.webp', man: false } }.
+  // Until any exist the list is empty and nothing is requested.
+  var SINGER_BASE = window.GARBO_SINGER_BASE || '../../../../assets/singers/', SINGERS = window.GARBO_SINGERS || null;
+  function slugify(t) { return String(t).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
   function atmoSegment(elId, items, current, pick) {
@@ -647,6 +657,10 @@
     $('atmoStyleDesc').textContent = style === 'dandiya' ? 'Everyone strikes dandiya sticks on the beat.' : 'The circle claps on the beat.';
     if (A.engine && A.style !== style) A.engine.setStyle(style);
     A.style = style;
+    // The lead singer wears the artist's face when assets/singers/index.json has one for them
+    var artist = S.track && S.track.song ? String(S.track.song.artist || '').split(/,|&/)[0].trim() : S.nonstop ? String((S.nonstop.artists || [])[0] || '') : '';
+    var face = SINGERS && SINGERS[slugify(artist)];
+    if (scene.atmosphere) scene.atmosphere({ singerFace: face ? { url: SINGER_BASE + face.file, man: !!face.man } : null });
     if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
   }
   function atmoLoadBed(ctx) {
@@ -698,7 +712,10 @@
 
   atmoSegment('atmoVenues', E ? E.VENUES : { outdoors: { label: 'Outdoors' } }, A.venue, function (id) { A.venue = id; if (A.engine) A.engine.setVenue(id); atmoSave(); atmoRender(); });
   atmoSegment('atmoListeners', E ? E.LISTENERS : { circle: { label: 'In the circle' } }, A.listener, function (id) { A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender(); });
-  atmoSegment('atmoYou', { woman: { label: 'Woman' }, man: { label: 'Man' } }, A.youAs, function (id) { A.youAs = id; atmoSave(); atmoRender(); });
+  // A quiet switch for which of the couple is you
+  function swapText() { $('atmoSwap').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
+  $('atmoSwap').addEventListener('click', function () { A.youAs = A.youAs === 'man' ? 'woman' : 'man'; swapText(); atmoSave(); atmoRender(); });
+  swapText();
   atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
   atmoSegment('atmoModes', ATMO_MODES, A.mode, function (id) { A.mode = id; if (A.engine && A.running) A.engine.setProfile(ATMO_MODES[id].profile); atmoSave(); atmoRender(); });
   atmoSegment('atmoPatterns', E ? E.PATTERNS : {}, A.pattern, function (id) { A.pattern = id; if (A.engine) A.engine.setPattern(id); atmoSave(); });

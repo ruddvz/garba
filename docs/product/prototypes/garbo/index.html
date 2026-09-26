@@ -89,7 +89,11 @@
         <button class="tb quiet" id="heartBtn" type="button" aria-label="Save to My Garba" aria-pressed="false"><svg><use href="#i-heart"/></svg></button>
       </section>
 
-      <nav class="dial" id="dial" aria-label="Genres"><div class="dial-track" id="dialTrack"></div></nav>
+      <nav class="dial" id="dial" aria-label="Genres">
+        <button class="dial-arrow prev" id="dialPrev" type="button" aria-label="Previous genre" tabindex="-1"><svg aria-hidden="true"><use href="#i-chev"/></svg></button>
+        <div class="dial-track" id="dialTrack"></div>
+        <button class="dial-arrow next" id="dialNext" type="button" aria-label="Next genre" tabindex="-1"><svg aria-hidden="true"><use href="#i-chev"/></svg></button>
+      </nav>
 
       <footer class="foot">
         <button class="live" id="liveBtn" type="button" aria-pressed="false"><i aria-hidden="true"></i>24/7 Live</button>
@@ -167,8 +171,7 @@
       <p class="atmo-desc">The lights follow the kind of music you pick, and Dandiya Raas puts sticks in every hand.</p>
       <p class="atmo-desc" id="atmoUnavailable" hidden>The Atmosphere engine isn't loaded in this copy of the prototype, so only the look changes.</p>
       <div class="atmo-row"><h3>Venue</h3><div class="atmo-seg" id="atmoVenues"></div><p class="atmo-desc" id="atmoVenueDesc"></p></div>
-      <div class="atmo-row"><h3>Where you are</h3><div class="atmo-seg" id="atmoListeners"></div><p class="atmo-desc" id="atmoListenerDesc"></p></div>
-      <div class="atmo-row"><h3>You dance as</h3><div class="atmo-seg" id="atmoYou"></div><p class="atmo-desc">You and your partner dance side by side in the main circle.</p></div>
+      <div class="atmo-row"><h3>Where you are</h3><div class="atmo-seg" id="atmoListeners"></div><p class="atmo-desc" id="atmoListenerDesc"></p><button class="atmo-swap" id="atmoSwap" type="button">Dance as the man instead</button></div>
       <div class="atmo-row"><h3>Who keeps the beat</h3><div class="atmo-seg" id="atmoStyles"></div><p class="atmo-desc" id="atmoStyleDesc"></p></div>
       <div class="atmo-row"><h3>Around the music</h3><div class="atmo-seg" id="atmoModes"></div></div>
       <div class="atmo-row atmo-beat">
