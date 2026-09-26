@@ -64,7 +64,7 @@ for (const marker of [
 
 // Garba Circle modules are imported by app.js from assets/runtime, which Pages copies whole.
 const appSource = await read('app.js');
-for (const file of ['assets/runtime/garba-circle.js', 'assets/runtime/garba-circle-controller.js', 'assets/runtime/qr-code.js', 'assets/runtime/live-sync.js', 'assets/runtime/playable-order.js', 'assets/runtime/my-songs.js']) {
+for (const file of ['assets/runtime/garba-circle.js', 'assets/runtime/garba-circle-controller.js', 'assets/runtime/qr-code.js', 'assets/runtime/live-sync.js', 'assets/runtime/sync-correction.js', 'assets/runtime/playable-order.js', 'assets/runtime/my-songs.js']) {
   if (!sw.includes(`'./${file}'`)) fail(`PWA core shell does not cache ${file}`);
   if (!sw.includes(`'/${file}'`)) fail(`PWA fresh-runtime list does not include ${file}`);
 }

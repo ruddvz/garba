@@ -1,6 +1,6 @@
 // Keep the service-worker contract covered by the production browser smoke suite.
 const CACHE_PREFIX = 'garba-live-';
-const CACHE_NAME = `${CACHE_PREFIX}v34`;
+const CACHE_NAME = `${CACHE_PREFIX}v35`;
 const STAGING_CACHE_NAME = `${CACHE_PREFIX}staging`;
 const LEGACY_PREFIX = 'garba-shell-';
 const STAGING_READY_URL = new URL('./__garba_staging_ready__', self.location.href).toString();
@@ -28,6 +28,7 @@ const CORE_SHELL = [
   './assets/runtime/garba-circle-controller.js',
   './assets/runtime/qr-code.js',
   './assets/runtime/live-sync.js',
+  './assets/runtime/sync-correction.js',
   './assets/runtime/playable-order.js',
   './assets/runtime/my-songs.js',
   './assets/audio/courtyard-night.ogg',
@@ -80,6 +81,7 @@ const FRESH_RUNTIME_SUFFIXES = [
   '/assets/runtime/garba-circle-controller.js',
   '/assets/runtime/qr-code.js',
   '/assets/runtime/live-sync.js',
+  '/assets/runtime/sync-correction.js',
   '/assets/runtime/playable-order.js',
   '/assets/runtime/my-songs.js',
 ];

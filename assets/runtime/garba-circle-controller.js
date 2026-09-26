@@ -12,35 +12,18 @@ import {
   encodeCircleCode,
   decodeCircleCode,
   getCirclePosition,
-  planDriftCorrection,
   measureClockOffset,
   createDateHeaderProbe,
-  DEFAULT_DRIFT_THRESHOLD_SECONDS,
 } from './garba-circle.js';
 import { qrSvg } from './qr-code.js';
+import { createSyncCorrector } from './sync-correction.js';
 
 const DRIFT_INTERVAL_MS = 2000;
 const DRIFT_READS = 10;
-const SEEK_COOLDOWN_MS = 3000;
 const SETTLE_AFTER_PLAY_MS = 700;
 const BOUNDARY_WINDOW_SECONDS = 1.5;
-// After a load or resume, a couple of small seeks remove the residual a load leaves behind.
-const FINE_THRESHOLD_SECONDS = 0.04;
-const FINE_CORRECTIONS = 3;
-// A small offset that holds steady across readings is real, not noise: correct it occasionally.
-const STEADY_READINGS = 3;
-const STEADY_SPREAD_SECONDS = 0.03;
-const STEADY_INTERVAL_MS = 15000;
-// Share of each measured residual folded into the learned lead (timing reads are precise to a few ms).
-const LEAD_GAIN = 0.8;
 // YouTube errors that mean the video cannot play here at all (removed, embedding disabled).
 const UNPLAYABLE_ERRORS = new Set([100, 101, 150]);
-const MAX_THRESHOLD_SECONDS = 1;
-const MAX_LOAD_LEAD_SECONDS = 3;
-// Seeks inside the buffer land within tens of ms; a larger residual means the player stalled,
-// which must not be learned as seek latency.
-const MAX_SEEK_LEAD_SECONDS = 0.5;
-const SEEK_LEARN_LIMIT_SECONDS = 0.25;
 
 const COPY = {
   lede: 'Everyone who opens this link hears the same song at the same moment. Use earbuds for a silent garba.',
@@ -89,6 +72,7 @@ function formatClock(clock) {
 export function createCircleController(app) {
   const player = () => window.GARBA_YOUTUBE_PLAYER || null;
   const probe = createDateHeaderProbe({ url: './robots.txt' });
+  const corrector = createSyncCorrector({ player, now: localNow });
 
   const circle = {
     status: 'idle', // idle | starting | ready | active | invalid | mismatch
@@ -101,19 +85,11 @@ export function createCircleController(app) {
     clock: null,
     clockPromise: null,
     wasPlaying: false,
-    lastSeekAt: 0,
-    seekTimes: [],
-    seekLeadSeconds: 0,
-    loadLeadSeconds: 0,
     pendingLoadSongId: null,
-    pendingSeek: false,
     boundaryTimer: null,
     settleTimer: null,
     driftTimer: null,
     measuring: false,
-    fineCorrections: 0,
-    recentDrifts: [],
-    lastSteadyFixAt: 0,
     lastDriftSeconds: null,
   };
 
@@ -182,10 +158,10 @@ export function createCircleController(app) {
       waitForBoundary(now.remainingSeconds);
       return;
     }
-    const offset = Math.min(now.offsetSeconds + circle.loadLeadSeconds, Math.max(0, now.remainingSeconds + now.offsetSeconds - 0.5));
+    // Aim ahead by how late this phone usually lands after opening a recording.
+    const offset = Math.min(now.offsetSeconds + corrector.loadLead, Math.max(0, now.remainingSeconds + now.offsetSeconds - 0.5));
     circle.pendingLoadSongId = now.song.id;
-    circle.recentDrifts = [];
-    circle.lastSeekAt = localNow();
+    corrector.loaded();
     Promise.resolve(app.playCircleSong(now.song, offset)).catch(() => {});
     renderDialog();
   }
@@ -219,19 +195,6 @@ export function createCircleController(app) {
     return elapsed > 0 && advanced >= elapsed * 0.5 ? drift : null;
   }
 
-  function driftThreshold() {
-    const cutoff = localNow() - 30000;
-    circle.seekTimes = circle.seekTimes.filter((at) => at > cutoff);
-    const repeats = Math.max(0, circle.seekTimes.length - 2);
-    return Math.min(MAX_THRESHOLD_SECONDS, DEFAULT_DRIFT_THRESHOLD_SECONDS * 1.5 ** repeats);
-  }
-
-  function steadyOffset() {
-    const readings = circle.recentDrifts;
-    if (readings.length < STEADY_READINGS || localNow() - circle.lastSteadyFixAt < STEADY_INTERVAL_MS) return false;
-    const spread = Math.max(...readings) - Math.min(...readings);
-    return spread < STEADY_SPREAD_SECONDS && readings.every((drift) => Math.abs(drift) >= FINE_THRESHOLD_SECONDS);
-  }
 
   async function alignOnce() {
     if (circle.status !== 'active' || circle.measuring) return;
@@ -245,49 +208,24 @@ export function createCircleController(app) {
       else if (!circle.boundaryTimer) goToCircle();
       return;
     }
-    if (localNow() - circle.lastSeekAt < SEEK_COOLDOWN_MS) return;
+    if (corrector.busy()) return;
 
     circle.measuring = true;
     try {
       const drift = await measureDrift(now.song.id);
       if (drift == null || circle.status !== 'active') return;
       circle.lastDriftSeconds = drift;
-      circle.recentDrifts = [...circle.recentDrifts, drift].slice(-STEADY_READINGS);
-
-      // Learn how late this phone is after a load or a seek, so the next one lands closer.
-      if (circle.pendingLoadSongId === now.song.id) {
-        circle.loadLeadSeconds = Math.min(MAX_LOAD_LEAD_SECONDS, Math.max(0, circle.loadLeadSeconds - drift * LEAD_GAIN));
-        circle.pendingLoadSongId = null;
-      } else if (circle.pendingSeek) {
-        if (Math.abs(drift) < SEEK_LEARN_LIMIT_SECONDS) {
-          circle.seekLeadSeconds = Math.min(MAX_SEEK_LEAD_SECONDS, Math.max(0, circle.seekLeadSeconds - drift * LEAD_GAIN));
-        }
-        circle.pendingSeek = false;
-      }
-
+      circle.pendingLoadSongId = null;
       const fresh = position();
       if (fresh?.song?.id !== now.song.id) return;
-      const fine = circle.fineCorrections > 0;
-      const steady = !fine && steadyOffset();
-      const plan = planDriftCorrection({
-        expectedSeconds: fresh.offsetSeconds,
-        actualSeconds: fresh.offsetSeconds + drift,
-        thresholdSeconds: fine || steady ? FINE_THRESHOLD_SECONDS : driftThreshold(),
-        leadSeconds: circle.seekLeadSeconds,
+      // Learns this phone's load and seek delays, then seeks (aiming ahead) or briefly changes
+      // the playback rate to close small gaps without an audible skip.
+      corrector.correct({
+        drift,
+        remainingSeconds: fresh.remainingSeconds,
+        expectedSeconds: () => position()?.offsetSeconds ?? fresh.offsetSeconds,
+        seekTo: (seconds) => player()?.seekTo?.(seconds),
       });
-      if (plan.action === 'seek' && fresh.remainingSeconds > BOUNDARY_WINDOW_SECONDS + circle.seekLeadSeconds) {
-        player()?.seekTo?.(plan.targetSeconds);
-        circle.lastSeekAt = localNow();
-        circle.pendingSeek = true;
-        circle.recentDrifts = [];
-        if (fine) circle.fineCorrections -= 1;
-        else if (steady) circle.lastSteadyFixAt = circle.lastSeekAt;
-        else {
-          circle.seekTimes.push(circle.lastSeekAt);
-          // A catch-up seek lands roughly; allow one small refinement afterwards.
-          circle.fineCorrections = 1;
-        }
-      } else if (fine) circle.fineCorrections = 0;
     } finally {
       circle.measuring = false;
       renderStatus();
@@ -306,8 +244,7 @@ export function createCircleController(app) {
     if (playing && !circle.wasPlaying) {
       // First frames after a load, seek or resume: measure soon, then keep the regular loop.
       clearTimeout(circle.settleTimer);
-      circle.lastSeekAt = 0;
-      circle.fineCorrections = FINE_CORRECTIONS;
+      corrector.resumed();
       circle.settleTimer = setTimeout(alignOnce, SETTLE_AFTER_PLAY_MS);
     }
     circle.wasPlaying = playing;
@@ -327,7 +264,7 @@ export function createCircleController(app) {
     if (circle.status !== 'active') return;
     await syncClock().catch(() => null);
     if (circle.status !== 'active') return;
-    circle.lastSeekAt = 0;
+    corrector.resumed();
     alignOnce();
     renderStatus();
   }
@@ -338,7 +275,6 @@ export function createCircleController(app) {
     circle.status = 'active';
     circle.role = role;
     circle.wasPlaying = false;
-    circle.seekTimes = [];
     startDriftLoop();
     notify();
   }
@@ -420,8 +356,9 @@ export function createCircleController(app) {
     if (circle.status === 'idle') return;
     const wasActive = circle.status === 'active';
     clearTimers();
+    corrector.reset();
     Object.assign(circle, {
-      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, pendingSeek: false, recentDrifts: [], lastDriftSeconds: null,
+      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, lastDriftSeconds: null,
     });
     closeDialog();
     notify();
@@ -629,10 +566,10 @@ export function createCircleController(app) {
       syncedNow: syncedNow(),
       position: circle.status === 'active' ? position() : null,
       lastDriftSeconds: circle.lastDriftSeconds,
-      seekLeadSeconds: circle.seekLeadSeconds,
-      loadLeadSeconds: circle.loadLeadSeconds,
-      recentDrifts: [...circle.recentDrifts],
-      fineCorrections: circle.fineCorrections,
+      seekLeadSeconds: corrector.seekLead,
+      loadLeadSeconds: corrector.loadLead,
+      nudging: corrector.nudging,
+      fineCorrections: corrector.fine,
     }),
   });
 }

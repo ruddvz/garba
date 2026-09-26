@@ -9,26 +9,14 @@
  */
 
 import { createLiveTimeline } from './live-station.js';
-import {
-  measureClockOffset,
-  createDateHeaderProbe,
-  planDriftCorrection,
-  DEFAULT_DRIFT_THRESHOLD_SECONDS,
-} from './garba-circle.js';
+import { measureClockOffset, createDateHeaderProbe } from './garba-circle.js';
+import { createSyncCorrector } from './sync-correction.js';
 
 const DRIFT_INTERVAL_MS = 2000;
 const DRIFT_READS = 10;
 const DRIFT_READ_GAP_MS = 50;
-const SEEK_COOLDOWN_MS = 3000;
 const SETTLE_AFTER_PLAY_MS = 700;
 const BOUNDARY_WINDOW_SECONDS = 1.5;
-const FINE_THRESHOLD_SECONDS = 0.04;
-const FINE_CORRECTIONS = 3;
-const MAX_THRESHOLD_SECONDS = 1;
-const LEAD_GAIN = 0.8;
-const MAX_LOAD_LEAD_SECONDS = 3;
-const MAX_SEEK_LEAD_SECONDS = 0.5;
-const SEEK_LEARN_LIMIT_SECONDS = 0.25;
 // A measured clock is reused for this long before Live Radio measures it again on tune-in.
 const CLOCK_TTL_MS = 10 * 60 * 1000;
 
@@ -77,6 +65,12 @@ export function createLiveSync(app) {
   const localNow = app.now || defaultNow;
   const sleep = app.sleep || defaultSleep;
   const probe = app.probe || createDateHeaderProbe({ url: './robots.txt' });
+  const corrector = createSyncCorrector({
+    player,
+    now: localNow,
+    setTimer: app.setTimer || ((fn, ms) => setTimeout(fn, ms)),
+    clearTimer: app.clearTimer || ((id) => clearTimeout(id)),
+  });
 
   const sync = {
     active: false,
@@ -90,13 +84,6 @@ export function createLiveSync(app) {
     settleTimer: null,
     measuring: false,
     wasPlaying: false,
-    lastSeekAt: 0,
-    seekTimes: [],
-    pendingLoadSongId: null,
-    pendingSeek: false,
-    loadLeadSeconds: 0,
-    seekLeadSeconds: 0,
-    fineCorrections: 0,
     lastDriftSeconds: null,
   };
 
@@ -152,11 +139,9 @@ export function createLiveSync(app) {
     const now = broadcastAt();
     if (!now?.song) return null;
     const remaining = now.remainingExactSeconds ?? now.remainingSeconds;
-    const offset = Math.min(now.offsetSeconds + sync.loadLeadSeconds, Math.max(0, now.offsetSeconds + remaining - 0.5));
-    sync.pendingLoadSongId = now.song.id;
-    sync.lastSeekAt = localNow();
-    // A load lands roughly: allow a few small refinements once it plays.
-    sync.fineCorrections = FINE_CORRECTIONS;
+    // Aim ahead by how late this phone usually lands after opening a recording.
+    const offset = Math.min(now.offsetSeconds + corrector.loadLead, Math.max(0, now.offsetSeconds + remaining - 0.5));
+    corrector.loaded();
     Promise.resolve(app.playLiveSong(now.song, offset)).catch(() => {});
     return now;
   }
@@ -190,12 +175,6 @@ export function createLiveSync(app) {
     return elapsed > 0 && advanced >= elapsed * 0.5 ? drift : null;
   }
 
-  function driftThreshold() {
-    const cutoff = localNow() - 30000;
-    sync.seekTimes = sync.seekTimes.filter((at) => at > cutoff);
-    const repeats = Math.max(0, sync.seekTimes.length - 2);
-    return Math.min(MAX_THRESHOLD_SECONDS, DEFAULT_DRIFT_THRESHOLD_SECONDS * 1.5 ** repeats);
-  }
 
   async function alignOnce() {
     if (!stillLive() || sync.measuring) return;
@@ -207,45 +186,21 @@ export function createLiveSync(app) {
       if (!sync.boundaryTimer) goLive();
       return;
     }
-    if (step.action !== 'hold' || localNow() - sync.lastSeekAt < SEEK_COOLDOWN_MS) return;
+    if (step.action !== 'hold' || corrector.busy()) return;
 
     sync.measuring = true;
     try {
       const drift = await measureDrift(now.song.id);
       if (drift == null || !stillLive()) return;
       sync.lastDriftSeconds = drift;
-
-      // Learn how late this device lands after a load or a seek, so the next one aims ahead.
-      if (sync.pendingLoadSongId === now.song.id) {
-        sync.loadLeadSeconds = Math.min(MAX_LOAD_LEAD_SECONDS, Math.max(0, sync.loadLeadSeconds - drift * LEAD_GAIN));
-        sync.pendingLoadSongId = null;
-      } else if (sync.pendingSeek) {
-        if (Math.abs(drift) < SEEK_LEARN_LIMIT_SECONDS) {
-          sync.seekLeadSeconds = Math.min(MAX_SEEK_LEAD_SECONDS, Math.max(0, sync.seekLeadSeconds - drift * LEAD_GAIN));
-        }
-        sync.pendingSeek = false;
-      }
-
       const fresh = broadcastAt();
       if (fresh?.song?.id !== now.song.id) return;
-      const fine = sync.fineCorrections > 0;
-      const plan = planDriftCorrection({
-        expectedSeconds: fresh.offsetSeconds,
-        actualSeconds: fresh.offsetSeconds + drift,
-        thresholdSeconds: fine ? FINE_THRESHOLD_SECONDS : driftThreshold(),
-        leadSeconds: sync.seekLeadSeconds,
+      corrector.correct({
+        drift,
+        remainingSeconds: fresh.remainingExactSeconds ?? fresh.remainingSeconds,
+        expectedSeconds: () => broadcastAt()?.offsetSeconds ?? fresh.offsetSeconds,
+        seekTo: (seconds) => player()?.seekTo?.(seconds),
       });
-      const remaining = fresh.remainingExactSeconds ?? fresh.remainingSeconds;
-      if (plan.action === 'seek' && remaining > BOUNDARY_WINDOW_SECONDS + sync.seekLeadSeconds) {
-        player()?.seekTo?.(plan.targetSeconds);
-        sync.lastSeekAt = localNow();
-        sync.pendingSeek = true;
-        if (fine) sync.fineCorrections -= 1;
-        else {
-          sync.seekTimes.push(sync.lastSeekAt);
-          sync.fineCorrections = 1;
-        }
-      } else if (fine) sync.fineCorrections = 0;
     } finally {
       sync.measuring = false;
     }
@@ -257,8 +212,7 @@ export function createLiveSync(app) {
     if (playing && !sync.wasPlaying) {
       // First frames after a load, seek or resume: realign soon, with a finer threshold.
       clearTimeout(sync.settleTimer);
-      sync.lastSeekAt = 0;
-      sync.fineCorrections = FINE_CORRECTIONS;
+      corrector.resumed();
       sync.settleTimer = setTimeout(alignOnce, SETTLE_AFTER_PLAY_MS);
     }
     sync.wasPlaying = playing;
@@ -268,7 +222,7 @@ export function createLiveSync(app) {
     if (!stillLive()) return;
     await syncClock();
     if (!stillLive()) return;
-    sync.lastSeekAt = 0;
+    corrector.resumed();
     alignOnce();
   }
 
@@ -280,7 +234,6 @@ export function createLiveSync(app) {
     const wasActive = sync.active;
     sync.active = true;
     sync.wasPlaying = false;
-    sync.seekTimes = [];
     sync.lastDriftSeconds = null;
     if (!wasActive) {
       clearInterval(sync.driftTimer);
@@ -291,8 +244,8 @@ export function createLiveSync(app) {
       syncClock().then(() => {
         if (!stillLive()) return;
         // The first load used the unmeasured clock; its error is not load latency to learn from.
-        sync.pendingLoadSongId = null;
-        sync.lastSeekAt = 0;
+        corrector.discardPending();
+        corrector.resumed();
         // If the unmeasured clock picked the wrong song, switch now rather than after it plays.
         const onBroadcastSong = broadcastAt()?.song?.id === player()?.activeSongId;
         if (onBroadcastSong) alignOnce();
@@ -306,9 +259,7 @@ export function createLiveSync(app) {
     if (!sync.active) return;
     sync.active = false;
     clearTimers();
-    sync.pendingLoadSongId = null;
-    sync.pendingSeek = false;
-    sync.fineCorrections = 0;
+    corrector.reset();
   }
 
   /**
@@ -351,9 +302,10 @@ export function createLiveSync(app) {
       syncedNow: syncedNow(),
       broadcast: sync.active ? broadcastAt() : null,
       lastDriftSeconds: sync.lastDriftSeconds,
-      loadLeadSeconds: sync.loadLeadSeconds,
-      seekLeadSeconds: sync.seekLeadSeconds,
-      fineCorrections: sync.fineCorrections,
+      loadLeadSeconds: corrector.loadLead,
+      seekLeadSeconds: corrector.seekLead,
+      nudging: corrector.nudging,
+      fineCorrections: corrector.fine,
     }),
   });
 }

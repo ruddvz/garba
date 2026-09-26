@@ -4,6 +4,7 @@ import path from 'node:path';
 import { buildLiveSchedule, createLiveTimeline, getLiveBroadcastState } from '../../assets/runtime/live-station.js';
 import { createLiveSync, planLiveStep } from '../../assets/runtime/live-sync.js';
 import { mulberry32 } from '../../assets/runtime/garba-circle.js';
+import { planCorrection, nudgeRates } from '../../assets/runtime/sync-correction.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const pass = (message) => console.log(`✓ ${message}`);
@@ -200,6 +201,120 @@ const settle = async (world, device, rounds = 3) => {
   assert.equal(other.sync.active, false, 'sync stops once Live Radio is off');
   pass('live sync never takes over another mode and stops with Live Radio');
 
+  for (const device of devices) device.sync.stop();
+}
+
+/* ---------------- correction planning ---------------- */
+
+assert.deepEqual(nudgeRates([0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]), { faster: 1.25, slower: 0.75 });
+assert.equal(nudgeRates([1]), null, 'no rate control without a faster and a slower rate');
+assert.equal(nudgeRates([]), null);
+const rates = { faster: 1.25, slower: 0.75 };
+assert.deepEqual(planCorrection({ drift: -0.2, remainingSeconds: 100, rates }), { action: 'nudge', rate: 1.25, durationSeconds: 0.8 });
+assert.deepEqual(planCorrection({ drift: 0.1, remainingSeconds: 100, rates }), { action: 'nudge', rate: 0.75, durationSeconds: 0.4 });
+assert.equal(planCorrection({ drift: -3, remainingSeconds: 100, rates, seekLead: 0.4 }).action, 'seek', 'large gaps seek');
+assert.equal(planCorrection({ drift: -0.2, remainingSeconds: 100 }).action, 'none', 'without rate control, small gaps wait for the fine pass');
+assert.equal(planCorrection({ drift: -0.2, remainingSeconds: 100, fine: true }).action, 'seek', 'the fine pass seeks small gaps');
+assert.equal(planCorrection({ drift: -0.02, remainingSeconds: 100, rates, fine: true }).action, 'none', 'within 30 ms is in sync');
+assert.equal(planCorrection({ drift: -0.5, remainingSeconds: 1.2, rates }).action, 'none', 'no correction right before a song boundary');
+pass('correction planning: speed nudges for small gaps, seeks for large ones, nothing within 30 ms or at a boundary');
+
+/* ---------------- realistic phones: seeks and loads take time to land ---------------- */
+
+// A phone's player freezes after a load or seek, then plays on from the target, so it lands
+// behind by however long that took (with jitter). Optionally it supports playback-rate changes.
+function createRealisticDevice(world, { skewMs, loadSeconds, seekSeconds, jitterSeconds = 0.1, rates = null, seed = 1 }) {
+  const random = mulberry32(seed);
+  const jitter = () => (random() * 2 - 1) * jitterSeconds;
+  const player = {
+    activeSongId: null,
+    playing: false,
+    ended: false,
+    anchor: 0,
+    resumeAt: 0,
+    rate: 1,
+    rateChanges: 0,
+    seeks: 0,
+    position() {
+      if (world.t < this.resumeAt) return this.anchor;
+      return this.anchor + ((world.t - this.resumeAt) / 1000) * this.rate;
+    },
+    get elapsedSeconds() { return this.activeSongId ? this.position() : null; },
+    land(target, delaySeconds) {
+      this.anchor = target;
+      this.resumeAt = world.t + Math.max(0, delaySeconds) * 1000;
+    },
+    seekTo(seconds) {
+      this.seeks += 1;
+      this.land(seconds, seekSeconds + jitter());
+    },
+  };
+  if (rates) {
+    player.getAvailablePlaybackRates = () => rates;
+    player.setPlaybackRate = (rate) => {
+      const now = player.position();
+      player.anchor = now;
+      player.resumeAt = Math.max(world.t, player.resumeAt);
+      player.rate = rate;
+      player.rateChanges += 1;
+    };
+  }
+  let live = true;
+  const sync = createLiveSync({
+    songs: () => songs,
+    isLive: () => live,
+    player: () => player,
+    now: () => world.t + skewMs,
+    sleep: world.sleep,
+    probe: world.probe,
+    showToast: () => {},
+    setTimer: (fn, ms) => {
+      const timer = { cancelled: false };
+      world.sleep(ms).then(() => { if (!timer.cancelled) fn(); });
+      return timer;
+    },
+    clearTimer: (timer) => { if (timer) timer.cancelled = true; },
+    playLiveSong: (entry, offset) => {
+      player.activeSongId = entry.id;
+      player.playing = true;
+      player.ended = false;
+      player.rate = 1;
+      player.land(offset, loadSeconds + jitter());
+    },
+  });
+  return { sync, player, leave: () => { live = false; } };
+}
+
+// Run the real drift loop cadence (every 2 s) for a while.
+const runFor = async (world, devices, seconds) => {
+  const end = world.t + seconds * 1000;
+  while (world.t < end) {
+    await world.sleep(2000);
+    for (const device of devices) await device.sync.alignOnce();
+  }
+};
+
+for (const withRates of [false, true]) {
+  const world = createWorld(Date.UTC(2026, 9, 12, 17, 5, 3, 777));
+  const profiles = [
+    { skewMs: -3700, loadSeconds: 1.2, seekSeconds: 0.35 },
+    { skewMs: 120000, loadSeconds: 2.4, seekSeconds: 0.8 },
+    { skewMs: 999, loadSeconds: 0.6, seekSeconds: 0.2 },
+    { skewMs: -45000, loadSeconds: 1.8, seekSeconds: 0.6 },
+  ];
+  const devices = profiles.map((profile, i) => createRealisticDevice(world, { ...profile, seed: 11 + i, rates: withRates ? [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] : null }));
+  for (const device of devices) device.sync.start();
+  await runFor(world, devices, 50);
+  // Once settled, every phone must stay on the broadcast at every sample, not just once.
+  let worst = 0;
+  for (let i = 0; i < 10; i += 1) {
+    await runFor(world, devices, 2);
+    const gaps = devices.map((device) => gap(world, device));
+    worst = Math.max(worst, ...gaps);
+    assert.ok(Math.max(...gaps) < 0.03, `${withRates ? 'nudging' : 'seeks only'}: phones stay within 30 ms of the broadcast (${gaps.map((g) => g.toFixed(3)).join(', ')})`);
+  }
+  const label = withRates ? 'with playback-rate nudging' : 'with seeks only';
+  pass(`${label}: phones with clocks up to 2 min off, 0.6–2.4 s loads and 0.2–0.8 s seeks (±0.1 s jitter) settle on the broadcast and stay within ${Math.round(worst * 1000)} ms for 20 s (seeks: ${devices.map((d) => d.player.seeks).join('/')}${withRates ? `, rate nudges: ${devices.map((d) => d.player.rateChanges).join('/')}` : ''})`);
   for (const device of devices) device.sync.stop();
 }
 
