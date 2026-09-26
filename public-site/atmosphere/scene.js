@@ -171,6 +171,7 @@
       L.watchers = watchersFor(id);
       L.trees = treesFor(id);
       L.props = propsFor(id, L);
+      if (id === 'sheri') sheriStreet(L);
       L.motes = []; for (var mi = 0; mi < 80; mi++) L.motes.push([lerp(-26, 26, rnd()), rnd() * 9, lerp(-6, 46, rnd()), 0.1 + rnd() * 0.25, rnd() * TAU]);
       layouts[id] = L; return L;
     }
@@ -189,7 +190,7 @@
       });
     }
     // Where people walk; kept clear of the space right in front of the camera
-    var BOUNDS = { outdoors: [-23, 23, -5, 40], stadium: [-21, 21, -5, 32], sheri: [-6, 6, -3, 60] };
+    var BOUNDS = { outdoors: [-23, 23, -5, 40], stadium: [-21, 21, -5, 32], sheri: [-6, 6, -10, 60] };
     function freeSpot(id, L) {
       var bx = BOUNDS[id];
       for (var k = 0; k < 40; k++) {
@@ -311,6 +312,7 @@
         out.push({ x: -3, y: 0.45, z: -19.2, kind: 'benchPlank', w: 2 });
         sitter(-3.35, 0.45, -19.2, 'bench', 'w'); sitter(-2.6, 0.45, -19.2, 'bench', 'm'); sitter(-4.15, 0.45, -19.2, 'bench', null);
         out.push({ x: -1.2, y: 0, z: -18.6, kind: 'stand', who: person({ stander: true, phone: true, sway: 0.5 }) });
+        [[-14.8, 0.55, 0], [-14.3, 0.48, 0.6], [-12.6, 0.4, 2.1]].forEach(function (k) { out.push({ x: 0, y: 0, z: k[0], kind: 'runner', view: 'far', cx: -1, amp: 3.6, sp: k[1], ph: k[2], who: person({ kid: true, h: 0.95 + rnd() * 0.25, walker: true, moving: true, step: 0 }) }); });
         out.push({ x: -0.5, y: 0, z: -18.1, kind: 'stand', who: person({ stander: true, sway: 1.5 }) });
       }
       return out;
@@ -388,7 +390,71 @@
       }
       return out.filter(function (o) { return o.kind !== 'none'; });
     }
+    // The near end of the lane, as you see it from the bench: the house on your right is purple with a white van
+    // parked in front of it, and a motorbike and an Activa stand across the lane edges
+    function sheriStreet(L) {
+      var zc = -7.5, right = L.houses.filter(function (h) { return h.side > 0 && h.z1 <= zc && h.z2 >= zc; })[0];
+      if (right) right.col = '#7a4f9e';
+      var vz0 = zc - 1.9, vz1 = zc + 1.9;
+      L.props = L.props.filter(function (o) { return !(o.x > 3 && o.z > vz0 - 1 && o.z < vz1 + 1) && !(o.z > -14.5 && o.z < -9 && Math.abs(o.x) > 4); });
+      L.seats = L.seats.filter(function (se) { return !(se.x > 3 && se.z > vz0 - 1 && se.z < vz1 + 1); });
+      L.props.push({ kind: 'van', x: 5.3, z: zc });
+      L.props.push({ kind: 'bike', x: -5.5, z: -12.2, side: -1, col: '#1c1c1c' });
+      L.props.push({ kind: 'activa', x: -5.55, z: -7.8, side: -1, col: '#e9e7e1' });
+      L.props.push({ kind: 'activa', x: 5.55, z: -12.4, side: 1, col: '#2f6fa8' });
+      L.props.push({ kind: 'bike', x: -5.4, z: 12.5, side: -1, col: '#8e1b2c' });
+    }
+    // A wheel in the side plane of a vehicle parked along the lane (points in y and z at a fixed x)
+    function sideWheel(x, y, z, r) { var pts = []; for (var k = 0; k < 14; k++) { var a = k / 14 * TAU; pts.push([x, y + Math.sin(a) * r, z + Math.cos(a) * r]); } fillPoly(pts, '#141414'); var hub = []; for (var k2 = 0; k2 < 10; k2++) { var a2 = k2 / 10 * TAU; hub.push([x - 0.005, y + Math.sin(a2) * r * 0.5, z + Math.cos(a2) * r * 0.5]); } fillPoly(hub, '#8f9398'); }
+    function van(o) {
+      // A white Eeco-style van: its side faces the lane, its back faces you
+      var x0 = o.x - 0.72, x1 = o.x + 0.72, z0 = o.z - 1.9, z1 = o.z + 1.9, b = 0.28, top = 1.9;
+      fillPoly([[x0, top, z0], [x1, top, z0], [x1, top, z1 - 0.45], [x0, top, z1 - 0.45]], '#cfd0cc');
+      fillPoly([[x0, b, z0], [x0, b, z1], [x0, 1.05, z1], [x0, top, z1 - 0.45], [x0, top, z0]], '#ecece7');
+      fillPoly([[x0 - 0.004, 1.15, z0 + 0.25], [x0 - 0.004, 1.15, z1 - 0.9], [x0 - 0.004, 1.72, z1 - 0.9], [x0 - 0.004, 1.72, z0 + 0.25]], '#2a323c');
+      fillPoly([[x0 - 0.005, 1.15, z1 - 0.8], [x0 - 0.005, 1.05, z1 - 0.1], [x0 - 0.005, 1.72, z1 - 0.52], [x0 - 0.005, 1.72, z1 - 0.8]], '#2a323c');
+      [z0 + 1.3, z0 + 2.45].forEach(function (zp) { var a = P(x0 - 0.006, 1.15, zp), c = P(x0 - 0.006, 1.72, zp); if (a && c) { g.strokeStyle = '#ecece7'; g.lineWidth = Math.max(1, a.s * 0.04); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(c.x, c.y); g.stroke(); } });
+      var sl0 = P(x0 - 0.006, b + 0.05, z0 + 1.3), sl1 = P(x0 - 0.006, 1.1, z0 + 1.3); if (sl0 && sl1) { g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(sl0.x, sl0.y); g.lineTo(sl1.x, sl1.y); g.stroke(); }
+      fillPoly([[x0 - 0.004, b, z0], [x0 - 0.004, b, z1], [x0 - 0.004, b + 0.14, z1], [x0 - 0.004, b + 0.14, z0]], '#9a9c98');
+      sideWheel(x0 - 0.01, 0.3, z0 + 0.65, 0.3); sideWheel(x0 - 0.01, 0.3, z1 - 0.7, 0.3);
+      // The back: big rear window, tail lights, a yellow plate and a dark bumper
+      fillPoly([[x0, b, z0], [x1, b, z0], [x1, top, z0], [x0, top, z0]], '#f1f1ec');
+      fillPoly([[x0 + 0.14, 1.15, z0 - 0.004], [x1 - 0.14, 1.15, z0 - 0.004], [x1 - 0.14, 1.75, z0 - 0.004], [x0 + 0.14, 1.75, z0 - 0.004]], '#262e37');
+      fillPoly([[x0 + 0.14, 1.55, z0 - 0.005], [x0 + 0.55, 1.75, z0 - 0.005], [x0 + 0.4, 1.75, z0 - 0.005], [x0 + 0.14, 1.62, z0 - 0.005]], 'rgba(255,255,255,.12)');
+      [x0 + 0.06, x1 - 0.2].forEach(function (lx) { fillPoly([[lx, 0.62, z0 - 0.005], [lx + 0.14, 0.62, z0 - 0.005], [lx + 0.14, 0.95, z0 - 0.005], [lx, 0.95, z0 - 0.005]], '#a51d1a'); });
+      fillPoly([[o.x - 0.24, 0.5, z0 - 0.006], [o.x + 0.24, 0.5, z0 - 0.006], [o.x + 0.24, 0.62, z0 - 0.006], [o.x - 0.24, 0.62, z0 - 0.006]], '#f2cf3e');
+      fillPoly([[x0, b, z0 - 0.02], [x1, b, z0 - 0.02], [x1, 0.45, z0 - 0.02], [x0, 0.45, z0 - 0.02]], '#3a3b3d');
+      var sh = P(o.x, 0, o.z); if (sh) { g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(sh.x, sh.y, sh.s * 0.9, sh.s * 0.12, 0, 0, TAU); g.fill(); }
+    }
+    // A motorbike or an Activa parked across the lane edge, seen side-on, its front towards the middle of the lane
+    function twoWheeler(o) {
+      var p = P(o.x, 0, o.z); if (!p) return;
+      var s = p.s, dir = -o.side, bike = o.kind === 'bike', wr = s * (bike ? 0.31 : 0.23), wb = s * (bike ? 0.66 : 0.55), fx = p.x + dir * wb, rx = p.x - dir * wb, wy = p.y - wr;
+      [fx, rx].forEach(function (wx) { g.fillStyle = '#131313'; g.beginPath(); g.arc(wx, wy, wr, 0, TAU); g.fill(); g.fillStyle = '#9ca0a5'; g.beginPath(); g.arc(wx, wy, wr * 0.45, 0, TAU); g.fill(); if (s > 30) { g.strokeStyle = 'rgba(40,40,40,.8)'; g.lineWidth = 1; for (var k = 0; k < 6; k++) { var a = k / 6 * Math.PI; g.beginPath(); g.moveTo(wx - Math.cos(a) * wr * 0.42, wy - Math.sin(a) * wr * 0.42); g.lineTo(wx + Math.cos(a) * wr * 0.42, wy + Math.sin(a) * wr * 0.42); g.stroke(); } } });
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      if (bike) {
+        g.strokeStyle = '#2b2b2e'; g.lineWidth = Math.max(1, s * 0.04); g.beginPath(); g.moveTo(rx, wy); g.lineTo(p.x, p.y - s * 0.62); g.lineTo(fx - dir * s * 0.08, p.y - s * 0.95); g.lineTo(fx, wy); g.stroke();
+        g.fillStyle = o.col; g.beginPath(); g.ellipse(p.x + dir * s * 0.18, p.y - s * 0.8, s * 0.24, s * 0.1, 0, 0, TAU); g.fill();
+        g.fillStyle = '#161616'; g.beginPath(); g.moveTo(p.x - dir * s * 0.1, p.y - s * 0.78); g.lineTo(p.x - dir * s * 0.55, p.y - s * 0.72); g.lineTo(p.x - dir * s * 0.55, p.y - s * 0.66); g.lineTo(p.x - dir * s * 0.1, p.y - s * 0.7); g.closePath(); g.fill();
+        g.strokeStyle = '#c9ccd1'; g.lineWidth = Math.max(1, s * 0.035); g.beginPath(); g.moveTo(p.x, p.y - s * 0.4); g.lineTo(rx - dir * s * 0.1, p.y - s * 0.42); g.stroke();
+        g.strokeStyle = '#1b1b1b'; g.lineWidth = Math.max(1, s * 0.025); g.beginPath(); g.moveTo(fx - dir * s * 0.1, p.y - s * 0.98); g.lineTo(fx - dir * s * 0.02, p.y - s * 1.08); g.lineTo(fx - dir * s * 0.24, p.y - s * 1.1); g.stroke();
+        g.fillStyle = '#f4f1e6'; g.beginPath(); g.arc(fx + dir * s * 0.02, p.y - s * 0.93, s * 0.06, 0, TAU); g.fill();
+      } else {
+        // Activa: step-through body, front apron, floorboard and the rounded rear cowl
+        g.fillStyle = o.col;
+        g.beginPath(); g.moveTo(fx - dir * s * 0.05, p.y - s * 0.28); g.quadraticCurveTo(fx - dir * s * 0.02, p.y - s * 0.95, fx - dir * s * 0.15, p.y - s * 1.0); g.lineTo(fx - dir * s * 0.28, p.y - s * 0.95); g.lineTo(fx - dir * s * 0.3, p.y - s * 0.3); g.closePath(); g.fill();
+        g.fillRect(Math.min(fx - dir * s * 0.3, p.x + dir * s * 0.05), p.y - s * 0.3, Math.abs(fx - dir * s * 0.3 - (p.x + dir * s * 0.05)), s * 0.06);
+        g.beginPath(); g.moveTo(p.x + dir * s * 0.05, p.y - s * 0.28); g.quadraticCurveTo(p.x - dir * s * 0.1, p.y - s * 0.72, rx + dir * s * 0.05, p.y - s * 0.62); g.quadraticCurveTo(rx - dir * s * 0.28, p.y - s * 0.5, rx - dir * s * 0.12, p.y - s * 0.3); g.closePath(); g.fill();
+        g.fillStyle = '#1a1a1a'; g.beginPath(); g.ellipse(p.x - dir * s * 0.28, p.y - s * 0.7, s * 0.3, s * 0.06, 0, 0, TAU); g.fill();
+        g.strokeStyle = '#2a2a2a'; g.lineWidth = Math.max(1, s * 0.025); g.beginPath(); g.moveTo(fx - dir * s * 0.2, p.y - s * 1.02); g.lineTo(fx - dir * s * 0.38, p.y - s * 1.05); g.stroke();
+        g.fillStyle = '#f4f1e6'; g.beginPath(); g.arc(fx - dir * s * 0.12, p.y - s * 0.9, s * 0.045, 0, TAU); g.fill();
+        g.strokeStyle = '#555'; g.lineWidth = 1; g.beginPath(); g.moveTo(fx - dir * s * 0.24, p.y - s * 1.04); g.lineTo(fx - dir * s * 0.3, p.y - s * 1.16); g.stroke();
+      }
+      g.lineCap = 'butt';
+    }
     function prop(o, t) {
+      if (o.kind === 'van') { van(o); return; }
+      if (o.kind === 'bike' || o.kind === 'activa') { twoWheeler(o); return; }
       var p = P(o.x, 0, o.z); if (!p) return;
       var s = p.s;
       if (o.kind === 'scooter') {
@@ -456,6 +522,7 @@
         g.globalAlpha = 1; return;
       }
       if (d.stander && !reduce) x += Math.sin(T0 * 0.8 + (d.sway || 0)) * h * 0.02;
+      if (sit && !reduce && st.on) x += Math.sin(T0 * 1.6 + (d.ph || 0) * 3) * h * 0.02;
       if (running) y -= Math.abs(Math.sin(d.step || 0)) * h * 0.05;
       g.lineCap = 'round';
       if (!sit) {
