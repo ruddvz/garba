@@ -878,6 +878,8 @@
       var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
+      // Light falls off away from the garbo: people out at the edges are a shade darker than those by the lamp
+      if (!near && !isYou && !d.coupleRole && !d.role && lightAt) { var ld = Math.hypot(p.x - lightAt.x, (p.y - lightAt.y) * 2.2) / Math.max(1, W * 0.9); dk = Math.max(dk, Math.min(0.42, ld * 0.5) * (st.on ? 0.8 : 1)); }
       if (!near && h > 16) { g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, p.y, h * 0.2, h * 0.045, 0, 0, TAU); g.fill(); }
       var skin = tint(SKIN[Math.floor((d.ph || 0) * 10) % SKIN.length], dk), main = tint(d.col, dk), top = tint(d.top, dk), gold = tint('#e8b04b', dk);
       var fine = (h > 26 || (d.coupleRole && h > 12)) && !near, lw = Math.max(0.8, h * 0.034);
@@ -980,6 +982,17 @@
         g.fillStyle = 'rgba(214,176,111,' + (0.25 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, p.y, h * (0.32 + youGlow * 0.12), h * 0.09, 0, 0, TAU); g.fill();
         youLabel = { x: Math.max(28, Math.min(W - 28, x)), y: Math.max(26, y - h * 1.14), h: h };
       }
+    }
+    function fogBand(f) {
+      var s0 = F / f.z, yG = HOR + cam.y * s0, yT = Math.max(0, HOR + (cam.y - 18) * s0), yB = Math.min(H, yG + (yG - HOR) * 0.25 + 6);
+      if (yG < 0 || yT >= H) return;
+      var col = st.venue === 'stadium' ? '26,19,28' : st.venue === 'sheri' ? '22,17,32' : '20,15,30';
+      var gr = g.createLinearGradient(0, yT, 0, yB);
+      gr.addColorStop(0, 'rgba(' + col + ',0)'); gr.addColorStop(Math.max(0.01, Math.min(0.98, (HOR - yT) / Math.max(1, yB - yT))), 'rgba(' + col + ',' + f.a + ')');
+      gr.addColorStop(Math.max(0.02, Math.min(0.99, (yG - yT) / Math.max(1, yB - yT))), 'rgba(' + col + ',' + f.a * 0.85 + ')'); gr.addColorStop(1, 'rgba(' + col + ',0)');
+      g.fillStyle = gr;
+      if (st.venue === 'sheri') { var l = P(-7.2, 0, cam.z + f.z), r = P(7.2, 0, cam.z + f.z); if (l && r) g.fillRect(l.x, yT, r.x - l.x, yB - yT); }
+      else g.fillRect(0, yT, W, yB - yT);
     }
     // A soft warm follow-spot on you and your partner
     function followSpot(p, d) {
@@ -1163,7 +1176,7 @@
     }
 
     /* ---------- frame ---------- */
-    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null;
+    var T = 0, lampAt = { x: 0.5, y: 0.6, r: 0.08 }, youLabel = null, partnerLabel = null, lightAt = null;
     function frame(ms) {
       if (!running) return;
       var dt = Math.min(0.05, lastMs ? (ms - lastMs) / 1000 : 0.016); lastMs = ms;
@@ -1224,9 +1237,14 @@
       L.seats.forEach(function (se) { var p = P(se.x, 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       L.watchers.forEach(function (wt) { if (wt.clapAt && t >= wt.clapAt) { wt.flash = 1; wt.clapAt = 0; } wt.flash *= Math.exp(-dt * 3); var p = P(wt.x, 0, wt.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: wt, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
       items.sort(function (a, b2) { return b2.z - a.z; });
+      var lc0 = P(circleCentre(L.circles[0], T).x, 1, circleCentre(L.circles[0], T).z); lightAt = lc0 ? { x: lc0.x, y: lc0.y } : null;
       youLabel = null; partnerLabel = null;
       var lit = st.lit != null ? st.lit : st.on ? 1 : 0.35;
+      // Depth: veils of night air laid between layers of the crowd, thicker the further back, so the circle round
+      // the garbo stays crisp and everything behind it recedes instead of piling into one cluster
+      var D0 = -cam.z, FOG = [{ z: D0 + 58, a: 0.5 }, { z: D0 + 40, a: 0.36 }, { z: D0 + 25, a: 0.24 }, { z: D0 + 13, a: 0.1 }], fi = 0;
       items.forEach(function (it) {
+        while (fi < FOG.length && it.z < FOG[fi].z) fogBand(FOG[fi++]);
         if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; if (st.venue !== 'sheri') mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (st.venue !== 'sheri') mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
         else if (it.kind === 'tree') drawTree(it.tr, t);
@@ -1235,6 +1253,7 @@
         else { if (it.you || it.partner) followSpot(it.p, it.d); figure(it.p, it.d, T, it.you, beatPh, it.you || it.partner ? 1 : it.fade); if (it.partner) partnerMark(it.p, it.d); }
       });
 
+      while (fi < FOG.length) fogBand(FOG[fi++]);
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       // Your label always sits on top, so you can find yourself in the crowd
       if (partnerLabel && youLabel && Math.abs(partnerLabel.x - youLabel.x) < 70 && Math.abs(partnerLabel.y - youLabel.y) < 24) partnerLabel.y = youLabel.y - 26;
