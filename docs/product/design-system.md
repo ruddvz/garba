@@ -124,8 +124,8 @@ Outgoing and incoming text may animate inside a fixed measure. The surrounding p
 
 ### Views and the More card
 
-- **Simple view** (the courtyard artwork) is the default. **Immersive view** draws the live venue scene (garbo, dancers, stage, DJ) behind the same player and controls. Listeners choose it in the More card, and the choice is remembered on that device.
-- The venue scene loads only after Immersive is chosen. If it fails, the player returns to Simple view and says so.
+- **Simple view** (the courtyard artwork) is the default. **Immersive view** shows the complete Garbo player prototype in an isolated frame, with live song, time, playback, genre and mode state supplied by the production player. Listeners choose it in the More card, and the choice is remembered on that device.
+- The prototype loads only after Immersive is chosen. The production player remains mounted and authoritative; prototype controls call its existing actions. If the prototype cannot load, Simple view remains available.
 - The More card holds the less-used top-bar actions, so the bar stays short at every size:
   - phone and tablet (up to 1023px): the bar shows Search, Up next and More;
   - desktop (1024px and up): Garba Circle and My Garba also stay in the bar.

@@ -1,10 +1,8 @@
 /*
  * PlayGarba Immersive view and the More card.
  *
- * Simple view, the courtyard artwork, stays the default. Immersive view is the listener's choice: the live
- * venue scene (a garba night round a garbo, a stage, a DJ) drawn behind the same player and buttons. It
- * follows real playback, the genre and the Atmosphere venue and position, and it is remembered per device.
- * The scene loads only when Immersive is chosen.
+ * Simple view, the courtyard artwork, stays the default. Immersive view opens the complete Garbo player
+ * prototype in an isolated frame. The production player remains mounted and owns all playback.
  *
  * The More card gathers the less-used top-bar actions (share, Garba Circle, My Garba, Atmosphere) with the
  * view switch, so each screen size keeps only what it needs in the bar. Rows act through the original
@@ -14,86 +12,77 @@
   'use strict';
 
   var VIEW_KEY = 'garba:view';
-  var SCENE_SRC = 'atmosphere/scene.js';
   var app = document.getElementById('app');
-  var world = app && app.querySelector('.world');
-  if (!app || !world || window.GARBA_IMMERSIVE_VIEW) return;
+  if (!app || !window.GARBA_IMMERSIVE_PLAYER || window.GARBA_IMMERSIVE_VIEW) return;
 
-  var reduceQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   var view = 'simple';
   try { if (localStorage.getItem(VIEW_KEY) === 'immersive') view = 'immersive'; } catch (e) { /* storage unavailable */ }
 
-  /* ---------- the venue scene ---------- */
-  var scene = null, canvas = null, loading = null, failed = false;
-  var THEMES = { traditional: 1, dandiya: 1, devotional: 1, folk: 1, sanedo: 1, fusion: 1, nonstop: 1 };
-
-  function loadScene() {
-    if (window.GarbaVenueScene) return Promise.resolve();
-    if (!loading) {
-      loading = new Promise(function (resolve, reject) {
-        var script = document.createElement('script');
-        script.src = SCENE_SRC; script.async = true;
-        script.onload = resolve;
-        script.onerror = function () { loading = null; reject(new Error('scene')); };
-        document.head.appendChild(script);
-      });
+  /* ---------- complete embedded prototype ---------- */
+  var overlay = null, frame = null, closeButton = null, syncTimer = 0, catalogueSent = false, catalogueSignature = '';
+  var CHANNEL = 'playgarba:immersive-prototype';
+  function ensureFrame() {
+    if (overlay) return;
+    overlay = document.createElement('section');
+    overlay.className = 'garbo-prototype-overlay';
+    overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Garbo player'); overlay.hidden = true;
+    frame = document.createElement('iframe'); frame.className = 'garbo-prototype-frame';
+    frame.title = 'Garbo player prototype'; frame.allow = 'autoplay; clipboard-write; fullscreen';
+    closeButton = document.createElement('button'); closeButton.className = 'garbo-prototype-close';
+    closeButton.type = 'button'; closeButton.textContent = 'Back to player';
+    closeButton.addEventListener('click', function () { setView('simple'); });
+    overlay.append(frame, closeButton); document.body.appendChild(overlay);
+    frame.addEventListener('load', function () { sendSnapshot(true); });
+  }
+  function sendSnapshot(includeCatalogue) {
+    if (!frame || !frame.contentWindow || view !== 'immersive') return;
+    var snapshot = window.GARBA_IMMERSIVE_PLAYER.snapshot();
+    var sendCatalogue = includeCatalogue || !catalogueSent || snapshot.catalogueSignature !== catalogueSignature;
+    if (sendCatalogue) snapshot = window.GARBA_IMMERSIVE_PLAYER.snapshot({ includeCatalogue: true });
+    if (Array.isArray(snapshot.songs) && snapshot.songs.length) {
+      catalogueSent = true;
+      catalogueSignature = snapshot.catalogueSignature || '';
     }
-    return loading;
+    frame.contentWindow.postMessage({ channel: CHANNEL, type: 'state', snapshot: snapshot }, location.origin);
   }
-
-  function playing() { return app.classList.contains('is-playing'); }
-  function atmosphere() {
-    var a = window.GARBA_ATMOSPHERE;
-    var out = { venue: 'outdoors', listener: 'circle' };
-    if (a) { if (/^(outdoors|stadium|sheri)$/.test(a.venue)) out.venue = a.venue; if (/^(circle|far|stage)$/.test(a.listener)) out.listener = a.listener; }
-    return out;
+  function onMessage(event) {
+    if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
+    var message = event.data;
+    if (!message || message.channel !== CHANNEL) return;
+    if (message.type === 'ready') { catalogueSent = false; sendSnapshot(true); }
+    else if (message.type === 'action' && typeof message.action === 'string') {
+      if (message.action === 'circle') setView('simple', true);
+      window.GARBA_IMMERSIVE_PLAYER.action(message.action, message.value);
+      sendSnapshot(false);
+    } else if (message.type === 'exit') setView('simple');
   }
-  function frame() {
-    // The venue composes itself in the upper part of the screen, above the song and the controls
-    if (!scene || !canvas) return;
-    var bar = app.querySelector('.topbar'), top = bar ? bar.getBoundingClientRect().bottom : 56, h = window.innerHeight, w = window.innerWidth;
-    var title = document.getElementById('songTitle'), room = h * (w > h ? 0.46 : 0.36);
-    // Keep the garbo and the dancers clear of the song title
-    if (title && title.offsetParent) room = Math.min(room, title.getBoundingClientRect().top - top - 10);
-    // A short screen (a phone on its side) has no room above the song, so the venue becomes a dimmed backdrop
-    var backdrop = room < 150;
-    canvas.classList.toggle('is-backdrop', backdrop);
-    scene.setBox(backdrop ? { x: 0, y: 0, w: w, h: h } : { x: 0, y: top, w: w, h: room });
+  function startPrototype() {
+    ensureFrame(); overlay.hidden = false;
+    closeCard(false);
+    app.setAttribute('aria-hidden', 'true'); app.inert = true;
+    if (!frame.src) frame.src = new URL('./garbo/prototype/?live=1&embed=1', location.href).href;
+    window.addEventListener('message', onMessage);
+    sendSnapshot(true);
+    clearInterval(syncTimer);
+    syncTimer = setInterval(function () { sendSnapshot(!catalogueSent); }, 500);
+    if (closeButton) closeButton.focus({ preventScroll: true });
   }
-  function sync() {
-    if (!scene) return;
-    var a = atmosphere(), on = playing(), genre = app.dataset.genre || 'traditional';
-    scene.set({
-      on: on, lit: on ? 1 : 0.35, mode: on ? 'immersive' : 'off', venue: a.venue, listener: a.listener,
-      theme: THEMES[genre] ? genre : 'traditional', style: genre === 'dandiya' ? 'dandiya' : 'claps', level: 0.6, density: 1
-    });
-  }
-  function startScene() {
-    if (scene || failed) return;
-    loadScene().then(function () {
-      if (view !== 'immersive' || scene) return;
-      canvas = document.createElement('canvas');
-      canvas.className = 'immersive-stage';
-      canvas.setAttribute('aria-hidden', 'true');
-      world.insertBefore(canvas, world.querySelector('.world-vignette'));
-      scene = window.GarbaVenueScene.create(canvas, { venues: window.GARBA_ATMOSPHERE_ENGINE && window.GARBA_ATMOSPHERE_ENGINE.VENUES, reduceMotion: reduceQuery.matches });
-      frame(); sync();
-    }, function () {
-      // Without the scene the player stays on the artwork, and says why once
-      failed = true; setView('simple', true);
-      announce('Immersive view could not load. Showing the simple view.');
-    });
-  }
-  function stopScene() {
-    if (scene) { scene.stop(); scene = null; }
-    if (canvas) { canvas.remove(); canvas = null; }
+  function stopPrototype() {
+    var wasOpen = overlay && !overlay.hidden;
+    clearInterval(syncTimer); syncTimer = 0;
+    window.removeEventListener('message', onMessage);
+    if (overlay) overlay.hidden = true;
+    app.removeAttribute('aria-hidden'); app.inert = false;
+    catalogueSent = false; catalogueSignature = '';
+    if (wasOpen && moreButton) moreButton.focus({ preventScroll: true });
   }
 
   function setView(next, quiet) {
     view = next === 'immersive' ? 'immersive' : 'simple';
     try { localStorage.setItem(VIEW_KEY, view); } catch (e) { /* storage unavailable */ }
     app.classList.toggle('view-immersive', view === 'immersive');
-    if (view === 'immersive') startScene(); else stopScene();
+    if (view === 'immersive') startPrototype(); else stopPrototype();
     renderViewChoice();
     if (!quiet) announce(view === 'immersive' ? 'Immersive view on' : 'Simple view on');
   }
@@ -158,17 +147,13 @@
   }
 
   /* ---------- wiring ---------- */
-  window.addEventListener('garba:playback-state-change', sync);
-  window.addEventListener('garba:atmosphere-change', sync);
-  new MutationObserver(sync).observe(app, { attributes: true, attributeFilter: ['class', 'data-genre'] });
-  window.addEventListener('resize', frame);
-  window.addEventListener('garba:playback-state-change', frame);
-  if (reduceQuery.addEventListener) reduceQuery.addEventListener('change', function () { if (scene) { stopScene(); startScene(); } });
+  window.addEventListener('garba:playback-state-change', function () { sendSnapshot(false); });
+  window.addEventListener('garba:atmosphere-change', function () { sendSnapshot(false); });
 
   window.GARBA_IMMERSIVE_VIEW = {
     get view() { return view; },
     set view(v) { setView(v, true); },
-    get sceneReady() { return !!scene; },
+    get sceneReady() { return !!frame && !overlay.hidden; },
   };
 
   setView(view, true);
