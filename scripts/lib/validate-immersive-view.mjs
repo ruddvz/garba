@@ -61,7 +61,9 @@ for (const marker of ["get('live') === '1'", "'play'", "'seek'", "'shuffle'", "'
   if (!prototypeJs.includes(marker)) fail(`The canonical prototype runtime is missing ${marker}`);
 }
 if (!prototypeHtml.includes('id="exploreCount"')) fail('The canonical prototype page must expose the live Explore result count');
-for (const marker of ['href="garbo.css?v=20260926-1"', 'src="garbo.js?v=20260926-1"']) {
+if (!prototypeHtml.includes('class="proto-states"')) fail('The standalone prototype must keep its prototype-state picker');
+if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototypeJs.includes('prototypeStates.hidden = LIVE_SITE')) fail('Prototype-state controls must be hidden in embedded live mode and remain available standalone');
+for (const marker of ['href="garbo.css?v=20260926-1"', 'src="garbo.js?v=20260926-2"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
