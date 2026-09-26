@@ -39,7 +39,7 @@ a { color: var(--brass); }
 /* Stage */
 .stage { position: relative; width: 100%; aspect-ratio: 1 / 1; max-height: 78vh; margin-inline: auto; border-radius: 26px; overflow: hidden; background: #07050a; border: 1px solid var(--line); isolation: isolate; }
 .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.lamp { position: absolute; left: 50%; top: 64%; width: 84px; height: 84px; margin: -60px 0 0 -42px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; display: grid; place-items: end center; padding: 0 0 2px; transition: left .9s cubic-bezier(.3,.7,.2,1), top .9s cubic-bezier(.3,.7,.2,1); }
+.lamp { position: absolute; left: 50%; top: 64%; width: 84px; height: 84px; margin: -60px 0 0 -42px; border-radius: 50%; border: 0; background: transparent; cursor: pointer; display: grid; place-items: end center; padding: 0 0 2px; }
 .lamp span { font: 700 13px/1 var(--ui); color: var(--ivory); background: rgba(11, 6, 5, .72); padding: 6px 10px; border-radius: 12px; border: 1px solid rgba(214, 176, 111, .5); white-space: nowrap; }
 .stage.on .lamp span { opacity: .0; }
 .stage.on .lamp:hover span, .stage.on .lamp:focus-visible span { opacity: 1; }
@@ -95,14 +95,29 @@ output.desc { min-height: 0; font-weight: 600; }
 
 .atmo-foot { text-align: center; font-size: 14px; color: var(--ivory-3); display: grid; gap: 10px; justify-items: center; }
 
+/* Beat: tap on the left, the reading on the right */
+.beat-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; width: 100%; }
+.beat-read { display: grid; gap: 10px; justify-items: start; text-align: left; }
+.beat-read .desc { margin: 0; min-height: 0; max-width: none; text-wrap: pretty; }
+/* Navratri night */
+.ticks { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ivory-3); margin-top: -6px; }
+
 @media (max-width: 480px) {
+  .seg-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .seg button { font-size: 14px; }
   .tap { width: 108px; height: 108px; }
   .stage { aspect-ratio: 4 / 5; }
 }
+/* Desktop: the venue fills the left of the screen at full height and stays put; the story and controls scroll beside it */
 @media (min-width: 960px) {
-  .atmo { max-width: 1200px; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); column-gap: 48px; align-items: start; }
-  .atmo > .atmo-head, .atmo > .clips, .atmo > .atmo-foot { grid-column: 1 / -1; }
-  .stage { position: sticky; top: 24px; aspect-ratio: 4 / 5; max-height: calc(100vh - 48px); }
+  .atmo { max-width: none; padding: 20px 28px 60px; grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr); column-gap: 40px; row-gap: 30px; align-items: start; }
+  .atmo > * { grid-column: 2; }
+  .atmo > .stage { grid-column: 1; grid-row: 1 / span 6; position: sticky; top: 20px; aspect-ratio: auto; height: calc(100vh - 40px); max-height: none; border-radius: 28px; }
+  .atmo-head { justify-items: start; text-align: left; }
+  .atmo-head p { text-wrap: pretty; }
+  .readout { font-size: 14px; top: 18px; }
+}
+@media (min-width: 1500px) {
+  .atmo { grid-template-columns: minmax(0, 2fr) minmax(400px, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

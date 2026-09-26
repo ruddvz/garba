@@ -34,7 +34,7 @@
 
   <section class="panel" aria-label="Atmosphere controls">
     <button class="switch power" id="power" type="button" role="switch" aria-checked="false">
-      <span><strong id="powerLabel">Atmosphere is off</strong><small>Turn it on to hear the circle. Everything below changes live.</small></span>
+      <span><strong id="powerLabel">Atmosphere is off</strong><small id="powerNote">Turn it on and the dancers gather round the lamp. Everything below changes live.</small></span>
       <i class="knob" aria-hidden="true"></i>
     </button>
     <div class="row">
@@ -48,6 +48,17 @@
       <p class="desc" id="venueDesc"></p>
     </div>
     <div class="row">
+      <h3>Music</h3>
+      <div class="seg seg-4" id="themes" style="--n:4"></div>
+      <p class="desc" id="themeDesc"></p>
+    </div>
+    <div class="row">
+      <h3><label for="night">Navratri night</label></h3>
+      <input id="night" type="range" min="0" max="9" step="1" value="0">
+      <div class="ticks" aria-hidden="true"><span>Tonight</span><span>Night 9</span></div>
+      <p class="desc" id="nightDesc"></p>
+    </div>
+    <div class="row">
       <h3>Where you are</h3>
       <div class="seg" id="listeners" style="--n:2"></div>
       <p class="desc" id="listenerDesc"></p>
@@ -58,10 +69,14 @@
     </div>
     <div class="row beat">
       <h3>Beat</h3>
-      <button class="tap" id="tap" type="button">Tap the beat</button>
-      <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-      <p class="bpm"><b id="bpmOut">112</b> BPM</p>
-      <p class="desc" id="tapHint" aria-live="polite">Tap 4 times in time with any Garba song, or drag to set the tempo.</p>
+      <div class="beat-grid">
+        <button class="tap" id="tap" type="button">Tap the beat</button>
+        <div class="beat-read">
+          <p class="bpm"><b id="bpmOut">112</b> BPM</p>
+          <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="desc" id="tapHint" aria-live="polite">Tap 4 times in time with any Garba song, or drag to set the tempo.</p>
+        </div>
+      </div>
       <input id="bpm" type="range" min="70" max="170" step="1" value="112" aria-label="Tempo in beats per minute">
       <div class="seg" id="patterns" style="--n:3" role="group" aria-label="Clap pattern"></div>
     </div>
@@ -69,6 +84,7 @@
       <h3><label for="level">Intensity</label></h3>
       <input id="level" type="range" min="5" max="100" step="5" value="60">
       <output id="levelOut" class="desc" for="level">60%</output>
+      <p class="desc">Turn it up and more people come out to dance and walk around.</p>
     </div>
     <button class="switch" id="dhol" type="button" aria-pressed="false">
       <span><strong>Add a stand-in rhythm</strong><small>A plain synthesised dhol, kept dry the way a song from YouTube stays unprocessed.</small></span>

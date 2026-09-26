@@ -18,8 +18,15 @@
     immersive: { label: 'Full circle', desc: 'The crowd and the claps all around you. Best on headphones.', profile: { crowd: 0.85, night: 1, claps: 0.9, spatial: true } }
   };
   var STYLES = { claps: 'Hand claps', dandiya: 'Dandiya sticks' };
-  var scene = null;
-  var st = { mode: 'immersive', venue: 'outdoors', listener: 'circle', style: 'claps', pattern: 'beat', bpm: 112, level: 0.6, dhol: false, on: false, ctx: null, engine: null, timer: 0, taps: [], keyed: false, dholNext: 0, dholStep: 0, dholGain: null };
+  // The kind of music changes the lights; Dandiya also hands everyone sticks
+  var THEMES = {
+    traditional: { label: 'Traditional', desc: 'Warm marigold and oil-lamp light. Bulbs twinkle slowly.' },
+    dandiya: { label: 'Dandiya', desc: 'Bright pinks, blues and greens, lights sweeping faster, and dandiya sticks in every hand.' },
+    devotional: { label: 'Devotional', desc: 'Soft saffron and white light, slow and calm, for aartis and bhajan garbas.' },
+    fusion: { label: 'Fusion', desc: 'Neon blue and violet washes, the fastest moving lights on the night.' }
+  };
+  var scene = null, lampPos = { x: -1, y: -1 };
+  var st = { theme: 'traditional', night: 0, mode: 'immersive', venue: 'outdoors', listener: 'circle', style: 'claps', pattern: 'beat', bpm: 112, level: 0.6, dhol: false, on: false, ctx: null, engine: null, timer: 0, taps: [], keyed: false, dholNext: 0, dholStep: 0, dholGain: null };
 
   /* ---------------- controls ---------------- */
   function segment(el, items, current, onPick) {
@@ -36,9 +43,11 @@
   function readout() {
     sceneSync();
     var claps = MODES[st.mode].profile.claps;
-    $('readout').innerHTML = E.VENUES[st.venue].label + ' <span>· ' + E.LISTENERS[st.listener].label + ' · ' + MODES[st.mode].label + (claps ? ' · ' + Math.round(st.bpm) + ' BPM' : '') + '</span>';
+    $('readout').innerHTML = E.VENUES[st.venue].label + ' <span>· ' + E.LISTENERS[st.listener].label + (claps ? ' · ' + Math.round(st.bpm) + ' BPM' : ' · ' + MODES[st.mode].label) + '</span>';
     $('modeDesc').textContent = MODES[st.mode].desc;
     $('venueDesc').textContent = E.VENUES[st.venue].desc;
+    $('themeDesc').textContent = THEMES[st.theme].desc;
+    if (scene) nightText();
     $('listenerDesc').textContent = E.LISTENERS[st.listener].desc;
     $('bpmOut').textContent = Math.round(st.bpm);
   }
@@ -46,6 +55,13 @@
   segment($('venues'), E.VENUES, st.venue, function (id) { st.venue = id; if (st.engine) st.engine.setVenue(id); readout(); });
   segment($('listeners'), E.LISTENERS, st.listener, function (id) { st.listener = id; if (st.engine) st.engine.setListener(id); readout(); });
   segment($('styles'), STYLES, st.style, function (id) { st.style = id; if (st.engine) st.engine.setStyle(id); sceneSync(); });
+  segment($('themes'), THEMES, st.theme, function (id) {
+    st.theme = id;
+    // Dandiya nights are danced with sticks; switching away returns to claps
+    var style = id === 'dandiya' ? 'dandiya' : 'claps';
+    if (style !== st.style) { st.style = style; if (st.engine) st.engine.setStyle(style); $('styles').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.id === style)); }); }
+    readout();
+  });
   segment($('patterns'), E.PATTERNS, st.pattern, function (id) { st.pattern = id; if (st.engine) st.engine.setPattern(id); });
   readout();
 
@@ -117,6 +133,7 @@
   function syncPower() {
     $('power').setAttribute('aria-checked', String(st.on));
     $('powerLabel').textContent = st.on ? 'Atmosphere is on' : 'Atmosphere is off';
+    $('powerNote').textContent = st.on ? 'Turn it off and the circle breaks up to rest. Everything below changes live.' : 'Turn it on and the dancers gather round the lamp. Everything below changes live.';
     $('stage').classList.toggle('on', st.on);
     $('lampLabel').textContent = st.on ? 'Pause' : 'Light the lamp';
     $('lamp').setAttribute('aria-label', st.on ? 'Pause the Atmosphere' : 'Light the lamp to start');
@@ -218,12 +235,24 @@
       return { anchor: tp.anchor, period: tp.period, cycle: pat.cycle, hits: pat.hits };
     },
     onFrame: function (l) {
-      var lamp = $('lamp');
-      lamp.style.left = (l.x * 100) + '%'; lamp.style.top = (l.y * 100) + '%';
+      // Follow the garbo, but only move the button when the garbo has moved a whole pixel
+      var lamp = $('lamp'), r = $('stage').getBoundingClientRect(), x = Math.round(l.x * r.width), y = Math.round(l.y * r.height);
+      if (x !== lampPos.x || y !== lampPos.y) { lampPos = { x: x, y: y }; lamp.style.left = x + 'px'; lamp.style.top = y + 'px'; }
     }
   });
-  function sceneSync() { if (scene) scene.set({ venue: st.venue, listener: st.listener, style: st.style, mode: st.mode, on: st.on, level: st.level }); }
+  function sceneSync() { if (scene) scene.set({ venue: st.venue, listener: st.listener, style: st.style, mode: st.mode, on: st.on, level: st.level, theme: st.theme, density: 0.45 + 0.55 * st.level, moonAge: st.night ? st.night + 0.2 : null }); }
   sceneSync();
+
+  // Navratri runs from the day after a new moon, so each night has its own moon. Night 0 shows tonight's real moon.
+  function nightText() {
+    var m = window.GarbaVenueScene.moonInfo(st.night ? st.night + 0.2 : null), pct = Math.round(m.lit * 100);
+    var line = st.night ? 'Night ' + st.night + ' of Navratri: ' + (m.name === 'new moon' ? 'the thinnest sliver of a moon' : 'a ' + m.name + ' moon') + ', ' + pct + '% lit.'
+      : 'Tonight\'s real moon: a ' + m.name + ', ' + pct + '% lit.';
+    $('nightDesc').textContent = line + (st.venue === 'stadium' ? ' You won\'t see it from inside the stadium.' : '');
+    $('night').setAttribute('aria-valuetext', st.night ? 'Night ' + st.night : 'Tonight');
+  }
+  $('night').addEventListener('input', function () { st.night = +this.value; sceneSync(); nightText(); });
+  nightText();
 
   /* ---------------- recorded clips (artifact build only) ---------------- */
   var audios = [];
