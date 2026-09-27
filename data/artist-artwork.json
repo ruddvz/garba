@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "updated": "2026-09-26",
+  "updated": "2026-09-27",
   "policy": "Photographic artist artwork requires identity verification and explicit reusable licensing. Generated portrait illustrations may be shown only when explicitly marked as illustrations and must not be treated as licensed photography. Missing entries fall back to the existing visual system rather than guessing or hotlinking unverified images.",
   "artists": {
     "aditya-gadhvi": {
@@ -265,6 +265,22 @@
     },
     "damayanti-bardai": {
       "illustrationUrl": "/garbo/prototype/singers/damayanti-bardai.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "abhita-patel": {
+      "illustrationUrl": "/garbo/prototype/singers/abhita-patel.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "dipali-somaiya": {
+      "illustrationUrl": "/garbo/prototype/singers/dipali-somaiya.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "sonal-gadhvi": {
+      "illustrationUrl": "/garbo/prototype/singers/sonal-gadhvi.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "sudesh-bhosle": {
+      "illustrationUrl": "/garbo/prototype/singers/sudesh-bhosle.webp",
       "illustrationType": "ai-generated-stylized-portrait"
     }
   }

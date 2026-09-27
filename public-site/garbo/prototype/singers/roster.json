@@ -1,8 +1,8 @@
 {
   "rosterSource": "data/discovery/artists-2026-01.json",
-  "updated": "2026-09-26",
-  "rosterEntryCount": 58,
-  "humanPortraitCount": 54,
+  "updated": "2026-09-27",
+  "rosterEntryCount": 62,
+  "humanPortraitCount": 58,
   "excludedGroupActs": [
     "Aghori Muzik",
     "Bandish Projekt",
@@ -638,6 +638,55 @@
         "https://music.amazon.in/artists/B000QKW8ZE/damayanti-bardai"
       ],
       "portraitNotes": "AI-generated face-only illustration; the album art and profile sources verify the singer's identity and guide likeness, without licensing the generated portrait."
+    },
+    {
+      "artist": "Abhita Patel",
+      "artistId": "abhita-patel",
+      "tier": "legacy-core",
+      "songCount": 11,
+      "portrait": "abhita-patel.webp",
+      "sourceReferences": [
+        "https://open.spotify.com/artist/6ZwX6sBJpdvCWcBDK37zzl",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/abhita-patel-singers-hit-song-in-bewafa-dilno-kheladi/articleshow/38976406.cms"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on the singer photo published with the Times of India profile and her verified artist catalogue; reference imagery guides likeness and is not a license."
+    },
+    {
+      "artist": "Dipali Somaiya",
+      "artistId": "dipali-somaiya",
+      "tier": "legacy-core",
+      "songCount": 11,
+      "portrait": "dipali-somaiya.webp",
+      "sourceReferences": [
+        "https://yollay.com/profile/dipaleesomaiya",
+        "https://music.apple.com/ca/artist/dipali-somaiya/1194024269",
+        "https://open.spotify.com/intl-de/track/2wvHQlbQlceokH5S3jUuCM"
+      ],
+      "portraitNotes": "Also billed Dipalee Somaiya and Dipalee Somaiya Date. AI-generated stylized face-only illustration based on her verified artist profile; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Sonal Gadhvi",
+      "artistId": "sonal-gadhvi",
+      "tier": "legacy-core",
+      "songCount": 21,
+      "portrait": "sonal-gadhvi.webp",
+      "sourceReferences": [
+        "https://www.anantkala.com/",
+        "https://timesofindia.indiatimes.com/entertainment/gujarati/music/watch-gujarati-singer-sonu-charan-uses-her-quarantine-time-to-enjoy-household-chores/articleshow/75808484.cms"
+      ],
+      "portraitNotes": "Also credited as Sonu Charan; Anant Kala identifies Sonu Charan as Sonal Gadhvi. AI-generated stylized face-only illustration based on a singer profile photo; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Sudesh Bhosle",
+      "artistId": "sudesh-bhosle",
+      "tier": "legacy-core",
+      "songCount": 9,
+      "portrait": "sudesh-bhosle.webp",
+      "sourceReferences": [
+        "https://music.apple.com/us/artist/sudesh-bhosle/1524144134",
+        "https://starclinch.com/sudesh-bhosale"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on an artist booking profile and music catalogue; references guide likeness and are not licenses."
     }
   ]
 }
