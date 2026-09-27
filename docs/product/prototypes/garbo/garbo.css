@@ -61,23 +61,22 @@ button { font: inherit; color: inherit; }
   background: rgba(11,6,5,.72); color: var(--ivory);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 }
-/* At the DJ's table the scene buttons step aside, and the switch closes into a pill of its own */
-.dj-mode .view-switch { border-bottom: 1px solid rgba(214,176,111,.3); border-radius: 26px; }
-.view-switch button {
-  position: relative; width: 76px; min-width: 76px; height: 40px; min-height: 40px; display: block; padding: 0; border: 0; border-radius: 999px;
-  background: rgba(246,236,215,.08); color: inherit; cursor: pointer; touch-action: manipulation;
-}
-/* A toggle: the knob carries the icon of the view you're in, the other view's icon waits faintly on the track */
-.view-switch-control .view-switch-detail { position: absolute; left: 3px; top: 3px; width: 34px; height: 34px; border-radius: 50%; background: rgba(246,236,215,.9); box-shadow: 0 2px 8px rgba(0,0,0,.35); transition: left .2s var(--ease-out), background .2s var(--ease-out); }
-.view-switch-control[aria-checked="true"] .view-switch-detail { left: 39px; background: var(--brass); }
-.view-switch-icon { position: absolute; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); transition: color .2s ease, opacity .2s ease; }
-.view-switch-icon-simple { left: 12px; color: var(--ink); }
-.view-switch-icon-immersive { left: 48px; color: var(--ivory-3); opacity: .7; }
-.view-switch-control[aria-checked="true"] .view-switch-icon-simple { color: var(--ivory-3); opacity: .7; }
-.view-switch-control[aria-checked="true"] .view-switch-icon-immersive { color: var(--ink); opacity: 1; }
-.view-switch button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .view-switch-icon, .view-switch-control .view-switch-detail { transition: none; } }
-@media (forced-colors: active) { .view-switch, .view-switch button { border: 1px solid ButtonText; } .view-switch-control .view-switch-detail { background: ButtonText; box-shadow: none; } }
+/* At the DJ's table, and with the player hidden, the scene buttons step aside and the switch closes into a pill of its own */
+.dj-mode .view-switch, .player-off .view-switch { border-bottom: 1px solid rgba(214,176,111,.3); border-radius: 26px; }
+.view-switch-control { position: relative; display: flex; width: 76px; height: 40px; border-radius: 999px; background: rgba(246,236,215,.08); }
+/* Two halves on one track. The knob sits under the Immersive half, the view you're in, and carries its full-screen
+   icon; home waits faintly on the other half and goes to Simple */
+.view-switch-control .view-switch-detail { position: absolute; left: 40px; top: 3px; width: 34px; height: 34px; border-radius: 50%; background: var(--brass); box-shadow: 0 2px 8px rgba(0,0,0,.35); pointer-events: none; }
+.view-switch-half { position: relative; flex: 1 1 0; min-width: 0; height: 100%; display: grid; place-items: center; padding: 0; border: 0; border-radius: 999px; background: none; color: inherit; cursor: pointer; touch-action: manipulation; }
+.view-switch-icon { width: 16px; height: 16px; transition: color .2s ease, opacity .2s ease; }
+.view-switch-icon-simple { color: var(--ivory-3); opacity: .7; }
+.view-switch-half:hover .view-switch-icon-simple { color: var(--ivory); opacity: 1; }
+.view-switch-icon-immersive, .view-switch-icon-exit { color: var(--ink); }
+#fullBtn .view-switch-icon-exit, #fullBtn[aria-pressed="true"] .view-switch-icon-immersive { display: none; }
+#fullBtn[aria-pressed="true"] .view-switch-icon-exit { display: block; }
+.view-switch-half:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .view-switch-icon { transition: none; } }
+@media (forced-colors: active) { .view-switch, .view-switch-control { border: 1px solid ButtonText; } .view-switch-control .view-switch-detail { background: ButtonText; box-shadow: none; } }
 .ib { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; padding: 0; border-radius: 50%; cursor: pointer; color: var(--ivory); }
 .ib svg { width: 22px; height: 22px; }
 .ib:active, .tb:active, .pp:active { transform: scale(.93); }
@@ -85,7 +84,9 @@ button { font: inherit; color: inherit; }
 .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .lamp-slot { flex: 1 1 auto; min-height: 150px; position: relative; }
 .lamp-hit { position: absolute; left: 50%; top: 50%; width: 40%; height: 72%; transform: translate(-50%, -58%); border: 0; background: none; border-radius: 40%; cursor: pointer; }
-.ring-seek { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; opacity: 0; margin: 0; cursor: grab; }
+/* The invisible seek under the lamp answers the keyboard only. To a pointer it was an unseen band across the venue
+   floor: a tap there jumped the song instead of starting it. Pointers seek with the bar under the title */
+.ring-seek { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; opacity: 0; margin: 0; pointer-events: none; }
 .ring-seek:focus-visible { opacity: 0; }
 .lamp-slot:has(.ring-seek:focus-visible) { outline: 2px solid var(--brass); outline-offset: -2px; border-radius: 50%; }
 .hint { flex: 0 0 auto; margin: 2px 0 10px; text-align: center; min-height: 16px; font: 600 13px/16px var(--ui); color: var(--brass); transition: opacity .3s ease; }
@@ -609,6 +610,32 @@ button { font: inherit; color: inherit; }
   .side-card { left: 10px; right: 10px; top: auto; bottom: calc(var(--safe-b, 0px) + 10px); width: auto; max-height: calc(100dvh - var(--pill-top) - 279px - var(--safe-b, 0px) - 22px); border-radius: 22px; animation-name: card-rise; }
   @keyframes card-rise { from { transform: translateY(24px); opacity: .6; } }
 }
+/* On a phone one home button takes the moon's place in the top bar and Hide player the link button's; Tonight and Play
+   YouTube link open from More. Circle, View, Sound and Ideas hang under the bar as a pill of their own, so more of the
+   venue shows. The home button opens the switch as that pill's head, where it sits on wider screens */
+#viewBtn, #tonightOpen, #linkOpen { display: none; }
+@media (max-width: 600px), (orientation: landscape) and (max-height: 520px) {
+  :root { --pill-switch-h: 0px; }
+  #tonightBtn, #linkSongBtn, .view-switch { display: none; }
+  #viewBtn, #tonightOpen, #linkOpen { display: grid; }
+  #viewBtn[aria-expanded="true"] { color: var(--brass); }
+  .view-open { --pill-switch-h: 49px; }
+  .view-open .view-switch { display: flex; }
+  .rail { transition: opacity .3s ease, top .2s var(--ease-out); }
+  .app:not(.view-open) .rail { padding: 5px 4px; border-top: 1px solid rgba(214, 176, 111, .3); border-radius: 26px; background: rgba(11, 6, 5, .72); }
+}
+@media (prefers-reduced-motion: reduce) { .rail { transition: opacity .3s ease; } }
+/* The narrowest phones keep the wordmark clear of the top-bar buttons */
+@media (max-width: 340px) { .brand { font-size: 22px; } }
+/* Hide player: only the top bar stays. The eye in it brings the player back */
+.hide-btn .i-on, .hide-btn[aria-pressed="true"] .i-off { display: none; }
+.hide-btn[aria-pressed="true"] .i-on { display: block; }
+.hide-btn[aria-pressed="true"] { color: var(--brass); }
+.player-off .stage { display: flex; flex-direction: column; }
+.player-off .stage > :not(.lamp-slot), .player-off .rail { display: none; }
+.player-off .lamp-slot { flex: 1 1 auto; }
+/* A card rising from the bottom stops short of the scene pill (four buttons, 230px) */
+@media (max-width: 600px) { .side-card { max-height: calc(100dvh - var(--pill-top) - 230px - var(--safe-b, 0px) - 22px); } }
 /* The cards are made of the same stuff as the view pill beside them: dark glass, a brass hairline, capsule corners.
    Each choice is one capsule, and the chosen option is its brass knob, like the view switch. */
 .side-card { border-radius: 26px; border-color: rgba(214, 176, 111, .3); background: rgba(11, 6, 5, .9); box-shadow: 0 18px 44px rgba(0, 0, 0, .5); }
@@ -638,6 +665,14 @@ button { font: inherit; color: inherit; }
 /* The Ideas card's header already says what it's for, so the form starts straight away */
 #ideaCard .idea-body > .atmo-desc { display: none; }
 #ideaCard .idea-body { gap: 12px; }
+/* No explanations under the options: the choices speak for themselves, and only live status lines show */
+#atmoVenueDesc, #atmoListenerDesc, #atmoStyleDesc, .tile small { display: none; }
+#atmoTapHint:empty { display: none; }
+.tile { min-height: 0; }
+.tile-wide .tile-ic { grid-row: 1; }
+/* Tally's form is a light page with light lettering on a see-through background. Given the player's dark scheme the
+   browser would back the frame with solid white and hide the questions; the frame takes Tally's scheme instead */
+#ideaCard iframe { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) { .side-card { animation: none; } }
 
 /* The first-time tip, just below the garbo */

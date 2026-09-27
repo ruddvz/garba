@@ -236,19 +236,65 @@
     return true;
   }
 
+  function goSimple() {
+    setViewMenu(false);
+    if (fullscreenElement()) exitFullscreen();
+    if (LIVE_SITE) {
+      window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'view', view: 'simple' }, location.origin);
+    } else {
+      try { localStorage.setItem('garba:view', 'simple'); } catch (e) {}
+      var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      window.location.href = isLocalDev ? '/' : '../../../../';
+    }
+  }
   var viewSwitch = document.querySelector('[data-view-switch]');
   if (viewSwitch) {
     viewSwitch.closest('.view-switch').hidden = false;
-    viewSwitch.addEventListener('click', function () {
-      if (LIVE_SITE) {
-        window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'view', view: 'simple' }, location.origin);
-      } else {
-        try { localStorage.setItem('garba:view', 'simple'); } catch (e) {}
-        var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        window.location.href = isLocalDev ? '/' : '../../../../';
-      }
-    });
+    viewSwitch.addEventListener('click', goSimple);
   }
+
+  // The switch's two halves: home goes to Simple, and the Immersive half, already on, takes the player full screen
+  // (and back). Inside PlayGarba the player is a frame that is allowed to go full screen. iPhone browsers can't put a
+  // page full screen, so there the listener is pointed to the Home Screen install, which opens without browser bars.
+  function fullscreenElement() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function exitFullscreen() { var x = document.exitFullscreen || document.webkitExitFullscreen; if (x) try { var r = x.call(document); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+  function toggleFullscreen() {
+    if (fullscreenElement()) { exitFullscreen(); return; }
+    var root = document.documentElement, go = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (!go || !(document.fullscreenEnabled || document.webkitFullscreenEnabled)) { toast('For full screen on this phone, add PlayGarba to your Home Screen.'); return; }
+    try { var r = go.call(root); if (r && r.catch) r.catch(function () { toast("Full screen isn't available here."); }); } catch (e) { toast("Full screen isn't available here."); }
+  }
+  function syncFullscreen() {
+    var on = !!fullscreenElement();
+    $('fullBtn').setAttribute('aria-pressed', String(on));
+    $('fullBtn').setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  }
+  $('fullBtn').addEventListener('click', function () { setViewMenu(false); toggleFullscreen(); });
+
+  // On a phone one home button stands in the moon's place. It opens the switch as the head of the scene pill; a tap
+  // anywhere else puts it away
+  function viewMenuOpen() { return app.classList.contains('view-open'); }
+  function setViewMenu(open) {
+    if (open === viewMenuOpen()) return;
+    app.classList.toggle('view-open', open);
+    $('viewBtn').setAttribute('aria-expanded', String(open));
+  }
+  $('viewBtn').hidden = false;
+  $('viewBtn').addEventListener('click', function () { setViewMenu(!viewMenuOpen()); });
+  document.addEventListener('pointerdown', function (e) { if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn')) setViewMenu(false); }, true);
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  document.addEventListener('webkitfullscreenchange', syncFullscreen);
+
+  // Hide the player: everything but the top bar steps aside and the venue takes the whole screen
+  function setPlayerHidden(off) {
+    app.classList.toggle('player-off', off);
+    $('hidePlayerBtn').setAttribute('aria-pressed', String(off));
+    $('hidePlayerBtn').setAttribute('aria-label', off ? 'Show player' : 'Hide player');
+    if (off) closeCard(true);
+    relayout();
+  }
+  function playerHidden() { return app.classList.contains('player-off'); }
+  $('hidePlayerBtn').addEventListener('click', function () { setPlayerHidden(!playerHidden()); });
 
   var brandLink = document.querySelector('.brand');
   if (brandLink && !LIVE_SITE) {
@@ -1031,7 +1077,7 @@
     if (!openCardId) return;
     var id = openCardId; $(id).hidden = true; openCardId = null;
     var btn = document.querySelector('.rail-btn[data-card="' + id + '"]') || (id === 'linkCard' ? $('linkSongBtn') : null);
-    if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) btn.focus(); }
+    if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) (btn.offsetParent ? btn : $('moreBtn')).focus(); }
   }
   // The rail's card buttons; its Circle button opens Private Garba Circle instead
   document.querySelectorAll('.rail-btn[data-card]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
@@ -1200,6 +1246,8 @@
   document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheet(); });
   $('scrim').addEventListener('click', function () { closeSheet(); });
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && viewMenuOpen()) { e.preventDefault(); setViewMenu(false); if ($('viewBtn').offsetParent) $('viewBtn').focus(); return; }
+    if (e.key === 'Escape' && playerHidden() && !openCardId && !openSheet) { e.preventDefault(); setPlayerHidden(false); return; }
     if (LIVE_SITE && e.key === 'Escape' && !openCardId && !openSheet) {
       e.preventDefault();
       window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'exit' }, location.origin);
@@ -1593,6 +1641,10 @@
   $('searchBtn').addEventListener('click', function () { showSheet('exploreSheet', 'searchInput'); });
   $('exploreBtn').addEventListener('click', function () { showSheet('exploreSheet'); });
   $('tonightBtn').addEventListener('click', function () { showSheet('tonightSheet'); });
+  // On a phone the moon's place in the top bar goes to the view switch, and Tonight opens from More instead
+  $('tonightOpen').addEventListener('click', function () { showSheet('tonightSheet'); opener = $('moreBtn'); });
+  // On a phone the link button's place goes to Hide player, so Play YouTube link opens from More
+  $('linkOpen').addEventListener('click', function (e) { e.stopPropagation(); closeSheet(true); openCard('linkCard'); });
   $('moreBtn').addEventListener('click', function () { showSheet('moreSheet'); });
   $('shareOpen').addEventListener('click', function () { showSheet('shareSheet'); });
   $('aboutOpen').addEventListener('click', function () { showSheet('aboutPage'); });
@@ -1915,7 +1967,8 @@
   /* ---------- layout + loop ---------- */
   function relayout() {
     scene.resize();
-    scene.layout($('lampSlot').getBoundingClientRect(), $('np').getBoundingClientRect());
+    var H = window.innerHeight;
+    scene.layout($('lampSlot').getBoundingClientRect(), playerHidden() ? { top: H, bottom: H, left: 0, right: window.innerWidth, width: 0, height: 0 } : $('np').getBoundingClientRect());
     renderDial();
   }
   window.addEventListener('resize', relayout);
@@ -1925,6 +1978,8 @@
   // Inside PlayGarba the player is an iframe that stays loaded while Simple is shown; the venue isn't drawn while it's hidden
   function frameHidden() { try { var fe = window.frameElement; return !!(fe && fe.closest && fe.closest('[hidden]')); } catch (e) { return false; } }
   function loop(now) {
+    // The next frame is asked for first, so a frame that fails to draw can never stop the venue for good
+    requestAnimationFrame(loop);
     var dt = Math.min(0.05, (now - last) / 1000); last = now;
     clockAcc += dt;
     if (clockAcc >= 0.25) { tick(clockAcc); clockAcc = 0; renderTime(); scene.set({ progress: progress() }); }
@@ -1936,7 +1991,6 @@
       if (openSheet && openSheet.id === 'exploreSheet' && still) mirrors.frame(stillT);
     }
     animateClaps(now);
-    requestAnimationFrame(loop);
   }
   var clapBeat = -1;
   function animateClaps(now) {

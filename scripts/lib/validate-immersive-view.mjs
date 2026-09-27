@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260927-7"', 'src="garbo.js?v=20260927-9"', 'src="scene.js?v=20260927-9"']) {
+for (const marker of ['href="garbo.css?v=20260927-8"', 'src="garbo.js?v=20260927-10"', 'src="scene.js?v=20260927-9"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -89,13 +89,38 @@ if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expos
 if (!prototypeHtml.includes('id="circleRail"') || !prototypeHtml.includes('<span>Circle</span>')) fail('Immersive\'s rail must carry the Private Garba Circle button');
 if (!/<button class="circle-perch is-idle" id="circlePerch"(?![^>]*\shidden)[^>]*>/.test(html) || !html.includes('Listen with friends')) fail('The Private Garba Circle chip above 24/7 LIVE must show before a circle starts');
 if (/action === 'circle'\) setView\('simple'/.test(runtime)) fail('Opening Private Garba Circle from Immersive must not switch the listener to Simple view');
-if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('role="switch"') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');
+if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('aria-label="Switch to Simple view" data-view-switch') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');
+// The switch's Immersive half, already on, takes the player full screen and back
+if (!prototypeHtml.includes('id="fullBtn" aria-label="Full screen" aria-pressed="false"') || !prototypeJs.includes("$('fullBtn').addEventListener('click', function () { setViewMenu(false); toggleFullscreen(); });") || !prototypeJs.includes('if (fullscreenElement()) exitFullscreen();')) fail('The Immersive half of the switch must toggle full screen, and leaving for Simple must leave full screen');
 for (const marker of ['class="view-switch-detail"', 'class="view-switch-icon view-switch-icon-simple"', 'class="view-switch-icon view-switch-icon-immersive"']) {
   if (!prototypeHtml.includes(marker)) fail(`The embedded prototype is missing the icon-only view switch element ${marker}`);
 }
 if (prototypeHtml.includes('>Simple<') || prototypeHtml.includes('>Immersive<')) fail('The embedded prototype mode pill must not render visible text labels');
 if (!prototypeJs.includes("viewSwitch.closest('.view-switch').hidden = false")) fail('Live Immersive mode must reveal the switch itself, not only its parent toolbar');
 if (!prototypeCss.includes('.lamp-tip') || !prototypeCss.includes('.side-card')) fail('The canonical prototype must include its full player presentation');
+// One frame that fails to draw (a hidden frame has no size) must not freeze the venue: the loop books its next frame first
+if (!prototypeJs.includes('  function loop(now) {\n    // The next frame is asked for first, so a frame that fails to draw can never stop the venue for good\n    requestAnimationFrame(loop);')) fail('The Immersive draw loop must request its next frame before drawing');
+// A tap anywhere on the venue must start the song: the invisible keyboard seek under the lamp takes no pointer
+if (!prototypeCss.includes('.ring-seek { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; opacity: 0; margin: 0; pointer-events: none; }')) fail('The invisible ring seek must not catch taps on the venue');
+// The Tally form must stay see-through on the dark card: a dark iframe around Tally's light page gets an opaque white
+// backdrop that hides its light question text
+if (!prototypeCss.includes('#ideaCard iframe { color-scheme: light; }')) fail('The Ideas card must give the Tally frame its light colour scheme');
+for (const file of ['docs/product/prototypes/garbo/ideas.js', 'public-site/garbo/prototype/ideas.js']) {
+  if (!(await read(file)).includes('background: transparent; color-scheme: light; }')) fail(`${file} must give the Tally frame its light colour scheme`);
+}
+// On a phone a home button takes the moon's place in the top bar and opens the switch at the head of the scene pill;
+// Hide player takes the link button's place, and Tonight and Play YouTube link open from More. Wider screens keep the
+// switch at the head of the pill under More
+const moreAt = prototypeHtml.indexOf('id="moreSheet"'), tonightTileAt = prototypeHtml.indexOf('id="tonightOpen"');
+if (moreAt < 0 || tonightTileAt < moreAt || tonightTileAt > prototypeHtml.indexOf('</section>', moreAt)) fail('More must carry the Tonight tile that phones use in place of the moon button');
+if (!prototypeJs.includes("$('tonightOpen').addEventListener('click', function () { showSheet('tonightSheet');")) fail('The Tonight tile in More must open the Tonight sheet');
+if (!prototypeHtml.includes('id="hidePlayerBtn" type="button" aria-label="Hide player" aria-pressed="false"') || !prototypeJs.includes('function setPlayerHidden(off)') || !prototypeCss.includes('.player-off .stage > :not(.lamp-slot), .player-off .rail { display: none; }')) fail('The top bar must carry Hide player, which leaves the venue on the whole screen');
+const linkTileAt = prototypeHtml.indexOf('id="linkOpen"');
+if (linkTileAt < moreAt || linkTileAt > prototypeHtml.indexOf('</section>', moreAt) || !prototypeJs.includes("$('linkOpen').addEventListener('click'")) fail('More must carry the Play YouTube link tile that phones use in place of the link button');
+if (!/<button class="ib" id="tonightBtn"[^>]*>[\s\S]*?<\/button>\s*<button class="ib" id="viewBtn"[^>]*aria-expanded="false"/.test(prototypeHtml) || !prototypeJs.includes("$('viewBtn').addEventListener('click', function () { setViewMenu(!viewMenuOpen()); });") || !prototypeJs.includes("if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn')) setViewMenu(false);")) fail('On a phone the home button must sit in the moon\'s place, open the switch, and close on a tap elsewhere');
+for (const marker of ['@media (max-width: 600px), (orientation: landscape) and (max-height: 520px) {', '#tonightBtn, #linkSongBtn, .view-switch { display: none; }', '#viewBtn, #tonightOpen, #linkOpen { display: grid; }', '.view-open { --pill-switch-h: 49px; }', '.view-open .view-switch { display: flex; }']) {
+  if (!prototypeCss.includes(marker)) fail(`The phone top bar is missing ${marker}`);
+}
 
 if (failed) process.exit(1);
-console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More, and the deployed Garbo scene path resolves');
+console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');

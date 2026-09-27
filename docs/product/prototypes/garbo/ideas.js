@@ -79,7 +79,9 @@
     var s = document.createElement('style'); s.id = 'garbo-ideas-style';
     s.textContent = [
       '.idea-form { margin: 0 -6px; }',
-      '.idea-form iframe { display: block; width: 100%; height: 360px; border: 0; background: transparent; }',
+      // The player is dark and Tally's page is light. When the two colour schemes differ, the browser paints the frame
+      // solid white, and the form's light lettering disappears on it. Matching Tally's scheme keeps the frame see-through.
+      '.idea-form iframe { display: block; width: 100%; height: 360px; border: 0; background: transparent; color-scheme: light; }',
       '.idea-open { display: block; text-align: center; font-size: 13px; color: var(--brass, #d6b06f); }',
       '.idea-wall { display: grid; gap: 10px; border-top: 1px solid var(--line, rgba(246,236,215,.14)); padding-top: 16px; text-align: left; }',
       '.idea-wall h3 { margin: 0; font: 600 13px/1.3 var(--ui, system-ui, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: var(--brass, #d6b06f); text-align: center; }',
