@@ -2911,7 +2911,8 @@ const circle = createCircleController({
   playCircleSong,
   // Play your songs: the song on screen, then Up next
   pickedSongs: () => [currentSong(), ...manualQueueSongs()].filter(Boolean),
-  resolveDuration: (song) => (canExecuteSong(song) ? resolveYouTubeDuration(song.youtubeId) : Promise.resolve(0)),
+  // Only a whole video someone added or pasted is measured: a catalogue chapter's length is not its video's
+  resolveDuration: (song) => ((song.userAdded || song.circleLink) && canExecuteSong(song) ? resolveYouTubeDuration(song.youtubeId) : Promise.resolve(0)),
   registerCircleSongs,
   showToast,
   onChange: () => {

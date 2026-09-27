@@ -84,6 +84,11 @@ for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
 }
 if (!/Garbo player prototype/i.test(prototypeHtml) || !prototypeJs.includes("get('live') === '1'")) fail('The canonical prototype page must support live-site mode');
 if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expose the live Garba Circle action');
+// Private Garba Circle is findable in both players: a chip above 24/7 LIVE that shows before any circle starts,
+// and a Circle button in Immersive's rail. Opening it from Immersive keeps the listener in Immersive.
+if (!prototypeHtml.includes('id="circleRail"') || !prototypeHtml.includes('<span>Circle</span>')) fail('Immersive\'s rail must carry the Private Garba Circle button');
+if (!/<button class="circle-perch is-idle" id="circlePerch"(?![^>]*\shidden)[^>]*>/.test(html) || !html.includes('Listen with friends')) fail('The Private Garba Circle chip above 24/7 LIVE must show before a circle starts');
+if (/action === 'circle'\) setView\('simple'/.test(runtime)) fail('Opening Private Garba Circle from Immersive must not switch the listener to Simple view');
 if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('role="switch"') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');
 for (const marker of ['class="view-switch-detail"', 'class="view-switch-icon view-switch-icon-simple"', 'class="view-switch-icon view-switch-icon-immersive"']) {
   if (!prototypeHtml.includes(marker)) fail(`The embedded prototype is missing the icon-only view switch element ${marker}`);
