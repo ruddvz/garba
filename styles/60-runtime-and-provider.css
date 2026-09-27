@@ -960,3 +960,15 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
 .circle-songs { margin: 0; color: rgba(246, 236, 215, .78); font-size: 13.5px; line-height: 1.45; }
 .circle-songs[hidden] { display: none; }
 .circle-songs.is-changed { color: var(--ivory); font-weight: 650; }
+
+/* The container holding the Private Garba Circle chip and 24/7 LIVE is as tall and wide as the chip, so on phones
+   its box reaches over the genre strip and Explore. Only its buttons take taps; the space around them passes taps
+   through to the controls underneath. While a sheet hides the container, its buttons stay untappable too. */
+.live-station-container { pointer-events: none; }
+.live-station-container > button { pointer-events: auto; }
+@media (max-width: 700px) {
+  .app:not([data-sheet-snap="closed"]) .live-station-container > button,
+  .app[data-sheet-snap="collapsed"] .live-station-container > button,
+  .app[data-sheet-snap="medium"] .live-station-container > button,
+  .app[data-sheet-snap="full"] .live-station-container > button { pointer-events: none; }
+}
