@@ -51,7 +51,7 @@
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     var cam = { x: 0, y: 4, z: -15 };
     var TH = THEMES.traditional, BEAT = 0, band = {};
-    var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false, youName: '', partnerName: '', youFace: null, partnerFace: null };
+    var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false, youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false };
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
@@ -2842,7 +2842,8 @@
       // head is, ringed in gold for you and ivory for your partner. Drawn before the arms, so a clap overhead stays in front.
       if (d.coupleRole && headFaceFits(h)) {
         var mine = d.coupleRole === youRole(), myFace = coupleFace(mine);
-        if (myFace) faceDisc(myFace, x, y - h * 0.9, Math.max(h * 0.1, Math.min(9, h * 0.16)), mine ? '#e8b04b' : 'rgba(243,230,208,.9)');
+        if (myFace && myFace.cut) cutHead(myFace.img, x, y - h * 0.885, h);
+        else if (myFace) faceDisc(myFace.img, x, y - h * 0.9, Math.max(h * 0.1, Math.min(9, h * 0.16)), mine ? '#e8b04b' : 'rgba(243,230,208,.9)');
       }
       // The singers' jewellery and his safa tail
       if (d.role === 'singer' && h > 18) {
@@ -2940,7 +2941,23 @@
     }
     function coupleWord(you) { return cleanName(you ? st.youName : st.partnerName) || (you ? 'you' : 'yours'); }
     function youRole() { return st.youAs === 'man' ? 'm' : 'w'; }
-    function coupleFace(you) { var u = you ? st.youFace : st.partnerFace; return typeof u === 'string' && u ? faceImg(u) : null; }
+    // A face with a transparent background (a cut-out PNG or WebP) is worn like the singers' heads; a photo is cropped round
+    function coupleFace(you) {
+      var u = you ? st.youFace : st.partnerFace, img = typeof u === 'string' && u ? faceImg(u) : null;
+      return img ? { img: img, cut: !!(you ? st.youFaceCut : st.partnerFaceCut) } : null;
+    }
+    // The same size and seat as a singer's cut-out head: a little oversized, the way a figurine's head is
+    function cutHead(img, cx, hy, h) {
+      var ih = h * 0.3, iw = ih * (img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1);
+      g.drawImage(img, cx - iw / 2, hy - ih * 0.58, iw, ih);
+    }
+    // In a tag, a cut-out sits in the face's slot as it is, scaled to fit
+    function cutInSlot(img, cx, cy, d) {
+      var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+      if (!iw || !ih) return;
+      var sc = d / Math.max(iw, ih);
+      g.drawImage(img, cx - iw * sc / 2, cy - ih * sc / 2, iw * sc, ih * sc);
+    }
     // Seen from the front, a face goes on the dancer's head once they are big enough to carry it; otherwise, and
     // whenever you are both seen from behind, it goes in the tag beside the name
     function headFaceFits(h) { return h > 20; }
@@ -2974,7 +2991,12 @@
       g.fillStyle = you ? '#e8b04b' : 'rgba(243,230,208,.94)'; g.fill();
       g.strokeStyle = you ? '#fff1c2' : 'rgba(142,27,44,.5)'; g.lineWidth = 1; g.stroke();
       var tx = x;
-      if (face) { var fx = x - w / 2 + fs * 0.4 + lay.fd / 2; faceDisc(face, fx, top + hh * 0.5, lay.fd / 2, you ? '#fff1c2' : 'rgba(142,27,44,.5)'); tx = fx + lay.fd / 2 + fs * 0.35 + lay.tw / 2; }
+      if (face) {
+        var fx = x - w / 2 + fs * 0.4 + lay.fd / 2;
+        if (face.cut) cutInSlot(face.img, fx, top + hh * 0.5, lay.fd * 1.1);
+        else faceDisc(face.img, fx, top + hh * 0.5, lay.fd / 2, you ? '#fff1c2' : 'rgba(142,27,44,.5)');
+        tx = fx + lay.fd / 2 + fs * 0.35 + lay.tw / 2;
+      }
       g.font = '700 ' + fs + 'px ' + GU_FONT; g.fillStyle = you ? '#2a1208' : '#6b1420'; g.fillText(text, tx, top + hh * 0.7);
     }
     // Pictograms over the two of you, like the signs on a door: a woman in a dress and a man. Yours glows gold.
