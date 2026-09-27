@@ -51,7 +51,7 @@
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     var cam = { x: 0, y: 4, z: -15 };
     var TH = THEMES.traditional, BEAT = 0, band = {};
-    var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false };
+    var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false, youName: '', partnerName: '', youFace: null, partnerFace: null };
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
@@ -2838,6 +2838,12 @@
         if (rich) { dotRow(alongQuad(x - h * 0.034, y - h * 0.96, x, y - h * 1.012, x + h * 0.034, y - h * 0.96, 7), Math.max(0.6, h * 0.005), '#fffaf0'); g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = Math.max(0.5, h * 0.004); g.beginPath(); g.moveTo(x, y - h * 0.952); g.lineTo(x, y - h * 0.93); g.stroke(); }
         if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(0.6, h * 0.008); g.beginPath(); g.moveTo(x, y - h * 0.955); g.lineTo(x, y - h * 0.925); g.stroke(); g.fillStyle = gold; g.beginPath(); g.arc(x, y - h * 0.922, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.fillStyle = '#c0392b'; g.beginPath(); g.arc(x, y - h * 0.9, Math.max(0.6, h * 0.008), 0, TAU); g.fill(); g.fillStyle = gold; g.beginPath(); g.arc(x - h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.arc(x + h * 0.066, y - h * 0.87, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); }
       }
+      // Your own face, and your partner's, as a round cut-out over the head: a little oversized, the way a figurine's
+      // head is, ringed in gold for you and ivory for your partner. Drawn before the arms, so a clap overhead stays in front.
+      if (d.coupleRole && headFaceFits(h)) {
+        var mine = d.coupleRole === youRole(), myFace = coupleFace(mine);
+        if (myFace) faceDisc(myFace, x, y - h * 0.9, Math.max(h * 0.1, Math.min(9, h * 0.16)), mine ? '#e8b04b' : 'rgba(243,230,208,.9)');
+      }
       // The singers' jewellery and his safa tail
       if (d.role === 'singer' && h > 18) {
         if (!d.man) { g.fillStyle = gold; [-1, 1].forEach(function (sd) { g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.862, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.84, Math.max(0.8, h * 0.016), 0, TAU); g.fill(); }); }
@@ -2900,7 +2906,7 @@
       g.globalAlpha = 1;
       if (isYou) {
         g.fillStyle = 'rgba(214,176,111,' + (0.25 + youGlow * 0.5) + ')'; g.beginPath(); g.ellipse(x, p.y, h * (0.32 + youGlow * 0.12), h * 0.09, 0, 0, TAU); g.fill();
-        youLabel = { x: x, y: y - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: x, hy: y - h * 0.97 };
+        youLabel = { x: x, y: y - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: x, hy: y - h * 0.97, faceOnHead: headFaceFits(h) };
       }
     }
     function fogBand(f) {
@@ -2923,20 +2929,53 @@
     // You over you, and yours over your partner, on a small leaf-shaped tag
     // A canvas font can't use CSS variables: a font string with var() is ignored and the last font stays in use
     var GU_FONT = 'system-ui, -apple-system, "Segoe UI", "Noto Sans Gujarati", "Gujarati Sangam MN", Shruti, "Anek Gujarati", FreeSerif, sans-serif';
-    function coupleWord(you, man) { return you ? 'you' : 'yours'; }
+    // The page can name the two of you (youName, partnerName) and give each a face (youFace, partnerFace: an image
+    // URL, usually a small data: URL made on the device). A blank name falls back to the word. Names are drawn as
+    // canvas text, never markup, and control and direction-override characters are dropped first.
+    var NAME_MAX = 16;
+    function cleanName(v) {
+      if (typeof v !== 'string') return '';
+      var s = v.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, '').replace(/\s+/g, ' ').trim();
+      return Array.from(s).slice(0, NAME_MAX).join('').trim();
+    }
+    function coupleWord(you) { return cleanName(you ? st.youName : st.partnerName) || (you ? 'you' : 'yours'); }
+    function youRole() { return st.youAs === 'man' ? 'm' : 'w'; }
+    function coupleFace(you) { var u = you ? st.youFace : st.partnerFace; return typeof u === 'string' && u ? faceImg(u) : null; }
+    // Seen from the front, a face goes on the dancer's head once they are big enough to carry it; otherwise, and
+    // whenever you are both seen from behind, it goes in the tag beside the name
+    function headFaceFits(h) { return h > 20; }
+    function faceDisc(img, cx, cy, r, ring) {
+      var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+      if (!iw || !ih || r < 1) return;
+      var sc = 2 * r / Math.min(iw, ih);
+      g.save(); g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.clip();
+      g.drawImage(img, cx - iw * sc / 2, cy - ih * sc / 2, iw * sc, ih * sc);
+      g.restore();
+      g.strokeStyle = ring; g.lineWidth = Math.max(1, r * 0.12); g.beginPath(); g.arc(cx, cy, r, 0, TAU); g.stroke();
+    }
     function tagSize(h, compact) { var fs = compact ? Math.max(10, Math.min(13, h * 0.08)) : Math.max(12, Math.min(17, h * 0.15)); return { fs: fs, hh: fs * 1.55, tip: fs * 0.55 }; }
-    function tag(x, y, h, you, man, T0, compact, lead) {
-      var text = coupleWord(you, man), z = tagSize(h, compact), fs = z.fs;
-      g.font = '700 ' + fs + 'px ' + GU_FONT; g.textAlign = 'center';
-      var w = Math.max(fs * 1.9, g.measureText(text).width + fs * 1.1), hh = z.hh, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 1.5, top = y - hh - z.tip - 3 + bob;
+    // The tag's width: the name, and room on the left for a face when it carries one
+    function tagLayout(text, z, face) {
+      var fs = z.fs; g.font = '700 ' + fs + 'px ' + GU_FONT;
+      var tw = g.measureText(text).width, fd = face ? z.hh * 0.74 : 0;
+      return { tw: tw, fd: fd, w: face ? fs * 0.4 + fd + fs * 0.35 + tw + fs * 0.55 : Math.max(fs * 1.9, tw + fs * 1.1) };
+    }
+    function tag(x, y, h, you, T0, compact, lead, face) {
+      var text = coupleWord(you), z = tagSize(h, compact), fs = z.fs, lay = tagLayout(text, z, face);
+      g.textAlign = 'center';
+      var w = lay.w, hh = z.hh, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 1.5, top = y - hh - z.tip - 3 + bob, head = x;
       x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x));
-      if (lead) { g.strokeStyle = you ? 'rgba(232,176,75,.8)' : 'rgba(243,230,208,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, top + hh + z.tip); g.lineTo(lead.x, lead.y); g.stroke(); }
+      // A long name near the edge slides the tag inward; its tip keeps pointing at the head as far as the tag allows
+      var tip = Math.max(x - w / 2 + hh * 0.45, Math.min(x + w / 2 - hh * 0.45, head));
+      if (lead) { g.strokeStyle = you ? 'rgba(232,176,75,.8)' : 'rgba(243,230,208,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(tip, top + hh + z.tip); g.lineTo(lead.x, lead.y); g.stroke(); }
       if (you) glow(x, top + hh * 0.5, hh * 0.5, 'rgba(255,210,130,1)', 0.2 + youGlow * 0.35);
       g.beginPath(); g.moveTo(x - w / 2, top + hh * 0.35); g.quadraticCurveTo(x - w / 2, top, x - w / 2 + hh * 0.35, top); g.lineTo(x + w / 2 - hh * 0.35, top); g.quadraticCurveTo(x + w / 2, top, x + w / 2, top + hh * 0.35);
-      g.lineTo(x + w / 2, top + hh * 0.7); g.quadraticCurveTo(x + w / 2, top + hh, x + w / 2 - hh * 0.3, top + hh); g.lineTo(x + fs * 0.35, top + hh); g.lineTo(x, top + hh + fs * 0.55); g.lineTo(x - fs * 0.35, top + hh); g.lineTo(x - w / 2 + hh * 0.3, top + hh); g.quadraticCurveTo(x - w / 2, top + hh, x - w / 2, top + hh * 0.7); g.closePath();
+      g.lineTo(x + w / 2, top + hh * 0.7); g.quadraticCurveTo(x + w / 2, top + hh, x + w / 2 - hh * 0.3, top + hh); g.lineTo(tip + fs * 0.35, top + hh); g.lineTo(tip, top + hh + fs * 0.55); g.lineTo(tip - fs * 0.35, top + hh); g.lineTo(x - w / 2 + hh * 0.3, top + hh); g.quadraticCurveTo(x - w / 2, top + hh, x - w / 2, top + hh * 0.7); g.closePath();
       g.fillStyle = you ? '#e8b04b' : 'rgba(243,230,208,.94)'; g.fill();
       g.strokeStyle = you ? '#fff1c2' : 'rgba(142,27,44,.5)'; g.lineWidth = 1; g.stroke();
-      g.fillStyle = you ? '#2a1208' : '#6b1420'; g.fillText(text, x, top + hh * 0.7);
+      var tx = x;
+      if (face) { var fx = x - w / 2 + fs * 0.4 + lay.fd / 2; faceDisc(face, fx, top + hh * 0.5, lay.fd / 2, you ? '#fff1c2' : 'rgba(142,27,44,.5)'); tx = fx + lay.fd / 2 + fs * 0.35 + lay.tw / 2; }
+      g.font = '700 ' + fs + 'px ' + GU_FONT; g.fillStyle = you ? '#2a1208' : '#6b1420'; g.fillText(text, tx, top + hh * 0.7);
     }
     // Pictograms over the two of you, like the signs on a door: a woman in a dress and a man. Yours glows gold.
     function marker(x, y, h, you, T0, man) {
@@ -2962,7 +3001,7 @@
       var h = d.h * p.s;
       g.fillStyle = 'rgba(214,176,111,.22)'; g.beginPath(); g.ellipse(p.x, p.y, h * 0.3, h * 0.08, 0, 0, TAU); g.fill();
       var by = p.y - (st.on && !reduce ? Math.abs(Math.sin(BEAT * Math.PI + d.ph)) * 0.05 * p.s : 0);
-      partnerLabel = { x: p.x, y: by - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: p.x, hy: by - h * 0.97 };
+      partnerLabel = { x: p.x, y: by - h * (d.man ? 0.985 : 1.0), h: h, man: d.coupleRole === 'm', hx: p.x, hy: by - h * 0.97, faceOnHead: headFaceFits(h) };
     }
     function label(text, x, y, h, soft) {
       var fs = Math.max(soft ? 10 : 11, Math.min(soft ? 12.5 : 14, h * 0.2));
@@ -3347,12 +3386,15 @@
       // Your label always sits on top, so you can find yourself in the crowd
       // Each tag rests on its own head. If the two would overlap, your partner's is lifted above yours with a line down to their head.
       var compact = st.listener !== 'circle', lead = null;
+      var youTagFace = youLabel && !youLabel.faceOnHead ? coupleFace(true) : null, partnerTagFace = partnerLabel && !partnerLabel.faceOnHead ? coupleFace(false) : null;
       if (partnerLabel && youLabel) {
-        var zs = tagSize(youLabel.h, compact), need = zs.hh + zs.tip + 6, wide = zs.fs * 2.6;
+        // Two tags side by side need room for both names, however long they are
+        var zs = tagSize(youLabel.h, compact), zp = tagSize(partnerLabel.h, compact), need = zs.hh + zs.tip + 6;
+        var wide = (tagLayout(coupleWord(true), zs, youTagFace).w + tagLayout(coupleWord(false), zp, partnerTagFace).w) / 2 + 4;
         if (Math.abs(partnerLabel.x - youLabel.x) < wide && Math.abs(partnerLabel.y - youLabel.y) < need) { lead = { x: partnerLabel.hx, y: partnerLabel.y - 2 }; partnerLabel.y = Math.min(partnerLabel.y, youLabel.y) - need; }
       }
-      if (partnerLabel) tag(partnerLabel.x, partnerLabel.y, partnerLabel.h, false, partnerLabel.man, T, compact, lead);
-      if (youLabel) tag(youLabel.x, youLabel.y, youLabel.h, true, youLabel.man, T, compact, null);
+      if (partnerLabel) tag(partnerLabel.x, partnerLabel.y, partnerLabel.h, false, T, compact, lead, partnerTagFace);
+      if (youLabel) tag(youLabel.x, youLabel.y, youLabel.h, true, T, compact, null, youTagFace);
 
       // Dust and moths drifting up through the light
       if (!reduce && st.venue !== 'sheri') {
@@ -3423,6 +3465,9 @@
       // Singer heads for the song's artists: singerFaces is a list, singerFace a single one
       if (patch.singerFaces !== undefined) loadFaces(patch.singerFaces);
       else if (patch.singerFace !== undefined) loadFaces(patch.singerFace ? [patch.singerFace] : []);
+      // A face made on the device is a data: URL; once neither of you wears it, let its decoded image go
+      var nextYouFace = patch.youFace !== undefined ? patch.youFace : st.youFace, nextPartnerFace = patch.partnerFace !== undefined ? patch.partnerFace : st.partnerFace;
+      [st.youFace, st.partnerFace].forEach(function (old) { if (typeof old === 'string' && old.indexOf('data:') === 0 && old !== nextYouFace && old !== nextPartnerFace) delete faceCache[old]; });
       if (patch.venue && patch.venue !== st.venue && W > 1) {
         fade = fade || document.createElement('canvas'); fade.width = canvas.width; fade.height = canvas.height;
         fade.getContext('2d').drawImage(canvas, 0, 0); fadeA = 1; waves = []; arrivals = [];

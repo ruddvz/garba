@@ -239,6 +239,36 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     if (!/^rgb\(\d{1,3},\d{1,3},\d{1,3}\)$/.test(out)) fail(`shade(${input}, ${f}) gave an invalid colour: ${out}`);
   }
   if (shadeRaw('#8e1b2c', -0.3) !== shadeRaw('rgb(142,27,44)', -0.3)) fail('shade() must treat hex and rgb() forms of the same colour alike');
+  // You and your partner can carry your own names and faces. A face goes on the head seen from the front and in the
+  // tag seen from behind, the two tags make room for however long the names are, and a replaced face is let go.
+  for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null", 'function coupleFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the couple name and face marker: ${marker}`);
+  }
+  // A name is plain canvas text: cleaned of control and direction-override characters, capped at 16 characters,
+  // and blank falls back to the word. Scripts and emoji come through whole.
+  const nameBody = scene.slice(scene.indexOf('    var NAME_MAX = 16;'), scene.indexOf('    function coupleWord('));
+  const cleanName = new Function(`${nameBody}; return cleanName;`)();
+  const ch = (...codes) => String.fromCodePoint(...codes);
+  const show = (v) => (typeof v === 'string' ? JSON.stringify(v).replace(/[^ -~]/gu, (c) => `<U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}>`) : String(v));
+  const gujarati = ch(0x0aa7, 0x0ab0, 0x0acd, 0x0aae, 0x0abf, 0x0ab2);
+  for (const [input, want] of [
+    ['  Rudra  ', 'Rudra'],
+    ['Rudra   and  Dolly', 'Rudra and Dolly'],
+    [`Ru${ch(0x202e)}dra${ch(0x2066)}`, 'Rudra'],
+    [`Dol${ch(0x200b)}ly${ch(0x2028)}${ch(0xfeff)}`, 'Dolly'],
+    [`Ru${ch(0x07)}dra`, 'Rudra'],
+    [gujarati, gujarati],
+    [`${ch(0x1f483)} Dolly`, `${ch(0x1f483)} Dolly`],
+    ['x'.repeat(40), 'x'.repeat(16)],
+    ['Krupansu Sorath Krupansu', 'Krupansu Sorath'],
+    ['   ', ''],
+    [42, ''],
+    [null, ''],
+  ]) {
+    const got = cleanName(input);
+    if (got !== want) fail(`cleanName(${show(input)}) gave ${show(got)}, expected ${show(want)}`);
+  }
+  if (!/function coupleWord\(you\) \{ return cleanName\(you \? st\.youName : st\.partnerName\) \|\| \(you \? 'you' : 'yours'\); \}/.test(scene)) fail("A blank name must fall back to 'you' and 'yours'");
 }
 
 if (failed) process.exit(1);
