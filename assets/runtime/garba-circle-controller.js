@@ -1,6 +1,8 @@
 /**
- * PlayGarba Garba Circle controller
+ * PlayGarba Private Garba Circle controller
  * Connects the pure circle model to the app, the YouTube runtime and the Circle dialog.
+ * A circle either keeps the music going (the catalogue in one shared, shuffled order) or plays the songs the host
+ * picked: the current song, their Up next, and any YouTube links they paste, carried in the link itself.
  * The YouTube player stays the playback engine; this module only decides what should be
  * playing, where, and nudges the player back when it drifts.
  */
@@ -10,7 +12,11 @@ import {
   buildCircleSchedule,
   scheduleFingerprint,
   encodeCircleCode,
-  decodeCircleCode,
+  decodeAnyCircleCode,
+  encodePickedCode,
+  buildPickedSchedule,
+  pickedItemFor,
+  MAX_PICKED_ITEMS,
   cleanCircleName,
   parseCircleFace,
   MAX_CIRCLE_NAME_LENGTH,
@@ -33,11 +39,15 @@ const NAME_SETTLE_MS = 350;
 const UNPLAYABLE_ERRORS = new Set([100, 101, 150]);
 
 const COPY = {
-  lede: 'Everyone who opens this link hears the same song at the same moment. Use earbuds for a silent garba.',
-  joinLede: 'You have been invited to a Garba Circle. Everyone in it hears the same song at the same moment. Use earbuds for a silent garba.',
+  lede: 'Everyone who opens your link hears the same song at the same moment, on their own phone. Only people with the link can join. Use earbuds for a silent garba.',
+  joinLede: 'You have been invited to a Private Garba Circle. Everyone in it hears the same song at the same moment. Use earbuds for a silent garba.',
   syncing: 'Matching this phone’s clock…',
-  ineligible: 'Garba Circle needs a YouTube recording with a known length. Choose another song to start one.',
+  ineligible: 'Keeping the music going needs a YouTube recording with a known length. Choose another song, or play your own songs instead.',
+  nothingPicked: 'None of these songs can play in a circle yet. Choose a song, or paste a YouTube link, then try again.',
+  lengths: 'Getting each song’s length from YouTube…',
   moveTogether: 'Everyone in the circle hears the same song. Leave the circle to choose another.',
+  hostOnly: 'Only the host can add songs to this circle.',
+  full: `A circle holds up to ${MAX_PICKED_ITEMS} songs.`,
   unplayable: 'This recording can’t play here, so the circle continues with the next song.',
   left: 'Left the circle.',
   invalid: 'This circle link is incomplete. Ask for the link again.',
@@ -45,9 +55,12 @@ const COPY = {
   empty: 'The circle has no songs it can play on this version of PlayGarba.',
   copied: 'Link copied.',
   copyFailed: 'Could not copy the link. Select it and copy it instead.',
-  shareText: 'Join my Garba Circle on PlayGarba',
-  title: 'Garba Circle',
+  shareText: 'Join my Private Garba Circle on PlayGarba',
+  title: 'Private Garba Circle',
 };
+
+// A picked song is the same song whether it came from the catalogue or a pasted link to the same video.
+const itemKey = (item) => (item.kind === 'song' ? `s:${item.id}` : `y:${item.videoId}`);
 
 function loadHost() {
   try {
@@ -85,6 +98,9 @@ function formatClock(clock) {
  *   currentSong: () => object | null,
  *   hostElapsedSeconds: () => number,
  *   playCircleSong: (song: object, offsetSeconds: number) => Promise<void> | void,
+ *   pickedSongs: () => Array,
+ *   resolveDuration: (song: object) => Promise<number>,
+ *   registerCircleSongs: (songs: Array) => void,
  *   showToast: (message: string) => void,
  *   onChange: () => void,
  *   trigger: () => HTMLElement | null,
@@ -96,8 +112,13 @@ export function createCircleController(app) {
   const corrector = createSyncCorrector({ player, now: localNow });
 
   const circle = {
-    status: 'idle', // idle | starting | ready | active | invalid | mismatch
+    status: 'idle', // idle | setup | starting | ready | active | invalid | mismatch
     role: null,
+    // shuffle: the catalogue in one shared order. picked: the host's own songs, looped.
+    kind: 'shuffle',
+    items: [],
+    // The host added songs since the link was last copied or shared
+    listChanged: false,
     message: '',
     code: null,
     startMs: 0,
@@ -134,13 +155,13 @@ export function createCircleController(app) {
 
   function eyebrow() {
     if (circle.status !== 'active') return '';
-    if (circle.pendingLoadSongId || circle.lastDriftSeconds == null) return 'Garba Circle · syncing';
-    return player()?.playing ? 'Garba Circle · in sync' : 'Garba Circle · paused';
+    if (circle.pendingLoadSongId || circle.lastDriftSeconds == null) return 'Private Garba Circle · syncing';
+    return player()?.playing ? 'Private Garba Circle · in sync' : 'Private Garba Circle · paused';
   }
 
   // Tell the app to re-render (eyebrow, button state, URL) only when something it shows changed.
   function notify() {
-    const next = `${circle.status}|${circle.code}|${eyebrow()}|${circle.name}|${circle.face}`;
+    const next = `${circle.status}|${circle.code}|${eyebrow()}|${circle.name}|${circle.face}|${circle.kind}`;
     if (next === lastEyebrow) return;
     lastEyebrow = next;
     app.onChange();
@@ -306,31 +327,110 @@ export function createCircleController(app) {
     notify();
   }
 
-  async function start() {
+  // The host chooses how the circle plays before anything starts
+  function openSetup() {
+    Object.assign(circle, { status: 'setup', role: 'host', message: '', kind: 'shuffle', items: [], listChanged: false });
+    openDialog();
+  }
+
+  function hostIdentity() {
+    const host = loadHost();
+    circle.name = host.name;
+    circle.face = host.face ?? randomSeed() % CIRCLE_FACE_COUNT;
+  }
+
+  /**
+   * The songs a picked circle can carry, in order. Catalogue songs travel by id; pasted links and songs added on
+   * this device travel by video and length, and a length YouTube hasn't told us yet is asked for first.
+   */
+  async function pickedItemsFrom(songs) {
+    const items = [];
+    const seen = new Set();
+    let skipped = 0;
+    for (const song of songs || []) {
+      if (!song) continue;
+      let item = pickedItemFor(song);
+      if (!item && song.youtubeId && !(Number(song.durationSeconds) > 0)) {
+        const seconds = await Promise.resolve(app.resolveDuration(song)).catch(() => 0);
+        if (seconds > 0) {
+          song.durationSeconds = seconds;
+          item = pickedItemFor(song);
+        }
+      }
+      if (!item) { skipped += 1; continue; }
+      const key = itemKey(item);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(item);
+    }
+    return { items, skipped };
+  }
+
+  function useSchedule(schedule) {
+    circle.schedule = schedule;
+    const links = schedule.filter((song) => song.circleLink);
+    if (links.length) app.registerCircleSongs(links);
+  }
+
+  async function start(kind = 'shuffle') {
     const song = app.currentSong();
-    if (!isCircleEligible(song)) {
-      app.showToast(COPY.ineligible);
+    if (kind !== 'picked' && !isCircleEligible(song)) {
+      circle.message = COPY.ineligible;
+      renderDialog();
       return false;
     }
     circle.status = 'starting';
     circle.role = 'host';
-    const host = loadHost();
-    circle.name = host.name;
-    circle.face = host.face ?? randomSeed() % CIRCLE_FACE_COUNT;
+    circle.kind = kind === 'picked' ? 'picked' : 'shuffle';
+    circle.message = '';
+    hostIdentity();
     openDialog();
 
-    const clock = await clockReady().catch(() => null);
+    const clockWait = clockReady().catch(() => null);
+    let picked = null;
+    if (circle.kind === 'picked') {
+      renderDialog();
+      picked = await pickedItemsFrom(app.pickedSongs());
+      if (circle.status !== 'starting') return false;
+    }
+    const clock = await clockWait;
     if (circle.status !== 'starting') return false;
     circle.clock = clock || { offsetMs: 0, uncertaintyMs: Infinity, reliable: false };
 
-    const seed = randomSeed();
-    const schedule = buildCircleSchedule(app.songs(), { seed, firstSongId: song.id });
     const yt = player();
-    const alreadyPlaying = yt?.playing && yt.activeSongId === song.id;
     const elapsed = Math.max(0, Number(app.hostElapsedSeconds()) || 0);
-    circle.schedule = schedule;
-    circle.startMs = Math.round(syncedNow() - elapsed * 1000);
-    circle.code = encodeCircleCode({ seed, startMs: circle.startMs, firstSongId: song.id, fingerprint: scheduleFingerprint(schedule) });
+    let schedule;
+    if (circle.kind === 'picked') {
+      const items = picked.items.slice(0, MAX_PICKED_ITEMS);
+      const built = items.length ? buildPickedSchedule(items, app.songs()) : { schedule: [] };
+      if (!built.schedule?.length) {
+        Object.assign(circle, { status: 'setup', message: COPY.nothingPicked });
+        renderDialog({ focus: true });
+        return false;
+      }
+      schedule = built.schedule;
+      // The current song carries on where it is when it opens the list; otherwise the list starts from its top
+      const first = schedule[0];
+      const continuing = song && (first.id === song.id || (first.youtubeId && first.youtubeId === song.youtubeId));
+      circle.startMs = Math.round(syncedNow() - (continuing ? elapsed : 0) * 1000);
+      circle.items = items;
+      circle.code = encodePickedCode({ startMs: circle.startMs, items, fingerprint: scheduleFingerprint(schedule) });
+      if (!circle.code) {
+        Object.assign(circle, { status: 'setup', message: COPY.full, items: [] });
+        renderDialog({ focus: true });
+        return false;
+      }
+      useSchedule(schedule);
+      const left = picked.skipped + Math.max(0, picked.items.length - items.length);
+      if (left) app.showToast(`${left} ${left === 1 ? 'song was' : 'songs were'} left out: YouTube didn’t give ${left === 1 ? 'its' : 'their'} length.`);
+    } else {
+      const seed = randomSeed();
+      schedule = buildCircleSchedule(app.songs(), { seed, firstSongId: song.id });
+      circle.schedule = schedule;
+      circle.startMs = Math.round(syncedNow() - elapsed * 1000);
+      circle.code = encodeCircleCode({ seed, startMs: circle.startMs, firstSongId: song.id, fingerprint: scheduleFingerprint(schedule) });
+    }
+    const alreadyPlaying = yt?.playing && yt.activeSongId === schedule[0].id && schedule[0].id === song?.id;
     activate('host');
     if (alreadyPlaying) circle.wasPlaying = true;
     else goToCircle();
@@ -339,30 +439,73 @@ export function createCircleController(app) {
   }
 
   /**
+   * The host adds songs to a circle that plays their own songs. They go at the end, so everything already playing
+   * keeps its place; the link changes, and the dialog asks the host to share the new one.
+   */
+  async function addSongs(songs) {
+    if (!(circle.status === 'active' && circle.role === 'host' && circle.kind === 'picked')) return { added: 0, reason: 'host-only' };
+    const { items, skipped } = await pickedItemsFrom(songs);
+    if (circle.status !== 'active') return { added: 0 };
+    const have = new Set(circle.items.map(itemKey));
+    const fresh = items.filter((item) => !have.has(itemKey(item)));
+    const take = fresh.slice(0, Math.max(0, MAX_PICKED_ITEMS - circle.items.length));
+    if (!take.length) return { added: 0, reason: fresh.length ? 'full' : skipped ? 'no-length' : 'already-in' };
+    const nextItems = [...circle.items, ...take];
+    const built = buildPickedSchedule(nextItems, app.songs());
+    if (!built.schedule) return { added: 0 };
+    // Songs go on the end, so within the list's first time through every boundary stays where it was. Once the
+    // list has looped, the start is moved so the song and second playing now stay exactly as they are.
+    let startMs = circle.startMs;
+    const slot = getCirclePosition(circle.schedule, circle.startMs, syncedNow());
+    if (slot?.started && slot.cycle > 0) {
+      const before = circle.schedule.slice(0, slot.index).reduce((sum, song) => sum + Number(song.durationSeconds), 0);
+      startMs = Math.round(syncedNow() - (before + slot.offsetSeconds) * 1000);
+    }
+    const code = encodePickedCode({ startMs, items: nextItems, fingerprint: scheduleFingerprint(built.schedule) });
+    if (!code) return { added: 0, reason: 'full' };
+    Object.assign(circle, { items: nextItems, startMs, code, listChanged: true });
+    useSchedule(built.schedule);
+    notify();
+    renderDialog();
+    return { added: take.length, reason: fresh.length > take.length ? 'full' : '' };
+  }
+
+  /**
    * Read a `?circle=` code on load. Returns the circle's current song so the player can show it
    * before the listener taps Join, or null when the link cannot be joined.
    */
   function prepareJoin(code, { name = '', face = null } = {}) {
-    const decoded = decodeCircleCode(code);
+    const decoded = decodeAnyCircleCode(code);
     circle.name = cleanCircleName(name);
     circle.face = parseCircleFace(face, CIRCLE_FACE_COUNT);
-    const schedule = decoded
-      ? buildCircleSchedule(app.songs(), { seed: decoded.seed, firstSongId: decoded.firstSongId })
-      : [];
     circle.role = 'guest';
     circle.code = code;
+    circle.kind = decoded?.kind === 'picked' ? 'picked' : 'shuffle';
+    circle.items = decoded?.kind === 'picked' ? decoded.items : [];
+    let schedule = [];
+    let missing = false;
+    if (decoded?.kind === 'picked') {
+      const built = buildPickedSchedule(decoded.items, app.songs());
+      missing = Boolean(built.missing);
+      schedule = built.schedule || [];
+    } else if (decoded) {
+      schedule = buildCircleSchedule(app.songs(), { seed: decoded.seed, firstSongId: decoded.firstSongId });
+    }
     if (!decoded) {
       circle.status = 'invalid';
       circle.message = COPY.invalid;
+    } else if (missing) {
+      circle.status = 'mismatch';
+      circle.message = COPY.mismatch;
     } else if (!schedule.length) {
       circle.status = 'invalid';
       circle.message = COPY.empty;
-    } else if (scheduleFingerprint(schedule) !== decoded.fingerprint || schedule[0].id !== decoded.firstSongId) {
+    } else if (scheduleFingerprint(schedule) !== decoded.fingerprint || (decoded.kind === 'shuffle' && schedule[0].id !== decoded.firstSongId)) {
       circle.status = 'mismatch';
       circle.message = COPY.mismatch;
     } else {
       circle.status = 'ready';
-      circle.schedule = schedule;
+      useSchedule(schedule);
       circle.startMs = decoded.startMs;
       syncClock().catch(() => null).finally(renderDialog);
     }
@@ -390,7 +533,7 @@ export function createCircleController(app) {
     clearTimers();
     corrector.reset();
     Object.assign(circle, {
-      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, lastDriftSeconds: null, name: '', face: null,
+      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, lastDriftSeconds: null, name: '', face: null, kind: 'shuffle', items: [], listChanged: false,
     });
     closeDialog();
     notify();
@@ -422,20 +565,25 @@ export function createCircleController(app) {
       <div class="circle-sheet">
         <header class="circle-header">
           <span class="circle-face" data-circle="face" hidden></span>
-          <h2 id="circleTitle">Garba Circle</h2>
-          <button class="icon-button circle-close" type="button" data-circle="close" aria-label="Close Garba Circle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+          <h2 id="circleTitle">Private Garba Circle</h2>
+          <button class="icon-button circle-close" type="button" data-circle="close" aria-label="Close Private Garba Circle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
         </header>
         <p class="circle-lede" id="circleLede"></p>
         <p class="circle-message" data-circle="message" role="alert" hidden></p>
         <button class="circle-primary" type="button" data-circle="join" hidden>Join circle</button>
+        <div class="circle-setup" data-circle="setup" role="group" aria-label="How the circle plays" hidden>
+          <button class="circle-choice" type="button" data-circle="startShuffle"><strong>Keep the music going</strong><span>Starts with this song, then everyone hears the catalogue in one shared order.</span></button>
+          <button class="circle-choice" type="button" data-circle="startPicked"><strong>Play your songs</strong><span data-circle="pickedHint">This song, then your Up next.</span></button>
+        </div>
         <div class="circle-invite" data-circle="invite" hidden>
           <div class="circle-identity" data-circle="identity" hidden>
-            <label class="circle-field"><span class="circle-field-label">Circle name</span><input class="circle-name" type="text" data-circle="name" maxlength="${MAX_CIRCLE_NAME_LENGTH}" autocomplete="off" autocapitalize="words" enterkeyhint="done" spellcheck="false" placeholder="Garba Circle" /></label>
+            <label class="circle-field"><span class="circle-field-label">Circle name</span><input class="circle-name" type="text" data-circle="name" maxlength="${MAX_CIRCLE_NAME_LENGTH}" autocomplete="off" autocapitalize="words" enterkeyhint="done" spellcheck="false" placeholder="Private Garba Circle" /></label>
             <div class="circle-field">
               <span class="circle-field-label" id="circleFacesLabel">Face</span>
               <div class="circle-face-grid" data-circle="faces" role="radiogroup" aria-labelledby="circleFacesLabel"></div>
             </div>
           </div>
+          <p class="circle-songs" data-circle="songs" hidden></p>
           <div class="circle-qr" data-circle="qr"></div>
           <p class="circle-link"><span class="visually-hidden">Circle link: </span><span data-circle="link"></span></p>
           <div class="circle-actions">
@@ -454,6 +602,8 @@ export function createCircleController(app) {
 
     parts.close.addEventListener('click', closeDialog);
     parts.join.addEventListener('click', join);
+    parts.startShuffle.addEventListener('click', () => start('shuffle'));
+    parts.startPicked.addEventListener('click', () => start('picked'));
     parts.copy.addEventListener('click', copyLink);
     parts.share.addEventListener('click', shareLink);
     parts.leave.addEventListener('click', () => leave());
@@ -461,7 +611,7 @@ export function createCircleController(app) {
     dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
     dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeDialog(); });
     dialog.addEventListener('close', () => {
-      if (circle.status === 'invalid' || circle.status === 'mismatch') leaveUnjoined();
+      if (circle.status === 'invalid' || circle.status === 'mismatch' || circle.status === 'setup') leaveUnjoined();
       const trigger = app.trigger();
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     });
@@ -558,7 +708,7 @@ export function createCircleController(app) {
   }
 
   function leaveUnjoined() {
-    Object.assign(circle, { status: 'idle', role: null, message: '', code: null, schedule: [], name: '', face: null });
+    Object.assign(circle, { status: 'idle', role: null, message: '', code: null, schedule: [], name: '', face: null, kind: 'shuffle', items: [], listChanged: false });
     notify();
   }
 
@@ -574,7 +724,7 @@ export function createCircleController(app) {
   }
 
   function toggle() {
-    if (circle.status === 'idle') return start();
+    if (circle.status === 'idle') { openSetup(); return true; }
     if (dialog?.open) closeDialog();
     else openDialog();
     return true;
@@ -585,7 +735,8 @@ export function createCircleController(app) {
     const yt = player();
     const now = circle.status === 'active' ? position() : null;
     let text = '';
-    if (circle.status === 'starting' || (circle.status === 'ready' && !circle.clock)) text = COPY.syncing;
+    if (circle.status === 'starting') text = circle.kind === 'picked' ? COPY.lengths : COPY.syncing;
+    else if (circle.status === 'ready' && !circle.clock) text = COPY.syncing;
     else if (circle.status === 'ready') text = formatClock(circle.clock);
     else if (circle.status === 'active') {
       if (!yt?.playing) text = `Paused. Press Play to rejoin the circle where it is now. ${formatClock(circle.clock)}`;
@@ -606,7 +757,7 @@ export function createCircleController(app) {
     dialog.dataset.state = status;
     const invited = circle.role === 'guest' && !active;
     parts.lede.textContent = invited && circle.name
-      ? `You have been invited to ${circle.name}, a Garba Circle. Everyone in it hears the same song at the same moment. Use earbuds for a silent garba.`
+      ? `You have been invited to ${circle.name}, a Private Garba Circle. Everyone in it hears the same song at the same moment. Use earbuds for a silent garba.`
       : invited ? COPY.joinLede : COPY.lede;
     renderIdentity();
     parts.message.hidden = !circle.message;
@@ -616,17 +767,35 @@ export function createCircleController(app) {
       parts.join.disabled = false;
       parts.join.textContent = 'Join circle';
     }
+    const setup = status === 'setup';
+    parts.setup.hidden = !setup;
+    if (setup) {
+      const queued = Math.max(0, (app.pickedSongs() || []).length - 1);
+      parts.pickedHint.textContent = queued
+        ? `This song, then the ${queued} ${queued === 1 ? 'song' : 'songs'} in your Up next. Paste YouTube links to add more.`
+        : 'This song for now. Add songs to Up next, or paste YouTube links, and they join the circle.';
+    }
+    const picking = active && circle.kind === 'picked';
+    parts.songs.hidden = !picking;
+    if (picking) {
+      const count = circle.schedule.length;
+      const what = `${count} ${count === 1 ? 'song' : 'songs'} in this circle, played in order and then from the top.`;
+      parts.songs.textContent = circle.role !== 'host' ? what
+        : circle.listChanged ? `You added songs. Share the new link so everyone hears them. ${what}`
+          : `${what} Add to Up next or paste a YouTube link to add more.`;
+      parts.songs.classList.toggle('is-changed', circle.role === 'host' && circle.listChanged);
+    }
     parts.invite.hidden = !active;
     parts.leave.hidden = !active;
     parts.share.hidden = !(active && typeof navigator.share === 'function');
     if (active && parts.link.textContent !== linkUrl()) {
       const url = linkUrl();
       parts.link.textContent = url;
-      parts.qr.innerHTML = qrSvg(url, { title: 'QR code for the Garba Circle link' });
+      parts.qr.innerHTML = qrSvg(url, { title: 'QR code for the Private Garba Circle link' });
     }
     renderStatus();
     // Focus the action that matters in this state; also rescue focus from a control that was hidden.
-    const focusTarget = status === 'ready' ? parts.join : active ? parts.copy : parts.close;
+    const focusTarget = status === 'ready' ? parts.join : active ? parts.copy : status === 'setup' ? parts.startShuffle : parts.close;
     const lost = !dialog.contains(document.activeElement) || document.activeElement?.hidden;
     if (dialog.open && (focus || lost)) focusTarget.focus({ preventScroll: true });
   }
@@ -643,7 +812,15 @@ export function createCircleController(app) {
     }, 2200);
   }
 
+  // Once the host passes the new link on, the nudge to share it goes away
+  function linkShared() {
+    if (!circle.listChanged) return;
+    circle.listChanged = false;
+    renderDialog();
+  }
+
   async function copyLink() {
+    linkShared();
     try {
       await navigator.clipboard.writeText(linkUrl());
       feedback(COPY.copied);
@@ -658,7 +835,8 @@ export function createCircleController(app) {
   }
 
   async function shareLink() {
-    const result = await window.GARBA_SHARE_INTENT?.executeShare?.({ title: title(), text: circle.name ? `Join ${circle.name}, my Garba Circle on PlayGarba` : COPY.shareText, url: linkUrl() });
+    linkShared();
+    const result = await window.GARBA_SHARE_INTENT?.executeShare?.({ title: title(), text: circle.name ? `Join ${circle.name}, my Private Garba Circle on PlayGarba` : COPY.shareText, url: linkUrl() });
     if (result?.status === 'copied') feedback(COPY.copied);
     else if (result?.status === 'failed') feedback(COPY.copyFailed);
   }
@@ -672,6 +850,14 @@ export function createCircleController(app) {
 
   return Object.freeze({
     get active() { return circle.status === 'active'; },
+    // shuffle or picked, while a circle is joinable or active
+    get kind() { return circle.status === 'idle' ? null : circle.kind; },
+    // host or guest, while a circle is being set up, joined or played
+    get role() { return circle.status === 'idle' ? null : circle.role; },
+    // True for the host of a circle that plays their own songs: Up next and pasted links add to it
+    get canAddSongs() { return circle.status === 'active' && circle.role === 'host' && circle.kind === 'picked'; },
+    addSongs,
+    hostOnlyMessage: COPY.hostOnly,
     // The link code stays in the address bar while the circle is joinable or active.
     get code() { return circle.status === 'idle' ? null : circle.code; },
     // The name and face the host gave the circle, while it is joinable or active.

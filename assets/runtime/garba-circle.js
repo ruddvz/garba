@@ -134,6 +134,129 @@ export function decodeCircleCode(value) {
   return encodeCircleCode(decoded) === value ? decoded : null;
 }
 
+/* ----------------------------- circles that play the host's own songs ----------------------------- */
+
+// A circle can instead play a list the host picked, looped. The link carries the list itself:
+// `2.<start36>.<fingerprint>.<check>.<item>.<item>…`. An item is a catalogue song id, or `_`, an 11-character
+// YouTube video id and the video's length in whole seconds in base 36, for a pasted YouTube link. A pasted link
+// carries its own length because no catalogue knows it, and every phone must agree on every song boundary.
+export const PICKED_CODE_VERSION = '2';
+export const MAX_PICKED_ITEMS = 30;
+const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+const MAX_LINK_SECONDS = 6 * 3600;
+const MAX_PICKED_CODE_LENGTH = 2000;
+
+function itemToken(item) {
+  if (item?.kind === 'song') {
+    const id = String(item.id || '');
+    return SONG_ID_RE.test(id) && id.length <= MAX_SONG_ID_LENGTH ? id : null;
+  }
+  if (item?.kind === 'link') {
+    const seconds = Math.round(Number(item.durationSeconds));
+    if (!VIDEO_ID_RE.test(String(item.videoId || '')) || !(seconds > MIN_SONG_SECONDS) || seconds > MAX_LINK_SECONDS) return null;
+    return `_${item.videoId}${seconds.toString(36)}`;
+  }
+  return null;
+}
+
+function tokenItem(token) {
+  if (token.startsWith('_')) {
+    const videoId = token.slice(1, 12);
+    const tail = token.slice(12);
+    if (!VIDEO_ID_RE.test(videoId) || !/^[0-9a-z]{1,4}$/.test(tail)) return null;
+    return { kind: 'link', videoId, durationSeconds: parseInt(tail, 36) };
+  }
+  return { kind: 'song', id: token };
+}
+
+/** Encode a picked circle, or null when anything in it could not be decoded again exactly. */
+export function encodePickedCode({ startMs, items, fingerprint } = {}) {
+  if (!Number.isInteger(startMs) || startMs < MIN_START_MS || startMs > MAX_START_MS) return null;
+  if (!Array.isArray(items) || !items.length || items.length > MAX_PICKED_ITEMS) return null;
+  const fp = String(fingerprint || '');
+  if (!/^[0-9a-z]{1,7}$/.test(fp) || parseInt(fp, 36) > UINT32_MAX) return null;
+  const tokens = items.map(itemToken);
+  if (tokens.some((token) => !token)) return null;
+  const body = [PICKED_CODE_VERSION, startMs.toString(36), fp].join('.');
+  const list = tokens.join('.');
+  const code = `${body}.${codeCheck(`${body}.${list}`)}.${list}`;
+  return code.length <= MAX_PICKED_CODE_LENGTH ? code : null;
+}
+
+/** Decode a picked circle code. Returns null for anything `encodePickedCode` would not produce. */
+export function decodePickedCode(value) {
+  if (typeof value !== 'string' || value.length > MAX_PICKED_CODE_LENGTH) return null;
+  const parts = value.split('.');
+  if (parts.length < 5 || parts[0] !== PICKED_CODE_VERSION) return null;
+  const [, start36, fingerprint, check] = parts;
+  if (!/^[0-9a-z]{1,11}$/.test(start36) || !/^[0-9a-z]{3}$/.test(check)) return null;
+  const items = parts.slice(4).map(tokenItem);
+  if (items.some((item) => !item)) return null;
+  const decoded = { startMs: parseInt(start36, 36), fingerprint, items };
+  return encodePickedCode(decoded) === value ? decoded : null;
+}
+
+/** Either kind of circle code: `{ kind: 'shuffle', … }` (version 1), `{ kind: 'picked', … }` (version 2) or null. */
+export function decodeAnyCircleCode(value) {
+  const picked = decodePickedCode(value);
+  if (picked) return { kind: 'picked', ...picked };
+  const shuffle = decodeCircleCode(value);
+  return shuffle ? { kind: 'shuffle', ...shuffle } : null;
+}
+
+/** A pasted YouTube link as a song the circle can schedule. Its title arrives later from YouTube. */
+export function circleLinkSong({ videoId, durationSeconds, title = '' }) {
+  return {
+    id: `link-${videoId}`,
+    title: String(title || '') || 'YouTube video',
+    artist: 'Added to the circle',
+    genre: 'traditional',
+    category: 'circle-link',
+    durationSeconds: Number(durationSeconds),
+    youtubeId: videoId,
+    youtubeStartSeconds: 0,
+    playbackProvider: 'youtube',
+    playbackSourceUrl: `https://www.youtube.com/watch?v=${videoId}`,
+    playbackSourceType: 'circle-link',
+    circleLink: true,
+  };
+}
+
+/** The item a song becomes in a picked circle: a catalogue song by id, anything else by its YouTube video. */
+export function pickedItemFor(song) {
+  if (!song) return null;
+  if (isCircleEligible(song) && !song.userAdded && !song.circleLink) return { kind: 'song', id: song.id };
+  const videoId = String(song.youtubeId || '');
+  const seconds = Math.round(Number(song.durationSeconds));
+  if (!VIDEO_ID_RE.test(videoId) || !(seconds > MIN_SONG_SECONDS)) return null;
+  return { kind: 'link', videoId, durationSeconds: seconds };
+}
+
+/**
+ * The picked circle's songs in the host's order. Returns `{ schedule }`, or `{ missing }` naming a catalogue
+ * song this phone doesn't have (or can't play in a circle), which means the phones run different catalogues.
+ * A song picked twice plays once, where it was first picked.
+ */
+export function buildPickedSchedule(items = [], songs = []) {
+  const byId = new Map();
+  for (const song of songs || []) if (song?.id && !byId.has(song.id)) byId.set(song.id, song);
+  const schedule = [];
+  const seen = new Set();
+  for (const item of items || []) {
+    let song = null;
+    if (item?.kind === 'song') {
+      song = byId.get(item.id);
+      if (!song || !isCircleEligible(song)) return { missing: item.id };
+    } else if (item?.kind === 'link') {
+      song = circleLinkSong(item);
+    }
+    if (!song || seen.has(song.id)) continue;
+    seen.add(song.id);
+    schedule.push(song);
+  }
+  return { schedule };
+}
+
 export const MAX_CIRCLE_NAME_LENGTH = 32;
 // Control characters, zero-width characters and bidirectional overrides never belong in a circle's name.
 const NAME_STRIP_RE = /[\u0000-\u001f\u007f-\u009f­​-‏‪-‮⁠-⁯﻿]/g;

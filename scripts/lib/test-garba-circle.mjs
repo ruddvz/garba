@@ -17,6 +17,13 @@ import {
   measureClockOffset,
   createDateHeaderProbe,
   mulberry32,
+  encodePickedCode,
+  decodePickedCode,
+  decodeAnyCircleCode,
+  buildPickedSchedule,
+  pickedItemFor,
+  circleLinkSong,
+  MAX_PICKED_ITEMS,
 } from '../../assets/runtime/garba-circle.js';
 import { CIRCLE_FACE_COUNT, circleFaceLabel, circleFaceSvg } from '../../assets/runtime/circle-faces.js';
 
@@ -437,6 +444,88 @@ for (const [label, entry] of stats) {
   const code = encodeCircleCode({ seed: 7, startMs: Date.UTC(2026, 8, 27), firstSongId: 'kesariya', fingerprint: 'abc' });
   assert.deepEqual(decodeCircleCode(code), { seed: 7, startMs: Date.UTC(2026, 8, 27), fingerprint: 'abc', firstSongId: 'kesariya' });
   pass('circle codes keep their format alongside a name and a face');
+}
+
+
+{
+  // A circle that plays the host's own songs carries the list in its link: catalogue songs by id, pasted YouTube
+  // links by video id and length. The same list decodes to the same schedule on every phone.
+  const startMs = Date.UTC(2026, 8, 27, 18, 30);
+  const items = [
+    { kind: 'song', id: 'song-b' },
+    { kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 213 },
+    { kind: 'song', id: 'song-a' },
+    { kind: 'link', videoId: 'A_b-C_d-E_f', durationSeconds: 3599 },
+  ];
+  const built = buildPickedSchedule(items, songs);
+  assert.ok(built.schedule, 'every picked song is on this phone');
+  assert.deepEqual(built.schedule.map((song) => song.id), ['song-b', 'link-dQw4w9WgXcQ', 'song-a', 'link-A_b-C_d-E_f']);
+  const link = built.schedule[1];
+  assert.equal(link.durationSeconds, 213);
+  assert.equal(link.youtubeId, 'dQw4w9WgXcQ');
+  assert.equal(link.playbackSourceUrl, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  const fingerprint = scheduleFingerprint(built.schedule);
+  const code = encodePickedCode({ startMs, items, fingerprint });
+  assert.ok(code && code.startsWith('2.'), 'a picked circle has its own code version');
+  assert.ok(!/[^A-Za-z0-9._-]/.test(code), 'the code survives a URL untouched');
+  assert.deepEqual(decodePickedCode(code), { startMs, fingerprint, items });
+  assert.deepEqual(decodeAnyCircleCode(code), { kind: 'picked', startMs, fingerprint, items });
+  const url = new URL('https://playgarba.com/');
+  url.searchParams.set('circle', code);
+  assert.equal(new URL(url.toString()).searchParams.get('circle'), code, 'the code round-trips through a link');
+
+  // Old shuffle links still decode, as their own kind
+  const oldCode = encodeCircleCode({ seed: 7, startMs, firstSongId: 'song-a', fingerprint: 'abc' });
+  assert.deepEqual(decodeAnyCircleCode(oldCode), { kind: 'shuffle', seed: 7, startMs, fingerprint: 'abc', firstSongId: 'song-a' });
+  assert.equal(decodePickedCode(oldCode), null);
+
+  // Truncated, edited or malformed links are refused, never half-read
+  assert.equal(decodePickedCode(code.slice(0, -3)), null, 'a cut-off link');
+  assert.equal(decodePickedCode(code.replace('song-a', 'song-c')), null, 'a swapped song');
+  assert.equal(decodePickedCode(code.replace('_dQw4w9WgXcQ', '_dQw4w9WgXcR')), null, 'a swapped video');
+  assert.equal(decodePickedCode(`${code}.song-c`), null, 'an added song without a new check');
+  assert.equal(decodeAnyCircleCode('2.x'), null);
+  assert.equal(decodeAnyCircleCode(null), null);
+  assert.equal(decodePickedCode('2.' + 'a'.repeat(2100)), null, 'an oversized link');
+
+  // What can't be carried exactly isn't encoded at all
+  assert.equal(encodePickedCode({ startMs, items: [], fingerprint }), null, 'an empty list');
+  assert.equal(encodePickedCode({ startMs, items: [{ kind: 'link', videoId: 'short', durationSeconds: 200 }], fingerprint }), null, 'a bad video id');
+  assert.equal(encodePickedCode({ startMs, items: [{ kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 0 }], fingerprint }), null, 'an unknown length');
+  assert.equal(encodePickedCode({ startMs, items: [{ kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 9 }], fingerprint }), null, 'a clip shorter than a song');
+  assert.equal(encodePickedCode({ startMs, items: [{ kind: 'song', id: 'Not An Id' }], fingerprint }), null, 'a bad song id');
+  const many = Array.from({ length: MAX_PICKED_ITEMS + 1 }, (_, i) => ({ kind: 'link', videoId: `abcdefghi${String(i).padStart(2, '0')}`, durationSeconds: 200 }));
+  assert.equal(encodePickedCode({ startMs, items: many, fingerprint }), null, `more than ${MAX_PICKED_ITEMS} songs`);
+  assert.ok(encodePickedCode({ startMs, items: many.slice(0, MAX_PICKED_ITEMS), fingerprint }), `${MAX_PICKED_ITEMS} songs fit`);
+
+  // A phone without one of the catalogue songs can't join: its catalogue is different
+  assert.deepEqual(buildPickedSchedule([{ kind: 'song', id: 'not-here' }], songs), { missing: 'not-here' });
+  // A song picked twice plays once, where it was first picked
+  assert.deepEqual(buildPickedSchedule([{ kind: 'song', id: 'song-a' }, { kind: 'song', id: 'song-a' }], songs).schedule.map((song) => song.id), ['song-a']);
+
+  // Catalogue songs travel by id; pasted links, and songs added on one device, travel by video and length
+  assert.deepEqual(pickedItemFor(songs.find((song) => song.id === 'song-a')), { kind: 'song', id: 'song-a' });
+  assert.deepEqual(pickedItemFor({ id: 'mine-dQw4w9WgXcQ', userAdded: true, youtubeId: 'dQw4w9WgXcQ', durationSeconds: 212.6 }), { kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 213 });
+  assert.deepEqual(pickedItemFor(circleLinkSong({ videoId: 'dQw4w9WgXcQ', durationSeconds: 213 })), { kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 213 });
+  assert.equal(pickedItemFor({ id: 'mine-x', userAdded: true, youtubeId: 'dQw4w9WgXcQ', durationSeconds: 0 }), null, 'a link whose length is not known yet');
+
+  // The host's list loops, and every phone finds the same song and second in it
+  const total = built.schedule.reduce((sum, song) => sum + song.durationSeconds, 0);
+  const at = getCirclePosition(built.schedule, startMs, startMs + (total + 150 + 10) * 1000);
+  assert.equal(at.song.id, 'link-dQw4w9WgXcQ');
+  assert.equal(Math.round(at.offsetSeconds), 10);
+  assert.equal(at.cycle, 1);
+
+  // Adding songs at the end keeps every earlier boundary where it was, so phones on the old link stay together
+  // until the old list would have looped
+  const longer = buildPickedSchedule([...items, { kind: 'song', id: 'song-c' }], songs).schedule;
+  for (const seconds of [0, 150, 250, 480, total - 1]) {
+    const before = getCirclePosition(built.schedule, startMs, startMs + seconds * 1000);
+    const after = getCirclePosition(longer, startMs, startMs + seconds * 1000);
+    assert.equal(after.song.id, before.song.id);
+    assert.equal(after.offsetSeconds, before.offsetSeconds);
+  }
+  pass('picked circles: host order, pasted links with their length, exact links, old links still work, songs added at the end');
 }
 
 console.log('garba circle tests passed');

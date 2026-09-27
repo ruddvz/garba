@@ -14,6 +14,7 @@ import {
   parseYouTubeLink,
   parseYouTubePlaylist,
   resolveYouTubePlaylist,
+  resolveYouTubeDuration,
   makeUserSong,
   cleanVideoTitle,
   fetchVideoDetails,
@@ -174,7 +175,7 @@ const formatDuration = (seconds) => {
 
 const currentSong = () => state.songs.find((song) => song.id === state.songId) || null;
 const currentGenre = () => state.genres.find((genre) => genre.id === state.genreId) || null;
-const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId);
+const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === genreId && !song.circleLink);
 
 // Playable-first ordering, rebuilt whenever the song list itself changes.
 let playableOrderCache = { songs: null, order: null };
@@ -196,7 +197,41 @@ function withMySongs(songs, { reload = false } = {}) {
   const mine = reload ? mySongs.load(new Set(state.genres.map((genre) => genre.id))) : mySongs.songs;
   const catalogueOrder = createPlayableOrder(songs, { canExecute: canExecuteSong, videoIdOf: youtubeVideoId });
   const catalogueVideos = new Set(songs.filter((song) => catalogueOrder.tier(song) === PLAYABLE_TIER.FULL).map(youtubeVideoId));
-  return [...songs, ...mine.filter((song) => !catalogueVideos.has(song.youtubeId))];
+  const listed = [...songs, ...mine.filter((song) => !catalogueVideos.has(song.youtubeId))];
+  const ids = new Set(listed.map((song) => song.id));
+  return [...listed, ...circleLinkSongs.filter((song) => !ids.has(song.id))];
+}
+
+// YouTube links a Private Garba Circle plays. Every phone in the circle builds them from the link, so they can
+// open in the player like any song, but they aren't saved on this device or shown in its lists.
+let circleLinkSongs = [];
+function registerCircleSongs(songs) {
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  const fallbackGenre = state.genres.some((genre) => genre.id === state.genreId) ? state.genreId : state.genres[0]?.id;
+  const fresh = [];
+  const canonical = songs.map((song) => {
+    const known = byId.get(song.id);
+    if (known) return known;
+    // The player opens a song in its genre, so a link borrows the one on screen; it stays out of that genre's list
+    song.genre = fallbackGenre || song.genre;
+    byId.set(song.id, song);
+    fresh.push(song);
+    return song;
+  });
+  if (fresh.length) {
+    circleLinkSongs = [...circleLinkSongs, ...fresh];
+    state.songs = [...state.songs, ...fresh];
+    for (const song of fresh) {
+      fetchVideoDetails(song.youtubeId).then((details) => {
+        if (!details?.title) return;
+        const clean = cleanVideoTitle(details.title, details.channel);
+        song.title = clean.title || details.title;
+        song.artist = clean.artist || details.channel || song.artist;
+        if (state.songId === song.id) renderPlayer();
+      }).catch(() => {});
+    }
+  }
+  return canonical;
 }
 
 function findSongByVideoId(videoId) {
@@ -579,7 +614,35 @@ function getUpNextSongs() {
   return [...queued, ...automatic].slice(0, Math.max(12, queued.length + Math.min(8, automatic.length)));
 }
 
+// In a Private Garba Circle the group hears one list, so Up next and pasted links add to the circle instead.
+async function addToCircle(songs) {
+  if (!circle.canAddSongs) {
+    showToast(circle.role === 'host'
+      ? 'This circle keeps the music going. To choose the songs, leave it and start one with Play your songs.'
+      : circle.hostOnlyMessage);
+    return false;
+  }
+  const result = await circle.addSongs(songs);
+  if (result.added) {
+    showToast(result.added === 1
+      ? 'Added to the circle. Share the new link so everyone hears it.'
+      : `Added ${result.added} songs to the circle. Share the new link so everyone hears them.`);
+    return true;
+  }
+  showToast({
+    full: 'A circle holds up to 30 songs.',
+    'no-length': 'YouTube didn’t give this song’s length, so it can’t join the circle.',
+    'already-in': 'That song is already in the circle.',
+  }[result.reason] || 'That song can’t join the circle.');
+  return false;
+}
+
 function queueSong(songId) {
+  if (circle.active) {
+    const song = state.songs.find((item) => item.id === songId);
+    if (song) addToCircle([song]);
+    return;
+  }
   if (!songId || songId === state.songId) {
     showToast('That song is already playing.');
     return;
@@ -604,6 +667,11 @@ function queueSong(songId) {
 
 // Moves a song to the front of Up next, so it plays after the current one.
 function queueSongNext(songId) {
+  if (circle.active) {
+    const song = state.songs.find((item) => item.id === songId);
+    if (song) addToCircle([song]);
+    return Boolean(song);
+  }
   if (!songId || songId === state.songId) return false;
   const song = state.songs.find((item) => item.id === songId);
   if (!song || !canExecuteSong(song)) return false;
@@ -937,6 +1005,8 @@ function getSheetSongs() {
   } else {
     songs = state.songs.filter((song) => song.genre === state.sheetFilter);
   }
+  // YouTube links playing in a Private Garba Circle belong to the circle, not to this device's lists
+  songs = songs.filter((song) => !song.circleLink);
 
   if (query) songs = rankPlayerSongs(songs, rawQuery);
   // Songs that can play right now come first (complete songs, then chapters), in every list but the queue.
@@ -1913,6 +1983,11 @@ function openLinkSongCard() {
   els.linkSongCard.hidden = false;
   els.linkSongButton.setAttribute('aria-expanded', 'true');
   if (els.linkSongStatus) els.linkSongStatus.textContent = '';
+  const toCircle = circle.canAddSongs;
+  const desc = els.linkSongCard.querySelector('.link-song-desc');
+  if (desc) desc.textContent = toCircle ? 'Paste a YouTube song, video or playlist link to add it to your Private Garba Circle.' : 'Paste any YouTube song or video link to play it directly.';
+  const submit = $('linkSongSubmit');
+  if (submit) submit.textContent = toCircle ? 'Add to circle' : 'Play now';
   setTimeout(() => els.linkSongInput?.focus(), 30);
 }
 
@@ -2002,8 +2077,38 @@ async function playYouTubePlaylist(listId, startVideoId) {
   return true;
 }
 
+// A link pasted while in a Private Garba Circle goes to the circle (for its host) rather than leaving it.
+async function addYouTubeUrlToCircle(value) {
+  const say = (text) => { if (els.linkSongStatus) els.linkSongStatus.textContent = text; };
+  if (!circle.canAddSongs) {
+    const text = circle.role === 'host'
+      ? 'This circle keeps the music going. To choose the songs, leave it and start one with Play your songs.'
+      : 'You’re in a Private Garba Circle. Only its host can add songs. Leave the circle to play this link on your own.';
+    say(text);
+    reportLink('failed', text);
+    return false;
+  }
+  const listId = parseYouTubePlaylist(value);
+  const videoIds = listId ? await resolveYouTubePlaylist(listId) : [parseYouTubeLink(value)].filter(Boolean);
+  if (!videoIds.length) {
+    const text = listId ? 'That playlist could not be opened. It may be private or empty.' : 'Please enter a valid YouTube link or video ID.';
+    say(text);
+    reportLink('failed', text);
+    return false;
+  }
+  say(videoIds.length > 1 ? 'Getting each song’s length from YouTube…' : 'Getting the song’s length from YouTube…');
+  // A video the catalogue already has joins as that song; anything else joins as a link
+  const songs = videoIds.map((videoId) => findSongByVideoId(videoId) || { id: `paste-${videoId}`, youtubeId: videoId, durationSeconds: 0, userAdded: true });
+  const added = await addToCircle(songs);
+  say('');
+  reportLink(added ? 'playing' : 'failed');
+  if (added) closeLinkSongCard();
+  return added;
+}
+
 async function playYouTubeUrl(value) {
   linkRequestSeq += 1;
+  if (circle.active) return addYouTubeUrlToCircle(value);
   const listId = parseYouTubePlaylist(value);
   if (listId) return playYouTubePlaylist(listId, parseYouTubeLink(value));
   const videoId = parseYouTubeLink(value);
@@ -2155,7 +2260,7 @@ function wireEvents() {
   els.shuffleButton?.addEventListener('click', toggleShuffle);
   els.liveStationButton?.addEventListener('click', toggleLiveStation);
   els.circleButton?.addEventListener('click', () => { circleOpener = els.circleButton; circle.toggle(); });
-  els.circlePerch?.addEventListener('click', () => { circleOpener = els.circlePerch; circle.show(); });
+  els.circlePerch?.addEventListener('click', () => { circleOpener = els.circlePerch; circle.toggle(); });
 
   document.addEventListener('keydown', (event) => {
     if (event.target instanceof HTMLInputElement) return;
@@ -2703,25 +2808,39 @@ document.addEventListener('visibilitychange', () => {
   }, 900);
 });
 
-// While a circle is on, its face and name sit above 24/7 LIVE; tapping them opens the circle.
+// The chip above 24/7 LIVE is how people find Private Garba Circle: before a circle it says what it is, and
+// while one is on it carries the circle's face and name. Tapping it starts a circle or opens the one you're in.
 let circlePerchKey = '';
 // Where focus goes back to when the circle dialog closes: whichever control opened it.
 let circleOpener = null;
+const CIRCLE_RING_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.2" r="1.7"></circle><circle cx="18.75" cy="8.1" r="1.7"></circle><circle cx="18.75" cy="15.9" r="1.7"></circle><circle cx="12" cy="19.8" r="1.7"></circle><circle cx="5.25" cy="15.9" r="1.7"></circle><circle cx="5.25" cy="8.1" r="1.7"></circle><circle cx="12" cy="12" r="1.2"></circle></svg>';
 function renderCirclePerch() {
   const perch = els.circlePerch;
   if (!perch) return;
   const identity = circle.active ? circle.identity : null;
-  const key = identity ? `${identity.face}|${identity.title}` : '';
+  const key = identity ? `${identity.face}|${identity.title}|${identity.name}` : 'idle';
   if (key === circlePerchKey) { placeCirclePerch(); return; }
   circlePerchKey = key;
-  perch.hidden = !identity;
-  if (!identity) return;
+  perch.hidden = false;
+  perch.classList.toggle('is-idle', !identity);
   const face = perch.querySelector('.circle-perch-face');
-  face.innerHTML = identity.face == null ? '' : circleFaceSvg(identity.face);
-  face.hidden = identity.face == null;
-  perch.querySelector('.circle-perch-name').textContent = identity.title;
-  perch.querySelector('.circle-perch-kicker').hidden = !identity.name;
-  perch.setAttribute('aria-label', identity.name ? `${identity.name}, your Garba Circle. Open the circle.` : 'Your Garba Circle. Open the circle.');
+  const name = perch.querySelector('.circle-perch-name');
+  const kicker = perch.querySelector('.circle-perch-kicker');
+  if (!identity) {
+    face.innerHTML = CIRCLE_RING_SVG;
+    face.hidden = false;
+    name.textContent = 'Private Garba Circle';
+    kicker.textContent = 'Listen with friends';
+    kicker.hidden = false;
+    perch.setAttribute('aria-label', 'Private Garba Circle: listen with friends, everyone hearing the same song at the same moment');
+  } else {
+    face.innerHTML = identity.face == null ? '' : circleFaceSvg(identity.face);
+    face.hidden = identity.face == null;
+    name.textContent = identity.title;
+    kicker.textContent = 'Private Garba Circle';
+    kicker.hidden = !identity.name;
+    perch.setAttribute('aria-label', identity.name ? `${identity.name}, your Private Garba Circle. Open the circle.` : 'Your Private Garba Circle. Open the circle.');
+  }
   placeCirclePerch();
 }
 
@@ -2746,7 +2865,7 @@ window.addEventListener('resize', () => {
    jump to that tenth of the song. They move the progress bar, so they seek exactly as dragging it does. */
 function keySeekTo(seconds) {
   const duration = state.duration;
-  // Live Radio and a Garba Circle play the same moment for everyone, so there is nothing to seek.
+  // Live Radio and a Private Garba Circle play the same moment for everyone, so there is nothing to seek.
   if (state.liveMode || circle.active || !duration || els.progress.disabled) return;
   const next = Math.min(Math.max(0, seconds), Math.max(0, duration - 0.5));
   els.progress.value = String(Math.round(next / duration * 1000));
@@ -2790,6 +2909,10 @@ const circle = createCircleController({
   currentSong,
   hostElapsedSeconds: circleHostElapsedSeconds,
   playCircleSong,
+  // Play your songs: the song on screen, then Up next
+  pickedSongs: () => [currentSong(), ...manualQueueSongs()].filter(Boolean),
+  resolveDuration: (song) => resolveYouTubeDuration(song.youtubeId),
+  registerCircleSongs,
   showToast,
   onChange: () => {
     if (circle.code) state.hasExplicitNavigation = true;
@@ -2967,6 +3090,7 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       }
       case 'queue-add':
         if (typeof value !== 'string' || !value) return false;
+        if (circle.active) { queueSong(value); return true; }
         queueSong(value);
         return state.manualQueue.includes(value);
       case 'queue-next':

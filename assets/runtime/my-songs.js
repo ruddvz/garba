@@ -126,6 +126,66 @@ export function resolveYouTubePlaylist(listId, { timeoutMs = 12000, win = global
   });
 }
 
+/**
+ * A video's length in seconds, read by a small YouTube player that is never shown. YouTube often reports the
+ * length only once a video has started, so if a cued video doesn't give it, the hidden player starts it muted
+ * and stops at once. Resolves to 0 when the video can't be reached or embedded.
+ */
+export function resolveYouTubeDuration(videoId, { timeoutMs = 12000, win = globalThis.window, doc = globalThis.document } = {}) {
+  return new Promise((resolve) => {
+    if (!VIDEO_ID_RE.test(String(videoId || '')) || !win || !doc?.body) { resolve(0); return; }
+    let done = false;
+    let player = null;
+    let poll = 0;
+    let nudge = 0;
+    const host = doc.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = 'position:fixed;left:-10000px;top:0;width:200px;height:200px;opacity:0;pointer-events:none;';
+    const mount = doc.createElement('div');
+    host.appendChild(mount);
+    doc.body.appendChild(host);
+    const finish = (seconds) => {
+      if (done) return;
+      done = true;
+      clearInterval(poll);
+      clearTimeout(nudge);
+      clearTimeout(timer);
+      try { player?.stopVideo?.(); } catch { /* already gone */ }
+      try { player?.destroy?.(); } catch { /* already gone */ }
+      host.remove();
+      resolve(seconds > 0 ? seconds : 0);
+    };
+    const timer = setTimeout(() => finish(0), timeoutMs);
+    const read = () => {
+      try {
+        const seconds = Number(player?.getDuration?.());
+        if (seconds > 0) finish(seconds);
+      } catch { /* not ready yet */ }
+    };
+    whenYouTubeApi(win, doc, Math.max(1000, timeoutMs - 1000)).then((YT) => {
+      if (done) return;
+      player = new YT.Player(mount, {
+        width: 200,
+        height: 200,
+        videoId,
+        playerVars: { autoplay: 0, controls: 0, playsinline: 1, origin: win.location?.origin },
+        events: {
+          onReady: () => {
+            read();
+            if (done) return;
+            poll = setInterval(read, 250);
+            nudge = setTimeout(() => {
+              try { player.mute(); player.playVideo(); } catch { /* the poll keeps trying */ }
+            }, 1500);
+          },
+          onStateChange: read,
+          onError: () => finish(0),
+        },
+      });
+    }, () => finish(0));
+  });
+}
+
 const NOISE_WORDS = /\b(official|video|audio|lyric(?:s|al)?|full\s*(?:song|video|hd)?|song|hd|4k|1080p|720p|hq|new|latest|trending|superhit|super\s*hit|exclusive|gujarati|garba\s*song|navratri(?:\s*special)?(?:\s*\d{4})?|\d{4})\b/gi;
 
 function isNoise(segment) {

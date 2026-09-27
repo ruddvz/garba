@@ -5,6 +5,7 @@ import {
   parseYouTubeLink,
   parseYouTubePlaylist,
   resolveYouTubePlaylist,
+  resolveYouTubeDuration,
   cleanVideoTitle,
   makeUserSong,
   readMySongs,
@@ -185,5 +186,41 @@ function fakeBrowser(playlist, { fail = false } = {}) {
   assert.deepEqual(await resolveYouTubePlaylist('nope', { win: fake.win, doc: fake.doc }), [], 'a malformed list id resolves empty');
 }
 pass('YouTube playlist links: list ids read, mixes and private lists left out; the probe player reads the ids in order and removes itself');
+
+/* ---------------- a video's length, for Private Garba Circle ---------------- */
+
+function fakeLengthBrowser({ cued = 0, played = 0, fail = false } = {}) {
+  const made = [];
+  const element = () => ({ style: {}, children: [], setAttribute() {}, appendChild(child) { this.children.push(child); }, remove() { this.removed = true; } });
+  const doc = { body: element(), head: element(), createElement: () => { const el = element(); made.push(el); return el; }, querySelector: () => ({}) };
+  const players = [];
+  class Player {
+    constructor(mount, options) { this.options = options; this.started = false; players.push(this); setTimeout(() => (fail ? options.events.onError({ data: 150 }) : options.events.onReady()), 0); }
+    getDuration() { return this.started ? played : cued; }
+    mute() { this.muted = true; }
+    playVideo() { this.started = true; this.options.events.onStateChange({ data: 1 }); }
+    stopVideo() { this.stopped = true; }
+    destroy() { this.destroyed = true; }
+  }
+  return { win: { YT: { Player }, location: { origin: 'https://playgarba.com' } }, doc, players, made };
+}
+{
+  const cued = fakeLengthBrowser({ cued: 213.4 });
+  assert.equal(await resolveYouTubeDuration(id, { win: cued.win, doc: cued.doc, timeoutMs: 3000 }), 213.4, 'a cued video gives its length');
+  assert.equal(cued.players[0].options.videoId, id);
+  assert.equal(cued.players[0].options.playerVars.autoplay, 0);
+  assert.ok(!cued.players[0].started, 'a video that gives its length when cued is never started');
+  assert.ok(cued.players[0].destroyed && cued.made[0].removed, 'the probe player is removed afterwards');
+
+  const late = fakeLengthBrowser({ cued: 0, played: 300 });
+  assert.equal(await resolveYouTubeDuration(id, { win: late.win, doc: late.doc, timeoutMs: 5000 }), 300, 'a video that needs starting gives its length once started');
+  assert.ok(late.players[0].muted, 'the probe only ever starts a video muted');
+  assert.ok(late.players[0].stopped && late.players[0].destroyed, 'and stops and removes it at once');
+
+  const refused = fakeLengthBrowser({ fail: true });
+  assert.equal(await resolveYouTubeDuration(id, { win: refused.win, doc: refused.doc, timeoutMs: 2000 }), 0, 'a video that cannot be embedded gives 0');
+  assert.equal(await resolveYouTubeDuration('nope', { win: cued.win, doc: cued.doc }), 0, 'a malformed id gives 0');
+}
+pass('video length for Private Garba Circle: read from a hidden player, started muted only when needed, removed afterwards');
 
 console.log('my songs tests passed');
