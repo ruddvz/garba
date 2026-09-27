@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="garbo.css?v=20260927-5">
+  <link rel="stylesheet" href="garbo.css?v=20260927-6">
 </head>
 <body>
   <!--
@@ -106,7 +106,7 @@
         <p class="from" id="from">From Killol 2.0</p>
       </section>
 
-      <div class="time" id="time"><span id="elapsed">0:00</span><span class="time-sep" aria-hidden="true">·</span><span id="duration">2:15</span></div>
+      <div class="time" id="time"><span id="elapsed">0:00</span><input class="seek-bar" id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Seek"><span class="time-sep" aria-hidden="true">·</span><span id="duration">2:15</span></div>
 
       <section class="transport" aria-label="Playback controls">
         <button class="tb quiet" id="shuffleBtn" type="button" aria-label="Shuffle" aria-pressed="false"><svg><use href="#i-shuffle"/></svg></button>
@@ -298,7 +298,27 @@
       <div class="atmo-seg card-seg" id="atmoListeners" role="group" aria-labelledby="viewStandL"></div>
       <p class="atmo-desc" id="atmoListenerDesc"></p>
     </div>
-    <button class="atmo-swap" id="atmoSwap" type="button"><svg aria-hidden="true"><use href="#i-swap"/></svg><span id="atmoSwapLabel">Dance as the man instead</span></button>
+    <div class="card-section couple" role="group" aria-labelledby="viewCoupleL">
+      <h3 class="card-label" id="viewCoupleL">You and your partner</h3>
+      <div class="couple-row">
+        <button class="face-pick" id="youFacePick" type="button" aria-label="Add your face"><img alt="" hidden><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+        <input class="host-input couple-name" id="youName" type="text" maxlength="10" value="you" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Your name">
+        <button class="ib face-clear" id="youFaceClear" type="button" aria-label="Remove your face" hidden><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="couple-row">
+        <button class="face-pick" id="partnerFacePick" type="button" aria-label="Add your partner's face"><img alt="" hidden><svg aria-hidden="true"><use href="#i-plus"/></svg></button>
+        <input class="host-input couple-name" id="partnerName" type="text" maxlength="10" value="yours" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Your partner's name">
+        <button class="ib face-clear" id="partnerFaceClear" type="button" aria-label="Remove your partner's face" hidden><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="face-crop" id="faceCrop" hidden>
+        <canvas class="crop-view" id="cropView" width="440" height="440" tabindex="0" role="img" aria-label="Your photo. Drag, or use the arrow keys, to fit the face in the circle."></canvas>
+        <label class="crop-zoom"><span>Zoom</span><input id="cropZoom" type="range" min="1" max="4" step="0.01" value="1"></label>
+        <div class="crop-actions"><button class="atmo-swap" id="cropCancel" type="button">Cancel</button><button class="primary" id="cropUse" type="button">Use this face</button></div>
+      </div>
+      <input id="faceFile" type="file" accept="image/png,image/webp,image/jpeg,image/*" hidden>
+      <p class="atmo-desc">Tap + to add a face. A PNG with no background looks best. Names and faces stay on this device and reset when you close the tab.</p>
+      <button class="atmo-swap" id="atmoSwap" type="button"><svg aria-hidden="true"><use href="#i-swap"/></svg><span id="atmoSwapLabel">Dance as the man instead</span></button>
+    </div>
   </section>
 
   <section class="side-card" id="soundCard" role="dialog" aria-labelledby="soundCardT" hidden>
@@ -381,6 +401,6 @@
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
   <script src="../../atmosphere/scene.js"></script>
   <script src="scene.js"></script>
-  <script src="garbo.js?v=20260927-6"></script>
+  <script src="garbo.js?v=20260927-7"></script>
 </body>
 </html>

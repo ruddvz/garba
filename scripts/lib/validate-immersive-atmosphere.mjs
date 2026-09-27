@@ -268,6 +268,18 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     const got = cleanName(input);
     if (got !== want) fail(`cleanName(${show(input)}) gave ${show(got)}, expected ${show(want)}`);
   }
+  // Immersive View: two fields filled in with you and yours (10 characters, one line), a face picker, and a seek bar
+  // under the title. Names and faces live in sessionStorage only and never go into localStorage or a link.
+  for (const dir of ['docs/product/prototypes/garbo', 'public-site/garbo/prototype']) {
+    const [page, js] = await Promise.all([read(`${dir}/index.html`), read(`${dir}/garbo.js`)]);
+    for (const marker of ['id="youName" type="text" maxlength="10" value="you"', 'id="partnerName" type="text" maxlength="10" value="yours"', 'id="youFacePick"', 'id="partnerFacePick"', 'id="faceFile" type="file"', 'id="cropView"', 'class="seek-bar" id="seekBar" type="range"']) {
+      if (!page.includes(marker)) fail(`${dir}/index.html is missing ${marker}`);
+    }
+    for (const marker of ["COUPLE_KEY = 'garbo-couple'", 'sessionStorage.setItem(COUPLE_KEY', 'function cutoutOf(', 'youFaceCut: C.youFaceCut', "ring.dispatchEvent(new Event('input', { bubbles: true }))", 'if (!barHeld)']) {
+      if (!js.includes(marker)) fail(`${dir}/garbo.js is missing ${marker}`);
+    }
+    if (/localStorage\.setItem\(COUPLE_KEY/.test(js) || /COUPLE_KEY[^\n]*location/.test(js)) fail(`${dir}/garbo.js must keep names and faces in sessionStorage only`);
+  }
   if (!/function coupleWord\(you\) \{ return cleanName\(you \? st\.youName : st\.partnerName\) \|\| \(you \? 'you' : 'yours'\); \}/.test(scene)) fail("A blank name must fall back to 'you' and 'yours'");
 }
 

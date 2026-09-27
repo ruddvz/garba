@@ -180,6 +180,8 @@
   function renderTime() {
     var elapsed = $('elapsed'), dur = $('duration'), sep = document.querySelector('.time-sep');
     elapsed.className = ''; sep.hidden = false;
+    // The seek bar shows only when there is a position to move: not on Live, and not before a hosted live starts
+    var bar = $('seekBar'); bar.hidden = true;
     if (!S.track || S.track.kind === 'empty') { elapsed.textContent = ''; dur.textContent = ''; sep.hidden = true; return; }
     if (S.live) { elapsed.textContent = 'Live now'; elapsed.className = 'live-now'; dur.textContent = ''; sep.hidden = true; return; }
     if (S.hosted && S.hosted.waiting) { elapsed.textContent = 'Starts in ' + fmt(S.hosted.startsIn); elapsed.className = 'live-now'; dur.textContent = ''; sep.hidden = true; $('ringSeek').disabled = true; return; }
@@ -191,7 +193,12 @@
     seek.disabled = !!S.hosted || (!d && !(S.track.kind === 'chapter'));
     seek.value = String(Math.round(Math.min(1, progress()) * 1000));
     seek.setAttribute('aria-valuetext', fmt(S.pos) + (d ? ' of ' + fmt(d) : ''));
+    bar.hidden = false; bar.disabled = seek.disabled;
+    if (!barHeld) { bar.value = seek.value; bar.style.setProperty('--p', seek.value / 10 + '%'); }
+    bar.setAttribute('aria-valuetext', seek.getAttribute('aria-valuetext'));
   }
+  // While a finger holds the bar, playback updates don't pull the thumb away from it
+  var barHeld = false;
 
   /* ---------- modes ---------- */
   var HINTS = {
@@ -1550,6 +1557,20 @@
     if (!LIVE_SITE) ytSeekTo(S.pos);
     renderTime();
   });
+  // The seek bar under the title works wherever the garbo is on screen; it moves the ring and uses its seek
+  (function () {
+    var bar = $('seekBar'), ring = $('ringSeek');
+    function release() { barHeld = false; renderTime(); }
+    bar.addEventListener('pointerdown', function () { barHeld = true; });
+    bar.addEventListener('pointerup', release);
+    bar.addEventListener('pointercancel', release);
+    bar.addEventListener('change', release);
+    bar.addEventListener('input', function () {
+      bar.style.setProperty('--p', bar.value / 10 + '%');
+      ring.value = bar.value;
+      ring.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  })();
   $('liveBtn').addEventListener('click', function () {
     if (S.hosted) showSheet('livesSheet', 'hostNew');
     else if (S.circleInfo && requestLiveAction('circle')) return;
@@ -1639,6 +1660,7 @@
     var songKey = S.track ? (S.track.kind === 'song' && S.track.song ? 'song:' + (S.track.song.id || S.track.song.title) : S.track.kind === 'chapter' ? 'set:' + (S.track.set && S.track.set.id) + ':' + S.track.chapterIndex : '') : '';
     if (scene.atmosphere) scene.atmosphere({ singerFaces: heads, singers: lineup.length ? lineup : null, songKey: songKey || null });
     if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
+    if (typeof coupleApply === 'function' && C) coupleApply();
   }
   function atmoLoadBed(ctx) {
     var beds = window.GARBO_ATMO_BEDS || {
@@ -1693,6 +1715,155 @@
   function swapText() { $('atmoSwapLabel').textContent = A.youAs === 'man' ? 'Dance as the woman instead' : 'Dance as the man instead'; }
   $('atmoSwap').addEventListener('click', function () { A.youAs = A.youAs === 'man' ? 'woman' : 'man'; swapText(); atmoSave(); atmoRender(); });
   swapText();
+
+  /* ---------- you and your partner: your own names and faces ----------
+     The tags start as "you" and "yours". Whatever is typed replaces the word over that dancer, and a blank field brings
+     the word back. A face is a picture on the device: one with a transparent background is worn like the singers'
+     cut-out heads, and a photo is fitted into a circle first. Names and faces are kept in sessionStorage only, so they
+     last through a reload and a switch between Simple and Immersive and reset when the tab closes. Nothing is
+     uploaded, logged, put in a link or shared with a Garba Circle. */
+  var COUPLE_KEY = 'garbo-couple', COUPLE_WORD = { you: 'you', partner: 'yours' };
+  var C = { youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false };
+  try {
+    var savedCouple = JSON.parse(sessionStorage.getItem(COUPLE_KEY) || '{}');
+    ['you', 'partner'].forEach(function (who) {
+      if (typeof savedCouple[who + 'Name'] === 'string') C[who + 'Name'] = savedCouple[who + 'Name'].slice(0, 10);
+      if (typeof savedCouple[who + 'Face'] === 'string' && savedCouple[who + 'Face'].indexOf('data:image/') === 0) { C[who + 'Face'] = savedCouple[who + 'Face']; C[who + 'FaceCut'] = savedCouple[who + 'FaceCut'] === true; }
+    });
+  } catch (e) { /* storage unavailable */ }
+  function coupleSave() {
+    try { sessionStorage.setItem(COUPLE_KEY, JSON.stringify(C)); }
+    catch (e) { toast("This face is kept until you reload. It's too large to keep longer."); }
+  }
+  function coupleApply() {
+    if (scene.atmosphere) scene.atmosphere({ youName: C.youName, partnerName: C.partnerName, youFace: C.youFace, partnerFace: C.partnerFace, youFaceCut: C.youFaceCut, partnerFaceCut: C.partnerFaceCut });
+  }
+  function renderFaces() {
+    ['you', 'partner'].forEach(function (who) {
+      var btn = $(who + 'FacePick'), img = btn.querySelector('img'), face = C[who + 'Face'], mine = who === 'you';
+      img.hidden = !face; if (face) img.src = face; else img.removeAttribute('src');
+      btn.classList.toggle('has-face', !!face); btn.classList.toggle('is-cut', !!face && C[who + 'FaceCut']);
+      btn.setAttribute('aria-label', (face ? 'Change ' : 'Add ') + (mine ? 'your face' : "your partner's face"));
+      $(who + 'FaceClear').hidden = !face;
+    });
+  }
+  function setFace(who, url, cut) {
+    C[who + 'Face'] = url; C[who + 'FaceCut'] = !!(url && cut);
+    coupleSave(); renderFaces(); coupleApply();
+  }
+  ['you', 'partner'].forEach(function (who) {
+    var input = $(who + 'Name'), key = who + 'Name', word = COUPLE_WORD[who];
+    input.value = C[key] || word;
+    // Tapping the field selects the word, so typing a name replaces it
+    // (the mouse-up that follows a click would otherwise drop the selection and leave the caret after the word)
+    var keepSelection = false;
+    input.addEventListener('focus', function () { input.select(); keepSelection = true; setTimeout(function () { if (document.activeElement === input && keepSelection) input.select(); }, 0); });
+    input.addEventListener('mouseup', function (e) { if (keepSelection) { e.preventDefault(); keepSelection = false; } });
+    input.addEventListener('keydown', function () { keepSelection = false; });
+    input.addEventListener('input', function () {
+      var v = input.value.replace(/\s+/g, ' ').trim();
+      C[key] = v === word ? '' : v; coupleSave(); coupleApply();
+    });
+    input.addEventListener('blur', function () { if (!input.value.trim()) input.value = word; });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+    $(who + 'FacePick').addEventListener('click', function () { faceFor = who; $('faceFile').click(); });
+    $(who + 'FaceClear').addEventListener('click', function () { setFace(who, null, false); if (cropFor === who) closeCrop(); $(who + 'FacePick').focus(); });
+  });
+  var faceFor = 'you', cropFor = null;
+  $('faceFile').addEventListener('change', function () {
+    var file = this.files && this.files[0], who = faceFor; this.value = '';
+    if (!file) return;
+    if (file.type && file.type.indexOf('image/') !== 0) { toast("That file isn't a picture. Try a PNG or a JPEG."); return; }
+    var url = URL.createObjectURL(file), im = new Image();
+    im.onload = function () { URL.revokeObjectURL(url); takeFace(im, who); };
+    im.onerror = function () { URL.revokeObjectURL(url); toast("That picture couldn't be opened here. Try a PNG or a JPEG."); };
+    im.src = url;
+  });
+  // Pictures are scaled down on the device before anything else happens, so a big photo stays quick
+  function takeFace(im, who) {
+    var w0 = im.naturalWidth, h0 = im.naturalHeight; if (!w0 || !h0) return;
+    var k = Math.min(1, 640 / Math.max(w0, h0)), w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+    var c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(im, 0, 0, w, h);
+    var cut = cutoutOf(c);
+    if (cut) { closeCrop(); setFace(who, cut, true); }
+    else openCrop(c, who);
+  }
+  // A cut-out has a clear background: most of its edge is transparent. It's trimmed to the visible part and kept as is.
+  function cutoutOf(c) {
+    var w = c.width, h = c.height, d;
+    try { d = c.getContext('2d').getImageData(0, 0, w, h).data; } catch (e) { return null; }
+    var edge = 0, clear = 0, x, y, a;
+    for (x = 0; x < w; x++) { edge += 2; if (d[(x) * 4 + 3] < 128) clear++; if (d[((h - 1) * w + x) * 4 + 3] < 128) clear++; }
+    for (y = 1; y < h - 1; y++) { edge += 2; if (d[(y * w) * 4 + 3] < 128) clear++; if (d[(y * w + w - 1) * 4 + 3] < 128) clear++; }
+    if (clear / edge < 0.5) return null;
+    var x0 = w, y0 = h, x1 = -1, y1 = -1, seen = 0;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) { a = d[(y * w + x) * 4 + 3]; if (a > 24) { seen++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+    if (seen < w * h * 0.03) return null;
+    var bw = x1 - x0 + 1, bh = y1 - y0 + 1, k = Math.min(1, 256 / Math.max(bw, bh)), out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(bw * k)); out.height = Math.max(1, Math.round(bh * k));
+    out.getContext('2d').drawImage(c, x0, y0, bw, bh, 0, 0, out.width, out.height);
+    var webp = out.toDataURL('image/webp', 0.9);
+    return webp.indexOf('data:image/webp') === 0 ? webp : out.toDataURL('image/png');
+  }
+  // A photo: drag it and zoom until the face fills the circle, then keep that circle
+  var crop = { src: null, zoom: 1, ox: 0, oy: 0 }, cropPointers = {};
+  function cropBase() { var v = $('cropView'); return v.width / Math.min(crop.src.width, crop.src.height); }
+  function cropClamp() {
+    var v = $('cropView'), s = cropBase() * crop.zoom, mx = Math.max(0, (crop.src.width * s - v.width) / 2), my = Math.max(0, (crop.src.height * s - v.height) / 2);
+    crop.ox = Math.max(-mx, Math.min(mx, crop.ox)); crop.oy = Math.max(-my, Math.min(my, crop.oy));
+  }
+  function cropDraw(g2, size, frame) {
+    var v = $('cropView'), k = size / v.width, s = cropBase() * crop.zoom * k, w = crop.src.width * s, h = crop.src.height * s;
+    g2.fillStyle = '#221612'; g2.fillRect(0, 0, size, size);
+    g2.drawImage(crop.src, size / 2 + crop.ox * k - w / 2, size / 2 + crop.oy * k - h / 2, w, h);
+    if (!frame) return;
+    g2.fillStyle = 'rgba(11, 6, 5, .62)'; g2.beginPath(); g2.rect(0, 0, size, size); g2.arc(size / 2, size / 2, size * 0.46, 0, Math.PI * 2, true); g2.fill();
+    g2.strokeStyle = '#d6b06f'; g2.lineWidth = 3; g2.beginPath(); g2.arc(size / 2, size / 2, size * 0.46, 0, Math.PI * 2); g2.stroke();
+  }
+  function cropRender() { cropClamp(); var v = $('cropView'); cropDraw(v.getContext('2d'), v.width, true); }
+  function openCrop(c, who) {
+    crop.src = c; crop.zoom = 1; crop.ox = 0; crop.oy = 0; cropFor = who; cropPointers = {};
+    $('cropZoom').value = '1'; $('faceCrop').hidden = false; cropRender();
+    $('cropView').setAttribute('aria-label', (who === 'you' ? 'Your photo' : "Your partner's photo") + '. Drag, or use the arrow keys, to fit the face in the circle.');
+    $('cropView').focus({ preventScroll: true });
+    $('faceCrop').scrollIntoView({ block: 'nearest', behavior: reducedQuery.matches ? 'auto' : 'smooth' });
+  }
+  function closeCrop() { var who = cropFor; $('faceCrop').hidden = true; crop.src = null; cropFor = null; if (who) $(who + 'FacePick').focus(); }
+  (function () {
+    var v = $('cropView'), scale = function () { return v.width / v.getBoundingClientRect().width; }, pinch = 0;
+    function pts() { return Object.keys(cropPointers).map(function (k) { return cropPointers[k]; }); }
+    v.addEventListener('pointerdown', function (e) { if (!crop.src) return; v.setPointerCapture(e.pointerId); cropPointers[e.pointerId] = { x: e.clientX, y: e.clientY }; var p = pts(); pinch = p.length === 2 ? Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) : 0; });
+    v.addEventListener('pointermove', function (e) {
+      var prev = cropPointers[e.pointerId]; if (!prev || !crop.src) return;
+      var p = pts();
+      if (p.length === 1) { crop.ox += (e.clientX - prev.x) * scale(); crop.oy += (e.clientY - prev.y) * scale(); }
+      cropPointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (p.length === 2) { p = pts(); var dist = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); if (pinch) setZoom(crop.zoom * dist / pinch); pinch = dist; }
+      cropRender();
+    });
+    function up(e) { delete cropPointers[e.pointerId]; pinch = 0; }
+    v.addEventListener('pointerup', up); v.addEventListener('pointercancel', up);
+    v.addEventListener('wheel', function (e) { if (!crop.src) return; e.preventDefault(); setZoom(crop.zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)); }, { passive: false });
+    v.addEventListener('keydown', function (e) {
+      var step = { ArrowLeft: [-12, 0], ArrowRight: [12, 0], ArrowUp: [0, -12], ArrowDown: [0, 12] }[e.key];
+      if (step) { e.preventDefault(); crop.ox += step[0]; crop.oy += step[1]; cropRender(); }
+      else if (e.key === '+' || e.key === '=') { e.preventDefault(); setZoom(crop.zoom * 1.1); }
+      else if (e.key === '-') { e.preventDefault(); setZoom(crop.zoom / 1.1); }
+    });
+    function setZoom(z) { crop.zoom = Math.max(1, Math.min(4, z)); $('cropZoom').value = String(crop.zoom); cropRender(); }
+    $('cropZoom').addEventListener('input', function () { setZoom(Number(this.value)); });
+    $('cropCancel').addEventListener('click', closeCrop);
+    $('cropUse').addEventListener('click', function () {
+      if (!crop.src) return;
+      var out = document.createElement('canvas'); out.width = out.height = 192;
+      // The kept square is the circle's own box, so the scene's round crop matches what was framed here
+      var g2 = out.getContext('2d'), k = 192 / (0.92 * $('cropView').width);
+      g2.translate(96, 96); g2.scale(k, k); g2.translate(-$('cropView').width / 2, -$('cropView').width / 2);
+      cropDraw(g2, $('cropView').width, false);
+      var who = cropFor; closeCrop(); setFace(who, out.toDataURL('image/jpeg', 0.86), false);
+    });
+  })();
+  renderFaces(); coupleApply();
   atmoSegment('atmoStyles', { claps: { label: 'Hand claps' }, dandiya: { label: 'Dandiya sticks' } }, 'claps', function (id) { A.styleChoice = id; atmoRender(); });
   atmoSegment('atmoModes', ATMO_MODES, A.mode, function (id) { A.mode = id; if (A.engine && A.running) A.engine.setProfile(ATMO_MODES[id].profile); atmoSave(); atmoRender(); });
   atmoSegment('atmoPatterns', E ? E.PATTERNS : {}, A.pattern, function (id) { A.pattern = id; if (A.engine) A.engine.setPattern(id); atmoSave(); });
