@@ -936,7 +936,7 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
 .circle-perch.is-idle .circle-perch-name { font-size: 13.5px; }
 
 /* Picking how the circle plays, and what a circle of your own songs holds */
-.circle-setup { display: grid; gap: 10px; }
+.circle-setup { display: grid; gap: 10px; margin-top: 6px; }
 .circle-setup[hidden] { display: none; }
 .circle-choice {
   appearance: none;

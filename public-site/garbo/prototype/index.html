@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="garbo.css?v=20260927-6">
+  <link rel="stylesheet" href="garbo.css?v=20260927-7">
 </head>
 <body>
   <!--
@@ -131,6 +131,7 @@
 
     <!-- Scene controls: each opens a small card at the side, leaving the player as it is -->
     <nav class="rail" id="rail" aria-label="Scene">
+      <button class="rail-btn rail-circle" type="button" id="circleRail" aria-label="Private Garba Circle: listen with friends" aria-haspopup="dialog" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg><span>Circle</span></button>
       <button class="rail-btn" type="button" data-card="viewCard" aria-controls="viewCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-eye"/></svg><span>View</span></button>
       <button class="rail-btn" type="button" id="soundBtn" data-card="soundCard" aria-controls="soundCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-headphones"/></svg><span>Sound</span></button>
       <button class="rail-btn" type="button" data-card="ideaCard" aria-controls="ideaCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-bulb"/></svg><span>Ideas</span></button>
@@ -193,7 +194,7 @@
     <header class="sheet-head"><h2 id="moreTitle">More</h2><button class="ib" type="button" data-close aria-label="Close More"><svg><use href="#i-close"/></svg></button></header>
     <div class="sheet-body">
       <div class="tiles">
-        <button class="tile" type="button" id="circleBridge" aria-pressed="false"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-ring"/></svg></span><strong>Garba Circle</strong><small>Open the listening circle</small></button>
+        <button class="tile" type="button" id="circleBridge" aria-pressed="false"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-ring"/></svg></span><strong>Private Garba Circle</strong><small>Listen together with friends</small></button>
         <button class="tile tile-wide" type="button" id="livesOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-live"/></svg></span><strong>Lives</strong><small>Host your own live with your songs, or go back to one you joined</small></button>
         <button class="tile" type="button" id="shareOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-share"/></svg></span><strong>Share this song</strong><small>A card with the lit garbo</small></button>
         <button class="tile" type="button" id="aboutOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-book"/></svg></span><strong>What is Garba?</strong><small>The lamp, the circle, the nights</small></button>
@@ -401,6 +402,6 @@
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
   <script src="../../atmosphere/scene.js"></script>
   <script src="scene.js"></script>
-  <script src="garbo.js?v=20260927-7"></script>
+  <script src="garbo.js?v=20260927-8"></script>
 </body>
 </html>

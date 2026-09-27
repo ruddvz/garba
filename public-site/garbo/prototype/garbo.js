@@ -321,6 +321,7 @@
     S.circle = Boolean(snapshot.circle);
     // The circle's face and name, which take over the Live button while the listener is in it
     var info = snapshot.circleInfo;
+    S.circleCanAdd = S.circle && snapshot.circleCanAdd === true;
     S.circleInfo = S.circle && info && typeof info.title === 'string' ? { title: info.title, name: String(info.name || ''), face: Number.isInteger(info.face) ? info.face : null } : null;
     S.liveUpNext = Array.isArray(snapshot.upNext) ? snapshot.upNext : null;
     if (snapshot.link && Number.isFinite(snapshot.link.seq)) {
@@ -342,6 +343,7 @@
     }
     renderPerch();
     var circleBridge = $('circleBridge');
+    $('circleRail').setAttribute('aria-pressed', String(Boolean(snapshot.circle)));
     if (circleBridge) {
       circleBridge.hidden = false;
       circleBridge.setAttribute('aria-pressed', String(Boolean(snapshot.circle)));
@@ -844,7 +846,7 @@
     b.classList.toggle('in-circle', !!c);
     $('liveLabel').textContent = S.hosted ? LV.title(S.hosted.live) : c ? c.title : '24/7 Live';
     if (S.hosted) { b.prepend(LV.avatarNode(S.hosted.live.avatar, 34, true)); b.setAttribute('aria-label', LV.title(S.hosted.live) + ', hosted by ' + S.hosted.live.host + '. Open Lives.'); }
-    else if (c) { if (c.face != null) b.prepend(LV.avatarNode(c.face, 34, true)); b.setAttribute('aria-label', (c.name ? c.name + ', your' : 'Your') + ' Garba Circle. Open the circle.'); }
+    else if (c) { if (c.face != null) b.prepend(LV.avatarNode(c.face, 34, true)); b.setAttribute('aria-label', (c.name ? c.name + ', your' : 'Your') + ' Private Garba Circle. Open the circle.'); }
     else b.removeAttribute('aria-label');
     b.setAttribute('aria-pressed', String(S.live || !!S.hosted || !!c));
   }
@@ -1015,7 +1017,7 @@
     closeCard(true);
     if (openSheet) closeSheet(true);
     var c = $(id); c.hidden = false; openCardId = id;
-    document.querySelectorAll('.rail-btn').forEach(function (b) { b.setAttribute('aria-expanded', String(b.dataset.card === id)); });
+    document.querySelectorAll('.rail-btn[data-card]').forEach(function (b) { b.setAttribute('aria-expanded', String(b.dataset.card === id)); });
     if (id === 'linkCard') {
       $('linkSongBtn')?.setAttribute('aria-expanded', 'true');
       var s = $('linkSongStatus'); if (s) { s.style.display = 'none'; s.textContent = ''; }
@@ -1031,7 +1033,8 @@
     var btn = document.querySelector('.rail-btn[data-card="' + id + '"]') || (id === 'linkCard' ? $('linkSongBtn') : null);
     if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) btn.focus(); }
   }
-  document.querySelectorAll('.rail-btn').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
+  // The rail's card buttons; its Circle button opens Private Garba Circle instead
+  document.querySelectorAll('.rail-btn[data-card]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
   $('linkSongBtn')?.addEventListener('click', function (e) { e.stopPropagation(); openCard('linkCard'); });
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-card-close]')) { closeCard(); return; }
@@ -1251,7 +1254,8 @@
   }
   /* Up next at the DJ's table: play a song next, add it to the end, or take it off again. Live Radio, a Garba
      Circle and a hosted live follow their own running order, so there's no list of your own to add to then. */
-  function canQueue() { return LIVE_SITE ? LIVE_STATE_READY && !S.live && !S.circle : !S.live && !S.hosted && !S.tonight; }
+  // In a Private Garba Circle only its host, playing their own songs, adds to it; + then adds to the circle
+  function canQueue() { return LIVE_SITE ? LIVE_STATE_READY && !S.live && (!S.circle || S.circleCanAdd) : !S.live && !S.hosted && !S.tonight; }
   function queueButton(kind, s) {
     var b = el('button', 'ra'); b.type = 'button';
     var label = kind === 'next' ? 'Play ' + s.title + ' next' : 'Add ' + s.title + ' to Up next';
@@ -1325,7 +1329,7 @@
       }
       ol.append(li);
     });
-    note.textContent = S.circle ? 'The Garba Circle follows its host.' : queued ? '' : canQueue() ? 'Use + on a song to add it here, or ⏭ to play it next.' : '';
+    note.textContent = S.circleCanAdd ? 'Use + on a song to add it to your circle.' : S.circle ? 'The Private Garba Circle follows its host.' : queued ? '' : canQueue() ? 'Use + on a song to add it here, or ⏭ to play it next.' : '';
   }
   function renderRows(preserveScroll) {
     var sheetBody = $('exploreSheet').querySelector('.sheet-body');
@@ -1576,11 +1580,16 @@
     else if (S.circleInfo && requestLiveAction('circle')) return;
     else toggleLive();
   });
-  $('circleBridge')?.addEventListener('click', function () {
+  // Private Garba Circle lives in the player that owns playback: the rail's Circle button and the More tile open it
+  function openCircle() {
     if (requestLiveAction('circle')) return;
     var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     window.location.href = isLocalDev ? '/#circle' : '../../../../#circle';
-  });
+  }
+  $('circleBridge')?.addEventListener('click', openCircle);
+  $('circleRail').addEventListener('click', openCircle);
+  // Lives was the prototype's first try at hosting; in the player it is Private Garba Circle's "Play your songs"
+  if (LIVE_SITE) $('livesOpen').hidden = true;
   $('searchBtn').addEventListener('click', function () { showSheet('exploreSheet', 'searchInput'); });
   $('exploreBtn').addEventListener('click', function () { showSheet('exploreSheet'); });
   $('tonightBtn').addEventListener('click', function () { showSheet('tonightSheet'); });

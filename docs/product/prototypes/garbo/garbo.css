@@ -605,8 +605,8 @@ button { font: inherit; color: inherit; }
 .side-card .atmo-note a { display: inline; margin: 0 0 0 4px; }
 /* On a phone there's no room beside the pill, so a card rises from the bottom as a full-width sheet */
 @media (max-width: 600px) {
-  /* It stops short of the view pill (switch 49px + three buttons 172px), so the other buttons stay reachable */
-  .side-card { left: 10px; right: 10px; top: auto; bottom: calc(var(--safe-b, 0px) + 10px); width: auto; max-height: calc(100dvh - var(--pill-top) - 221px - var(--safe-b, 0px) - 22px); border-radius: 22px; animation-name: card-rise; }
+  /* It stops short of the view pill (switch 49px + four buttons 230px), so the other buttons stay reachable */
+  .side-card { left: 10px; right: 10px; top: auto; bottom: calc(var(--safe-b, 0px) + 10px); width: auto; max-height: calc(100dvh - var(--pill-top) - 279px - var(--safe-b, 0px) - 22px); border-radius: 22px; animation-name: card-rise; }
   @keyframes card-rise { from { transform: translateY(24px); opacity: .6; } }
 }
 /* The cards are made of the same stuff as the view pill beside them: dark glass, a brass hairline, capsule corners.
@@ -689,3 +689,7 @@ button { font: inherit; color: inherit; }
 .crop-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
 .crop-actions .primary { width: auto; height: 44px; margin: 0; padding: 0 18px; }
 .side-card .crop-actions .atmo-swap { margin: 0; }
+
+/* Private Garba Circle: its button in the rail lights while you're in one; Lives' tile leaves the player */
+.tile[hidden] { display: none; }
+.rail-btn.rail-circle[aria-pressed="true"] { color: var(--brass); }

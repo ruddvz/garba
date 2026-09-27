@@ -3018,6 +3018,8 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       favourite: song ? state.favourites.has(song.id) : false,
       circle: circle.active,
       circleInfo: circle.active ? circle.identity : null,
+      // The host of a circle that plays their own songs adds to it from Up next
+      circleCanAdd: circle.canAddSongs,
       catalogueSignature: state.catalogueSignature,
       link: state.linkRequest || null,
       // What plays after this song: the songs the listener queued, then the automatic continuation
