@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260927-8"', 'src="garbo.js?v=20260927-10"', 'src="scene.js?v=20260927-9"']) {
+for (const marker of ['href="garbo.css?v=20260928-1"', 'src="garbo.js?v=20260928-1"', 'src="scene.js?v=20260927-9"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -122,5 +122,17 @@ for (const marker of ['@media (max-width: 600px), (orientation: landscape) and (
   if (!prototypeCss.includes(marker)) fail(`The phone top bar is missing ${marker}`);
 }
 
+// More is a column of icons beside the player, Install sits right after Private Garba Circle, and it opens a guide
+// with a tab per kind of device that can ask for the browser's own install prompt
+const moreTiles = [...prototypeHtml.slice(moreAt, prototypeHtml.indexOf('</section>', moreAt)).matchAll(/<button class="tile"[^>]*id="([a-zA-Z]+)"/g)].map((m) => m[1]);
+if (moreTiles[0] !== 'circleBridge' || moreTiles[1] !== 'installBtn') fail(`More must open with Private Garba Circle then Install PlayGarba, found ${moreTiles.slice(0, 2).join(', ')}`);
+if (/class="tile-ic"|<small>/.test(prototypeHtml.slice(moreAt, prototypeHtml.indexOf('</section>', moreAt)))) fail('More tiles are an icon and a name, with no icon background or second line');
+if (!prototypeCss.includes('.app.more-open { left: calc(-1 * var(--more-w)); right: var(--more-w); }') || !prototypeJs.includes("app.classList.toggle('more-open', id === 'moreSheet');")) fail('Opening More must move the player aside for the column');
+for (const marker of ['id="installSheet"', 'data-install="iphone"', 'data-install="android"', 'data-install="computer"', 'id="installNow"', 'Brave can', 'Safari']) {
+  if (!prototypeHtml.includes(marker)) fail(`The install guide is missing ${marker}`);
+}
+if (!prototypeJs.includes("requestLiveAction('install')") || !app.includes("case 'install': {") || !app.includes('installable: Boolean(state.installPrompt),')) fail('Install now must reach the browser install prompt held by the page');
+// Choices are words alone and card titles stand alone
+if (prototypeJs.includes('SEG_ICONS') || prototypeHtml.includes('class="card-badge"')) fail('Choices and card titles must not carry icons');
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');

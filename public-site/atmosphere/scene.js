@@ -1418,12 +1418,15 @@
     }
     // Cloth or skin wrapped round a body: dark at the turning edges, the wash catching the front, the far side in shadow
     function roundLit(hex, x0, x1) {
+      // A figure whose place isn't known yet (the first frame as a song starts, on a phone) gets flat colour, not an error
+      if (!isFinite(x0) || !isFinite(x1)) return hex;
       var gr = g.createLinearGradient(x0, 0, x1, 0);
       gr.addColorStop(0, shade(hex, -0.5)); gr.addColorStop(0.22, shade(hex, -0.08)); gr.addColorStop(0.42, shade(hex, 0.16)); gr.addColorStop(0.68, hex); gr.addColorStop(1, shade(hex, -0.55));
       return gr;
     }
     // The same, softer: for people seen from behind, whose fronts face the light
     function roundSoft(hex, x0, x1) {
+      if (!isFinite(x0) || !isFinite(x1)) return hex;
       var gr = g.createLinearGradient(x0, 0, x1, 0);
       gr.addColorStop(0, shade(hex, -0.32)); gr.addColorStop(0.3, shade(hex, 0.04)); gr.addColorStop(0.6, hex); gr.addColorStop(1, shade(hex, -0.34));
       return gr;

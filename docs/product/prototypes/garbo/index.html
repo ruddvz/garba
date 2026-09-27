@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="garbo.css?v=20260927-8">
+  <link rel="stylesheet" href="garbo.css?v=20260928-1">
 </head>
 <body>
   <!--
@@ -193,24 +193,49 @@
     </div>
   </section>
 
-  <section class="sheet" id="moreSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="moreTitle" hidden>
-    <div class="sheet-grip" aria-hidden="true"></div>
+  <section class="sheet more-panel" id="moreSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="moreTitle" hidden>
     <header class="sheet-head"><h2 id="moreTitle">More</h2><button class="ib" type="button" data-close aria-label="Close More"><svg><use href="#i-close"/></svg></button></header>
     <div class="sheet-body">
       <div class="tiles">
-        <button class="tile" type="button" id="circleBridge" aria-pressed="false"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-ring"/></svg></span><strong>Private Garba Circle</strong><small>Listen together with friends</small></button>
-        <button class="tile tile-wide" type="button" id="livesOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-live"/></svg></span><strong>Lives</strong><small>Host your own live with your songs, or go back to one you joined</small></button>
-        <button class="tile" type="button" id="shareOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-share"/></svg></span><strong>Share this song</strong><small>A card with the lit garbo</small></button>
-        <button class="tile" type="button" id="aboutOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-book"/></svg></span><strong>What is Garba?</strong><small>The lamp, the circle, the nights</small></button>
-        <button class="tile" type="button" id="installBtn"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-install"/></svg></span><strong>Install PlayGarba</strong><small>Keep it one tap away</small></button>
-        <button class="tile tile-wide" type="button" id="linkOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-link"/></svg></span><strong>Play YouTube link</strong><small>Paste a YouTube video or playlist</small></button>
-        <button class="tile tile-wide" type="button" id="tonightOpen"><span class="tile-ic"><svg aria-hidden="true"><use href="#i-moon"/></svg></span><strong>Tonight</strong><small>A night in five parts, from 9 pm to 1 am</small></button>
+        <button class="tile" type="button" id="circleBridge" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg><span>Private Garba Circle</span></button>
+        <button class="tile" type="button" id="installBtn" aria-haspopup="dialog"><svg aria-hidden="true"><use href="#i-install"/></svg><span>Install PlayGarba</span></button>
+        <button class="tile" type="button" id="shareOpen"><svg aria-hidden="true"><use href="#i-share"/></svg><span>Share this song</span></button>
+        <button class="tile" type="button" id="aboutOpen"><svg aria-hidden="true"><use href="#i-book"/></svg><span>What is Garba?</span></button>
+        <button class="tile" type="button" id="linkOpen"><svg aria-hidden="true"><use href="#i-link"/></svg><span>Play YouTube link</span></button>
+        <button class="tile" type="button" id="tonightOpen"><svg aria-hidden="true"><use href="#i-moon"/></svg><span>Tonight</span></button>
+        <button class="tile" type="button" id="livesOpen"><svg aria-hidden="true"><use href="#i-live"/></svg><span>Lives</span></button>
       </div>
       <details class="proto-states">
         <summary>Prototype states</summary>
         <p class="note">Jump to any state the player can be in. These only exist in the prototype.</p>
         <div class="states" id="stateGrid"></div>
       </details>
+    </div>
+  </section>
+
+  <section class="sheet" id="installSheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="installTitle" hidden>
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-head"><h2 id="installTitle">Install PlayGarba</h2><button class="ib" type="button" data-close aria-label="Close Install PlayGarba"><svg><use href="#i-close"/></svg></button></header>
+    <div class="sheet-body install-body">
+      <div class="install-tabs" role="tablist" aria-label="Your device">
+        <button type="button" role="tab" id="installTabIphone" aria-controls="installIphone" aria-selected="false" data-install="iphone">iPhone</button>
+        <button type="button" role="tab" id="installTabAndroid" aria-controls="installAndroid" aria-selected="false" data-install="android">Android</button>
+        <button type="button" role="tab" id="installTabComputer" aria-controls="installComputer" aria-selected="false" data-install="computer">Computer</button>
+      </div>
+      <div class="install-pane" role="tabpanel" id="installIphone" aria-labelledby="installTabIphone" hidden>
+        <p>Listen in Brave. It's the browser we suggest on iPhone.</p>
+        <p>Brave can't add PlayGarba to your Home Screen, though. For that, open playgarba.com in Safari, tap Share, then Add to Home Screen. It opens full screen, without the browser bars.</p>
+      </div>
+      <div class="install-pane" role="tabpanel" id="installAndroid" aria-labelledby="installTabAndroid" hidden>
+        <p>Use Brave. The music keeps playing when your screen turns off or you switch to another app.</p>
+        <p>To install, open the Brave menu and tap Install app, or Add to Home screen.</p>
+      </div>
+      <div class="install-pane" role="tabpanel" id="installComputer" aria-labelledby="installTabComputer" hidden>
+        <p>PlayGarba works in any browser on a computer.</p>
+        <p>To keep it one click away in Brave, Chrome or Edge, click the install icon at the right end of the address bar.</p>
+      </div>
+      <button class="primary" type="button" id="installNow" hidden>Install now</button>
+      <p class="install-done" id="installDone" hidden>PlayGarba is installed on this device.</p>
     </div>
   </section>
 
@@ -283,7 +308,7 @@
   </section>
 
   <section class="side-card" id="linkCard" role="dialog" aria-labelledby="linkCardT" hidden>
-    <header class="card-head"><span class="card-badge" aria-hidden="true"><svg><use href="#i-link"/></svg></span><h2 id="linkCardT">Play YouTube link</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <header class="card-head"><h2 id="linkCardT">Play YouTube link</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="card-body" style="padding: 16px 20px 20px; display: grid; gap: 12px;">
       <label class="sr-only" for="linkSongInput">YouTube link</label>
       <input class="host-input" id="linkSongInput" type="url" inputmode="url" placeholder="https://youtu.be/… or watch?v=…" autocomplete="off" spellcheck="false">
@@ -293,7 +318,7 @@
   </section>
 
   <section class="side-card" id="viewCard" role="dialog" aria-labelledby="viewCardT" hidden>
-    <header class="card-head"><span class="card-badge" aria-hidden="true"><svg><use href="#i-eye"/></svg></span><h2 id="viewCardT">View</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <header class="card-head"><h2 id="viewCardT">View</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="card-section">
       <h3 class="card-label" id="viewVenueL">Venue</h3>
       <div class="atmo-seg card-seg" id="atmoVenues" role="group" aria-labelledby="viewVenueL"></div>
@@ -327,7 +352,7 @@
   </section>
 
   <section class="side-card" id="soundCard" role="dialog" aria-labelledby="soundCardT" hidden>
-    <header class="card-head"><span class="card-badge" aria-hidden="true"><svg><use href="#i-headphones"/></svg></span><h2 id="soundCardT">Sound</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <header class="card-head"><h2 id="soundCardT">Sound</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="card-body atmo-body">
       <button class="atmo-power" id="atmoPower" type="button" role="switch" aria-checked="false">
         <span class="pw-ic" aria-hidden="true"><svg><use href="#i-power"/></svg></span><span><strong id="atmoPowerLabel">Sound is off</strong></span><i aria-hidden="true"></i>
@@ -352,7 +377,7 @@
   </section>
 
   <section class="side-card" id="ideaCard" role="dialog" aria-labelledby="ideaCardT" hidden>
-    <header class="card-head"><span class="card-badge" aria-hidden="true"><svg><use href="#i-bulb"/></svg></span><h2 id="ideaCardT">Ask for a feature</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+    <header class="card-head"><h2 id="ideaCardT">Ask for a feature</h2><button class="ib card-x" type="button" data-card-close aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
     <div class="card-body idea-body">
       <p class="atmo-desc">What should PlayGarba do next? Your words are kept exactly as you write them.</p>
       <label class="sr-only" for="ideaText">Your idea</label>
@@ -405,6 +430,6 @@
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
   <script src="../../../../public-site/atmosphere/scene.js"></script>
   <script src="scene.js?v=20260927-9"></script>
-  <script src="garbo.js?v=20260927-10"></script>
+  <script src="garbo.js?v=20260928-1"></script>
 </body>
 </html>

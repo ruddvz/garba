@@ -3021,6 +3021,9 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       circleInfo: circle.active ? circle.identity : null,
       // The host of a circle that plays their own songs adds to it from Up next
       circleCanAdd: circle.canAddSongs,
+      // Immersive's install guide offers the browser's own install prompt when there is one
+      installable: Boolean(state.installPrompt),
+      installed: isStandalone(),
       catalogueSignature: state.catalogueSignature,
       link: state.linkRequest || null,
       // What plays after this song: the songs the listener queued, then the automatic continuation
@@ -3067,6 +3070,14 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       case 'favourite': els.mobileFavourite?.click(); return true;
       case 'live': els.liveStationButton?.click(); return true;
       case 'circle': els.circleButton?.click(); return true;
+      case 'install': {
+        const prompt = state.installPrompt;
+        if (!prompt) return false;
+        state.installPrompt = null;
+        prompt.prompt();
+        prompt.userChoice.catch(() => null).then(() => { if (els.installBanner) els.installBanner.hidden = true; });
+        return true;
+      }
       case 'explore': els.browseButton?.click(); return true;
       case 'seek': {
         if (!Number.isFinite(value) || !state.duration) return false;

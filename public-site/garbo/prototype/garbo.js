@@ -368,6 +368,8 @@
     // The circle's face and name, which take over the Live button while the listener is in it
     var info = snapshot.circleInfo;
     S.circleCanAdd = S.circle && snapshot.circleCanAdd === true;
+    S.installable = snapshot.installable === true;
+    S.installed = snapshot.installed === true;
     S.circleInfo = S.circle && info && typeof info.title === 'string' ? { title: info.title, name: String(info.name || ''), face: Number.isInteger(info.face) ? info.face : null } : null;
     S.liveUpNext = Array.isArray(snapshot.upNext) ? snapshot.upNext : null;
     if (snapshot.link && Number.isFinite(snapshot.link.seq)) {
@@ -1063,6 +1065,7 @@
     closeCard(true);
     if (openSheet) closeSheet(true);
     var c = $(id); c.hidden = false; openCardId = id;
+    app.classList.add('card-open');
     document.querySelectorAll('.rail-btn[data-card]').forEach(function (b) { b.setAttribute('aria-expanded', String(b.dataset.card === id)); });
     if (id === 'linkCard') {
       $('linkSongBtn')?.setAttribute('aria-expanded', 'true');
@@ -1076,6 +1079,7 @@
   function closeCard(silent) {
     if (!openCardId) return;
     var id = openCardId; $(id).hidden = true; openCardId = null;
+    app.classList.remove('card-open');
     var btn = document.querySelector('.rail-btn[data-card="' + id + '"]') || (id === 'linkCard' ? $('linkSongBtn') : null);
     if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) (btn.offsetParent ? btn : $('moreBtn')).focus(); }
   }
@@ -1215,6 +1219,9 @@
     var s = $(id); s.hidden = false; openSheet = s;
     if (id !== 'aboutPage') $('scrim').hidden = false;
     $('scrim').classList.toggle('light', id === 'exploreSheet' && VENUE_SCENE);
+    // More is a column of icons at the side: the player steps left to make room, and no dimming covers it
+    $('scrim').classList.toggle('clear', id === 'moreSheet');
+    app.classList.toggle('more-open', id === 'moreSheet');
     closeCard(true);
     app.inert = true;
     var target = focusId ? $(focusId) : s;
@@ -1239,6 +1246,7 @@
     if (!openSheet) return;
     if (openSheet.id === 'exploreSheet' && !keepDj) djMode(false);
     openSheet.hidden = true; openSheet = null;
+    app.classList.remove('more-open');
     $('scrim').hidden = true; app.inert = false;
     syncVideoDock();
     if (!silent && opener && opener.focus) opener.focus();
@@ -1648,7 +1656,35 @@
   $('moreBtn').addEventListener('click', function () { showSheet('moreSheet'); });
   $('shareOpen').addEventListener('click', function () { showSheet('shareSheet'); });
   $('aboutOpen').addEventListener('click', function () { showSheet('aboutPage'); });
-  $('installBtn').addEventListener('click', function () { toast('Your browser shows its install prompt here.'); });
+  /* ---------- install guide ----------
+     One tab per kind of device, opened on the one the listener is using. Where the browser offers its own install
+     prompt (Android and computers, inside PlayGarba) Install now asks for it; an installed copy says so instead. */
+  function deviceKind() {
+    var ua = navigator.userAgent || '';
+    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'iphone';
+    if (/Android/.test(ua)) return 'android';
+    return 'computer';
+  }
+  function selectInstallTab(kind) {
+    document.querySelectorAll('.install-tabs [role="tab"]').forEach(function (t) {
+      var on = t.dataset.install === kind;
+      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+  function syncInstall() {
+    $('installDone').hidden = !S.installed;
+    $('installNow').hidden = S.installed || !S.installable;
+  }
+  $('installBtn').addEventListener('click', function () { selectInstallTab(deviceKind()); syncInstall(); showSheet('installSheet'); opener = $('moreBtn'); });
+  document.querySelectorAll('.install-tabs [role="tab"]').forEach(function (t, i, all) {
+    t.addEventListener('click', function () { selectInstallTab(t.dataset.install); });
+    t.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return;
+      e.preventDefault(); var n = all[(i + d + all.length) % all.length]; selectInstallTab(n.dataset.install); n.focus();
+    });
+  });
+  $('installNow').addEventListener('click', function () { if (requestLiveAction('install')) { S.installable = false; syncInstall(); } });
   $('livesOpen').addEventListener('click', function () { needLives().then(function () { showSheet('livesSheet', 'hostNew'); }, function () { toast("Lives couldn't load. Check your connection."); }); });
 
   /* ---------- Singer faces ---------- */
@@ -1678,15 +1714,14 @@
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
   // Each choice gets its own icon; clap patterns show their beat as dots
-  var SEG_ICONS = { circle: 'i-ring', far: 'i-chair', stage: 'i-mic', stadium: 'i-stadium', outdoors: 'i-tree', sheri: 'i-houses', claps: 'i-hands', dandiya: 'i-sticks', crowd: 'i-crowd', clapping: 'i-hands', immersive: 'i-full' };
+  // The choices are words alone; only the beat choices keep their clap dots, which show the rhythm itself
   var SEG_DOTS = { beat: [1], 'be-tali': [0, 0, 1, 1], 'tran-tali': [0, 1, 1, 1] };
   function atmoSegment(elId, items, current, pick) {
     var box = $(elId); box.textContent = '';
     box.style.setProperty('--n', String(Object.keys(items).length));
     Object.keys(items).forEach(function (id) {
       var b = el('button'); b.type = 'button'; b.dataset.id = id;
-      if (SEG_ICONS[id]) { var ic = el('span', 'seg-ic'); ic.setAttribute('aria-hidden', 'true'); ic.innerHTML = '<svg><use href="#' + SEG_ICONS[id] + '"/></svg>'; b.append(ic); }
-      else if (SEG_DOTS[id]) { var dt = el('span', 'seg-dots'); dt.setAttribute('aria-hidden', 'true'); SEG_DOTS[id].forEach(function (on) { dt.append(el('i', on ? 'on' : null)); }); b.append(dt); }
+      if (SEG_DOTS[id]) { var dt = el('span', 'seg-dots'); dt.setAttribute('aria-hidden', 'true'); SEG_DOTS[id].forEach(function (on) { dt.append(el('i', on ? 'on' : null)); }); b.append(dt); }
       b.append(el('span', 'seg-l', items[id].label));
       b.setAttribute('aria-pressed', String(id === current));
       b.addEventListener('click', function () { pick(id); box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
