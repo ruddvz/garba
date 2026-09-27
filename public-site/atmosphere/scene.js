@@ -2932,7 +2932,7 @@
     // The page can name the two of you (youName, partnerName) and give each a face (youFace, partnerFace: an image
     // URL, usually a small data: URL made on the device). A blank name falls back to the word. Names are drawn as
     // canvas text, never markup, and control and direction-override characters are dropped first.
-    var NAME_MAX = 16;
+    var NAME_MAX = 10;
     function cleanName(v) {
       if (typeof v !== 'string') return '';
       var s = v.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, '').replace(/\s+/g, ' ').trim();

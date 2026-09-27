@@ -244,23 +244,23 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null", 'function coupleFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the couple name and face marker: ${marker}`);
   }
-  // A name is plain canvas text: cleaned of control and direction-override characters, capped at 16 characters,
+  // A name is plain canvas text: cleaned of control and direction-override characters, capped at 10 characters,
   // and blank falls back to the word. Scripts and emoji come through whole.
-  const nameBody = scene.slice(scene.indexOf('    var NAME_MAX = 16;'), scene.indexOf('    function coupleWord('));
+  const nameBody = scene.slice(scene.indexOf('    var NAME_MAX = 10;'), scene.indexOf('    function coupleWord('));
   const cleanName = new Function(`${nameBody}; return cleanName;`)();
   const ch = (...codes) => String.fromCodePoint(...codes);
   const show = (v) => (typeof v === 'string' ? JSON.stringify(v).replace(/[^ -~]/gu, (c) => `<U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}>`) : String(v));
   const gujarati = ch(0x0aa7, 0x0ab0, 0x0acd, 0x0aae, 0x0abf, 0x0ab2);
   for (const [input, want] of [
     ['  Rudra  ', 'Rudra'],
-    ['Rudra   and  Dolly', 'Rudra and Dolly'],
+    ['Ru   dra  D', 'Ru dra D'],
     [`Ru${ch(0x202e)}dra${ch(0x2066)}`, 'Rudra'],
     [`Dol${ch(0x200b)}ly${ch(0x2028)}${ch(0xfeff)}`, 'Dolly'],
     [`Ru${ch(0x07)}dra`, 'Rudra'],
     [gujarati, gujarati],
     [`${ch(0x1f483)} Dolly`, `${ch(0x1f483)} Dolly`],
-    ['x'.repeat(40), 'x'.repeat(16)],
-    ['Krupansu Sorath Krupansu', 'Krupansu Sorath'],
+    ['x'.repeat(40), 'x'.repeat(10)],
+    ['Krupansu Sorath', 'Krupansu S'],
     ['   ', ''],
     [42, ''],
     [null, ''],
