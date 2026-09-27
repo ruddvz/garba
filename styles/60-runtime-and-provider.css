@@ -919,3 +919,44 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
 }
 .circle-perch-face[hidden],
 .circle-perch-kicker[hidden] { display: none; }
+/* Before a circle, the chip says what it is: the ring of dots in the accent colour, "Private Garba Circle",
+   "Listen with friends". It is how people find the circle without opening More. */
+.circle-perch.is-idle .circle-perch-face {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: rgba(246, 236, 215, .08);
+}
+.circle-perch.is-idle .circle-perch-face svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  stroke: none;
+}
+.circle-perch.is-idle .circle-perch-name { font-size: 13.5px; }
+
+/* Picking how the circle plays, and what a circle of your own songs holds */
+.circle-setup { display: grid; gap: 10px; }
+.circle-setup[hidden] { display: none; }
+.circle-choice {
+  appearance: none;
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(246, 236, 215, .18);
+  background: rgba(246, 236, 215, .06);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.circle-choice strong { font-size: 16px; font-weight: 700; }
+.circle-choice span { color: rgba(246, 236, 215, .72); font-size: 13.5px; line-height: 1.4; }
+.circle-choice:hover { background: rgba(246, 236, 215, .1); border-color: rgba(246, 236, 215, .3); }
+.circle-choice:focus-visible { outline: 2px solid var(--ivory); outline-offset: 2px; }
+.circle-songs { margin: 0; color: rgba(246, 236, 215, .78); font-size: 13.5px; line-height: 1.45; }
+.circle-songs[hidden] { display: none; }
+.circle-songs.is-changed { color: var(--ivory); font-weight: 650; }

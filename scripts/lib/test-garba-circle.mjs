@@ -24,6 +24,7 @@ import {
   pickedItemFor,
   circleLinkSong,
   MAX_PICKED_ITEMS,
+  songHash,
 } from '../../assets/runtime/garba-circle.js';
 import { CIRCLE_FACE_COUNT, circleFaceLabel, circleFaceSvg } from '../../assets/runtime/circle-faces.js';
 
@@ -526,6 +527,34 @@ for (const [label, entry] of stats) {
     assert.equal(after.offsetSeconds, before.offsetSeconds);
   }
   pass('picked circles: host order, pasted links with their length, exact links, old links still work, songs added at the end');
+}
+
+{
+  // Catalogue songs travel by a 7-character hash of their id, so a long list still makes a scannable QR code
+  const startMs = Date.UTC(2026, 8, 27, 19);
+  const catalogueIds = songs.map((song) => song.id);
+  const items = [{ kind: 'song', id: 'song-c' }, { kind: 'link', videoId: 'dQw4w9WgXcQ', durationSeconds: 213 }, { kind: 'song', id: 'song-a' }];
+  const schedule = buildPickedSchedule(items, songs).schedule;
+  const fingerprint = scheduleFingerprint(schedule);
+  const code = encodePickedCode({ startMs, items, fingerprint, catalogueIds });
+  assert.ok(code.includes(`.-${songHash('song-c')}`) && !code.includes('song-c'), 'a catalogue song travels by its hash');
+  const decoded = decodePickedCode(code);
+  assert.deepEqual(decoded.items[0], { kind: 'song', hash: songHash('song-c') });
+  assert.deepEqual(buildPickedSchedule(decoded.items, songs).schedule.map((song) => song.id), schedule.map((song) => song.id), 'the hash finds the same song on another phone');
+  assert.equal(scheduleFingerprint(buildPickedSchedule(decoded.items, songs).schedule), fingerprint);
+  // A hash two catalogue songs share is never used: that song travels by its full id
+  const shared = encodePickedCode({ startMs, items, fingerprint, catalogueIds: [...catalogueIds, 'song-c'] });
+  assert.ok(shared.includes('.song-c.'), 'a hash that is not unique falls back to the full id');
+  // A song someone added on their own phone never answers to a catalogue hash
+  const lookalike = { ...songs.find((song) => song.id === 'song-c'), userAdded: true };
+  assert.ok(buildPickedSchedule(decoded.items, [lookalike]).missing, 'an added song is not matched by hash');
+  // Thirty catalogue songs with long ids stay a short link
+  const long = Array.from({ length: MAX_PICKED_ITEMS }, (_, i) => yt(`rangtaali-2-2019-${String(i).padStart(2, '0')}-a-very-long-catalogue-song-title-id`, 240));
+  const longItems = long.map((song) => ({ kind: 'song', id: song.id }));
+  const longCode = encodePickedCode({ startMs, items: longItems, fingerprint: scheduleFingerprint(long), catalogueIds: long.map((song) => song.id) });
+  assert.ok(longCode && longCode.length < 300, `thirty songs make a ${longCode?.length}-character code`);
+  assert.deepEqual(buildPickedSchedule(decodePickedCode(longCode).items, long).schedule.map((song) => song.id), long.map((song) => song.id));
+  pass('picked circles: catalogue songs travel by a short, unique hash; thirty songs stay a short link');
 }
 
 console.log('garba circle tests passed');

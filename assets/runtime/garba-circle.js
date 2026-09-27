@@ -137,19 +137,47 @@ export function decodeCircleCode(value) {
 /* ----------------------------- circles that play the host's own songs ----------------------------- */
 
 // A circle can instead play a list the host picked, looped. The link carries the list itself:
-// `2.<start36>.<fingerprint>.<check>.<item>.<item>…`. An item is a catalogue song id, or `_`, an 11-character
-// YouTube video id and the video's length in whole seconds in base 36, for a pasted YouTube link. A pasted link
-// carries its own length because no catalogue knows it, and every phone must agree on every song boundary.
+// `2.<start36>.<fingerprint>.<check>.<item>.<item>…`. An item is one of:
+// - `-` and a 7-character base-36 hash of a catalogue song's id, so thirty songs still make a QR code a phone can
+//   scan. Ids never change, so the hash still finds the song after the catalogue grows;
+// - a catalogue song id in full, used only when two songs in the catalogue share a hash;
+// - `_`, an 11-character YouTube video id and the video's length in whole seconds in base 36, for a pasted link.
+//   A pasted link carries its own length because no catalogue knows it, and every phone must agree on every
+//   song boundary.
 export const PICKED_CODE_VERSION = '2';
 export const MAX_PICKED_ITEMS = 30;
 const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const MAX_LINK_SECONDS = 6 * 3600;
 const MAX_PICKED_CODE_LENGTH = 2000;
 
-function itemToken(item) {
+/** A catalogue song a picked circle can carry by id: not one a listener added on their own device. */
+export function isCatalogueCircleSong(song) {
+  return Boolean(song) && isCircleEligible(song) && !song.userAdded && !song.circleLink;
+}
+
+/** The short form of a catalogue song id in a picked circle's link. */
+export function songHash(id) {
+  return fnv1a(String(id)).toString(36).padStart(7, '0');
+}
+const HASH_RE = /^[0-9a-z]{7}$/;
+
+// How many catalogue songs share each hash, so a song whose hash isn't unique travels by its full id
+function hashCounts(catalogueIds) {
+  const counts = new Map();
+  for (const id of catalogueIds || []) {
+    const hash = songHash(id);
+    counts.set(hash, (counts.get(hash) || 0) + 1);
+  }
+  return counts;
+}
+
+function itemToken(item, counts) {
   if (item?.kind === 'song') {
+    if (item.hash != null) return HASH_RE.test(String(item.hash)) ? `-${item.hash}` : null;
     const id = String(item.id || '');
-    return SONG_ID_RE.test(id) && id.length <= MAX_SONG_ID_LENGTH ? id : null;
+    if (!SONG_ID_RE.test(id) || id.length > MAX_SONG_ID_LENGTH) return null;
+    const hash = songHash(id);
+    return counts && counts.get(hash) === 1 ? `-${hash}` : id;
   }
   if (item?.kind === 'link') {
     const seconds = Math.round(Number(item.durationSeconds));
@@ -160,6 +188,10 @@ function itemToken(item) {
 }
 
 function tokenItem(token) {
+  if (token.startsWith('-')) {
+    const hash = token.slice(1);
+    return HASH_RE.test(hash) ? { kind: 'song', hash } : null;
+  }
   if (token.startsWith('_')) {
     const videoId = token.slice(1, 12);
     const tail = token.slice(12);
@@ -169,13 +201,17 @@ function tokenItem(token) {
   return { kind: 'song', id: token };
 }
 
-/** Encode a picked circle, or null when anything in it could not be decoded again exactly. */
-export function encodePickedCode({ startMs, items, fingerprint } = {}) {
+/**
+ * Encode a picked circle, or null when anything in it could not be decoded again exactly. With `catalogueIds`,
+ * catalogue songs travel by their short hash wherever it is unique; without it, by their full id.
+ */
+export function encodePickedCode({ startMs, items, fingerprint, catalogueIds = null } = {}) {
   if (!Number.isInteger(startMs) || startMs < MIN_START_MS || startMs > MAX_START_MS) return null;
   if (!Array.isArray(items) || !items.length || items.length > MAX_PICKED_ITEMS) return null;
   const fp = String(fingerprint || '');
   if (!/^[0-9a-z]{1,7}$/.test(fp) || parseInt(fp, 36) > UINT32_MAX) return null;
-  const tokens = items.map(itemToken);
+  const counts = catalogueIds ? hashCounts(catalogueIds) : null;
+  const tokens = items.map((item) => itemToken(item, counts));
   if (tokens.some((token) => !token)) return null;
   const body = [PICKED_CODE_VERSION, startMs.toString(36), fp].join('.');
   const list = tokens.join('.');
@@ -225,7 +261,7 @@ export function circleLinkSong({ videoId, durationSeconds, title = '' }) {
 /** The item a song becomes in a picked circle: a catalogue song by id, anything else by its YouTube video. */
 export function pickedItemFor(song) {
   if (!song) return null;
-  if (isCircleEligible(song) && !song.userAdded && !song.circleLink) return { kind: 'song', id: song.id };
+  if (isCatalogueCircleSong(song)) return { kind: 'song', id: song.id };
   const videoId = String(song.youtubeId || '');
   const seconds = Math.round(Number(song.durationSeconds));
   if (!VIDEO_ID_RE.test(videoId) || !(seconds > MIN_SONG_SECONDS)) return null;
@@ -239,14 +275,22 @@ export function pickedItemFor(song) {
  */
 export function buildPickedSchedule(items = [], songs = []) {
   const byId = new Map();
-  for (const song of songs || []) if (song?.id && !byId.has(song.id)) byId.set(song.id, song);
+  const byHash = new Map();
+  for (const song of songs || []) {
+    if (!song?.id || byId.has(song.id)) continue;
+    byId.set(song.id, song);
+    if (!isCatalogueCircleSong(song)) continue;
+    const hash = songHash(song.id);
+    byHash.set(hash, byHash.has(hash) ? null : song);
+  }
   const schedule = [];
   const seen = new Set();
   for (const item of items || []) {
     let song = null;
     if (item?.kind === 'song') {
-      song = byId.get(item.id);
-      if (!song || !isCircleEligible(song)) return { missing: item.id };
+      // A hash two songs share on this phone can't be trusted: treat it like a missing song
+      song = item.hash != null ? byHash.get(item.hash) : byId.get(item.id);
+      if (!song || !isCircleEligible(song)) return { missing: item.id ?? `#${item.hash}` };
     } else if (item?.kind === 'link') {
       song = circleLinkSong(item);
     }

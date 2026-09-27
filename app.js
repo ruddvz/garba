@@ -2911,7 +2911,7 @@ const circle = createCircleController({
   playCircleSong,
   // Play your songs: the song on screen, then Up next
   pickedSongs: () => [currentSong(), ...manualQueueSongs()].filter(Boolean),
-  resolveDuration: (song) => resolveYouTubeDuration(song.youtubeId),
+  resolveDuration: (song) => (canExecuteSong(song) ? resolveYouTubeDuration(song.youtubeId) : Promise.resolve(0)),
   registerCircleSongs,
   showToast,
   onChange: () => {

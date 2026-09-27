@@ -16,6 +16,7 @@ import {
   encodePickedCode,
   buildPickedSchedule,
   pickedItemFor,
+  isCatalogueCircleSong,
   MAX_PICKED_ITEMS,
   cleanCircleName,
   parseCircleFace,
@@ -366,6 +367,9 @@ export function createCircleController(app) {
     return { items, skipped };
   }
 
+  // Catalogue songs travel in the link by a short hash, checked for uniqueness against this catalogue
+  const catalogueIds = () => app.songs().filter(isCatalogueCircleSong).map((song) => song.id);
+
   function useSchedule(schedule) {
     circle.schedule = schedule;
     const links = schedule.filter((song) => song.circleLink);
@@ -414,7 +418,7 @@ export function createCircleController(app) {
       const continuing = song && (first.id === song.id || (first.youtubeId && first.youtubeId === song.youtubeId));
       circle.startMs = Math.round(syncedNow() - (continuing ? elapsed : 0) * 1000);
       circle.items = items;
-      circle.code = encodePickedCode({ startMs: circle.startMs, items, fingerprint: scheduleFingerprint(schedule) });
+      circle.code = encodePickedCode({ startMs: circle.startMs, items, fingerprint: scheduleFingerprint(schedule), catalogueIds: catalogueIds() });
       if (!circle.code) {
         Object.assign(circle, { status: 'setup', message: COPY.full, items: [] });
         renderDialog({ focus: true });
@@ -461,7 +465,7 @@ export function createCircleController(app) {
       const before = circle.schedule.slice(0, slot.index).reduce((sum, song) => sum + Number(song.durationSeconds), 0);
       startMs = Math.round(syncedNow() - (before + slot.offsetSeconds) * 1000);
     }
-    const code = encodePickedCode({ startMs, items: nextItems, fingerprint: scheduleFingerprint(built.schedule) });
+    const code = encodePickedCode({ startMs, items: nextItems, fingerprint: scheduleFingerprint(built.schedule), catalogueIds: catalogueIds() });
     if (!code) return { added: 0, reason: 'full' };
     Object.assign(circle, { items: nextItems, startMs, code, listChanged: true });
     useSchedule(built.schedule);
