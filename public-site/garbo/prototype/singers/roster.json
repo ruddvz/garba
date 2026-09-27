@@ -1,8 +1,8 @@
 {
   "rosterSource": "data/discovery/artists-2026-01.json",
   "updated": "2026-09-27",
-  "rosterEntryCount": 62,
-  "humanPortraitCount": 58,
+  "rosterEntryCount": 63,
+  "humanPortraitCount": 59,
   "excludedGroupActs": [
     "Aghori Muzik",
     "Bandish Projekt",
@@ -687,6 +687,19 @@
         "https://starclinch.com/sudesh-bhosale"
       ],
       "portraitNotes": "AI-generated stylized face-only illustration based on an artist booking profile and music catalogue; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Rupal Doshi",
+      "artistId": "rupal-doshi",
+      "tier": "legacy-core",
+      "songCount": 16,
+      "portrait": "rupal-doshi.webp",
+      "sourceReferences": [
+        "https://www.sonicmusicrecords.com/top-10-gujarati-female-singers/",
+        "https://krupmusic.com/song/tame-manav-sacha-banjo/",
+        "https://timesofindia.indiatimes.com/videos/entertainment/music/gujarati/gujarati-dandiya-garba-songs-non-stop-dandiya-raas/videoshow/66161445.cms"
+      ],
+      "portraitNotes": "Also billed as Rupal Doshi Shah. AI-generated stylized face-only portrait guided by the singer feature collage; the music credits confirm singer identity, and reference imagery is not a license."
     }
   ]
 }
