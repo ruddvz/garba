@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-3"', 'src="garbo.js?v=20260928-4"', 'src="scene.js?v=20260928-1"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-4"', 'src="garbo.js?v=20260928-5"', 'src="scene.js?v=20260928-1"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -101,7 +101,8 @@ if (!prototypeCss.includes('.lamp-tip') || !prototypeCss.includes('.side-card'))
 // One frame that fails to draw (a hidden frame has no size) must not freeze the venue: the loop books its next frame first
 if (!prototypeJs.includes('  function loop(now) {\n    // The next frame is asked for first, so a frame that fails to draw can never stop the venue for good\n    requestAnimationFrame(loop);')) fail('The Immersive draw loop must request its next frame before drawing');
 // A tap anywhere on the venue must start the song: the invisible keyboard seek under the lamp takes no pointer
-if (!prototypeCss.includes('.ring-seek { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; opacity: 0; margin: 0; pointer-events: none; }')) fail('The invisible ring seek must not catch taps on the venue');
+if (/ringSeek|ring-seek/.test(prototypeHtml + prototypeJs + prototypeCss)) fail('The invisible ring seek is gone: the seek bar under the title is the only seek');
+if (!prototypeJs.includes('applySeek(bar.value / 1000);')) fail('The seek bar under the title must seek directly');
 // The Tally form must stay see-through on the dark card: a dark iframe around Tally's light page gets an opaque white
 // backdrop that hides its light question text
 if (!prototypeCss.includes('#ideaCard iframe { color-scheme: light; }')) fail('The Ideas card must give the Tally frame its light colour scheme');
@@ -117,8 +118,8 @@ if (!prototypeJs.includes("$('tonightOpen').addEventListener('click', function (
 if (!prototypeHtml.includes('id="hidePlayerBtn" type="button" aria-label="Hide player" aria-pressed="false"') || !prototypeJs.includes('function setPlayerHidden(off)') || !prototypeCss.includes('.player-off .stage > :not(.lamp-slot), .player-off .rail { display: none; }')) fail('The top bar must carry Hide player, which leaves the venue on the whole screen');
 const linkTileAt = prototypeHtml.indexOf('id="linkOpen"');
 if (linkTileAt < moreAt || linkTileAt > prototypeHtml.indexOf('</section>', moreAt) || !prototypeJs.includes("$('linkOpen').addEventListener('click'")) fail('More must carry the Play YouTube link tile that phones use in place of the link button');
-if (!/<button class="ib" id="tonightBtn"[^>]*>[\s\S]*?<\/button>\s*<button class="ib" id="viewBtn"[^>]*aria-expanded="false"/.test(prototypeHtml) || !prototypeJs.includes("$('viewBtn').addEventListener('click', function () { setViewMenu(!viewMenuOpen()); });") || !prototypeJs.includes("if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn')) setViewMenu(false);")) fail('On a phone the home button must sit in the moon\'s place, open the switch, and close on a tap elsewhere');
-for (const marker of ['@media (max-width: 600px), (orientation: landscape) and (max-height: 520px) {', '#tonightBtn, #linkSongBtn, .view-switch { display: none; }', '#viewBtn, #tonightOpen, #linkOpen { display: grid; }', '.view-open { --pill-switch-h: 49px; }', '.view-open .view-switch { display: flex; }']) {
+if (!/<button class="ib" id="tonightBtn"[^>]*>[\s\S]*?<\/button>\s*<button class="ib" id="viewBtn"[^>]*aria-expanded="false"/.test(prototypeHtml) || !prototypeJs.includes("$('viewBtn').addEventListener('click', function () { setViewMenu(!viewMenuOpen()); });") || !prototypeJs.includes("if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn, #rail')) setViewMenu(false);")) fail('On a phone the home button must sit in the moon\'s place, open the switch, and close on a tap elsewhere');
+for (const marker of ['@media (max-width: 600px), (orientation: landscape) and (max-height: 520px) {', '#tonightBtn, #linkSongBtn, .view-switch { display: none; }', '#viewBtn, #tonightOpen, #linkOpen { display: grid; }', '.view-open { --pill-switch-h: 49px; }', '.view-open .view-switch { display: flex; }', '.app:not(.view-open) .rail { display: none; }']) {
   if (!prototypeCss.includes(marker)) fail(`The phone top bar is missing ${marker}`);
 }
 

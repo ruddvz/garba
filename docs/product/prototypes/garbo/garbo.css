@@ -84,11 +84,6 @@ button { font: inherit; color: inherit; }
 .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .lamp-slot { flex: 1 1 auto; min-height: 150px; position: relative; }
 .lamp-hit { position: absolute; left: 50%; top: 50%; width: 40%; height: 72%; transform: translate(-50%, -58%); border: 0; background: none; border-radius: 40%; cursor: pointer; }
-/* The invisible seek under the lamp answers the keyboard only. To a pointer it was an unseen band across the venue
-   floor: a tap there jumped the song instead of starting it. Pointers seek with the bar under the title */
-.ring-seek { position: absolute; left: 0; right: 0; bottom: 0; height: 30%; opacity: 0; margin: 0; pointer-events: none; }
-.ring-seek:focus-visible { opacity: 0; }
-.lamp-slot:has(.ring-seek:focus-visible) { outline: 2px solid var(--brass); outline-offset: -2px; border-radius: 50%; }
 .hint { flex: 0 0 auto; margin: 2px 0 10px; text-align: center; min-height: 16px; font: 600 13px/16px var(--ui); color: var(--brass); transition: opacity .3s ease; }
 
 /* Now playing: fixed slot so long titles never move the controls */
@@ -622,7 +617,8 @@ button { font: inherit; color: inherit; }
   .view-open { --pill-switch-h: 49px; }
   .view-open .view-switch { display: flex; }
   .rail { transition: opacity .3s ease, top .2s var(--ease-out); }
-  .app:not(.view-open) .rail { padding: 5px 4px; border-top: 1px solid rgba(214, 176, 111, .3); border-radius: 26px; background: rgba(11, 6, 5, .72); }
+  /* Circle, View, Sound and Ideas come out with the switch: the home button shows them all, and hides them again */
+  .app:not(.view-open) .rail { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .rail { transition: opacity .3s ease; } }
 /* The narrowest phones keep the wordmark clear of the top-bar buttons */

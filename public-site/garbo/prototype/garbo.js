@@ -208,18 +208,15 @@
     var bar = $('seekBar'); bar.hidden = true;
     if (!S.track || S.track.kind === 'empty') { elapsed.textContent = ''; dur.textContent = ''; sep.hidden = true; return; }
     if (S.live) { elapsed.textContent = 'Live now'; elapsed.className = 'live-now'; dur.textContent = ''; sep.hidden = true; return; }
-    if (S.hosted && S.hosted.waiting) { elapsed.textContent = 'Starts in ' + fmt(S.hosted.startsIn); elapsed.className = 'live-now'; dur.textContent = ''; sep.hidden = true; $('ringSeek').disabled = true; return; }
+    if (S.hosted && S.hosted.waiting) { elapsed.textContent = 'Starts in ' + fmt(S.hosted.startsIn); elapsed.className = 'live-now'; dur.textContent = ''; sep.hidden = true; return; }
     var d = duration();
     elapsed.textContent = fmt(S.pos);
     // Until YouTube reports the length, the end shows as --:--, as it does in the Simple player
     dur.textContent = d ? fmt(d) : '--:--';
-    var seek = $('ringSeek');
-    seek.disabled = !!S.hosted || (!d && !(S.track.kind === 'chapter'));
-    seek.value = String(Math.round(Math.min(1, progress()) * 1000));
-    seek.setAttribute('aria-valuetext', fmt(S.pos) + (d ? ' of ' + fmt(d) : ''));
-    bar.hidden = false; bar.disabled = seek.disabled;
-    if (!barHeld) { bar.value = seek.value; bar.style.setProperty('--p', seek.value / 10 + '%'); }
-    bar.setAttribute('aria-valuetext', seek.getAttribute('aria-valuetext'));
+    bar.hidden = false;
+    bar.disabled = !!S.hosted || (!d && !(S.track.kind === 'chapter'));
+    if (!barHeld) { var at = String(Math.round(Math.min(1, progress()) * 1000)); bar.value = at; bar.style.setProperty('--p', at / 10 + '%'); }
+    bar.setAttribute('aria-valuetext', fmt(S.pos) + (d ? ' of ' + fmt(d) : ''));
   }
   // While a finger holds the bar, playback updates don't pull the thumb away from it
   var barHeld = false;
@@ -297,8 +294,8 @@
   }
   $('fullBtn').addEventListener('click', function () { setViewMenu(false); toggleFullscreen(); });
 
-  // On a phone one home button stands in the moon's place. It opens the switch as the head of the scene pill; a tap
-  // anywhere else puts it away
+  // On a phone one home button stands in the moon's place. It brings out the switch with Circle, View, Sound and Ideas
+  // under it, and a second tap, or a tap anywhere else, puts them away
   function viewMenuOpen() { return app.classList.contains('view-open'); }
   function setViewMenu(open) {
     if (open === viewMenuOpen()) return;
@@ -307,7 +304,7 @@
   }
   $('viewBtn').hidden = false;
   $('viewBtn').addEventListener('click', function () { setViewMenu(!viewMenuOpen()); });
-  document.addEventListener('pointerdown', function (e) { if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn')) setViewMenu(false); }, true);
+  document.addEventListener('pointerdown', function (e) { if (viewMenuOpen() && !e.target.closest('.view-switch, #viewBtn, #rail')) setViewMenu(false); }, true);
   document.addEventListener('fullscreenchange', syncFullscreen);
   document.addEventListener('webkitfullscreenchange', syncFullscreen);
 
@@ -1327,7 +1324,7 @@
   document.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheet(); });
   $('scrim').addEventListener('click', function () { closeSheet(); });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && viewMenuOpen()) { e.preventDefault(); setViewMenu(false); if ($('viewBtn').offsetParent) $('viewBtn').focus(); return; }
+    if (e.key === 'Escape' && viewMenuOpen() && !openCardId && !openSheet) { e.preventDefault(); setViewMenu(false); if ($('viewBtn').offsetParent) $('viewBtn').focus(); return; }
     if (e.key === 'Escape' && playerHidden() && !openCardId && !openSheet) { e.preventDefault(); setPlayerHidden(false); return; }
     if (LIVE_SITE && e.key === 'Escape' && !openCardId && !openSheet) {
       e.preventDefault();
@@ -1655,10 +1652,8 @@
      walking round the venue. There are no buttons for these, so the screen stays as it is. The keys are left alone
      while typing, and while a sheet or card is open. */
   function seekTo(f) {
-    var r = $('ringSeek');
-    if (!duration() || S.live || S.hosted || !S.track || r.disabled) return false;
-    r.value = String(Math.round(Math.max(0, Math.min(1, f)) * 1000));
-    r.dispatchEvent(new Event('input', { bubbles: true }));
+    if (!duration() || S.live || S.hosted || !S.track || $('seekBar').disabled) return false;
+    applySeek(Math.max(0, Math.min(1, f)));
     return true;
   }
   function seekBy(sec) { var d = duration(); return !!d && seekTo(Math.min(d - 1, Math.max(0, S.pos + sec)) / d); }
@@ -1675,9 +1670,10 @@
     else if (!e.shiftKey && /^[0-9]$/.test(k)) done = seekTo(Number(k) / 10);
     if (done) e.preventDefault();
   });
-  $('ringSeek').addEventListener('input', function () {
-    if (requestLiveAction('seek', this.value / 1000)) return;
-    var f = this.value / 1000, t = S.track;
+  // Moving to a share of the song: the seek bar under the title, and J, L and 0 to 9 on a keyboard
+  function applySeek(f) {
+    if (requestLiveAction('seek', f)) return;
+    var t = S.track;
     if (!t || S.live) return;
     if (t.kind === 'chapter') {
       var set = t.set, n = set.chapters.length;
@@ -1689,10 +1685,10 @@
     }
     if (!LIVE_SITE) ytSeekTo(S.pos);
     renderTime();
-  });
-  // The seek bar under the title works wherever the garbo is on screen; it moves the ring and uses its seek
+  }
+  // The seek bar under the title is the one way to move through a song by hand
   (function () {
-    var bar = $('seekBar'), ring = $('ringSeek');
+    var bar = $('seekBar');
     function release() { barHeld = false; renderTime(); }
     bar.addEventListener('pointerdown', function () { barHeld = true; });
     bar.addEventListener('pointerup', release);
@@ -1700,8 +1696,7 @@
     bar.addEventListener('change', release);
     bar.addEventListener('input', function () {
       bar.style.setProperty('--p', bar.value / 10 + '%');
-      ring.value = bar.value;
-      ring.dispatchEvent(new Event('input', { bubbles: true }));
+      applySeek(bar.value / 1000);
     });
   })();
   $('liveBtn').addEventListener('click', function () {
