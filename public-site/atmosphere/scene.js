@@ -3565,8 +3565,27 @@
     // walking up to a stall brings the seller's call, and Escape walks you back to your place in the circle
     var WALK_BOUNDS = { outdoors: [-25.5, 25.5, -8, 40], stadium: [-21, 21, -8, 33], sheri: [-5.4, 5.4, -10, 60] };
     var STALL_CALLS = { Chai: 'Cutting chai?', Dabeli: 'Garam dabeli!', 'Pani puri': 'Pani puri, teekha?', Water: 'Thandu paani!', 'Ice cream': 'Kulfi, kesar pista!', Snacks: 'Fafda jalebi!' };
-    var walkMe = { on: false, x: 0, z: 0, x0: 0, z0: 0, vx: 0, vz: 0, keys: {}, stick: null, ox: 0, oz: 0, used: false, shownAt: 0 };
+    var walkMe = { on: false, x: 0, z: 0, vx: 0, vz: 0, keys: {}, stick: null, used: false, shownAt: 0, frame: 0, park: null, parkT: 0 };
     var canWalk = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+    // Walking, the view follows from just behind the two of you, centred: this far back and this high
+    var FOLLOW = { outdoors: [6.4, 3.5], stadium: [6.4, 3.6], sheri: [5.4, 3.1] };
+    function followCam(id) { var f = FOLLOW[id] || FOLLOW.outdoors; return [walkMe.x, f[1], walkMe.z - f[0]]; }
+    // Walk up to the stage and you're standing by it: past this line (and within this far either side of the middle)
+    // the view changes to By the stage on its own, as picking it in View does
+    var STAGE_LINE = { outdoors: [35.5, 12], stadium: [26, 9], sheri: [55, 6] };
+    // The player owns which place you stand in, so a change made by walking is asked of it; without one to ask, walking
+    // stays in the circle
+    function askListener(id) {
+      if (!opts.onListener || st.listener === id) return false;
+      set({ listener: id }); opts.onListener(id);
+      return true;
+    }
+    // Back from the stage: you pick up where you left the ground, and walk on from there
+    function walkFrom(at) {
+      walkMe.on = true; walkMe.used = true; walkMe.x = at.x; walkMe.z = at.z; walkMe.vx = walkMe.vz = 0;
+      // The first move doesn't move you: the view comes round behind the two of you first, and you set off once it's there
+      walkMe.frame = reduce ? 0 : 1.6;
+    }
     function walkStep(dt) {
       var free = st.listener === 'circle' && !st.dj;
       if (!free && walkMe.on) walkMe.on = false;
@@ -3574,7 +3593,10 @@
       // A touch screen's stick steers with a direction and a strength: a small push strolls, a full one walks
       var sk = walkMe.stick;
       if (sk && Math.hypot(sk.x, sk.z) > 0.08) { vx = sk.x; vz = sk.z; pace = 2.1 * Math.min(1, Math.hypot(sk.x, sk.z)); }
-      if ((vx || vz) && free && !walkMe.on) { var me = listenerPos(layout(st.venue), T); walkMe.on = true; walkMe.used = true; walkMe.x = walkMe.x0 = me.x; walkMe.z = walkMe.z0 = me.z; walkMe.vx = walkMe.vz = 0; }
+      // Left by the stage for a moment and nobody walked on: the two of you go back to your place in the circle
+      if (walkMe.park && !walkMe.on && st.listener !== 'stage' && performance.now() - walkMe.parkT > 400 && !(vx || vz)) walkMe.park = null;
+      if ((vx || vz) && free && !walkMe.on) { walkFrom(walkMe.park || listenerPos(layout(st.venue), T)); walkMe.park = null; }
+      if (walkMe.frame > 0) { walkMe.frame -= dt; vx = vz = 0; }
       if (walkMe.on) {
         // A walk, not a slide: you pick up speed over the first few steps, ease to a stop when you let go, and turn
         // through a curve rather than on the spot
@@ -3592,10 +3614,14 @@
           walkMe.x = ux * ko; walkMe.z = uz * ko;
           if (vin < 0) { walkMe.vx -= vin * ux; walkMe.vz -= vin * uz; }
         }
+        // Up at the stage: stand by it, and leave the two of you where you stepped off the ground
+        var sl = STAGE_LINE[st.venue];
+        if (sl && walkMe.vz > 0.4 && walkMe.z >= sl[0] && Math.abs(walkMe.x) <= sl[1] && opts.onListener) {
+          walkMe.park = { x: walkMe.x, z: Math.max(walkMe.z - 2.2, sl[0] - 2.2) }; walkMe.parkT = performance.now();
+          walkMe.on = false; walkMe.frame = 0; walkMe.keys = {};
+          askListener('stage');
+        }
       }
-      // The view keeps up with you as you walk (the walk already eases in and out) and eases back when you return
-      var e = walkMe.on ? 1 : Math.min(1, dt * 3);
-      walkMe.ox += ((walkMe.on ? walkMe.x - walkMe.x0 : 0) - walkMe.ox) * e; walkMe.oz += ((walkMe.on ? walkMe.z - walkMe.z0 : 0) - walkMe.oz) * e;
       // Which way the view looks: ahead of you as you walk (a little to the side you're heading), round to face a stall
       // you walk up to, and straight on again when you go back to the circle. The two of you turn with it: walking
       // away you are seen from behind, and at a stall you look at the counter.
@@ -3634,6 +3660,15 @@
           if (sl.vendor) sl.vendor.flash = Math.max(sl.vendor.flash || 0, 0.6);
         }
       }
+      // Walked up to the stage: for a few seconds, how to step back onto the ground
+      var parkAge = walkMe.park ? (performance.now() - walkMe.parkT) / 1000 : 99;
+      if (canWalk && st.listener === 'stage' && !st.dj && parkAge > 1.4 && parkAge < 7) {
+        var pa = Math.min(1, (parkAge - 1.4) / 0.5, (7 - parkAge) / 0.6), pf = 13, ptx = 'Press ↓ to step back';
+        g.save(); g.globalAlpha = pa * 0.92; g.font = '600 ' + pf + 'px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+        var pw = g.measureText(ptx).width + 26, py = BY + Math.max(64, BH * 0.1);
+        g.fillStyle = 'rgba(11,6,5,.62)'; roundRect(W / 2 - pw / 2, py, pw, 28, 14); g.fill();
+        g.fillStyle = '#f6e7c8'; g.fillText(ptx, W / 2, py + 14); g.restore();
+      }
       if (canWalk && !walkMe.used && st.listener === 'circle' && !st.dj && !reduce) {
         if (!walkMe.shownAt) walkMe.shownAt = t;
         var age = t - walkMe.shownAt;
@@ -3655,8 +3690,9 @@
       if (d.x == null || reduce) { var start = goHome ? slot : d.rest; d.x = start.x; d.z = start.z; d.wantHome = goHome; d.wait = 0; }
       if (d.wantHome !== goHome) { d.wantHome = goHome; d.wait = d.delay; d.around = 0; }
       var target = goHome ? slot : d.rest, dx = target.x - d.x, dz = target.z - d.z, dist = Math.hypot(dx, dz);
-      if (walkMe.on && d.coupleRole) {
-        // While you walk, the two of you walk with it: side by side on your spot, the stride keeping time with the pace
+      if ((walkMe.on || walkMe.park) && d.coupleRole) {
+        // While you walk, the two of you walk with it: side by side on your spot, the stride keeping time with the pace.
+        // Standing by the stage, they wait where you stepped off the ground.
         d.wait = 0;
         var sp = Math.hypot(walkMe.vx, walkMe.vz), ex = slot.x - d.x, ez = slot.z - d.z, gap = Math.hypot(ex, ez);
         if (gap > 1.5) { d.x += ex / gap * Math.min(gap, 3.2 * dt); d.z += ez / gap * Math.min(gap, 3.2 * dt); }
@@ -3777,7 +3813,9 @@
       // a long walk, with a step in it. A new venue starts in place.
       walkStep(dt);
       var ct = st.dj ? djCam(st.venue) : (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = st.dj ? 0.2 : { circle: 0.3, far: 0.4, stage: 0.44 }[st.listener] || 0.3;
-      if (!st.dj && st.listener === 'circle' && (Math.abs(walkMe.ox) > 0.01 || Math.abs(walkMe.oz) > 0.01)) ct = [ct[0] + walkMe.ox, ct[1], ct[2] + walkMe.oz];
+      // Walking, the view follows from just behind the two of you, centred, whatever part of the ring you set off from
+      var following = !st.dj && st.listener === 'circle' && walkMe.on;
+      if (following) ct = followCam(st.venue);
       // Turning, the camera swings round you rather than round itself, so the two of you stay in the frame
       var yawNow = !st.dj && st.listener === 'circle' ? walkMe.yaw || 0 : 0;
       if (Math.abs(yawNow) > 1e-3) {
@@ -3786,7 +3824,8 @@
       }
       // On a wide screen the DJ stands right of centre, leaving the left for the laptop's song list
       if (st.dj && W > H * 1.1) { ct[0] -= 1.35; ct[1] += 0.12; ct[2] -= 1.3; }
-      var camKey = st.venue + '/' + (st.dj ? 'dj' : st.listener);
+      // Setting off and coming back are moves of their own, on the same eased path as changing where you stand
+      var camKey = st.venue + '/' + (st.dj ? 'dj' : st.listener) + (following ? '/walk' : '');
       if (camVenue !== st.venue || reduce) { camVenue = st.venue; camNow = ct.slice(); horNow = hf; walk = null; camKeyNow = camKey; }
       else if (camKey !== camKeyNow) { camKeyNow = camKey; var wd = Math.hypot(ct[0] - camNow[0], ct[1] - camNow[1], ct[2] - camNow[2]); walk = { from: camNow.slice(), h0: horNow, t: 0, dur: Math.min(1.8, 0.8 + wd / 45), lift: Math.min(2.6, wd * 0.06) }; }
       if (walk) {
@@ -3801,6 +3840,8 @@
         camNow[0] += (ct[0] - camNow[0]) * ek; camNow[1] += (ct[1] - camNow[1]) * ek; camNow[2] += (ct[2] - camNow[2]) * ek; horNow += (hf - horNow) * ek;
       }
       camSettled = Math.abs(ct[0] - camNow[0]) + Math.abs(ct[1] - camNow[1]) + Math.abs(ct[2] - camNow[2]) < 0.02;
+      // The view is behind the two of you: now they set off
+      if (walkMe.frame > 0 && !walk) walkMe.frame = 0;
       view.k += (target - view.k) * Math.min(1, dt * (reduce ? 60 : 2.6));
       var ce = CAMS[st.venue] || CAMS.outdoors, e = ease(Math.max(0, Math.min(1, view.k)));
       HOR = BY + BH * horNow;
@@ -3837,7 +3878,7 @@
         c.dancers.forEach(function (d, di) {
           if (d.clapAt && t >= d.clapAt) { d.flash = 1; d.clapAt = 0; }
           d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2); d.clapK = clapNear(d, t);
-          var slot = walkMe.on && d.coupleRole ? { x: walkMe.x + (d.coupleRole === 'w' ? -0.35 : 0.35), z: walkMe.z } : dancerWorld(c, d, T, ctr), w = travel(d, slot, dt);
+          var at = walkMe.on ? walkMe : walkMe.park, slot = at && d.coupleRole ? { x: at.x + (d.coupleRole === 'w' ? -0.35 : 0.35), z: at.z } : dancerWorld(c, d, T, ctr), w = travel(d, slot, dt);
           d.wx = w.x; d.wz = w.z;
           if (d.atHome) home++;
           var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z); d._px = p ? p.x : null;
@@ -4021,7 +4062,11 @@
         if (!running || e.metaKey || e.ctrlKey || e.altKey) return;
         if (e.key === 'Escape' && walkMe.on) { walkMe.on = false; walkMe.keys = {}; return; }
         var dir = WALK_KEYS[e.key];
-        if (!dir || st.listener !== 'circle' || st.dj || !walkKeyTarget(e)) return;
+        if (!dir || st.dj || !walkKeyTarget(e)) return;
+        // Standing by the stage, stepping back takes you onto the ground where you left it; from far off, any step
+        // takes you into the circle. Either way the view comes round behind the two of you before you move.
+        if (st.listener === 'stage' && !(dir === 'down' && askListener('circle'))) return;
+        if (st.listener === 'far' && !askListener('circle')) return;
         e.preventDefault(); walkMe.keys[dir] = true;
       });
       window.addEventListener('keyup', function (e) { var dir = WALK_KEYS[e.key]; if (dir) walkMe.keys[dir] = false; });
@@ -4038,9 +4083,10 @@
     return {
       set: set, resize: resize,
       // Walking without a keyboard: a direction (x across, z forward) with a strength up to 1; 0, 0 stops. walkHome
-      // takes you back to your place in the circle, as Escape does.
+      // takes you back to your place in the circle, as Escape does. Walking up to the stage, the scene asks for By the
+      // stage through opts.onListener(id), as it asks for In the circle when you step back from the stage or from far off.
       steer: function (x, z) { x = +x || 0; z = +z || 0; walkMe.stick = x || z ? { x: x, z: z } : null; },
-      walkHome: function () { walkMe.on = false; walkMe.keys = {}; walkMe.stick = null; },
+      walkHome: function () { walkMe.on = false; walkMe.frame = 0; walkMe.park = null; walkMe.keys = {}; walkMe.stick = null; },
       // Where the scene composes itself inside the canvas, in CSS pixels. Omit to use the whole canvas.
       setBox: function (b) { box = b; layoutBox(); statics = {}; },
       // Only the part of the screen the visitor can see is allocated and drawn: on a phone the controls cover the

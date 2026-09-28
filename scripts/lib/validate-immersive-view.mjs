@@ -83,7 +83,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-8"', 'src="garbo.js?v=20260928-9"', 'src="scene.js?v=20260928-2"', 'src="../../../../public-site/atmosphere/scene.js?v=20260928-7"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-8"', 'src="garbo.js?v=20260928-10"', 'src="scene.js?v=20260928-3"', 'src="../../../../public-site/atmosphere/scene.js?v=20260928-8"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -170,6 +170,10 @@ if (!prototypeJs.includes("new ResizeObserver(function () { if (!relayoutFrame) 
   const venueScene = await read('public-site/atmosphere/scene.js');
   for (const marker of ['steer: function (x, z) {', 'walkHome: function () {', 'var sk = walkMe.stick;']) if (!venueScene.includes(marker)) fail(`The venue scene must accept a touch stick: ${marker}`);
   for (const marker of ["if (!playerHidden() || e.pointerType === 'mouse' || stick.id !== null || e.target.closest('#lampHit')) return;", 'if (scene.steer) scene.steer(ux, -uy);', 'if (scene.walkHome) scene.walkHome();', 'function standInCircle()']) if (!prototypeJs.includes(marker)) fail(`The Immersive walking stick is missing ${marker}`);
+  // Walking up to the stage changes where you stand: the scene asks, and the player keeps the choice, the sound and View in step
+  if (!prototypeJs.includes('onListener: function (id) {') || !prototypeJs.includes("(A.listener === 'stage' && dy <= 0)")) fail('Immersive must keep the listener choice when walking takes you to the stage or back');
+  const prototypeSceneJs = await read('docs/product/prototypes/garbo/scene.js');
+  if (!prototypeSceneJs.includes('onListener: hooks.onListener,')) fail('The Immersive scene wrapper must pass the walk listener hook to the venue scene');
   if (!prototypeCss.includes('.player-off .lamp-slot { touch-action: none; }')) fail('The venue must not scroll or zoom under the walking stick');
   // Nothing is drawn under the thumb: the stick walks you without showing, and a line of words teaches it once
   if (prototypeJs.includes("el('div', 'stick')") || prototypeCss.includes('.stick {') || !prototypeJs.includes("toast('Drag anywhere to walk around');")) fail('Touch walking must not draw a stick over the venue');

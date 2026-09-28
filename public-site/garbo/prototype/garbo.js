@@ -70,6 +70,12 @@
       if (tip) tip.style.visibility = away ? 'hidden' : '';
       // The first-time tip sits just below the garbo, wherever the scene puts it
       if (tip && !tip.hidden && !away) { tip.style.left = lx + 'px'; tip.style.top = (ly + Math.max(30, l.r * window.innerWidth * 1.6)) + 'px'; }
+    },
+    // Walk up to the stage and you're By the stage; step back and you're In the circle. The sound and View follow.
+    onListener: function (id) {
+      if (!E || !E.LISTENERS[id] || A.listener === id) return;
+      A.listener = id; if (A.engine) A.engine.setListener(id); atmoSave(); atmoRender();
+      if (id === 'stage' && coarse.matches && playerHidden()) toast('Drag down to step back');
     }
   }) : new window.GarboScene.Scene($('scene'));
   if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
@@ -391,7 +397,8 @@
   $('lampSlot').addEventListener('pointermove', function (e) {
     if (e.pointerId !== stick.id) return;
     var dx = e.clientX - stick.x0, dy = e.clientY - stick.y0, d = Math.hypot(dx, dy);
-    if (!stick.moved) { if (d < 10) return; stick.moved = true; standInCircle(); }
+    // By the stage, a drag down steps you back onto the ground; a drag toward the stage has nowhere further to go
+    if (!stick.moved) { if (d < 10 || (A.listener === 'stage' && dy <= 0)) return; stick.moved = true; standInCircle(); }
     var k = Math.min(1, d / STICK_R) / (d || 1), ux = dx * k, uy = dy * k;
     if (scene.steer) scene.steer(ux, -uy);
   });

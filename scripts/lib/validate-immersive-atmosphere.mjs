@@ -278,6 +278,13 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   for (const marker of ['var cam = { x: 0, y: 4, z: -15, yaw: 0 }, cosY = 1, sinY = 0;', 'zc = dx * sinY + dz * cosY', 'za = depth(a[0], a[2])', 'yawTo = Math.max(-1.25, Math.min(1.25, Math.atan2(sl0.x - walkMe.x, sl0.z - walkMe.z)));', 'ct = [pv.x + rx0 * cY + rz0 * sY, ct[1], pv.z - rx0 * sY + rz0 * cY];', 'if (d.coupleRole && walkMe.on && walkMe.away', 'var lampA = Math.max(0, Math.min(1, (it.p.z - 2.6) / 4));']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the turning walk marker: ${marker}`);
   }
+  // Setting off, the view first comes round behind the two of you, centred, and you move only once it's there; it then
+  // follows from that distance. Walking up to the stage puts you By the stage (asked of the player, which owns that
+  // choice), and stepping back from the stage or from far off takes you onto the ground again.
+  for (const marker of ['function followCam(id)', "if (following) ct = followCam(st.venue);", "(following ? '/walk' : '')", 'if (walkMe.frame > 0) { walkMe.frame -= dt; vx = vz = 0; }', 'if (walkMe.frame > 0 && !walk) walkMe.frame = 0;', 'var STAGE_LINE = {', "askListener('stage');", "if (st.listener === 'stage' && !(dir === 'down' && askListener('circle'))) return;", "if (st.listener === 'far' && !askListener('circle')) return;", 'if (!opts.onListener || st.listener === id) return false;']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the frame-first walk or stage walk-up marker: ${marker}`);
+  }
+  if (scene.includes('walkMe.ox')) fail('Walking must follow from a fixed place behind the couple, not keep the offset the view happened to start at');
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
   // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
   for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false", 'function coupleFace(', 'function cutHead(', 'wearFace(coupleFace(mine), mine, x, y - h * 0.885, h);', 'wearFace(coupleFace(youSeat), youSeat, ga.who.headAt.x, ga.who.headAt.y + hs * 0.085, hs);', 'function wearFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {
