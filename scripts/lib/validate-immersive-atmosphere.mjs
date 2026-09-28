@@ -284,6 +284,8 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   for (const marker of ['function followCam(id)', "if (following) ct = followCam(st.venue);", "(following ? '/walk' : '')", 'if (walkMe.frame > 0) { walkMe.frame -= dt; vx = vz = 0; }', 'if (walkMe.frame > 0 && !walk) walkMe.frame = 0;', 'var STAGE_LINE = {', "askListener('stage');", "if (st.listener === 'stage' && !(dir === 'down' && askListener('circle'))) return;", "if (st.listener === 'far' && !askListener('circle')) return;", 'if (!opts.onListener || st.listener === id) return false;']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the frame-first walk or stage walk-up marker: ${marker}`);
   }
+  const wrapper = await read('docs/product/prototypes/garbo/scene.js');
+  if (!wrapper.includes("document.querySelector('#atmoListeners button[data-id=\"' + id + '\"]')")) fail('The Immersive scene wrapper must hand a walk-made place change to View, which owns it');
   if (scene.includes('walkMe.ox')) fail('Walking must follow from a fixed place behind the couple, not keep the offset the view happened to start at');
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
   // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.

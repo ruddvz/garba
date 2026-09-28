@@ -325,8 +325,12 @@
       // The stage screen uses the same lettering and garbo mark as this player's top-left logo
       brand: { text: 'PlayGarba.com', font: '600 {s}px Rasa, "Iowan Old Style", Georgia, serif', mark: true, spacing: -0.01 }, clock: hooks.clock, beats: hooks.beats, reduceMotion: hooks.reduce,
       overlay: function (g, W, H) { self.drawScrim(g, W, H); },
-      // Walking up to the stage (or back from it) changes where you stand; the player keeps that choice
-      onListener: hooks.onListener,
+      // Walking up to the stage (or back from it) changes where you stand. The player keeps that choice, so the
+      // change goes through View's own place buttons, which also move the sound and the card's selection with it.
+      onListener: hooks.onListener || function (id) {
+        var b = document.querySelector('#atmoListeners button[data-id="' + id + '"]');
+        if (b) b.click();
+      },
       // The lamp's place is reported as a share of the canvas; the player reads it as a share of the window
       onFrame: function (l) {
         if (!hooks.onLamp) return;
