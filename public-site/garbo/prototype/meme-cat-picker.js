@@ -1,16 +1,8 @@
 const MAX_CUTOUTS = 10;
-const CUTOUTS = Object.freeze([
-  { id: 'open-mouth-cat', label: 'Open mouth', image: 'singers/meme-cats/open-mouth-cat.webp' },
-  { id: 'patched-meme-cat', label: 'Patched smile', image: 'singers/meme-cats/patched-meme-cat.webp' },
-  { id: 'side-eye-cat', label: 'Side eye', image: 'singers/meme-cats/side-eye-cat.webp' },
-  { id: 'tongue-cat', label: 'Tongue out', image: 'singers/meme-cats/tongue-cat.webp' },
-  { id: 'checkerboard-tongue-cat', label: 'Sleepy tongue', image: 'singers/meme-cats/checkerboard-tongue-cat.webp' },
-  { id: 'shocked-tabby-cat', label: 'Shocked tabby', image: 'singers/meme-cats/shocked-tabby-cat.webp' },
-  { id: 'ginger-wide-eyed-cat', label: 'Wide-eyed ginger', image: 'singers/meme-cats/ginger-wide-eyed-cat.webp' },
-  { id: 'speaking-gray-cat', label: 'Talking tabby', image: 'singers/meme-cats/speaking-gray-cat.webp' },
-  { id: 'sleepy-orange-profile-cat', label: 'Sleepy orange', image: 'singers/meme-cats/sleepy-orange-profile-cat.webp' },
-  { id: 'sleepy-white-cat', label: 'Sleepy white', image: 'singers/meme-cats/sleepy-white-cat.webp' },
-]);
+const CUTOUTS = Object.freeze(Array.from({ length: MAX_CUTOUTS }, (_, index) => {
+  const id = `face-${String(index + 1).padStart(2, '0')}`;
+  return { id, image: `singers/meme-cats/${id}.webp` };
+}));
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be', 'www.youtu.be', 'youtube-nocookie.com', 'www.youtube-nocookie.com']);
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const PLAYLIST_ID = /^[A-Za-z0-9_-]{10,64}$/;
@@ -18,20 +10,10 @@ const PLAYLIST_ID = /^[A-Za-z0-9_-]{10,64}$/;
 const linkForm = document.querySelector('#linkForm');
 const linkInput = document.querySelector('#youtubeUrl');
 const linkStatus = document.querySelector('#linkStatus');
-const clearCutouts = document.querySelector('#clearCutouts');
-const count = document.querySelector('#cutoutCount');
-const limitNote = document.querySelector('#limitNote');
 const cutoutOptions = document.querySelector('#cutoutOptions');
-const cutoutList = document.querySelector('#cutoutList');
-const cutoutEmpty = document.querySelector('#cutoutEmpty');
-const scene = document.querySelector('#scene');
-const sceneCutouts = document.querySelector('#sceneCutouts');
-const sceneEmpty = document.querySelector('#sceneEmpty');
-const sceneCaption = document.querySelector('#sceneCaption');
-
 let activeLink = null;
-let stickers = [];
-const stickerSets = new Map();
+let selectedIds = new Set();
+const cutoutSets = new Map();
 
 function parseYouTubeUrl(value) {
   const raw = String(value || '').trim();
@@ -49,100 +31,64 @@ function parseYouTubeUrl(value) {
   return null;
 }
 function linkKey(link) { return link ? `${link.type}:${link.id}` : ''; }
-function currentInputMatchesActiveLink() { return linkKey(parseYouTubeUrl(linkInput.value)) === linkKey(activeLink); }
-function renderStickers() {
-  count.textContent = `${stickers.length} / ${MAX_CUTOUTS}`;
-  const matchesActive = currentInputMatchesActiveLink();
-  cutoutOptions.querySelectorAll('[data-add-cutout]').forEach((button) => {
-    const alreadyAdded = stickers.some((sticker) => sticker.id === button.dataset.addCutout);
-    button.disabled = !activeLink || !matchesActive || stickers.length >= MAX_CUTOUTS || alreadyAdded;
-    button.textContent = alreadyAdded ? 'Added' : 'Add';
-  });
-  clearCutouts.disabled = stickers.length === 0;
-  cutoutList.hidden = stickers.length === 0;
-  cutoutEmpty.hidden = stickers.length > 0;
-  cutoutList.replaceChildren();
-  sceneCutouts.replaceChildren();
-  for (const sticker of stickers) {
-    const cutout = CUTOUTS.find((item) => item.id === sticker.id);
-    if (!cutout) continue;
-    const card = document.createElement('article');
-    card.className = 'sticker-card';
-    const face = document.createElement('img'); face.src = cutout.image; face.alt = ''; face.setAttribute('aria-hidden', 'true');
-    const label = document.createElement('span'); label.textContent = cutout.label;
-    const remove = document.createElement('button'); remove.className = 'remove-sticker'; remove.type = 'button';
-    remove.setAttribute('aria-label', `Remove ${cutout.label}`); remove.textContent = '×';
-    remove.addEventListener('click', () => removeSticker(sticker.id));
-    card.append(face, label, remove); cutoutList.append(card);
-    const sceneFace = document.createElement('img'); sceneFace.className = 'scene-cat'; sceneFace.src = cutout.image; sceneFace.alt = ''; sceneFace.setAttribute('aria-hidden', 'true'); sceneCutouts.append(sceneFace);
+function render() {
+  const matchesActive = linkKey(parseYouTubeUrl(linkInput.value)) === linkKey(activeLink);
+  for (const button of cutoutOptions.querySelectorAll('[data-cutout-id]')) {
+    const selected = selectedIds.has(button.dataset.cutoutId);
+    button.setAttribute('aria-pressed', String(selected));
+    button.setAttribute('aria-label', `${selected ? 'Remove' : 'Add'} face cutout ${Number(button.dataset.cutoutId.slice(-2))}`);
+    button.disabled = !selected && (!activeLink || !matchesActive || selectedIds.size >= MAX_CUTOUTS);
+    button.classList.toggle('is-selected', selected);
+    button.querySelector('.state-mark').textContent = selected ? '✓' : '+';
   }
-  sceneEmpty.hidden = stickers.length > 0;
-  scene.dataset.hasCutouts = String(stickers.length > 0);
-  sceneCaption.textContent = !activeLink ? 'Example singer portraits stay exactly as they are.'
-    : stickers.length ? `${stickers.length} extra ${stickers.length === 1 ? 'face cutout is' : 'face cutouts are'} on this ${activeLink.type}. Artist portraits stay unchanged.`
-      : `This ${activeLink.type} has no extra cutouts yet. Artist portraits stay unchanged.`;
-  if (!activeLink) limitNote.textContent = 'Add a video or playlist to enable cutouts.';
-  else if (!matchesActive) limitNote.textContent = 'Preview the new link to give it a fresh cutout set.';
-  else if (stickers.length >= MAX_CUTOUTS) limitNote.textContent = 'That’s ten. Remove a cutout to add another.';
-  else limitNote.textContent = 'Choose up to ten different face cutouts for this link.';
 }
-function removeSticker(id) {
-  stickers = stickers.filter((sticker) => sticker.id !== id);
-  if (activeLink) stickerSets.set(linkKey(activeLink), stickers);
-  renderStickers();
-  const option = cutoutOptions.querySelector(`[data-add-cutout="${CSS.escape(id)}"]`);
-  (cutoutList.querySelector('.remove-sticker') || option || clearCutouts).focus();
-}
+
 linkForm.addEventListener('submit', (event) => {
   event.preventDefault();
   const parsed = parseYouTubeUrl(linkInput.value);
   if (!parsed) {
-    linkStatus.dataset.state = 'error'; linkStatus.textContent = 'Paste a YouTube video or public playlist link.';
-    linkInput.setAttribute('aria-invalid', 'true'); renderStickers(); return;
+    linkInput.setAttribute('aria-invalid', 'true');
+    linkStatus.textContent = 'Enter a valid YouTube video or playlist link.';
+    return;
   }
   linkInput.removeAttribute('aria-invalid');
-  const changed = linkKey(parsed) !== linkKey(activeLink);
-  if (changed && activeLink) stickerSets.set(linkKey(activeLink), stickers);
+  const previousKey = linkKey(activeLink);
+  const nextKey = linkKey(parsed);
+  if (previousKey !== nextKey && activeLink) cutoutSets.set(previousKey, new Set(selectedIds));
   activeLink = parsed;
-  if (changed) stickers = stickerSets.get(linkKey(activeLink)) || [];
-  linkStatus.dataset.state = 'ready';
-  linkStatus.textContent = changed ? `New ${parsed.type} ready. Its cutout set starts fresh; singers stay unchanged.` : `This ${parsed.type} is ready. Its cutouts stay separate from the singers.`;
-  renderStickers();
+  selectedIds = new Set(cutoutSets.get(nextKey) || []);
+  linkStatus.textContent = 'Link added.';
+  render();
 });
 linkInput.addEventListener('input', () => {
   linkInput.removeAttribute('aria-invalid');
-  if (linkStatus.dataset.state === 'error') {
-    linkStatus.textContent = activeLink ? `Current preview: ${activeLink.type}. Preview another link to start a fresh cutout set.` : 'Add a link to enable cutouts.';
-    delete linkStatus.dataset.state;
-  } else if (activeLink && !currentInputMatchesActiveLink()) {
-    linkStatus.dataset.state = 'pending'; linkStatus.textContent = `Current ${activeLink.type} preview stays active. Preview this link to start its own fresh set.`;
-  } else if (activeLink) {
-    linkStatus.dataset.state = 'ready'; linkStatus.textContent = `This ${activeLink.type} remains selected. Its cutouts stay separate from the singers.`;
-  }
-  renderStickers();
+  render();
 });
 cutoutOptions.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-add-cutout]');
-  if (!button || !activeLink || !currentInputMatchesActiveLink() || stickers.length >= MAX_CUTOUTS) return;
-  const id = button.dataset.addCutout;
-  if (stickers.some((sticker) => sticker.id === id)) return;
-  stickers.push({ id }); stickerSets.set(linkKey(activeLink), stickers); renderStickers();
-  cutoutOptions.querySelector(`[data-add-cutout="${CSS.escape(id)}"]`)?.focus();
+  const button = event.target.closest('[data-cutout-id]');
+  if (!button || !activeLink || linkKey(parseYouTubeUrl(linkInput.value)) !== linkKey(activeLink)) return;
+  const id = button.dataset.cutoutId;
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else if (selectedIds.size < MAX_CUTOUTS) selectedIds.add(id);
+  cutoutSets.set(linkKey(activeLink), new Set(selectedIds));
+  render();
 });
-clearCutouts.addEventListener('click', () => {
-  stickers = []; if (activeLink) stickerSets.set(linkKey(activeLink), stickers); renderStickers();
-  cutoutOptions.querySelector('[data-add-cutout]:not(:disabled)')?.focus();
-});
-window.CAT_PICKER_TEST = Object.freeze({ parseYouTubeUrl, maxCutouts: MAX_CUTOUTS, cutoutIds: CUTOUTS.map(({ id }) => id) });
+
 for (const cutout of CUTOUTS) {
-  const card = document.createElement('article'); card.className = 'cutout-option';
-  const art = document.createElement('span'); art.className = 'cutout-art';
-  const face = document.createElement('img'); face.src = cutout.image; face.alt = ''; face.setAttribute('aria-hidden', 'true'); art.append(face);
-  const description = document.createElement('span'); description.className = 'cutout-description';
-  const title = document.createElement('strong'); title.textContent = cutout.label;
-  const note = document.createElement('small'); note.textContent = 'Face cutout'; description.append(title, note);
-  const button = document.createElement('button'); button.className = 'button button-add'; button.type = 'button';
-  button.dataset.addCutout = cutout.id; button.disabled = true; button.textContent = 'Add'; button.setAttribute('aria-label', `Add ${cutout.label}`);
-  card.append(art, description, button); cutoutOptions.append(card);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'cutout-option';
+  button.dataset.cutoutId = cutout.id;
+  button.disabled = true;
+  const face = document.createElement('img');
+  face.src = cutout.image;
+  face.alt = '';
+  face.setAttribute('aria-hidden', 'true');
+  const mark = document.createElement('span');
+  mark.className = 'state-mark';
+  mark.setAttribute('aria-hidden', 'true');
+  button.append(face, mark);
+  cutoutOptions.append(button);
 }
-renderStickers();
+render();
+window.CAT_PICKER_TEST = Object.freeze({ parseYouTubeUrl, maxCutouts: MAX_CUTOUTS, cutoutIds: CUTOUTS.map(({ id }) => id) });
