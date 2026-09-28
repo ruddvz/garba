@@ -50,7 +50,7 @@ input::placeholder { color: #887b6c; }
 .button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .button-primary { min-width: 132px; color: #241708; background: var(--gold); }
 .button-primary:hover { background: #f0ca87; }
-.button-add { min-width: 65px; color: #241708; background: var(--gold); }
+.button-add { min-width: 44px; min-height: 32px; padding: 0 6px; color: #241708; background: var(--gold); font-size: 10px; }
 .button-add:hover:not(:disabled) { background: #f0ca87; }
 .button-quiet { color: var(--ivory-dim); background: transparent; border-color: var(--line); }
 .button-quiet:hover:not(:disabled) { color: var(--ivory); background: rgba(243, 230, 208, .06); }
@@ -65,12 +65,13 @@ input::placeholder { color: #887b6c; }
 .section-head h2 { margin: 0; font: 400 25px/1.1 var(--display); }
 .count { flex: 0 0 auto; min-width: 54px; border: 1px solid rgba(231, 189, 116, .3); border-radius: 999px; color: var(--gold); padding: 6px 9px; text-align: center; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .panel-copy { margin: 12px 0 15px; color: var(--ivory-dim); font-size: 12px; line-height: 1.55; }
-.cutout-option { display: flex; align-items: center; gap: 11px; min-height: 92px; border: 1px solid rgba(243, 230, 208, .1); border-radius: 10px; padding: 8px 10px 8px 5px; background: rgba(12, 9, 7, .48); }
-.cutout-art { display: grid; width: 76px; height: 76px; flex: 0 0 auto; place-items: center; }
+.cutout-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.cutout-option { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 68px; border: 1px solid rgba(243, 230, 208, .1); border-radius: 8px; padding: 5px; background: rgba(12, 9, 7, .48); }
+.cutout-art { display: grid; width: 54px; height: 54px; flex: 0 0 auto; place-items: center; }
 .cutout-art img { width: 100%; height: 100%; object-fit: contain; }
 .cutout-description { display: grid; gap: 4px; flex: 1; min-width: 0; }
-.cutout-description strong { color: var(--ivory); font-size: 12px; }
-.cutout-description small { color: var(--ivory-muted); font-size: 10px; }
+.cutout-description strong { color: var(--ivory); font-size: 10px; line-height: 1.2; }
+.cutout-description small { color: var(--ivory-muted); font-size: 9px; }
 .cutout-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 13px; }
 .sticker-card { position: relative; display: grid; min-width: 0; place-items: center; border: 1px solid rgba(231, 189, 116, .2); border-radius: 8px; background: rgba(12, 9, 7, .56); padding: 6px 4px 5px; animation: pop-in .18s ease-out both; }
 .sticker-card img { width: 68px; height: 68px; object-fit: contain; }
@@ -94,7 +95,7 @@ input::placeholder { color: #887b6c; }
 .scene-divider { display: grid; place-items: center; align-self: center; }
 .scene-divider span { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid rgba(231, 189, 116, .34); border-radius: 50%; color: var(--gold); font-size: 14px; }
 .scene-cutouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; justify-items: center; gap: 5px; }
-.scene-cat { width: min(100%, 94px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 7px 10px rgba(0, 0, 0, .34)); animation: pop-in .2s ease-out both; }
+.scene-cat { width: min(100%, 72px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 7px 10px rgba(0, 0, 0, .34)); animation: pop-in .2s ease-out both; }
 .scene-cat:nth-child(3n + 2) { transform: rotate(7deg) scale(.94); }
 .scene-cat:nth-child(3n) { transform: rotate(-6deg) scale(.92); }
 .scene-empty { display: grid; grid-column: 3; grid-row: 1; align-self: center; justify-self: center; justify-items: center; gap: 8px; color: var(--ivory-muted); text-align: center; font-size: 10px; line-height: 1.4; }
@@ -113,7 +114,7 @@ input::placeholder { color: #887b6c; }
   .scene-panel { grid-row: 1; padding: 15px; }
   .scene { min-height: 214px; grid-template-columns: minmax(0, 1fr) 22px minmax(94px, .56fr); gap: 8px; padding: 11px; }
   .artist-card img { height: 118px; }
-  .scene-cat { width: min(100%, 78px); }
+  .scene-cat { width: min(100%, 68px); }
 }
 @media (max-width: 390px) {
   .page { width: calc(100% - 22px); }

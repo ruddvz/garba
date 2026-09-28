@@ -41,15 +41,11 @@
           <span class="count" id="cutoutCount" aria-live="polite">0 / 10</span>
         </div>
         <p class="panel-copy">These are separate stickers in the scene. They don’t attach to a singer.</p>
-        <div class="cutout-option">
-          <span class="cutout-art"><img src="singers/cat-face-cutout.webp" alt="" aria-hidden="true"></span>
-          <span class="cutout-description"><strong>Surprised cat</strong><small>Face and ears only</small></span>
-          <button class="button button-add" id="addCat" type="button" disabled>Add</button>
-        </div>
+        <div class="cutout-options" id="cutoutOptions" aria-label="Choose extra cat face cutouts"></div>
         <div class="cutout-list" id="cutoutList" aria-label="Cutouts added to this link" aria-live="polite"></div>
         <div class="cutout-empty" id="cutoutEmpty">
           <p>No cutouts on this link yet.</p>
-          <span>Paste a new link, then add the cat here.</span>
+          <span>Paste a new link, then choose from the faces above.</span>
         </div>
         <button class="button button-quiet clear-button" id="clearCutouts" type="button" disabled>Remove all cutouts</button>
         <p class="limit-note" id="limitNote" aria-live="polite">Up to ten face cutouts per link.</p>
