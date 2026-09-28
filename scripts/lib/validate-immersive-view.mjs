@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-2"', 'src="garbo.js?v=20260928-2"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-2"', 'src="garbo.js?v=20260928-3"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -147,5 +147,8 @@ for (const id of ['i-play', 'i-pause', 'i-search', 'i-more', 'i-close', 'i-full'
 for (const marker of ["morphIcon('play', $('playBtn'), 'i-play');", "morphIcon('hide', $('hidePlayerBtn'), 'i-eye-off');", "morphIcon('full', $('fullBtn'), 'i-full',", "reducedMotion: 'user'"]) {
   if (!prototypeJs.includes(marker)) fail(`The toggles must morph their icons: ${marker}`);
 }
+// Layout from the lamp slot's observer waits a frame: done inside the callback it crops the phone canvas, whose own
+// observer then trips a ResizeObserver loop error (a page error in WebKit)
+if (!prototypeJs.includes("new ResizeObserver(function () { if (!relayoutFrame) relayoutFrame = requestAnimationFrame(")) fail('The lamp slot observer must lay out on the next frame');
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');

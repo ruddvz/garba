@@ -2034,7 +2034,10 @@
     renderDial();
   }
   window.addEventListener('resize', relayout);
-  if (window.ResizeObserver) new ResizeObserver(relayout).observe($('lampSlot'));
+  // Laying out resizes the venue canvas (cropped on phones), which has its own observer: doing it on the next frame,
+  // not inside this callback, keeps the two from tripping a ResizeObserver loop error
+  var relayoutFrame = 0;
+  if (window.ResizeObserver) new ResizeObserver(function () { if (!relayoutFrame) relayoutFrame = requestAnimationFrame(function () { relayoutFrame = 0; relayout(); }); }).observe($('lampSlot'));
 
   var last = performance.now(), t0 = last, clockAcc = 0, stillT = 1.3;
   // Inside PlayGarba the player is an iframe that stays loaded while Simple is shown; the venue isn't drawn while it's hidden
