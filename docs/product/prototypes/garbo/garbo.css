@@ -787,3 +787,14 @@ button { font: inherit; color: inherit; }
 
 /* The morphing icon stands in for both of a toggle's glyphs, so it never hides with either state */
 #fullBtn[aria-pressed="true"] svg.morph { display: block; }
+
+/* The walking stick on a touch screen: a ring where the thumb went down and a knob that follows it. It only exists
+   while the player is hidden, and the venue under it doesn't scroll or zoom */
+.player-off .lamp-slot { touch-action: none; }
+.stick { position: absolute; z-index: 5; width: 104px; height: 104px; margin: -52px 0 0 -52px; display: grid; place-items: center; border: 1.5px solid rgba(246, 236, 215, .45); border-radius: 50%; background: rgba(11, 6, 5, .2); opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.stick.on { opacity: 1; }
+.stick-knob { width: 44px; height: 44px; border-radius: 50%; background: rgba(246, 236, 215, .85); box-shadow: 0 2px 10px rgba(0, 0, 0, .45); }
+.stick.hint { animation: stick-hint 2.8s ease both; }
+.stick.hint .stick-knob { animation: knob-hint 2.8s ease both; }
+@keyframes stick-hint { 0% { opacity: 0; } 15%, 72% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes knob-hint { 0%, 28% { transform: translate(0, 0); } 44% { transform: translate(0, -30px); } 62%, 100% { transform: translate(0, 0); } }

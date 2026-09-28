@@ -334,6 +334,9 @@
     });
   }
   VenueStage.prototype.resize = function () { this.v.resize(); };
+  // Walking the venue from a touch screen's stick, and back to your place
+  VenueStage.prototype.steer = function (x, z) { if (this.v.steer) this.v.steer(x, z); };
+  VenueStage.prototype.walkHome = function () { if (this.v.walkHome) this.v.walkHome(); };
   VenueStage.prototype.layout = function (slot, np) {
     // At the DJ's table the scene has the whole screen: on a phone the DJ sits above the laptop, on a wide screen beside it
     if (this.dj) { var W = window.innerWidth, H = window.innerHeight; this.cropTo(null); this.v.setBox(W > H * 1.1 ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 40, w: W, h: H * 0.5 }); this.top = 0; this.scrim = null; return; }

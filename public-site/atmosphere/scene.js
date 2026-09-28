@@ -3146,16 +3146,19 @@
     // walking up to a stall brings the seller's call, and Escape walks you back to your place in the circle
     var WALK_BOUNDS = { outdoors: [-25.5, 25.5, -8, 40], stadium: [-21, 21, -8, 33], sheri: [-5.4, 5.4, -10, 60] };
     var STALL_CALLS = { Chai: 'Cutting chai?', Dabeli: 'Garam dabeli!', 'Pani puri': 'Pani puri, teekha?', Water: 'Thandu paani!', 'Ice cream': 'Kulfi, kesar pista!', Snacks: 'Fafda jalebi!' };
-    var walkMe = { on: false, x: 0, z: 0, x0: 0, z0: 0, keys: {}, ox: 0, oz: 0, used: false, shownAt: 0 };
+    var walkMe = { on: false, x: 0, z: 0, x0: 0, z0: 0, keys: {}, stick: null, ox: 0, oz: 0, used: false, shownAt: 0 };
     var canWalk = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
     function walkStep(dt) {
       var free = st.listener === 'circle' && !st.dj;
       if (!free && walkMe.on) walkMe.on = false;
-      var k = walkMe.keys, vx = (k.right ? 1 : 0) - (k.left ? 1 : 0), vz = (k.up ? 1 : 0) - (k.down ? 1 : 0);
+      var k = walkMe.keys, vx = (k.right ? 1 : 0) - (k.left ? 1 : 0), vz = (k.up ? 1 : 0) - (k.down ? 1 : 0), pace = 2.6;
+      // A touch screen's stick steers with a direction and a strength: a small push strolls, a full one walks
+      var sk = walkMe.stick;
+      if (sk && Math.hypot(sk.x, sk.z) > 0.08) { vx = sk.x; vz = sk.z; pace = 2.6 * Math.min(1, Math.hypot(sk.x, sk.z)); }
       if ((vx || vz) && free) {
         if (!walkMe.on) { var me = listenerPos(layout(st.venue), T); walkMe.on = true; walkMe.used = true; walkMe.x = walkMe.x0 = me.x; walkMe.z = walkMe.z0 = me.z; }
         var l = Math.hypot(vx, vz), b = WALK_BOUNDS[st.venue] || WALK_BOUNDS.outdoors;
-        walkMe.x = Math.max(b[0], Math.min(b[1], walkMe.x + vx / l * 2.6 * dt)); walkMe.z = Math.max(b[2], Math.min(b[3], walkMe.z + vz / l * 2.6 * dt));
+        walkMe.x = Math.max(b[0], Math.min(b[1], walkMe.x + vx / l * pace * dt)); walkMe.z = Math.max(b[2], Math.min(b[3], walkMe.z + vz / l * pace * dt));
       }
       // The view follows you, easing, and eases back when you return
       var e = Math.min(1, dt * 3);
@@ -3552,6 +3555,10 @@
     if (!opts.manual) requestAnimationFrame(frame);
     return {
       set: set, resize: resize,
+      // Walking without a keyboard: a direction (x across, z forward) with a strength up to 1; 0, 0 stops. walkHome
+      // takes you back to your place in the circle, as Escape does.
+      steer: function (x, z) { x = +x || 0; z = +z || 0; walkMe.stick = x || z ? { x: x, z: z } : null; },
+      walkHome: function () { walkMe.on = false; walkMe.keys = {}; walkMe.stick = null; },
       // Where the scene composes itself inside the canvas, in CSS pixels. Omit to use the whole canvas.
       setBox: function (b) { box = b; layoutBox(); statics = {}; },
       // Only the part of the screen the visitor can see is allocated and drawn: on a phone the controls cover the

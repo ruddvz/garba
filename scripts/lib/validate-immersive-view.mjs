@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-2"', 'src="garbo.js?v=20260928-3"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-3"', 'src="garbo.js?v=20260928-4"', 'src="scene.js?v=20260928-1"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -150,5 +150,13 @@ for (const marker of ["morphIcon('play', $('playBtn'), 'i-play');", "morphIcon('
 // Layout from the lamp slot's observer waits a frame: done inside the callback it crops the phone canvas, whose own
 // observer then trips a ResizeObserver loop error (a page error in WebKit)
 if (!prototypeJs.includes("new ResizeObserver(function () { if (!relayoutFrame) relayoutFrame = requestAnimationFrame(")) fail('The lamp slot observer must lay out on the next frame');
+// With the player hidden, a touch screen walks the venue with a floating stick; the scene takes a direction and a
+// strength, and showing the player walks you back
+{
+  const venueScene = await read('public-site/atmosphere/scene.js');
+  for (const marker of ['steer: function (x, z) {', 'walkHome: function () {', 'var sk = walkMe.stick;']) if (!venueScene.includes(marker)) fail(`The venue scene must accept a touch stick: ${marker}`);
+  for (const marker of ["if (!playerHidden() || e.pointerType === 'mouse' || stick.id !== null || e.target.closest('#lampHit')) return;", 'if (scene.steer) scene.steer(ux, -uy);', 'if (scene.walkHome) scene.walkHome();', 'function standInCircle()']) if (!prototypeJs.includes(marker)) fail(`The Immersive walking stick is missing ${marker}`);
+  if (!prototypeCss.includes('.player-off .lamp-slot { touch-action: none; }')) fail('The venue must not scroll or zoom under the walking stick');
+}
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');

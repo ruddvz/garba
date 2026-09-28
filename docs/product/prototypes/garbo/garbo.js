@@ -317,10 +317,56 @@
     $('hidePlayerBtn').setAttribute('aria-pressed', String(off));
     $('hidePlayerBtn').setAttribute('aria-label', off ? 'Show player' : 'Hide player');
     morphTo('hide', off ? 'i-eye' : 'i-eye-off');
-    if (off) closeCard(true);
+    if (off) { closeCard(true); stickHint(); }
+    else { stickEnd(); if (scene.walkHome) scene.walkHome(); }
     relayout();
   }
   function playerHidden() { return app.classList.contains('player-off'); }
+
+  /* ---------- walking on a touch screen ----------
+     With the player hidden the venue has the screen. A thumb put down anywhere on it and dragged shows a small stick
+     under it and walks you that way, as the arrow keys do on a laptop; letting go stops. A tap without a drag still
+     lights the garbo. Walking needs you in the circle, so a drag from further off steps you into it. */
+  var STICK_R = 44, stick = { id: null, x0: 0, y0: 0, moved: false, el: null, knob: null };
+  function stickEl() {
+    if (stick.el) return stick.el;
+    stick.el = el('div', 'stick'); stick.el.setAttribute('aria-hidden', 'true');
+    stick.knob = el('div', 'stick-knob'); stick.el.append(stick.knob); app.append(stick.el);
+    return stick.el;
+  }
+  function stickAt(x, y, cls) { var s = stickEl(); s.style.left = x + 'px'; s.style.top = y + 'px'; stick.knob.style.transform = ''; s.className = 'stick ' + cls; }
+  function standInCircle() {
+    if (A.listener === 'circle') return;
+    A.listener = 'circle'; if (A.engine) A.engine.setListener('circle'); atmoSave(); atmoRender();
+  }
+  function stickEnd(e) {
+    if (e && e.pointerId !== stick.id) return;
+    stick.id = null; if (scene.steer) scene.steer(0, 0);
+    if (stick.el) stick.el.className = 'stick';
+  }
+  $('lampSlot').addEventListener('pointerdown', function (e) {
+    if (!playerHidden() || e.pointerType === 'mouse' || stick.id !== null || e.target.closest('#lampHit')) return;
+    stick.id = e.pointerId; stick.x0 = e.clientX; stick.y0 = e.clientY; stick.moved = false;
+    try { this.setPointerCapture(e.pointerId); } catch (err) { /* capture unavailable */ }
+  });
+  $('lampSlot').addEventListener('pointermove', function (e) {
+    if (e.pointerId !== stick.id) return;
+    var dx = e.clientX - stick.x0, dy = e.clientY - stick.y0, d = Math.hypot(dx, dy);
+    if (!stick.moved) { if (d < 10) return; stick.moved = true; standInCircle(); var r = app.getBoundingClientRect(); stickAt(stick.x0 - r.left, stick.y0 - r.top, 'on'); }
+    var k = Math.min(1, d / STICK_R) / (d || 1), ux = dx * k, uy = dy * k;
+    stick.knob.style.transform = 'translate(' + (ux * STICK_R).toFixed(1) + 'px,' + (uy * STICK_R).toFixed(1) + 'px)';
+    if (scene.steer) scene.steer(ux, -uy);
+  });
+  $('lampSlot').addEventListener('pointerup', stickEnd);
+  $('lampSlot').addEventListener('pointercancel', stickEnd);
+  // The first time the player is hidden on a touch screen, the stick shows itself once, nudged forward, then fades
+  var coarse = window.matchMedia ? window.matchMedia('(pointer: coarse)') : { matches: false };
+  function stickHint() {
+    if (!coarse.matches || reducedQuery.matches) return;
+    try { if (localStorage.getItem('garbo-stick-shown')) return; localStorage.setItem('garbo-stick-shown', '1'); } catch (e) { /* storage unavailable */ }
+    var r = $('lampSlot').getBoundingClientRect(), a = app.getBoundingClientRect();
+    stickAt(r.left + r.width / 2 - a.left, r.bottom - a.top - Math.min(150, r.height * 0.22), 'hint');
+  }
   $('hidePlayerBtn').addEventListener('click', function () { setPlayerHidden(!playerHidden()); });
 
   var brandLink = document.querySelector('.brand');
