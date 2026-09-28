@@ -1101,9 +1101,9 @@
           var tf = Math.max(6.5, Math.min(10, fs * 0.34));
           g.font = '600 ' + tf.toFixed(1) + 'px system-ui, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
           try { g.letterSpacing = tf * 0.12 + 'px'; } catch (e) { /* older canvas */ }
-          var tw0 = g.measureText('DRONE').width, cx0 = Math.min(rx + rw, W) - tw0 / 2 - tf * 1.1, ty0 = Math.min(ry + rh, H) - tf * 1.3;
+          var tw0 = g.measureText(feedTag).width, cx0 = Math.min(rx + rw, W) - tw0 / 2 - tf * 1.1, ty0 = Math.min(ry + rh, H) - tf * 1.3;
           if (reduce || (t % 1.2) < 0.8) { g.fillStyle = '#e0473b'; g.beginPath(); g.arc(cx0 - tw0 / 2 - tf * 0.7, ty0, tf * 0.3, 0, TAU); g.fill(); }
-          g.fillStyle = 'rgba(246,236,215,.72)'; g.fillText('DRONE', cx0, ty0);
+          g.fillStyle = 'rgba(246,236,215,.72)'; g.fillText(feedTag, cx0, ty0);
           try { g.letterSpacing = '0px'; } catch (e) { /* older canvas */ }
         }
       }
@@ -1118,7 +1118,7 @@
     }
     // The drone feed is drawn into its own image, at up to 20 frames a second and a little under full
     // resolution, the way an LED wall shows a video: it looks the same and costs a fraction as much
-    var feed = { cv: null, t: -1, key: '' };
+    var feed = { cv: null, t: -1, key: '' }, feedTag = 'DRONE';
     function droneFeed(id, rx, ry, rw, rh, t) {
       var q = Math.min(DPR, 1.5) * (QP >= 1 ? 1 : 0.75), fw = Math.max(1, Math.round(rw * q)), fh = Math.max(1, Math.round(rh * q)), key = id + ':' + fw + 'x' + fh;
       if (!feed.cv) feed.cv = document.createElement('canvas');
@@ -1130,6 +1130,67 @@
         feed.t = t; feed.key = key;
       }
       g.drawImage(feed.cv, rx, ry, rw, rh);
+    }
+    /* ---------- close-ups on the big screen ----------
+       Between the aerial passes the screen cuts to a camera down at ground level, side on: the two of you (wearing
+       any faces you gave), a child running through, a dancer as she turns, the lead singer from the waist up. The
+       subject is drawn with the full renderer, faces and embroidery and all, over the night behind them thrown out
+       of focus (soft discs of the bulbs, the dark shapes of the crowd), and the camera drifts slowly across. */
+    function closeShot(id, sh, rx, ry, rw, rh, t) {
+      var u = sh.cu, kind = sh.close, L = layout(id), subj = [];
+      if (kind === 'couple') L.circles[0].dancers.forEach(function (d) { if (d.coupleRole && d.wx != null) subj.push(d); });
+      else if (kind === 'kid' && sh.runner) subj.push(sh.runner);
+      else if (kind === 'star' && sh.star && sh.star.wx != null) subj.push(sh.star);
+      var singer = null;
+      if (kind === 'singer') (band[id] || []).forEach(function (b) { if (b.role === 'singer' && !b.waiting && !b.leaving && (!singer || (b.lineupIndex || 0) < (singer.lineupIndex || 0))) singer = b; });
+      if (!subj.length && !singer) return false;
+      var savedLight = lightAt, savedQP = QP, savedFog = FOGF;
+      lightAt = null; QP = Math.max(QP, 1);
+      try {
+        // The night behind, out of focus
+        var hue = TH.hues[0], bg = g.createLinearGradient(0, ry, 0, ry + rh);
+        bg.addColorStop(0, 'hsl(' + hue + ',' + TH.sat * 0.4 + '%,' + (9 + 4 * pulse) + '%)'); bg.addColorStop(0.7, '#1b110c'); bg.addColorStop(1, '#241710');
+        g.fillStyle = bg; g.fillRect(rx, ry, rw, rh);
+        var drift = u * 0.12 + (reduce ? 0 : t * 0.004);
+        g.save(); g.globalCompositeOperation = 'lighter';
+        for (var i = 0; i < 26; i++) {
+          var fx = (((i * 0.1373 + 0.07) % 1) + 1.2 - drift * (0.6 + (i % 3) * 0.3)) % 1.2 - 0.1, fy = 0.06 + ((i * 0.6180339) % 1) * 0.52, fr = rh * (0.035 + ((i * 0.377) % 1) * 0.07);
+          var bx = rx + fx * rw, by = ry + fy * rh, col = TH.bulbs[i % TH.bulbs.length], bgr = g.createRadialGradient(bx, by, fr * 0.2, bx, by, fr);
+          bgr.addColorStop(0, col); bgr.addColorStop(0.75, col); bgr.addColorStop(1, 'rgba(0,0,0,0)');
+          g.globalAlpha = (0.12 + 0.14 * ((i * 0.53) % 1)) * (0.7 + 0.3 * bright); g.fillStyle = bgr; g.beginPath(); g.arc(bx, by, fr, 0, TAU); g.fill();
+        }
+        g.restore();
+        // The crowd behind, soft dark shapes of heads and shoulders swaying
+        g.fillStyle = 'rgba(12,7,5,.55)';
+        for (var c = 0; c < 9; c++) { var cx0 = rx + (((c * 0.19 + 0.05 - drift * 1.4) % 1.1 + 1.1) % 1.1 - 0.05) * rw, sy = reduce ? 0 : Math.sin(t * 1.3 + c) * rh * 0.01, cy0 = ry + rh * (0.6 + (c % 3) * 0.03) + sy; g.beginPath(); g.ellipse(cx0, cy0, rh * 0.09, rh * 0.12, 0, 0, TAU); g.ellipse(cx0, cy0 - rh * 0.16, rh * 0.045, rh * 0.055, 0, 0, TAU); g.fill(); }
+        // The ground, warm where the lamp's light reaches
+        var fl = g.createLinearGradient(0, ry + rh * 0.72, 0, ry + rh); fl.addColorStop(0, 'rgba(60,36,20,0)'); fl.addColorStop(1, 'rgba(60,36,20,.9)'); g.fillStyle = fl; g.fillRect(rx, ry + rh * 0.72, rw, rh * 0.28);
+        var zoom = 1 + 0.08 * u, dolly = (u - 0.5) * rw * 0.1, cx = rx + rw / 2 - dolly;
+        if (singer) {
+          // The lead singer from the waist up, mic at her mouth, as the side screens show her
+          var Hh = rh * 1.9 * zoom, py = ry + rh * 2.0 * zoom - rh * 0.05;
+          performer({ x: cx, y: py, s: Hh / singer.h }, singer, 0, BEAT);
+          var hy = py - Hh * 0.885 - (singer.hopK || 0) * Hh * 0.13, img = singer.faceUrl ? faceImg(singer.faceUrl) : null;
+          if (!img && !singer.faceUrl && !singer.lineup) for (var fi = 0; fi < faces.length; fi++) if (faces[fi].img && faces[fi].man === !!singer.man) { img = faces[fi].img; break; }
+          if (img) { var ih = Hh * 0.3, iw = ih * (img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1); g.drawImage(img, cx - iw / 2, hy - ih * 0.58, iw, ih); }
+          handMic(singer);
+        } else {
+          // Framed from the waist up, full length for a child. (The top of the screen sits behind the stage's valance,
+          // so heads are kept a third of the way down.)
+          var kidShot = kind === 'kid', H0 = rh * (kidShot ? 0.78 : subj.length > 1 ? 1.5 : 1.6) * zoom, footY = ry + rh * (kidShot ? 1.02 : subj.length > 1 ? 1.68 : 1.78);
+          subj.sort(function (a, b) { return (a.coupleRole === 'w' ? 0 : 1) - (b.coupleRole === 'w' ? 0 : 1); });
+          subj.forEach(function (d, k) {
+            var ox = subj.length > 1 ? (k ? 1 : -1) * H0 * 0.16 : 0;
+            figure({ x: cx + ox, y: footY, s: H0 / d.h, z: 4 }, d, T, false, BEAT, null);
+          });
+        }
+        // A soft vignette, the way a long lens darkens the corners
+        var vg = g.createRadialGradient(rx + rw / 2, ry + rh / 2, rh * 0.35, rx + rw / 2, ry + rh / 2, Math.max(rw, rh) * 0.75);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); g.fillStyle = vg; g.fillRect(rx, ry, rw, rh);
+        // Each cut opens from dark
+        if (!reduce && sh.cut < 0.35) { g.fillStyle = 'rgba(0,0,0,' + (1 - sh.cut / 0.35) + ')'; g.fillRect(rx, ry, rw, rh); }
+      } finally { lightAt = savedLight; QP = savedQP; FOGF = savedFog; }
+      return true;
     }
     // A quiet sequence of overhead drone shots. It follows the same people as the ground scene,
     // but lets their movement make the gathering readable instead of drawing its circles for them.
@@ -1159,22 +1220,29 @@
         { dur: 8, at: function (u) { return { x: ctr.x, z: lerp(ctr.z - 9, ctr.z + 11, u), zoom: 2.4, tilt: 0.3, spin: 0 }; } },
         { dur: 7, at: function () { return star && star.wx != null ? { x: star.wx, z: star.wz, zoom: 3.8, tilt: 0.2, spin: 0.05, star: star } : { x: ctr.x, z: ctr.z, zoom: 2.4, tilt: 0.2, spin: 0.05 }; } },
         { dur: 7, at: function (u) { return you ? { x: you.wx, z: you.wz, zoom: 3.4 - 0.4 * u, tilt: 0.3, spin: 0.03 } : { x: ctr.x, z: ctr.z, zoom: 1.6, tilt: 0.2, spin: 0.03 }; } },
-        { dur: 8, at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 3, tilt: 0.25, spin: 0.02 } : { x: nearAt.x, z: nearAt.z, zoom: 1.3, tilt: 0, spin: 0.02 }; } }
+        { dur: 8, at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 3, tilt: 0.25, spin: 0.02 } : { x: nearAt.x, z: nearAt.z, zoom: 1.3, tilt: 0, spin: 0.02 }; } },
+        { dur: 6, close: 'couple', at: function () { return you ? { x: you.wx, z: you.wz, zoom: 5, tilt: 0.8, spin: 0 } : { x: ctr.x, z: ctr.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
+        { dur: 6, close: 'singer', at: function () { return { x: 0, z: 63.9, zoom: 5, tilt: 0.8, spin: 0 }; } }
       ] : [
         { dur: 9, at: function () { return { x: ctr.x, z: ctr.z, zoom: 1.3, tilt: 0.1, spin: 0.012 }; } },
         // A slow sideways pass across the ring round the garbo, then back across the next ring the other way
         { dur: 8, at: function (u) { return { x: lerp(ctr.x - R0, ctr.x + R0, ease(u)), z: ctr.z - 1, zoom: 2.4, tilt: 0.35, spin: 0 }; } },
         { dur: 7, at: function () { return star && star.wx != null ? { x: star.wx, z: star.wz, zoom: 3.8, tilt: 0.25, spin: 0.04, star: star } : { x: ctr.x, z: ctr.z, zoom: 2.4, tilt: 0.3, spin: 0.04 }; } },
         { dur: 8, at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 3, tilt: 0.25, spin: 0.02 } : { x: nearAt.x, z: nearAt.z, zoom: 1.3, tilt: 0, spin: 0.02 }; } },
+        // Down at ground level: a child running through, the lead singer, a dancer as she turns, the two of you
+        { dur: 5, close: 'kid', at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 5, tilt: 0.8, spin: 0 } : { x: nearAt.x, z: nearAt.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
+        { dur: 6, close: 'singer', at: function () { return { x: 0, z: id === 'stadium' ? 35.5 : 46, zoom: 5, tilt: 0.8, spin: 0 }; } },
         { dur: 8, at: function (u) { return { x: lerp(nearAt.x + near.R + 2, nearAt.x - near.R - 2, ease(u)), z: nearAt.z, zoom: 2.2, tilt: 0.3, spin: 0 }; } },
+        { dur: 6, close: 'star', at: function () { return star && star.wx != null ? { x: star.wx, z: star.wz, zoom: 5, tilt: 0.8, spin: 0, star: star } : { x: ctr.x, z: ctr.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
         { dur: 7, at: function (u) { return you ? { x: you.wx, z: you.wz, zoom: 3.4 - 0.4 * u, tilt: 0.3, spin: 0.03 } : { x: ctr.x, z: ctr.z, zoom: 1.6, tilt: 0.2, spin: 0.03 }; } },
+        { dur: 6, close: 'couple', at: function () { return you ? { x: you.wx, z: you.wz, zoom: 5, tilt: 0.8, spin: 0 } : { x: ctr.x, z: ctr.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
         { dur: 9, at: function (u) { return { x: lerp(nearAt.x, farAt.x, u), z: lerp(nearAt.z, farAt.z, u), zoom: 1.45, tilt: 0.6, spin: 0.015 }; } }
       ];
       var total = SHOTS.reduce(function (n, sh) { return n + sh.dur; }, 0), tc = reduce ? 0 : t % total, si = 0;
       while (si < SHOTS.length - 1 && tc >= SHOTS[si].dur) { tc -= SHOTS[si].dur; si++; }
-      var cur = SHOTS[si].at(tc / SHOTS[si].dur);
-      // Each new shot flies over from where the last one ended
-      var fly = reduce ? 1 : ease(Math.min(1, tc / 1.8));
+      var cur = SHOTS[si].at(tc / SHOTS[si].dur), closeK = SHOTS[si].close || null;
+      // Each new shot flies over from where the last one ended; a close-up is a cut
+      var fly = reduce || closeK || SHOTS[(si + SHOTS.length - 1) % SHOTS.length].close ? 1 : ease(Math.min(1, tc / 1.8));
       if (fly < 1) { var prevS = SHOTS[(si + SHOTS.length - 1) % SHOTS.length], was = prevS.at(1); ['x', 'z', 'zoom', 'tilt'].forEach(function (key) { cur[key] = lerp(was[key], cur[key], fly); }); }
       // The dancer being watched spins every couple of seconds, and her neighbours clap for her
       if (cur.star && st.on && !reduce && fly >= 1 && T - (cur.star.cuteAt || 0) > 1.9) {
@@ -1185,7 +1253,7 @@
       var rot = sheri ? Math.PI / 2 : 0.4;
       if (!reduce) rot += 0.075 * Math.sin(t * 0.12) + t * cur.spin;
       var fz = cur.z; if (!reduce && sheri && !cur.star) fz += 1.2 * Math.sin(t * 0.09);
-      return { x: cur.x, z: fz, zoom: cur.zoom, tilt: cur.tilt, rot: rot, span: span0 / cur.zoom, sheri: sheri, ctr: ctr, c0: c0 };
+      return { x: cur.x, z: fz, zoom: cur.zoom, tilt: cur.tilt, rot: rot, span: span0 / cur.zoom, sheri: sheri, ctr: ctr, c0: c0, close: closeK, cu: tc / SHOTS[si].dur, cut: tc, star: star, runner: runner, you: you };
     }
     // Where the drone is in the world: above what it films, higher for a wide shot, set back for a tilted one
     function dronePos(id, t) {
@@ -1226,7 +1294,10 @@
       if (strobe) glow(p.x, p.y + sz * 0.05, Math.max(4, sz * 0.45), '#ffffff', 0.85);
     }
     function aerial(id, rx, ry, rw, rh, t) {
-      var sh = shotAt(id, t), L = layout(id), c0 = sh.c0, ctr = sh.ctr, sheri = sh.sheri, span = sh.span, tilt = sh.tilt, rot = sh.rot, fx = sh.x, fz = sh.z;
+      var sh0 = shotAt(id, t);
+      feedTag = 'DRONE';
+      if (sh0.close && closeShot(id, sh0, rx, ry, rw, rh, t)) { feedTag = 'LIVE'; return; }
+      var sh = sh0, L = layout(id), c0 = sh.c0, ctr = sh.ctr, sheri = sh.sheri, span = sh.span, tilt = sh.tilt, rot = sh.rot, fx = sh.x, fz = sh.z;
       var k = rh / span, cx = rx + rw / 2, cy = ry + rh * 0.56, cr = Math.cos(rot), sr = Math.sin(rot);
       // A tilted shot looks across the ground: depth squeezes, and the near side opens out a little
       function M(x, z) { var dx = x - fx, dz = z - fz, u = (dx * cr - dz * sr) * k, v = (dx * sr + dz * cr) * k, pf = 1 - tilt * 0.3 * Math.max(-1, Math.min(1, v / (rh * 0.6))); return [cx + u * pf, cy - v * (1 - tilt * 0.45)]; }
@@ -1537,6 +1608,85 @@
     // Points along a quadratic curve, for borders, garlands and rows of mirrors
     function alongQuad(x0, y0, cx, cy, x1, y1, n) { var out = []; for (var i = 0; i <= n; i++) { var u = i / n, a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, c = u * u; out.push([a * x0 + b * cx + c * x1, a * y0 + b * cy + c * y1]); } return out; }
 
+    /* ---------- embroidery and mirror work ----------
+       A band of embroidery along a curve: the base in one colour, a small diamond motif in gold at every other stitch,
+       and a fine gold edge each side. A mirror is a small silver disc in a thread ring that flashes as the light
+       crosses it. */
+    function embBand(pts, w, base, motif, h) {
+      if (pts.length < 2) return;
+      g.lineCap = 'round'; g.lineJoin = 'round';
+      g.strokeStyle = base; g.lineWidth = Math.max(1, w); g.beginPath(); pts.forEach(function (q, i) { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke();
+      g.strokeStyle = motif; g.lineWidth = Math.max(0.4, w * 0.12);
+      [-0.5, 0.5].forEach(function (e) { g.beginPath(); pts.forEach(function (q, i) { if (i) g.lineTo(q[0], q[1] + e * w); else g.moveTo(q[0], q[1] + e * w); }); g.stroke(); });
+      if (w < 2.2) return;
+      g.fillStyle = motif;
+      for (var i = 0; i < pts.length; i++) {
+        var q = pts[i], r = w * 0.32;
+        if (i % 2) { g.beginPath(); g.moveTo(q[0], q[1] - r); g.lineTo(q[0] + r * 0.8, q[1]); g.lineTo(q[0], q[1] + r); g.lineTo(q[0] - r * 0.8, q[1]); g.closePath(); g.fill(); }
+        else { g.beginPath(); g.arc(q[0], q[1], Math.max(0.4, r * 0.35), 0, TAU); g.fill(); }
+      }
+    }
+    function mirrorDisc(x, y, r, seed) {
+      if (r < 0.6) return;
+      var tw = reduce ? 0.5 : 0.5 + 0.5 * Math.sin(T * 4.2 + seed * 1.7);
+      g.fillStyle = '#7a1a2e'; g.beginPath(); g.arc(x, y, r * 1.35, 0, TAU); g.fill();
+      var mg = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r); mg.addColorStop(0, 'rgba(255,255,255,' + (0.7 + 0.3 * tw) + ')'); mg.addColorStop(1, 'rgba(150,165,180,.95)');
+      g.fillStyle = mg; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+      if (tw > 0.9 && st.on) glow(x, y, r * 1.2, '#ffffff', (tw - 0.9) * 8);
+    }
+    /* ---------- a face up close ----------
+       Once a head is big enough to carry it (a figure about 130 px tall, and in the drone's close-ups), the face is
+       drawn properly: tapered brows, almond eyes with an iris that glances about, a catch-light and a lid line (kajal
+       and lashes for her), a crease, the nose's side shadow with its nostrils and a lit tip, lips with a cupid's bow
+       (parted when singing or cheering), and a blush and a small nath for her. */
+    function faceHD(x, fy, hr, o) {
+      var ey = fy - hr * 0.05, lw = Math.max(0.6, hr * 0.045), ink = o.ink, skin = o.skin;
+      [-1, 1].forEach(function (sd) {
+        var b0 = x + sd * hr * 0.12, b1 = x + sd * hr * 0.6, by = ey - hr * 0.33, arch = o.man ? 0.15 : 0.13;
+        g.fillStyle = o.older ? '#8f877d' : ink; g.beginPath(); g.moveTo(b0, by + hr * 0.03); g.quadraticCurveTo(x + sd * hr * 0.36, by - hr * arch, b1, by + hr * 0.07);
+        g.quadraticCurveTo(x + sd * hr * 0.36, by - hr * (arch - (o.man ? 0.09 : 0.06)), b0, by + hr * (o.man ? 0.1 : 0.07)); g.closePath(); g.fill();
+      });
+      [-1, 1].forEach(function (sd) {
+        var cx = x + sd * hr * 0.33, w = hr * 0.2, hh = hr * 0.1, ox = cx - sd * w * 0.05;
+        g.strokeStyle = shade(skin, -0.22); g.lineWidth = Math.max(0.5, lw * 0.5); g.beginPath(); g.moveTo(cx - w * 0.85, ey - hh * 0.9); g.quadraticCurveTo(cx, ey - hh * 2.3, cx + w * 0.9, ey - hh * 0.8); g.stroke();
+        if (o.blink) { g.strokeStyle = ink; g.lineWidth = lw * 1.2; g.beginPath(); g.moveTo(cx - w, ey); g.quadraticCurveTo(cx, ey + hh * 0.9, cx + w, ey - hh * 0.1); g.stroke(); return; }
+        g.save(); g.beginPath(); g.moveTo(cx - w, ey); g.quadraticCurveTo(ox, ey - hh * 1.55, cx + w, ey - hh * 0.15); g.quadraticCurveTo(ox, ey + hh * 1.2, cx - w, ey); g.closePath();
+        g.fillStyle = '#fbf5ea'; g.fill(); g.clip();
+        var ix = cx + (o.look || 0) * w * 0.28, iy = ey - hh * 0.1, ir = hh * 1.05, ig = g.createRadialGradient(ix, iy, ir * 0.2, ix, iy, ir);
+        ig.addColorStop(0, '#7a4a24'); ig.addColorStop(0.7, '#4a2a14'); ig.addColorStop(1, '#24130a');
+        g.fillStyle = ig; g.beginPath(); g.arc(ix, iy, ir, 0, TAU); g.fill();
+        g.fillStyle = '#0d0705'; g.beginPath(); g.arc(ix, iy, ir * 0.42, 0, TAU); g.fill();
+        g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(cx - w, ey - hh * 1.6, w * 2, hh * 0.7);
+        g.restore();
+        g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.arc(ix + ir * 0.35, iy - ir * 0.38, Math.max(0.5, ir * 0.26), 0, TAU); g.fill();
+        g.strokeStyle = ink; g.lineWidth = lw * (o.man ? 1.1 : 1.7); g.lineCap = 'round'; g.beginPath(); g.moveTo(cx - w * 1.02, ey + hh * 0.05); g.quadraticCurveTo(ox, ey - hh * 1.6, cx + w * 1.08, ey - hh * 0.3); g.stroke();
+        if (!o.man) {
+          g.lineWidth = lw * 0.7; g.beginPath(); for (var l = 0; l < 3; l++) { var lx0 = cx + sd * w * (0.45 + l * 0.22), ly0 = ey - hh * (1.05 - l * 0.28); g.moveTo(lx0, ly0); g.lineTo(lx0 + sd * hr * 0.05, ly0 - hr * 0.05); } g.stroke();
+          g.strokeStyle = 'rgba(31,19,13,.55)'; g.lineWidth = lw * 0.6; g.beginPath(); g.moveTo(cx - w * 0.8, ey + hh * 0.55); g.quadraticCurveTo(ox, ey + hh * 1.25, cx + w * 1.05, ey + hh * 0.05); g.stroke();
+        }
+      });
+      var nb = shade(skin, -0.28);
+      g.strokeStyle = nb; g.lineWidth = lw * 0.75; g.beginPath(); g.moveTo(x + hr * 0.07, ey + hr * 0.02); g.quadraticCurveTo(x + hr * 0.12, ey + hr * 0.26, x + hr * 0.1, ey + hr * 0.33); g.stroke();
+      g.beginPath(); g.moveTo(x - hr * 0.13, ey + hr * 0.35); g.quadraticCurveTo(x, ey + hr * 0.44, x + hr * 0.13, ey + hr * 0.35); g.stroke();
+      g.fillStyle = shade(skin, -0.45); g.beginPath(); g.ellipse(x - hr * 0.065, ey + hr * 0.375, hr * 0.035, hr * 0.018, 0.3, 0, TAU); g.ellipse(x + hr * 0.065, ey + hr * 0.375, hr * 0.035, hr * 0.018, -0.3, 0, TAU); g.fill();
+      g.fillStyle = 'rgba(255,245,230,.28)'; g.beginPath(); g.arc(x + hr * 0.02, ey + hr * 0.29, hr * 0.045, 0, TAU); g.fill();
+      if (!o.man) [-1, 1].forEach(function (sd) { var bg = g.createRadialGradient(x + sd * hr * 0.47, ey + hr * 0.33, 0, x + sd * hr * 0.47, ey + hr * 0.33, hr * 0.24); bg.addColorStop(0, 'rgba(214,86,86,.24)'); bg.addColorStop(1, 'rgba(214,86,86,0)'); g.fillStyle = bg; g.beginPath(); g.arc(x + sd * hr * 0.47, ey + hr * 0.33, hr * 0.24, 0, TAU); g.fill(); });
+      var my = ey + hr * 0.6, lip = o.man ? shade(skin, -0.32) : '#a8323c', open = o.open || 0;
+      if (open > 0.1) {
+        var oh = hr * (0.05 + 0.14 * open);
+        g.fillStyle = '#4a120e'; g.beginPath(); g.ellipse(x, my + oh * 0.3, hr * 0.19, oh, 0, 0, TAU); g.fill();
+        g.fillStyle = '#f4efe6'; g.fillRect(x - hr * 0.12, my + oh * 0.3 - oh * 0.95, hr * 0.24, Math.max(0.6, oh * 0.35));
+        g.strokeStyle = lip; g.lineWidth = lw * 1.1; g.beginPath(); g.ellipse(x, my + oh * 0.3, hr * 0.2, oh * 1.05, 0, 0, TAU); g.stroke();
+      } else {
+        g.fillStyle = lip; g.beginPath(); g.moveTo(x - hr * 0.2, my); g.quadraticCurveTo(x - hr * 0.1, my - hr * 0.07, x - hr * 0.02, my - hr * 0.045); g.quadraticCurveTo(x, my - hr * 0.03, x + hr * 0.02, my - hr * 0.045);
+        g.quadraticCurveTo(x + hr * 0.1, my - hr * 0.07, x + hr * 0.2, my); g.quadraticCurveTo(x, my + hr * (o.man ? 0.04 : 0.02), x - hr * 0.2, my); g.fill();
+        g.fillStyle = shade(lip, 0.08); g.beginPath(); g.moveTo(x - hr * 0.17, my + hr * 0.01); g.quadraticCurveTo(x, my + hr * (o.man ? 0.1 : 0.13), x + hr * 0.17, my + hr * 0.01); g.closePath(); g.fill();
+        g.strokeStyle = shade(lip, -0.35); g.lineWidth = Math.max(0.5, lw * 0.5); g.beginPath(); g.moveTo(x - hr * 0.19, my + hr * 0.005); g.quadraticCurveTo(x, my + hr * 0.035, x + hr * 0.19, my + hr * 0.005); g.stroke();
+        if (!o.man) { g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(x + hr * 0.03, my + hr * 0.06, hr * 0.05, hr * 0.015, 0, 0, TAU); g.fill(); }
+      }
+      if (o.bindi) { g.fillStyle = '#b3141f'; g.beginPath(); g.arc(x, ey - hr * 0.26, Math.max(0.6, hr * 0.06), 0, TAU); g.fill(); }
+      if (o.nath) { g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(0.6, lw * 0.6); g.beginPath(); g.arc(x - hr * 0.16, ey + hr * 0.42, hr * 0.1, -0.4, TAU - 0.9); g.stroke(); g.fillStyle = '#f6f0e4'; g.beginPath(); g.arc(x - hr * 0.16, ey + hr * 0.52, Math.max(0.5, hr * 0.025), 0, TAU); g.fill(); }
+    }
     function performer(p, d, i, beatPh) {
       var s = p.s, x = p.x, y = p.y, h = d.h * s, walking = d.walking && !reduce, playing = st.on && !reduce, tw = d.twirl || 0, up = d.flash > 0.25;
       var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || playing ? Math.sin(ph) : 0, groundY = y;
@@ -1596,6 +1746,11 @@
         g.strokeStyle = gold; g.lineWidth = Math.max(0.8, h * 0.008); g.beginPath(); g.moveTo(x - h * 0.05, y - h * 0.79); g.quadraticCurveTo(x, y - h * 0.735, x + h * 0.05, y - h * 0.79); g.stroke();
         g.beginPath(); g.moveTo(x - h * 0.074, y - h * 0.612); g.quadraticCurveTo(x, y - h * 0.597, x + h * 0.074, y - h * 0.612); g.stroke();
         dotRow([[x - h * 0.035, y - h * 0.68], [x, y - h * 0.665], [x + h * 0.035, y - h * 0.68], [x - h * 0.018, y - h * 0.64], [x + h * 0.018, y - h * 0.64]], Math.max(0.5, h * 0.006), goldHi);
+        if (d.role === 'singer' && h > 60) {
+          // The singer's choli is heavier: an embroidered band along its hem, mirrors across the front
+          embBand(alongQuad(x - h * 0.072, y - h * 0.625, x, y - h * 0.61, x + h * 0.072, y - h * 0.625, 10), h * 0.02, d.odhni || '#8e1b2c', gold, h);
+          [-0.045, -0.015, 0.015, 0.045].forEach(function (u, ci) { mirrorDisc(x + u * h, y - h * (0.705 - Math.abs(u) * 0.3), h * 0.008, d.ph * 11 + ci); });
+        }
       } else {
         /* His churidar, bunched at the ankle, and mojari with the curled toe */
         var lx = walking ? sw * h * 0.06 : sw * h * 0.02, legC = d.legs || '#efe6d6';
@@ -1625,6 +1780,13 @@
         dotRow(alongQuad(x - h * 0.066, y - h * 0.7, x, y - h * 0.665, x + h * 0.066, y - h * 0.7, 9), Math.max(0.5, h * 0.0055), goldHi);
         for (var mi = 0; mi < 4; mi++) { var mt = reduce ? 0.6 : 0.5 + 0.5 * Math.sin(T * 4 + mi * 2 + d.ph * 5); g.fillStyle = 'rgba(235,245,255,' + (0.55 + 0.4 * mt) + ')'; g.beginPath(); g.arc(x + (mi - 1.5) * h * 0.03, y - h * 0.745, Math.max(0.6, h * 0.007), 0, TAU); g.fill(); }
         g.strokeStyle = gold; g.lineWidth = Math.max(0.7, h * 0.006); g.beginPath(); g.moveTo(x, y - h * 0.795); g.lineTo(x, y - h * 0.66); g.stroke();
+        if (d.role === 'singer' && h > 60) {
+          // The singer's kediyu: an embroidered placket down the front with mirrors set in it, and a band across the frill
+          var pk = []; for (var pq = 0; pq <= 8; pq++) pk.push([x + Math.sin(pq * 0.7) * h * 0.002, lerp(y - h * 0.79, y - h * 0.5, pq / 8)]);
+          embBand(pk, h * 0.024, shade(trim, -0.15), gold, h);
+          for (var pm = 1; pm < 8; pm += 2) mirrorDisc(pk[pm][0], pk[pm][1], h * 0.008, d.ph * 13 + pm);
+          embBand(alongQuad(x - fl * 0.85, yH - h * 0.06, x, yH - h * 0.02, x + fl * 0.85, yH - h * 0.06, 14), h * 0.02, shade(trim, -0.15), gold, h);
+        }
         // A koti (sleeveless jacket) over it for the dhol and benjo players, the keys player's short Nehru jacket
         if (d.role === 'dhol' || d.role === 'benjo' || kurta) {
           var kc = kurta ? shade(trim, -0.35) : trim, kb = kurta ? y - h * 0.5 : y - h * 0.55;
@@ -1682,7 +1844,10 @@
       g.fillStyle = roundLit(skinC, x - hr, x + hr); g.beginPath(); g.ellipse(x, headY, hr * 0.92, hr * 1.08, 0, 0, TAU); g.fill();
       // Ears, then the face: brows, eyes, the nose's shadow, a mouth that opens with the song for the singers
       g.fillStyle = shade(skinC, -0.15); g.beginPath(); g.ellipse(x - hr * 0.93, headY + hr * 0.05, hr * 0.14, hr * 0.24, 0, 0, TAU); g.ellipse(x + hr * 0.93, headY + hr * 0.05, hr * 0.14, hr * 0.24, 0, 0, TAU); g.fill();
-      if (h > 70) {
+      if (h >= 130) {
+        var blinkH = !reduce && ((T + d.ph * 7) % 4.3) < 0.12, singH = d.role === 'singer' && st.on && !reduce && d.act !== 'idle' ? 0.35 + 0.65 * Math.abs(Math.sin(beatPh * Math.PI * 2 + d.ph)) : 0;
+        faceHD(x, headY, hr, { man: d.man, skin: skinC, ink: ink, blink: blinkH || (d.role === 'singer' && d.act === 'sing' && Math.sin(T * 0.9 + d.ph) > 0.6), open: singH, look: Math.sin(T * 0.37 + d.ph * 5) * 0.6, older: d.older });
+      } else if (h > 70) {
         var ey = headY - hr * 0.05, blink = !reduce && ((T + d.ph * 7) % 4.3) < 0.12;
         g.strokeStyle = ink; g.lineWidth = Math.max(0.8, h * 0.006);
         g.beginPath(); g.moveTo(x - hr * 0.55, ey - hr * 0.3); g.quadraticCurveTo(x - hr * 0.33, ey - hr * 0.42, x - hr * 0.12, ey - hr * 0.32); g.moveTo(x + hr * 0.12, ey - hr * 0.32); g.quadraticCurveTo(x + hr * 0.33, ey - hr * 0.42, x + hr * 0.55, ey - hr * 0.3); g.stroke();
@@ -2990,6 +3155,12 @@
         if (rich) { g.strokeStyle = 'rgba(0,0,0,.2)'; g.lineWidth = Math.max(0.6, h * 0.005); for (var kp = -4; kp <= 4; kp++) { g.beginPath(); g.moveTo(x + kp * h * 0.018, y - h * 0.6); g.quadraticCurveTo(x + kp * fl * 0.16, y - h * 0.5, x + kp * fl * 0.23, y - h * 0.41); g.stroke(); } }
         if (fine) { g.fillStyle = gold; for (var em = -2; em <= 2; em++) { g.beginPath(); g.arc(x + em * h * 0.032, y - h * 0.7 + Math.abs(em) * h * 0.012, Math.max(0.6, h * 0.01), 0, TAU); g.fill(); } }
         if (fine) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(x - fl, y - h * 0.425); g.quadraticCurveTo(x, y - h * 0.385, x + fl, y - h * 0.425); g.stroke(); g.beginPath(); g.moveTo(x, y - h * 0.8); g.lineTo(x, y - h * 0.63); g.stroke(); }
+        if (rich) {
+          // Up close, the kediyu is worked: an embroidered yoke across the chest set with mirrors, and a band above the frill
+          embBand(alongQuad(x - h * 0.078, y - h * 0.74, x, y - h * 0.71, x + h * 0.078, y - h * 0.74, 10), h * 0.022, tint(d.stole || '#8e1b2c', dk), gold, h);
+          [-0.05, -0.025, 0.025, 0.05].forEach(function (u, mi) { mirrorDisc(x + u * h, y - h * 0.685 + Math.abs(u) * h * 0.2, h * 0.009, d.ph * 9 + mi); });
+          embBand(alongQuad(x - fl * 0.9, y - h * 0.47, x, y - h * 0.43, x + fl * 0.9, y - h * 0.47, 14), h * 0.02, tint(d.stole || '#8e1b2c', dk), gold, h);
+        }
       } else {
         // Chaniya with a bordered hem, then the choli and a strip of waist
         var flare = h * (0.25 + (dancing ? 0.045 * sw : walking ? 0.01 * sw : 0) + 0.16 * tw + (d.sitting ? 0.06 : 0)), hem = d.sitting ? groundY : y - h * 0.01 - h * 0.03 * tw;
@@ -3009,6 +3180,16 @@
         g.fillStyle = skin; g.fillRect(x - h * 0.06, y - h * 0.6, h * 0.12, h * 0.06);
         g.fillStyle = rich ? roundLit(top, x - h * 0.08, x + h * 0.08) : top; g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.08, y - h * 0.79); g.lineTo(x + h * 0.07, y - h * 0.6); g.lineTo(x - h * 0.07, y - h * 0.6); g.closePath(); g.fill();
         if (rich) { g.strokeStyle = gold; g.lineWidth = Math.max(0.7, h * 0.007); g.beginPath(); g.moveTo(x - h * 0.05, y - h * 0.79); g.quadraticCurveTo(x, y - h * 0.74, x + h * 0.05, y - h * 0.79); g.moveTo(x - h * 0.07, y - h * 0.605); g.lineTo(x + h * 0.07, y - h * 0.605); g.stroke(); }
+        if (rich) {
+          // Up close, her chaniya is embroidered: a motif band at the tier and a mirror-work band above the hem, the
+          // mirrors catching the light as she turns; a few mirrors on the choli too
+          var tyR = y - h * 0.3, tflR = h * 0.075 + (flare - h * 0.075) * 0.55;
+          embBand(alongQuad(x - tflR, tyR, x, tyR + h * 0.03, x + tflR, tyR, 14), h * 0.026, tint(d.tier || d.top, dk), gold, h);
+          var mb = alongQuad(x - flare * 0.9, hem - h * 0.085, x, hem - h * 0.045, x + flare * 0.9, hem - h * 0.085, 12);
+          embBand(mb, h * 0.03, tint(d.odhni || d.top, dk), gold, h);
+          for (var mi2 = 1; mi2 < mb.length - 1; mi2 += 2) mirrorDisc(mb[mi2][0], mb[mi2][1], h * 0.011, d.ph * 7 + mi2 + tw * 3);
+          [-0.035, 0, 0.035].forEach(function (u, ci) { mirrorDisc(x + u * h, y - h * (0.68 - Math.abs(u) * 0.4), h * 0.008, d.ph * 5 + ci); });
+        }
         // Odhni over one shoulder, falling behind
         g.strokeStyle = tint(d.odhni || d.top, dk); g.globalAlpha *= 0.85; g.lineWidth = Math.max(1, h * 0.04);
         g.beginPath(); g.moveTo(x - h * 0.08, y - h * 0.78); g.quadraticCurveTo(x + h * 0.02, y - h * 0.62, x + h * 0.09, y - h * 0.56); g.quadraticCurveTo(x + h * (0.16 + 0.04 * sw + 0.1 * tw), y - h * 0.48, x + h * (0.18 + 0.05 * sw + 0.14 * tw), y - h * 0.3); g.stroke();
@@ -3045,7 +3226,9 @@
       g.fillStyle = skin; g.fillRect(x - h * 0.022, y - h * 0.83, h * 0.044, h * 0.05);
       if (rich) g.fillStyle = roundLit(skin, x - h * 0.068, x + h * 0.068);
       g.beginPath(); g.arc(x, y - h * 0.885, h * 0.068, 0, TAU); g.fill();
-      if (rich && h >= 70) {
+      if (rich && h >= 130) {
+        faceHD(x, y - h * 0.885, h * 0.068, { man: d.man, skin: skin, ink: tint('#1f130d', dk), blink: !reduce && ((T + d.ph * 7) % 4.7) < 0.12, open: up || d.cheer ? 0.6 : 0, look: Math.sin(T * 0.37 + d.ph * 5) * 0.6, older: d.older, bindi: !d.man, nath: !d.man && !d.older });
+      } else if (rich && h >= 70) {
         // A face: brows, eyes (they blink), the shadow of the nose, and a smile that opens on a cheer
         var fy = y - h * 0.885, hr0 = h * 0.068, ink0 = tint('#1f130d', dk), blink0 = !reduce && ((T + d.ph * 7) % 4.7) < 0.12;
         g.strokeStyle = ink0; g.lineWidth = Math.max(0.7, h * 0.005);

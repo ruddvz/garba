@@ -212,7 +212,7 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
 // the crowd with bodies and cloth near the stage, rigging for the chhatris, and the mandap over the sheri takht
 {
   const scene = await read('public-site/atmosphere/scene.js');
-  for (const marker of ['function performer(', 'function micStand(', 'function drawCeiling(', 'function jhummar(', 'function backRich(', 'function backHead(', 'function sheriMandap(', 'function chhatriRig(', 'function armsFor(', "cachedLayer('stadiumCeiling', drawCeiling)", 'o.riserZ = zF + depth * 0.72', 'if (m.h * p.s >= 58) {', 'var rich = h >= (QP >= 1 ? 40 : 90)', "g.fillText('DRONE'"]) {
+  for (const marker of ['function performer(', 'function micStand(', 'function drawCeiling(', 'function jhummar(', 'function backRich(', 'function backHead(', 'function sheriMandap(', 'function chhatriRig(', 'function armsFor(', "cachedLayer('stadiumCeiling', drawCeiling)", 'o.riserZ = zF + depth * 0.72', 'if (m.h * p.s >= 58) {', 'var rich = h >= (QP >= 1 ? 40 : 90)', "feedTag = 'DRONE';"]) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the staging marker: ${marker}`);
   }
   // The stage screen is a drone feed of detailed people from above, with no name on it, rendered as its own image
@@ -266,6 +266,11 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   // close show their wares
   for (const marker of ['walkMe.vx += dvx; walkMe.vz += dvz;', 'd.step = (d.step || 0) + Math.max(sp, gap > 0.2 ? 1 : 0) * dt * 5.2;', 'var rr = Math.hypot(walkMe.x, walkMe.z), ko = KEEP_OUT + 0.45;', 'function nearFigure(', "nearFigure(p, d, T, beatPh, Math.min(1, fade * 1.25)); return;", 'var near = 0, dk = 0;', 'function stallWares(']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the walking, near-camera or stall marker: ${marker}`);
+  }
+  // Up close, faces are drawn properly and clothes carry embroidery bands and mirror work; the stage screen cuts from
+  // the drone's passes to ground-level close-ups of the couple, a child, a dancer and the lead singer, marked LIVE
+  for (const marker of ['function faceHD(', 'function embBand(', 'function mirrorDisc(', 'function closeShot(', "close: 'couple'", "close: 'singer'", "close: 'kid'", "close: 'star'", "if (sh0.close && closeShot(id, sh0, rx, ry, rw, rh, t)) { feedTag = 'LIVE'; return; }", 'g.fillText(feedTag, cx0, ty0);']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the close-up detail or drone close-up marker: ${marker}`);
   }
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
   // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
