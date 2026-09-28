@@ -319,7 +319,7 @@
   function VenueStage(canvas, hooks) {
     var self = this;
     this.state = { mode: 'ember', progress: 0, chapters: null, chapterIndex: -1, live: false };
-    this.lit = 0.22; this.scrim = null; this.top = 0; this.crop = null;
+    this.lit = 0.22; this.scrim = null; this.shade = null; this.box = null; this.crop = null;
     this.v = window.GarbaVenueScene.create(canvas, {
       manual: true, lampScale: 1.35, venues: hooks.venues,
       // The stage screen uses the same lettering and garbo mark as this player's top-left logo
@@ -338,14 +338,28 @@
   VenueStage.prototype.steer = function (x, z) { if (this.v.steer) this.v.steer(x, z); };
   VenueStage.prototype.walkHome = function () { if (this.v.walkHome) this.v.walkHome(); };
   VenueStage.prototype.layout = function (slot, np) {
+    var W = window.innerWidth, H = window.innerHeight, size = W + 'x' + H;
     // At the DJ's table the scene has the whole screen: on a phone the DJ sits above the laptop, on a wide screen beside it
-    if (this.dj) { var W = window.innerWidth, H = window.innerHeight; this.cropTo(null); this.v.setBox(W > H * 1.1 ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 40, w: W, h: H * 0.5 }); this.top = 0; this.scrim = null; return; }
+    if (this.dj) { this.cropTo(null); this.v.setBox(W > H * 1.1 ? { x: 0, y: 0, w: W, h: H } : { x: 0, y: 40, w: W, h: H * 0.5 }); this.scrim = null; this.shade = null; return; }
+    // Hiding the player only takes the player away: the venue keeps the framing it had, drawn down to the edge
+    if (!(np.width && np.height)) {
+      this.scrim = null; this.shade = null; this.cropTo(null);
+      this.v.setBox(this.box && this.box.size === size ? this.box : { x: slot.left, y: slot.top, w: slot.width, h: slot.height });
+      return;
+    }
     this.scrim = np.left >= slot.right - 10 ? { side: true, at: np.left } : { side: false, at: np.top };
+    // The player: the title block down through the seek bar, the controls and the genres below them
+    var box = { l: np.left, t: np.top, r: np.right, b: np.bottom };
+    Array.prototype.forEach.call(document.querySelectorAll('.stage > .time, .stage > .transport, .stage > .dial'), function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.width && r.height) { box.l = Math.min(box.l, r.left); box.t = Math.min(box.t, r.top); box.r = Math.max(box.r, r.right); box.b = Math.max(box.b, r.bottom); }
+    });
+    this.shade = box;
     // On a phone or tablet the venue is only drawn as far as the controls: below (or beside) them the page's own ink shows
     var edge = this.scrim.at + 80;
-    this.cropTo(this.v.tier === 'desktop' || !(np.width && np.height) ? null : this.scrim.side ? (edge < window.innerWidth - 1 ? { w: edge } : null) : (edge < window.innerHeight - 1 ? { h: edge } : null));
-    this.v.setBox({ x: slot.left, y: slot.top, w: slot.width, h: slot.height });
-    this.top = slot.top;
+    this.cropTo(this.v.tier === 'desktop' ? null : this.scrim.side ? (edge < W - 1 ? { w: edge } : null) : (edge < H - 1 ? { h: edge } : null));
+    this.box = { x: slot.left, y: slot.top, w: slot.width, h: slot.height, size: size };
+    this.v.setBox(this.box);
   };
   VenueStage.prototype.cropTo = function (c) {
     if (!this.v.setCrop) return;
@@ -366,25 +380,23 @@
     });
     this.v.draw(performance.now());
   };
-  // Keep the top bar and the controls legible over the venue
+  // Keep the player legible over the venue: one soft shade centred behind it and nowhere else, so the venue shows
+  // round it. Where the canvas is cropped (phones and tablets) the venue also fades into the page's ink at its edge.
   VenueStage.prototype.drawScrim = function (ctx, W, H) {
-    var top = this.dj ? 56 : this.top;
-    var tg = ctx.createLinearGradient(0, 0, 0, top + 40);
-    tg.addColorStop(0, 'rgba(11,6,5,.92)'); tg.addColorStop(Math.min(0.9, top / (top + 40)), 'rgba(11,6,5,.7)'); tg.addColorStop(1, 'rgba(11,6,5,0)');
-    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, top + 40);
-    if (!this.scrim || this.dj) return;
-    var a = this.scrim.at - 40, sg, end = this.crop ? 'rgba(11,6,5,1)' : 'rgba(11,6,5,.9)';
-    if (this.scrim.side) {
-      sg = ctx.createLinearGradient(a, 0, a + 120, 0);
-      sg.addColorStop(0, 'rgba(11,6,5,0)'); sg.addColorStop(1, end);
-      ctx.fillStyle = sg; ctx.fillRect(a, 0, 120, H);
-      ctx.fillStyle = 'rgba(11,6,5,.9)'; ctx.fillRect(a + 120, 0, W, H);
-    } else {
-      sg = ctx.createLinearGradient(0, a, 0, a + 120);
-      sg.addColorStop(0, 'rgba(11,6,5,0)'); sg.addColorStop(1, end);
-      ctx.fillStyle = sg; ctx.fillRect(0, a, W, 120);
-      ctx.fillStyle = 'rgba(11,6,5,.9)'; ctx.fillRect(0, a + 120, W, H);
-    }
+    var b = this.shade;
+    if (!b || this.dj) return;
+    var cx = (b.l + b.r) / 2, cy = (b.t + b.b) / 2, rx = (b.r - b.l) / 2 + 160, ry = (b.b - b.t) / 2 + 110;
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(rx, ry);
+    var sg = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    sg.addColorStop(0, 'rgba(11,6,5,.84)'); sg.addColorStop(0.5, 'rgba(11,6,5,.7)'); sg.addColorStop(0.8, 'rgba(11,6,5,.3)'); sg.addColorStop(1, 'rgba(11,6,5,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    var c = this.crop, fg;
+    if (!c) return;
+    fg = c.h ? ctx.createLinearGradient(0, c.h - 90, 0, c.h) : ctx.createLinearGradient(c.w - 90, 0, c.w, 0);
+    fg.addColorStop(0, 'rgba(11,6,5,0)'); fg.addColorStop(1, 'rgba(11,6,5,1)');
+    ctx.fillStyle = fg;
+    if (c.h) ctx.fillRect(0, c.h - 90, W, 90); else ctx.fillRect(c.w - 90, 0, 90, H);
   };
 
   window.GarboScene = { Scene: Scene, VenueStage: VenueStage, MirrorBand: MirrorBand, drawCard: drawCard };

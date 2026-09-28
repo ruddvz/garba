@@ -238,6 +238,10 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   const stageCopies = await Promise.all(['docs/product/prototypes/garbo/scene.js', 'public-site/garbo/prototype/scene.js'].map(read));
   if (stageCopies[0] !== stageCopies[1]) fail('The deployed Garbo scene.js must match its canonical source');
   for (const marker of ["this.v.tier === 'desktop'", 'VenueStage.prototype.cropTo', 'l.y * (c.h || H) / H']) if (!stageCopies[0].includes(marker)) fail(`Garbo scene is missing the visible-area crop marker: ${marker}`);
+  // The only shade is one soft oval behind the player (no band under the top bar, none across the bottom), and hiding
+  // the player keeps the venue framed as it was instead of zooming into the space the player leaves
+  for (const marker of ['var sg = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);', "document.querySelectorAll('.stage > .time, .stage > .transport, .stage > .dial')", 'this.box && this.box.size === size ? this.box :']) if (!stageCopies[0].includes(marker)) fail(`Garbo scene is missing the player shade or framing marker: ${marker}`);
+  if (/createLinearGradient\(0, 0, 0, top/.test(stageCopies[0]) || stageCopies[0].includes("fillRect(0, a + 120, W, H)")) fail('Garbo scene must not shade a band under the top bar or across the bottom of the venue');
   for (const file of ['docs/product/prototypes/garbo/garbo.js', 'public-site/garbo/prototype/garbo.js']) {
     if (!(await read(file)).includes('if (!document.hidden && !frameHidden()) {')) fail(`${file} must not draw the venue while the Immersive frame is hidden`);
   }
