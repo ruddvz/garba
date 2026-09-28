@@ -59,7 +59,8 @@
     opts = opts || {};
     var g = canvas.getContext('2d');
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
-    var cam = { x: 0, y: 4, z: -15 };
+    // The camera can turn (yaw, in radians, positive to the right) to follow you as you walk and to face a stall
+    var cam = { x: 0, y: 4, z: -15, yaw: 0 }, cosY = 1, sinY = 0;
     var TH = THEMES.traditional, BEAT = 0, band = {};
     var st = { dj: false, djSay: '', youAs: 'woman', theme: 'traditional', density: 1, venue: 'outdoors', listener: 'circle', style: 'claps', mode: 'immersive', on: false, level: 0.6, lit: null, progress: 0, chapters: null, chapterIndex: -1, live: false, youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false };
     var view = { k: 0 };
@@ -75,13 +76,14 @@
 
     /* ---------- projection ---------- */
     function P(X, Y, Z) {
-      var zc = Z - cam.z; if (zc < NEAR - 1e-6) return null;
-      var s = F / zc; return { x: BX + BW / 2 + (X - cam.x) * s, y: HOR + (cam.y - Y) * s, s: s, z: zc };
+      var dx = X - cam.x, dz = Z - cam.z, zc = dx * sinY + dz * cosY; if (zc < NEAR - 1e-6) return null;
+      var s = F / zc; return { x: BX + BW / 2 + (dx * cosY - dz * sinY) * s, y: HOR + (cam.y - Y) * s, s: s, z: zc };
     }
+    function depth(X, Z) { return (X - cam.x) * sinY + (Z - cam.z) * cosY; }
     function clip(pts) {
       var out = [];
       for (var i = 0; i < pts.length; i++) {
-        var a = pts[i], b = pts[(i + 1) % pts.length], za = a[2] - cam.z, zb = b[2] - cam.z;
+        var a = pts[i], b = pts[(i + 1) % pts.length], za = depth(a[0], a[2]), zb = depth(b[0], b[2]);
         if (za >= NEAR) out.push(a);
         if ((za >= NEAR) !== (zb >= NEAR)) { var t = (NEAR - za) / (zb - za); out.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)]); }
       }
@@ -652,7 +654,7 @@
       var rich = h >= (QP >= 1 ? 40 : 90), sh = hip - h * 0.26;
       if (rich) { backRich(x, y, h, d, T0, running, sit, hip, skin, top, main, hair); }
       else if (!sit) {
-        if (d.man) { g.strokeStyle = d.legs || '#efe6d6'; g.lineWidth = Math.max(1, h * 0.055); var lx = running ? Math.sin(d.step) * h * 0.06 : 0; g.beginPath(); g.moveTo(x - h * 0.045, hip + h * 0.06); g.lineTo(x - h * 0.06 - lx, y); g.moveTo(x + h * 0.045, hip + h * 0.06); g.lineTo(x + h * 0.06 + lx, y); g.stroke(); }
+        if (d.man) { g.strokeStyle = d.legs || '#efe6d6'; g.lineWidth = Math.max(1, h * 0.055); var lx = running ? Math.sin(d.step || 0) * h * 0.06 : 0; g.beginPath(); g.moveTo(x - h * 0.045, hip + h * 0.06); g.lineTo(x - h * 0.06 - lx, y); g.moveTo(x + h * 0.045, hip + h * 0.06); g.lineTo(x + h * 0.06 + lx, y); g.stroke(); }
         else { g.fillStyle = main; g.beginPath(); g.moveTo(x - h * 0.075, hip - h * 0.03); g.lineTo(x + h * 0.075, hip - h * 0.03); g.quadraticCurveTo(x + h * 0.19, y - h * 0.22, x + h * 0.24, y); g.quadraticCurveTo(x, y + h * 0.04, x - h * 0.24, y); g.quadraticCurveTo(x - h * 0.19, y - h * 0.22, x - h * 0.075, hip - h * 0.03); g.fill(); g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, h * 0.03); g.beginPath(); g.moveTo(x - h * 0.23, y - h * 0.01); g.quadraticCurveTo(x, y + h * 0.03, x + h * 0.23, y - h * 0.01); g.stroke(); }
       } else if (!d.man) { g.fillStyle = main; g.beginPath(); g.ellipse(x, hip, h * 0.2, h * 0.07, 0, Math.PI, 0); g.fill(); }
       // Back: a choli with a strip of skin above the waist, or the back of a kediyu
@@ -723,7 +725,7 @@
       var sh = hip - h * 0.26, dim = -0.04, beam = TH.beams[Math.floor((d.sway || 0) * 3) % TH.beams.length], roundLit = roundSoft;
       if (!sit) {
         if (d.man) {
-          var legC = d.legs || '#efe6d6', lx = running ? Math.sin(d.step) * h * 0.06 : 0;
+          var legC = d.legs || '#efe6d6', lx = running ? Math.sin(d.step || 0) * h * 0.06 : 0;
           [[-1, -lx], [1, lx]].forEach(function (lg) { var sd = lg[0], a = [x + sd * h * 0.045, hip + h * 0.06], k = [x + sd * h * 0.055 + lg[1] * 0.5, lerp(hip, y, 0.5)], f = [x + sd * h * 0.06 + lg[1], y - h * 0.02]; var lc0 = shade(legC, sd < 0 ? -0.2 : -0.06); seg(a, k, h * 0.062, h * 0.05, lc0); seg(k, f, h * 0.05, h * 0.036, lc0); g.fillStyle = '#3a1f12'; g.beginPath(); g.ellipse(f[0], y - h * 0.005, h * 0.035, h * 0.016, 0, 0, TAU); g.fill(); });
         } else {
           var fl = h * 0.24, hemY = y;
@@ -1613,7 +1615,7 @@
        and a fine gold edge each side. A mirror is a small silver disc in a thread ring that flashes as the light
        crosses it. */
     function embBand(pts, w, base, motif, h) {
-      if (pts.length < 2) return;
+      if (pts.length < 2 || !isFinite(w) || !pts.every(function (q) { return isFinite(q[0]) && isFinite(q[1]); })) return;
       g.lineCap = 'round'; g.lineJoin = 'round';
       g.strokeStyle = base; g.lineWidth = Math.max(1, w); g.beginPath(); pts.forEach(function (q, i) { if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); g.stroke();
       g.strokeStyle = motif; g.lineWidth = Math.max(0.4, w * 0.12);
@@ -1627,7 +1629,7 @@
       }
     }
     function mirrorDisc(x, y, r, seed) {
-      if (r < 0.6) return;
+      if (!(r >= 0.6) || !isFinite(x) || !isFinite(y)) return;
       var tw = reduce ? 0.5 : 0.5 + 0.5 * Math.sin(T * 4.2 + seed * 1.7);
       g.fillStyle = '#7a1a2e'; g.beginPath(); g.arc(x, y, r * 1.35, 0, TAU); g.fill();
       var mg = g.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r); mg.addColorStop(0, 'rgba(255,255,255,' + (0.7 + 0.3 * tw) + ')'); mg.addColorStop(1, 'rgba(150,165,180,.95)');
@@ -1689,7 +1691,7 @@
     }
     function performer(p, d, i, beatPh) {
       var s = p.s, x = p.x, y = p.y, h = d.h * s, walking = d.walking && !reduce, playing = st.on && !reduce, tw = d.twirl || 0, up = d.flash > 0.25;
-      var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || playing ? Math.sin(ph) : 0, groundY = y;
+      var ph = walking ? d.step || 0 : beatPh * Math.PI + (d.ph || 0), sw = walking || playing ? Math.sin(ph) : 0, groundY = y;
       if (d.sitting) y = p.y + 0.3 * h;
       else y -= (walking ? 0.025 : 0.015) * Math.abs(sw) * s;
       if (!st.on && !reduce) { x += Math.sin(T * 0.6 + d.ph * 3) * h * 0.012; y -= Math.max(0, Math.sin(T * 1.1 + d.ph)) * h * 0.004; }
@@ -2435,7 +2437,7 @@
     var standsCache = null, standsKey = '';
     function standsLayer(L) {
       var settled = camSettled;
-      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), (st.density * QD).toFixed(2)].join('|');
+      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), cam.yaw.toFixed(3), (st.density * QD).toFixed(2)].join('|');
       if (settled && standsCache && standsKey === key) { g.drawImage(standsCache, 0, 0, W, H); return; }
       if (!settled) { drawStands(L); return; }
       standsCache = standsCache || document.createElement('canvas');
@@ -2584,7 +2586,7 @@
     var layerCache = {};
     function cachedLayer(name, draw) {
       var settled = camSettled;
-      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2)].join('|'), c = layerCache[name];
+      var key = [W, H, BX, BY, BW, BH, cam.x.toFixed(2), cam.y.toFixed(2), cam.z.toFixed(2), cam.yaw.toFixed(3)].join('|'), c = layerCache[name];
       if (settled && c && c.key === key) { g.drawImage(c.cv, 0, 0, W, H); return; }
       if (!settled) { draw(true); return; }
       c = layerCache[name] = layerCache[name] || { cv: document.createElement('canvas') };
@@ -3099,12 +3101,23 @@
     }
     function figure(p, d, T, isYou, beatPh, fade) {
       if (fade != null && fade < 0.999 && !isYou && !d.coupleRole) { nearFigure(p, d, T, beatPh, Math.min(1, fade * 1.25)); return; }
+      // Walking away from the camera, or looking at a stall, the two of you are seen from behind, faces still worn
+      if (d.coupleRole && walkMe.on && walkMe.away && st.listener === 'circle' && fade !== null) {
+        d.headAt = null; backFigure(p, d, T, !!d.walking);
+        var hb = d.h * p.s;
+        if (d.headAt) {
+          var mineB = d.coupleRole === youRole(), fitB = headFaceFits(hb);
+          if (fitB) wearFace(coupleFace(mineB), mineB, d.headAt.x, d.headAt.y + hb * 0.085, hb);
+          if (isYou) youLabel = { x: d.headAt.x, y: d.headAt.y, h: hb, man: d.coupleRole === 'm', hx: d.headAt.x, hy: d.headAt.y, faceOnHead: fitB };
+        }
+        return;
+      }
       if (d.coupleRole && st.listener !== 'circle' && d.alt) { var a0 = d.alt; ['flash', 'twirl', 'atHome', 'walking', 'step', 'sitting', 'rest', 'ph'].forEach(function (k) { a0[k] = d[k]; }); d = a0; }
       var s = p.s, x = p.x, y = p.y, h = d.h * s, up = d.flash > 0.25;
       var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = (d.pair && d.pair.on && !d.moving) || !d.walker && !d.role && !d.watcher && !d.stander && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
       var groundY = null;
       if (d.sitting) { groundY = p.y + ((d.rest && d.rest.y) || 0) * s; y = p.y + 0.48 * h; }
-      var ph = walking ? d.step : beatPh * Math.PI + d.ph, sw = walking || dancing || playing ? Math.sin(ph) : 0;
+      var ph = walking ? d.step || 0 : beatPh * Math.PI + (d.ph || 0), sw = walking || dancing || playing ? Math.sin(ph) : 0;
       if (!d.sitting) y -= (walking ? 0.025 : dancing ? 0.05 : 0.015) * Math.abs(sw) * s;
       if (d.stander && !reduce) x += Math.sin(T * 0.8 + d.sway) * h * 0.02;
       if (d.role && !st.on && !reduce) { x += Math.sin(T * 0.6 + d.ph * 3) * h * 0.012; y -= Math.max(0, Math.sin(T * 1.1 + d.ph)) * h * 0.004; }
@@ -3580,9 +3593,24 @@
           if (vin < 0) { walkMe.vx -= vin * ux; walkMe.vz -= vin * uz; }
         }
       }
-      // The view follows you, easing, and eases back when you return
-      var e = Math.min(1, dt * 3);
+      // The view keeps up with you as you walk (the walk already eases in and out) and eases back when you return
+      var e = walkMe.on ? 1 : Math.min(1, dt * 3);
       walkMe.ox += ((walkMe.on ? walkMe.x - walkMe.x0 : 0) - walkMe.ox) * e; walkMe.oz += ((walkMe.on ? walkMe.z - walkMe.z0 : 0) - walkMe.oz) * e;
+      // Which way the view looks: ahead of you as you walk (a little to the side you're heading), round to face a stall
+      // you walk up to, and straight on again when you go back to the circle. The two of you turn with it: walking
+      // away you are seen from behind, and at a stall you look at the counter.
+      var yawTo = 0, sp = Math.hypot(walkMe.vx, walkMe.vz);
+      if (walkMe.on && free) {
+        var sl0 = null, sd0 = 3.6; layout(st.venue).stalls.forEach(function (sl) { var dd = Math.hypot(sl.front.x - walkMe.x, sl.front.z - walkMe.z); if (dd < sd0) { sd0 = dd; sl0 = sl; } });
+        walkMe.atStall = sl0;
+        if (sl0) yawTo = Math.max(-1.25, Math.min(1.25, Math.atan2(sl0.x - walkMe.x, sl0.z - walkMe.z)));
+        else if (sp > 0.2) yawTo = Math.max(-0.4, Math.min(0.4, walkMe.vx / Math.max(sp, 1.2) * 0.4 * (walkMe.vz < -0.2 ? 0.4 : 1)));
+        else yawTo = walkMe.yawHold || 0;
+        if (!sl0) walkMe.yawHold = yawTo;
+        var fwd = walkMe.vx * Math.sin(cam.yaw) + walkMe.vz * Math.cos(cam.yaw);
+        if (sl0 && sp < 0.6) walkMe.away = true; else if (fwd > 0.5) walkMe.away = true; else if (fwd < -0.3 || (sp > 0.4 && Math.abs(fwd) < 0.15 && !sl0)) walkMe.away = false;
+      } else { walkMe.atStall = null; walkMe.yawHold = 0; walkMe.away = false; }
+      walkMe.yaw = (walkMe.yaw || 0) + (yawTo - (walkMe.yaw || 0)) * Math.min(1, dt * (walkMe.atStall ? 1.8 : 2.4));
     }
     // The stall you've walked up to, if any
     function stallNear(L) {
@@ -3750,6 +3778,12 @@
       walkStep(dt);
       var ct = st.dj ? djCam(st.venue) : (CAMS[st.venue] || CAMS.outdoors)[st.listener] || CAMS.outdoors.circle, hf = st.dj ? 0.2 : { circle: 0.3, far: 0.4, stage: 0.44 }[st.listener] || 0.3;
       if (!st.dj && st.listener === 'circle' && (Math.abs(walkMe.ox) > 0.01 || Math.abs(walkMe.oz) > 0.01)) ct = [ct[0] + walkMe.ox, ct[1], ct[2] + walkMe.oz];
+      // Turning, the camera swings round you rather than round itself, so the two of you stay in the frame
+      var yawNow = !st.dj && st.listener === 'circle' ? walkMe.yaw || 0 : 0;
+      if (Math.abs(yawNow) > 1e-3) {
+        var pv = walkMe.on ? { x: walkMe.x, z: walkMe.z } : listenerPos(layout(st.venue), T), rx0 = ct[0] - pv.x, rz0 = ct[2] - pv.z, cY = Math.cos(yawNow), sY = Math.sin(yawNow);
+        ct = [pv.x + rx0 * cY + rz0 * sY, ct[1], pv.z - rx0 * sY + rz0 * cY];
+      }
       // On a wide screen the DJ stands right of centre, leaving the left for the laptop's song list
       if (st.dj && W > H * 1.1) { ct[0] -= 1.35; ct[1] += 0.12; ct[2] -= 1.3; }
       var camKey = st.venue + '/' + (st.dj ? 'dj' : st.listener);
@@ -3763,14 +3797,14 @@
         horNow = walk.h0 + (hf - walk.h0) * we;
         if (wp >= 1) walk = null;
       } else {
-        var ek = Math.min(1, dt * 2.4);
+        var ek = Math.min(1, dt * (walkMe.on ? 4 : 2.4));
         camNow[0] += (ct[0] - camNow[0]) * ek; camNow[1] += (ct[1] - camNow[1]) * ek; camNow[2] += (ct[2] - camNow[2]) * ek; horNow += (hf - horNow) * ek;
       }
       camSettled = Math.abs(ct[0] - camNow[0]) + Math.abs(ct[1] - camNow[1]) + Math.abs(ct[2] - camNow[2]) < 0.02;
       view.k += (target - view.k) * Math.min(1, dt * (reduce ? 60 : 2.6));
       var ce = CAMS[st.venue] || CAMS.outdoors, e = ease(Math.max(0, Math.min(1, view.k)));
       HOR = BY + BH * horNow;
-      cam.x = camNow[0]; cam.y = camNow[1]; cam.z = camNow[2];
+      cam.x = camNow[0]; cam.y = camNow[1]; cam.z = camNow[2]; cam.yaw = yawNow; cosY = Math.cos(yawNow); sinY = Math.sin(yawNow);
       bright += ((st.on ? 1 : 0.55) - bright) * Math.min(1, dt * 3);
       pulse *= Math.exp(-dt * 5);
       var L = layout(st.venue);
@@ -3841,7 +3875,19 @@
       var D0 = -cam.z, FOG = [{ z: st.listener === 'stage' || st.dj ? 60 : D0 + 40, a: 0.42 }], fi = 0;
       items.forEach(function (it) {
         while (fi < FOG.length && it.z < FOG[fi].z) fogBand(FOG[fi++]);
-        if (it.kind === 'lamp') { var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p; mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
+        if (it.kind === 'lamp') {
+          // Walking right past the garbo, its canopy fades as the camera goes by instead of filling the screen
+          var lampA = Math.max(0, Math.min(1, (it.p.z - 2.6) / 4)); if (lampA <= 0.02) return;
+          var lp2 = it.main && opts.lampScale ? { x: it.p.x, y: it.p.y, s: it.p.s * opts.lampScale, z: it.p.z } : it.p;
+          if (lampA < 1) {
+            // Faded as a whole, on the scratch layer, so its glows and overlaps don't show through each other
+            if (!nearLayer) nearLayer = document.createElement('canvas');
+            if (nearLayer.width !== canvas.width || nearLayer.height !== canvas.height) { nearLayer.width = canvas.width; nearLayer.height = canvas.height; }
+            var lc0 = nearLayer.getContext('2d'), live0 = g; lc0.setTransform(DPR, 0, 0, DPR, 0, 0); lc0.clearRect(0, 0, W, H); g = lc0;
+            try { mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); } finally { g = live0; }
+            g.save(); g.globalAlpha = lampA; g.drawImage(nearLayer, 0, 0, W, H); g.restore();
+          } else { mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); }
+          it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
         else if (it.kind === 'tree') drawTree(it.tr, t);
         else if (it.kind === 'prop') prop(it.o, t);
