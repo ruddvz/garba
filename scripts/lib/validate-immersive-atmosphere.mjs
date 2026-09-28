@@ -253,6 +253,14 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     if (!/^rgb\(\d{1,3},\d{1,3},\d{1,3}\)$/.test(out)) fail(`shade(${input}, ${f}) gave an invalid colour: ${out}`);
   }
   if (shadeRaw('#8e1b2c', -0.3) !== shadeRaw('rgb(142,27,44)', -0.3)) fail('shade() must treat hex and rgb() forms of the same colour alike');
+  // The stages: steps at each end, three blank lit sponsor blocks on the outdoor stage front, side screens outdoors that
+  // take turns between a sponsor slide and a close-up of the lead singer, the indoor corner screens and Sheri's flex
+  // banners as sponsor spaces. Singers hold a handheld mic under the mouth, drawn over their face, and the crowd lowers
+  // its phones when the song stops.
+  for (const marker of ['arrays: 13, sponsors: 3, sideScreens: true', 'function litPanel(', 'function sideScreens(', 'function singerCloseUp(', 'function flexBanner(', 'function holdMic(', 'function handMic(', "'crowd', 'taali'", 'function phoneK(', 'phonesUp + (st.on ? 1 : -1) * dt * 0.9', 'var ax = sd < 0 ? o.x0 + 0.5 : o.x1 - 2.3']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the stage, sponsor, singer or crowd marker: ${marker}`);
+  }
+  if ((scene.match(/handMic\(m\);/g) || []).length < 3) fail('Every singer drawing path must draw the handheld mic after the face');
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
   // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
   for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false", 'function coupleFace(', 'function cutHead(', 'wearFace(coupleFace(mine), mine, x, y - h * 0.885, h);', 'wearFace(coupleFace(youSeat), youSeat, ga.who.headAt.x, ga.who.headAt.y + hs * 0.085, hs);', 'function wearFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {

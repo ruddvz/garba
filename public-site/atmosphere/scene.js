@@ -65,7 +65,7 @@
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
-    var waves = [], arrivals = [], haze = 0, youGlow = 0, pulse = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
+    var waves = [], arrivals = [], haze = 0, youGlow = 0, pulse = 0, phonesUp = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
     // Render quality steps down on its own when frames run slow: first fewer pixels, then a smaller crowd, and last a
     // steady 30 frames a second, which reads smoother than a stutter between 60 and 20
     var TIER = opts.tier || deviceTier(), PIXELS = TIER.pixels, QP = 1, QD = TIER.density, slowFor = 0, frameMs = 16, capMs = 0;
@@ -609,6 +609,13 @@
       }
 
     }
+    // How far this person's phone is up: everyone lifts theirs when the song starts and lowers it when it stops,
+    // each at their own moment, so the phones don't rise and fall as one
+    function phoneK(d) {
+      if (!d.phone) return 0;
+      var k = Math.max(0, Math.min(1, phonesUp * 1.6 - (((d.sway || d.ph || 0) * 0.37) % 1) * 0.6));
+      return k * k * (3 - 2 * k);
+    }
     // Someone seen from behind: back of the head, hair or pagdi, the choli or kediyu, the odhni falling down the back
     function backFigure(p, d, T0, running) {
       FOGF = 0;
@@ -633,7 +640,7 @@
           if (!d.phone && !d.kid) { if (gc < 1.2) grooveUp = true; else if (gc > 3 && gc < 4.6) clapOver = Math.pow(Math.abs(Math.cos(BEAT * Math.PI)), 4); }
         } else x += Math.sin(T0 * 0.8 + (d.sway || 0)) * h * 0.02;
       }
-      var armsUp = d.armsUp || grooveUp || clapOver > 0, upWave = reduce || clapOver > 0 ? 0 : Math.sin(T0 * 12 + (d.ph || 0) * 5) * h * 0.025;
+      var pk = phoneK(d), armsUp = d.armsUp || grooveUp || clapOver > 0, upWave = reduce || clapOver > 0 ? 0 : Math.sin(T0 * 12 + (d.ph || 0) * 5) * h * 0.025;
       // Arms raised: apart and waving for a cheer, drawing together until the hands meet overhead for a clap
       var spread0 = clapOver > 0 ? 1 - clapOver : 1;
       var upE = [x - h * (0.1 + 0.05 * spread0), hip - h * 0.35, x + h * (0.1 + 0.05 * spread0)], upH = [x - h * (0.015 + 0.155 * spread0) + upWave, x + h * (0.015 + 0.155 * spread0) - upWave];
@@ -662,7 +669,7 @@
         }
         else seg([x - h * 0.085, sh + h * 0.02], [x - h * 0.11, sh + h * 0.13], aw, aw * 0.9, slvL), seg([x - h * 0.11, sh + h * 0.13], [x - h * 0.12, hip - h * 0.02], aw * 0.9, aw * 0.75, skL);
         if (armsUp) { /* drawn above */ }
-        else if (d.phone) { seg([x + h * 0.085, sh + h * 0.02], [x + h * 0.12, sh - h * 0.06], aw, aw * 0.9, slvR); seg([x + h * 0.12, sh - h * 0.06], [x + h * 0.1, sh - h * 0.16], aw * 0.9, aw * 0.75, skR); }
+        else if (d.phone) { var pe = [x + h * lerp(0.11, 0.12, pk), sh + h * lerp(0.13, -0.06, pk)], ph1 = [x + h * lerp(0.12, 0.1, pk), lerp(hip - h * 0.02, sh - h * 0.16, pk)]; seg([x + h * 0.085, sh + h * 0.02], pe, aw, aw * 0.9, slvR); seg(pe, ph1, aw * 0.9, aw * 0.75, skR); }
         else { seg([x + h * 0.085, sh + h * 0.02], [x + h * 0.11, sh + h * 0.13], aw, aw * 0.9, slvR); seg([x + h * 0.11, sh + h * 0.13], [x + h * 0.12, hip - h * 0.02], aw * 0.9, aw * 0.75, skR); }
         if (!d.man) { g.strokeStyle = '#c0392b'; g.lineWidth = Math.max(1, h * 0.008); g.beginPath(); g.moveTo(x - h * 0.135, hip - h * 0.06); g.lineTo(x - h * 0.105, hip - h * 0.06); g.stroke(); g.strokeStyle = '#e8b04b'; g.beginPath(); g.moveTo(x - h * 0.135, hip - h * 0.045); g.lineTo(x - h * 0.105, hip - h * 0.045); g.stroke(); }
       } else {
@@ -671,10 +678,10 @@
       if (armsUp) { g.moveTo(x - h * 0.085, sh + h * 0.02); g.lineTo(upE[0], upE[1]); g.lineTo(upH[0], sh - h * 0.21); g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(upE[2], upE[1]); g.lineTo(upH[1], sh - h * 0.21); }
       else { g.moveTo(x - h * 0.085, sh + h * 0.02); g.lineTo(x - h * 0.12, hip - h * 0.02); }
       if (armsUp) { /* both drawn */ }
-      else if (d.phone) { g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(x + h * 0.1, sh - h * 0.16); } else { g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(x + h * 0.12, hip - h * 0.02); }
+      else { g.moveTo(x + h * 0.085, sh + h * 0.02); g.lineTo(x + h * lerp(0.12, 0.1, pk), lerp(hip - h * 0.02, sh - h * 0.16, pk)); }
       g.stroke();
       }
-      if (d.phone && d.video) {
+      if (pk > 0.85 && d.video) {
         // Held sideways to record: the screen shows the stage lights, with the red recording dot
         var pw0 = h * (d.gimbal ? 0.13 : 0.11), ph0 = pw0 * 0.56, px0 = x + h * 0.1 - pw0 / 2, py0 = sh - h * 0.25;
         if (d.gimbal) { g.strokeStyle = '#1a1a1a'; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(x + h * 0.1, sh - h * 0.16); g.lineTo(x + h * 0.1, py0 + ph0); g.stroke(); }
@@ -684,7 +691,7 @@
         g.fillStyle = 'rgba(255,240,210,.8)'; g.fillRect(px0 + pw0 * 0.3, py0 + ph0 * 0.55, pw0 * 0.4, ph0 * 0.2);
         if (Math.sin(T0 * 4 + (d.sway || 0)) > -0.3) { g.fillStyle = '#ff3b30'; g.beginPath(); g.arc(px0 + pw0 * 0.14, py0 + ph0 * 0.22, Math.max(0.8, ph0 * 0.12), 0, TAU); g.fill(); }
         glow(x + h * 0.1, py0 + ph0 / 2, Math.max(1, h * 0.05), '#eaf3ff', 0.35);
-      } else if (d.phone) { g.fillStyle = 'rgba(200,225,255,.95)'; g.fillRect(x + h * 0.075, sh - h * 0.25, h * 0.05, h * 0.09); glow(x + h * 0.1, sh - h * 0.2, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
+      } else if (pk > 0.5) { var py1 = lerp(hip - h * 0.1, sh - h * 0.25, pk); g.fillStyle = 'rgba(200,225,255,.95)'; g.fillRect(x + h * 0.075, py1, h * 0.05, h * 0.09); glow(x + h * 0.1, py1 + h * 0.05, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5 * pk); }
       // Odhni falling from one shoulder down the back: a sheet of cloth with a gold border when you're close
       if (!d.man && rich) {
         var oc = d.odhni || d.top, ob = hip + (sit ? -h * 0.02 : h * 0.17), sway0 = reduce ? 0 : Math.sin(T0 * 1.4 + (d.sway || 0)) * h * 0.012;
@@ -859,7 +866,7 @@
       });
       // Trees beyond the stage go behind it; the rest are sorted in with the crowd
       layout('outdoors').trees.filter(function (tr) { return tr.z >= 44; }).sort(function (a, b) { return b.z - a.z; }).forEach(function (tr) { drawTree(tr, t); });
-      stage({ x0: -11, x1: 11, z: 46, h: 1.6, screenTop: 8.5, truss: 10.5, arrays: 13 }, t, 'outdoors');
+      stage({ x0: -11, x1: 11, z: 46, h: 1.6, screenTop: 8.5, truss: 10.5, arrays: 13, sponsors: 3, sideScreens: true }, t, 'outdoors');
       // Delay speaker towers halfway down the ground, so the back of the crowd hears the band on time
       [-21, 21].forEach(function (x) { speakerPole(x, 16, 6); });
     }
@@ -877,7 +884,7 @@
     function stage(o, t, id) {
       // A deck deep enough to stage the band: singers down at the front, the players on a riser behind them, the screen at the back
       var zF = o.z, depth = o.depth || 3.2, zB = o.z + depth, rH = 0.4, rz0 = zF + depth * 0.45, close = st.listener === 'stage' || st.dj;
-      // The front of the deck: a pleated maroon skirt, a gold trim along the edge, and steps up in the middle
+      // The front of the deck: a pleated maroon skirt, a gold trim along the edge, and steps up at each end
       fillPoly([[o.x0, 0, zF], [o.x1, 0, zF], [o.x1, o.h, zF], [o.x0, o.h, zF]], '#2a0c12');
       var fa = P(o.x0, o.h, zF), fb = P(o.x1, o.h, zF), fg0 = P(o.x0, 0, zF);
       // (Pleats only at full quality; a device that has had to step down gets the plain skirt)
@@ -888,7 +895,27 @@
         pgr.addColorStop(1, 'rgba(0,0,0,.32)'); g.fillStyle = pgr; g.fillRect(fa.x, fa.y, fb.x - fa.x, fg0.y - fa.y);
       }
       if (fa && fb) { g.strokeStyle = '#c9963f'; g.lineWidth = Math.max(1, fa.s * 0.05); g.beginPath(); g.moveTo(fa.x, fa.y + fa.s * 0.03); g.lineTo(fb.x, fb.y + fb.s * 0.03); g.stroke(); }
-      for (var stp = 0; stp < 3; stp++) { var sy0 = o.h * stp / 3, sy1 = o.h * (stp + 1) / 3, sz = zF - 0.9 + stp * 0.3; fillPoly([[-1.3, sy0, sz], [1.3, sy0, sz], [1.3, sy1, sz], [-1.3, sy1, sz]], stp % 2 ? '#3a1a14' : '#44201a'); fillPoly([[-1.3, sy1, sz], [1.3, sy1, sz], [1.3, sy1, sz + 0.3], [-1.3, sy1, sz + 0.3]], '#5a2c20'); }
+      // Between the two flights, the sponsors' blocks set into the skirt: blank lit panels until sponsors are signed
+      if (o.sponsors) {
+        var spx0 = o.x0 + 2.9, spx1 = o.x1 - 2.9, gap = 0.7, spw = (spx1 - spx0 - gap * (o.sponsors - 1)) / o.sponsors;
+        for (var sp = 0; sp < o.sponsors; sp++) { var sxa = spx0 + sp * (spw + gap); litPanel(sxa, o.h * 0.14, sxa + spw, o.h * 0.84, zF - 0.02); }
+      }
+      // A flight of steps at each end of the deck, its inner side showing as a stepped stringer with a rail above
+      [-1, 1].forEach(function (sd) {
+        var ax = sd < 0 ? o.x0 + 0.5 : o.x1 - 2.3, bx = ax + 1.8, inner = sd < 0 ? bx : ax, n = 4, tread = 0.9 / n;
+        var stringer = [[inner, 0, zF - 0.9]];
+        for (var sk = 0; sk < n; sk++) { stringer.push([inner, o.h * (sk + 1) / n, zF - 0.9 + sk * tread]); stringer.push([inner, o.h * (sk + 1) / n, zF - 0.9 + (sk + 1) * tread]); }
+        stringer.push([inner, 0, zF]);
+        fillPoly(stringer, '#1f0c0d');
+        for (var stp = 0; stp < n; stp++) {
+          var sy0 = o.h * stp / n, sy1 = o.h * (stp + 1) / n, sz = zF - 0.9 + stp * tread;
+          fillPoly([[ax, sy0, sz], [bx, sy0, sz], [bx, sy1, sz], [ax, sy1, sz]], stp % 2 ? '#3a1a14' : '#44201a');
+          fillPoly([[ax, sy1, sz], [bx, sy1, sz], [bx, sy1, sz + tread], [ax, sy1, sz + tread]], '#5a2c20');
+          var nose = P(ax, sy1, sz), nose1 = P(bx, sy1, sz); if (nose && nose1) { g.strokeStyle = 'rgba(214,166,74,.7)'; g.lineWidth = Math.max(0.6, nose.s * 0.02); g.beginPath(); g.moveTo(nose.x, nose.y); g.lineTo(nose1.x, nose1.y); g.stroke(); }
+        }
+        var r0 = P(inner, 0.95, zF - 0.95), r1 = P(inner, o.h + 0.95, zF), rp0 = P(inner, 0, zF - 0.95), rp1 = P(inner, o.h, zF);
+        if (r0 && r1 && rp0 && rp1) { g.strokeStyle = '#c9963f'; g.lineWidth = Math.max(0.8, r0.s * 0.035); g.beginPath(); g.moveTo(r0.x, r0.y); g.lineTo(r1.x, r1.y); g.moveTo(rp0.x, rp0.y); g.lineTo(r0.x, r0.y); g.moveTo(rp1.x, rp1.y); g.lineTo(r1.x, r1.y); g.stroke(); }
+      });
       // The deck: dark and glossy, picking up the screen's colour towards the back
       if (poly([[o.x0, o.h, zF], [o.x1, o.h, zF], [o.x1, o.h, zB], [o.x0, o.h, zB]])) {
         var d0 = P(0, o.h, zF), d1 = P(0, o.h, zB);
@@ -955,9 +982,11 @@
           fillPoly([[x - 0.7, y - 0.55, zz], [x + 0.7, y - 0.55, zz], [x + 0.7, y, zz], [x - 0.7, y, zz]], '#0b0909');
           var gp = P(x, y - 0.28, zz - 0.01); if (gp) { g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(gp.x - gp.s * 0.6, gp.y - gp.s * 0.12, gp.s * 1.2, gp.s * 0.24); }
         }
-        var sx = sd * (o.x1 - 2.5);
-        cabinet(sx - 0.4, 0, zF - 0.9, 0.78, 1.1); cabinet(sx + 0.4, 0, zF - 0.9, 0.78, 1.1); cabinet(sx, 1.1, zF - 0.9, 0.7, 0.55);
+        // The subs stand on the ground under their array, clear of the steps
+        var sx = sd * o.arrays;
+        cabinet(sx - 0.4, 0, zF - 0.4, 0.78, 1.1); cabinet(sx + 0.4, 0, zF - 0.4, 0.78, 1.1); cabinet(sx, 1.1, zF - 0.4, 0.7, 0.55);
       });
+      if (o.sideScreens) sideScreens(o, t, id);
       // Front edge of the stage: a line of bulbs, and marigold garlands swagged between them
       for (var fb = 0; fb <= 16; fb++) { var fp = P(lerp(o.x0, o.x1, fb / 16), o.h, zF - 0.02); if (fp) glow(fp.x, fp.y, Math.max(0.7, Math.min(2.2, fp.s * 0.07)), TH.bulbs[fb % TH.bulbs.length], (0.8 + 0.2 * pulse) * bright); }
       for (var sg = 0; sg < 8; sg++) {
@@ -992,6 +1021,56 @@
       }
       o.riserZ = zF + depth * 0.72; o.riserH = rH;
       bandOn(id, o.h, zF + 0.6, o);
+    }
+    /* ---------- the side screens ----------
+       Two LED screens flank the outdoor stage on truss legs, the way the big grounds show the stage to the back of the
+       crowd. They take turns: a sponsor's slide (blank until sponsors are signed), then a live close-up of the lead
+       singer from the waist up, mic and all. */
+    function sideScreens(o, t, id) {
+      var live = (band[id] || []).some(function (b) { return b.role === 'singer' && !b.waiting && !b.leaving; });
+      var y0 = 5, y1 = 9, z = o.z + 0.3, closeUp = st.on && !reduce && live ? Math.max(0, Math.min(1, (Math.abs(((t / 9) % 2) - 1) - 0.45) * 8 + 0.5)) : 0;
+      [-1, 1].forEach(function (sd) {
+        var xa = Math.min(sd * 14.4, sd * 21.4), xb = Math.max(sd * 14.4, sd * 21.4);
+        // Two lattice legs down to the ground
+        [xa + 0.7, xb - 0.7].forEach(function (lx) {
+          var lb = P(lx, 0, z + 0.2), lt = P(lx, y0, z + 0.2); if (!lb || !lt) return;
+          var lw = Math.max(1.5, lb.s * 0.3); g.strokeStyle = '#3d3844'; g.lineWidth = Math.max(0.6, lb.s * 0.04);
+          g.beginPath(); g.moveTo(lb.x - lw / 2, lb.y); g.lineTo(lt.x - lw / 2, lt.y); g.moveTo(lb.x + lw / 2, lb.y); g.lineTo(lt.x + lw / 2, lt.y);
+          var nz = Math.max(3, Math.round((lb.y - lt.y) / lw)); for (var k = 0; k < nz; k++) { g.moveTo(lb.x + (k % 2 ? lw : -lw) / 2, lerp(lb.y, lt.y, k / nz)); g.lineTo(lb.x + (k % 2 ? -lw : lw) / 2, lerp(lb.y, lt.y, (k + 1) / nz)); }
+          g.stroke();
+        });
+        fillPoly([[xa - 0.25, y0 - 0.25, z + 0.02], [xb + 0.25, y0 - 0.25, z + 0.02], [xb + 0.25, y1 + 0.25, z + 0.02], [xa - 0.25, y1 + 0.25, z + 0.02]], '#0b0a0d');
+        if (closeUp < 1) litPanel(xa, y0, xb, y1, z);
+        if (closeUp > 0) { g.save(); g.globalAlpha = closeUp; singerCloseUp(id, xa, y0, xb, y1, z, t); g.restore(); }
+      });
+    }
+    function singerCloseUp(id, x0, y0, x1, y1, z, t) {
+      var a = P(x0, y0, z), b2 = P(x1, y0, z), tp = P(x0, y1, z); if (!a || !b2 || !tp) return;
+      var rx = a.x, ry = tp.y, rw = b2.x - a.x, rh = a.y - tp.y;
+      if (rw < 24 || rx > W || rx + rw < 0 || ry > H || ry + rh < 0) return;
+      var m = null; (band[id] || []).forEach(function (b) { if (b.role === 'singer' && !b.waiting && !b.leaving && (!m || (b.lineupIndex || 0) < (m.lineupIndex || 0))) m = b; });
+      g.save(); g.beginPath(); g.rect(rx, ry, rw, rh); g.clip();
+      var bg = g.createLinearGradient(0, ry, 0, ry + rh); bg.addColorStop(0, 'hsl(' + TH.hues[0] + ',' + TH.sat * 0.6 + '%,' + (16 + 6 * pulse) + '%)'); bg.addColorStop(1, '#120b0a');
+      g.fillStyle = bg; g.fillRect(rx, ry, rw, rh);
+      if (m) {
+        // From the waist up, the head a third of the way down the screen, swaying a little as a camera operator follows
+        var Hh = rh * 1.9, cx = rx + rw / 2 + (reduce ? 0 : Math.sin(t * 0.7) * rw * 0.03), py = ry + rh * 2.0;
+        performer({ x: cx, y: py, s: Hh / m.h }, m, 0, BEAT);
+        var hy = py - Hh * 0.885 - (m.hopK || 0) * Hh * 0.13, img = m.faceUrl ? faceImg(m.faceUrl) : null;
+        if (!img && !m.faceUrl && !m.lineup) for (var fi = 0; fi < faces.length; fi++) if (faces[fi].img && faces[fi].man === !!m.man) { img = faces[fi].img; break; }
+        if (img) { var ih = Hh * 0.3, iw = ih * (img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1); g.drawImage(img, cx - iw / 2, hy - ih * 0.58, iw, ih); }
+        handMic(m);
+      }
+      if (rh > 20) { g.fillStyle = ledGrid() || 'rgba(0,0,0,0)'; g.globalAlpha *= 0.2; g.fillRect(rx, ry, rw, rh); }
+      g.restore();
+    }
+    // A sponsor's panel: a lit box with a thin gold frame. It stays blank until a sponsor is signed.
+    function litPanel(x0, y0, x1, y1, z) {
+      if (!poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]])) return;
+      var b = P((x0 + x1) / 2, y0, z), tp = P((x0 + x1) / 2, y1, z);
+      if (b && tp && b.y - tp.y > 1) { var gr = g.createLinearGradient(0, tp.y, 0, b.y); gr.addColorStop(0, 'rgba(236,224,200,.92)'); gr.addColorStop(0.55, 'rgba(206,190,160,.9)'); gr.addColorStop(1, 'rgba(168,150,120,.9)'); g.fillStyle = gr; } else g.fillStyle = 'rgba(206,190,160,.9)';
+      g.fill();
+      g.strokeStyle = '#c9963f'; g.lineWidth = Math.max(0.8, (b ? b.s : 4) * 0.035); g.stroke();
     }
     // The big screen behind the band carries a live aerial shot of the ground, as if a drone were circling over
     // the garbo. When it's too small to read it shows a mandala that breathes with the beat instead.
@@ -1293,7 +1372,7 @@
       return inBurst ? Math.sin(Math.PI * (now - burst.at) / 3.2) : 0;
     }
     // Shift on a keyboard cues the singers: each press, the next move from a shuffled set, so every move comes round
-    var SINGER_MOVES = ['hop', 'spin', 'point', 'clapup', 'dance', 'wave'], moveBag = [];
+    var SINGER_MOVES = ['hop', 'spin', 'point', 'clapup', 'dance', 'wave', 'crowd', 'taali'], moveBag = [];
     function swapSingers() {
       var ss = (band[st.venue] || []).filter(function (m) { return m.role === 'singer' && !m.leaving && !m.waiting && !m.entering; });
       if (reduce) return;
@@ -1371,6 +1450,7 @@
           g.globalAlpha = wingA;
           performer(p, m, i, BEAT);
           faceOn(p.y - m.h * p.s * 0.885 - (m.hopK || 0) * m.h * p.s * 0.13);
+          handMic(m);
           g.globalAlpha = 1;
           if (m.role === 'singer' && !m.leaving) micStand(m.x - 0.25, by, bz - 0.35);
           return;
@@ -1380,6 +1460,7 @@
         if (m.role === 'keys') fillPoly([[m.x - 0.6, by + 0.85, bz - 0.3], [m.x + 0.6, by + 0.85, bz - 0.3], [m.x + 0.6, by + 0.95, bz - 0.3], [m.x - 0.6, by + 0.95, bz - 0.3]], '#111');
         figure(p, m, T, false, BEAT, 1);
         faceOn(p.y - m.h * p.s * (m.dancing ? 0.9 : 0.885) - Math.abs(Math.sin(BEAT * Math.PI)) * m.h * p.s * 0.01);
+        handMic(m);
         if (m.role === 'dhol') {
           var dp = P(m.x, by + 0.9, bz - 0.25);
           if (dp && close) {
@@ -1664,12 +1745,8 @@
 
       /* What's in their hands */
       if (d.role === 'singer') {
-        // The handheld mic: black body, a silver grille that catches the light
-        var mx0 = lh[0], my0 = lh[1], ang = -1.1;
-        g.strokeStyle = '#1b1b1d'; g.lineWidth = Math.max(1.4, h * 0.022); g.beginPath(); g.moveTo(mx0 + Math.cos(ang + Math.PI) * h * 0.05, my0 + Math.sin(ang + Math.PI) * h * 0.05); g.lineTo(mx0 + Math.cos(ang) * h * 0.035, my0 + Math.sin(ang) * h * 0.035); g.stroke();
-        var gx = mx0 + Math.cos(ang) * h * 0.05, gy = my0 + Math.sin(ang) * h * 0.05, gr0 = g.createRadialGradient(gx - h * 0.006, gy - h * 0.006, 0.5, gx, gy, h * 0.022); gr0.addColorStop(0, '#f4f4f6'); gr0.addColorStop(1, '#6b6f75');
-        g.fillStyle = gr0; g.beginPath(); g.arc(gx, gy, h * 0.02, 0, TAU); g.fill();
-        g.strokeStyle = '#111'; g.lineWidth = Math.max(0.8, h * 0.004); g.beginPath(); g.moveTo(mx0 - h * 0.02, my0 + h * 0.04); g.quadraticCurveTo(mx0 - h * 0.05, y - h * 0.3, x - h * 0.2, groundY); g.stroke();
+        // The handheld mic is drawn after the singer's face, in front of it: see handMic
+        holdMic(d, lh, x, headY, hr, h, skinC);
       }
       if (d.role === 'dhol') {
         // The dhol slung across the waist: lacquered barrel, laced ropes with brass rings, a head at each end,
@@ -1694,7 +1771,35 @@
       if (d.flash > 0.05) glow(x, shy - h * 0.27, Math.max(1, h * 0.03 * (1 + d.flash)), '#fff0d0', d.flash);
       g.restore();
     }
-    // A mic on a boom stand: tripod legs, the pole, the boom arm, and the mic in its clip
+    // Where the singer's mic is this frame: singing, its head sits just under the mouth, tilted up to it; with the song
+    // stopped it hangs from the hand; held out to the crowd it points at them; clapping overhead it points up
+    function holdMic(d, hd, x, headY, hr, h, skin) {
+      var ang;
+      if (d.idle || !st.on) ang = 1.95;
+      else if (d.pose === 'crowd' && d.poseK > 0.5) ang = Math.PI * 0.88;
+      else if ((d.pose === 'clapup' && d.poseK > 0.5) || d.dancing) ang = -Math.PI / 2 - 0.25;
+      else { var mx = x + hr * 0.1 - hd[0], my = headY + hr * 0.62 - hd[1]; ang = Math.atan2(my, mx); }
+      d.mic = { x: hd[0], y: hd[1], ang: ang, h: h, skin: skin };
+    }
+    // The handheld mic, drawn over the singer's face so a cut-out head never hides it: a slim black handle with a
+    // gold ring, a silver grille that catches the light, and the fingers closed round the handle
+    function handMic(d) {
+      var m = d.mic; if (!m) return;
+      var h = m.h, c = Math.cos(m.ang), s0 = Math.sin(m.ang), hx = m.x, hy = m.y;
+      var bx = hx - c * h * 0.035, by = hy - s0 * h * 0.035, tx = hx + c * h * 0.045, ty = hy + s0 * h * 0.045, gx = hx + c * h * 0.062, gy = hy + s0 * h * 0.062;
+      g.lineCap = 'round';
+      g.strokeStyle = '#18181b'; g.lineWidth = Math.max(1.2, h * 0.02); g.beginPath(); g.moveTo(bx, by); g.lineTo(tx, ty); g.stroke();
+      g.strokeStyle = '#d6a64a'; g.lineWidth = Math.max(0.8, h * 0.023); g.beginPath(); g.moveTo(hx + c * h * 0.04, hy + s0 * h * 0.04); g.lineTo(tx, ty); g.stroke();
+      var gr = h * 0.021, gg = g.createRadialGradient(gx - gr * 0.35, gy - gr * 0.4, gr * 0.1, gx, gy, gr);
+      gg.addColorStop(0, '#fbfbfd'); gg.addColorStop(0.55, '#b8bcc2'); gg.addColorStop(1, '#55595f');
+      g.fillStyle = gg; g.beginPath(); g.arc(gx, gy, gr, 0, TAU); g.fill();
+      if (gr > 3) { g.strokeStyle = 'rgba(40,42,46,.45)'; g.lineWidth = Math.max(0.5, gr * 0.08); g.beginPath(); g.moveTo(gx - gr, gy); g.lineTo(gx + gr, gy); g.moveTo(gx, gy - gr); g.lineTo(gx, gy + gr); g.stroke(); }
+      if (st.on) glow(gx - gr * 0.3, gy - gr * 0.3, Math.max(0.6, gr * 0.3), '#ffffff', 0.35 * bright);
+      g.fillStyle = m.skin; g.beginPath(); g.ellipse(hx, hy, h * 0.022, h * 0.017, m.ang, 0, TAU); g.fill();
+      if (h > 90) { g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = Math.max(0.5, h * 0.003); for (var f = -1; f <= 1; f++) { g.beginPath(); g.moveTo(hx - s0 * h * 0.02 + c * f * h * 0.008, hy + c * h * 0.02 + s0 * f * h * 0.008); g.lineTo(hx + s0 * h * 0.004 + c * f * h * 0.008, hy - c * h * 0.004 + s0 * f * h * 0.008); g.stroke(); } }
+      d.mic = null;
+    }
+    // A boom stand at each singer's spot, its clip empty: the mic is in their hand
     function micStand(x, y, z) {
       var base = P(x, y, z), top = P(x, y + 1.35, z); if (!base || !top) return;
       var s = base.s, lw = Math.max(0.8, s * 0.018);
@@ -1702,7 +1807,7 @@
       g.beginPath(); g.moveTo(base.x - s * 0.2, base.y + s * 0.02); g.lineTo(base.x, base.y - s * 0.12); g.lineTo(base.x + s * 0.2, base.y + s * 0.02); g.moveTo(base.x, base.y - s * 0.12); g.lineTo(base.x + s * 0.03, base.y + s * 0.05); g.stroke();
       g.beginPath(); g.moveTo(base.x, base.y - s * 0.12); g.lineTo(top.x, top.y); g.lineTo(top.x + s * 0.3, top.y - s * 0.12); g.stroke();
       g.fillStyle = '#2b2b2f'; g.beginPath(); g.arc(top.x, top.y, Math.max(1, s * 0.025), 0, TAU); g.fill();
-      if (s > 40) { var gr0 = g.createRadialGradient(top.x + s * 0.3, top.y - s * 0.14, 0.5, top.x + s * 0.32, top.y - s * 0.12, s * 0.045); gr0.addColorStop(0, '#f2f2f4'); gr0.addColorStop(1, '#5d6066'); g.fillStyle = gr0; g.beginPath(); g.arc(top.x + s * 0.33, top.y - s * 0.13, s * 0.035, 0, TAU); g.fill(); }
+      if (s > 40) { g.strokeStyle = '#2b2b2f'; g.lineWidth = Math.max(0.8, s * 0.012); g.beginPath(); g.arc(top.x + s * 0.32, top.y - s * 0.13, s * 0.022, 0.4, TAU - 0.4); g.stroke(); }
     }
     // The DJ's booth: a table draped in bandhani, a laptop, a controller that blinks on the beat, a steel jug of chhas
     // and a stack of cups. The DJ sits behind it on a stool, headphones round the neck, sipping chhas from a paper cup.
@@ -2015,7 +2120,7 @@
         return;
       }
       if (reduce) { m.cx = m.x; m.act = 'sing'; m.walking = false; m.dancing = false; m.cheer = 0; m.twirl = 0; return; }
-      var MOVE_LEN = { hop: 1.5, spin: 2.2, point: 2, clapup: 2.6, dance: 4, wave: 2.2 };
+      var MOVE_LEN = { hop: 1.5, spin: 2.2, point: 2, clapup: 2.6, dance: 4, wave: 2.2, crowd: 3.2, taali: 3.6 };
       if (m.cue && now >= m.cue.at) {
         // Changing sides for a new song: each singer walks across to where the other stood, mirrored across the stage
         if (m.cue.act === 'swap') { m.act = 'walk'; m.tx = m.lane ? lo + hi - m.cx : Math.max(lo, Math.min(hi, lo + hi - m.cx)); m.t0 = now; m.until = now + 6; m.cued = true; }
@@ -2025,22 +2130,24 @@
       if (now > m.until || (!m.cued && ((!st.on && m.act !== 'idle') || (st.on && m.act === 'idle')))) {
         // Each singer does their own thing: a move someone else is already doing is picked again
         var r = rnd(), busy = singers.filter(function (x) { return x !== m && x.act !== 'sing' && x.act !== 'walk'; }).map(function (x) { return x.act; });
-        var pick = function (r0) { return r0 < 0.34 ? 'walk' : r0 < 0.46 ? 'dance' : r0 < 0.56 ? 'wave' : r0 < 0.62 ? 'hop' : r0 < 0.68 ? 'spin' : r0 < 0.74 ? 'point' : r0 < 0.8 ? 'clapup' : 'sing'; };
+        var pick = function (r0) { return r0 < 0.28 ? 'walk' : r0 < 0.38 ? 'dance' : r0 < 0.46 ? 'wave' : r0 < 0.51 ? 'hop' : r0 < 0.56 ? 'spin' : r0 < 0.61 ? 'point' : r0 < 0.66 ? 'clapup' : r0 < 0.72 ? 'crowd' : r0 < 0.79 ? 'taali' : 'sing'; };
         for (var tries0 = 0; tries0 < 4 && busy.indexOf(pick(r)) >= 0; tries0++) r = rnd();
         m.cued = false; m.t0 = now;
         if (!st.on) { m.act = 'idle'; m.until = now + 3 + rnd() * 4; }
-        else if (r < 0.34) {
+        else if (r < 0.28) {
           // A new spot in their own lane, a good step from where they are
           m.act = 'walk'; var tx, tries = 0;
           do { tx = lerp(lo, hi, rnd()); } while (tries++ < 8 && Math.abs(tx - m.cx) < (hi - lo) * 0.3);
           m.tx = tx; m.until = now + 6;
         }
-        else if (r < 0.46) { m.act = 'dance'; m.until = now + 3.5 + rnd() * 2.5; }
-        else if (r < 0.56) { m.act = 'wave'; m.until = now + 1.8 + rnd() * 1.5; }
-        else if (r < 0.62) { m.act = 'hop'; m.until = now + MOVE_LEN.hop; }
-        else if (r < 0.68) { m.act = 'spin'; m.until = now + MOVE_LEN.spin; }
-        else if (r < 0.74) { m.act = 'point'; m.until = now + MOVE_LEN.point; }
-        else if (r < 0.8) { m.act = 'clapup'; m.until = now + MOVE_LEN.clapup; }
+        else if (r < 0.38) { m.act = 'dance'; m.until = now + 3.5 + rnd() * 2.5; }
+        else if (r < 0.46) { m.act = 'wave'; m.until = now + 1.8 + rnd() * 1.5; }
+        else if (r < 0.51) { m.act = 'hop'; m.until = now + MOVE_LEN.hop; }
+        else if (r < 0.56) { m.act = 'spin'; m.until = now + MOVE_LEN.spin; }
+        else if (r < 0.61) { m.act = 'point'; m.until = now + MOVE_LEN.point; }
+        else if (r < 0.66) { m.act = 'clapup'; m.until = now + MOVE_LEN.clapup; }
+        else if (r < 0.72) { m.act = 'crowd'; m.until = now + MOVE_LEN.crowd; }
+        else if (r < 0.79) { m.act = 'taali'; m.until = now + MOVE_LEN.taali; }
         else { m.act = 'sing'; m.until = now + 3 + rnd() * 4; m.gest = rnd(); }
       }
       // Walking along the front at an easy pace, legs stepping
@@ -2059,8 +2166,8 @@
       var mu = m.t0 != null && m.until > m.t0 ? Math.max(0, Math.min(1, (now - m.t0) / (m.until - m.t0))) : 1, env = Math.sin(Math.PI * mu);
       m.hopK = m.act === 'hop' ? Math.abs(Math.sin(mu * Math.PI * 3)) * env : 0;
       if (m.act === 'spin') { m.twirl = Math.max(m.twirl, env); m.spinK = env; } else m.spinK = 0;
-      m.pose = m.act === 'point' || m.act === 'clapup' ? m.act : null; m.poseK = m.pose ? Math.min(1, env * 1.6) : 0;
-      if (m.act === 'clapup') { var cb = Math.floor(BEAT); if (cb !== m.lastClap) { m.lastClap = cb; m.flash = 1; } }
+      m.pose = m.act === 'point' || m.act === 'clapup' || m.act === 'crowd' || m.act === 'taali' ? m.act : null; m.poseK = m.pose ? Math.min(1, env * 1.6) : 0;
+      if (m.act === 'clapup' || m.act === 'taali') { var cb = Math.floor(BEAT); if (cb !== m.lastClap) { m.lastClap = cb; m.flash = m.act === 'taali' ? 0.6 : 1; } }
       m.cx = m.lane ? Math.max(lo - 0.15, Math.min(hi + 0.15, m.cx)) : Math.max(lo - 0.6, Math.min(hi + 0.6, m.cx));
     }
     function speakerPole(x, z, h) {
@@ -2153,14 +2260,11 @@
           fillPoly([[bx - sd * 0.01, 5.1, bz - 0.8], [bx - sd * 0.01, 5.1, bz + 0.8], [bx - sd * 0.01, 4.9, bz + 0.8], [bx - sd * 0.01, 4.9, bz - 0.8]], '#e8b04b');
           var ex = P(sd * 25.05, 1.9, bz + 5); if (ex) { var es = Math.max(2, ex.s * 0.5); g.fillStyle = '#1f8f4b'; g.fillRect(ex.x - es / 2, ex.y - es * 0.3, es, es * 0.6); }
         }
-        // Big screens hung from the girders in the far corners, below the shamiana's edge
-        if (poly([[sd * 33, 7.4, 40], [sd * 23, 7.4, 40], [sd * 23, 10.9, 40], [sd * 33, 10.9, 40]])) {
-          var sc = P(sd * 28, 9.15, 40), sw = P(sd * 33, 9.15, 40);
-          var lg = g.createLinearGradient(sw.x, 0, sc.x, 0); lg.addColorStop(0, 'hsl(' + TH.hues[0] + ',' + TH.sat + '%,' + (14 + 6 * bright) + '%)'); lg.addColorStop(1, 'hsl(' + TH.hues[TH.hues.length - 1] + ',' + TH.sat + '%,' + (20 + 10 * pulse) + '%)');
-          g.fillStyle = lg; g.fill();
-          if (sc) { g.strokeStyle = 'rgba(255,236,200,' + (0.25 + 0.3 * pulse) + ')'; g.lineWidth = 1; g.beginPath(); g.arc(sc.x, sc.y, sc.s * 1.8, 0, TAU); g.stroke(); }
-          [24, 32].forEach(function (cx) { var c0 = P(sd * cx, 10.9, 40), c1 = P(sd * cx, 16.1, 40); if (c0 && c1) { g.strokeStyle = 'rgba(40,36,48,.9)'; g.lineWidth = 1; g.beginPath(); g.moveTo(c0.x, c0.y); g.lineTo(c1.x, c1.y); g.stroke(); } });
-        }
+        // Big screens hung from the girders in the far corners, below the shamiana's edge: the sponsors' screens, lit and
+        // blank until sponsors are signed
+        fillPoly([[sd * 33.25, 7.2, 40.02], [sd * 22.75, 7.2, 40.02], [sd * 22.75, 11.1, 40.02], [sd * 33.25, 11.1, 40.02]], '#0d0b10');
+        litPanel(Math.min(sd * 33, sd * 23), 7.4, Math.max(sd * 33, sd * 23), 10.9, 40);
+        [24, 32].forEach(function (cx) { var c0 = P(sd * cx, 11.1, 40), c1 = P(sd * cx, 16.1, 40); if (c0 && c1) { g.strokeStyle = 'rgba(40,36,48,.9)'; g.lineWidth = 1; g.beginPath(); g.moveTo(c0.x, c0.y); g.lineTo(c1.x, c1.y); g.stroke(); } });
       });
     }
     var standsCache = null, standsKey = '';
@@ -2370,6 +2474,8 @@
       // House fronts on both sides, far to near
       var hs = L.houses.slice().sort(function (a, b) { return b.z1 - a.z1; });
       hs.forEach(function (h) { house(h, t); });
+      // Flex banners tied on the house fronts, the way a society's garba shows its sponsors: blank until they're signed
+      [[-1, 3.5, 8.5], [1, 5, 10], [-1, 34, 38.5], [1, 36, 40.5]].forEach(function (fb) { flexBanner(fb[0] * 7.96, fb[1], fb[2], 2.5, 3.8); });
       // Street lamps on brackets, each throwing a pool of warm light
       for (var lz = 62; lz >= -20; lz -= 14) [-1, 1].forEach(function (sd, k) {
         var z0 = lz + k * 7, arm0 = P(sd * 8, 5.2, z0), arm1 = P(sd * 6.6, 5.2, z0), pool = P(sd * 5.8, 0, z0);
@@ -2409,6 +2515,16 @@
       g.fillStyle = '#6b1020'; g.beginPath(); g.moveTo(va.x, va.y); g.lineTo(vb.x, va.y); for (var k2 = n; k2 > 0; k2--) { var xr = va.x + k2 * sw, xl = xr - sw; g.lineTo(xr, va.y + dp * 0.6); g.quadraticCurveTo((xl + xr) / 2, va.y + dp * 1.4, xl, va.y + dp * 0.6); } g.closePath(); g.fill();
       g.strokeStyle = '#d6a64a'; g.lineWidth = Math.max(0.8, va.s * 0.04); g.beginPath(); for (var k3 = 0; k3 < n; k3++) { var xl2 = va.x + k3 * sw; g.moveTo(xl2, va.y + dp * 0.6); g.quadraticCurveTo(xl2 + sw / 2, va.y + dp * 1.4, xl2 + sw, va.y + dp * 0.6); } g.stroke();
       for (var k4 = 0; k4 <= 28; k4++) { var tq = P(lerp(-3.4, 3.4, k4 / 28), hgt - 0.02, 63.86); if (!tq) continue; g.fillStyle = k4 % 3 ? '#f29a2e' : '#f6c342'; g.beginPath(); g.arc(tq.x, tq.y, Math.max(0.9, tq.s * 0.06), 0, TAU); g.fill(); if (k4 % 4 === 2) { g.fillStyle = '#2f8f5b'; g.beginPath(); g.moveTo(tq.x - tq.s * 0.05, tq.y); g.lineTo(tq.x + tq.s * 0.05, tq.y); g.lineTo(tq.x, tq.y + tq.s * 0.22); g.closePath(); g.fill(); } }
+    }
+    function flexBanner(X, z0, z1, y0, y1) {
+      if (z1 < cam.z + NEAR) return;
+      if (!poly([[X, y0, z0], [X, y0, z1], [X, y1, z1], [X, y1, z0]])) return;
+      var a = P(X, y0, z0), b = P(X, y1, z0);
+      if (a && b && a.y - b.y > 1) { var fg = g.createLinearGradient(0, b.y, 0, a.y); fg.addColorStop(0, '#e7dfcf'); fg.addColorStop(1, '#bfb49f'); g.fillStyle = fg; } else g.fillStyle = '#d6ccb8';
+      g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; g.stroke();
+      // A brass eyelet at each corner, tied to the wall
+      [[y0, z0], [y0, z1], [y1, z1], [y1, z0]].forEach(function (c) { var e = P(X, c[0] + (c[0] === y0 ? 0.08 : -0.08), c[1] + (c[1] === z0 ? 0.12 : -0.12)); if (e && e.s > 6) { g.fillStyle = '#9a7a3a'; g.beginPath(); g.arc(e.x, e.y, Math.max(0.6, e.s * 0.025), 0, TAU); g.fill(); } });
     }
     function house(h, t) {
       var X = h.side * 8;
@@ -2675,8 +2791,9 @@
       var le, lh, re, rh;
       if (d.role === 'singer' && d.idle) { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.08, shy + h * 0.27]; var tk2 = reduce ? 0 : Math.max(0, Math.sin(T * 1.7 + d.ph)); re = [x + h * 0.13, shy + h * 0.12]; rh = [x + h * (0.12 + 0.06 * tk2), shy + h * (0.28 - 0.14 * tk2)]; }
       else if (d.role === 'singer' && !d.dancing) {
-        // The mic in one hand; the other hand draws the phrase: an open palm, a reach to the crowd, a hand on the heart
-        le = [x - h * 0.13, shy + h * 0.12]; lh = [x - h * 0.03, shy - h * 0.09];
+        // The mic in one hand, held just under the chin; the other hand draws the phrase: an open palm, a reach to the
+        // crowd, a hand on the heart
+        le = [x - h * 0.14, shy + h * 0.1]; lh = [x - h * 0.05, shy + h * 0.005];
         if (d.cheer) { var wv = reduce ? 0 : Math.sin(T * 7) * h * 0.04; re = [x + h * 0.15, shy - h * 0.13]; rh = [x + h * 0.2 + wv, shy - h * 0.32]; }
         else { var gp = reduce ? 0 : Math.sin(T * 1.3 + d.ph) * 0.5 + Math.sin(T * 0.47 + d.ph * 2) * 0.5, g0 = (d.gest || 0) < 0.33 ? 0 : (d.gest || 0) < 0.66 ? 1 : 2;
           if (g0 === 2) { re = [x + h * 0.12, shy + h * 0.1]; rh = [x + h * 0.02, shy + h * (0.06 + 0.02 * gp)]; }
@@ -2697,7 +2814,7 @@
       else if (d.holding === 'tea') { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.12, shy + h * 0.16]; rh = [x + h * 0.07, shy + h * 0.06]; d.cupAt = rh; }
       else if (d.holding === 'phone') { le = [x - h * 0.11, shy + h * 0.14]; lh = [x - h * 0.02, shy + h * 0.12]; re = [x + h * 0.11, shy + h * 0.14]; rh = [x + h * 0.02, shy + h * 0.12]; }
       else if (d.sitting && !d.role) { le = [x - h * 0.11, shy + h * 0.15]; lh = [x - h * 0.06, shy + h * 0.29]; re = [x + h * 0.11, shy + h * 0.15]; rh = [x + h * 0.06, shy + h * 0.29]; }
-      else if (d.stander && d.phone) { le = [x - h * 0.13, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.1, shy - h * 0.06]; rh = [x + h * 0.06, shy - h * 0.2]; }
+      else if (d.stander && d.phone) { var fk = phoneK(d); le = [x - h * 0.13, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * lerp(0.11, 0.1, fk), shy + h * lerp(0.15, -0.06, fk)]; rh = [x + h * lerp(0.1, 0.06, fk), shy + h * lerp(0.28, -0.2, fk)]; }
       else if (d.stander && d.chat && Math.sin(T * 1.3 + d.sway) > 0.4) { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.13, shy + h * 0.3]; re = [x + h * 0.16, shy + h * 0.12]; rh = [x + h * 0.22, shy + h * (0.02 + 0.04 * Math.sin(T * 5 + d.sway))]; }
       else if (d.photo && !walking) { le = [x - h * 0.12, shy + h * 0.06]; lh = [x - h * 0.04, shy - h * 0.1]; re = [x + h * 0.12, shy + h * 0.06]; rh = [x + h * 0.04, shy - h * 0.1]; }
       else if (d.reach) { var rs = d.reach; le = [x + rs * h * 0.06, shy + h * 0.1]; lh = [x + rs * h * 0.24, shy + h * 0.08]; re = [x + rs * h * 0.16, shy + h * 0.06]; rh = [x + rs * h * 0.27, shy + h * 0.02]; }
@@ -2721,7 +2838,11 @@
       }
       if (d.pose && d.poseK > 0.02) {
         var pk = d.poseK;
-        if (d.pose === 'point') { re = [lerp(re[0], x + h * 0.17, pk), lerp(re[1], shy - h * 0.03, pk)]; rh = [lerp(rh[0], x + h * 0.31, pk), lerp(rh[1], shy - h * 0.13, pk)]; }
+        // The mic held out to the crowd to sing the line back, the free hand cupped to the ear to hear them
+        if (d.pose === 'crowd') { le = [lerp(le[0], x - h * 0.19, pk), lerp(le[1], shy + h * 0.02, pk)]; lh = [lerp(lh[0], x - h * 0.33, pk), lerp(lh[1], shy - h * 0.06, pk)]; re = [lerp(re[0], x + h * 0.15, pk), lerp(re[1], shy - h * 0.02, pk)]; rh = [lerp(rh[0], x + h * 0.085, pk), lerp(rh[1], shy - h * 0.12, pk)]; }
+        // Taali: the mic hand comes down to the chest and the free hand claps against it on each beat
+        else if (d.pose === 'taali') { var tq = reduce ? 0.5 : Math.pow(Math.abs(Math.cos(BEAT * Math.PI)), 3); le = [lerp(le[0], x - h * 0.13, pk), lerp(le[1], shy + h * 0.12, pk)]; lh = [lerp(lh[0], x - h * 0.03, pk), lerp(lh[1], shy + h * 0.1, pk)]; re = [lerp(re[0], x + h * 0.15, pk), lerp(re[1], shy + h * 0.1, pk)]; rh = [lerp(rh[0], x + h * lerp(0.13, 0.0, tq), pk), lerp(rh[1], shy + h * lerp(0.02, 0.09, tq), pk)]; }
+        else if (d.pose === 'point') { re = [lerp(re[0], x + h * 0.17, pk), lerp(re[1], shy - h * 0.03, pk)]; rh = [lerp(rh[0], x + h * 0.31, pk), lerp(rh[1], shy - h * 0.13, pk)]; }
         else { var cl = reduce ? 0.5 : Math.abs(Math.sin(BEAT * Math.PI)); le = [lerp(le[0], x - h * 0.13, pk), lerp(le[1], shy - h * 0.15, pk)]; lh = [lerp(lh[0], x - h * (0.02 + 0.06 * cl), pk), lerp(lh[1], shy - h * 0.33, pk)]; re = [lerp(re[0], x + h * 0.13, pk), lerp(re[1], shy - h * 0.15, pk)]; rh = [lerp(rh[0], x + h * (0.02 + 0.06 * cl), pk), lerp(rh[1], shy - h * 0.33, pk)]; }
       }
       return [le, lh, re, rh];
@@ -2889,7 +3010,7 @@
       g.beginPath(); g.moveTo(L[0], L[1]); g.lineTo(le[0], le[1]); g.lineTo(lh[0], lh[1]); g.moveTo(R[0], R[1]); g.lineTo(re[0], re[1]); g.lineTo(rh[0], rh[1]); g.stroke();
       }
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
-      if (d.stander && d.phone) { g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = 'rgba(200,225,255,.9)'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (st.on) glow(rh[0], rh[1] - h * 0.02, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5); }
+      if (d.stander && d.phone) { var sk = phoneK(d); g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = sk > 0.5 ? 'rgba(200,225,255,.9)' : '#1d2230'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (sk > 0.5) glow(rh[0], rh[1] - h * 0.02, Math.max(0.8, h * 0.03), '#eaf3ff', 0.5 * sk); }
       if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
       if (d.role === 'dj' && h > 50) {
         // Up close the DJ has a face: eyes, brows, and a grin that opens when he talks
@@ -2916,7 +3037,7 @@
         g.strokeStyle = 'rgba(0,0,0,.2)'; g.lineWidth = Math.max(0.6, h * 0.006); g.stroke();
         g.fillStyle = '#fbfaf3'; g.beginPath(); g.ellipse(cx0, cy0 - ch0 * 0.65, cw0, cw0 * 0.3, 0, 0, TAU); g.fill();
       }
-      if (d.role === 'singer') { g.strokeStyle = tint('#222222', dk); g.lineWidth = Math.max(1, h * 0.025); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lh[0] + h * 0.02, lh[1] + h * 0.08); g.stroke(); }
+      if (d.role === 'singer') holdMic(d, lh, x, y - h * 0.885, h * 0.068, h, skin);
       if (st.style === 'dandiya' && !d.walker && !d.role) {
         // On the beat the two sticks cross and strike; between beats they are held out, swinging with the step
         var len = h * 0.3, la, ra;
@@ -3329,6 +3450,8 @@
       if (!reduce) T += dt;
       TH = THEMES[st.theme] || THEMES.traditional;
       var bb = opts.beats && opts.beats(); BEAT = bb ? ((t - bb.anchor) / bb.period) % 2 : T * 1.8;
+      // Phones go up while the song plays and come down, over a second or so, when it stops
+      phonesUp = reduce ? (st.on ? 1 : 0) : Math.max(0, Math.min(1, phonesUp + (st.on ? 1 : -1) * dt * 0.9));
       var target = st.listener === 'far' ? 1 : 0;
       // You walk between the places you can stand: a second or two along an eased path, lifted over the crowd on
       // a long walk, with a step in it. A new venue starts in place.
