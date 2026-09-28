@@ -59,6 +59,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`product/playback-controller.md`](product/playback-controller.md): single playback authority, command, transport-evidence and migration contract
 - [`product/youtube-first-playback.md`](product/youtube-first-playback.md): one-tap YouTube IFrame playback architecture, route safety and provider fallback hierarchy
 - [`product/feedback-2026-09-27.md`](product/feedback-2026-09-27.md): tracker for the 27 Sep 2026 feedback form: what exists, what's hidden, what's being built and what needs the owner's approval
+- [`product/ask-playgarba.md`](product/ask-playgarba.md): in-player help that answers from curated feature answers, the catalogue and our own pages, with an honest not-yet fallback
 - [`product/garba-circle.md`](product/garba-circle.md): listening together in sync without a backend: shared schedule, Date-header clock sync, drift correction and limits
 - [`product/my-songs.md`](product/my-songs.md): genre taps that play straight away, playable-first song lists, full Explore over the player, and adding your own YouTube songs
 - [`product/responsive-pwa.md`](product/responsive-pwa.md): responsive and installed-app behaviour

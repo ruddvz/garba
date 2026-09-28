@@ -1,0 +1,942 @@
+{
+  "version": 1,
+  "form": "https://tally.so/r/0QXgY9",
+  "note": "Curated answers for Ask PlayGarba. Every live answer names a control that exists today; anything not built says so plainly (status not-yet) and offers the request form. Keep answers to one to three short sentences. Update this file when a feature ships or changes.",
+  "synonyms": {
+    "fast forward": "seek",
+    "fastforward": "seek",
+    "forward": "seek",
+    "rewind": "seek",
+    "backward": "seek",
+    "skip ahead": "seek",
+    "aagal": "seek",
+    "pachhal": "seek",
+    "gujrati": "gujarati",
+    "gujarathi": "gujarati",
+    "ગુજરાતી": "gujarati",
+    "3 taali": "tran taali",
+    "3 tali": "tran taali",
+    "3 taal": "tran taali",
+    "3 tal": "tran taali",
+    "3rali": "tran taali",
+    "three taali": "tran taali",
+    "three clap": "tran taali",
+    "three claps": "tran taali",
+    "tran tali": "tran taali",
+    "tran taal": "tran taali",
+    "trantali": "tran taali",
+    "2 taali": "be taali",
+    "2 tali": "be taali",
+    "two taali": "be taali",
+    "two clap": "be taali",
+    "two claps": "be taali",
+    "be tali": "be taali",
+    "betali": "be taali",
+    "dodhiya": "dodhiyu",
+    "dothiyu": "dodhiyu",
+    "dodiya": "dodhiyu",
+    "dodhiyo": "dodhiyu",
+    "dodhiyun": "dodhiyu",
+    "popatiyi": "popatiyu",
+    "popatiya": "popatiyu",
+    "titoda": "titodo",
+    "titodatitoda": "titodo",
+    "dadiya": "dandiya",
+    "dandia": "dandiya",
+    "raas": "dandiya",
+    "arti": "aarti",
+    "aarati": "aarti",
+    "aarthi": "aarti",
+    "minimise": "background",
+    "minimize": "background",
+    "minimizing": "background",
+    "minimising": "background",
+    "lock screen": "background",
+    "screen off": "background",
+    "switch tab": "background",
+    "switch tabs": "background",
+    "other app": "background",
+    "freinds": "friends",
+    "frnds": "friends",
+    "circke": "circle",
+    "sheri garba": "sheri",
+    "gaanu": "song",
+    "gaano": "song",
+    "gana": "song",
+    "geet": "song",
+    "gaayak": "singer",
+    "gayak": "singer",
+    "menimzing": "background",
+    "menimize": "background",
+    "oyoutube": "youtube",
+    "youtub": "youtube",
+    "prefered": "preferred",
+    "favourate": "favourite",
+    "fav": "favourite"
+  },
+  "intents": [
+    {
+      "id": "seek",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "seek",
+        "jump in the song",
+        "skip part",
+        "go back in the song",
+        "move ahead in the song",
+        "skip forward"
+      ],
+      "answer": "Drag the bar under the song to jump forward or back. In Immersive the same bar sits under the title.",
+      "source": {
+        "label": "How to use",
+        "href": "/how-to-use/"
+      }
+    },
+    {
+      "id": "names-faces",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "name",
+        "my name",
+        "partner name",
+        "change name",
+        "rename",
+        "face",
+        "photo",
+        "my photo",
+        "picture",
+        "customise",
+        "customize",
+        "character",
+        "name of",
+        "change the name",
+        "changing the name",
+        "our names",
+        "own names",
+        "our own name"
+      ],
+      "answer": "In Immersive, open View and go to You and your partner. Type a name for each of you, up to 10 letters. The + beside a name adds a face. Names and faces stay on your device.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "man-woman",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "gender",
+        "male",
+        "female",
+        "man",
+        "woman",
+        "boy",
+        "girl",
+        "neutral",
+        "choose gender",
+        "play as"
+      ],
+      "answer": "In Immersive, View → You and your partner has a man or woman switch for who you dance as. A neutral choice isn't there yet.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        },
+        {
+          "label": "Ask for a neutral choice",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "dance-circle",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "dance in a circle",
+        "people dance",
+        "make people dance",
+        "characters dance",
+        "crowd dance",
+        "move them",
+        "dancers stop"
+      ],
+      "answer": "In Immersive the dancers go round the garbo in circles while a song plays, and drift off to rest when it stops. Press Play and they come back.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "walking",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "walk",
+        "walking",
+        "move around",
+        "arrow keys",
+        "joystick",
+        "go to the stage",
+        "go near stage",
+        "stalls",
+        "stall"
+      ],
+      "answer": "In Immersive, use the arrow keys on a laptop. On a phone, hide the player and drag anywhere. The view comes round behind you first. Walk up to the stage and you're standing by it; press ↓ to step back.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "venue-place",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "sheri",
+        "stadium",
+        "outdoors",
+        "venue",
+        "by the stage",
+        "far away",
+        "where you stand",
+        "view",
+        "stage view"
+      ],
+      "answer": "In Immersive, View → Venue picks Outdoors, Stadium or Sheri. Where you stand picks In the circle, Far away or By the stage.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "couple",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "couple",
+        "couple garba",
+        "partner",
+        "dance together",
+        "with partner"
+      ],
+      "answer": "In Immersive, you and your partner dance as a couple in the circle, and couples in the crowd dance in pairs.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "immersive",
+      "status": "live",
+      "topic": "immersive",
+      "phrases": [
+        "immersive",
+        "3d",
+        "animation",
+        "scene",
+        "virtual garba",
+        "dancers",
+        "simple view"
+      ],
+      "answer": "Immersive puts the music in a Garba ground with dancers, a stage and stalls. Switch between Simple and Immersive with the switch below More.",
+      "actions": [
+        {
+          "label": "Open Immersive",
+          "do": "immersive"
+        }
+      ]
+    },
+    {
+      "id": "background",
+      "status": "live",
+      "topic": "background",
+      "phrases": [
+        "background",
+        "keep playing",
+        "stops playing when",
+        "close the app",
+        "play when closed",
+        "tab",
+        "screen lock"
+      ],
+      "answer": "Phone browsers pause YouTube when you leave the page or lock the screen. On a phone or iPad, use the Brave browser or install PlayGarba to keep it playing. On a laptop any browser keeps playing.",
+      "actions": [
+        {
+          "label": "How to install",
+          "do": "link",
+          "href": "/install/"
+        }
+      ],
+      "source": {
+        "label": "Install",
+        "href": "/install/"
+      }
+    },
+    {
+      "id": "install",
+      "status": "live",
+      "topic": "background",
+      "phrases": [
+        "install",
+        "app",
+        "home screen",
+        "download app",
+        "desktop app",
+        "pwa",
+        "add to home"
+      ],
+      "answer": "Install playgarba.com from your browser to get a PlayGarba icon on your home screen or desktop. The install guide covers iPhone, iPad, Android, Chrome and Edge.",
+      "actions": [
+        {
+          "label": "How to install",
+          "do": "link",
+          "href": "/install/"
+        }
+      ],
+      "source": {
+        "label": "Install",
+        "href": "/install/"
+      }
+    },
+    {
+      "id": "friends",
+      "status": "live",
+      "topic": "friends",
+      "phrases": [
+        "friends",
+        "group",
+        "together",
+        "private",
+        "same song",
+        "same time",
+        "sync",
+        "party",
+        "silent garba",
+        "circle",
+        "listen with",
+        "online garba",
+        "share with friends"
+      ],
+      "answer": "Private Garba Circle plays the same song at the same moment on everyone's phone. Start one, then share the link or QR code. Only people with the link can join.",
+      "actions": [
+        {
+          "label": "Start a Private Garba Circle",
+          "do": "open",
+          "target": "#circleButton"
+        }
+      ],
+      "source": {
+        "label": "How to use",
+        "href": "/how-to-use/"
+      }
+    },
+    {
+      "id": "tran-taali",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "tran taali"
+      ],
+      "answer": "Tran Taali has three claps in each round. Explore has a Tran Taali list, and playing it keeps the music on it. In Immersive, Sound → Beat → Tran tali claps along.",
+      "actions": [
+        {
+          "label": "Play Tran Taali",
+          "do": "list",
+          "id": "step:tran-taali"
+        }
+      ]
+    },
+    {
+      "id": "be-taali",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "be taali"
+      ],
+      "answer": "Be Taali has two claps in each round. Explore has a Be Taali list. In Immersive, Sound → Beat → Be tali claps along.",
+      "actions": [
+        {
+          "label": "Play Be Taali",
+          "do": "list",
+          "id": "step:be-taali"
+        }
+      ]
+    },
+    {
+      "id": "taali",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "taali",
+        "tali",
+        "taal",
+        "tal",
+        "ek taali",
+        "one taali",
+        "clap pattern"
+      ],
+      "answer": "Explore has a Tran Taali list (three claps in each round) and a Be Taali list (two claps). In Immersive, Sound → Beat sets the claps.",
+      "actions": [
+        {
+          "label": "Play Tran Taali",
+          "do": "list",
+          "id": "step:tran-taali"
+        },
+        {
+          "label": "Play Be Taali",
+          "do": "list",
+          "id": "step:be-taali"
+        }
+      ]
+    },
+    {
+      "id": "dakla",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "dakla",
+        "daklu"
+      ],
+      "answer": "Explore has a Dakla list.",
+      "actions": [
+        {
+          "label": "Play Dakla",
+          "do": "list",
+          "id": "step:dakla"
+        }
+      ]
+    },
+    {
+      "id": "dodhiyu",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "dodhiyu"
+      ],
+      "answer": "Explore has a Dodhiyu list for the music. Dancers doing the Dodhiyu step aren't animated yet.",
+      "actions": [
+        {
+          "label": "Play Dodhiyu",
+          "do": "list",
+          "id": "step:dodhiyu"
+        },
+        {
+          "label": "Ask for the step",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "hinch",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "hinch"
+      ],
+      "answer": "Explore has a Hinch list.",
+      "actions": [
+        {
+          "label": "Play Hinch",
+          "do": "list",
+          "id": "step:hinch"
+        }
+      ]
+    },
+    {
+      "id": "dance-steps",
+      "status": "not-yet",
+      "topic": "steps",
+      "phrases": [
+        "step",
+        "steps",
+        "popatiyu",
+        "titodo",
+        "mandli step",
+        "mandali step",
+        "beginner",
+        "learn to dance",
+        "teach",
+        "two step back",
+        "4 step",
+        "four step",
+        "up down leg"
+      ],
+      "answer": "Dancers doing named steps (Popatiyu, Titodo, two steps forward and two back) aren't animated yet. The music for Tran Taali, Be Taali, Dakla, Dodhiyu and Hinch is in Explore.",
+      "actions": [
+        {
+          "label": "Play Tran Taali",
+          "do": "list",
+          "id": "step:tran-taali"
+        },
+        {
+          "label": "Ask for a step",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "dandiya",
+      "status": "live",
+      "topic": "steps",
+      "phrases": [
+        "dandiya",
+        "sticks",
+        "stick"
+      ],
+      "answer": "Pick Dandiya in the style strip under the player. In Immersive, Sound → Who keeps the beat → Dandiya sticks.",
+      "actions": [
+        {
+          "label": "Play Dandiya",
+          "do": "genre",
+          "id": "dandiya"
+        }
+      ],
+      "source": {
+        "label": "Dandiya Raas",
+        "href": "/dandiya-raas/"
+      }
+    },
+    {
+      "id": "aarti",
+      "status": "not-yet",
+      "topic": "steps",
+      "phrases": [
+        "aarti",
+        "mataji aarti",
+        "puja",
+        "pooja",
+        "aarti animation"
+      ],
+      "answer": "Aarti recordings are in the Devotional style. An aarti moment in Immersive isn't built yet.",
+      "actions": [
+        {
+          "label": "Play Devotional",
+          "do": "genre",
+          "id": "devotional"
+        },
+        {
+          "label": "Ask for aarti in Immersive",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "gujarati-ui",
+      "status": "not-yet",
+      "topic": "about",
+      "phrases": [
+        "gujarati language",
+        "in gujarati",
+        "change language",
+        "language",
+        "translate",
+        "english to gujarati",
+        "gujarati text"
+      ],
+      "answer": "PlayGarba's buttons and text are in English for now. A Gujarati version isn't built yet. Song titles keep their own spelling.",
+      "actions": [
+        {
+          "label": "Ask for Gujarati",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "nonstop",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "nonstop",
+        "non stop",
+        "long set",
+        "continuous",
+        "medley",
+        "mashup"
+      ],
+      "answer": "Nonstop is for long continuous sets. Pick Nonstop in the style strip under the player.",
+      "actions": [
+        {
+          "label": "Play Nonstop",
+          "do": "genre",
+          "id": "nonstop"
+        }
+      ],
+      "source": {
+        "label": "How to use",
+        "href": "/how-to-use/"
+      }
+    },
+    {
+      "id": "explore",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "search",
+        "find a song",
+        "explore",
+        "catalogue",
+        "artist playlist",
+        "artist list",
+        "preferred artist",
+        "favourite artist",
+        "playlist of",
+        "preferred artist",
+        "artist playlist"
+      ],
+      "answer": "Type a song or an artist here and I'll look it up. Explore also opens on Steps and styles and Artist essentials; playing a list keeps the music on it.",
+      "actions": [
+        {
+          "label": "Open Explore",
+          "do": "open",
+          "target": "#browseButton"
+        }
+      ]
+    },
+    {
+      "id": "favourites",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "favourite",
+        "favorite",
+        "save song",
+        "like song",
+        "my garba",
+        "saved songs",
+        "heart"
+      ],
+      "answer": "Tap the heart to save a song. My Garba in More keeps your saved songs on this device.",
+      "actions": [
+        {
+          "label": "Open My Garba",
+          "do": "open",
+          "target": "[data-proxy=\"favouritesButton\"]"
+        }
+      ]
+    },
+    {
+      "id": "youtube-playlist",
+      "status": "not-yet",
+      "topic": "controls",
+      "phrases": [
+        "youtube playlist",
+        "save to youtube",
+        "export playlist",
+        "spotify",
+        "save playlist",
+        "save a playlist",
+        "playlist we can save",
+        "youtube playlist for"
+      ],
+      "answer": "My Garba saves songs inside PlayGarba. Saving them to a YouTube or Spotify playlist isn't possible yet. You can play any YouTube link with Play YouTube link.",
+      "actions": [
+        {
+          "label": "Play a YouTube link",
+          "do": "open",
+          "target": "#linkSongButton"
+        },
+        {
+          "label": "Ask for playlist export",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "youtube-link",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "youtube link",
+        "paste link",
+        "play link",
+        "my own song",
+        "own songs",
+        "play whatever"
+      ],
+      "answer": "Paste any YouTube song or video link and it plays in PlayGarba. In a Private Garba Circle, the host's links play for everyone.",
+      "actions": [
+        {
+          "label": "Play a YouTube link",
+          "do": "open",
+          "target": "#linkSongButton"
+        }
+      ]
+    },
+    {
+      "id": "shuffle-queue",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "shuffle",
+        "random",
+        "queue",
+        "up next",
+        "next song",
+        "play next",
+        "order"
+      ],
+      "answer": "Shuffle sits beside the play controls. The queue button shows Up next; in Immersive, Explore has play-next and add buttons on every song.",
+      "source": {
+        "label": "How to use",
+        "href": "/how-to-use/"
+      }
+    },
+    {
+      "id": "live-station",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "24/7",
+        "24 7",
+        "live radio",
+        "radio",
+        "live station",
+        "always on"
+      ],
+      "answer": "24/7 Live plays one shared running order, like radio. Tap 24/7 Live at the bottom left.",
+      "actions": [
+        {
+          "label": "Play 24/7 Live",
+          "do": "open",
+          "target": "#liveStationButton"
+        }
+      ]
+    },
+    {
+      "id": "not-playing",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "not playing",
+        "doesn't play",
+        "doesnt play",
+        "won't play",
+        "wont play",
+        "not working",
+        "unavailable",
+        "not available",
+        "error",
+        "stuck",
+        "stops",
+        "stopped"
+      ],
+      "answer": "Some recordings can't play because YouTube doesn't allow them outside YouTube. Those show Not available and are skipped, so the music keeps going. If a song you need is missing or broken, tell us which one.",
+      "actions": [
+        {
+          "label": "Report a song",
+          "do": "ask"
+        }
+      ],
+      "source": {
+        "label": "FAQ",
+        "href": "/faq/"
+      }
+    },
+    {
+      "id": "sound",
+      "status": "live",
+      "topic": "controls",
+      "phrases": [
+        "sound off",
+        "mute",
+        "volume",
+        "off",
+        "turn off crowd",
+        "crowd sound",
+        "claps sound",
+        "clap",
+        "clap button",
+        "atmosphere",
+        "equalizer",
+        "equaliser",
+        "bass"
+      ],
+      "answer": "Music volume follows your device. In Immersive, the Sound card adds the crowd, claps or dandiya sticks around the music, or turns them off. In Simple, Garba Atmosphere in More does the same. There's no equalizer or clap button yet.",
+      "actions": [
+        {
+          "label": "Open Garba Atmosphere",
+          "do": "open",
+          "target": "[data-proxy=\"atmosphereButton\"]"
+        },
+        {
+          "label": "Ask for this",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "lights",
+      "status": "not-yet",
+      "topic": "immersive",
+      "phrases": [
+        "light",
+        "lights",
+        "dj light",
+        "more light",
+        "brighter",
+        "lighting"
+      ],
+      "answer": "The ground lights up when a song plays, but there's no lights control yet.",
+      "actions": [
+        {
+          "label": "Ask for a lights control",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "artist-photo",
+      "status": "not-yet",
+      "topic": "about",
+      "phrases": [
+        "artist image",
+        "artist photo",
+        "artist picture",
+        "profile pic",
+        "singer photo"
+      ],
+      "answer": "Artist photos aren't shown in Explore yet.",
+      "actions": [
+        {
+          "label": "Ask for artist photos",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "near-me",
+      "status": "not-yet",
+      "topic": "about",
+      "phrases": [
+        "near me",
+        "events",
+        "event",
+        "garba near",
+        "mandli",
+        "mandali",
+        "pass",
+        "tickets",
+        "ahmedabad",
+        "surat",
+        "vadodara"
+      ],
+      "answer": "Finding Garba events near you isn't part of PlayGarba yet.",
+      "actions": [
+        {
+          "label": "Ask for Garba near me",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "partnership",
+      "status": "live",
+      "topic": "about",
+      "phrases": [
+        "partnership",
+        "partner with",
+        "sponsor",
+        "ads",
+        "advertise",
+        "collaborate",
+        "collab"
+      ],
+      "answer": "For sponsorships and partnerships, send a note through the form with how to reach you.",
+      "actions": [
+        {
+          "label": "Send a note",
+          "do": "ask"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "status": "live",
+      "topic": "about",
+      "phrases": [
+        "account",
+        "login",
+        "log in",
+        "sign up",
+        "signup",
+        "password",
+        "subscription",
+        "pay",
+        "price",
+        "free"
+      ],
+      "answer": "No account and no payment. PlayGarba is free to open and play.",
+      "source": {
+        "label": "FAQ",
+        "href": "/faq/"
+      }
+    },
+    {
+      "id": "offline",
+      "status": "live",
+      "topic": "background",
+      "phrases": [
+        "offline",
+        "without internet",
+        "no internet",
+        "download song",
+        "download"
+      ],
+      "answer": "Music needs an internet connection, because it plays from YouTube. Installing doesn't make songs available offline.",
+      "source": {
+        "label": "FAQ",
+        "href": "/faq/"
+      }
+    }
+  ],
+  "topics": [
+    {
+      "id": "now",
+      "label": "What's playing?"
+    },
+    {
+      "id": "controls",
+      "label": "Controls and seek",
+      "ask": "seek"
+    },
+    {
+      "id": "immersive",
+      "label": "Immersive and walking",
+      "ask": "walking"
+    },
+    {
+      "id": "friends",
+      "label": "Listen with friends",
+      "ask": "friends"
+    },
+    {
+      "id": "background",
+      "label": "Keep playing in the background",
+      "ask": "background"
+    },
+    {
+      "id": "steps",
+      "label": "Steps and taali",
+      "ask": "dance-steps"
+    },
+    {
+      "id": "about",
+      "label": "About Garba",
+      "ask": "what is garba"
+    }
+  ]
+}
