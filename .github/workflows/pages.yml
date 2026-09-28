@@ -136,7 +136,7 @@ jobs:
             docs/product/prototypes/garbo/garbo.js \
             docs/product/prototypes/garbo/garbo.css \
             _site/garbo/prototype/
-          grep -q 'src="../../atmosphere/scene.js"' _site/garbo/prototype/index.html || { echo 'Immersive venue scene path is invalid'; exit 1; }
+          grep -q 'src="../../atmosphere/scene.js?v=' _site/garbo/prototype/index.html || { echo 'Immersive venue scene path or cache version is invalid'; exit 1; }
           cp \
             public-site/editorial.css \
             public-site/pages.css \
