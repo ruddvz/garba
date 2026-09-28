@@ -1994,6 +1994,7 @@
   // Credits that aren't a singer on stage: various artists, traditional, choruses, producers and DJ credits
   var NOT_A_SINGER = /various|traditional|chorus|muzik|music|\bdj\b|sounds|orchestra|meghdhanush|tropical|\bedm\b/i;
   // Only artists with a confirmed singer portrait receive an attributed stage likeness and voice presentation.
+  function voiceOf(name) { var singer = SINGERS && SINGERS[slugify(String(name).trim())]; return singer ? !!singer.man : null; }
 
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
@@ -2036,7 +2037,7 @@
       var f = SINGERS && SINGERS[slugify(a)];
       // Only an explicit singer portrait record carries a voice presentation. A first-name guess can put
       // a duet singer in the wrong role, so unresolved catalogue credits stay out of the named lineup.
-      return f ? { name: a, man: !!f.man, url: SINGER_BASE + f.file } : null;
+      return f ? { name: a, man: voiceOf(a), url: SINGER_BASE + f.file } : null;
     });
     lineup = lineup.filter(Boolean).slice(0, 3);
     // Chapters of one long recording keep one lineup: the song key is the recording's while it plays on
