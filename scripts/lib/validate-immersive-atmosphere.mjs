@@ -285,7 +285,7 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     for (const marker of ['id="youName" type="text" maxlength="10" value="you"', 'id="partnerName" type="text" maxlength="10" value="yours"', 'id="youFacePick"', 'id="partnerFacePick"', 'id="faceFile" type="file"', 'id="cropView"', 'class="seek-bar" id="seekBar" type="range"']) {
       if (!page.includes(marker)) fail(`${dir}/index.html is missing ${marker}`);
     }
-    for (const marker of ["COUPLE_KEY = 'garbo-couple'", 'sessionStorage.setItem(COUPLE_KEY', 'function cutoutOf(', 'youFaceCut: C.youFaceCut', "ring.dispatchEvent(new Event('input', { bubbles: true }))", 'if (!barHeld)']) {
+    for (const marker of ["COUPLE_KEY = 'garbo-couple'", 'sessionStorage.setItem(COUPLE_KEY', 'function cutoutOf(', 'youFaceCut: C.youFaceCut', 'applySeek(bar.value / 1000);', 'if (!barHeld)']) {
       if (!js.includes(marker)) fail(`${dir}/garbo.js is missing ${marker}`);
     }
     if (/localStorage\.setItem\(COUPLE_KEY/.test(js) || /COUPLE_KEY[^\n]*location/.test(js)) fail(`${dir}/garbo.js must keep names and faces in sessionStorage only`);
