@@ -787,3 +787,12 @@ button { font: inherit; color: inherit; }
 
 /* The morphing icon stands in for both of a toggle's glyphs, so it never hides with either state */
 #fullBtn[aria-pressed="true"] svg.morph { display: block; }
+
+/* English / ગુજરાતી: the toggle sits between More's title and its close button, so the column is a little wider */
+.lang-toggle { min-width: 38px; height: 30px; padding: 0 9px; border: 1px solid rgba(214, 176, 111, .45); border-radius: 999px; background: none; color: var(--ivory); font: 600 14px/1 var(--ui); cursor: pointer; }
+.lang-toggle:hover { border-color: var(--brass); color: var(--brass); }
+.lang-toggle:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+#moreSheet .sheet-head { gap: 6px; }
+#moreSheet .sheet-head .lang-toggle { margin-left: auto; }
+:root { --more-w: 156px; }
+@media (min-width: 900px) and (min-height: 560px) { :root { --more-w: 168px; } }

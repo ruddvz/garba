@@ -972,3 +972,11 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
   .app[data-sheet-snap="medium"] .live-station-container > button,
   .app[data-sheet-snap="full"] .live-station-container > button { pointer-events: none; }
 }
+
+/* English / ગુજરાતી: the toggle sits between More's title and its close button. In Gujarati the interface keeps its
+   Latin type and takes Gujarati glyphs from Anek Gujarati and Rasa, which language.js loads only then */
+.more-card-head .lang-toggle { margin-left: auto; margin-right: 6px; }
+.lang-toggle { min-width: 40px; height: 32px; padding: 0 10px; border: 1px solid rgba(214, 176, 111, .45); border-radius: 999px; background: none; color: inherit; font: 600 14px/1 "Anek Gujarati", var(--sans); cursor: pointer; }
+.lang-toggle:hover { border-color: rgba(214, 176, 111, .8); }
+.lang-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+html[lang="gu"] { --sans: Inter, "Anek Gujarati", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --serif: "Iowan Old Style", "Palatino Linotype", Baskerville, Georgia, "Rasa", "Times New Roman", serif; }

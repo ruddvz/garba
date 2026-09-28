@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-2"', 'src="garbo.js?v=20260928-2"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-3"', 'src="garbo.js?v=20260928-2"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -146,6 +146,29 @@ for (const id of ['i-play', 'i-pause', 'i-search', 'i-more', 'i-close', 'i-full'
 }
 for (const marker of ["morphIcon('play', $('playBtn'), 'i-play');", "morphIcon('hide', $('hidePlayerBtn'), 'i-eye-off');", "morphIcon('full', $('fullBtn'), 'i-full',", "reducedMotion: 'user'"]) {
   if (!prototypeJs.includes(marker)) fail(`The toggles must morph their icons: ${marker}`);
+}
+// English / ગુજરાતી (#1775): one toggle between More's title and its close button in each player, one shared runtime
+// with the owner-reviewed table, and catalogue metadata left alone
+{
+  const language = await read('assets/runtime/language.js');
+  const scope = {};
+  new Function('window', 'globalThis', 'document', 'MutationObserver', language)(scope, scope, undefined, undefined);
+  const t = scope.GarbaLanguage?.translate;
+  if (typeof t !== 'function') fail('assets/runtime/language.js must expose GarbaLanguage.translate');
+  else {
+    const cases = [['More', 'વધુ'], ['  Play  ', 'વગાડો'], ['Private Garba Circle', 'પ્રાઇવેટ ગરબા સર્કલ'], ['Save Tara Vina Shyam Mane to My Garba', 'Tara Vina Shyam Mane મારા ગરબામાં સાચવો'], ['Keep going: 3 more taps.', 'ચાલુ રાખો: હજી 3 ટૅપ.'], ['Chyo Chyo Ramva Gayata', null], ['Kinjal Dave', null], ['0:42', null]];
+    for (const [en, gu] of cases) if (t(en) !== gu) fail(`GarbaLanguage.translate(${JSON.stringify(en)}) should give ${JSON.stringify(gu)}, got ${JSON.stringify(t(en))}`);
+  }
+  for (const marker of ["var KEY = 'garba:lang'", "'#songTitle, #songArtist, #title, #artist, .brand'", "window.addEventListener('storage'", 'family=Anek+Gujarati']) {
+    if (!language.includes(marker) && !language.includes(marker.replace(/'/g, ''))) fail(`language.js is missing ${marker}`);
+  }
+  const heads = [[html, 'id="moreCardTitle"', 'data-more-close'], [prototypeHtml, 'id="moreTitle"', 'aria-label="Close More"']];
+  for (const [page, title, close] of heads) {
+    const a = page.indexOf(title), b = page.indexOf('data-lang-toggle', a), c = page.indexOf(close, a);
+    if (a < 0 || b < 0 || c < 0 || !(a < b && b < c)) fail('The language toggle must sit between More\'s title and its close button');
+  }
+  if (!html.includes('src="assets/runtime/language.js?v=') || !prototypeHtml.includes('src="../../../../assets/runtime/language.js?v=')) fail('Both players must load the shared language runtime');
+  if (/import[^;]*language\.js/.test(app)) fail('app.js must not import language.js (AGENTS invariant 7): both pages load it with a script tag');
 }
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');
