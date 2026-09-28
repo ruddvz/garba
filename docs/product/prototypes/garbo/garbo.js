@@ -74,15 +74,6 @@
   }) : new window.GarboScene.Scene($('scene'));
   if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
 
-  var STEPS = [
-    { name: 'Be tali', desc: 'Two claps in each round', claps: 2 },
-    { name: 'Tran tali', desc: 'Three claps in each round', claps: 3 },
-    { name: 'Hinch', desc: 'Mixes Garba and Raas movement', claps: 0 },
-    { name: 'Dodhiyu', desc: 'Four steps forward, two steps back', claps: 0 },
-    { name: 'Popatiyu', desc: 'The parrot step, led by the shoulders and hands', claps: 0 },
-    { name: 'Raas', desc: 'Danced in pairs with dandiya sticks', claps: 0 }
-  ];
-
   var S = {
     data: null, genres: [], genre: 'traditional',
     queue: [], index: 0, track: null,
@@ -433,7 +424,7 @@
         };
         S.genres = S.data.genres;
         snapshot.songs.forEach(function (song) { songById[song.id] = song; });
-        buildDial(); buildChips(); buildSteps(); buildTonight(); buildStates();
+        buildDial(); buildChips(); buildTonight(); buildStates();
         setGenre(snapshot.genreId || (snapshot.song && snapshot.song.genre) || 'traditional', false);
         relayout();
       } else {
@@ -498,6 +489,18 @@
     S.installed = snapshot.installed === true;
     S.circleInfo = S.circle && info && typeof info.title === 'string' ? { title: info.title, name: String(info.name || ''), face: Number.isInteger(info.face) ? info.face : null } : null;
     S.liveUpNext = Array.isArray(snapshot.upNext) ? snapshot.upNext : null;
+    // Explore's step playlists and artists come from the player, with the list playing now and the videos YouTube
+    // refused this session (greyed out here without waiting for a catalogue refresh)
+    if (Array.isArray(snapshot.collections)) S.collections = snapshot.collections;
+    var listBefore = S.playList ? S.playList.id : '';
+    S.playList = snapshot.playlist || null;
+    var brokenChanged = false;
+    if (Array.isArray(snapshot.broken) && snapshot.broken.length !== S.brokenCount) {
+      S.brokenCount = snapshot.broken.length;
+      var brokenSet = {}; snapshot.broken.forEach(function (v) { brokenSet[v] = 1; });
+      S.data.songs.forEach(function (s0) { if (s0.videoId && brokenSet[s0.videoId] && s0.playable) { s0.playable = false; brokenChanged = true; } });
+    }
+    if (!catalogueChanged && (brokenChanged || listBefore !== (S.playList ? S.playList.id : '')) && openSheet && openSheet.id === 'exploreSheet') renderRows(true);
     if (snapshot.link && Number.isFinite(snapshot.link.seq)) {
       if (S.linkWait != null && snapshot.link.seq > S.linkWait) linkAnswer(snapshot.link);
       S.linkSeq = Math.max(S.linkSeq, snapshot.link.seq);
@@ -1512,25 +1515,104 @@
     });
     note.textContent = S.circleCanAdd ? 'Use + on a song to add it to your circle.' : S.circle ? 'The Private Garba Circle follows its host.' : queued ? '' : canQueue() ? 'Use + on a song to add it here, or ⏭ to play it next.' : '';
   }
+  /* ---------- Explore ----------
+     Browsing, Explore offers what's worth exploring: the step and style playlists and each artist's essentials, with
+     how many of their songs can play. A search lists songs, as it always has. Opening a list shows its songs the way
+     search results look; playing from it keeps Next, auto-advance and shuffle on that list until you pick something
+     else. A song that can't play is greyed out as Not available and is never started. */
+  var exploreOpen = null;
+  var STEP_CLAPS = { 'step:tran-taali': 3, 'step:be-taali': 2 };
+  function exploreCollections() {
+    if (S.collections) return S.collections;
+    if (LIVE_SITE) return [];
+    // The prototype on its own builds the same lists from its songs
+    var out = [], byArtist = {};
+    [['tran-taali', 'Tran Taali'], ['be-taali', 'Be Taali'], ['dakla', 'Dakla'], ['dodhiyu', 'Dodhiyu'], ['hinch', 'Hinch'], ['sanedo', 'Sanedo']].forEach(function (st) {
+      var ids = S.data.songs.filter(function (s) { return s.category === st[0] || (s.styles || []).indexOf(st[0]) >= 0 || (st[0] === 'sanedo' && s.genre === 'sanedo'); }).map(function (s) { return s.id; });
+      if (ids.length) out.push({ id: 'step:' + st[0], kind: 'step', title: st[1], ids: ids, playable: ids.filter(function (id) { return songById[id] && songById[id].playable; }).length });
+    });
+    S.data.songs.forEach(function (s) { String(s.artist || '').split(/\s*(?:,|&|\/|;|\band\b)\s*/i).forEach(function (n) { n = n.trim(); if (!n || /^various artists?$/i.test(n)) return; (byArtist[n] = byArtist[n] || []).push(s); }); });
+    Object.keys(byArtist).forEach(function (n) { var list = byArtist[n], ok = list.filter(function (s) { return s.playable; }).length; if (ok >= 3) out.push({ id: 'artist:' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-'), kind: 'artist', title: n, ids: list.map(function (s) { return s.id; }), playable: ok }); });
+    return out;
+  }
+  function canPlayLine(col) { return col.playable === col.ids.length ? col.playable + (col.playable === 1 ? ' song' : ' songs') : col.playable + ' of ' + col.ids.length + ' can play'; }
+  function songRow(s, onPlay) {
+    var li = el('li'), b = el('button', 'row'); b.type = 'button'; b.dataset.id = s.id;
+    b.append(el('strong', null, s.title), el('span', 'dur', s.durationSeconds ? fmt(s.durationSeconds) : ''), el('span', null, s.artist));
+    if (!s.playable) { b.setAttribute('aria-disabled', 'true'); li.className = 'is-na'; b.append(el('span', 'badge na', 'Not available')); }
+    b.addEventListener('click', function () { if (!s.playable) { toast("This song isn't available to play."); return; } onPlay(s); });
+    li.append(b);
+    if (s.playable && canQueue()) {
+      li.className = 'queueable';
+      var acts = el('span', 'row-acts');
+      acts.append(queueButton('next', s), queueButton('add', s));
+      li.append(acts);
+    }
+    return li;
+  }
+  function playFromList(col, startId) {
+    if (requestLiveAction('play-list', { id: col.id, start: startId || null })) { djSay('આ જ ચાલશે!', 'The DJ is playing ' + col.title + '.'); return; }
+    // The prototype on its own: its queue becomes this list's songs
+    var songs = col.ids.map(function (id) { return songById[id]; }).filter(function (s) { return s && s.playable; });
+    if (!songs.length) { toast('Nothing in ' + col.title + ' can play right now.'); return; }
+    var first = (startId && songById[startId]) || songs[0];
+    exitSpecial(); S.queue = songs; S.index = Math.max(0, songs.indexOf(first));
+    djPick(function () { loadSong(first, true); });
+  }
+  function renderExploreLists(ul, count, showingNonstop) {
+    var cols = exploreCollections(), open = exploreOpen && cols.filter(function (c) { return c.id === exploreOpen; })[0];
+    if (open) {
+      if (count && !showingNonstop) count.textContent = canPlayLine(open);
+      var head = el('li', 'list-head'), back = el('button', 'ib list-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to Explore');
+      back.innerHTML = '<svg aria-hidden="true"><use href="#i-chev"/></svg>';
+      back.addEventListener('click', function () { exploreOpen = null; renderRows(); var first = $('songRows').querySelector('[data-list]'); if (first) first.focus({ preventScroll: true }); });
+      var playing = S.playList && S.playList.id === open.id, go = el('button', 'list-play', playing ? 'Playing' : 'Play'); go.type = 'button';
+      if (!open.playable || playing) go.disabled = true;
+      go.addEventListener('click', function () { playFromList(open, null); });
+      head.append(back, el('h3', null, open.title), go);
+      ul.append(head);
+      if (playing) {
+        var note = el('li', 'list-note'), leave = el('button', 'list-leave', 'Stop keeping to this list'); leave.type = 'button';
+        leave.addEventListener('click', function () { requestLiveAction('leave-list'); });
+        note.append(el('span', null, 'Next, auto-play and shuffle stay on ' + open.title + '.'), leave); ul.append(note);
+      }
+      var songs = open.ids.map(function (id) { return songById[id]; }).filter(Boolean);
+      songs.sort(function (a, b2) { return (b2.playable ? 1 : 0) - (a.playable ? 1 : 0); });
+      if (!songs.length) ul.append(el('li', 'empty', 'Nothing in ' + open.title + ' is listed yet.'));
+      songs.forEach(function (s) { ul.append(songRow(s, function () { playFromList(open, s.id); })); });
+      return;
+    }
+    exploreOpen = null;
+    if (count && !showingNonstop) count.textContent = '';
+    if (!cols.length) { ul.append(el('li', 'empty', LIVE_SITE && !S.collections ? 'Loading Explore…' : 'Search for a song or an artist.')); return; }
+    [['Steps and styles', cols.filter(function (c) { return c.kind === 'step'; })], ['Artist essentials', cols.filter(function (c) { return c.kind === 'artist'; })]].forEach(function (sec) {
+      if (!sec[1].length) return;
+      ul.append(el('li', 'explore-kicker', sec[0]));
+      sec[1].forEach(function (col) {
+        var li = el('li', 'explore-list'), b = el('button', 'row'); b.type = 'button'; b.dataset.list = col.id;
+        b.append(el('strong', null, col.title), el('span', null, canPlayLine(col)));
+        if (!col.playable) { li.classList.add('is-na'); b.append(el('span', 'badge na', 'Not available')); }
+        else if (S.playList && S.playList.id === col.id) b.append(el('span', 'badge on', 'Playing'));
+        var claps = STEP_CLAPS[col.id];
+        if (claps) {
+          var c = el('span', 'claps'); c.setAttribute('role', 'img'); c.setAttribute('aria-label', claps + ' claps');
+          for (var i = 0; i < 4; i++) { var d = el('i'); if (i < claps) d.className = 'c'; c.append(d); }
+          b.append(c);
+        }
+        b.addEventListener('click', function () {
+          exploreOpen = col.id; renderRows();
+          var sheetBody = $('exploreSheet').querySelector('.sheet-body'); if (sheetBody) sheetBody.scrollTop = 0;
+          var back = $('songRows').querySelector('.list-back'); if (back) back.focus({ preventScroll: true });
+        });
+        li.append(b); ul.append(li);
+      });
+    });
+  }
   function renderRows(preserveScroll) {
     var sheetBody = $('exploreSheet').querySelector('.sheet-body');
     var previousScrollTop = sheetBody ? sheetBody.scrollTop : 0;
     var q = $('searchInput').value.trim().toLowerCase();
     var ul = $('songRows'); ul.textContent = '';
-    var seenChapterVideos = new Set();
-    var matches = S.data.songs.filter(function (s) {
-      if (chipGenre !== 'all' && s.genre !== chipGenre) return false;
-      if (!q) {
-        // When browsing without search: show one representative song per chaptered set
-        if (s.videoId && s.isChapter) {
-          if (seenChapterVideos.has(s.videoId)) return false;
-          seenChapterVideos.add(s.videoId);
-        }
-        return true;
-      }
-      return (s.title + ' ' + s.artist + ' ' + (s.release ? s.release.title : '')).toLowerCase().indexOf(q) !== -1;
-    });
-    var songs = matches.slice(0, visibleSongCount);
     var count = $('exploreCount');
     var showingNonstop = !$('panelNonstop').hidden;
     var setQuery = q;
@@ -1538,42 +1620,30 @@
       return !setQuery || (set.title + ' ' + set.artists.join(' ')).toLowerCase().indexOf(setQuery) !== -1;
     });
     var visibleSets = setMatches.slice(0, visibleSetCount);
-    if (count) {
-      if (showingNonstop && S.nonstopSetsStatus === 'loading') count.textContent = 'Loading verified Nonstop sets…';
-      else if (showingNonstop && S.nonstopSetsStatus === 'error') count.textContent = 'Nonstop sets could not load. Check your connection.';
-      else if (showingNonstop) count.textContent = setMatches.length > visibleSets.length
+    if (count && showingNonstop) {
+      if (S.nonstopSetsStatus === 'loading') count.textContent = 'Loading verified Nonstop sets…';
+      else if (S.nonstopSetsStatus === 'error') count.textContent = 'Nonstop sets could not load. Check your connection.';
+      else count.textContent = setMatches.length > visibleSets.length
         ? 'Showing ' + visibleSets.length + ' of ' + setMatches.length + ' Nonstop sets.'
         : setMatches.length + (setMatches.length === 1 ? ' Nonstop set' : ' Nonstop sets');
-      else count.textContent = matches.length > songs.length
+    }
+    if (!q) renderExploreLists(ul, count, showingNonstop);
+    else {
+      var matches = S.data.songs.filter(function (s) { return (s.title + ' ' + s.artist + ' ' + (s.release ? s.release.title : '')).toLowerCase().indexOf(q) !== -1; });
+      matches.sort(function (a, b2) { return (b2.playable ? 1 : 0) - (a.playable ? 1 : 0); });
+      var songs = matches.slice(0, visibleSongCount);
+      if (count && !showingNonstop) count.textContent = matches.length > songs.length
         ? 'Showing ' + songs.length + ' of ' + matches.length + ' songs · search to narrow the list.'
         : matches.length + (matches.length === 1 ? ' song' : ' songs');
+      if (!songs.length) ul.append(el('li', 'empty', 'No songs match "' + $('searchInput').value.trim() + '".'));
+      songs.forEach(function (s) { ul.append(songRow(s, playNow)); });
+      appendMoreRow(ul, 'songs', songs.length, matches.length, function () {
+        visibleSongCount += songBatchSize; renderRows(true);
+        var next = $('songRows').querySelector('.more-row');
+        if (next) next.focus({ preventScroll: true });
+        else $('songRows').lastElementChild?.querySelector('button')?.focus({ preventScroll: true });
+      });
     }
-    if (!songs.length) {
-      var g = genreInfo(chipGenre);
-      ul.append(el('li', 'empty', q ? 'No songs match "' + $('searchInput').value.trim() + '".' : 'No ' + (g ? g.name : '') + ' songs are listed yet.'));
-    }
-    songs.forEach(function (s) {
-      var li = el('li'), b = el('button', 'row'); b.type = 'button'; b.dataset.id = s.id;
-      b.append(el('strong', null, s.title), el('span', 'dur', s.durationSeconds ? fmt(s.durationSeconds) : ''));
-      var meta = el('span', null, s.artist);
-      b.append(meta);
-      if (!s.playable) { b.setAttribute('aria-disabled', 'true'); b.append(el('span', 'badge na', 'Not playable yet')); }
-      b.addEventListener('click', function () { playNow(s); });
-      li.append(b);
-      if (s.playable && canQueue()) {
-        li.className = 'queueable';
-        var acts = el('span', 'row-acts');
-        acts.append(queueButton('next', s), queueButton('add', s));
-        li.append(acts);
-      }
-      ul.append(li);
-    });
-    appendMoreRow(ul, 'songs', songs.length, matches.length, function () {
-      visibleSongCount += songBatchSize; renderRows(true);
-      var next = $('songRows').querySelector('.more-row');
-      if (next) next.focus({ preventScroll: true });
-      else $('songRows').lastElementChild?.querySelector('button')?.focus({ preventScroll: true });
-    });
     var sets = $('setRows'); sets.textContent = '';
     if (!setMatches.length) {
       var message = S.nonstopSetsStatus === 'loading' ? 'Loading verified Nonstop sets…'
@@ -1601,20 +1671,7 @@
     document.querySelectorAll('#songRows .row').forEach(function (r) { r.classList.toggle('is-current', r.dataset.id === id); });
     if (openSheet && openSheet.id === 'exploreSheet') renderDecks();
   }
-  function buildSteps() {
-    var ul = $('stepRows');
-    STEPS.forEach(function (st) {
-      var li = el('li', 'step');
-      li.append(el('strong', null, st.name), el('span', null, st.desc), el('span', null, 'No songs tagged yet'));
-      if (st.claps) {
-        var c = el('span', 'claps'); c.setAttribute('role', 'img'); c.setAttribute('aria-label', st.claps + ' claps');
-        for (var i = 0; i < 4; i++) { var d = el('i'); if (i < st.claps) d.className = 'c'; c.append(d); }
-        li.append(c);
-      }
-      ul.append(li);
-    });
-  }
-  var tabs = ['tabSongs', 'tabNonstop', 'tabSteps', 'tabQueue'];
+  var tabs = ['tabSongs', 'tabNonstop', 'tabQueue'];
   tabs.forEach(function (id, i) {
     $(id).addEventListener('click', function () { selectTab(i); });
     $(id).addEventListener('keydown', function (e) {
@@ -1626,8 +1683,8 @@
       var on = i === n; $(id).setAttribute('aria-selected', String(on)); $(id).tabIndex = on ? 0 : -1;
       $($(id).getAttribute('aria-controls')).hidden = !on;
     });
-    $('exploreSheet').classList.toggle('on-queue', n === 3);
-    if (n !== 3 && wideDecks()) $('panelQueue').hidden = false;
+    $('exploreSheet').classList.toggle('on-queue', n === 2);
+    if (n !== 2 && wideDecks()) $('panelQueue').hidden = false;
     if (S.data) renderRows();
   }
   $('searchInput').addEventListener('input', function () {
@@ -2154,7 +2211,7 @@
   }
   var clapBeat = -1;
   function animateClaps(now) {
-    if (!openSheet || openSheet.id !== 'exploreSheet' || $('panelSteps').hidden || reducedQuery.matches) return;
+    if (!openSheet || openSheet.id !== 'exploreSheet' || $('panelSongs').hidden || reducedQuery.matches) return;
     var beat = Math.floor(now / 520) % 4;
     if (beat === clapBeat) return; clapBeat = beat;
     document.querySelectorAll('.claps').forEach(function (c) { c.querySelectorAll('i').forEach(function (d, i) { d.classList.toggle('hit', i === beat && d.classList.contains('c')); }); });
@@ -2169,7 +2226,7 @@
     var st = STATES.filter(function (x) { return x.id === h; })[0];
     if (st) { st.run(); return; }
     if (h === 'explore') showSheet('exploreSheet');
-    if (h === 'steps') { showSheet('exploreSheet'); selectTab(2); }
+    if (h === 'steps') { exploreOpen = null; showSheet('exploreSheet'); selectTab(0); }
     if (h === 'nonstop-list') { showSheet('exploreSheet'); selectTab(1); }
     if (h === 'tonight-sheet') showSheet('tonightSheet');
     if (h === 'more') showSheet('moreSheet');
@@ -2184,7 +2241,7 @@
     if (!S.data) {
       S.data = data; S.genres = data.genres;
       data.songs.forEach(function (s) { songById[s.id] = s; });
-      buildDial(); buildChips(); buildSteps(); buildTonight(); buildStates();
+      buildDial(); buildChips(); buildTonight(); buildStates();
       setGenre('traditional', false);
       initYtPlayer();
       relayout();

@@ -19,7 +19,17 @@ import {
   cleanVideoTitle,
   fetchVideoDetails,
 } from './assets/runtime/my-songs.js';
-const { routeReadiness, canExecuteSong, youtubeVideoId } = window.GARBA_ROUTE_READINESS;
+const { routeReadiness, canExecuteSong: routeCanExecute, youtubeVideoId } = window.GARBA_ROUTE_READINESS;
+
+// Videos YouTube refused to play inside PlayGarba this session (embedding turned off, removed, private). They count as
+// unplayable everywhere, so they show Not available, are never started again and auto-advance steps over them.
+const BROKEN_VIDEOS_KEY = 'playgarba:broken-videos:v1';
+const brokenVideos = new Set((() => { try { const list = JSON.parse(sessionStorage.getItem(BROKEN_VIDEOS_KEY) || '[]'); return Array.isArray(list) ? list.filter((id) => typeof id === 'string') : []; } catch { return []; } })());
+function canExecuteSong(song) {
+  if (!routeCanExecute(song)) return false;
+  const videoId = youtubeVideoId(song);
+  return !(videoId && brokenVideos.has(videoId));
+}
 const {
   parseShareTimestamp,
   buildSongShareUrl,
@@ -179,6 +189,119 @@ const songsForGenre = (genreId) => state.songs.filter((song) => song.genre === g
 
 // Playable-first ordering, rebuilt whenever the song list itself changes.
 let playableOrderCache = { songs: null, order: null };
+function markVideoBroken(videoId) {
+  if (!videoId || brokenVideos.has(videoId)) return false;
+  brokenVideos.add(videoId);
+  try { sessionStorage.setItem(BROKEN_VIDEOS_KEY, JSON.stringify([...brokenVideos].slice(-300))); } catch { /* storage can be unavailable */ }
+  playableOrderCache = { songs: null, order: null };
+  return true;
+}
+
+/* ---------- step playlists and artist essentials ----------
+   What Immersive's Explore offers: the step and style playlists and each artist with at least three songs that can
+   play. A song belongs to a step only by its catalogue taxonomy (its category or a style carrying that exact id);
+   nothing is guessed from titles. Playing from one keeps Next, auto-advance and shuffle on it until the listener
+   picks something else, and survives a reload. */
+const STEP_LISTS = [
+  { id: 'tran-taali', title: 'Tran Taali' },
+  { id: 'be-taali', title: 'Be Taali' },
+  { id: 'dakla', title: 'Dakla' },
+  { id: 'dodhiyu', title: 'Dodhiyu' },
+  { id: 'hinch', title: 'Hinch' },
+  { id: 'sanedo', title: 'Sanedo', genre: 'sanedo' },
+];
+const ARTIST_MIN_SONGS = 3;
+const artistSlug = (name) => String(name || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function artistCredits(value) {
+  return String(value || '').split(/\s*(?:,|&|\/|;|\band\b|\bfeat\.?|\bft\.?|\bwith\b)\s*/i).map((part) => part.trim()).filter((part) => part && !/^various artists?$/i.test(part));
+}
+let playCollectionsCache = { songs: null, broken: -1, list: [] };
+function playCollections() {
+  if (playCollectionsCache.songs === state.songs && playCollectionsCache.broken === brokenVideos.size) return playCollectionsCache.list;
+  const catalogue = state.songs.filter((song) => !song.userAdded && !song.circleLink);
+  const steps = STEP_LISTS.map((step) => {
+    const songs = catalogue.filter((song) => song.category === step.id || (Array.isArray(song.styles) && song.styles.includes(step.id)) || (step.genre && song.genre === step.genre));
+    return { id: `step:${step.id}`, kind: 'step', title: step.title, ids: songs.map((song) => song.id), playable: songs.filter(canExecuteSong).length };
+  }).filter((list) => list.ids.length);
+  const byArtist = new Map();
+  catalogue.forEach((song) => artistCredits(song.artist).forEach((name) => {
+    const key = artistSlug(name); if (!key) return;
+    if (!byArtist.has(key)) byArtist.set(key, { name, songs: [] });
+    byArtist.get(key).songs.push(song);
+  }));
+  const artists = [...byArtist.entries()].map(([key, entry]) => ({ id: `artist:${key}`, kind: 'artist', title: entry.name, ids: entry.songs.map((song) => song.id), playable: entry.songs.filter(canExecuteSong).length }))
+    .filter((list) => list.playable >= ARTIST_MIN_SONGS)
+    .sort((a, b) => b.playable - a.playable || a.title.localeCompare(b.title));
+  const list = [...steps, ...artists];
+  playCollectionsCache = { songs: state.songs, broken: brokenVideos.size, list };
+  return list;
+}
+
+// The list playing now: a step or artist playlist (loops, kept through a reload) or a pasted YouTube playlist
+// (plays through once). `cursor` is the last of its songs that played, so a queued song in between doesn't lose it.
+const PLAY_LIST_KEY = 'playgarba:play-list:v1';
+function setPlayList(list) {
+  state.playlist = list;
+  try {
+    if (list && list.kind !== 'youtube') localStorage.setItem(PLAY_LIST_KEY, JSON.stringify({ v: 1, id: list.id, kind: list.kind, title: list.title, ids: list.ids, cursor: list.cursor || null }));
+    else localStorage.removeItem(PLAY_LIST_KEY);
+  } catch { /* storage can be unavailable */ }
+}
+function restorePlayList() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(PLAY_LIST_KEY) || 'null'); } catch { return; }
+  if (!saved || saved.v !== 1 || !Array.isArray(saved.ids)) return;
+  // Rebuilt from today's catalogue, so a list whose songs changed stays true to what it is
+  const fresh = playCollections().find((list) => list.id === saved.id);
+  const ids = fresh ? fresh.ids : saved.ids.filter((id) => state.songs.some((song) => song.id === id));
+  if (!ids.length || !ids.includes(state.songId)) { setPlayList(null); return; }
+  state.playlist = { id: saved.id, kind: saved.kind, title: fresh?.title || saved.title, ids, loop: true, cursor: state.songId };
+}
+function playListNextId() {
+  const list = state.playlist; if (!list) return null;
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  const playable = (id) => id !== state.songId && byId.has(id) && canExecuteSong(byId.get(id));
+  const anchor = list.ids.includes(state.songId) ? state.songId : list.cursor;
+  const at = list.ids.indexOf(anchor);
+  if (at < 0) return null;
+  if (state.shuffleMode && list.kind !== 'youtube') {
+    const recent = new Set([...getRecentPlayedSongs().slice(-Math.max(1, Math.floor(list.ids.length / 2))), ...state.listeningHistory.slice(-8)]);
+    const pool = list.ids.filter((id) => playable(id) && !recent.has(id));
+    const fallback = pool.length ? pool : list.ids.filter(playable);
+    return fallback.length ? fallback[Math.floor(Math.random() * fallback.length)] : null;
+  }
+  for (let step = 1; step <= list.ids.length; step += 1) {
+    const index = at + step;
+    if (index >= list.ids.length && !list.loop) return null;
+    const id = list.ids[index % list.ids.length];
+    if (playable(id)) return id;
+  }
+  return null;
+}
+function playListUpcoming(limit) {
+  const list = state.playlist; if (!list) return [];
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  const anchor = list.ids.includes(state.songId) ? state.songId : list.cursor, at = Math.max(0, list.ids.indexOf(anchor)), out = [];
+  for (let step = 1; step <= list.ids.length && out.length < limit; step += 1) {
+    const index = at + step;
+    if (index >= list.ids.length && !list.loop) break;
+    const song = byId.get(list.ids[index % list.ids.length]);
+    if (song && song.id !== state.songId && canExecuteSong(song) && !out.includes(song)) out.push(song);
+  }
+  return out;
+}
+function playFromList(listId, startId) {
+  const list = playCollections().find((entry) => entry.id === listId);
+  if (!list) return false;
+  const byId = new Map(state.songs.map((song) => [song.id, song]));
+  const playableIds = list.ids.filter((id) => byId.has(id) && canExecuteSong(byId.get(id)));
+  if (!playableIds.length) { showToast(`Nothing in ${list.title} can play right now.`); return false; }
+  const first = playableIds.includes(startId) ? startId
+    : state.shuffleMode ? playableIds[Math.floor(Math.random() * playableIds.length)] : playableIds[0];
+  setPlayList({ id: list.id, kind: list.kind, title: list.title, ids: list.ids, loop: true, cursor: first });
+  selectSong(first, { preservePlayback: true, forceAutoplay: true, keepSheet: true, preservePlayList: true });
+  return true;
+}
 function playableOrder() {
   if (playableOrderCache.songs !== state.songs) {
     playableOrderCache = {
@@ -610,7 +733,7 @@ function manualQueueSongs() {
 function getUpNextSongs() {
   const queued = manualQueueSongs();
   const queuedIds = new Set(queued.map((song) => song.id));
-  const automatic = automaticUpNextSongs(12).filter((song) => song.id !== state.songId && !queuedIds.has(song.id));
+  const automatic = (state.playlist && !state.shuffleMode ? playListUpcoming(12) : automaticUpNextSongs(12)).filter((song) => song.id !== state.songId && !queuedIds.has(song.id));
   return [...queued, ...automatic].slice(0, Math.max(12, queued.length + Math.min(8, automatic.length)));
 }
 
@@ -855,6 +978,10 @@ async function selectSong(songId, options = {}) {
   else if (!options.preserveContext && !options.initial) state.liveMode = false;
   if (options.circleMode) state.liveMode = false;
   else if (!options.initial) circle.leave();
+  if (state.playlist && !options.initial) {
+    if (state.playlist.ids.includes(song.id)) { state.playlist.cursor = song.id; setPlayList(state.playlist); }
+    else if (!options.preservePlayList && !options.consumeQueued) setPlayList(null);
+  }
   if (!state.liveMode) liveSync.stop();
 
   const previousSongId = state.songId;
@@ -864,6 +991,7 @@ async function selectSong(songId, options = {}) {
   }
   recordRecentPlayedSong(song.id);
   if (options.consumeQueued) removeQueuedSong(song.id, { announce: false });
+  scheduleLookAhead();
 
   const genre = state.genres.find((entry) => entry.id === song.genre);
   if (!genre) return;
@@ -1366,6 +1494,7 @@ async function toggleLiveStation() {
 }
 
 function changeSong(direction) {
+  if (direction > 0) state.advanceAt = Date.now();
   if (circle.active) {
     circle.handleChangeSong();
     return;
@@ -1411,15 +1540,18 @@ function changeSong(direction) {
     }
   }
 
-  // A pasted playlist plays through in its own order; picking a song outside it leaves the playlist
+  // A playlist keeps playing its own songs: a pasted YouTube playlist through once in its order, a step or artist
+  // playlist round and round (shuffled when shuffle is on), stepping over songs that can't play. Picking a song
+  // outside it leaves it.
   if (direction > 0 && state.playlist) {
-    const at = state.playlist.ids.indexOf(state.songId);
-    const nextId = at >= 0 ? state.playlist.ids[at + 1] : null;
-    if (nextId && state.songs.some((song) => song.id === nextId)) {
-      selectSong(nextId, { keepSheet: true, preservePlayback: true, preserveContext: true });
+    const nextId = playListNextId();
+    if (nextId) {
+      state.advanceAt = Date.now();
+      selectSong(nextId, { keepSheet: true, preservePlayback: true, preserveContext: true, preservePlayList: true });
       return;
     }
-    state.playlist = null;
+    if (state.playlist.kind !== 'youtube') showToast(`Nothing else in ${state.playlist.title} can play right now.`);
+    setPlayList(null);
   }
 
   if (direction > 0 && state.releaseContextId) {
@@ -2055,7 +2187,7 @@ async function playYouTubePlaylist(listId, startVideoId, faceCutouts = []) {
   }
   const startSong = startVideoId ? findSongByVideoId(startVideoId) : null;
   const startId = startSong && ids.includes(startSong.id) ? startSong.id : ids[0];
-  state.playlist = { id: listId, ids };
+  setPlayList({ id: listId, kind: 'youtube', title: 'Your playlist', ids, loop: false, cursor: null });
   showToast(`Playing your playlist · ${ids.length} ${ids.length === 1 ? 'song' : 'songs'}`);
   reportLink('playing');
   await selectSong(startId, { preservePlayback: true, forceAutoplay: true });
@@ -2196,7 +2328,40 @@ async function playYouTubeUrl(value, { faceCutouts = [] } = {}) {
   return true;
 }
 
+// The next songs are checked while this one plays: a video YouTube won't let PlayGarba play is marked Not available
+// before its turn comes, so the change of song is never a stop on a dead video. (Offline, nothing is marked.)
+const lookAheadChecked = new Set();
+let lookAheadTimer = 0;
+function scheduleLookAhead() {
+  clearTimeout(lookAheadTimer);
+  lookAheadTimer = setTimeout(async () => {
+    const upcoming = state.playlist && !state.shuffleMode ? playListUpcoming(3) : getUpNextSongs().slice(0, 2);
+    let changed = false;
+    for (const song of upcoming) {
+      const videoId = youtubeVideoId(song);
+      if (!videoId || song.userAdded || lookAheadChecked.has(videoId)) continue;
+      lookAheadChecked.add(videoId);
+      const details = await fetchVideoDetails(videoId).catch(() => null);
+      if (details?.unavailable && markVideoBroken(videoId)) changed = true;
+    }
+    if (changed) { updateQueueBadge(); renderSheet(); }
+  }, 2500);
+}
+
 function wireEvents() {
+  // A video YouTube refuses (embedding off, removed, private) is marked Not available for this session. Inside a
+  // playlist, or when auto-advance reached it, the next playable song starts straight away instead of stopping on it.
+  window.addEventListener('garba:youtube-error', (event) => {
+    const code = Number(event.detail?.code || 0);
+    if (circle.active || ![100, 101, 150].includes(code)) return;
+    const song = state.songs.find((entry) => entry.id === event.detail?.songId);
+    const videoId = song ? youtubeVideoId(song) : null;
+    if (!videoId) return;
+    markVideoBroken(videoId);
+    updateQueueBadge(); renderSheet();
+    if (state.playlist || Date.now() - (state.advanceAt || 0) < 20000) setTimeout(() => { if (state.songId === song.id) changeSong(1); }, 700);
+  });
+
   let searchTimer = null;
   els.playButton.addEventListener('click', togglePlay);
   els.miniPlay.addEventListener('click', togglePlay);
@@ -2591,6 +2756,7 @@ async function init() {
       renderPlayer();
       renderSheet();
     } else clearReleaseContext();
+    if (!circleStart && initial.song) { restorePlayList(); if (state.playlist) { renderPlayer(); renderSheet(); } }
 
     state.pendingSongId = initial.pendingSongId;
     if (initial.pendingNonstopSetId) {
@@ -3049,6 +3215,15 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
         durationSeconds: Number.isFinite(item.durationSeconds) ? item.durationSeconds : null,
         queued: state.manualQueue.includes(item.id),
       })),
+      playlist: state.playlist && state.playlist.kind !== 'youtube' ? {
+        id: state.playlist.id,
+        kind: state.playlist.kind,
+        title: state.playlist.title,
+        total: state.playlist.ids.length,
+        playable: state.playlist.ids.filter((id) => { const item = state.songs.find((entry) => entry.id === id); return item && canExecuteSong(item); }).length,
+      } : null,
+      // Videos YouTube refused this session, so Immersive greys them out without waiting for a catalogue refresh
+      broken: [...brokenVideos].slice(-300),
       nonstop: window.GARBA_NONSTOP?.activeSet ? {
         id: window.GARBA_NONSTOP.activeSet.id,
         title: window.GARBA_NONSTOP.activeSet.title,
@@ -3073,6 +3248,7 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
           isChapter: tier === PLAYABLE_TIER.CHAPTER,
         };
       });
+      snapshot.collections = playCollections().map(({ id, kind, title, ids, playable }) => ({ id, kind, title, ids, playable }));
     }
     return snapshot;
   },
@@ -3129,6 +3305,13 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       case 'nonstop':
         if (typeof value !== 'string' || !value) return false;
         return Boolean(window.GARBA_NONSTOP?.play?.(value));
+      case 'play-list':
+        if (!value || typeof value !== 'object' || typeof value.id !== 'string') return false;
+        return playFromList(value.id, typeof value.start === 'string' ? value.start : null);
+      case 'leave-list':
+        if (!state.playlist) return false;
+        setPlayList(null); renderSheet();
+        return true;
       case 'play-youtube':
         if (typeof value === 'string' && value.trim()) {
           playYouTubeUrl(value.trim());

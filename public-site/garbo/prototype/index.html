@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="garbo.css?v=20260928-7">
+  <link rel="stylesheet" href="garbo.css?v=20260928-8">
 </head>
 <body>
   <!--
@@ -152,18 +152,13 @@
     <label class="search"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="searchInput" type="search" placeholder="Search songs or artists" autocomplete="off" enterkeyhint="search" aria-label="Search songs or artists"></label>
     <p class="note explore-count" id="exploreCount" role="status" aria-live="polite"></p>
     <div class="tabs" role="tablist" aria-label="Browse">
-      <button role="tab" id="tabSongs" aria-selected="true" aria-controls="panelSongs" type="button">Songs</button>
+      <button role="tab" id="tabSongs" aria-selected="true" aria-controls="panelSongs" type="button">Explore</button>
       <button role="tab" id="tabNonstop" aria-selected="false" aria-controls="panelNonstop" type="button" tabindex="-1">Nonstop</button>
-      <button role="tab" id="tabSteps" aria-selected="false" aria-controls="panelSteps" type="button" tabindex="-1">By step</button>
       <button role="tab" id="tabQueue" aria-selected="false" aria-controls="panelQueue" type="button" tabindex="-1">Up next<span class="tab-count" id="queueCount"></span></button>
     </div>
     <div class="sheet-body">
-      <div role="tabpanel" id="panelSongs" aria-labelledby="tabSongs"><div class="chips" id="genreChips"></div><ul class="rows" id="songRows"></ul></div>
+      <div role="tabpanel" id="panelSongs" aria-labelledby="tabSongs"><div class="chips" id="genreChips" hidden></div><ul class="rows" id="songRows"></ul></div>
       <div role="tabpanel" id="panelNonstop" aria-labelledby="tabNonstop" hidden><ul class="rows" id="setRows"></ul></div>
-      <div role="tabpanel" id="panelSteps" aria-labelledby="tabSteps" hidden>
-        <p class="note">Garba is danced in steps, and each step has its own clap pattern. Songs will show up here once people who know them add step tags. PlayGarba doesn't guess these.</p>
-        <ul class="steps" id="stepRows"></ul>
-      </div>
     </div>
     <!-- The DJ's decks: what's playing and what comes next. Beside the list on a wide laptop, a tab on a phone. -->
     <div class="decks" role="tabpanel" id="panelQueue" aria-labelledby="tabQueue" hidden>
@@ -428,6 +423,6 @@
   <script src="../../atmosphere/scene.js?v=20260928-7"></script>
   <script src="scene.js?v=20260928-2"></script>
   <script src="morphicons.js?v=1.7.1"></script>
-  <script src="garbo.js?v=20260928-8"></script>
+  <script src="garbo.js?v=20260928-9"></script>
 </body>
 </html>

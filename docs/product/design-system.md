@@ -139,6 +139,8 @@ Explore is a listening interface, not a dashboard.
 - Title is primary, artist is secondary, release/context is tertiary.
 - Descriptions and source context use progressive disclosure rather than expanding every row by default.
 - Keep Nonstop sets visibly and behaviourally distinct from ordinary songs.
+- In Immersive, Explore opens on lists: Steps and styles, then Artist essentials (an artist needs at least three playable songs). Playing a list keeps Next, auto-play and shuffle inside it until the listener leaves it, and survives a reload. Build lists from catalogue tags and credits only, never guessed.
+- A song that can't play shows **Not available**, is greyed and never starts. A video YouTube refuses mid-list is marked for the session and skipped, so the music doesn't stop.
 - Avoid duplicate catalogue objects to create presentation-only playlists.
 - Favourites/My Garba and manual queue state should use canonical song IDs.
 - Search, empty, loading and error states are product states, not afterthoughts.
