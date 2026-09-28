@@ -261,6 +261,12 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     if (!scene.includes(marker)) fail(`Venue scene is missing the stage, sponsor, singer or crowd marker: ${marker}`);
   }
   if ((scene.match(/handMic\(m\);/g) || []).length < 3) fail('Every singer drawing path must draw the handheld mic after the face');
+  // Walking eases in and out with the couple on your spot and a stride that keeps time with the pace; the garbo's
+  // platform is walked round; dancers passing the camera keep their full design and fade out as a whole; stalls up
+  // close show their wares
+  for (const marker of ['walkMe.vx += dvx; walkMe.vz += dvz;', 'd.step = (d.step || 0) + Math.max(sp, gap > 0.2 ? 1 : 0) * dt * 5.2;', 'var rr = Math.hypot(walkMe.x, walkMe.z), ko = KEEP_OUT + 0.45;', 'function nearFigure(', "nearFigure(p, d, T, beatPh, Math.min(1, fade * 1.25)); return;", 'var near = 0, dk = 0;', 'function stallWares(']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the walking, near-camera or stall marker: ${marker}`);
+  }
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
   // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
   for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false", 'function coupleFace(', 'function cutHead(', 'wearFace(coupleFace(mine), mine, x, y - h * 0.885, h);', 'wearFace(coupleFace(youSeat), youSeat, ga.who.headAt.x, ga.who.headAt.y + hs * 0.085, hs);', 'function wearFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {

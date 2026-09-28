@@ -2610,12 +2610,38 @@
       fillPoly([wpt(-hw, 0, 0), wpt(-hw, 0, D), wpt(-hw, 2.4, D), wpt(-hw, 2.4, 0)], '#32200f');
       fillPoly([wpt(hw, 0, 0), wpt(hw, 0, D), wpt(hw, 2.4, D), wpt(hw, 2.4, 0)], '#32200f');
       var vp = at(0.2, 0, D * 0.55); if (vp) figure(vp, sl.vendor, 0, false, 0);
+      // Close enough to see properly, the stall is drawn in full: a planked counter with a brass trim, bamboo poles at
+      // the corners, a fringed awning and its own wares. From further off a few shapes read the same.
+      var fl = at(-hw, 1, 0), fr = at(hw, 1, 0), near = fl && fr && Math.max(fl.s, fr.s) > 24;
       fillPoly([wpt(-hw, 0, 0), wpt(hw, 0, 0), wpt(hw, 1, 0), wpt(-hw, 1, 0)], sl.col);
+      if (near) {
+        g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = Math.max(0.6, fl.s * 0.015);
+        for (var pk = 1; pk < 9; pk++) { var q0 = at(-hw + sl.w * pk / 9, 0.05, 0), q1 = at(-hw + sl.w * pk / 9, 0.95, 0); if (q0 && q1) { g.beginPath(); g.moveTo(q0.x, q0.y); g.lineTo(q1.x, q1.y); g.stroke(); } }
+        fillPoly([wpt(-hw, 0.82, -0.005), wpt(hw, 0.82, -0.005), wpt(hw, 0.9, -0.005), wpt(-hw, 0.9, -0.005)], '#e8b04b');
+        fillPoly([wpt(-hw, 0.08, -0.005), wpt(hw, 0.08, -0.005), wpt(hw, 0.14, -0.005), wpt(-hw, 0.14, -0.005)], 'rgba(0,0,0,.3)');
+      }
       fillPoly([wpt(-hw, 0.97, 0), wpt(hw, 0.97, 0), wpt(hw, 1.05, -0.25), wpt(-hw, 1.05, -0.25)], '#d9c3a0');
-      for (var k = 0; k < 3; k++) { var pot = at(-hw * 0.6 + k * hw * 0.6, 1.05, -0.1); if (pot) { g.fillStyle = ['#c9a37a', '#b5651d', '#e8d5b0'][k]; g.beginPath(); g.ellipse(pot.x, pot.y - pot.s * 0.12, pot.s * 0.18, pot.s * 0.13, 0, 0, TAU); g.fill(); } }
+      if (near) stallWares(sl, hw, at, t);
+      else for (var k = 0; k < 3; k++) { var pot = at(-hw * 0.6 + k * hw * 0.6, 1.05, -0.1); if (pot) { g.fillStyle = ['#c9a37a', '#b5651d', '#e8d5b0'][k]; g.beginPath(); g.ellipse(pot.x, pot.y - pot.s * 0.12, pot.s * 0.18, pot.s * 0.13, 0, 0, TAU); g.fill(); } }
+      if (near) [-hw - 0.25, hw + 0.25].forEach(function (u) { var b0 = at(u, 0, -0.5), b1 = at(u, 2.75, -0.5); if (!b0 || !b1) return; var bw = Math.max(1.5, b0.s * 0.07); g.strokeStyle = '#8a6a3a'; g.lineWidth = bw; g.lineCap = 'butt'; g.beginPath(); g.moveTo(b0.x, b0.y); g.lineTo(b1.x, b1.y); g.stroke(); g.strokeStyle = 'rgba(40,24,10,.6)'; g.lineWidth = Math.max(0.6, bw * 0.25); for (var nk = 1; nk < 5; nk++) { var ny = lerp(b0.y, b1.y, nk / 5), nx = lerp(b0.x, b1.x, nk / 5); g.beginPath(); g.moveTo(nx - bw / 2, ny); g.lineTo(nx + bw / 2, ny); g.stroke(); } });
       fillPoly([wpt(-hw - 0.3, 2.75, -0.5), wpt(hw + 0.3, 2.75, -0.5), wpt(hw + 0.3, 2.95, D), wpt(-hw - 0.3, 2.95, D)], 'rgba(40,24,14,.95)');
       var n = 8;
       for (var i = 0; i < n; i++) { var u0 = -hw - 0.3 + (sl.w + 0.6) * i / n, u1 = -hw - 0.3 + (sl.w + 0.6) * (i + 1) / n; fillPoly([wpt(u0, 2.3, -0.5), wpt(u1, 2.3, -0.5), wpt(u1, 2.75, -0.5), wpt(u0, 2.75, -0.5)], i % 2 ? '#efe2c8' : sl.col); }
+      if (near) {
+        // A scalloped edge along the awning with a tassel at each point
+        for (var sc0 = 0; sc0 < n; sc0++) {
+          var ua = -hw - 0.3 + (sl.w + 0.6) * sc0 / n, ub = ua + (sl.w + 0.6) / n, a0 = at(ua, 2.3, -0.5), b0 = at(ub, 2.3, -0.5), m0 = at((ua + ub) / 2, 2.14, -0.5); if (!a0 || !b0 || !m0) continue;
+          g.fillStyle = sc0 % 2 ? sl.col : '#efe2c8'; g.beginPath(); g.moveTo(a0.x, a0.y); g.quadraticCurveTo(m0.x, m0.y + (m0.y - a0.y), b0.x, b0.y); g.closePath(); g.fill();
+          g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(m0.x, m0.y + (m0.y - a0.y) * 0.5, Math.max(0.8, m0.s * 0.03), 0, TAU); g.fill();
+        }
+        if (sl.en === 'Snacks' || sl.en === 'Water') {
+          // Packets hung in strips from the awning, swaying a little
+          for (var hp = 0; hp < 7; hp++) {
+            var hu = -hw + 0.3 + (sl.w - 0.6) * hp / 6, sw0 = reduce ? 0 : Math.sin(t * 1.6 + hp) * 0.02;
+            for (var hk = 0; hk < 3; hk++) { var pa = at(hu + sw0, 2.1 - hk * 0.2, -0.45), pb = at(hu + 0.13 + sw0, 1.95 - hk * 0.2, -0.45); if (!pa || !pb) continue; g.fillStyle = ['#f6c342', '#d8453a', '#2f8f5b', '#3b4cc0', '#f08a24'][(hp + hk) % 5]; g.fillRect(pa.x, pa.y, pb.x - pa.x, pb.y - pa.y); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(pa.x, pa.y, (pb.x - pa.x) * 0.3, pb.y - pa.y); }
+          }
+        }
+      }
       for (var bq = 0; bq <= 6; bq++) { var bp = at(-hw + sl.w * bq / 6, 2.24, -0.5); if (bp) glow(bp.x, bp.y, Math.min(3, Math.max(0.8, bp.s * 0.06)), TH.bulbs[bq % TH.bulbs.length], (0.8 + pulse * 0.2) * bright); }
       var sp = at(0, 3.3, -0.5);
       if (sp) {
@@ -2628,6 +2654,49 @@
           g.fillStyle = '#ffd58a'; g.fillText(sl.sign, sp.x, sp.y + fs * 0.12);
           if (fe >= 6) { g.font = '600 ' + fe + 'px system-ui, sans-serif'; g.fillStyle = 'rgba(255,230,190,.75)'; g.fillText(sl.en, sp.x, sp.y + fs * 0.12 + fe * 1.15); }
         }
+      }
+    }
+
+    // What each stall sells, on its counter: chai boiling in a kettle with a row of glasses, a lit glass case of puris,
+    // blue water cans, a freezer of kulfi, trays of fafda and jalebi
+    function stallWares(sl, hw, at, t) {
+      var en = sl.en, c = at(0, 1.05, -0.12); if (!c) return;
+      var s0 = c.s;
+      if (en === 'Chai') {
+        var st0 = at(-hw * 0.45, 1.05, -0.12);
+        if (st0) {
+          g.fillStyle = '#2a2a2e'; g.fillRect(st0.x - s0 * 0.22, st0.y - s0 * 0.08, s0 * 0.44, s0 * 0.08);
+          glow(st0.x, st0.y - s0 * 0.09, s0 * 0.05, '#5ab0ff', 0.7);
+          var kg = g.createLinearGradient(st0.x - s0 * 0.2, 0, st0.x + s0 * 0.2, 0); kg.addColorStop(0, '#6d6f74'); kg.addColorStop(0.45, '#e2e4e8'); kg.addColorStop(1, '#5a5c61');
+          g.fillStyle = kg; g.beginPath(); g.ellipse(st0.x, st0.y - s0 * 0.22, s0 * 0.19, s0 * 0.14, 0, 0, TAU); g.fill();
+          g.strokeStyle = '#8a8c91'; g.lineWidth = Math.max(0.8, s0 * 0.03); g.beginPath(); g.moveTo(st0.x + s0 * 0.16, st0.y - s0 * 0.25); g.quadraticCurveTo(st0.x + s0 * 0.3, st0.y - s0 * 0.3, st0.x + s0 * 0.33, st0.y - s0 * 0.4); g.stroke();
+          g.beginPath(); g.arc(st0.x, st0.y - s0 * 0.38, s0 * 0.1, Math.PI, 0); g.stroke();
+          if (!reduce) { g.strokeStyle = 'rgba(255,245,230,.28)'; g.lineWidth = Math.max(0.8, s0 * 0.025); for (var sm = 0; sm < 3; sm++) { var sy = (t * 0.6 + sm / 3) % 1, sx = st0.x - s0 * 0.05 + sm * s0 * 0.05; g.globalAlpha = 1 - sy; g.beginPath(); g.moveTo(sx, st0.y - s0 * (0.36 + sy * 0.5)); g.quadraticCurveTo(sx + Math.sin(t * 2 + sm) * s0 * 0.06, st0.y - s0 * (0.46 + sy * 0.5), sx, st0.y - s0 * (0.56 + sy * 0.5)); g.stroke(); } g.globalAlpha = 1; }
+        }
+        for (var gl = 0; gl < 6; gl++) { var gp = at(hw * (0.05 + gl * 0.13), 1.05, -0.12); if (gp) { g.fillStyle = 'rgba(230,236,240,.55)'; g.fillRect(gp.x - s0 * 0.035, gp.y - s0 * 0.11, s0 * 0.07, s0 * 0.11); g.fillStyle = '#b8753a'; g.fillRect(gp.x - s0 * 0.03, gp.y - s0 * 0.07, s0 * 0.06, s0 * 0.065); } }
+      } else if (en === 'Pani puri' || en === 'Dabeli') {
+        var ca = at(-hw * 0.7, 1.05, -0.1), cb = at(hw * 0.7, 1.55, -0.1);
+        if (ca && cb) {
+          g.fillStyle = 'rgba(255,240,210,.18)'; g.fillRect(ca.x, cb.y, cb.x - ca.x, ca.y - cb.y);
+          g.strokeStyle = 'rgba(230,236,240,.7)'; g.lineWidth = Math.max(0.8, s0 * 0.02); g.strokeRect(ca.x, cb.y, cb.x - ca.x, ca.y - cb.y);
+          glow((ca.x + cb.x) / 2, cb.y + s0 * 0.04, s0 * 0.08, '#fff4dc', 0.5 * bright);
+          for (var pr = 0; pr < 2; pr++) for (var pc = 0; pc < 9; pc++) { var px = lerp(ca.x, cb.x, (pc + 0.5 + (pr % 2) * 0.5) / 9.5), py = ca.y - (ca.y - cb.y) * (0.2 + pr * 0.22); g.fillStyle = en === 'Dabeli' ? '#d9a35a' : '#e2b56c'; g.beginPath(); g.arc(px, py, Math.max(1, s0 * 0.045), 0, TAU); g.fill(); g.fillStyle = 'rgba(120,70,20,.35)'; g.beginPath(); g.arc(px - s0 * 0.01, py - s0 * 0.01, Math.max(0.5, s0 * 0.015), 0, TAU); g.fill(); }
+          if (en === 'Pani puri') { var bw0 = at(hw * 0.85, 1.05, -0.1); if (bw0) { g.fillStyle = 'rgba(90,160,90,.75)'; g.beginPath(); g.ellipse(bw0.x, bw0.y - s0 * 0.12, s0 * 0.12, s0 * 0.12, 0, 0, TAU); g.fill(); g.strokeStyle = '#b8bcc2'; g.lineWidth = Math.max(0.8, s0 * 0.02); g.stroke(); } }
+        }
+      } else if (en === 'Water') {
+        for (var wc = 0; wc < 5; wc++) { var wp = at(-hw * 0.75 + wc * hw * 0.37, 1.05, -0.12); if (!wp) continue; var wg = g.createLinearGradient(wp.x - s0 * 0.12, 0, wp.x + s0 * 0.12, 0); wg.addColorStop(0, '#1f5f9e'); wg.addColorStop(0.5, '#5aa8e6'); wg.addColorStop(1, '#1b4f84'); g.fillStyle = wg; g.fillRect(wp.x - s0 * 0.12, wp.y - s0 * 0.32, s0 * 0.24, s0 * 0.32); g.fillStyle = '#e8eef4'; g.fillRect(wp.x - s0 * 0.04, wp.y - s0 * 0.37, s0 * 0.08, s0 * 0.05); }
+      } else if (en === 'Ice cream') {
+        var fa = at(-hw * 0.8, 1.05, -0.1), fb2 = at(hw * 0.2, 1.4, -0.1);
+        if (fa && fb2) { g.fillStyle = '#f2f4f6'; g.fillRect(fa.x, fb2.y, fb2.x - fa.x, fa.y - fb2.y); g.fillStyle = '#3b8fd4'; g.fillRect(fa.x, fb2.y + (fa.y - fb2.y) * 0.45, fb2.x - fa.x, (fa.y - fb2.y) * 0.18); g.fillStyle = 'rgba(160,190,210,.8)'; g.fillRect(fa.x, fb2.y, fb2.x - fa.x, (fa.y - fb2.y) * 0.12); }
+        for (var kc = 0; kc < 4; kc++) { var kp = at(hw * (0.35 + kc * 0.15), 1.05, -0.12); if (!kp) continue; g.strokeStyle = '#d9c3a0'; g.lineWidth = Math.max(0.8, s0 * 0.015); g.beginPath(); g.moveTo(kp.x, kp.y); g.lineTo(kp.x, kp.y - s0 * 0.1); g.stroke(); g.fillStyle = ['#f6d27a', '#f0a0b8', '#e9e0c8', '#9ad08c'][kc]; g.beginPath(); g.ellipse(kp.x, kp.y - s0 * 0.17, s0 * 0.035, s0 * 0.08, 0, 0, TAU); g.fill(); }
+      } else {
+        [[-0.55, '#e6c35a'], [0.05, '#f08a24'], [0.6, '#d9a35a']].forEach(function (tr, ti) {
+          var tp = at(hw * tr[0], 1.05, -0.12); if (!tp) return;
+          g.fillStyle = '#b8bcc2'; g.beginPath(); g.ellipse(tp.x, tp.y - s0 * 0.02, s0 * 0.26, s0 * 0.06, 0, 0, TAU); g.fill();
+          g.fillStyle = tr[1]; g.beginPath(); g.ellipse(tp.x, tp.y - s0 * 0.07, s0 * 0.22, s0 * 0.07, 0, Math.PI, 0); g.fill();
+          if (ti === 1) { g.strokeStyle = '#d5621a'; g.lineWidth = Math.max(0.7, s0 * 0.02); for (var jc = 0; jc < 4; jc++) { g.beginPath(); g.arc(tp.x - s0 * 0.12 + jc * s0 * 0.08, tp.y - s0 * 0.1, s0 * 0.035, 0, TAU * 0.85); g.stroke(); } }
+          else { g.strokeStyle = 'rgba(160,110,40,.6)'; g.lineWidth = Math.max(0.5, s0 * 0.01); for (var fk = 0; fk < 5; fk++) { g.beginPath(); g.moveTo(tp.x - s0 * 0.15 + fk * s0 * 0.07, tp.y - s0 * 0.07); g.lineTo(tp.x - s0 * 0.1 + fk * s0 * 0.07, tp.y - s0 * 0.13); g.stroke(); } }
+        });
       }
     }
 
@@ -2847,7 +2916,24 @@
       }
       return [le, lh, re, rh];
     }
+    // Someone passing right by the camera keeps their whole design, face and all, and fades out as a whole: they are
+    // drawn in full on a scratch layer, only over the patch they cover, and that patch is laid over the scene with
+    // their fade. (Fading each stroke on its own would show the overlaps through each other.)
+    var nearLayer = null;
+    function nearFigure(p, d, T, beatPh, a) {
+      var h = d.h * p.s, x0 = Math.max(0, Math.floor(p.x - h * 0.7)), y0 = Math.max(0, Math.floor(p.y - h * 1.3)), x1 = Math.min(W, Math.ceil(p.x + h * 0.7)), y1 = Math.min(H, Math.ceil(p.y + h * 0.25));
+      if (x1 <= x0 || y1 <= y0 || a <= 0.01) return;
+      if (!nearLayer) nearLayer = document.createElement('canvas');
+      if (nearLayer.width !== canvas.width || nearLayer.height !== canvas.height) { nearLayer.width = canvas.width; nearLayer.height = canvas.height; }
+      var lc = nearLayer.getContext('2d'); lc.setTransform(DPR, 0, 0, DPR, 0, 0); lc.clearRect(x0, y0, x1 - x0, y1 - y0);
+      var live = g, fog = FOGF; g = lc;
+      try { figure(p, d, T, false, beatPh, null); } finally { g = live; FOGF = fog; }
+      g.save(); g.globalAlpha = a;
+      g.drawImage(nearLayer, x0 * DPR, y0 * DPR, (x1 - x0) * DPR, (y1 - y0) * DPR, x0, y0, x1 - x0, y1 - y0);
+      g.restore();
+    }
     function figure(p, d, T, isYou, beatPh, fade) {
+      if (fade != null && fade < 0.999 && !isYou && !d.coupleRole) { nearFigure(p, d, T, beatPh, Math.min(1, fade * 1.25)); return; }
       if (d.coupleRole && st.listener !== 'circle' && d.alt) { var a0 = d.alt; ['flash', 'twirl', 'atHome', 'walking', 'step', 'sitting', 'rest', 'ph'].forEach(function (k) { a0[k] = d[k]; }); d = a0; }
       var s = p.s, x = p.x, y = p.y, h = d.h * s, up = d.flash > 0.25;
       var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = (d.pair && d.pair.on && !d.moving) || !d.walker && !d.role && !d.watcher && !d.stander && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
@@ -2859,7 +2945,7 @@
       if (d.role && !st.on && !reduce) { x += Math.sin(T * 0.6 + d.ph * 3) * h * 0.012; y -= Math.max(0, Math.sin(T * 1.1 + d.ph)) * h * 0.004; }
       if (d.fk > 0.02) { if (d.flair === 'sway' || d.flair === 'step' || d.flair === 'lean') x += Math.sin(T * 3.4 + d.ph) * h * 0.06 * d.fk; if (d.flair === 'lean' || d.flair === 'raise') y -= Math.abs(Math.sin(T * 6.5 + d.ph)) * h * 0.025 * d.fk; if (d.flair === 'shake') x += Math.sin(T * 17) * h * 0.012 * d.fk; }
       if (d.hopK) y -= d.hopK * h * 0.13;
-      var near = fade == null ? 0 : 1 - fade, dk = near * 0.88;
+      var near = 0, dk = 0;
       FOGF = isYou || d.coupleRole || near ? 0 : Math.max(0, Math.min(0.62, ((st.listener === 'stage' || st.dj ? p.z - 21.5 : p.z + cam.z - 9)) / 55));
       if (h < 1.5) return;
       g.globalAlpha = 1 - Math.min(1, p.z / 70) * 0.4;
@@ -3283,19 +3369,33 @@
     // walking up to a stall brings the seller's call, and Escape walks you back to your place in the circle
     var WALK_BOUNDS = { outdoors: [-25.5, 25.5, -8, 40], stadium: [-21, 21, -8, 33], sheri: [-5.4, 5.4, -10, 60] };
     var STALL_CALLS = { Chai: 'Cutting chai?', Dabeli: 'Garam dabeli!', 'Pani puri': 'Pani puri, teekha?', Water: 'Thandu paani!', 'Ice cream': 'Kulfi, kesar pista!', Snacks: 'Fafda jalebi!' };
-    var walkMe = { on: false, x: 0, z: 0, x0: 0, z0: 0, keys: {}, stick: null, ox: 0, oz: 0, used: false, shownAt: 0 };
+    var walkMe = { on: false, x: 0, z: 0, x0: 0, z0: 0, vx: 0, vz: 0, keys: {}, stick: null, ox: 0, oz: 0, used: false, shownAt: 0 };
     var canWalk = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
     function walkStep(dt) {
       var free = st.listener === 'circle' && !st.dj;
       if (!free && walkMe.on) walkMe.on = false;
-      var k = walkMe.keys, vx = (k.right ? 1 : 0) - (k.left ? 1 : 0), vz = (k.up ? 1 : 0) - (k.down ? 1 : 0), pace = 2.6;
+      var k = walkMe.keys, vx = (k.right ? 1 : 0) - (k.left ? 1 : 0), vz = (k.up ? 1 : 0) - (k.down ? 1 : 0), pace = 2.1;
       // A touch screen's stick steers with a direction and a strength: a small push strolls, a full one walks
       var sk = walkMe.stick;
-      if (sk && Math.hypot(sk.x, sk.z) > 0.08) { vx = sk.x; vz = sk.z; pace = 2.6 * Math.min(1, Math.hypot(sk.x, sk.z)); }
-      if ((vx || vz) && free) {
-        if (!walkMe.on) { var me = listenerPos(layout(st.venue), T); walkMe.on = true; walkMe.used = true; walkMe.x = walkMe.x0 = me.x; walkMe.z = walkMe.z0 = me.z; }
-        var l = Math.hypot(vx, vz), b = WALK_BOUNDS[st.venue] || WALK_BOUNDS.outdoors;
-        walkMe.x = Math.max(b[0], Math.min(b[1], walkMe.x + vx / l * pace * dt)); walkMe.z = Math.max(b[2], Math.min(b[3], walkMe.z + vz / l * pace * dt));
+      if (sk && Math.hypot(sk.x, sk.z) > 0.08) { vx = sk.x; vz = sk.z; pace = 2.1 * Math.min(1, Math.hypot(sk.x, sk.z)); }
+      if ((vx || vz) && free && !walkMe.on) { var me = listenerPos(layout(st.venue), T); walkMe.on = true; walkMe.used = true; walkMe.x = walkMe.x0 = me.x; walkMe.z = walkMe.z0 = me.z; walkMe.vx = walkMe.vz = 0; }
+      if (walkMe.on) {
+        // A walk, not a slide: you pick up speed over the first few steps, ease to a stop when you let go, and turn
+        // through a curve rather than on the spot
+        var l = Math.hypot(vx, vz) || 1, tx = free && (vx || vz) ? vx / l * pace : 0, tz = free && (vx || vz) ? vz / l * pace : 0;
+        var acc = (tx || tz ? 5 : 7) * dt, dvx = tx - walkMe.vx, dvz = tz - walkMe.vz, dv = Math.hypot(dvx, dvz);
+        if (dv > acc) { dvx *= acc / dv; dvz *= acc / dv; }
+        walkMe.vx += dvx; walkMe.vz += dvz;
+        var b = WALK_BOUNDS[st.venue] || WALK_BOUNDS.outdoors, nx = walkMe.x + walkMe.vx * dt, nz = walkMe.z + walkMe.vz * dt;
+        if (nx < b[0] || nx > b[1]) walkMe.vx = 0; if (nz < b[2] || nz > b[3]) walkMe.vz = 0;
+        walkMe.x = Math.max(b[0], Math.min(b[1], nx)); walkMe.z = Math.max(b[2], Math.min(b[3], nz));
+        // The garbo's platform is in the way: walking into it slides you round its edge instead of through it
+        var rr = Math.hypot(walkMe.x, walkMe.z), ko = KEEP_OUT + 0.45;
+        if (rr < ko) {
+          var ux = rr > 0.01 ? walkMe.x / rr : 1, uz = rr > 0.01 ? walkMe.z / rr : 0, vin = walkMe.vx * ux + walkMe.vz * uz;
+          walkMe.x = ux * ko; walkMe.z = uz * ko;
+          if (vin < 0) { walkMe.vx -= vin * ux; walkMe.vz -= vin * uz; }
+        }
       }
       // The view follows you, easing, and eases back when you return
       var e = Math.min(1, dt * 3);
@@ -3344,7 +3444,16 @@
       if (d.x == null || reduce) { var start = goHome ? slot : d.rest; d.x = start.x; d.z = start.z; d.wantHome = goHome; d.wait = 0; }
       if (d.wantHome !== goHome) { d.wantHome = goHome; d.wait = d.delay; d.around = 0; }
       var target = goHome ? slot : d.rest, dx = target.x - d.x, dz = target.z - d.z, dist = Math.hypot(dx, dz);
-      if (walkMe.on && d.coupleRole) d.wait = 0;
+      if (walkMe.on && d.coupleRole) {
+        // While you walk, the two of you walk with it: side by side on your spot, the stride keeping time with the pace
+        d.wait = 0;
+        var sp = Math.hypot(walkMe.vx, walkMe.vz), ex = slot.x - d.x, ez = slot.z - d.z, gap = Math.hypot(ex, ez);
+        if (gap > 1.5) { d.x += ex / gap * Math.min(gap, 3.2 * dt); d.z += ez / gap * Math.min(gap, 3.2 * dt); }
+        else { var ea = Math.min(1, dt * 10); d.x += ex * ea; d.z += ez * ea; }
+        d.step = (d.step || 0) + Math.max(sp, gap > 0.2 ? 1 : 0) * dt * 5.2;
+        d.walking = (sp > 0.12 || gap > 0.2) && !reduce; d.atHome = !d.walking; d.sitting = false;
+        return { x: d.x, z: d.z };
+      }
       if (d.wait > 0) d.wait -= dt;
       else if (dist > 0.2) {
         var step = Math.min(dist, d.speed * dt * (goHome && dist < 2 ? 0.6 + dist * 0.2 : 1)), mx = dx / dist, mz = dz / dist, rc = Math.hypot(d.x, d.z);
