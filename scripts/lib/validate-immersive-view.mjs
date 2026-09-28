@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-1"', 'src="garbo.js?v=20260928-1"', 'src="scene.js?v=20260927-9"']) {
+for (const marker of ['href="garbo.css?v=20260928-2"', 'src="garbo.js?v=20260928-2"', 'src="scene.js?v=20260927-9"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -134,5 +134,18 @@ for (const marker of ['id="installSheet"', 'data-install="iphone"', 'data-instal
 if (!prototypeJs.includes("requestLiveAction('install')") || !app.includes("case 'install': {") || !app.includes('installable: Boolean(state.installPrompt),')) fail('Install now must reach the browser install prompt held by the page');
 // Choices are words alone and card titles stand alone
 if (prototypeJs.includes('SEG_ICONS') || prototypeHtml.includes('class="card-badge"')) fail('Choices and card titles must not carry icons');
+// Icons are Hugeicons Free (Stroke Rounded), credited beside the sprite; the three toggles morph with Morphicons, which
+// ships as one vendored script carrying its MIT notice in both copies
+if (!prototypeHtml.includes('Icons: Hugeicons Free 4.3.5, Stroke Rounded (hugeicons.com), MIT License')) fail('The Immersive sprite must credit Hugeicons');
+for (const id of ['i-play', 'i-pause', 'i-search', 'i-more', 'i-close', 'i-full', 'i-exit-full', 'i-ring', 'i-yt']) {
+  if (!prototypeHtml.includes(`<symbol id="${id}"`)) fail(`The Immersive sprite is missing ${id}`);
+}
+{
+  const morphCopies = await Promise.all(['docs/product/prototypes/garbo/morphicons.js', 'public-site/garbo/prototype/morphicons.js'].map(read));
+  if (morphCopies[0] !== morphCopies[1] || !morphCopies[0].startsWith('/*! Morphicons 1.7.1') || !morphCopies[0].includes('MIT License') || !morphCopies[0].includes('GarboMorph')) fail('The vendored Morphicons script must match in both copies and carry its MIT notice');
+}
+for (const marker of ["morphIcon('play', $('playBtn'), 'i-play');", "morphIcon('hide', $('hidePlayerBtn'), 'i-eye-off');", "morphIcon('full', $('fullBtn'), 'i-full',", "reducedMotion: 'user'"]) {
+  if (!prototypeJs.includes(marker)) fail(`The toggles must morph their icons: ${marker}`);
+}
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');

@@ -14,6 +14,30 @@
   var reducedQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   var mirrors = new window.GarboScene.MirrorBand($('mirrorBand'));
 
+  /* ---------- icons that change shape ----------
+     Play and pause, hide and show the player, full screen and back morph from one Hugeicons glyph into the other with
+     Morphicons. With reduced motion they change at once; without Morphicons the page's own two icons swap as before. */
+  var GLYPHS = {"i-play":[["path",{"d":"M18.8906 12.846C18.5371 14.189 16.8667 15.138 13.5257 17.0361C10.296 18.8709 8.6812 19.7884 7.37983 19.4196C6.8418 19.2671 6.35159 18.9776 5.95624 18.5787C5 17.6139 5 15.7426 5 12C5 8.2574 5 6.3861 5.95624 5.42132C6.35159 5.02245 6.8418 4.73288 7.37983 4.58042C8.6812 4.21165 10.296 5.12907 13.5257 6.96393C16.8667 8.86197 18.5371 9.811 18.8906 11.154C19.0365 11.7084 19.0365 12.2916 18.8906 12.846Z","stroke":"currentColor","stroke-linejoin":"round","stroke-width":"1.5"}]],"i-pause":[["path",{"d":"M4 7C4 5.58579 4 4.87868 4.43934 4.43934C4.87868 4 5.58579 4 7 4C8.41421 4 9.12132 4 9.56066 4.43934C10 4.87868 10 5.58579 10 7V17C10 18.4142 10 19.1213 9.56066 19.5607C9.12132 20 8.41421 20 7 20C5.58579 20 4.87868 20 4.43934 19.5607C4 19.1213 4 18.4142 4 17V7Z","stroke":"currentColor","stroke-width":"1.5"}],["path",{"d":"M14 7C14 5.58579 14 4.87868 14.4393 4.43934C14.8787 4 15.5858 4 17 4C18.4142 4 19.1213 4 19.5607 4.43934C20 4.87868 20 5.58579 20 7V17C20 18.4142 20 19.1213 19.5607 19.5607C19.1213 20 18.4142 20 17 20C15.5858 20 14.8787 20 14.4393 19.5607C14 19.1213 14 18.4142 14 17V7Z","stroke":"currentColor","stroke-width":"1.5"}]],"i-eye":[["path",{"d":"M21.544 11.045C21.848 11.4713 22 11.6845 22 12C22 12.3155 21.848 12.5287 21.544 12.955C20.1779 14.8706 16.6892 19 12 19C7.31078 19 3.8221 14.8706 2.45604 12.955C2.15201 12.5287 2 12.3155 2 12C2 11.6845 2.15201 11.4713 2.45604 11.045C3.8221 9.12944 7.31078 5 12 5C16.6892 5 20.1779 9.12944 21.544 11.045Z","stroke":"currentColor","stroke-width":"1.5"}],["path",{"d":"M15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15C13.6569 15 15 13.6569 15 12Z","stroke":"currentColor","stroke-width":"1.5"}]],"i-eye-off":[["path",{"d":"M19.439 15.439C20.3636 14.5212 21.0775 13.6091 21.544 12.955C21.848 12.5287 22 12.3155 22 12C22 11.6845 21.848 11.4713 21.544 11.045C20.1779 9.12944 16.6892 5 12 5C11.0922 5 10.2294 5.15476 9.41827 5.41827M6.74742 6.74742C4.73118 8.1072 3.24215 9.94266 2.45604 11.045C2.15201 11.4713 2 11.6845 2 12C2 12.3155 2.15201 12.5287 2.45604 12.955C3.8221 14.8706 7.31078 19 12 19C13.9908 19 15.7651 18.2557 17.2526 17.2526","stroke":"currentColor","stroke-linecap":"round","stroke-linejoin":"round","stroke-width":"1.5"}],["path",{"d":"M9.85786 10C9.32783 10.53 9 11.2623 9 12.0711C9 13.6887 10.3113 15 11.9289 15C12.7377 15 13.47 14.6722 14 14.1421","stroke":"currentColor","stroke-linecap":"round","stroke-width":"1.5"}],["path",{"d":"M3 3L21 21","stroke":"currentColor","stroke-linecap":"round","stroke-linejoin":"round","stroke-width":"1.5"}]],"i-full":[["path",{"d":"M15.5 21C16.8956 21 17.5933 21 18.1611 20.8278C19.4395 20.44 20.44 19.4395 20.8278 18.1611C21 17.5933 21 16.8956 21 15.5M21 8.5C21 7.10444 21 6.40666 20.8278 5.83886C20.44 4.56046 19.4395 3.56004 18.1611 3.17224C17.5933 3 16.8956 3 15.5 3M8.5 21C7.10444 21 6.40666 21 5.83886 20.8278C4.56046 20.44 3.56004 19.4395 3.17224 18.1611C3 17.5933 3 16.8956 3 15.5M3 8.5C3 7.10444 3 6.40666 3.17224 5.83886C3.56004 4.56046 4.56046 3.56004 5.83886 3.17224C6.40666 3 7.10444 3 8.5 3","stroke":"currentColor","stroke-linecap":"round","stroke-linejoin":"round","stroke-width":"1.5"}]],"i-exit-full":[["path",{"d":"M11.4333 16.0659L8.6912 15.9658C8.28365 15.951 7.96094 15.6163 7.96094 15.2084L7.96094 12.5936M13.4609 10.5659L8.41716 15.5843","stroke":"currentColor","stroke-linecap":"round","stroke-linejoin":"round","stroke-width":"1.5"}],["path",{"d":"M22 7C22 8.8856 22 9.8284 21.4142 10.4142C20.8284 11 19.8856 11 18 11H17C15.1144 11 14.1716 11 13.5858 10.4142C13 9.8284 13 8.8856 13 7L13 6C13 4.1144 13 3.1716 13.5858 2.5858C14.1716 2 15.1144 2 17 2L18 2C19.8856 2 20.8284 2 21.4142 2.5858C22 3.1716 22 4.1144 22 6V7Z","stroke":"currentColor","stroke-linecap":"round","stroke-linejoin":"round","stroke-width":"1.5"}],["path",{"d":"M22 15.5V13.5M10 22H14M2 10L2 14M10.5 2L8.5 2M21.9401 18.5C21.7861 19.5656 21.4865 20.321 20.9037 20.9038C20.321 21.4865 19.5656 21.7861 18.5 21.9401M5.5 21.9401C4.4344 21.7861 3.679 21.4865 3.0963 20.9037C2.5135 20.321 2.2139 19.5656 2.0599 18.5M2.0599 5.5C2.2139 4.4344 2.5135 3.679 3.0963 3.0963C3.679 2.5135 4.4344 2.2139 5.5 2.0599","stroke":"currentColor","stroke-linecap":"round","stroke-width":"1.5"}]]};
+  var morphs = {};
+  function morphIcon(key, btn, first, cls) {
+    var M = window.GarboMorph, ns = 'http://www.w3.org/2000/svg';
+    if (!btn || !M || typeof M.createMorph !== 'function') return;
+    var svg = document.createElementNS(ns, 'svg'), path = document.createElementNS(ns, 'path');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'morph' + (cls ? ' ' + cls : ''));
+    [['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', '1.5'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']].forEach(function (a) { path.setAttribute(a[0], a[1]); });
+    svg.appendChild(path);
+    Array.prototype.forEach.call(btn.querySelectorAll('svg'), function (s) { s.remove(); });
+    btn.insertBefore(svg, btn.firstChild);
+    try { morphs[key] = { m: M.createMorph(path, GLYPHS[first], { reducedMotion: 'user' }), at: first }; } catch (e) { morphs[key] = null; }
+  }
+  function morphTo(key, glyph) {
+    var x = morphs[key]; if (!x || x.at === glyph) return;
+    x.at = glyph; x.m.morphTo(GLYPHS[glyph], 'snappy');
+  }
+  morphIcon('play', $('playBtn'), 'i-play');
+  morphIcon('hide', $('hidePlayerBtn'), 'i-eye-off');
+  morphIcon('full', $('fullBtn'), 'i-full', 'view-switch-icon view-switch-icon-immersive');
+
   /* ---------- Atmosphere: the venue the player stands in, and the sound of the circle around the song ----------
      The venue scene and the sound engine are the shared production files. When they are not available the
      player falls back to the plain garbo scene and the Atmosphere sheet explains why. */
@@ -217,6 +241,7 @@
     app.dataset.state = mode;
     app.dataset.playing = String(mode === 'playing' || mode === 'live');
     var playing = app.dataset.playing === 'true';
+    morphTo('play', playing ? 'i-pause' : 'i-play');
     $('playBtn').setAttribute('aria-label', mode === 'loading' ? 'Loading' : playing ? 'Pause' : 'Play');
     $('lampHit').setAttribute('aria-label', playing ? 'Pause' : 'Light the garbo to play');
     var blocked = mode === 'unavailable' || mode === 'empty' || mode === 'offline';
@@ -268,6 +293,7 @@
     var on = !!fullscreenElement();
     $('fullBtn').setAttribute('aria-pressed', String(on));
     $('fullBtn').setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    morphTo('full', on ? 'i-exit-full' : 'i-full');
   }
   $('fullBtn').addEventListener('click', function () { setViewMenu(false); toggleFullscreen(); });
 
@@ -290,6 +316,7 @@
     app.classList.toggle('player-off', off);
     $('hidePlayerBtn').setAttribute('aria-pressed', String(off));
     $('hidePlayerBtn').setAttribute('aria-label', off ? 'Show player' : 'Hide player');
+    morphTo('hide', off ? 'i-eye' : 'i-eye-off');
     if (off) closeCard(true);
     relayout();
   }

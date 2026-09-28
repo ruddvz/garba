@@ -784,3 +784,6 @@ button { font: inherit; color: inherit; }
 .install-tabs button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .install-pane p { margin: 0 0 10px; font-size: 15.5px; line-height: 1.5; color: var(--ivory-2); text-wrap: pretty; }
 .install-done { margin: 10px 0 0; font-size: 14px; color: var(--brass); }
+
+/* The morphing icon stands in for both of a toggle's glyphs, so it never hides with either state */
+#fullBtn[aria-pressed="true"] svg.morph { display: block; }
