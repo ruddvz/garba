@@ -1,23 +1,52 @@
 <div align="center">
 
-# PlayGarba
-
-**All the Garba in the world, in one place, free for everyone.**
-
-A source-first catalogue of Garba music and a listening app built on it. Albums, cassettes, nonstop sets, live Navratri nights and chapters of long recordings, sorted properly and playable in one tap.
-
-[**Open playgarba.com**](https://playgarba.com/) · [Explore the catalogue](https://playgarba.com/explore/) · [Add a missing song](https://github.com/ruddvz/garba/issues/new/choose) · [Documentation](docs/README.md)
-
-[![Code licence: AGPL-3.0](https://img.shields.io/badge/code-AGPL--3.0-c79a3a?style=flat-square)](LICENSE)
-[![Data licence: CC BY-SA 4.0](https://img.shields.io/badge/data-CC%20BY--SA%204.0-8a2b2b?style=flat-square)](docs/project/licensing.md)
-[![Installable PWA](https://img.shields.io/badge/app-installable%20PWA-3d2a4f?style=flat-square)](docs/product/responsive-pwa.md)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-2f6b4f?style=flat-square)](CONTRIBUTING.md)
+<a href="https://playgarba.com/"><img src="assets/social/readme-banner.webp" alt="PlayGarba. All the Garba in the world. Free, open source, source-first." width="100%"></a>
 
 <br>
 
+<h3>A free, open-source home for Garba music.</h3>
+
+Albums, cassettes, nonstop sets, live Navratri nights and chapters of long recordings, catalogued from evidence and playable in one tap.
+
+<br>
+
+<a href="https://playgarba.com/"><img src="https://img.shields.io/badge/%E2%96%B6%20Open-playgarba.com-f2c75c?style=for-the-badge&labelColor=2a140d" alt="Open playgarba.com" height="34"></a>
+&nbsp;
+<a href="https://playgarba.com/explore/"><img src="https://img.shields.io/badge/Explore-the%20catalogue-c79a3a?style=for-the-badge&labelColor=2a140d" alt="Explore the catalogue" height="34"></a>
+&nbsp;
+<a href="https://github.com/ruddvz/garba/issues/new/choose"><img src="https://img.shields.io/badge/Add-a%20missing%20song-8a2b2b?style=for-the-badge&labelColor=2a140d" alt="Add a missing song" height="34"></a>
+
+<br><br>
+
+<img src="https://img.shields.io/badge/songs-1%2C700%2B-f2c75c?style=flat-square&labelColor=2a140d" alt="1,700+ songs">
+<img src="https://img.shields.io/badge/releases-240%2B-f2c75c?style=flat-square&labelColor=2a140d" alt="240+ releases">
+<img src="https://img.shields.io/badge/playable%20on%20YouTube-1%2C400%2B-f2c75c?style=flat-square&labelColor=2a140d" alt="1,400+ songs playable on YouTube">
+<a href="LICENSE"><img src="https://img.shields.io/badge/code-AGPL--3.0-c79a3a?style=flat-square&labelColor=2a140d" alt="Code licence: AGPL-3.0"></a>
+<a href="docs/project/licensing.md"><img src="https://img.shields.io/badge/data-CC%20BY--SA%204.0-c79a3a?style=flat-square&labelColor=2a140d" alt="Data licence: CC BY-SA 4.0"></a>
+<a href="docs/product/responsive-pwa.md"><img src="https://img.shields.io/badge/app-installable%20PWA-c79a3a?style=flat-square&labelColor=2a140d" alt="Installable PWA"></a>
+<a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/contributions-welcome-2f6b4f?style=flat-square&labelColor=2a140d" alt="Contributions welcome"></a>
+
+<br><br>
+
 <img src="assets/social/readme-player-desktop.webp" alt="The PlayGarba player on desktop: a lantern-lit palace courtyard with dancers, the song title and artist in the centre, playback controls, and a row of genre worlds (Nonstop, Traditional, Dandiya, Devotional, Folk, Sanedo, Fusion) along the bottom." width="100%">
 
+<sub>The Simple player, as it looks on playgarba.com.</sub>
+
 </div>
+
+<br>
+
+<table align="center">
+  <tr>
+    <td align="center" width="96"><img src="assets/genre-icons/nonstop.webp" width="52" alt=""><br><sub><b>Nonstop</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/traditional.webp" width="52" alt=""><br><sub><b>Traditional</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/dandiya.webp" width="52" alt=""><br><sub><b>Dandiya</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/devotional.webp" width="52" alt=""><br><sub><b>Devotional</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/folk.webp" width="52" alt=""><br><sub><b>Folk</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/sanedo.webp" width="52" alt=""><br><sub><b>Sanedo</b></sub></td>
+    <td align="center" width="96"><img src="assets/genre-icons/fusion.webp" width="52" alt=""><br><sub><b>Fusion</b></sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -34,20 +63,32 @@ It is free, it has no ads of its own, and it is open source so it can stay that 
 
 ## What you can do on it
 
-| | |
-| --- | --- |
-| **Play by world** | Tap Traditional, Dandiya, Devotional, Folk, Sanedo or Fusion and a song starts straight away. |
-| **Nonstop Garba** | Long sets and nonstop albums are first-class, with chapters where the source publishes them. |
-| **24/7 Live** | Garba radio that is always on. Everyone tuned in hears the same song. |
-| **Private Garba Circle** | Share a link or QR code and a whole group hears the same song at the same moment, each on their own phone. No server, no sign-up. |
-| **Explore** | Browse by genre, artist and release, search, and see which songs are playable first. |
-| **Your own songs** | Keep favourites, build Up next, and add YouTube links of your own. |
-| **Simple and Immersive** | The Simple player keeps the palace courtyard. Immersive puts you in a full venue scene. |
-| **Install it** | Add it to your home screen like an app, on Android, iPhone or desktop. |
+<table>
+  <tr>
+    <td valign="top">
 
-<p align="center">
-  <img src="assets/social/readme-player-phone.webp" alt="The PlayGarba player on a phone, showing a song title, playback controls, Private Garba Circle, genre worlds, 24/7 Live and Explore." width="280">
-</p>
+**Play by world.** Tap Traditional, Dandiya, Devotional, Folk, Sanedo or Fusion and a song starts straight away.
+
+**Nonstop Garba.** Long sets and nonstop albums are first-class, with chapters where the source publishes them.
+
+**24/7 Live.** Garba radio that is always on. Everyone tuned in hears the same song.
+
+**Private Garba Circle.** Share a link or QR code and a whole group hears the same song at the same moment, each on their own phone. No server, no sign-up.
+
+**Explore.** Browse by genre, artist and release, search, and see which songs are playable first.
+
+**Your own songs.** Keep favourites, build Up next, and add YouTube links of your own.
+
+**Simple and Immersive.** The Simple player keeps the palace courtyard. Immersive puts you in a full venue scene.
+
+**Install it.** Add it to your home screen like an app, on Android, iPhone or desktop.
+
+</td>
+    <td valign="top" width="300" align="center">
+      <img src="assets/social/readme-player-phone.webp" alt="The PlayGarba player on a phone, showing a song title, playback controls, Private Garba Circle, genre worlds, 24/7 Live and Explore." width="270">
+    </td>
+  </tr>
+</table>
 
 ## Music coverage
 
@@ -55,12 +96,12 @@ The player presents six visual worlds:
 
 | Player world | Music represented |
 | --- | --- |
-| **Traditional** | Traditional Garba, roots/archive material, Tran Taali, Be Taali and related forms |
-| **Dandiya** | Raas, Dandiya and related dance traditions |
-| **Devotional** | Mataji, Krishna Garba, devotional Raas and temple-oriented material |
-| **Folk** | Gujarati folk, lokgeet, Hinch, Dakla and related traditions |
-| **Sanedo** | Sanedo and high-energy community/festival material |
-| **Fusion** | Modern Gujarati Garba, electronic, hip-hop, remix, cinematic and crossover material |
+| <img src="assets/genre-icons/traditional.webp" width="22" alt=""> **Traditional** | Traditional Garba, roots/archive material, Tran Taali, Be Taali and related forms |
+| <img src="assets/genre-icons/dandiya.webp" width="22" alt=""> **Dandiya** | Raas, Dandiya and related dance traditions |
+| <img src="assets/genre-icons/devotional.webp" width="22" alt=""> **Devotional** | Mataji, Krishna Garba, devotional Raas and temple-oriented material |
+| <img src="assets/genre-icons/folk.webp" width="22" alt=""> **Folk** | Gujarati folk, lokgeet, Hinch, Dakla and related traditions |
+| <img src="assets/genre-icons/sanedo.webp" width="22" alt=""> **Sanedo** | Sanedo and high-energy community/festival material |
+| <img src="assets/genre-icons/fusion.webp" width="22" alt=""> **Fusion** | Modern Gujarati Garba, electronic, hip-hop, remix, cinematic and crossover material |
 
 These are presentation worlds. The canonical taxonomy is more detailed and lives in `data/taxonomy.json`.
 
