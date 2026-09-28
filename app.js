@@ -2009,18 +2009,27 @@ function reportLink(status, message = '') {
 
 // A pasted playlist plays in order: its videos join the listener's songs on this device, the linked video (or the
 // first) starts, and Next walks the playlist. Titles fill in from YouTube as they arrive.
-async function playYouTubePlaylist(listId, startVideoId) {
+function setImmersiveFaceCutouts(videoIds, cutouts) {
+  state.linkFaceCutouts = {
+    videoIds: [...new Set((Array.isArray(videoIds) ? videoIds : []).filter((id) => typeof id === 'string' && id.trim()))],
+    cutouts: [...new Set((Array.isArray(cutouts) ? cutouts : []).filter((id) => /^face-(0[1-9]|10)$/.test(id)))].slice(0, 10),
+  };
+}
+
+async function playYouTubePlaylist(listId, startVideoId, faceCutouts = []) {
+  setImmersiveFaceCutouts([], []);
   const say = (text) => { if (els.linkSongStatus) els.linkSongStatus.textContent = text; };
   say('Opening your playlist…');
   reportLink('opening', 'Opening your playlist…');
   const videoIds = await resolveYouTubePlaylist(listId);
   if (!videoIds.length) {
-    if (startVideoId) { say(''); return playYouTubeUrl(startVideoId); }
+    if (startVideoId) { say(''); return playYouTubeUrl(startVideoId, { faceCutouts }); }
     say('That playlist could not be opened. It may be private or empty.');
     showToast('That playlist could not be opened. It may be private or empty.');
     reportLink('failed', 'That playlist could not be opened. It may be private or empty.');
     return false;
   }
+  setImmersiveFaceCutouts(videoIds, faceCutouts);
   say('');
   closeLinkSongCard();
   let saved = [];
@@ -2106,17 +2115,21 @@ async function addYouTubeUrlToCircle(value) {
   return added;
 }
 
-async function playYouTubeUrl(value) {
+async function playYouTubeUrl(value, { faceCutouts = [] } = {}) {
   linkRequestSeq += 1;
-  if (circle.active) return addYouTubeUrlToCircle(value);
+  if (circle.active) {
+    setImmersiveFaceCutouts([], []);
+    return addYouTubeUrlToCircle(value);
+  }
   const listId = parseYouTubePlaylist(value);
-  if (listId) return playYouTubePlaylist(listId, parseYouTubeLink(value));
+  if (listId) return playYouTubePlaylist(listId, parseYouTubeLink(value), faceCutouts);
   const videoId = parseYouTubeLink(value);
   if (!videoId) {
     if (els.linkSongStatus) els.linkSongStatus.textContent = 'Please enter a valid YouTube link or video ID.';
     reportLink('failed', 'Please enter a valid YouTube link or video ID.');
     return false;
   }
+  setImmersiveFaceCutouts([videoId], faceCutouts);
   reportLink('playing');
   if (els.linkSongStatus) els.linkSongStatus.textContent = '';
   closeLinkSongCard();
@@ -3009,7 +3022,9 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
         genre: song.genre,
         durationSeconds: song.durationSeconds || null,
         playable: canExecuteSong(song),
+        youtubeVideoId: youtubeVideoId(song) || null,
       } : null,
+      faceCutouts: state.linkFaceCutouts || { videoIds: [], cutouts: [] },
       genreId: state.genreId,
       playing: Boolean(state.playing || player?.playing),
       elapsedSeconds: Number.isFinite(player?.elapsedSeconds) ? player.elapsedSeconds : state.elapsed,
@@ -3117,6 +3132,10 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       case 'play-youtube':
         if (typeof value === 'string' && value.trim()) {
           playYouTubeUrl(value.trim());
+          return true;
+        }
+        if (value && typeof value === 'object' && typeof value.url === 'string' && value.url.trim()) {
+          playYouTubeUrl(value.url.trim(), { faceCutouts: value.cutouts });
           return true;
         }
         return false;

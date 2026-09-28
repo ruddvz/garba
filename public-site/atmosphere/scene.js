@@ -1333,11 +1333,13 @@
       // Players on the riser are drawn first, the singers at the front last
       var order = band[id].map(function (m, i) { var sg0 = m.role === 'singer', bz0 = sg0 ? z - 0.3 : (o.riserZ != null ? o.riserZ : z + 0.4); return { m: m, i: i, bz: bz0, by: sg0 ? y : y + (o.riserH || 0) }; });
       order.sort(function (a, b) { return b.bz - a.bz; });
+      var singerCutoutIndex = 0;
       order.forEach(function (it0) {
         var m = it0.m, i = it0.i, bz = it0.bz, by = it0.by;
         if (m.near && st.listener !== 'stage') return;
         if (m.waiting) return;
         var mx = m.role === 'singer' ? m.cx : m.x, p = P(mx, by, bz); if (!p) return;
+        var linkFaceIndex = m.role !== 'singer' ? -1 : Number.isInteger(m.lineupIndex) ? m.lineupIndex : singerCutoutIndex++;
         // Each singer can wear the song's artist as a cut-out head (face and hair on a transparent background),
         // a little oversized, the way a figurine's head is. A duet puts each artist on the singer of the same sex.
         var faceOn = function (hy) {
@@ -1346,6 +1348,16 @@
           var img = m.faceUrl ? faceImg(m.faceUrl) : null;
           if (!img && !m.faceUrl && !m.lineup) { for (var fi2 = 0; fi2 < faces.length; fi2++) { var f0 = faces[fi2]; if (used.indexOf(fi2) < 0 && f0.img && f0.man === !!m.man) { img = f0.img; used.push(fi2); break; } } }
           if (img) { var hh = m.h * p.s, ih = hh * 0.3, iw = ih * (img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1); g.drawImage(img, p.x - iw / 2, hy - ih * 0.58, iw, ih); }
+          if (linkFaceIndex >= 0 && linkFaces.length) {
+            var sticker = faceImg(linkFaces[linkFaceIndex % linkFaces.length]);
+            if (sticker) {
+              var stickerH = m.h * p.s * 0.34;
+              var stickerW = stickerH * (sticker.naturalWidth && sticker.naturalHeight ? sticker.naturalWidth / sticker.naturalHeight : 1);
+              g.save(); g.shadowColor = 'rgba(0,0,0,.58)'; g.shadowBlur = Math.max(2, stickerH * 0.09);
+              g.drawImage(sticker, p.x - stickerW / 2, hy - stickerH * 0.58, stickerW, stickerH);
+              g.restore();
+            }
+          }
         };
         // Singers walking off or on fade into the side curtains
         // Singers fade only as they walk into or out of the wings, over their own walk; one dancing near the edge of a
@@ -1977,7 +1989,7 @@
       var n = lu.length, spread = n > 1 ? Math.min(w * 0.5, (n - 1) * 3.4) : 0, gap = n > 1 ? spread / (n - 1) : w * 0.4, half = n > 1 ? gap * 0.38 : Math.min(2.4, w * 0.14);
       lu.forEach(function (sg, i) {
         var slot = n === 1 ? mid : mid - spread / 2 + gap * i, dress = sg.man ? MEN_DRESS[mi++ % MEN_DRESS.length] : WOMEN_DRESS[wi++ % WOMEN_DRESS.length];
-        var m = { role: 'singer', lineup: true, man: sg.man, faceUrl: sg.url, name: sg.name, col: dress.col, top: dress.top, odhni: dress.odhni, pagdi: dress.pagdi, h: sg.man ? 1.74 : 1.62, ph: 1.1 + i * 1.1, flash: 0, x: slot, tx: slot, lane: [slot - half, slot + half] };
+        var m = { role: 'singer', lineup: true, lineupIndex: i, man: sg.man, faceUrl: sg.url, name: sg.name, col: dress.col, top: dress.top, odhni: dress.odhni, pagdi: dress.pagdi, h: sg.man ? 1.74 : 1.62, ph: 1.1 + i * 1.1, flash: 0, x: slot, tx: slot, lane: [slot - half, slot + half] };
         if (instant) { m.cx = slot; m.act = 'sing'; m.until = now + 1.5 + i * 1.3 + rnd() * 2; }
         else { m.cx = o.x1 - 0.2; m.entering = true; m.waiting = true; m.enterAt = now + lead + (old ? 2 : 0.4) + i * 0.45; m.spd = walkPace(m.cx, slot); m.wingAt = m.cx; m.fadeSpan = Math.max(0.3, Math.min(1.3, Math.abs(slot - m.cx) * 0.8)); m.act = 'enter'; m.until = now + 60; }
         m.wingL = o.x0 + 0.2; m.wingR = o.x1 - 0.2;
@@ -3496,7 +3508,7 @@
       BX = box ? box.x : 0; BY = box ? box.y : 0; BW = box ? box.w : W; BH = box ? box.h : H;
       HOR = BY + BH * 0.3; F = Math.min(BW, BH * 1.05) * 0.95;
     }
-    var faces = [];
+    var faces = [], linkFaces = [];
     function loadFaces(list) {
       var next = (list || []).filter(function (f) { return f && f.url; }).slice(0, 4);
       faces = next.map(function (f) {
@@ -3505,10 +3517,15 @@
         var rec = { url: f.url, man: !!f.man, img: null }, im = new Image(); im.decoding = 'async'; im.onload = function () { rec.img = im; }; im.src = f.url; return rec;
       });
     }
+    function loadLinkFaces(list) {
+      linkFaces = (list || []).filter(function (url, index, all) { return typeof url === 'string' && url && all.indexOf(url) === index; }).slice(0, 10);
+      linkFaces.forEach(faceImg);
+    }
     function set(patch) {
       // Singer heads for the song's artists: singerFaces is a list, singerFace a single one
       if (patch.singerFaces !== undefined) loadFaces(patch.singerFaces);
       else if (patch.singerFace !== undefined) loadFaces(patch.singerFace ? [patch.singerFace] : []);
+      if (patch.linkFaceCutouts !== undefined) loadLinkFaces(patch.linkFaceCutouts);
       // A face made on the device is a data: URL; once neither of you wears it, let its decoded image go
       var nextYouFace = patch.youFace !== undefined ? patch.youFace : st.youFace, nextPartnerFace = patch.partnerFace !== undefined ? patch.partnerFace : st.partnerFace;
       [st.youFace, st.partnerFace].forEach(function (old) { if (typeof old === 'string' && old.indexOf('data:') === 0 && old !== nextYouFace && old !== nextPartnerFace) delete faceCache[old]; });

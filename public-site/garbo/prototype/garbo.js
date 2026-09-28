@@ -92,7 +92,7 @@
     // Songs asked for at the DJ's table. On the live site the player keeps this list and sends it back as upNext.
     upNext: [], liveUpNext: null, circle: false,
     // The player's answer to the last pasted link: linkSeq is the latest one seen, linkWait the one the card awaits
-    linkSeq: 0, linkWait: null
+    linkSeq: 0, linkWait: null, linkFaceCutouts: []
   };
   var LV = null, lives = { mine: [], joined: [] }, songById = {};
   // Features load the first time they're used, not with the page
@@ -257,6 +257,64 @@
     window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'action', action: action, value: value }, location.origin);
     return true;
   }
+
+  var cutoutStorageKey = 'playgarba:immersive-face-cutouts:v1';
+  var cutoutNames = Array.from({ length: 10 }, function (_, index) { return 'face-' + String(index + 1).padStart(2, '0'); });
+  var cutoutSelection = {};
+  try {
+    var savedCutouts = JSON.parse(localStorage.getItem(cutoutStorageKey) || '{}');
+    if (savedCutouts && typeof savedCutouts === 'object' && !Array.isArray(savedCutouts)) cutoutSelection = savedCutouts;
+  } catch (e) {}
+
+  function cutoutScope(value) {
+    var video = parseYtId(value);
+    var list = parseYtList(value);
+    return list ? 'playlist:' + list : video ? 'video:' + video : '';
+  }
+
+  function selectedCutouts(scope) {
+    var selected = scope && Array.isArray(cutoutSelection[scope]) ? cutoutSelection[scope] : [];
+    return selected.filter(function (id, index) { return cutoutNames.indexOf(id) >= 0 && selected.indexOf(id) === index; }).slice(0, 10);
+  }
+
+  function renderCutoutPicker() {
+    var picker = $('faceCutoutPicker');
+    if (!picker) return;
+    var scope = cutoutScope($('linkSongInput')?.value || '');
+    var selected = selectedCutouts(scope);
+    picker.replaceChildren();
+    cutoutNames.forEach(function (id, index) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'face-cutout-option';
+      button.setAttribute('aria-label', (selected.indexOf(id) >= 0 ? 'Remove' : 'Add') + ' face cutout ' + (index + 1));
+      button.setAttribute('aria-pressed', String(selected.indexOf(id) >= 0));
+      var image = document.createElement('img');
+      image.src = 'singers/meme-cats/' + id + '.webp';
+      image.alt = '';
+      image.width = 64;
+      image.height = 64;
+      image.decoding = 'async';
+      button.append(image);
+      button.addEventListener('click', function (event) {
+        event.stopPropagation();
+        if (!scope) return;
+        var next = selectedCutouts(scope);
+        var existing = next.indexOf(id);
+        if (existing >= 0) next.splice(existing, 1);
+        else if (next.length < 10) next.push(id);
+        cutoutSelection[scope] = next;
+        try { localStorage.setItem(cutoutStorageKey, JSON.stringify(cutoutSelection)); } catch (e) {}
+        renderCutoutPicker();
+        picker.querySelectorAll('.face-cutout-option')[index]?.focus({ preventScroll: true });
+      });
+      picker.append(button);
+    });
+    picker.classList.toggle('is-link-ready', Boolean(scope));
+  }
+
+  $('linkSongInput')?.addEventListener('input', renderCutoutPicker);
+  renderCutoutPicker();
 
   function goSimple() {
     setViewMenu(false);
@@ -426,6 +484,13 @@
       }
       S.track = { kind: 'song', song: song };
     }
+    var faceState = snapshot.faceCutouts && typeof snapshot.faceCutouts === 'object' ? snapshot.faceCutouts : {};
+    var activeVideo = snapshot.song && typeof snapshot.song.youtubeVideoId === 'string' ? snapshot.song.youtubeVideoId : '';
+    var shownFaces = Array.isArray(faceState.videoIds) && faceState.videoIds.indexOf(activeVideo) >= 0 && Array.isArray(faceState.cutouts)
+      ? faceState.cutouts.filter(function (id, index, list) { return /^face-(0[1-9]|10)$/.test(id) && list.indexOf(id) === index; }).slice(0, 10)
+      : [];
+    S.linkFaceCutouts = shownFaces.map(function (id) { return new URL('singers/meme-cats/' + id + '.webp', document.baseURI).href; });
+    if (scene.atmosphere) scene.atmosphere({ linkFaceCutouts: S.linkFaceCutouts });
     S.genre = snapshot.genreId || (snapshot.song && snapshot.song.genre) || S.genre;
     LIVE_NONSTOP_TITLE = snapshot.nonstop && snapshot.nonstop.title || '';
     S.shuffle = Boolean(snapshot.shuffle);
@@ -1218,7 +1283,7 @@
       if ($('linkSongGo')) $('linkSongGo').disabled = true;
       clearTimeout(linkTimer);
       linkTimer = setTimeout(function () { if (S.linkWait != null) linkAnswer({ status: 'failed', message: 'YouTube is taking too long to answer. Try again in a moment.' }); }, 20000);
-      requestLiveAction('play-youtube', val);
+      requestLiveAction('play-youtube', { url: val, cutouts: selectedCutouts(cutoutScope(val)) });
       return;
     }
     var existing = S.data && Array.isArray(S.data.songs) ? S.data.songs.find(function (s) { return s.videoId === vid; }) : null;
@@ -1822,7 +1887,7 @@
     });
     lineup = lineup.filter(function (x) { return x.url; }).concat(lineup.filter(function (x) { return !x.url; })).slice(0, 3);
     var songKey = S.track ? (S.track.kind === 'song' && S.track.song ? 'song:' + (S.track.song.id || S.track.song.title) : S.track.kind === 'chapter' ? 'set:' + (S.track.set && S.track.set.id) + ':' + S.track.chapterIndex : '') : '';
-    if (scene.atmosphere) scene.atmosphere({ singerFaces: heads, singers: lineup.length ? lineup : null, songKey: songKey || null });
+    if (scene.atmosphere) scene.atmosphere({ singerFaces: heads, singers: lineup.length ? lineup : null, songKey: songKey || null, linkFaceCutouts: S.linkFaceCutouts });
     if (scene.atmosphere) scene.atmosphere({ youAs: A.youAs, venue: A.venue, listener: A.listener, style: style, theme: theme, mode: A.sound ? A.mode : 'off', level: 0.6, density: 1 });
     if (typeof coupleApply === 'function' && C) coupleApply();
   }

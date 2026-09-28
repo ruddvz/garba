@@ -424,6 +424,13 @@ button { font: inherit; color: inherit; }
 .avatar-grid button[aria-checked="true"] { border-color: var(--brass); box-shadow: 0 0 0 3px rgba(214, 176, 111, .25); }
 .host-input { width: 100%; height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--ink-3); color: var(--ivory); font: 16px/1 var(--ui); outline: none; }
 .host-input:focus { border-color: var(--brass); }
+.face-cutout-title { margin: 2px 0 -5px; color: var(--ivory); font: 600 14px/1.3 var(--ui); }
+.face-cutout-picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.face-cutout-option { display: grid; place-items: center; width: 100%; aspect-ratio: 1; min-width: 0; padding: 3px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.035); cursor: pointer; transition: border-color 140ms ease, background 140ms ease, transform 140ms ease; }
+.face-cutout-option:hover { transform: translateY(-1px); border-color: var(--brass); }
+.face-cutout-option[aria-pressed="true"] { border-color: var(--brass); background: rgba(214,176,111,.18); box-shadow: inset 0 0 0 1px rgba(214,176,111,.38); }
+.face-cutout-option:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.face-cutout-option img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .search.in-sheet { margin: 0; }
 .pl { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: pl; }
 .pl li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 6px 8px 10px; border-radius: 12px; background: var(--ink-3); counter-increment: pl; }
