@@ -352,7 +352,7 @@
   }
   $('fullBtn').addEventListener('click', function () { setViewMenu(false); toggleFullscreen(); });
 
-  // On a phone one home button stands in the moon's place. It brings out the switch with Circle, View, Sound and Ideas
+  // On a phone one home button stands in the moon's place. It brings out the switch with View, Sound and Ideas
   // under it, and a second tap, or a tap anywhere else, puts them away
   function viewMenuOpen() { return app.classList.contains('view-open'); }
   function setViewMenu(open) {
@@ -526,7 +526,6 @@
     }
     renderPerch();
     var circleBridge = $('circleBridge');
-    $('circleRail').setAttribute('aria-pressed', String(Boolean(snapshot.circle)));
     if (circleBridge) {
       circleBridge.hidden = false;
       circleBridge.setAttribute('aria-pressed', String(Boolean(snapshot.circle)));
@@ -1218,7 +1217,7 @@
     var btn = document.querySelector('.rail-btn[data-card="' + id + '"]') || (id === 'linkCard' ? $('linkSongBtn') : null);
     if (btn) { btn.setAttribute('aria-expanded', 'false'); if (!silent) (btn.offsetParent ? btn : $('moreBtn')).focus(); }
   }
-  // The rail's card buttons; its Circle button opens Private Garba Circle instead
+  // The rail's card buttons
   document.querySelectorAll('.rail-btn[data-card]').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); openCard(b.dataset.card); }); });
   $('linkSongBtn')?.addEventListener('click', function (e) { e.stopPropagation(); openCard('linkCard'); });
   document.addEventListener('click', function (e) {
@@ -1769,14 +1768,13 @@
     else if (S.circleInfo && requestLiveAction('circle')) return;
     else toggleLive();
   });
-  // Private Garba Circle lives in the player that owns playback: the rail's Circle button and the More tile open it
+  // Private Garba Circle lives in the player that owns playback: its tile in More opens it
   function openCircle() {
     if (requestLiveAction('circle')) return;
     var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     window.location.href = isLocalDev ? '/#circle' : '../../../../#circle';
   }
   $('circleBridge')?.addEventListener('click', openCircle);
-  $('circleRail').addEventListener('click', openCircle);
   // Lives was the prototype's first try at hosting; in the player it is Private Garba Circle's "Play your songs"
   if (LIVE_SITE) $('livesOpen').hidden = true;
   $('searchBtn').addEventListener('click', function () { showSheet('exploreSheet', 'searchInput'); });

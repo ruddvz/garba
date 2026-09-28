@@ -253,9 +253,9 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
     if (!/^rgb\(\d{1,3},\d{1,3},\d{1,3}\)$/.test(out)) fail(`shade(${input}, ${f}) gave an invalid colour: ${out}`);
   }
   if (shadeRaw('#8e1b2c', -0.3) !== shadeRaw('rgb(142,27,44)', -0.3)) fail('shade() must treat hex and rgb() forms of the same colour alike');
-  // You and your partner can carry your own names and faces. A face goes on the head seen from the front and in the
-  // tag seen from behind (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
-  for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false", 'function coupleFace(', 'function cutHead(', 'if (myFace && myFace.cut) cutHead(myFace.img, x, y - h * 0.885, h);', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {
+  // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,
+  // and only in the tag when the figure is too small (a transparent cut-out is worn like a singer's head, a photo is cropped round), the two tags make room for however long the names are, and a replaced face is let go.
+  for (const marker of ["youName: '', partnerName: '', youFace: null, partnerFace: null, youFaceCut: false, partnerFaceCut: false", 'function coupleFace(', 'function cutHead(', 'wearFace(coupleFace(mine), mine, x, y - h * 0.885, h);', 'wearFace(coupleFace(youSeat), youSeat, ga.who.headAt.x, ga.who.headAt.y + hs * 0.085, hs);', 'function wearFace(', 'function faceDisc(', 'if (d.coupleRole && headFaceFits(h)) {', 'faceOnHead: headFaceFits(h)', 'tagLayout(coupleWord(true), zs, youTagFace).w', 'delete faceCache[old]']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the couple name and face marker: ${marker}`);
   }
   // A name is plain canvas text: cleaned of control and direction-override characters, capped at 10 characters,

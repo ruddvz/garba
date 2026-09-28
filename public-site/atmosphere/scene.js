@@ -596,7 +596,9 @@
       if (ga.who) { ga.who.backWord = null; ga.who.headAt = null; }
       if (ga.who) backFigure(ga.kind === 'stand' || ga.kind === 'runner' ? P(ga.x, ga.y + (ga.hopY || 0), ga.z) : p, ga.who, T0, ga.kind === 'runner' && ga.who.moving);
       if (ga.who && ga.who.seatRole && (ga.view || 'far') === st.listener && !st.dj && ga.who.headAt) {
-        var youSeat = ga.who.seatRole === (st.youAs === 'man' ? 'm' : 'w'), lab = { x: ga.who.headAt.x, y: ga.who.headAt.y, h: ga.who.h * p.s, man: ga.who.man, hx: ga.who.headAt.x, hy: ga.who.headAt.y };
+        var youSeat = ga.who.seatRole === youRole(), hs = ga.who.h * p.s, lab = { x: ga.who.headAt.x, y: ga.who.headAt.y, h: hs, man: ga.who.man, hx: ga.who.headAt.x, hy: ga.who.headAt.y, faceOnHead: headFaceFits(hs) };
+        // Seen from behind, your face is still worn on your head, the way the singers wear theirs
+        if (lab.faceOnHead) wearFace(coupleFace(youSeat), youSeat, ga.who.headAt.x, ga.who.headAt.y + hs * 0.085, hs);
         if (youSeat) youLabel = lab; else partnerLabel = lab;
       }
       if (ga.kind === 'chair') {
@@ -2866,11 +2868,7 @@
       }
       // Your own face, and your partner's, as a round cut-out over the head: a little oversized, the way a figurine's
       // head is, ringed in gold for you and ivory for your partner. Drawn before the arms, so a clap overhead stays in front.
-      if (d.coupleRole && headFaceFits(h)) {
-        var mine = d.coupleRole === youRole(), myFace = coupleFace(mine);
-        if (myFace && myFace.cut) cutHead(myFace.img, x, y - h * 0.885, h);
-        else if (myFace) faceDisc(myFace.img, x, y - h * 0.9, Math.max(h * 0.1, Math.min(9, h * 0.16)), mine ? '#e8b04b' : 'rgba(243,230,208,.9)');
-      }
+      if (d.coupleRole && headFaceFits(h)) { var mine = d.coupleRole === youRole(); wearFace(coupleFace(mine), mine, x, y - h * 0.885, h); }
       // The singers' jewellery and his safa tail
       if (d.role === 'singer' && h > 18) {
         if (!d.man) { g.fillStyle = gold; [-1, 1].forEach(function (sd) { g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.862, Math.max(0.7, h * 0.012), 0, TAU); g.fill(); g.beginPath(); g.arc(x + sd * h * 0.066, y - h * 0.84, Math.max(0.8, h * 0.016), 0, TAU); g.fill(); }); }
@@ -2977,6 +2975,12 @@
       var ih = h * 0.3, iw = ih * (img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1);
       g.drawImage(img, cx - iw / 2, hy - ih * 0.58, iw, ih);
     }
+    // A face on a head centred at (cx, hy): a cut-out as it is, a photo cropped round and ringed, gold for you
+    function wearFace(face, mine, cx, hy, h) {
+      if (!face) return;
+      if (face.cut) cutHead(face.img, cx, hy, h);
+      else faceDisc(face.img, cx, hy - h * 0.015, Math.max(h * 0.1, Math.min(9, h * 0.16)), mine ? '#e8b04b' : 'rgba(243,230,208,.9)');
+    }
     // In a tag, a cut-out sits in the face's slot as it is, scaled to fit
     function cutInSlot(img, cx, cy, d) {
       var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
@@ -2984,8 +2988,8 @@
       var sc = d / Math.max(iw, ih);
       g.drawImage(img, cx - iw * sc / 2, cy - ih * sc / 2, iw * sc, ih * sc);
     }
-    // Seen from the front, a face goes on the dancer's head once they are big enough to carry it; otherwise, and
-    // whenever you are both seen from behind, it goes in the tag beside the name
+    // A face goes on the head, seen from the front or from behind, once the figure is big enough to carry it;
+    // a figure too small for that carries it in the tag beside the name
     function headFaceFits(h) { return h > 20; }
     function faceDisc(img, cx, cy, r, ring) {
       var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;

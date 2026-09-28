@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rasa:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Anek+Gujarati:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="garbo.css?v=20260928-5">
+  <link rel="stylesheet" href="garbo.css?v=20260928-6">
 </head>
 <body>
   <!--
@@ -128,12 +128,11 @@
       </footer>
     </main>
 
-    <!-- Scene controls: each opens a small card at the side, leaving the player as it is -->
+    <!-- Scene controls: icons alone, each opening a small card at the side, leaving the player as it is. Private Garba Circle opens from More -->
     <nav class="rail" id="rail" aria-label="Scene">
-      <button class="rail-btn rail-circle" type="button" id="circleRail" aria-label="Private Garba Circle: listen with friends" aria-haspopup="dialog" aria-pressed="false"><svg aria-hidden="true"><use href="#i-ring"/></svg><span>Circle</span></button>
-      <button class="rail-btn" type="button" data-card="viewCard" aria-controls="viewCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-eye"/></svg><span>View</span></button>
-      <button class="rail-btn" type="button" id="soundBtn" data-card="soundCard" aria-controls="soundCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-headphones"/></svg><span>Sound</span></button>
-      <button class="rail-btn" type="button" data-card="ideaCard" aria-controls="ideaCard" aria-expanded="false"><svg aria-hidden="true"><use href="#i-bulb"/></svg><span>Ideas</span></button>
+      <button class="rail-btn" type="button" data-card="viewCard" aria-controls="viewCard" aria-expanded="false" aria-label="View" title="View"><svg aria-hidden="true"><use href="#i-eye"/></svg></button>
+      <button class="rail-btn" type="button" id="soundBtn" data-card="soundCard" aria-controls="soundCard" aria-expanded="false" aria-label="Sound" title="Sound"><svg aria-hidden="true"><use href="#i-headphones"/></svg></button>
+      <button class="rail-btn" type="button" data-card="ideaCard" aria-controls="ideaCard" aria-expanded="false" aria-label="Ideas" title="Ideas"><svg aria-hidden="true"><use href="#i-bulb"/></svg></button>
     </nav>
     <p class="sr-only" id="djSr" aria-live="polite"></p>
 
@@ -426,9 +425,9 @@
 
   <!-- Shared production files: the Atmosphere sound engine and the venue scene. Without them the prototype uses its plain garbo scene. -->
   <script src="../../../../assets/runtime/immersive-atmosphere.js"></script>
-  <script src="../../atmosphere/scene.js?v=20260928-2"></script>
-  <script src="scene.js?v=20260928-1"></script>
+  <script src="../../atmosphere/scene.js?v=20260928-3"></script>
+  <script src="scene.js?v=20260928-2"></script>
   <script src="morphicons.js?v=1.7.1"></script>
-  <script src="garbo.js?v=20260928-6"></script>
+  <script src="garbo.js?v=20260928-7"></script>
 </body>
 </html>

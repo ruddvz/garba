@@ -74,7 +74,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260928-5"', 'src="garbo.js?v=20260928-6"', 'src="scene.js?v=20260928-1"', 'src="../../../../public-site/atmosphere/scene.js?v=20260928-2"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260928-6"', 'src="garbo.js?v=20260928-7"', 'src="scene.js?v=20260928-2"', 'src="../../../../public-site/atmosphere/scene.js?v=20260928-3"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -86,7 +86,11 @@ if (!/Garbo player prototype/i.test(prototypeHtml) || !prototypeJs.includes("get
 if (!prototypeHtml.includes('id="circleBridge"')) fail('The prototype must expose the live Garba Circle action');
 // Private Garba Circle is findable in both players: a chip above 24/7 LIVE that shows before any circle starts,
 // and a Circle button in Immersive's rail. Opening it from Immersive keeps the listener in Immersive.
-if (!prototypeHtml.includes('id="circleRail"') || !prototypeHtml.includes('<span>Circle</span>')) fail('Immersive\'s rail must carry the Private Garba Circle button');
+// Private Garba Circle opens from More; the rail keeps View, Sound and Ideas as icons alone, named for screen readers
+const railHtml = prototypeHtml.slice(prototypeHtml.indexOf('<nav class="rail" id="rail"'), prototypeHtml.indexOf('</nav>', prototypeHtml.indexOf('<nav class="rail" id="rail"')));
+if (prototypeHtml.includes('id="circleRail"') || !prototypeHtml.includes('id="circleBridge"')) fail('Immersive opens Private Garba Circle from its More tile, not from the rail');
+if (railHtml.includes('<span>') || !['aria-label="View"', 'aria-label="Sound"', 'aria-label="Ideas"'].every((m) => railHtml.includes(m))) fail('Immersive\'s rail buttons must be icons alone with accessible names');
+if (prototypeCss.includes('.card-open .stage > .np')) fail('An open card must not move the player on a wide screen');
 if (!/<button class="circle-perch is-idle" id="circlePerch"(?![^>]*\shidden)[^>]*>/.test(html) || !html.includes('Listen with friends')) fail('The Private Garba Circle chip above 24/7 LIVE must show before a circle starts');
 if (/action === 'circle'\) setView\('simple'/.test(runtime)) fail('Opening Private Garba Circle from Immersive must not switch the listener to Simple view');
 if (!prototypeHtml.includes('class="view-switch"') || !prototypeHtml.includes('aria-label="Switch to Simple view" data-view-switch') || !prototypeJs.includes("type: 'view'")) fail('Immersive mode must expose a live Simple/Immersive switch outside the prototype More menu');

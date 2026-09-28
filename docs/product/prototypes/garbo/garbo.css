@@ -538,7 +538,7 @@ button { font: inherit; color: inherit; }
 /* The scene rail: small buttons down the right side, each opening a card beside it */
 /* The scene rail: one capsule under the view switch, lined up with it */
 .rail { position: fixed; z-index: 19; right: var(--pill-right); top: calc(var(--pill-top) + var(--pill-switch-h)); width: var(--pill-w); box-sizing: border-box; display: grid; gap: 2px; padding: 6px 4px 5px; border-radius: 0 0 26px 26px; border: 1px solid rgba(214, 176, 111, .3); border-top: 0; background: linear-gradient(rgba(214, 176, 111, .22), rgba(214, 176, 111, .22)) 12px 0 / calc(100% - 24px) 1px no-repeat, rgba(11, 6, 5, .72); box-shadow: 0 14px 28px rgba(0, 0, 0, .35); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity .3s ease; }
-.rail-btn { width: 100%; min-height: 52px; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 6px 0; border-radius: 18px; border: 0; background: transparent; color: var(--ivory-2); font: 600 10.5px/1 var(--ui); letter-spacing: .01em; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.rail-btn { width: 100%; min-height: 46px; display: grid; justify-items: center; align-content: center; gap: 4px; padding: 6px 0; border-radius: 18px; border: 0; background: transparent; color: var(--ivory-2); font: 600 10.5px/1 var(--ui); letter-spacing: .01em; cursor: pointer; transition: background .15s ease, color .15s ease; }
 .rail-btn svg { width: 21px; height: 21px; }
 .rail-btn:hover { color: var(--ivory); background: rgba(246, 236, 215, .08); }
 .rail-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 1px; }
@@ -608,12 +608,12 @@ button { font: inherit; color: inherit; }
 .side-card .atmo-note a { display: inline; margin: 0 0 0 4px; }
 /* On a phone there's no room beside the pill, so a card rises from the bottom as a full-width sheet */
 @media (max-width: 600px) {
-  /* It stops short of the view pill (switch 49px + four buttons 230px), so the other buttons stay reachable */
-  .side-card { left: 10px; right: 10px; top: auto; bottom: calc(var(--safe-b, 0px) + 10px); width: auto; max-height: calc(100dvh - var(--pill-top) - 279px - var(--safe-b, 0px) - 22px); border-radius: 22px; animation-name: card-rise; }
+  /* It stops short of the view pill (switch 49px + three buttons 142px), so the other buttons stay reachable */
+  .side-card { left: 10px; right: 10px; top: auto; bottom: calc(var(--safe-b, 0px) + 10px); width: auto; max-height: calc(100dvh - var(--pill-top) - 191px - var(--safe-b, 0px) - 22px); border-radius: 22px; animation-name: card-rise; }
   @keyframes card-rise { from { transform: translateY(24px); opacity: .6; } }
 }
 /* On a phone one home button takes the moon's place in the top bar and Hide player the link button's; Tonight and Play
-   YouTube link open from More. Circle, View, Sound and Ideas hang under the bar as a pill of their own, so more of the
+   YouTube link open from More. View, Sound and Ideas hang under the bar as a pill of their own, so more of the
    venue shows. The home button opens the switch as that pill's head, where it sits on wider screens */
 #viewBtn, #tonightOpen, #linkOpen { display: none; }
 @media (max-width: 600px), (orientation: landscape) and (max-height: 520px) {
@@ -624,7 +624,7 @@ button { font: inherit; color: inherit; }
   .view-open { --pill-switch-h: 49px; }
   .view-open .view-switch { display: flex; }
   .rail { transition: opacity .3s ease, top .2s var(--ease-out); }
-  /* Circle, View, Sound and Ideas come out with the switch: the home button shows them all, and hides them again */
+  /* View, Sound and Ideas come out with the switch: the home button shows them all, and hides them again */
   .app:not(.view-open) .rail { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .rail { transition: opacity .3s ease; } }
@@ -637,8 +637,8 @@ button { font: inherit; color: inherit; }
 .player-off .stage { display: flex; flex-direction: column; }
 .player-off .stage > :not(.lamp-slot), .player-off .rail { display: none; }
 .player-off .lamp-slot { flex: 1 1 auto; }
-/* A card rising from the bottom stops short of the scene pill (four buttons, 230px) */
-@media (max-width: 600px) { .side-card { max-height: calc(100dvh - var(--pill-top) - 230px - var(--safe-b, 0px) - 22px); } }
+/* A card rising from the bottom stops short of the scene pill (three buttons, 142px) */
+@media (max-width: 600px) { .side-card { max-height: calc(100dvh - var(--pill-top) - 142px - var(--safe-b, 0px) - 22px); } }
 /* The cards are made of the same stuff as the view pill beside them: dark glass, a brass hairline, capsule corners.
    Each choice is one capsule, and the chosen option is its brass knob, like the view switch. */
 .side-card { border-radius: 26px; border-color: rgba(214, 176, 111, .3); background: rgba(11, 6, 5, .9); box-shadow: 0 18px 44px rgba(0, 0, 0, .5); }
@@ -728,9 +728,8 @@ button { font: inherit; color: inherit; }
 .crop-actions .primary { width: auto; height: 44px; margin: 0; padding: 0 18px; }
 .side-card .crop-actions .atmo-swap { margin: 0; }
 
-/* Private Garba Circle: its button in the rail lights while you're in one; Lives' tile leaves the player */
+/* Private Garba Circle opens from More; Lives' tile leaves the player */
 .tile[hidden] { display: none; }
-.rail-btn.rail-circle[aria-pressed="true"] { color: var(--brass); }
 
 /* ---------- A lighter frame ----------
    The top bar and the scene buttons are bare icons, like the wordmark beside them; a soft shadow keeps them clear of
@@ -740,15 +739,9 @@ button { font: inherit; color: inherit; }
 .tools .ib svg, #rail .rail-btn svg { filter: drop-shadow(0 1px 2px rgba(3, 4, 10, .9)) drop-shadow(0 2px 8px rgba(3, 4, 10, .5)); }
 #rail { padding: 0; border: 0; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 #rail .rail-btn { background: none; }
-#rail .rail-btn span { text-shadow: 0 1px 2px rgba(3, 4, 10, .92), 0 3px 12px rgba(3, 4, 10, .6); }
 #rail .rail-btn:hover, #rail .rail-btn[aria-expanded="true"] { background: none; color: var(--brass); }
 .app .view-switch { border: 0; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .view-switch-control { background: rgba(11, 6, 5, .55); box-shadow: inset 0 0 0 1px rgba(214, 176, 111, .28), 0 4px 14px rgba(0, 0, 0, .35); }
-/* On a wide screen an open card doesn't cover the player: the player steps left beside it and comes back when it closes */
-@media (min-width: 900px) and (min-height: 560px) {
-  .stage > .hint, .stage > .np, .stage > .time, .stage > .transport, .stage > .dial { transition: transform .3s var(--ease-out); }
-  .card-open .stage > .hint, .card-open .stage > .np, .card-open .stage > .time, .card-open .stage > .transport, .card-open .stage > .dial { transform: translateX(-190px); }
-}
 @media (prefers-reduced-motion: reduce) { .stage > * { transition: none !important; } }
 .side-card { border-color: rgba(214, 176, 111, .16); background: rgba(11, 6, 5, .74); box-shadow: 0 18px 44px rgba(0, 0, 0, .32); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 .card-head { grid-template-columns: minmax(0, 1fr) auto; }
