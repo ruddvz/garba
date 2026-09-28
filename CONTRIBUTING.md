@@ -106,8 +106,16 @@ Before opening a PR:
 7. call out unresolved uncertainty;
 8. do not claim browser/device validation you did not perform.
 
-## Rights and licence status
+## Licence of contributions
 
-The repository is public, but a repository-wide software/data licence still needs to be selected. Do not assume public visibility alone grants unrestricted reuse. Underlying recordings, compositions, artwork, embeds and other third-party material retain their own rights and licence terms.
+PlayGarba is free for everyone, and contributions keep it that way. By opening a pull request you agree that:
+
+- code you contribute is licensed under [AGPL-3.0-only](LICENSE);
+- catalogue data and documentation you contribute are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/);
+- you wrote it, or you have the right to submit it under those terms.
+
+You keep the copyright in your work and your name stays in the history. There is no contributor licence agreement. See [`docs/project/licensing.md`](docs/project/licensing.md) for the plain-language version and [`NOTICE`](NOTICE) for the attribution terms.
+
+Underlying recordings, compositions, artwork, embeds and other third-party material keep their own rights. Do not submit anything you cannot license.
 
 Be precise and respectful. When reliable sources disagree, record the disagreement rather than inventing certainty.

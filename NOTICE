@@ -1,0 +1,75 @@
+PlayGarba
+https://playgarba.com
+Source: https://github.com/ruddvz/garba
+
+Copyright (C) 2026 ruddvz and PlayGarba contributors.
+
+PlayGarba is free and it is meant to stay free. Anyone can listen, study
+the code, change it, run their own copy and contribute back. The licence
+below is not there to make that harder. It is there so nobody can take the
+shared work, close it off, and present it as something they built alone.
+
+------------------------------------------------------------------------
+What is licensed, and how
+------------------------------------------------------------------------
+
+1. Software (all source code, scripts, styles, workflows and build
+   tooling): GNU Affero General Public License, version 3 only
+   (AGPL-3.0-only). Full text in LICENSE.
+
+2. Catalogue data and written documentation (everything under data/,
+   docs/, public-site/ editorial text, and the Markdown files in this
+   repository): Creative Commons Attribution-ShareAlike 4.0 International
+   (CC BY-SA 4.0). https://creativecommons.org/licenses/by-sa/4.0/
+
+3. The PlayGarba name, the PlayGarba wordmark, the app icons and the
+   Garbo mark are not licensed under either licence. See TRADEMARKS.md.
+
+4. Music, recordings, compositions, lyrics, album artwork, YouTube embeds
+   and any other third-party material referenced or linked by PlayGarba
+   belong to their owners. PlayGarba does not license them to you and
+   does not host commercial audio. A file that carries its own notice
+   keeps that notice.
+
+The plain-language explanation is in docs/project/licensing.md.
+
+------------------------------------------------------------------------
+Additional terms under section 7 of the GNU AGPL v3
+------------------------------------------------------------------------
+
+The following additional terms apply to the software in this repository,
+as permitted by section 7(b), 7(c) and 7(e) of the AGPL-3.0. They do not
+limit anyone's freedom to use, study, modify or share the software.
+
+a) Attribution (section 7(b)). You must keep this NOTICE file and all
+   copyright notices in copies and modified versions. Any user interface
+   of a copy or modified version must show, in its "Appropriate Legal
+   Notices" (for example an About page, footer or credits screen), the
+   text:
+
+       Based on PlayGarba (https://playgarba.com),
+       source: https://github.com/ruddvz/garba
+
+   together with a link to the complete corresponding source of the
+   version being run, as section 13 of the AGPL already requires for
+   network use.
+
+b) Marking modified versions (section 7(c)). A modified version must be
+   clearly marked as changed from the original, and must not be presented
+   as the original PlayGarba or as an independent creation with no
+   connection to PlayGarba.
+
+c) Trademarks (section 7(e)). These licences grant no right to use the
+   PlayGarba name, wordmark, icons or Garbo mark, except as needed to give
+   the attribution in (a). A public fork or deployment must use its own
+   name and branding. See TRADEMARKS.md.
+
+------------------------------------------------------------------------
+Earlier revisions
+------------------------------------------------------------------------
+
+Commits made before this NOTICE and LICENSE were added were published
+with no licence, so they carried no reuse rights beyond GitHub's own
+viewing and forking features. The copyright holders now make those
+earlier revisions available under the same terms set out above. A copy
+of any revision that does not meet these terms is not licensed.

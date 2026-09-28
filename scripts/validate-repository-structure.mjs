@@ -17,9 +17,12 @@ const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const requiredRootFiles = new Set([
   'AGENTS.md',
   '.gitignore',
+  'CITATION.cff',
   'CNAME',
   'CONTRIBUTING.md',
   'EXECUTION-LEDGER.md',
+  'LICENSE',
+  'NOTICE',
   'README.md',
   'app.js',
   'index.html',
@@ -34,6 +37,7 @@ const requiredRootFiles = new Set([
   'sitemap.xml',
   'styles.css',
   'sw.js',
+  'TRADEMARKS.md',
   'vercel.json',
   'youtube-player-runtime.js',
 ]);

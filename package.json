@@ -2,6 +2,7 @@
   "name": "garba-music",
   "version": "0.7.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "description": "Open, community-built Gujarati Garba catalogue and immersive music player.",
   "scripts": {
     "catalogue": "node scripts/lib/validate-catalogue-release-ids.mjs && node scripts/build-catalogue.mjs && node scripts/enrich-runtime-songs.mjs",

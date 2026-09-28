@@ -88,6 +88,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 ## Project
 
 - [`project/roadmap.md`](project/roadmap.md): project-level roadmap
+- [`project/licensing.md`](project/licensing.md): plain-language guide to the AGPL-3.0 code licence, CC BY-SA 4.0 data licence, attribution terms and the PlayGarba name
 - [`project/search-discovery-programme.md`](project/search-discovery-programme.md): SEO, GEO and AEO strategy, baseline, route model, crawl/index rules and Navratri 2026 delivery sequence
 - [`project/event-discovery-contract.md`](project/event-discovery-contract.md): source/evidence, identity, freshness, cancellation, expiry and publication gates for future local event discovery
 

@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use PlayGarba code or catalogue data, please credit it as below."
+type: software
+title: "PlayGarba"
+abstract: "A source-first catalogue of Garba music and a free, installable listening app for it."
+authors:
+  - name: "ruddvz and PlayGarba contributors"
+repository-code: "https://github.com/ruddvz/garba"
+url: "https://playgarba.com"
+license: AGPL-3.0-only
+keywords:
+  - garba
+  - navratri
+  - gujarati music
+  - dandiya
+  - music catalogue
