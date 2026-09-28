@@ -1993,11 +1993,7 @@
   function slugify(t) { return String(t).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   // Credits that aren't a singer on stage: various artists, traditional, choruses, producers and DJ credits
   var NOT_A_SINGER = /various|traditional|chorus|muzik|music|\bdj\b|sounds|orchestra|meghdhanush|tropical|\bedm\b/i;
-  // Singers without a portrait: the first names common in the catalogue say which voice to dress; anyone else is
-  // left for the scene to place
-  var WOMEN_NAMES = 'geeta pamela aishwarya falguni rutvi kajal kinjal himali bhoomi rashmita santvani kairavi pooja anita dhara anushka alpa trupti shruti nisha rupal smita forum damayanti sonal dipali rekha abhita malini charmi apexa purva sargam shilpa pratiksha asha lalita priya ishani divya asees anuradha mina aarti veera poonam diwaliben madhubanti roopal goral sonam swati jigna kavya prakriti janhvi jahnvi dipti pragati rucha arohi archana neha shreya kavita dhvani sabhiben hemali alka'.split(' ');
-  var MEN_NAMES = 'kirtidan hemant atul aditya maulik rahul gaman praful jigardan hardik tushaar osman dharmesh hariom rushabh parthiv shailendra umesh kishor kishore kailash vikram musa gaurang achal tejas balraj deepak sonu bandish sudesh sanjay manoj govind sajid ashish bappi piyush parth amit bhargav dipak darshan himanshu kushal kedar raj siddharth jaysinh aakash jignesh vinay raag ashit pankaj mayur birju manu gaurav achint smmit hemang abhay vijay nitin yash bhavin shyam rutvij devraj niren vishaldan janak shail dev narendra tanishk karsan vinod ansh sachin lijo'.split(' ');
-  function voiceOf(name) { var first = String(name).trim().split(/\s+/)[0].toLowerCase(); return WOMEN_NAMES.indexOf(first) >= 0 ? false : MEN_NAMES.indexOf(first) >= 0 ? true : null; }
+  // Only artists with a confirmed singer portrait receive an attributed stage likeness and voice presentation.
 
   /* ---------- Atmosphere sheet ---------- */
   function atmoSave() { try { localStorage.setItem('garbo-proto-atmosphere', JSON.stringify({ mode: A.mode, venue: A.venue, listener: A.listener, pattern: A.pattern, youAs: A.youAs })); } catch (e) { /* storage unavailable */ } }
@@ -2034,13 +2030,15 @@
     // The singers wear the song's artists as cut-out heads, when there's one for them in window.GARBO_SINGERS
     var artists = S.track && S.track.song ? String(S.track.song.artist || '').split(/,|&| and /) : S.nonstop ? (S.nonstop.artists || []) : [];
     var heads = artists.map(function (a) { var f = SINGERS && SINGERS[slugify(String(a).trim())]; return f ? { url: SINGER_BASE + f.file, man: !!f.man } : null; }).filter(Boolean);
-    // The stage shows the song's own singers: up to three, those with a portrait first, each with the voice the roster
-    // records (the scene fills in any it can't place). A new song key walks the old lineup off and the new one on.
+    // The stage attributes faces and voice presentation only to confirmed singer records. A new song key walks the
+    // old lineup off and the new one on; unresolved credits aren't guessed into a male/female role.
     var seen = {}, lineup = artists.map(function (a) { return String(a).trim(); }).filter(function (a) { var k = slugify(a); if (!a || seen[k] || NOT_A_SINGER.test(a)) return false; seen[k] = true; return true; }).map(function (a) {
       var f = SINGERS && SINGERS[slugify(a)];
-      return f ? { name: a, man: !!f.man, url: SINGER_BASE + f.file } : { name: a, man: voiceOf(a), url: null };
+      // Only an explicit singer portrait record carries a voice presentation. A first-name guess can put
+      // a duet singer in the wrong role, so unresolved catalogue credits stay out of the named lineup.
+      return f ? { name: a, man: !!f.man, url: SINGER_BASE + f.file } : null;
     });
-    lineup = lineup.filter(function (x) { return x.url; }).concat(lineup.filter(function (x) { return !x.url; })).slice(0, 3);
+    lineup = lineup.filter(Boolean).slice(0, 3);
     // Chapters of one long recording keep one lineup: the song key is the recording's while it plays on
     var songKey = S.track ? (S.track.kind === 'song' && S.track.recordingKey ? 'recording:' + S.track.recordingKey : S.track.kind === 'song' && S.track.song ? 'song:' + (S.track.song.id || S.track.song.title) : S.track.kind === 'chapter' ? 'set:' + (S.track.set && S.track.set.id) + ':' + S.track.chapterIndex : '') : '';
     if (scene.atmosphere) scene.atmosphere({ singerFaces: heads, singers: lineup.length ? lineup : null, songKey: songKey || null, linkFaceCutouts: S.linkFaceCutouts });
