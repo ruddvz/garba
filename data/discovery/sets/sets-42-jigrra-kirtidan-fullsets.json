@@ -161,7 +161,29 @@
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "RDC Gujarati verified full-length continuous Garba collection. YouTube displayed 30M views and 2:47:33 runtime on 2026-09-29. This exact video ID was absent from the set registry despite being described as indexed in earlier research notes. One master programme; no chapter rows are created."
+      "notes": "RDC Gujarati verified full-length continuous Garba collection. YouTube displayed 30M views and 2:47:33 runtime on 2026-09-29. This exact video ID was absent from the set registry despite being described as indexed in earlier research notes. One master programme; no chapter rows are created.",
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba (RDC Gujarati)",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "sourceAlternates": [
+        {
+          "provider": "youtube",
+          "videoId": "Cix4CEICO6M",
+          "url": "https://www.youtube.com/watch?v=Cix4CEICO6M",
+          "sourceType": "verified-label-channel",
+          "sourceRuntimeDisplay": "2h 47m 33s",
+          "durationSeconds": 10053,
+          "viewSnapshot": {
+            "provider": "youtube",
+            "displayed": "1,464,679",
+            "checkedAt": "2026-09-29"
+          },
+          "notes": "RDC Gujarati verified upload dated 2024-09-21. It has the same 2:47:33 duration and Studio Saraswati/Kirtidan Gadhvi All Hits release credit as the selected 2021 master. Retained as an alternate upload of the same continuous programme, not a duplicate set."
+        }
+      ]
     },
     {
       "id": "set-kirtidan-virtual-navratri-2020-day-4",

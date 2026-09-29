@@ -28,7 +28,13 @@
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Studio Saraswati Official's 2016 Tahukar 2 DJ Mix Garba upload, surfaced directly by the user. This 32:46 programme is distinct from the already catalogued 1:14:00 full-audio Tahukar 2 upload; they are separate YouTube masters and are not combined or treated as track chapters. The verified channel page displayed 32M views on 2026-09-29. No track-level timestamps are inferred."
+      "notes": "Studio Saraswati Official's 2016 Tahukar 2 DJ Mix Garba upload, surfaced directly by the user. This 32:46 programme is distinct from the already catalogued 1:14:00 full-audio Tahukar 2 upload; they are separate YouTube masters and are not combined or treated as track chapters. The verified channel page displayed 32M views on 2026-09-29. No track-level timestamps are inferred.",
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Tahukar 1 to 10",
+          "url": "https://www.youtube.com/playlist?list=PLgwZbq7wbilYC6zmBrRWKVTuoihAQ-_rt"
+        }
+      ]
     },
     {
       "id": "set-aditya-gadhvi-mor-bani-nonstop-dandiya",
