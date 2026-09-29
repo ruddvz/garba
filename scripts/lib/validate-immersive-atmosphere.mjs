@@ -291,7 +291,7 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   }
   // With the player hidden, the ground it covered fills with more dancers: they arrive and leave gradually, and only
   // while a song plays, never at the DJ's table
-  for (const marker of ['var FILL = {', 'L.fill = fillFor(id, main);', 'var fillOn = !!st.fill && st.on && !st.dj;', 'fade: a * nearFade(p.z)', 'if (fillK > 0.3) L.fill.forEach(']) {
+  for (const marker of ['var FILL = {', 'L.fill = fillFor(id, main);', 'var fillOn = !!st.fill && st.on && !st.dj;', 'fade: a * nearFade(p.z)', 'if (fillK > 0.3) L.fill.forEach(', 'c.stageFill = true;', "if (!!c.stageFill !== (st.listener === 'stage')) return;", 'var roomK = st.listener === \'stage\' ? Math.min(1, fillK * 1.5) : 0;']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the hidden-player dancer marker: ${marker}`);
   }
   // An aarti (a song styled aarti): the dancing stops, everyone turns to the garbo and folds their hands, a few carry a

@@ -204,6 +204,10 @@
       // The ring is a little looser than the others, so it costs fewer figures to draw
       var f = FILL[id] || FILL.outdoors, out = f.ring ? [makeCircle(0, 0, f.ring, false, main, Math.round(TAU * f.ring / 1.4))] : [];
       f.groups.forEach(function (q) { var c = makeCircle(q[0], q[1], q[2], false, null, q[3]); if (q[3]) { c.small = true; c.w = 1.8; } out.push(c); });
+      // By the stage the space the player covered is the crowd in front of the stage: it makes room on either side of
+      // the middle, and two small circles dance there, leaving the view up the middle to the stage open
+      var sz = { outdoors: 46, stadium: 35.5, sheri: 64.5 }[id] || 46, sx = id === 'sheri' ? 2.8 : 3.7;
+      [[-sx, sz - 3.2, id === 'sheri' ? 1 : 1.2], [sx + 0.1, sz - 3.35, id === 'sheri' ? 0.95 : 1.15]].forEach(function (q) { var c = makeCircle(q[0], q[1], q[2], false); c.stageFill = true; c.baseX = q[0]; c.baseR = q[2]; out.push(c); });
       return out;
     }
     // Food stalls: where they stand, which way they face (u runs along the counter, v into the stall)
@@ -4006,6 +4010,9 @@
       var fillOn = !!st.fill && st.on && !st.dj;
       fillK = reduce ? (fillOn ? 1 : 0) : Math.max(0, Math.min(1, fillK + (fillOn ? 0.8 : -1.6) * dt));
       if (fillK > 0.001) L.fill.forEach(function (c) {
+        if (!!c.stageFill !== (st.listener === 'stage')) return;
+        // On a narrow screen the two circles by the stage draw in closer and smaller, so both stay in view
+        if (c.stageFill) { var hw0 = BW / 2 * Math.max(1, c.z0 - cam.z) / F; c.x0 = (c.baseX < 0 ? -1 : 1) * Math.min(Math.abs(c.baseX), hw0 * 0.62); c.R = Math.min(c.baseR, Math.max(0.7, hw0 * 0.4)); }
         if (st.on && !reduce) c.spin += c.w * dt * (1 - aartiK);
         var ctr = circleCentre(c, T), k = 1 + (1 - ease(fillK)) * (c.small ? 0.8 : 1.4) / c.R;
         c.dancers.forEach(function (d) {
@@ -4031,8 +4038,13 @@
         life.props.forEach(function (o) { var p = P(o.x, 0, o.z); if (p && p.z > 1.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z + (o.kind === 'plasticChair' ? 0.02 : 0), kind: 'djprop', o: o }); });
         life.people.forEach(function (q) { var p = P(q.x, q.seat ? 0.45 : 0, q.z); if (p && p.z > 1.6 && p.x > -60 && p.x < W + 60) items.push({ z: p.z - 0.01, kind: 'dancer', p: p, d: q.d, fade: 1 }); }); }
       L.props.forEach(function (o) { var p = P(o.x, 0, o.z); if (p && p.z > 2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'prop', o: o }); });
+      var roomK = st.listener === 'stage' ? Math.min(1, fillK * 1.5) : 0;
       L.gallery.forEach(function (ga) {
         if (ga.kind === 'runner') playKid(ga, L.gallery, dt);
+        // Making room for the dancers by the stage: those standing where a circle forms step out of it, from its middle
+        // outward as it gathers (the two of you and anyone filming stay)
+        if (roomK > 0.01 && ga.view === 'stage' && ga.kind === 'stand' && ga.who && !ga.who.seatRole && !ga.who.video && !ga.who.gimbal
+          && L.fill.some(function (c) { return c.stageFill && Math.hypot(ga.x - c.x0, ga.z - c.z0) < (c.R + 0.75) * roomK; })) return;
         var p = P(ga.x, ga.y + (ga.hopY || 0), ga.z); if (p && p.z > 0.9 && p.x > -60 && p.x < W + 60) items.push({ z: p.z + (ga.kind === 'step' ? 0.6 : 0), kind: 'gallery', ga: ga, p: p });
       });
       L.seats.forEach(function (se) { var p = P(se.x, se.y != null ? se.y : 0.45, se.z); if (p && p.z > 2.2 && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'seat', se: se, p: p, fade: Math.max(0, Math.min(1, (p.z - 3) / 4)) }); });
