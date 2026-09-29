@@ -1,8 +1,8 @@
 {
   "rosterSource": "data/discovery/artists-2026-01.json",
-  "updated": "2026-09-28",
-  "rosterEntryCount": 64,
-  "humanPortraitCount": 60,
+  "updated": "2026-09-29",
+  "rosterEntryCount": 66,
+  "humanPortraitCount": 62,
   "excludedGroupActs": [
     "Aghori Muzik",
     "Bandish Projekt",
@@ -713,6 +713,31 @@
         "https://www.youtube.com/watch?v=vKhuMEfrVrI"
       ],
       "portraitNotes": "AI-generated stylized face-only illustration based on the labeled singer photo and verified performer/repertoire sources; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Aishwarya Joshi",
+      "artistId": "aishwarya-joshi",
+      "tier": "emerging-current",
+      "songCount": 7,
+      "portrait": "aishwarya-joshi.webp",
+      "sourceReferences": [
+        "https://www.district.in/events/aishwarya-joshi/artist"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on the attributed artist portrait and performer profile; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Apexa Pandya",
+      "artistId": "apexa-pandya",
+      "tier": "current",
+      "songCount": 5,
+      "portrait": "apexa-pandya.webp",
+      "sourceReferences": [
+        "https://fusion4events.com/index.html",
+        "https://fusion4events.com/img/galary/garba2026/apexa-pandya-live-garba-munich-1.webp",
+        "https://fusion4events.com/img/galary/garba2026/apexa-pandya-live-garba-munich-4.webp",
+        "https://music.apple.com/in/artist/apexa-pandya/1524416959"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on a singer-identified event portrait and artist profile; references guide likeness and are not licenses."
     }
   ]
 }

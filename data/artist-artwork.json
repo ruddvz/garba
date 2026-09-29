@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "updated": "2026-09-28",
+  "updated": "2026-09-29",
   "policy": "Photographic artist artwork requires identity verification and explicit reusable licensing. Generated portrait illustrations may be shown only when explicitly marked as illustrations and must not be treated as licensed photography. Missing entries fall back to the existing visual system rather than guessing or hotlinking unverified images.",
   "artists": {
     "aditya-gadhvi": {
@@ -289,6 +289,14 @@
     },
     "rekha-trivedi": {
       "illustrationUrl": "/garbo/prototype/singers/rekha-trivedi.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "aishwarya-joshi": {
+      "illustrationUrl": "/garbo/prototype/singers/aishwarya-joshi.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "apexa-pandya": {
+      "illustrationUrl": "/garbo/prototype/singers/apexa-pandya.webp",
       "illustrationType": "ai-generated-stylized-portrait"
     }
   }
