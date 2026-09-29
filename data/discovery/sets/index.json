@@ -1,5 +1,5 @@
 {
-  "version": "0.20.4",
+  "version": "0.20.5",
   "updated": "2026-09-29",
   "chunks": [
     "sets-01.json",
@@ -43,7 +43,8 @@
     "sets-40-atul-nonstop-navratri.json",
     "sets-41-falguni-event-programmes.json",
     "sets-42-jigrra-kirtidan-fullsets.json",
-    "sets-43-ragatip-garba-performances.json"
+    "sets-43-ragatip-garba-performances.json",
+    "sets-44-aditya-label-nonstop.json"
   ],
   "policy": {
     "officialityOrder": [

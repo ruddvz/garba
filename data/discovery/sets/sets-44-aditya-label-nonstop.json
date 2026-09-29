@@ -1,0 +1,86 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-aditya-chamund-maa-no-rankar-nonstop",
+      "title": "Chamund Maa No Rankar | Nonstop Garba",
+      "artists": ["Aditya Gadhvi"],
+      "series": "No Rankar",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "eBJMwxHAndY",
+        "url": "https://www.youtube.com/watch?v=eBJMwxHAndY",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 02m 46s",
+      "durationSeconds": 3766,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "1.1M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete continuous Garba recording from Studio Sharda's verified YouTube channel. The video description credits singer Aditya Gadhavi and music Manoj Vimal. YouTube displayed 1.1M views on 2026-09-29 and a runtime of 1:02:46. The page showed a relative publication age of one year; no exact release year or companion playlist is asserted. Kept as one full set with no chapter/song rows."
+    },
+    {
+      "id": "set-aditya-mogal-maa-no-rankar-nonstop",
+      "title": "Mogal Maa No Rankar | Nonstop Garba",
+      "artists": ["Aditya Gadhvi"],
+      "series": "No Rankar",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Zn5Ig1w6a-c",
+        "url": "https://www.youtube.com/watch?v=Zn5Ig1w6a-c",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 02m 40s",
+      "durationSeconds": 3760,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "977K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete continuous Garba recording from Studio Sharda's verified YouTube channel. The video description credits singer Aditya Gadhavi and music Manoj Vimal. YouTube displayed 977K views on 2026-09-29 and a runtime of 1:02:40. The page showed a relative publication age of one year; no exact release year or companion playlist is asserted. Kept as one full set with no chapter/song rows."
+    },
+    {
+      "id": "set-aditya-jay-mogal-jogmaya-nonstop",
+      "title": "Aditya Gadhvi Garba Mogal Maa Na Nonstop Garba",
+      "artists": ["Aditya Gadhvi"],
+      "series": "Jay Mogal Jogmaya",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "KMo7XvDBqfo",
+        "url": "https://www.youtube.com/watch?v=KMo7XvDBqfo",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 11m 53s",
+      "durationSeconds": 4313,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "759K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete continuous Garba recording from Studio Sharda's verified YouTube channel. The video description credits album Jay Mogal Jogmaya, singer Aditya Gadhvi, and Studio Sharda as the music label. YouTube displayed 759K views on 2026-09-29 and a runtime of 1:11:53. The page showed a relative publication age of ten years; no exact release year or companion playlist is asserted. Kept as one full set with no chapter/song rows."
+    }
+  ]
+}
