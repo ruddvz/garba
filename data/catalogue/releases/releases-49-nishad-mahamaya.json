@@ -1,12 +1,49 @@
 [
   {
     "id": "nishad-mahamaya-2026",
+    "title": "Mahamaya Nonstop Garba 2026",
+    "displayTitle": "Mahamaya | Nonstop Garba 2026",
+    "artist": "Nishad Soni",
+    "originalReleaseYear": 2026,
+    "label": "Nishad Soni Official",
+    "description": "One 31:31 continuous Garba recording by Nishad Soni, published on his official YouTube channel.",
+    "categories": [
+      "modern-gujarati-garba"
+    ],
+    "visualGenre": "traditional",
+    "entryType": "single-continuous-set",
+    "songCount": 1,
+    "durationSeconds": 1891,
+    "series": null,
+    "volume": null,
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
+    "sources": [
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=a6FyIel2Gj0",
+        "kind": "official-artist-channel"
+      }
+    ],
+    "nonstopSetId": "set-nishad-soni-mahamaya-2026",
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified",
+    "audioAvailability": "youtube-official",
+    "durationPrecision": "platform-summary",
+    "notes": "One continuous 31:31 recording. The 19 chapter markers published on the video are metadata-only navigation points; they are not separate songs or track rows."
+  },
+  {
+    "id": "nishad-mahamaya-amazon-album-2026",
     "title": "Mahamaya",
     "artist": "Nishad Soni",
     "releaseDate": "2026-08-27",
     "originalReleaseYear": 2026,
     "label": "Nishad Soni Official",
-    "description": "A 19-track 2026 Gujarati Garba album by Nishad Soni, released August 27, 2026.",
+    "description": "Amazon Music lists a 19-track digital album titled Mahamaya by Nishad Soni, released August 27, 2026.",
     "categories": [
       "modern-gujarati-garba"
     ],
@@ -27,13 +64,14 @@
         "kind": "official-streaming-catalogue"
       }
     ],
-    "nonstopSetId": "set-nishad-soni-mahamaya-2026",
     "trackImportComplete": true,
     "rightsStatus": "commercial-catalogue",
     "audioBundled": false,
     "metadataStatus": "verified",
     "audioAvailability": "external-source-only",
     "durationPrecision": "track-sum",
-    "notes": "Amazon Music lists 19 tracks with a 34:04 combined track duration. The related official YouTube nonstop recording is a separate 31:31 performance edition and is catalogued separately."
+    "notes": "Preserved as provider-source metadata only. For PlayGarba listening, this title refers to one 31:31 continuous official YouTube recording; its internal chapter markers are navigation points, not separate catalog songs.",
+    "presentationRole": "source-only",
+    "canonicalReleaseId": "nishad-mahamaya-2026"
   }
 ]

@@ -131,6 +131,12 @@ npm run presentation:validate
 
 This verifies role values, canonical targets, alias track-order identity, Nonstop set safety, generated song redirects and the main-player/Explore filtering contracts.
 
+## Continuous Garba recordings and chapter markers
+
+A continuous Garba video or master is one listening item even when its description contains many song/chapter markers. Store the full recording as one continuous release and one playable song (or one Nonstop set where appropriate). Keep source-published chapter titles and start times on the discovery set for navigation; do not convert them into separate canonical songs.
+
+Create separate song rows only when independent song releases or a separately published split-track album are verified as distinct catalog objects. If a provider exposes a component album for the same continuous programme, preserve that provider listing as a hidden `source-only` release linked to the one user-facing continuous release. The ordinary Explore and listening views must show the complete recording as one item.
+
 ## Nonstop discovery source of truth
 
 `data/discovery/sets/index.json` and the chunks it lists are the only canonical registry for Nonstop/full-set listening and discovery. The live Nonstop browser, catalogue audits and taxonomy validators all read this registry.

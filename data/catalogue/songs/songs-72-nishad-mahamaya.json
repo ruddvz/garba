@@ -11,7 +11,7 @@
       "2026"
     ],
     "durationSeconds": 101,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 1,
     "audioUrl": null,
     "placeholder": false,
@@ -31,7 +31,7 @@
       "2026"
     ],
     "durationSeconds": 162,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 2,
     "audioUrl": null,
     "placeholder": false,
@@ -51,7 +51,7 @@
       "2026"
     ],
     "durationSeconds": 159,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 3,
     "audioUrl": null,
     "placeholder": false,
@@ -71,7 +71,7 @@
       "2026"
     ],
     "durationSeconds": 132,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 4,
     "audioUrl": null,
     "placeholder": false,
@@ -91,7 +91,7 @@
       "2026"
     ],
     "durationSeconds": 122,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 5,
     "audioUrl": null,
     "placeholder": false,
@@ -111,7 +111,7 @@
       "2026"
     ],
     "durationSeconds": 132,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 6,
     "audioUrl": null,
     "placeholder": false,
@@ -131,7 +131,7 @@
       "2026"
     ],
     "durationSeconds": 123,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 7,
     "audioUrl": null,
     "placeholder": false,
@@ -151,7 +151,7 @@
       "2026"
     ],
     "durationSeconds": 119,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 8,
     "audioUrl": null,
     "placeholder": false,
@@ -171,7 +171,7 @@
       "2026"
     ],
     "durationSeconds": 68,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 9,
     "audioUrl": null,
     "placeholder": false,
@@ -191,7 +191,7 @@
       "2026"
     ],
     "durationSeconds": 98,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 10,
     "audioUrl": null,
     "placeholder": false,
@@ -211,7 +211,7 @@
       "2026"
     ],
     "durationSeconds": 74,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 11,
     "audioUrl": null,
     "placeholder": false,
@@ -231,7 +231,7 @@
       "2026"
     ],
     "durationSeconds": 67,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 12,
     "audioUrl": null,
     "placeholder": false,
@@ -251,7 +251,7 @@
       "2026"
     ],
     "durationSeconds": 204,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 13,
     "audioUrl": null,
     "placeholder": false,
@@ -271,7 +271,7 @@
       "2026"
     ],
     "durationSeconds": 58,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 14,
     "audioUrl": null,
     "placeholder": false,
@@ -291,7 +291,7 @@
       "2026"
     ],
     "durationSeconds": 70,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 15,
     "audioUrl": null,
     "placeholder": false,
@@ -311,7 +311,7 @@
       "2026"
     ],
     "durationSeconds": 74,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 16,
     "audioUrl": null,
     "placeholder": false,
@@ -331,7 +331,7 @@
       "2026"
     ],
     "durationSeconds": 75,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 17,
     "audioUrl": null,
     "placeholder": false,
@@ -351,7 +351,7 @@
       "2026"
     ],
     "durationSeconds": 119,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 18,
     "audioUrl": null,
     "placeholder": false,
@@ -371,12 +371,34 @@
       "2026"
     ],
     "durationSeconds": 87,
-    "releaseId": "nishad-mahamaya-2026",
+    "releaseId": "nishad-mahamaya-amazon-album-2026",
     "trackNumber": 19,
     "audioUrl": null,
     "placeholder": false,
     "sourceStatus": "verified-metadata",
     "audioAvailability": "external-source-only",
     "youtubeId": null
+  },
+  {
+    "id": "nishad-mahamaya-2026-01-full-recording",
+    "title": "Mahamaya Nonstop Garba 2026",
+    "displayTitle": "Mahamaya | Nonstop Garba 2026",
+    "artist": "Nishad Soni",
+    "genre": "traditional",
+    "category": "modern-gujarati-garba",
+    "styles": [
+      "nonstop",
+      "garba",
+      "continuous-set",
+      "2026"
+    ],
+    "durationSeconds": 1891,
+    "releaseId": "nishad-mahamaya-2026",
+    "trackNumber": 1,
+    "audioUrl": null,
+    "placeholder": false,
+    "sourceStatus": "verified-metadata",
+    "audioAvailability": "youtube-official",
+    "youtubeId": "a6FyIel2Gj0"
   }
 ]
