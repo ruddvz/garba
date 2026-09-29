@@ -630,7 +630,8 @@
     // How far this person's phone is up: everyone lifts theirs when the song starts and lowers it when it stops,
     // each at their own moment, so the phones don't rise and fall as one
     function phoneK(d) {
-      if (!d.phone) return 0;
+      // In the aarti the phones come down, except for the few filming it
+      if (!d.phone || (aartiK > 0.5 && !d.video)) return 0;
       var k = Math.max(0, Math.min(1, phonesUp * 1.6 - (((d.sway || d.ph || 0) * 0.37) % 1) * 0.6));
       return k * k * (3 - 2 * k);
     }
@@ -658,6 +659,8 @@
           if (!d.phone && !d.kid) { if (gc < 1.2) grooveUp = true; else if (gc > 3 && gc < 4.6) clapOver = Math.pow(Math.abs(Math.cos(BEAT * Math.PI)), 4); }
         } else x += Math.sin(T0 * 0.8 + (d.sway || 0)) * h * 0.02;
       }
+      // Praying in the aarti, seen from behind: hands joined and raised over the head, so the prayer reads from the back
+      if (aartiK > 0.5 && !sit && !d.video && !d.gimbal && !d.kid) { grooveUp = false; clapOver = 1; }
       var pk = phoneK(d), armsUp = d.armsUp || grooveUp || clapOver > 0, upWave = reduce || clapOver > 0 ? 0 : Math.sin(T0 * 12 + (d.ph || 0) * 5) * h * 0.025;
       // Arms raised: apart and waving for a cheer, drawing together until the hands meet overhead for a clap
       var spread0 = clapOver > 0 ? 1 - clapOver : 1;

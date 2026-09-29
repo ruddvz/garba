@@ -708,6 +708,8 @@ button { font: inherit; color: inherit; }
 .time #elapsed { min-width: 3.4em; text-align: right; }
 .time #duration { min-width: 3.4em; text-align: left; }
 .time #elapsed.live-now { min-width: 0; }
+/* With no duration (Live now, Starts in) the one word sits centred over Play */
+.time #duration:empty { display: none; }
 .seek-bar { --p: 0%; flex: 1 1 auto; min-width: 0; height: 24px; margin: 0; padding: 0; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: none; }
 .seek-bar[hidden] { display: none; }
 .seek-bar:disabled { opacity: .4; cursor: default; }

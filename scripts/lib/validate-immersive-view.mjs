@@ -90,7 +90,7 @@ if (!prototypeJs.includes("document.querySelector('.proto-states')") || !prototy
 const guideNote = prototypeHtml.match(/<p class="about-note">([^<]*)<\/p>/)?.[1] || '';
 if (!guideNote.includes('Mata ni Pachedi') || !guideNote.includes("Devipujak community")) fail('The Garba guide must preserve its concise Pachedi attribution');
 if (/commission|TODO|should be credited/i.test(guideNote)) fail('The live Garba guide must not expose artwork commissioning or editorial task notes');
-for (const marker of ['href="garbo.css?v=20260929-1"', 'src="garbo.js?v=20260929-1"', 'src="scene.js?v=20260929-2"', 'src="../../../../public-site/atmosphere/scene.js?v=20260929-2"', 'src="morphicons.js?v=1.7.1"']) {
+for (const marker of ['href="garbo.css?v=20260929-2"', 'src="garbo.js?v=20260929-2"', 'src="scene.js?v=20260929-2"', 'src="../../../../public-site/atmosphere/scene.js?v=20260929-3"', 'src="morphicons.js?v=1.7.1"']) {
   if (!prototypeHtml.includes(marker)) fail(`The canonical prototype must version its cached embedded asset URL: ${marker}`);
 }
 for (const file of ['index.html', 'garbo.js', 'garbo.css']) {
@@ -181,5 +181,15 @@ if (!prototypeJs.includes("new ResizeObserver(function () { if (!relayoutFrame) 
   // Nothing is drawn under the thumb: the stick walks you without showing, and a line of words teaches it once
   if (prototypeJs.includes("el('div', 'stick')") || prototypeCss.includes('.stick {') || !prototypeJs.includes("toast('Drag anywhere to walk around');")) fail('Touch walking must not draw a stick over the venue');
 }
+// Aarti songs are findable in Immersive: an Aarti list built from the catalogue style, and search that matches the tag
+{
+  const [appSource, garboSource] = await Promise.all([read('app.js'), read('docs/product/prototypes/garbo/garbo.js')]);
+  if (!appSource.includes("{ id: 'aarti', title: 'Aarti' },")) fail('Explore must offer an Aarti list built from the catalogue aarti style');
+  if (!garboSource.includes("(s.aarti ? ' aarti' : '')")) fail('Immersive search must match songs tagged aarti');
+  // Seen from behind by the stage, the crowd's prayer must still read: joined hands raised, phones down but for those filming
+  const venue = await read('public-site/atmosphere/scene.js');
+  if (!venue.includes('if (aartiK > 0.5 && !sit && !d.video && !d.gimbal && !d.kid) { grooveUp = false; clapOver = 1; }') || !venue.includes('if (!d.phone || (aartiK > 0.5 && !d.video)) return 0;')) fail('The aarti crowd seen from behind must visibly pray');
+}
 if (failed) process.exit(1);
 console.log('✓ Simple and Immersive use separate renderers, the mode switch sits below More (opened from a home button on Immersive phones), and the deployed Garbo scene path resolves');
+

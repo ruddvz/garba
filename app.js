@@ -210,6 +210,8 @@ const STEP_LISTS = [
   { id: 'dodhiyu', title: 'Dodhiyu' },
   { id: 'hinch', title: 'Hinch' },
   { id: 'sanedo', title: 'Sanedo', genre: 'sanedo' },
+  // The aartis: the songs that stop the dancing for a prayer in Immersive
+  { id: 'aarti', title: 'Aarti' },
 ];
 const ARTIST_MIN_SONGS = 3;
 const artistSlug = (name) => String(name || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -3277,6 +3279,8 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
           videoId: vid || null,
           startSeconds: Number(item.youtubeStartSeconds || 0) || 0,
           isChapter: tier === PLAYABLE_TIER.CHAPTER,
+          // Searching "aarti" finds the songs tagged as one, not only those with the word in their title
+          aarti: Array.isArray(item.styles) && item.styles.some((style) => String(style).toLowerCase() === 'aarti'),
         };
       });
       snapshot.collections = playCollections().map(({ id, kind, title, ids, playable }) => ({ id, kind, title, ids, playable }));

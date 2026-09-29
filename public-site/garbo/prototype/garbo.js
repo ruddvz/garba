@@ -141,7 +141,8 @@
     // Read the track when the change lands, so a quick second change (a live link opening on load) wins
     var apply = function () {
       var v = trackView();
-      $('eyebrow').textContent = v.eyebrow;
+      // On 24/7 Live the Live button and "Live now" by the controls already say so: no line above the title
+      $('eyebrow').textContent = S.live ? '' : v.eyebrow;
       renderPerch();
       var title = $('title');
       title.textContent = v.title;
@@ -1772,7 +1773,7 @@
     if (count && !$('panelSingers').hidden) count.textContent = '';
     if (!q) { renderExploreLists(ul); if (count && !showingNonstop && $('panelSingers').hidden) count.textContent = ''; }
     else {
-      var matches = S.data.songs.filter(function (s) { return (s.title + ' ' + s.artist + ' ' + (s.release ? s.release.title : '')).toLowerCase().indexOf(q) !== -1; });
+      var matches = S.data.songs.filter(function (s) { return (s.title + ' ' + s.artist + ' ' + (s.release ? s.release.title : '') + (s.aarti ? ' aarti' : '')).toLowerCase().indexOf(q) !== -1; });
       matches.sort(function (a, b2) { return (b2.playable ? 1 : 0) - (a.playable ? 1 : 0); });
       var songs = matches.slice(0, visibleSongCount);
       if (count && !showingNonstop) count.textContent = matches.length > songs.length
