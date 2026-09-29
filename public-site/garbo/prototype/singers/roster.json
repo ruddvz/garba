@@ -1,8 +1,8 @@
 {
   "rosterSource": "data/discovery/artists-2026-01.json",
   "updated": "2026-09-29",
-  "rosterEntryCount": 66,
-  "humanPortraitCount": 62,
+  "rosterEntryCount": 67,
+  "humanPortraitCount": 63,
   "excludedGroupActs": [
     "Aghori Muzik",
     "Bandish Projekt",
@@ -738,6 +738,19 @@
         "https://music.apple.com/in/artist/apexa-pandya/1524416959"
       ],
       "portraitNotes": "AI-generated stylized face-only illustration based on a singer-identified event portrait and artist profile; references guide likeness and are not licenses."
+    },
+    {
+      "artist": "Nishad Soni",
+      "artistId": "nishad-soni",
+      "tier": "current",
+      "songCount": 0,
+      "portrait": "nishad-soni.webp",
+      "sourceReferences": [
+        "https://www.youtube.com/watch?v=a6FyIel2Gj0",
+        "https://music.apple.com/us/artist/nishad-soni/1462936934",
+        "https://in.bookmyshow.com/activities/mandavadi-garba-mandli/ET00512712/"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on the singer shown on his official-channel video; Apple Music and event sources confirm the performer identity. References guide likeness and are not licenses."
     }
   ]
 }

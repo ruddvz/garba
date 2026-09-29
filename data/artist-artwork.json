@@ -298,6 +298,10 @@
     "apexa-pandya": {
       "illustrationUrl": "/garbo/prototype/singers/apexa-pandya.webp",
       "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "nishad-soni": {
+      "illustrationUrl": "/garbo/prototype/singers/nishad-soni.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
     }
   }
 }
