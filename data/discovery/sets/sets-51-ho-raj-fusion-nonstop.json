@@ -1,0 +1,39 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-ho-raj-fusion-nonstop-jhankar",
+      "title": "Latest Navratri Gujarati Garba Song New - 2 | Fusion Garba Non Stop | Atul Purohit | Foram Mehta",
+      "artists": [
+        "Atul Purohit",
+        "Foram Mehta",
+        "Manoj Dave"
+      ],
+      "series": "Ho Raj Fusion Garba",
+      "categories": [
+        "electronic-fusion",
+        "traditional-garba"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "b2sB6JcXU8M",
+        "url": "https://www.youtube.com/watch?v=b2sB6JcXU8M",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "29m 50s",
+      "durationSeconds": 1790,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "148K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "YouTube's watch page identifies the verified Jhankar Music Bhakti Sagar channel and describes this as Ho Raj Fusion Garba Non Stop, sung by Atul Purohit, Foram Mehta, and Manoj Dave. It showed 148K views and a 29:50 runtime on 2026-09-29. This materially shorter upload is listed as its own continuous programme and is not linked to the 59:16 track-sum 2001 Ho Raj album. No track chapters or song rows are inferred."
+    }
+  ]
+}
