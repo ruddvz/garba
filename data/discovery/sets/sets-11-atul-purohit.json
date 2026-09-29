@@ -1,1 +1,300 @@
-{"updated":"2026-09-08","sets":[{"id":"set-atul-rangrasiya-vol1-2021","title":"Rangrasiya Nonstop Raas, Vol.1","artists":["Atul Purohit","Jigna Dashputre"],"year":2021,"setType":"official-nonstop","officiality":"official-artist-channel","source":{"provider":"youtube","videoId":"-PAdrU2oJNw","url":"https://www.youtube.com/watch?v=-PAdrU2oJNw","embeddable":true},"linkedReleaseId":"atul-rangrasiya-nonstop-raas-vol1-2021","categories":["raas-dandiya","live-garba"],"durationSeconds":2579,"segments":[],"chapterStatus":"source-no-published-chapters","playbackPolicy":"youtube-embed-visible","notes":"Official Atul Purohit continuous YouTube source. Current source/release searches expose no published internal timestamp map; external track-length metadata is not converted into seek points."},{"id":"set-atul-united-way-2025-day4","title":"Atul Purohit - United Way 2025 - Day 4","artists":["Atul Purohit","Jigna Dashputre"],"year":2025,"setType":"live-full-set","officiality":"official-artist-channel","source":{"provider":"youtube","videoId":"EGCC4g6YKHw","url":"https://www.youtube.com/watch?v=EGCC4g6YKHw","embeddable":false},"linkedReleaseId":null,"segments":[],"chapterStatus":"source-no-published-chapters","playbackPolicy":"youtube-external-visible","notes":"Official Atul Purohit live source. The watch page is embed-restricted and indexed source metadata publishes no chapter starts; preserve the official external recording without fabricated seeks."},{"id":"set-atul-united-way-2025-day5","title":"Atul Purohit - United Way 2025 - Day 5","artists":["Atul Purohit","Jigna Dashputre"],"year":2025,"setType":"live-full-set","officiality":"official-artist-channel","source":{"provider":"youtube","videoId":"AGVmcVHcM_o","url":"https://www.youtube.com/watch?v=AGVmcVHcM_o","embeddable":false},"linkedReleaseId":null,"segments":[],"chapterStatus":"source-no-published-chapters","playbackPolicy":"youtube-external-visible","notes":"Official Atul Purohit live source. Source-health reports embed restriction and indexed source metadata publishes no chapter starts; preserve external playback without fabricated seeks."},{"id":"set-atul-united-way-2025-day9","title":"Atul Purohit - United Way 2025 - Day 9","artists":["Atul Purohit","Jigna Dashputre"],"year":2025,"setType":"live-full-set","officiality":"official-artist-channel","source":{"provider":"youtube","videoId":"tYHqtUPD9Wc","url":"https://www.youtube.com/watch?v=tYHqtUPD9Wc","embeddable":false},"linkedReleaseId":null,"segments":[],"chapterStatus":"source-no-published-chapters","playbackPolicy":"youtube-external-visible","notes":"Official Atul Purohit live source. Indexed official-channel metadata credits the performers but publishes no chapter starts; preserve external playback without fabricated seeks."},{"id":"set-atul-united-way-2025-day10","title":"Atul Purohit - United Way 2025 - Day 10","artists":["Atul Purohit","Jigna Dashputre"],"year":2025,"setType":"live-full-set","officiality":"official-artist-channel","source":{"provider":"youtube","videoId":"UQQJZfs5K-U","url":"https://www.youtube.com/watch?v=UQQJZfs5K-U","embeddable":false},"linkedReleaseId":null,"segments":[],"chapterStatus":"source-no-published-chapters","playbackPolicy":"youtube-external-visible","notes":"Official Atul Purohit live source. Indexed official-channel metadata credits the performers but publishes no chapter starts; preserve external playback without fabricated seeks."}]}
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-atul-rangrasiya-vol1-2021",
+      "title": "Rangrasiya Nonstop Raas, Vol.1",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2021,
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "-PAdrU2oJNw",
+        "url": "https://www.youtube.com/watch?v=-PAdrU2oJNw",
+        "embeddable": true
+      },
+      "linkedReleaseId": "atul-rangrasiya-nonstop-raas-vol1-2021",
+      "categories": [
+        "raas-dandiya",
+        "live-garba"
+      ],
+      "durationSeconds": 2579,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Atul Purohit continuous YouTube source. Current source/release searches expose no published internal timestamp map; external track-length metadata is not converted into seek points."
+    },
+    {
+      "id": "set-atul-united-way-2025-day4",
+      "title": "Atul Purohit - United Way 2025 - Day 4",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "EGCC4g6YKHw",
+        "url": "https://www.youtube.com/watch?v=EGCC4g6YKHw",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit live source. The watch page is embed-restricted and indexed source metadata publishes no chapter starts; preserve the official external recording without fabricated seeks.",
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ]
+    },
+    {
+      "id": "set-atul-united-way-2025-day5",
+      "title": "Atul Purohit - United Way 2025 - Day 5",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "AGVmcVHcM_o",
+        "url": "https://www.youtube.com/watch?v=AGVmcVHcM_o",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit live source. Source-health reports embed restriction and indexed source metadata publishes no chapter starts; preserve external playback without fabricated seeks.",
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ]
+    },
+    {
+      "id": "set-atul-united-way-2025-day9",
+      "title": "Atul Purohit - United Way 2025 - Day 9",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "tYHqtUPD9Wc",
+        "url": "https://www.youtube.com/watch?v=tYHqtUPD9Wc",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit live source. Indexed official-channel metadata credits the performers but publishes no chapter starts; preserve external playback without fabricated seeks.",
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ]
+    },
+    {
+      "id": "set-atul-united-way-2025-day10",
+      "title": "Atul Purohit - United Way 2025 - Day 10",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "UQQJZfs5K-U",
+        "url": "https://www.youtube.com/watch?v=UQQJZfs5K-U",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit live source. Indexed official-channel metadata credits the performers but publishes no chapter starts; preserve external playback without fabricated seeks.",
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ]
+    },
+    {
+      "id": "set-atul-united-way-2025-day1",
+      "title": "Atul Purohit - United Way 2025 - Day 1",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "CA9GDvkNJaY",
+        "url": "https://www.youtube.com/watch?v=CA9GDvkNJaY",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 16m 49s",
+      "durationSeconds": 4609,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "197K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "sourceAlternates": [
+        {
+          "provider": "youtube",
+          "videoId": "4_SpQutlhP8",
+          "url": "https://www.youtube.com/watch?v=4_SpQutlhP8",
+          "sourceType": "official-artist-channel",
+          "sourceRuntimeDisplay": "1h 09m 14s",
+          "durationSeconds": 4154,
+          "viewSnapshot": {
+            "provider": "youtube",
+            "displayed": "62K",
+            "checkedAt": "2026-09-29"
+          },
+          "playlistUrl": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Atul Purohit Official Artist Channel live programme; the page identifies singers Atul Purohit and Jigna Dashputre. The official 2025 playlist contains this 1:16:49 Day 1 upload (197K views) and a second upload with the same title at 1:09:14 (62K). The second is retained as an alternate source reference rather than a duplicate set because the playlist does not establish whether it is a separate edition or a differently cut copy. One continuous programme, with no separate song rows or inferred chapters. The exact selected watch source passed the source-health probe for embedding on 2026-09-29."
+    },
+    {
+      "id": "set-atul-united-way-2025-day2",
+      "title": "Atul Purohit - United Way 2025 - Day 2",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "pVKYkQt7V34",
+        "url": "https://www.youtube.com/watch?v=pVKYkQt7V34",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "3h 09m",
+      "durationSeconds": 11340,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "214K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Atul Purohit Official Artist Channel livestream. The playlist page showed a 3:09:00 runtime and 214K views on 2026-09-29. This is one continuous day programme; individual songs are not created from it. The exact selected watch source passed the source-health probe for embedding on 2026-09-29."
+    },
+    {
+      "id": "set-atul-united-way-2025-day3",
+      "title": "Atul Purohit - United Way 2025 - Day 3",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "HmyKgzFHyD4",
+        "url": "https://www.youtube.com/watch?v=HmyKgzFHyD4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "3h 09m",
+      "durationSeconds": 11340,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "206K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Atul Purohit Official Artist Channel livestream. The playlist page showed a 3:09:00 runtime and 206K views on 2026-09-29. This is one continuous day programme; individual songs are not created from it. The exact selected watch source passed the source-health probe for embedding on 2026-09-29."
+    },
+    {
+      "id": "set-atul-united-way-2025-day6",
+      "title": "Atul Purohit - United Way 2025 - Day 6",
+      "artists": [
+        "Atul Purohit",
+        "Jigna Dashputre"
+      ],
+      "year": 2025,
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "wm5omEEXgPA",
+        "url": "https://www.youtube.com/watch?v=wm5omEEXgPA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 30m",
+      "durationSeconds": 5400,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "128K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
+          "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Atul Purohit Official Artist Channel livestream. The playlist page showed a 1:30:00 runtime and 128K views on 2026-09-29. This is one continuous day programme; individual songs are not created from it. The exact selected watch source passed the source-health probe for embedding on 2026-09-29."
+    }
+  ]
+}
