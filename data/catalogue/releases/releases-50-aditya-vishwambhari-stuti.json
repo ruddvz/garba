@@ -1,0 +1,30 @@
+[
+  {
+    "id": "aditya-gadhvi-vishwambhari-stuti",
+    "title": "Vishwambhari Stuti",
+    "artist": "Aditya Gadhvi",
+    "description": "A standalone Gujarati Ambe Maa stuti sung by Aditya Gadhvi. Zen Music Gujarati's verified YouTube upload describes this recording as Vishwambhari Stuti.",
+    "label": "Zen Music Gujarati",
+    "categories": ["mataji-devotional"],
+    "visualGenre": "devotional",
+    "entryType": "single",
+    "songCount": 1,
+    "durationSeconds": 485,
+    "series": null,
+    "volume": null,
+    "live": {"isLive": false, "venue": null},
+    "sources": [
+      {
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=_3zUksY4BGg",
+        "kind": "verified-label-channel"
+      }
+    ],
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified",
+    "audioAvailability": "youtube-official",
+    "durationPrecision": "platform-summary"
+  }
+]

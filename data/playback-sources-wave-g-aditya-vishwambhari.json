@@ -1,0 +1,17 @@
+{
+  "version": "0.29.13",
+  "updated": "2026-09-29",
+  "note": "Exact verified-label YouTube recording for Aditya Gadhvi's standalone 8:05 Vishwambhari Stuti. The video is stored as one devotional song, not as a continuous Garba set.",
+  "songSources": {
+    "aditya-gadhvi-vishwambhari-stuti": {
+      "provider": "youtube",
+      "videoId": "_3zUksY4BGg",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=_3zUksY4BGg",
+      "sourceType": "verified-label-channel",
+      "releaseId": "aditya-gadhvi-vishwambhari-stuti",
+      "trackNumber": 1,
+      "evidenceType": "verified-official-song"
+    }
+  }
+}
