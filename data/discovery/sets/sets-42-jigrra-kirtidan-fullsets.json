@@ -216,6 +216,37 @@
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
       "notes": "Kirtidan Gadhvi Official Artist Channel multi-artist virtual Navratri event programme. YouTube displayed 167K views and 1:04:24 runtime on 2026-09-29. Kept as one live programme, separate from studio album counts; no chapter rows are created."
+    },
+    {
+      "id": "set-jigrra-jai-adhyashakti-aarti-user-supplied-performance",
+      "title": "Jai Adhyashakti Aarti | Jigardan Gadhavi ft. Dhruvin, Kinjal & Yati",
+      "artists": [
+        "Jigardan Gadhavi"
+      ],
+      "categories": [
+        "mataji-devotional",
+        "aarti"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "pIkJQsqQiuM",
+        "url": "https://www.youtube.com/watch?v=pIkJQsqQiuM",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "13m 14s",
+      "durationSeconds": 794,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "608K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Exact user-requested Aarti performance. The accessible YouTube page identifies the uploader as JOJO Bhakti, an unverified community channel, shows an unlisted 13:14 upload, and credits Jigardan Gadhavi with Dhruvin, Kinjal and Yati; the latter names are not expanded because full identities are not established. It displayed 608K views on 2026-09-29. Preserved as one separate performance link, not as chapters and not as the canonical studio recording. The standalone embed probe returned YouTube Error 153, so this record is watch-page-only."
     }
   ]
 }
