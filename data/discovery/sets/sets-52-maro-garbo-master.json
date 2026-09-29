@@ -1,0 +1,55 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-atul-maro-garbo-2000-master",
+      "title": "મારો ગરબો | Maro Garbo | Nonstop Garba | Gujarati Garba Collection | Atul Purohit | Audio Jukebox",
+      "artists": [
+        "Atul Purohit",
+        "Himali Vora",
+        "Smita Shah"
+      ],
+      "year": 2000,
+      "categories": [
+        "tran-taali",
+        "traditional-garba"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "lZlOqYwagfA",
+        "url": "https://www.youtube.com/watch?v=lZlOqYwagfA",
+        "embeddable": true
+      },
+      "linkedReleaseId": "atul-maro-garbo-2000",
+      "sourceRuntimeDisplay": "1h 0m 19s",
+      "durationSeconds": 3619,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "270K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [
+        {"title":"Saybo Maro","startSeconds":0,"routingEligible":false},
+        {"title":"Vhalmni Vat","startSeconds":270,"routingEligible":false},
+        {"title":"Haiye Rakhi Hom","startSeconds":514,"routingEligible":false},
+        {"title":"Lumbe Zumbe","startSeconds":699,"routingEligible":false},
+        {"title":"Fagan Foramto Aayo","startSeconds":824,"routingEligible":false},
+        {"title":"Vayro Nathi Toye","startSeconds":1052,"routingEligible":false},
+        {"title":"Andhari Raat","startSeconds":1229,"routingEligible":false},
+        {"title":"Duha Chand","startSeconds":1403,"routingEligible":false},
+        {"title":"Maro Garbo","startSeconds":1823,"routingEligible":false},
+        {"title":"Baje Taal Manjira","startSeconds":2044,"routingEligible":false},
+        {"title":"Tame Re Sundarvanna","startSeconds":2325,"routingEligible":false},
+        {"title":"Aavi Chhe Nortani Raat","startSeconds":2570,"routingEligible":false},
+        {"title":"Chelaji Re","startSeconds":2899,"routingEligible":false},
+        {"title":"Maro Devariyo","startSeconds":3101,"routingEligible":false},
+        {"title":"Fagan Aayo","startSeconds":3366,"routingEligible":false}
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Soor Mandir upload matching the 2000 Maro Garbo Non Stop Garba Tran Taali release. The watch page showed a 1:00:19 runtime and 270K views on 2026-09-29. All 15 chapter names and starts are copied from the label-published YouTube description and remain metadata inside this single continuous-set listing; they are not 15 additional set records. Haiye Rakhi Hom remains metadata-only here so its stronger existing exact-song route is preserved."
+    }
+  ]
+}
