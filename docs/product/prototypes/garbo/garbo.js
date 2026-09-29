@@ -1580,7 +1580,7 @@
   var exploreOpen = null;
   var STEP_CLAPS = { 'step:tran-taali': 3, 'step:be-taali': 2 };
   function exploreCollections() {
-    if (S.collections) return S.collections;
+    if (S.collections) return mergeAliasArtistCollections(S.collections);
     if (LIVE_SITE) return [];
     // The prototype on its own builds the same lists from its songs
     var out = [], byArtist = {};
@@ -1590,6 +1590,31 @@
     });
     S.data.songs.forEach(function (s) { String(s.artist || '').split(/\s*(?:,|&|\/|;|\band\b)\s*/i).forEach(function (n) { n = n.trim(); if (!n || /^various artists?$/i.test(n)) return; (byArtist[n] = byArtist[n] || []).push(s); }); });
     Object.keys(byArtist).forEach(function (n) { var list = byArtist[n], ok = list.filter(function (s) { return s.playable; }).length; if (ok >= 3) out.push({ id: 'artist:' + n.toLowerCase().replace(/[^a-z0-9]+/g, '-'), kind: 'artist', title: n, ids: list.map(function (s) { return s.id; }), playable: ok }); });
+    return mergeAliasArtistCollections(out);
+  }
+  function mergeAliasArtistCollections(collections) {
+    var grouped = {}, out = [];
+    function canonicalId(name) {
+      var id = slugify(name), seen = {};
+      while (SINGER_ALIASES && SINGER_ALIASES[id] && !seen[id]) { seen[id] = true; id = SINGER_ALIASES[id]; }
+      return id;
+    }
+    collections.forEach(function (col) {
+      if (col.kind !== 'artist') { out.push(col); return; }
+      var key = canonicalId(col.title), group = grouped[key];
+      if (!group) {
+        group = grouped[key] = Object.assign({}, col, { ids: [], aliases: [] });
+        out.push(group);
+      }
+      if (slugify(col.title) === key) { group.id = col.id; group.title = col.title; }
+      else if (group.aliases.indexOf(col.title) < 0) group.aliases.push(col.title);
+      group.ids = group.ids.concat(col.ids || []);
+    });
+    Object.keys(grouped).forEach(function (key) {
+      var group = grouped[key], seenIds = {};
+      group.ids = group.ids.filter(function (id) { if (seenIds[id]) return false; seenIds[id] = true; return true; });
+      group.playable = group.ids.filter(function (id) { return songById[id] && songById[id].playable; }).length;
+    });
     return out;
   }
   function songRow(s, onPlay) {
@@ -1698,7 +1723,11 @@
     var open = findCollection(exploreOpen);
     if (open && open.kind === 'artist' && !q) { ul.classList.remove('singer-grid'); renderOpenList(ul, open); return; }
     ul.classList.add('singer-grid');
-    var singers = exploreCollections().filter(function (c) { return c.kind === 'artist' && (!q || c.title.toLowerCase().indexOf(q) !== -1); });
+    var singers = exploreCollections().filter(function (c) {
+      if (c.kind !== 'artist') return false;
+      if (!q || c.title.toLowerCase().indexOf(q) !== -1) return true;
+      return (c.aliases || []).some(function (name) { return name.toLowerCase().indexOf(q) !== -1; });
+    });
     singers.sort(function (a, b2) { return (singerFace(b2.title) ? 1 : 0) - (singerFace(a.title) ? 1 : 0) || b2.playable - a.playable || a.title.localeCompare(b2.title); });
     if (!singers.length) { ul.classList.remove('singer-grid'); ul.append(el('li', 'empty', q ? 'No singers match "' + $('searchInput').value.trim() + '".' : LIVE_SITE && !S.collections ? 'Loading…' : 'No singers yet.')); return; }
     singers.forEach(function (col) {
