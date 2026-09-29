@@ -1,0 +1,318 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-kirtidan-maa-khodal-tahukar-1-live-2015",
+      "title": "Maa Khodal No Tahukar - 1 | Kirtidan Gadhvi | Nonstop Gujarati Live Garba 2015",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2015,
+      "series": "Maa Khodal No Tahukar",
+      "volume": "1",
+      "categories": [
+        "traditional-garba",
+        "live-garba",
+        "mataji-devotional"
+      ],
+      "setType": "live-full-set",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "BnZTiP72pt4",
+        "url": "https://www.youtube.com/watch?v=BnZTiP72pt4",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "36m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "9.3M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified upload, titled as the first Maa Khodal No Tahukar live Garba programme. The supplied playlist page displayed 9.3M views and a 36-minute runtime on 2026-09-29. One continuous event recording; no chapters are created as standalone songs."
+    },
+    {
+      "id": "set-kirtidan-dj-nonstop-2015",
+      "title": "DJ Nonstop Kirtidan Gadhvi | Kirtidan Gadhvi Songs 2015 | Non Stop Gujarati DJ Songs",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2015,
+      "series": "DJ Nonstop Kirtidan",
+      "categories": [
+        "traditional-garba",
+        "raas-dandiya",
+        "modern-gujarati-garba"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "0h-X_iVhUYI",
+        "url": "https://www.youtube.com/watch?v=0h-X_iVhUYI",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 16m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "5.6M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified 2015 continuous DJ Garba programme. The supplied playlist page displayed 5.6M views and a 1:16 runtime on 2026-09-29. Kept as one compilation, not its internal songs."
+    },
+    {
+      "id": "set-kirtidan-aavajo-chaamund-maavadi-jukebox-2015",
+      "title": "Aavajo Chaamund Maavadi | Kirtidan Gadhvi | Gujarati Garba Songs 2015 | Audio Jukebox",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2015,
+      "series": "Aavajo Chaamund Maavadi",
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "HzDDutvyc5k",
+        "url": "https://www.youtube.com/watch?v=HzDDutvyc5k",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "59m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "1.7M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified Garba audio jukebox, published as one 59-minute continuous YouTube programme. The supplied playlist page displayed 1.7M views on 2026-09-29. No internal track rows are inferred from the jukebox title."
+    },
+    {
+      "id": "set-kirtidan-vs-kinjal-navratri-2016-nonstop",
+      "title": "Navratri 2016 Special: Kirtidan Gadhvi V/S Kinjal Dave | Non Stop Gujarati Garba | Navratri Hits",
+      "artists": [
+        "Kirtidan Gadhvi",
+        "Kinjal Dave"
+      ],
+      "year": 2016,
+      "series": "Navratri Hits",
+      "categories": [
+        "traditional-garba",
+        "live-garba",
+        "modern-gujarati-garba"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "rMV2R18-Mjs",
+        "url": "https://www.youtube.com/watch?v=rMV2R18-Mjs",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 59m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "678K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified two-artist continuous Garba collection. The supplied playlist page displayed 678K views and a 1:59 runtime on 2026-09-29. Kept as one programme, not separate Kirtidan/Kinjal song rows."
+    },
+    {
+      "id": "set-kirtidan-maa-khodal-tahukar-2-live-2015",
+      "title": "Maa Khodal No Tahukar - 2 | Kirtidan Gadhvi | Nonstop Gujarati Live Garba 2015",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2015,
+      "series": "Maa Khodal No Tahukar",
+      "volume": "2",
+      "categories": [
+        "traditional-garba",
+        "live-garba",
+        "mataji-devotional"
+      ],
+      "setType": "live-full-set",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "D4vha_ZOq9o",
+        "url": "https://www.youtube.com/watch?v=D4vha_ZOq9o",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "37m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "216K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified 2015 live Garba programme. The supplied playlist page displayed 216K views and a 37-minute runtime on 2026-09-29. One continuous programme; no song rows are inferred."
+    },
+    {
+      "id": "set-kirtidan-hits-2017-audio-jukebox",
+      "title": "Hits of Kirtidan Gadhvi - Best Of 2017 Gujarati Songs | Full Audio",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2017,
+      "series": "Hits of Kirtidan",
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "guZegke1P2Q",
+        "url": "https://www.youtube.com/watch?v=guZegke1P2Q",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 48m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "115K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified full-audio 2017 Kirtidan collection. The supplied playlist page displayed 115K views and a 1:48 runtime on 2026-09-29. Preserved as one jukebox programme without deriving standalone songs from its contents."
+    },
+    {
+      "id": "set-kirtidan-tahukar-7-2019-official-youtube",
+      "title": "Tahukar 7 | NonStop Garba 2019",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2019,
+      "series": "Tahukar",
+      "volume": "7",
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "c5tN6y1cVKI",
+        "url": "https://www.youtube.com/watch?v=c5tN6y1cVKI",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan gadhvi tahukar 1 to 10",
+          "url": "https://www.youtube.com/playlist?list=PLgwZbq7wbilYC6zmBrRWKVTuoihAQ-_rt"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "44m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "4.6M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Official Kirtidan Gadhvi channel Tahukar 7 Nonstop Garba upload. The supplied playlist page displayed the Official Artist Channel identity, 4.6M views and a 44-minute runtime on 2026-09-29. One continuous set; no chapter rows are created."
+    },
+    {
+      "id": "set-kirtidan-all-time-hits-garba-2025-part-4",
+      "title": "Kirtidan Gadhvi All Time Hits Garba | Navratri Special 2025 | Non Stop Gujarati Garba | Part 4",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2025,
+      "series": "All Time Hits Garba 2025",
+      "partNumber": 4,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-label-nonstop-part",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "6uYjD-1pGXs",
+        "url": "https://www.youtube.com/watch?v=6uYjD-1pGXs",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Kirtidan Gadhvi Garba",
+          "url": "https://www.youtube.com/playlist?list=PLbx52eNj-LkSkT809coKusD-eLKCkLRB_"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 11m",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "1.8M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified Part 4 video from the All Time Hits Garba 2025 series. The supplied playlist page displayed 1.8M views and a 1:11 runtime on 2026-09-29. Retained with its explicit part number; it is not misrepresented as the complete multi-part programme or as an individual song."
+    }
+  ]
+}
