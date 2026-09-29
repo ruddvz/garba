@@ -1718,13 +1718,13 @@
     }
     if (!steps.length && !(S.genres && S.genres.length)) ul.append(el('li', 'empty', LIVE_SITE && !S.collections ? 'Loading…' : 'Search for a song or an artist.'));
   }
-  // Singers: a face and a name each. Singers with a portrait come first, then the most songs
+  // Singers: show only artists with an attributed portrait; keep unpictured names in song credits/search.
   function renderSingers(ul, q) {
     var open = findCollection(exploreOpen);
     if (open && open.kind === 'artist' && !q) { ul.classList.remove('singer-grid'); renderOpenList(ul, open); return; }
     ul.classList.add('singer-grid');
     var singers = exploreCollections().filter(function (c) {
-      if (c.kind !== 'artist') return false;
+      if (c.kind !== 'artist' || !singerFace(c.title)) return false;
       if (!q || c.title.toLowerCase().indexOf(q) !== -1) return true;
       return (c.aliases || []).some(function (name) { return name.toLowerCase().indexOf(q) !== -1; });
     });
@@ -1735,7 +1735,6 @@
       b.setAttribute('aria-label', col.title);
       var face = singerFace(col.title), pic = el('span', 'singer-pic');
       if (face) { var im = el('img'); im.src = face; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; pic.append(im); }
-      else { pic.classList.add('no-face'); pic.textContent = initials(col.title); }
       if (S.playList && S.playList.id === col.id) b.classList.add('is-on');
       b.append(pic, el('span', 'singer-name', col.title));
       b.addEventListener('click', function () { openList(col.id); });
