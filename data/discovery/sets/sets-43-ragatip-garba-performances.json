@@ -1,0 +1,90 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-ragatip-symphony-garba-medley",
+      "title": "Garba Medley - Osman Mir, Third Culture Collective & Kavi Pau",
+      "artists": [
+        "Osman Mir",
+        "Third Culture Collective",
+        "Kavi Pau"
+      ],
+      "series": "The Symphony of Gujarat",
+      "categories": [
+        "traditional-garba",
+        "live-garba"
+      ],
+      "setType": "live-performance",
+      "officiality": "label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "IhqEZMS4KQY",
+        "url": "https://www.youtube.com/watch?v=IhqEZMS4KQY",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Symphony of Gujarat (Ragatip Music)",
+          "url": "https://www.youtube.com/playlist?list=PLgy3TFAZn1BUa_68etmzHJ5_EiDpIHneR"
+        },
+        {
+          "title": "Symphony of Gujarat: Osman Mir X Third Culture Collective",
+          "url": "https://www.youtube.com/playlist?list=PLSKNetnWXUKw"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "18m 41s",
+      "durationSeconds": 1121,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "742,907",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete 18:41 Garba medley performance recording from Ragatip Ltd's The Symphony of Gujarat production at Royal Festival Hall, London. The video description says the concert took place 2025-05-17, credits vocals to Osman Mir, composition/conducting to Kavi Pau, and the orchestra to Third Culture Collective; it states video copyright belongs to Ragatip Ltd. The upload premiered 2026-05-11. YouTube displayed 742,907 views on 2026-09-29. Ragatip Music is the production channel; it has no verified badge. The broader Third Culture playlist description gives a conflicting event year, so no year is asserted here. Kept as one complete performance video with no song/chapter rows."
+    },
+    {
+      "id": "set-ragatip-symphony-he-ranglo-jamyo",
+      "title": "He Ranglo Jamyo - Osman Mir, Aamir Mir, Third Culture Collective & Kavi Pau - Live in London",
+      "artists": [
+        "Osman Mir",
+        "Aamir Mir",
+        "Third Culture Collective",
+        "Kavi Pau"
+      ],
+      "series": "The Symphony of Gujarat",
+      "categories": [
+        "traditional-garba",
+        "live-garba"
+      ],
+      "setType": "live-performance",
+      "officiality": "label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "96TFRDlGJL4",
+        "url": "https://www.youtube.com/watch?v=96TFRDlGJL4",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Symphony of Gujarat: Osman Mir X Third Culture Collective",
+          "url": "https://www.youtube.com/playlist?list=PLSKNetnWXUKw"
+        }
+      ],
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "11m 05s",
+      "durationSeconds": 665,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "161,987",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete 11:05 live Garba performance from Ragatip Ltd's The Symphony of Gujarat production at Royal Festival Hall, London. The video description says the concert took place 2025-05-17, credits vocals to Osman Mir and Aamir Mir, composition/conducting to Kavi Pau, and the orchestra to Third Culture Collective; it states video copyright belongs to Ragatip Ltd. Published 2026-02-06. YouTube displayed 161,987 views on 2026-09-29. Ragatip Music is the production channel; it has no verified badge. Kept as one complete performance video with no song/chapter rows."
+    }
+  ]
+}
