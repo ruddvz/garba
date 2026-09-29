@@ -1,0 +1,71 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-uwb-2016-day1-live-stream",
+      "title": "United Way Baroda - Day 1 - Live Stream",
+      "artists": [],
+      "year": 2016,
+      "series": "United Way Baroda Live Stream",
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "llNn3n4YR-A",
+        "url": "https://www.youtube.com/watch?v=llNn3n4YR-A",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "sourceRuntimeDisplay": "4h 38m 24s",
+      "durationSeconds": 16704,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "93K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "United Way Live Stream - 2016",
+          "url": "https://www.youtube.com/playlist?list=PLSnEUEJ4PeaIWfMjsqXYMZ2XwTgsSq2gG"
+        }
+      ],
+      "notes": "The official United Way of Baroda 2016 archive lists this continuous upload as Day 1. The YouTube page showed 93K views on 2026-09-29. No performer credit or published song chapters are asserted here. YouTube's oEmbed health endpoint returned 401 on 2026-09-29, so the player must expose the visible watch-page route rather than promise an inline embed."
+    },
+    {
+      "id": "set-uwb-2016-day2-live-stream",
+      "title": "United Way Baroda - Day 2 - Live Stream",
+      "artists": [],
+      "year": 2016,
+      "series": "United Way Baroda Live Stream",
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "4HJ8bO0KImg",
+        "url": "https://www.youtube.com/watch?v=4HJ8bO0KImg",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-external-visible",
+      "sourceRuntimeDisplay": "1h 17m 54s",
+      "durationSeconds": 4674,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "109K",
+        "checkedAt": "2026-09-29"
+      },
+      "sourcePlaylists": [
+        {
+          "title": "United Way Live Stream - 2016",
+          "url": "https://www.youtube.com/playlist?list=PLSnEUEJ4PeaIWfMjsqXYMZ2XwTgsSq2gG"
+        }
+      ],
+      "notes": "The official United Way of Baroda archive and YouTube description identify this continuous upload as Day 2 live Garba in Vadodara on 1 October 2016. The YouTube page showed 109K views on 2026-09-29. At 1h 17m 54s, it is catalogued as a long live-event recording; the catalogue does not claim it covers the entire event night. No performer credit or published song chapters are asserted here. YouTube's oEmbed health endpoint returned 401 on 2026-09-29, so the player must expose the visible watch-page route rather than promise an inline embed."
+    }
+  ]
+}

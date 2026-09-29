@@ -1,5 +1,5 @@
 {
-  "version": "0.20.13",
+  "version": "0.20.14",
   "updated": "2026-09-29",
   "chunks": [
     "sets-01.json",
@@ -49,7 +49,8 @@
     "sets-46-aditya-user-supplied-fullsets.json",
     "sets-47-bandish-dakla-mixes.json",
     "sets-48-kirtidan-playlist-masters.json",
-    "sets-49-ishtar-khelaiya-popular.json"
+    "sets-49-ishtar-khelaiya-popular.json",
+    "sets-50-uwb-2016-live-archives.json"
   ],
   "policy": {
     "officialityOrder": [
