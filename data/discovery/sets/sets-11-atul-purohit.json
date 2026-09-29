@@ -110,6 +110,23 @@
           "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
           "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
         }
+      ],
+      "sourceAlternates": [
+        {
+          "provider": "youtube",
+          "videoId": "Y1zvZdUBQVE",
+          "url": "https://www.youtube.com/watch?v=Y1zvZdUBQVE",
+          "sourceType": "official-event-channel",
+          "title": "United Way Of Baroda - Garba Mahotsav 2025 By Atul Purohit - Day 9",
+          "sourceRuntimeDisplay": "3h 53m 27s",
+          "durationSeconds": 14007,
+          "viewSnapshot": {
+            "provider": "youtube",
+            "displayed": "400K",
+            "checkedAt": "2026-09-29"
+          },
+          "notes": "Same-night alternate upload on the official United Way of Baroda event channel. Its title identifies the same 2025 Day 9; the rendered runtime is within one minute of the selected official artist-channel programme. Stored as an alternate route, not a second live-night item; the recordings have not been compared frame by frame."
+        }
       ]
     },
     {
@@ -137,6 +154,23 @@
         {
           "title": "Atul Purohit Official — United Way of Baroda Navratri Festival 2025",
           "url": "https://www.youtube.com/playlist?list=PLGk6wPSrJhqzO1h_aBvpGUpSj3-xO1_jo"
+        }
+      ],
+      "sourceAlternates": [
+        {
+          "provider": "youtube",
+          "videoId": "QakrvCou2rM",
+          "url": "https://www.youtube.com/watch?v=QakrvCou2rM",
+          "sourceType": "official-event-channel",
+          "title": "United Way Of Baroda - Garba Mahotsav 2025 By Atul Purohit - Day 10",
+          "sourceRuntimeDisplay": "3h 55m 07s",
+          "durationSeconds": 14107,
+          "viewSnapshot": {
+            "provider": "youtube",
+            "displayed": "258K",
+            "checkedAt": "2026-09-29"
+          },
+          "notes": "Same-night alternate upload on the official United Way of Baroda event channel. Its title and runtime match the selected official artist-channel programme for 2025 Day 10. Stored as an alternate route, not a second live-night item; the recordings have not been compared frame by frame."
         }
       ]
     },
@@ -224,7 +258,24 @@
       "segments": [],
       "chapterStatus": "source-no-published-chapters",
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Official Atul Purohit Official Artist Channel livestream. The playlist page showed a 3:09:00 runtime and 214K views on 2026-09-29. This is one continuous day programme; individual songs are not created from it. The exact selected watch source passed the source-health probe for embedding on 2026-09-29."
+      "notes": "Official Atul Purohit Official Artist Channel livestream. The playlist page showed a 3:09:00 runtime and 214K views on 2026-09-29. This is one continuous day programme; individual songs are not created from it. The exact selected watch source passed the source-health probe for embedding on 2026-09-29.",
+      "sourceAlternates": [
+        {
+          "provider": "youtube",
+          "videoId": "QSfcawO-du8",
+          "url": "https://www.youtube.com/watch?v=QSfcawO-du8",
+          "sourceType": "official-event-channel",
+          "title": "United Way Of Baroda - Garba Mahotsav 2025 By Atul Purohit - Day 2",
+          "sourceRuntimeDisplay": "3h 09m 52s",
+          "durationSeconds": 11392,
+          "viewSnapshot": {
+            "provider": "youtube",
+            "displayed": "390K",
+            "checkedAt": "2026-09-29"
+          },
+          "notes": "Same-night alternate upload on the official United Way of Baroda event channel. Its title identifies the same 2025 Day 2; the rendered runtime is within one minute of the selected official artist-channel programme. Stored as an alternate route, not a second live-night item; the recordings have not been compared frame by frame."
+        }
+      ]
     },
     {
       "id": "set-atul-united-way-2025-day3",
