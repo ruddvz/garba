@@ -1,0 +1,61 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-bandish-projekt-dakla-2020-mix",
+      "title": "Bandish Projekt - DAKLA 2020 MIX Feat @Aishwaryajoshimusic ( LYRICAL VIDEO)",
+      "artists": ["Bandish Projekt", "Aishwarya Joshi"],
+      "year": 2020,
+      "series": "Dakla Mix",
+      "categories": ["dakla", "traditional-garba", "folk-lokgeet"],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "-83sM-9IbP0",
+        "url": "https://www.youtube.com/watch?v=-83sM-9IbP0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "33m 01s",
+      "durationSeconds": 1981,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "16M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete 33:01 Dakla mix uploaded by the Bandish Projekt and Aishwarya Joshi Official Artist Channels. The YouTube page displayed 16M views on 2026-09-29. Kept as one full continuous work; no chapters become standalone song rows. The upload description carries Bheja Fry Records' copyright notice."
+    },
+    {
+      "id": "set-bandish-projekt-dakla-2025-mix",
+      "title": "Bandish Projekt | @Aishwaryajoshimusic | Dakla 2025 Mix",
+      "artists": ["Bandish Projekt", "Aishwarya Joshi"],
+      "year": 2025,
+      "series": "Dakla Mix",
+      "categories": ["dakla", "traditional-garba", "folk-lokgeet"],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Mx550Q-m-fU",
+        "url": "https://www.youtube.com/watch?v=Mx550Q-m-fU",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "53m 44s",
+      "durationSeconds": 3224,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "927K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One complete 53:44 Dakla mix uploaded by the Bandish Projekt and Aishwarya Joshi Official Artist Channels. The YouTube page displayed 927K views on 2026-09-29. The player surfaced a 'Dakla 1' marker at the start, but no complete chapter map was verified; the mix remains one full-set entry with no separate song rows. The description carries Bheja Fry Records' copyright notice."
+    }
+  ]
+}

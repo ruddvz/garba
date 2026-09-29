@@ -1,5 +1,5 @@
 {
-  "version": "0.20.9",
+  "version": "0.20.10",
   "updated": "2026-09-29",
   "chunks": [
     "sets-01.json",
@@ -46,7 +46,8 @@
     "sets-43-ragatip-garba-performances.json",
     "sets-44-aditya-label-nonstop.json",
     "sets-45-kirtidan-aditya-supplied-masters.json",
-    "sets-46-aditya-user-supplied-fullsets.json"
+    "sets-46-aditya-user-supplied-fullsets.json",
+    "sets-47-bandish-dakla-mixes.json"
   ],
   "policy": {
     "officialityOrder": [
