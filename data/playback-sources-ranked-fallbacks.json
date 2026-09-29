@@ -1218,6 +1218,21 @@
       "trackNumber": 34,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
+    "atul-govaliyo-2025-01": {
+      "provider": "youtube",
+      "videoId": "2SRoX9M81os",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=2SRoX9M81os",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
+    },
     "atul-govaliyo-2025-02": {
       "provider": "youtube",
       "videoId": "EdA1Qhh5zJY",
@@ -1226,7 +1241,27 @@
       "sourceType": "official-artist-channel",
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 2,
-      "evidenceType": "official-youtube-auto-generated-track"
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "atul-govaliyo-2025-03": {
+      "provider": "youtube",
+      "videoId": "yk7oo6ZSkZM",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=yk7oo6ZSkZM",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 3,
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
     },
     "atul-govaliyo-2025-04": {
       "provider": "youtube",
@@ -1236,7 +1271,42 @@
       "sourceType": "official-artist-channel",
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 4,
-      "evidenceType": "official-youtube-auto-generated-track"
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "atul-govaliyo-2025-05": {
+      "provider": "youtube",
+      "videoId": "oFBBgl7KtcU",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=oFBBgl7KtcU",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 5,
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "atul-govaliyo-2025-06": {
+      "provider": "youtube",
+      "videoId": "Cc05ub8rR7M",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=Cc05ub8rR7M",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 6,
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
     },
     "atul-govaliyo-2025-07": {
       "provider": "youtube",
@@ -1246,7 +1316,27 @@
       "sourceType": "official-artist-channel",
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 7,
-      "evidenceType": "official-youtube-auto-generated-track"
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "atul-govaliyo-2025-08": {
+      "provider": "youtube",
+      "videoId": "ZYzxc7eo5hw",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=ZYzxc7eo5hw",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
+      "trackNumber": 8,
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
     },
     "atul-govaliyo-2025-09": {
       "provider": "youtube",
@@ -1256,7 +1346,12 @@
       "sourceType": "official-artist-channel",
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 9,
-      "evidenceType": "official-youtube-auto-generated-track"
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
     },
     "atul-govaliyo-2025-10": {
       "provider": "youtube",
@@ -1266,7 +1361,12 @@
       "sourceType": "official-artist-channel",
       "releaseId": "atul-govaliyo-live-uwb-vol1-2025",
       "trackNumber": 10,
-      "evidenceType": "official-youtube-auto-generated-track"
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FBGL46X1",
+        "sourceType": "verified-release-source"
+      }
     },
     "kairavi-kana-mane-dwarika-dekhad-2021": {
       "provider": "youtube",
