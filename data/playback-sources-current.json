@@ -1,7 +1,7 @@
 {
-  "version": "0.6.3",
+  "version": "0.6.4",
   "updated": "2026-09-29",
-  "note": "Current exact playback overrides. Ramzat 2 additions use exact YouTube auto-generated tracks for the original 2018 Sur Sagar album only. Ramzat 5 additions use independently verified exact split recordings tied directly to the 2024 Sur Sagar album. Ramzat 2017 now includes twelve independently verified split recordings from Sur Sagar label uploads or Official Artist Channel/distributor album tracks. Continuous Ramzat masters remain discovery/full-release evidence only; no continuous-set chapter timestamp is promoted to a split track.",
+  "note": "Current exact playback overrides. Ramzat 2 additions use exact YouTube auto-generated tracks for the original 2018 Sur Sagar album only. Ramzat 5 additions use independently verified exact split recordings tied directly to the 2024 Sur Sagar album. Ramzat 2017 now includes twelve independently verified split recordings from Sur Sagar label uploads or Official Artist Channel/distributor album tracks. Continuous Ramzat masters remain discovery/full-release evidence only; no continuous-set chapter timestamp is promoted to a split track. Standalone single releases include verified Official Artist Channel and label uploads with original commercial URLs preserved in alternate blocks.",
   "songSources": {
     "khalasi-coke-studio-bharat-2023": {
       "provider": "youtube",
@@ -1617,6 +1617,102 @@
         "provider": "spotify",
         "sourceUrl": "https://open.spotify.com/track/6k0xnvHw4ZUZZDmITYkmPR",
         "sourceType": "stream"
+      }
+    },
+    "tetudo2-geeta-rahul-2024": {
+      "provider": "youtube",
+      "videoId": "5MMqwxJ3VBY",
+      "sourceUrl": "https://www.youtube.com/watch?v=5MMqwxJ3VBY",
+      "sourceType": "verified-label-channel",
+      "evidenceType": "verified-official-music-video",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.co.uk/tracks/B0D9DYQ53R",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "saibo-re-kirtidan-priya-2020": {
+      "provider": "youtube",
+      "videoId": "LnEmw07VElA",
+      "sourceUrl": "https://www.youtube.com/watch?v=LnEmw07VElA",
+      "sourceType": "verified-label-channel",
+      "evidenceType": "verified-official-music-video",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3t52FLyZjdvDRzC9QgR0UF",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "helo-maro-shyam-ishani-hariom-2024": {
+      "provider": "youtube",
+      "videoId": "65uiI0Eor0A",
+      "sourceUrl": "https://www.youtube.com/watch?v=65uiI0Eor0A",
+      "sourceType": "official-artist-channel",
+      "evidenceType": "official-artist-youtube-video",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.in/tracks/B0DFMLHR5K",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "ramo-re-jigardan-kavya-2025": {
+      "provider": "youtube",
+      "videoId": "9n7tWwa77mY",
+      "sourceUrl": "https://www.youtube.com/watch?v=9n7tWwa77mY",
+      "sourceType": "official-artist-channel",
+      "evidenceType": "official-artist-youtube-video",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.in/tracks/B0FQ13DP43",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "mitha-moraliya-kirtidan-2025": {
+      "provider": "youtube",
+      "videoId": "aDPpAeDQ-Rs",
+      "sourceUrl": "https://www.youtube.com/watch?v=aDPpAeDQ-Rs",
+      "sourceType": "official-artist-channel",
+      "evidenceType": "official-artist-youtube-video",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.in/tracks/B0FQK43JSD",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "dhol-bajaa-darshan-prakriti-2022": {
+      "provider": "youtube",
+      "videoId": "mjTZI-dnCbg",
+      "sourceUrl": "https://www.youtube.com/watch?v=mjTZI-dnCbg",
+      "sourceType": "verified-label-channel",
+      "evidenceType": "verified-official-music-video",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/track/6JJaxPziuyO8FVfYHLaLG1",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "nand-na-lala-ne-geeta-rabari-2026": {
+      "provider": "youtube",
+      "videoId": "mGXjStkMBZs",
+      "sourceUrl": "https://www.youtube.com/watch?v=mGXjStkMBZs",
+      "sourceType": "official-artist-channel",
+      "evidenceType": "official-youtube-auto-generated-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/track/3cnE6CKrchLRp9CYph68On",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-rangrasiya-nonstop-raas-vol1-2021": {
+      "provider": "youtube",
+      "videoId": "-PAdrU2oJNw",
+      "sourceUrl": "https://www.youtube.com/watch?v=-PAdrU2oJNw",
+      "sourceType": "official-artist-channel",
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/2bMAOrim5RIJ7Gb7NjmD4Z",
+        "sourceType": "official-streaming-catalogue"
       }
     }
   }

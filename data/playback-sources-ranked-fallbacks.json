@@ -1,7 +1,7 @@
 {
-  "version": "0.20.0",
-  "updated": "2026-09-12",
-  "note": "Curated exact-selection routes for the highest-impact fallback releases. Ramzat 2017 now includes nine additional independently verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 adds five independently verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release; the other five canonical Govaliyo rows remain fail-closed. Issue #1400 adds the exact Kairavi Buch Official Artist Channel full-song route for Kana Mane Dwarika Dekhad (2021); its existing provider metadata remains provenance outside this override layer.",
+  "version": "0.21.0",
+  "updated": "2026-09-29",
+  "note": "Curated exact-selection routes for the highest-impact fallback releases. Issue #1901 adds 10 independently verified standalone/split YouTube routes from Osman Mir and Bhoomi Trivedi Official Artist Channels / Topic releases for Ramzat - Non Stop Garba (2017, ramzat-2017) with Apple Music alternates; tracks 11 and 21 remain fail-closed. Ramzat 2017 also includes nine verified full-song YouTube routes from issue #341; its continuous master remains discovery/full-release evidence only. Ramzat 2 and Rangtaali chapter mappings come from indexed official-jukebox set records. Other entries preserve verified routes for Garbi 2, Thanganat, Zankaar 2.0, Khamma Tran Taali, and Palav. Every YouTube ID and timestamp is tied to provider evidence. Missing or ambiguous timestamps remain unmapped. Issue #550 and #1870 add ten verified auto-generated Atul Purohit Official tracks from the 2025 Govaliyo Vol. 1 release. Issue #1400 adds the exact Kairavi Buch Official Artist Channel full-song route for Kana Mane Dwarika Dekhad (2021); its existing provider metadata remains provenance outside this override layer.",
   "songSources": {
     "ramzat-2017-36-ramzat-non-stop-garba": {
       "provider": "youtube",
@@ -1208,6 +1208,141 @@
       "trackNumber": 32,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
+    "ramzat-2017-17-matelvali-khodal-maa-ni-mithi-mer": {
+      "provider": "youtube",
+      "videoId": "IF3DYFeb03c",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=IF3DYFeb03c",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 17,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-20-morla-jaje-ambe-maa-na-desh": {
+      "provider": "youtube",
+      "videoId": "Tl3oJG0R8Nc",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=Tl3oJG0R8Nc",
+      "sourceType": "verified-label-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 20,
+      "evidenceType": "official-label-full-song-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-23-lembde-rame-lemboch-maa": {
+      "provider": "youtube",
+      "videoId": "4M0DvAFzksk",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=4M0DvAFzksk",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 23,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-24-madhwali-mangal-mandir-kholo": {
+      "provider": "youtube",
+      "videoId": "EgixlmdtMFA",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=EgixlmdtMFA",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 24,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-25-ekvar-bolun": {
+      "provider": "youtube",
+      "videoId": "3IYg-geufeI",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=3IYg-geufeI",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 25,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-28-dak-geet-khamma-khamma-okhadhara-ni": {
+      "provider": "youtube",
+      "videoId": "aS6z83vYUFc",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=aS6z83vYUFc",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 28,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-29-dak-geet-halo-halo-vagad-ni-vaate": {
+      "provider": "youtube",
+      "videoId": "rHqmqCYFuc0",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=rHqmqCYFuc0",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 29,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-31-chakkardi-bhamardi": {
+      "provider": "youtube",
+      "videoId": "CBQJ7jZ2O-w",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=CBQJ7jZ2O-w",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 31,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "ramzat-2017-33-talio-na-taale": {
+      "provider": "youtube",
+      "videoId": "BcbnWjUdd5A",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=BcbnWjUdd5A",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 33,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
+    },
     "ramzat-2017-34-maadi-tara-mandiriye": {
       "provider": "youtube",
       "videoId": "qRbsjVxEDos",
@@ -1217,6 +1352,21 @@
       "releaseId": "ramzat-2017",
       "trackNumber": 34,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "ramzat-2017-35-maa-ni-dhun-lagi": {
+      "provider": "youtube",
+      "videoId": "ahNPdnVKkfM",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=ahNPdnVKkfM",
+      "sourceType": "official-artist-channel",
+      "releaseId": "ramzat-2017",
+      "trackNumber": 35,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/ramzat-non-stop-garba/1278542919",
+        "sourceType": "verified-release-source"
+      }
     },
     "atul-govaliyo-2025-01": {
       "provider": "youtube",
