@@ -1,13 +1,268 @@
 {
-  "version": "0.31.0",
-  "updated": "2026-09-08",
-  "note": "Issue #346 YouTube-only reconciliation for Rangili Ramzat 7 and Rangili Ramzat 8 split tracks. Six canonical Rangili Ramzat 7 songs are promoted to exact Kirtidan Gadhvi Official Artist Channel auto-generated recordings whose YouTube metadata identifies the same 2025 Rangili Ramzat 7 (Garba) release and credited artist ensemble. The remaining 13 Rangili Ramzat 7 split tracks remain fail-closed because no direct exact original-release YouTube watch ID was independently recovered. All 17 Rangili Ramzat 8 split tracks also remain fail-closed because no exact split-track YouTube identities or source-published 17-song chapter map was verified. The verified continuous Rangili Ramzat 7/8 listening sets remain discovery evidence only. No timestamp is calculated from durations and no older/same-title recording is substituted.",
+  "version": "0.32.0",
+  "updated": "2026-09-29",
+  "note": "Issue #1867 YouTube reconciliation for Rangili Ramzat 8. All 17 canonical Rangili Ramzat 8 tracks are promoted to verified Umesh Barot - Topic / Studio Saraswati auto-generated YouTube tracks from official album playlist OLAK5uy_nyl6xxcnPhNFY6kceSt_4X41L1bIoTYB0. All 17 tracks match title and duration to the exact second with HTTP 200 oEmbed confirmation. Original Amazon Music release source is preserved in alternate. Six Rangili Ramzat 7 tracks remain preserved.",
   "songSources": {
     "rangili-ramzat-7-2025-04-mane-ekli-meli-ne-rame-raas-rangila-raja-rangili-ramzat-7": {"provider":"youtube","videoId":"mPURmQJsdI8","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=mPURmQJsdI8","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":4,"evidenceType":"official-youtube-auto-generated-original-album-track"},
     "rangili-ramzat-7-2025-06-dhan-dhan-che-kutch-ni-dharti-rangili-ramzat-7": {"provider":"youtube","videoId":"Bu7tRqrxFYo","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=Bu7tRqrxFYo","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":6,"evidenceType":"official-youtube-auto-generated-original-album-track"},
     "rangili-ramzat-7-2025-08-sona-indhoni-rupa-bedalu-re-rangili-ramzat-7": {"provider":"youtube","videoId":"cYwIPGwAzbs","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=cYwIPGwAzbs","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":8,"evidenceType":"official-youtube-auto-generated-original-album-track"},
     "rangili-ramzat-7-2025-09-garbe-ghume-khodal-maa-rangili-ramzat-7": {"provider":"youtube","videoId":"16U8OWIcroA","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=16U8OWIcroA","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":9,"evidenceType":"official-youtube-auto-generated-original-album-track"},
     "rangili-ramzat-7-2025-11-mane-lai-ja-ne-tari-sangath-rangili-ramzat-7": {"provider":"youtube","videoId":"JhTlIw7_BTw","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=JhTlIw7_BTw","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":11,"evidenceType":"official-youtube-auto-generated-original-album-track"},
-    "rangili-ramzat-7-2025-16-be-paisa-no-rumaliyo-rangili-ramzat-7": {"provider":"youtube","videoId":"c9TgLcvACLI","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=c9TgLcvACLI","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":16,"evidenceType":"official-youtube-auto-generated-original-album-track"}
+    "rangili-ramzat-7-2025-16-be-paisa-no-rumaliyo-rangili-ramzat-7": {"provider":"youtube","videoId":"c9TgLcvACLI","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=c9TgLcvACLI","sourceType":"official-artist-channel","releaseId":"rangili-ramzat-7-garba-2025","trackNumber":16,"evidenceType":"official-youtube-auto-generated-original-album-track"},
+    "rangili-ramzat-8-2025-01-pratham-ganpati-nu-name-tame-lejo": {
+      "provider": "youtube",
+      "videoId": "DYbTisoItOY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=DYbTisoItOY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-02-madi-taru-kanku-kharyu-ne-suraj-ugyo": {
+      "provider": "youtube",
+      "videoId": "GChP_v5-EFk",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=GChP_v5-EFk",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-03-birdali-bahuchar-madi": {
+      "provider": "youtube",
+      "videoId": "DQdTUpib9Mo",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=DQdTUpib9Mo",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 3,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-04-jamuna-ne-kanthe-kano-vansdi-vagadto": {
+      "provider": "youtube",
+      "videoId": "Bh0NQuaZLbY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=Bh0NQuaZLbY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 4,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-05-kumkum-na-pagla-padya": {
+      "provider": "youtube",
+      "videoId": "O33d2elXXWs",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=O33d2elXXWs",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 5,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-06-garbo-gabbar-gokh-thi-avyo": {
+      "provider": "youtube",
+      "videoId": "0L4PK1UTUP0",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=0L4PK1UTUP0",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 6,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-07-dholida-na-dhol": {
+      "provider": "youtube",
+      "videoId": "x3N2VWWuGwQ",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=x3N2VWWuGwQ",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 7,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-08-aavi-norta-ni-raat": {
+      "provider": "youtube",
+      "videoId": "qYi4bd7fxwI",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=qYi4bd7fxwI",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 8,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-09-kum-kum-pagle-madi-padharo-re": {
+      "provider": "youtube",
+      "videoId": "bfITeutlluA",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=bfITeutlluA",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 9,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-10-kaan-gopiyo-ne-bhan-bhulave": {
+      "provider": "youtube",
+      "videoId": "1HCuQd3jsNk",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=1HCuQd3jsNk",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 10,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-11-he-ri-sakhi-mangal-gao-ri": {
+      "provider": "youtube",
+      "videoId": "CQJcwI7iWpk",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=CQJcwI7iWpk",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 11,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-12-sanso-ki-mala-pe-simru-me-piyu-ka-nam": {
+      "provider": "youtube",
+      "videoId": "Tf5Kwzbl1ZU",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=Tf5Kwzbl1ZU",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 12,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-13-madi-pruthvi-na-pad-ma-pujani": {
+      "provider": "youtube",
+      "videoId": "8Kb7AXIgYkg",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=8Kb7AXIgYkg",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 13,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-14-vadaladi-varsi-re-sarovar-chali-gaya": {
+      "provider": "youtube",
+      "videoId": "zT1YuAxpdgc",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=zT1YuAxpdgc",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 14,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-15-dakor-na-thakor-tara-bandh-darvaja-khol": {
+      "provider": "youtube",
+      "videoId": "ZX4dHVsqPms",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=ZX4dHVsqPms",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 15,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-16-garbo-ghume-che": {
+      "provider": "youtube",
+      "videoId": "aymJbSxiBLY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=aymJbSxiBLY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 16,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    },
+    "rangili-ramzat-8-2025-17-ghor-andhari-re-rataldi-ma-niklya-char-ashvar": {
+      "provider": "youtube",
+      "videoId": "gKiHIYBeTUQ",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=gKiHIYBeTUQ",
+      "sourceType": "official-artist-channel",
+      "releaseId": "rangili-ramzat-8-kirtidan-2025",
+      "trackNumber": 17,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/albums/B0FSL5FZVB",
+        "sourceType": "verified-release-source"
+      }
+    }
   }
 }
