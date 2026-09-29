@@ -289,7 +289,13 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   for (const marker of ['function followCam(id)', "if (following) ct = followCam(st.venue);", "(following ? '/walk' : '')", 'if (walkMe.frame > 0) { walkMe.frame -= dt; vx = vz = 0; }', 'if (walkMe.frame > 0 && !walk) walkMe.frame = 0;', 'var STAGE_LINE = {', "askListener('stage');", "if (st.listener === 'stage' && !(dir === 'down' && askListener('circle'))) return;", "if (st.listener === 'far' && !askListener('circle')) return;", 'if (!opts.onListener || st.listener === id) return false;']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the frame-first walk or stage walk-up marker: ${marker}`);
   }
+  // With the player hidden, the ground it covered fills with more dancers: they arrive and leave gradually, and only
+  // while a song plays, never at the DJ's table
+  for (const marker of ['var FILL = {', 'L.fill = fillFor(id, main);', 'var fillOn = !!st.fill && st.on && !st.dj;', 'fade: a * nearFade(p.z)', 'if (fillK > 0.3) L.fill.forEach(']) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the hidden-player dancer marker: ${marker}`);
+  }
   const wrapper = await read('docs/product/prototypes/garbo/scene.js');
+  if (!wrapper.includes('var hidden = !this.dj && !(np.width && np.height);') || !wrapper.includes('this.v.set({ fill: hidden });')) fail('The Immersive scene wrapper must tell the venue when the player is hidden, so the ground it covered fills with dancers');
   if (!wrapper.includes("document.querySelector('#atmoListeners button[data-id=\"' + id + '\"]')")) fail('The Immersive scene wrapper must hand a walk-made place change to View, which owns it');
   if (scene.includes('walkMe.ox')) fail('Walking must follow from a fixed place behind the couple, not keep the offset the view happened to start at');
   // You and your partner can carry your own names and faces. A face goes on the head, seen from the front or from behind,

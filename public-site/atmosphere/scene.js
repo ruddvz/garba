@@ -66,7 +66,7 @@
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
-    var waves = [], arrivals = [], haze = 0, youGlow = 0, pulse = 0, phonesUp = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
+    var waves = [], arrivals = [], fillK = 0, haze = 0, youGlow = 0, pulse = 0, phonesUp = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
     // Render quality steps down on its own when frames run slow: first fewer pixels, then a smaller crowd, and last a
     // steady 30 frames a second, which reads smoother than a stutter between 60 and 20
     var TIER = opts.tier || deviceTier(), PIXELS = TIER.pixels, QP = 1, QD = TIER.density, slowFor = 0, frameMs = 16, capMs = 0;
@@ -188,7 +188,23 @@
       L.props = propsFor(id, L);
       if (id === 'sheri') sheriStreet(L);
       L.motes = []; for (var mi = 0; mi < 80; mi++) L.motes.push([lerp(-26, 26, rnd()), rnd() * 9, lerp(-6, 46, rnd()), 0.1 + rnd() * 0.25, rnd() * TAU]);
+      L.fill = fillFor(id, main);
       layouts[id] = L; return L;
+    }
+    // With the player put away, the ground in front of you is on show, so more people come to dance there: a ring between
+    // the garbo's circle and the next one out (the sheri is too narrow for it, so two small circles instead), and small
+    // circles and a pair in front of the chairs at the back, where far off looks from (in the stadium far off is up in the
+    // stands, where the ground under you is the steps). [x, z, radius, people]
+    var FILL = {
+      outdoors: { ring: 7.7, groups: [[-4.6, -20.4, 1.9], [4.4, -20.1, 1.7], [0.3, -22.6, 0.55, 2]] },
+      stadium: { ring: 7.7, groups: [] },
+      sheri: { ring: 0, groups: [[-3.1, -7.4, 1.5], [3.2, -7.8, 1.6], [2.4, -16.4, 1.2], [0.3, -19.7, 0.55, 2]] }
+    };
+    function fillFor(id, main) {
+      // The ring is a little looser than the others, so it costs fewer figures to draw
+      var f = FILL[id] || FILL.outdoors, out = f.ring ? [makeCircle(0, 0, f.ring, false, main, Math.round(TAU * f.ring / 1.4))] : [];
+      f.groups.forEach(function (q) { var c = makeCircle(q[0], q[1], q[2], false, null, q[3]); if (q[3]) { c.small = true; c.w = 1.8; } out.push(c); });
+      return out;
     }
     // Food stalls: where they stand, which way they face (u runs along the counter, v into the stall)
     function stallsFor(id) {
@@ -3757,6 +3773,11 @@
         if ((c.present || 0) < 0.15 || c.small) return;
         waves.push({ kind: 'front', c: c, t0: t0, a: (c.main ? 0.6 : 0.42) * (far ? 1.1 : 1) * Math.min(1, (c.present || 0) * 1.2), col: col, lim: Math.max(10, dd + 3) });
       });
+      // The people filling the ground the player left clap on the beat too
+      if (fillK > 0.3) L.fill.forEach(function (c) {
+        var ctr = circleCentre(c, T), t0 = bt - Math.max(0, Math.hypot(you.x - ctr.x, you.z - ctr.z) - c.R) / V;
+        c.dancers.forEach(function (d) { if (rnd() < 0.5 + 0.45 * st.level) { d.clapAt = t0 + d.lag; d.clapHigh = rnd() < 0.25; } });
+      });
       arrivals.push({ t: bt, g: 1 });
       L.watchers.forEach(function (wt) { if (rnd() < 0.12) wt.clapAt = bt; });
       L.standers.forEach(function (sd0) { if (!sd0.phone && rnd() < 0.1) sd0.clapAt = bt; });
@@ -3914,6 +3935,24 @@
         c.present = home / c.dancers.length;
         // Raas: neighbours pair up and strike each other's sticks, so each turns toward the other on the beat
         for (var pi = 0; pi + 1 < c.dancers.length; pi += 2) { var da = c.dancers[pi], db = c.dancers[pi + 1]; if (da._px != null && db._px != null) { da.strikeDir = db._px >= da._px ? 1 : -1; db.strikeDir = -da.strikeDir; } else { da.strikeDir = db.strikeDir = 0; } }
+      });
+      // The dancers filling the ground the player left arrive one after another, stepping in to their ring from just outside
+      // it, and go the same way when the player comes back or the song stops
+      var fillOn = !!st.fill && st.on && !st.dj;
+      fillK = reduce ? (fillOn ? 1 : 0) : Math.max(0, Math.min(1, fillK + (fillOn ? 0.8 : -1.6) * dt));
+      if (fillK > 0.001) L.fill.forEach(function (c) {
+        if (st.on && !reduce) c.spin += c.w * dt;
+        var ctr = circleCentre(c, T), k = 1 + (1 - ease(fillK)) * (c.small ? 0.8 : 1.4) / c.R;
+        c.dancers.forEach(function (d) {
+          var a = Math.max(0, Math.min(1, (fillK - d.delay / 1.8 * 0.4) / 0.6)); d._px = null;
+          if (a <= 0.01) return;
+          if (d.clapAt && t >= d.clapAt) { d.flash = 1; d.clapAt = 0; }
+          d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2); d.clapK = clapNear(d, t);
+          var w = dancerWorld(c, d, T, ctr), fx = ctr.x + (w.x - ctr.x) * k, fz = ctr.z + (w.z - ctr.z) * k, p = P(fx, 0, fz);
+          d.wx = fx; d.wz = fz; d._px = p ? p.x : null;
+          if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: a * nearFade(p.z) });
+        });
+        for (var fpi = 0; fpi + 1 < c.dancers.length; fpi += 2) { var fa = c.dancers[fpi], fb = c.dancers[fpi + 1]; if (fa._px != null && fb._px != null) { fa.strikeDir = fb._px >= fa._px ? 1 : -1; fb.strikeDir = -fa.strikeDir; } else { fa.strikeDir = fb.strikeDir = 0; } }
       });
       if (!reduce) { moveWalkers(L, st.venue, dt); moveKids(L, st.venue, dt); }
       L.standers.forEach(function (sd0) { if (sd0.clapAt && t >= sd0.clapAt) { sd0.flash = 1; sd0.clapAt = 0; } sd0.flash *= Math.exp(-dt * 4); sd0.clapK = clapNear(sd0, t); var p = P(sd0.x, 0, sd0.z); if (p && p.z > (st.dj ? 3 : 2.5) && p.x > -30 && p.x < W + 30) items.push({ z: p.z, kind: 'dancer', p: p, d: sd0, fade: nearFade(p.z) }); });
