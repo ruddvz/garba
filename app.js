@@ -3213,7 +3213,12 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
         recordingKey: song.playbackContainerType === 'youtube-continuous-set'
           ? `${song.playbackContainerId || youtubeVideoId(song) || ''}` || null
           : null,
+        // An aarti gets its own moment in Immersive, with its recording on the stage screen
+        aarti: Array.isArray(song.styles) && song.styles.some((style) => String(style).toLowerCase() === 'aarti'),
       } : null,
+      // The YouTube player is playing this song's video, so Immersive can show it on the stage screen
+      screenVideo: Boolean(song && player && player.activeSongId === song.id
+        && document.querySelector('#youtubeStage.open #youtubeProviderMedia iframe')),
       // The listener's music level (0–1)
       volume: Number.isFinite(player?.volume) ? player.volume : 1,
       faceCutouts: state.linkFaceCutouts || { videoIds: [], cutouts: [] },

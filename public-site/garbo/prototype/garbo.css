@@ -25,6 +25,8 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--ink); color: var(--ivory); overflow: hidden; }
+/* An aarti's recording plays behind the page, through the stage screen the scene leaves clear */
+html.screen-hole, html.screen-hole body { background: transparent; }
 body { font: 16px/1.5 var(--ui); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }

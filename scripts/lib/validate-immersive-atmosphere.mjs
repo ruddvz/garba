@@ -280,7 +280,7 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   // The view turns: it looks ahead as you walk, swings round to face a stall you walk up to, orbits round you so you
   // stay in frame, and the two of you are seen from behind walking away or looking at a stall; the garbo fades as the
   // camera passes right by it
-  for (const marker of ['var cam = { x: 0, y: 4, z: -15, yaw: 0 }, cosY = 1, sinY = 0;', 'zc = dx * sinY + dz * cosY', 'za = depth(a[0], a[2])', 'yawTo = Math.max(-1.25, Math.min(1.25, Math.atan2(sl0.x - walkMe.x, sl0.z - walkMe.z)));', 'ct = [pv.x + rx0 * cY + rz0 * sY, ct[1], pv.z - rx0 * sY + rz0 * cY];', 'if (d.coupleRole && walkMe.on && walkMe.away', 'var lampA = Math.max(0, Math.min(1, (it.p.z - 2.6) / 4));']) {
+  for (const marker of ['var cam = { x: 0, y: 4, z: -15, yaw: 0 }, cosY = 1, sinY = 0;', 'zc = dx * sinY + dz * cosY', 'za = depth(a[0], a[2])', 'yawTo = Math.max(-1.25, Math.min(1.25, Math.atan2(sl0.x - walkMe.x, sl0.z - walkMe.z)));', 'ct = [pv.x + rx0 * cY + rz0 * sY, ct[1], pv.z - rx0 * sY + rz0 * cY];', 'if (d.coupleRole && ((walkMe.on && walkMe.away && st.listener === \'circle\') || d.aartiAway)', 'var lampA = Math.max(0, Math.min(1, (it.p.z - 2.6) / 4));']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the turning walk marker: ${marker}`);
   }
   // Setting off, the view first comes round behind the two of you, centred, and you move only once it's there; it then
@@ -294,6 +294,22 @@ if (/nodes\.room[^C]*connect\(nodes\.(dry|bus|near|out)\)/.test(runtime)) fail('
   for (const marker of ['var FILL = {', 'L.fill = fillFor(id, main);', 'var fillOn = !!st.fill && st.on && !st.dj;', 'fade: a * nearFade(p.z)', 'if (fillK > 0.3) L.fill.forEach(']) {
     if (!scene.includes(marker)) fail(`Venue scene is missing the hidden-player dancer marker: ${marker}`);
   }
+  // An aarti (a song styled aarti): the dancing stops, everyone turns to the garbo and folds their hands, a few carry a
+  // thali with a diya, the singers sing without moves, no claps, the light goes warm, and the stage screen is left clear
+  // for the song's own YouTube recording, placed behind the see-through scene by the player (one player, never a second)
+  for (const marker of ["var aartiOn = !!st.aarti && st.on && !st.dj;", 'dancing = aartiK < 0.5 && (', 'd.aartiAway = aartiK > 0.5', 'function thali(cx, cy, h)', "if (st.aarti) { if (m.act !== 'sing'", 'if (aartiK > 0.3) return;', 'if (st.screenHole && !feeding && g === G0 && aartiK > 0.5', 'opts.onScreen(screenAt ?', "g.clip('evenodd')"]) {
+    if (!scene.includes(marker)) fail(`Venue scene is missing the aarti marker: ${marker}`);
+  }
+  for (const dir of ['docs/product/prototypes/garbo', 'public-site/garbo/prototype']) {
+    const [js, css, wrap] = await Promise.all([read(`${dir}/garbo.js`), read(`${dir}/garbo.css`), read(`${dir}/scene.js`)]);
+    if (!js.includes("scene.atmosphere({ aarti: aarti, screenHole: hole });") || !js.includes("type: 'screen', rect: r")) fail(`${dir}/garbo.js must pass the aarti to the scene and the clear screen's place to the player`);
+    if (!css.includes('html.screen-hole, html.screen-hole body { background: transparent; }')) fail(`${dir}/garbo.css must let the aarti's recording show through the page`);
+    if (!wrap.includes('onScreen: function (r) { if (hooks.onScreen) hooks.onScreen(r); }')) fail(`${dir}/scene.js must hand the clear screen's place on`);
+  }
+  const [host, appJs, providerCss] = await Promise.all([read('assets/runtime/immersive-view.js'), read('app.js'), read('styles/60-runtime-and-provider.css')]);
+  if (!host.includes("if (message.type === 'screen') { placeScreen(message.rect || null); return; }") || !host.includes("root.classList.toggle('garba-stage-screen', ok);")) fail('The Immersive host must place the playing YouTube player in the stage screen during an aarti');
+  if (!appJs.includes("aarti: Array.isArray(song.styles) && song.styles.some((style) => String(style).toLowerCase() === 'aarti'),") || !appJs.includes('screenVideo: Boolean(song && player && player.activeSongId === song.id')) fail('The Immersive snapshot must say when the song is an aarti and when its YouTube video is playing');
+  if (!providerCss.includes('html.garba-stage-screen body #youtubeStage.youtube-dock.open {') || !providerCss.includes('z-index: 1199 !important;')) fail('The YouTube player must sit behind the Immersive frame in the stage screen during an aarti');
   const wrapper = await read('docs/product/prototypes/garbo/scene.js');
   if (!wrapper.includes('var hidden = !this.dj && !(np.width && np.height);') || !wrapper.includes('this.v.set({ fill: hidden });')) fail('The Immersive scene wrapper must tell the venue when the player is hidden, so the ground it covered fills with dancers');
   if (!wrapper.includes("document.querySelector('#atmoListeners button[data-id=\"' + id + '\"]')")) fail('The Immersive scene wrapper must hand a walk-made place change to View, which owns it');

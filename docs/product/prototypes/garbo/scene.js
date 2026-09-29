@@ -331,6 +331,9 @@
         var b = document.querySelector('#atmoListeners button[data-id="' + id + '"]');
         if (b) b.click();
       },
+      // Where the stage screen is left clear for an aarti's recording, in pixels from the window's top left (the canvas
+      // starts there, cropped or not)
+      onScreen: function (r) { if (hooks.onScreen) hooks.onScreen(r); },
       // The lamp's place is reported as a share of the canvas; the player reads it as a share of the window
       onFrame: function (l) {
         if (!hooks.onLamp) return;

@@ -70,6 +70,10 @@
       if (tip) tip.style.visibility = away ? 'hidden' : '';
       // The first-time tip sits just below the garbo, wherever the scene puts it
       if (tip && !tip.hidden && !away) { tip.style.left = lx + 'px'; tip.style.top = (ly + Math.max(30, l.r * window.innerWidth * 1.6)) + 'px'; }
+    },
+    // In an aarti the scene leaves the stage screen clear; the player puts the song's own recording there, behind the scene
+    onScreen: function (r) {
+      if (LIVE_SITE) window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'screen', rect: r }, location.origin);
     }
   }) : new window.GarboScene.Scene($('scene'));
   if (VENUE_SCENE) document.documentElement.classList.add('venue-stage');
@@ -478,6 +482,11 @@
       : [];
     S.linkFaceCutouts = shownFaces.map(function (id) { return new URL('singers/meme-cats/' + id + '.webp', document.baseURI).href; });
     if (scene.atmosphere) scene.atmosphere({ linkFaceCutouts: S.linkFaceCutouts });
+    // An aarti: the dancing stops for it, and when the player is playing it from YouTube, its recording goes on the stage
+    // screen. The page is see-through only there, where the scene leaves the screen clear.
+    var aarti = !!(snapshot.song && snapshot.song.aarti), hole = aarti && snapshot.screenVideo === true;
+    if (scene.atmosphere) scene.atmosphere({ aarti: aarti, screenHole: hole });
+    document.documentElement.classList.toggle('screen-hole', hole);
     S.genre = snapshot.genreId || (snapshot.song && snapshot.song.genre) || S.genre;
     LIVE_NONSTOP_TITLE = snapshot.nonstop && snapshot.nonstop.title || '';
     S.shuffle = Boolean(snapshot.shuffle);

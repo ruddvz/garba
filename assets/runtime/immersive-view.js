@@ -125,11 +125,32 @@
     });
     return nonstopPromise;
   }
+  /* ---------- an aarti's recording on the stage screen ----------
+     In an aarti the scene leaves its stage screen clear and the page inside the frame goes see-through there. The
+     YouTube player already playing the song is placed right behind that screen, under the frame, so the singers and
+     the stage's lights stay in front of the picture. It is still the one player: the sound never doubles and the
+     picture keeps time with it. The rest of the window stays the venue's ink. */
+  var screenRect = null;
+  function placeScreen(rect) {
+    var root = document.documentElement, dock = document.getElementById('youtubeStage');
+    var ok = !!(rect && view === 'immersive' && overlay && !overlay.hidden && dock && dock.classList.contains('open') && dock.querySelector('iframe')
+      && [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) && rect.w > 0 && rect.h > 0);
+    screenRect = ok ? rect : null;
+    root.classList.toggle('garba-stage-screen', ok);
+    if (!ok) return;
+    // Filled edge to edge and centred, the way a stage screen shows a video, and a little larger than the screen so
+    // the player's own edges (its title and logo) fall outside it: only the picture shows
+    var vw = rect.w, vh = rect.w * 9 / 16;
+    if (vh < rect.h) { vh = rect.h; vw = rect.h * 16 / 9; }
+    vw *= 1.16; vh *= 1.16;
+    [['x', rect.x], ['y', rect.y], ['w', rect.w], ['h', rect.h], ['vw', vw], ['vh', vh]].forEach(function (kv) { root.style.setProperty('--stage-screen-' + kv[0], Math.round(kv[1]) + 'px'); });
+  }
   function onMessage(event) {
     if (!frame || event.origin !== location.origin || event.source !== frame.contentWindow) return;
     var message = event.data;
     if (!message || message.channel !== CHANNEL) return;
     if (message.type === 'view') { setView(message.view); return; }
+    if (message.type === 'screen') { placeScreen(message.rect || null); return; }
     if (message.type === 'ready') {
       catalogueSent = false;
       sendSnapshot(true);
@@ -152,13 +173,13 @@
     app.setAttribute('aria-hidden', 'true'); app.inert = true;
     if (!frame.src) {
       var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-      var protoPath = isLocalDev ? './docs/product/prototypes/garbo/?live=1&embed=1&v=20260928-6' : './garbo/prototype/?live=1&embed=1&v=20260928-6';
+      var protoPath = isLocalDev ? './docs/product/prototypes/garbo/?live=1&embed=1&v=20260929-1' : './garbo/prototype/?live=1&embed=1&v=20260929-1';
       frame.src = new URL(protoPath, location.href).href;
     }
     window.addEventListener('message', onMessage);
     sendSnapshot(true);
     clearInterval(syncTimer);
-    syncTimer = setInterval(function () { sendSnapshot(!catalogueSent); if (tapArmed) { if (isPlaying()) disarmFirstTap(); else armFirstTap(); } }, 500);
+    syncTimer = setInterval(function () { sendSnapshot(!catalogueSent); if (screenRect) placeScreen(screenRect); if (tapArmed) { if (isPlaying()) disarmFirstTap(); else armFirstTap(); } }, 500);
     if (frame.contentDocument && frame.contentDocument.readyState === 'complete') armFirstTap();
     frame.focus({ preventScroll: true });
   }
@@ -166,6 +187,7 @@
     var wasOpen = overlay && !overlay.hidden;
     clearInterval(syncTimer); syncTimer = 0;
     disarmFirstTap();
+    placeScreen(null);
     window.removeEventListener('message', onMessage);
     if (overlay) overlay.hidden = true;
     app.removeAttribute('aria-hidden'); app.inert = false;

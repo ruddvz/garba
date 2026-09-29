@@ -57,7 +57,7 @@
 
   function create(canvas, opts) {
     opts = opts || {};
-    var g = canvas.getContext('2d');
+    var g = canvas.getContext('2d'), G0 = g;
     var W = 1, H = 1, DPR = 1, F = 1, HOR = 1, box = null, BX = 0, BY = 0, BW = 1, BH = 1;
     // The camera can turn (yaw, in radians, positive to the right) to follow you as you walk and to face a stall
     var cam = { x: 0, y: 4, z: -15, yaw: 0 }, cosY = 1, sinY = 0;
@@ -66,7 +66,7 @@
     var view = { k: 0 };
     var rnd = seeded(opts.seed || (Date.now() % 100000) + 11);
     var layouts = {}, statics = {}, fade = null, fadeA = 0;
-    var waves = [], arrivals = [], fillK = 0, haze = 0, youGlow = 0, pulse = 0, phonesUp = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
+    var waves = [], arrivals = [], fillK = 0, aartiK = 0, screenAt = null, screenSent = '', feeding = false, haze = 0, youGlow = 0, pulse = 0, phonesUp = 0, beatKey = '', visIdx = null, lastMs = 0, running = true;
     // Render quality steps down on its own when frames run slow: first fewer pixels, then a smaller crowd, and last a
     // steady 30 frames a second, which reads smoother than a stutter between 60 and 20
     var TIER = opts.tier || deviceTier(), PIXELS = TIER.pixels, QP = 1, QD = TIER.density, slowFor = 0, frameMs = 16, capMs = 0;
@@ -651,7 +651,7 @@
       // arms up to cheer, or a clap over their heads that lands on the beat
       var grooveUp = false, clapOver = 0;
       if (d.stander && !reduce) {
-        if (st.on && !sit) {
+        if (st.on && !sit && aartiK < 0.5) {
           var sw0 = d.sway || 0, gc = (T0 * 0.35 + sw0 * 1.7) % 6;
           var bob0 = Math.pow(Math.abs(Math.cos(BEAT * Math.PI)), 3) * h * 0.02; y -= bob0; hip -= bob0;
           x += Math.sin(T0 * 1.8 + sw0) * h * 0.028;
@@ -1116,6 +1116,24 @@
       if (!poly([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]])) return;
       var a = P(x0, y0, z), b2 = P(x1, y0, z), tp = P(x0, y1, z), c = P((x0 + x1) / 2, (y0 + y1) / 2, z); if (!a || !b2 || !tp || !c) return;
       var rx = a.x, ry = tp.y, rw = b2.x - a.x, rh = a.y - tp.y;
+      // In an aarti the song's own recording plays on this screen: the panel is left clear and the player, placed behind
+      // the scene, shows through it, with the singers and the stage's lights still in front
+      if (st.screenHole && !feeding && g === G0 && aartiK > 0.5 && Math.abs(cam.yaw) < 0.02 && rw > 40) {
+        g.save(); g.clip(); g.clearRect(Math.floor(rx) - 1, Math.floor(ry) - 1, Math.ceil(rw) + 2, Math.ceil(rh) + 2);
+        // It still reads as the venue's LED wall, not a video player: its mesh of pixels over the picture, the panel
+        // darker towards its edges and a faint sheen across the top, and the stage's lights sweep over it as before
+        var mesh = rh > 24 ? ledGrid() : null;
+        if (mesh) { g.fillStyle = mesh; g.globalAlpha = 0.3; g.fillRect(rx, ry, rw, rh); g.globalAlpha = 1; }
+        var edge = g.createLinearGradient(rx, 0, rx + rw, 0);
+        edge.addColorStop(0, 'rgba(0,0,0,.4)'); edge.addColorStop(0.07, 'rgba(0,0,0,0)'); edge.addColorStop(0.93, 'rgba(0,0,0,0)'); edge.addColorStop(1, 'rgba(0,0,0,.4)');
+        g.fillStyle = edge; g.fillRect(rx, ry, rw, rh);
+        var sheen = g.createLinearGradient(0, ry, 0, ry + rh);
+        sheen.addColorStop(0, 'rgba(255,244,225,.07)'); sheen.addColorStop(0.45, 'rgba(255,244,225,0)'); sheen.addColorStop(1, 'rgba(0,0,0,.18)');
+        g.fillStyle = sheen; g.fillRect(rx, ry, rw, rh);
+        g.restore();
+        screenAt = { x: rx, y: ry, w: rw, h: rh };
+        return;
+      }
       g.save(); g.clip();
       var drone = rh > 34 && rw > 60;
       if (drone) droneFeed(id, rx, ry, rw, rh, t);
@@ -1164,7 +1182,8 @@
         if (feed.cv.width !== fw || feed.cv.height !== fh) { feed.cv.width = fw; feed.cv.height = fh; }
         var live = g, fg = feed.cv.getContext('2d'); fg.setTransform(q, 0, 0, q, 0, 0); fg.clearRect(0, 0, rw, rh);
         g = fg;
-        try { aerial(id, 0, 0, rw, rh, t); } finally { g = live; }
+        feeding = true;
+        try { aerial(id, 0, 0, rw, rh, t); } finally { g = live; feeding = false; }
         feed.t = t; feed.key = key;
       }
       g.drawImage(feed.cv, rx, ry, rw, rh);
@@ -1467,7 +1486,7 @@
     var burst = { at: -99, next: 30 };
     function bandFlair(members) {
       var now = T;
-      if (st.on && !reduce && now > burst.next) { burst.at = now; burst.next = now + 45 + rnd() * 60; }
+      if (st.on && !reduce && !st.aarti && now > burst.next) { burst.at = now; burst.next = now + 45 + rnd() * 60; }
       var inBurst = now - burst.at < 3.2;
       members.forEach(function (m) {
         var list = FLAIRS[m.role];
@@ -1476,7 +1495,7 @@
         if (inBurst && m.flairT0 !== burst.at) { m.flair = list[0]; m.flairT0 = burst.at; m.flairDur = 3.2; }
         else if (st.on && !reduce && now > m.flairNext) { m.flair = list[Math.floor(rnd() * list.length)]; m.flairT0 = now; m.flairDur = 1.6 + rnd() * 1.6; m.flairNext = now + m.flairDur + 7 + rnd() * 16; }
         var u = m.flair ? (now - m.flairT0) / m.flairDur : 1;
-        m.fk = u >= 0 && u < 1 && st.on && !reduce ? Math.sin(Math.PI * u) : 0;
+        m.fk = u >= 0 && u < 1 && st.on && !reduce && !st.aarti ? Math.sin(Math.PI * u) : 0;
       });
       return inBurst ? Math.sin(Math.PI * (now - burst.at) / 3.2) : 0;
     }
@@ -2323,6 +2342,8 @@
         return;
       }
       if (reduce) { m.cx = m.x; m.act = 'sing'; m.walking = false; m.dancing = false; m.cheer = 0; m.twirl = 0; return; }
+      // An aarti is sung standing still: no steps and no moves, the free hand on the heart
+      if (st.aarti) { if (m.act !== 'sing' || (m.gest || 0) < 0.66) { m.act = 'sing'; m.gest = 0.8; m.t0 = now; } m.until = now + 2; m.cue = null; m.cued = false; m.tx = m.cx; }
       var MOVE_LEN = { hop: 1.5, spin: 2.2, point: 2, clapup: 2.6, dance: 4, wave: 2.2, crowd: 3.2, taali: 3.6 };
       if (m.cue && now >= m.cue.at) {
         // Changing sides for a new song: each singer walks across to where the other stood, mirrored across the stage
@@ -3063,7 +3084,7 @@
     }
     // Where the elbows and hands go for what the person is doing: playing, singing, holding something, dancing
     function armsFor(d, x, shy, h, sw, walking, dancing, up, tw) {
-      var le, lh, re, rh;
+      var le, lh, re, rh; d.thaliAt = null;
       if (d.role === 'singer' && d.idle) { le = [x - h * 0.12, shy + h * 0.15]; lh = [x - h * 0.08, shy + h * 0.27]; var tk2 = reduce ? 0 : Math.max(0, Math.sin(T * 1.7 + d.ph)); re = [x + h * 0.13, shy + h * 0.12]; rh = [x + h * (0.12 + 0.06 * tk2), shy + h * (0.28 - 0.14 * tk2)]; }
       else if (d.role === 'singer' && !d.dancing) {
         // The mic in one hand, held just under the chin; the other hand draws the phrase: an open palm, a reach to the
@@ -3120,7 +3141,33 @@
         else if (d.pose === 'point') { re = [lerp(re[0], x + h * 0.17, pk), lerp(re[1], shy - h * 0.03, pk)]; rh = [lerp(rh[0], x + h * 0.31, pk), lerp(rh[1], shy - h * 0.13, pk)]; }
         else { var cl = reduce ? 0.5 : Math.abs(Math.sin(BEAT * Math.PI)); le = [lerp(le[0], x - h * 0.13, pk), lerp(le[1], shy - h * 0.15, pk)]; lh = [lerp(lh[0], x - h * (0.02 + 0.06 * cl), pk), lerp(lh[1], shy - h * 0.33, pk)]; re = [lerp(re[0], x + h * 0.13, pk), lerp(re[1], shy - h * 0.15, pk)]; rh = [lerp(rh[0], x + h * (0.02 + 0.06 * cl), pk), lerp(rh[1], shy - h * 0.33, pk)]; }
       }
+      // The aarti: hands folded at the chest, or both hands on the thali, turning it in slow circles before the garbo
+      var ak = !d.role && !d.walker && !d.holding && !d.photo && !(d.stander && d.phone) ? aartiK : 0;
+      if (ak > 0.01) {
+        var aw = ak * ak * (3 - 2 * ak);
+        if (d.thali) {
+          var ta = reduce ? 0 : T * 2.1 + (d.ph || 0), tcx = x + Math.cos(ta) * h * 0.06, tcy = shy + h * 0.05 + Math.sin(ta) * h * 0.045;
+          le = [lerp(le[0], x - h * 0.13, aw), lerp(le[1], shy + h * 0.14, aw)]; re = [lerp(re[0], x + h * 0.13, aw), lerp(re[1], shy + h * 0.14, aw)];
+          lh = [lerp(lh[0], tcx - h * 0.05, aw), lerp(lh[1], tcy + h * 0.012, aw)]; rh = [lerp(rh[0], tcx + h * 0.05, aw), lerp(rh[1], tcy + h * 0.012, aw)];
+          if (aw > 0.5) d.thaliAt = [tcx, tcy];
+        } else {
+          le = [lerp(le[0], x - h * 0.1, aw), lerp(le[1], shy + h * 0.15, aw)]; re = [lerp(re[0], x + h * 0.1, aw), lerp(re[1], shy + h * 0.15, aw)];
+          lh = [lerp(lh[0], x - h * 0.008, aw), lerp(lh[1], shy + h * 0.065, aw)]; rh = [lerp(rh[0], x + h * 0.008, aw), lerp(rh[1], shy + h * 0.065, aw)];
+        }
+      }
       return [le, lh, re, rh];
+    }
+    // A brass thali with a clay diya on it, its flame flickering, held out in front of someone doing the aarti
+    function thali(cx, cy, h) {
+      var rx = h * 0.075, ry = h * 0.024, fl = reduce ? 1 : 0.85 + 0.15 * Math.sin(T * 17 + cx) * Math.sin(T * 7.3);
+      glow(cx, cy - h * 0.04, Math.max(1.2, h * 0.018), '#ffc86a', 0.55 * aartiK);
+      g.fillStyle = '#9a6a1c'; g.beginPath(); g.ellipse(cx, cy + ry * 0.35, rx, ry, 0, 0, TAU); g.fill();
+      g.fillStyle = '#e2b24c'; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, TAU); g.fill();
+      if (h > 40) { g.fillStyle = '#c2185b'; for (var k = 0; k < 5; k++) { var a = k / 5 * TAU; g.beginPath(); g.arc(cx + Math.cos(a) * rx * 0.62, cy + Math.sin(a) * ry * 0.55, Math.max(0.6, h * 0.005), 0, TAU); g.fill(); } }
+      g.fillStyle = '#8a3b1a'; g.beginPath(); g.ellipse(cx, cy - ry * 0.3, rx * 0.28, ry * 0.55, 0, 0, Math.PI); g.fill();
+      var fh = h * 0.03 * fl;
+      g.fillStyle = '#ffd98a'; g.beginPath(); g.moveTo(cx - h * 0.008, cy - ry * 0.35); g.quadraticCurveTo(cx - h * 0.009, cy - ry * 0.35 - fh * 0.6, cx, cy - ry * 0.35 - fh); g.quadraticCurveTo(cx + h * 0.009, cy - ry * 0.35 - fh * 0.6, cx + h * 0.008, cy - ry * 0.35); g.fill();
+      g.fillStyle = '#fff4d6'; g.beginPath(); g.ellipse(cx, cy - ry * 0.35 - fh * 0.3, h * 0.003, fh * 0.28, 0, 0, TAU); g.fill();
     }
     // Someone passing right by the camera keeps their whole design, face and all, and fades out as a whole: they are
     // drawn in full on a scratch layer, only over the patch they cover, and that patch is laid over the scene with
@@ -3133,7 +3180,8 @@
       if (nearLayer.width !== canvas.width || nearLayer.height !== canvas.height) { nearLayer.width = canvas.width; nearLayer.height = canvas.height; }
       var lc = nearLayer.getContext('2d'); lc.setTransform(DPR, 0, 0, DPR, 0, 0); lc.clearRect(x0, y0, x1 - x0, y1 - y0);
       var live = g, fog = FOGF; g = lc;
-      try { figure(p, d, T, false, beatPh, null); } finally { g = live; FOGF = fog; }
+      d.nearDraw = true;
+      try { figure(p, d, T, false, beatPh, null); } finally { g = live; FOGF = fog; d.nearDraw = false; }
       g.save(); g.globalAlpha = a;
       g.drawImage(nearLayer, x0 * DPR, y0 * DPR, (x1 - x0) * DPR, (y1 - y0) * DPR, x0, y0, x1 - x0, y1 - y0);
       g.restore();
@@ -3141,7 +3189,7 @@
     function figure(p, d, T, isYou, beatPh, fade) {
       if (fade != null && fade < 0.999 && !isYou && !d.coupleRole) { nearFigure(p, d, T, beatPh, Math.min(1, fade * 1.25)); return; }
       // Walking away from the camera, or looking at a stall, the two of you are seen from behind, faces still worn
-      if (d.coupleRole && walkMe.on && walkMe.away && st.listener === 'circle' && fade !== null) {
+      if (d.coupleRole && ((walkMe.on && walkMe.away && st.listener === 'circle') || d.aartiAway) && fade !== null) {
         d.headAt = null; backFigure(p, d, T, !!d.walking);
         var hb = d.h * p.s;
         if (d.headAt) {
@@ -3151,9 +3199,10 @@
         }
         return;
       }
+      if (d.aartiAway && !d.coupleRole && !d.role && (fade !== null || d.nearDraw)) { backFigure(p, d, T, false); return; }
       if (d.coupleRole && st.listener !== 'circle' && d.alt) { var a0 = d.alt; ['flash', 'twirl', 'atHome', 'walking', 'step', 'sitting', 'rest', 'ph'].forEach(function (k) { a0[k] = d[k]; }); d = a0; }
       var s = p.s, x = p.x, y = p.y, h = d.h * s, up = d.flash > 0.25;
-      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = (d.pair && d.pair.on && !d.moving) || !d.walker && !d.role && !d.watcher && !d.stander && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false, playing = d.role && st.on && !reduce, tw = d.twirl || 0;
+      var walking = ((d.walker && d.moving) || d.walking) && !reduce, dancing = aartiK < 0.5 && ((d.pair && d.pair.on && !d.moving) || !d.walker && !d.role && !d.watcher && !d.stander && !d.sitting && st.on && !reduce && !d.walking && d.atHome !== false), playing = d.role && st.on && !reduce, tw = d.twirl || 0;
       var groundY = null;
       if (d.sitting) { groundY = p.y + ((d.rest && d.rest.y) || 0) * s; y = p.y + 0.48 * h; }
       var ph = walking ? d.step || 0 : beatPh * Math.PI + (d.ph || 0), sw = walking || dancing || playing ? Math.sin(ph) : 0;
@@ -3348,6 +3397,7 @@
         g.strokeStyle = '#e8b04b'; g.lineWidth = Math.max(1, h * 0.008); g.beginPath(); g.arc(x, y - h * 0.8, h * 0.05, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
       }
       if (d.holding === 'tea' && d.cupAt && h > 14) { var tc = d.cupAt; g.fillStyle = '#f4efe4'; g.fillRect(tc[0] - h * 0.018, tc[1] - h * 0.045, h * 0.036, h * 0.045); g.fillStyle = '#b07a4a'; g.fillRect(tc[0] - h * 0.015, tc[1] - h * 0.043, h * 0.03, h * 0.008); if (!reduce && h > 30) { g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.beginPath(); g.moveTo(tc[0], tc[1] - h * 0.05); g.quadraticCurveTo(tc[0] + h * 0.02 * Math.sin(T * 2), tc[1] - h * 0.08, tc[0], tc[1] - h * 0.11); g.stroke(); } }
+      if (d.thaliAt && h > 12) thali(d.thaliAt[0], d.thaliAt[1], h);
       if (d.holding === 'phone' && h > 14) { g.fillStyle = '#111'; g.fillRect(x - h * 0.025, shy + h * 0.06, h * 0.05, h * 0.075); g.fillStyle = 'rgba(200,225,255,.9)'; g.fillRect(x - h * 0.02, shy + h * 0.065, h * 0.04, h * 0.065); glow(x, shy + h * 0.1, Math.max(1, h * 0.06), '#cfe0ff', 0.35); }
       if (d.role === 'dj' && d.cupAt) {
         // Headphones round the neck, and the paper cup of chhas
@@ -3763,6 +3813,8 @@
       return Math.min(1, (d.flash || 0) * 1.7);
     }
     function spawnBeat(bt, T) {
+      // An aarti has no claps and no stick strikes: the beat passes quietly
+      if (aartiK > 0.3) return;
       var L = layout(st.venue), you = listenerPos(L, T), far = st.listener === 'far';
       var col = st.style === 'dandiya' ? '232,163,61' : '243,230,208', firstT0 = bt;
       L.circles.forEach(function (c, ci) {
@@ -3792,6 +3844,7 @@
     // With no clap sound playing, the circle still claps as it dances, silently, on every other beat of its own step
     var silentIdx = null;
     function silentBeat(bt) {
+      if (aartiK > 0.3) return;
       layout(st.venue).circles.forEach(function (c) { c.dancers.forEach(function (d) { if (d.atHome && !d.coupleRole && rnd() < 0.75) { d.clapAt = bt + (d.lag || 0); d.clapHigh = rnd() < 0.25; } }); });
     }
     function scheduleBeats(t, T) {
@@ -3855,6 +3908,10 @@
       var bb = opts.beats && opts.beats(); BEAT = bb ? ((t - bb.anchor) / bb.period) % 2 : T * 1.8;
       // Phones go up while the song plays and come down, over a second or so, when it stops
       phonesUp = reduce ? (st.on ? 1 : 0) : Math.max(0, Math.min(1, phonesUp + (st.on ? 1 : -1) * dt * 0.9));
+      // An aarti: the dancing stops and everyone turns to the garbo to pray, over a couple of seconds, and back again after
+      var aartiOn = !!st.aarti && st.on && !st.dj;
+      aartiK = reduce ? (aartiOn ? 1 : 0) : Math.max(0, Math.min(1, aartiK + (aartiOn ? 0.6 : -0.8) * dt));
+      screenAt = null;
       var target = st.listener === 'far' ? 1 : 0;
       // You walk between the places you can stand: a second or two along an eased path, lifted over the crowd on
       // a long walk, with a step in it. A new venue starts in place.
@@ -3896,7 +3953,7 @@
       bright += ((st.on ? 1 : 0.55) - bright) * Math.min(1, dt * 3);
       pulse *= Math.exp(-dt * 5);
       var L = layout(st.venue);
-      if (st.on && !reduce) L.circles.forEach(function (c) { c.spin += c.w * dt; });
+      if (st.on && !reduce) L.circles.forEach(function (c) { c.spin += c.w * dt * (1 - aartiK); });
 
       scheduleBeats(t, T);
       if (st.on && !reduce && st.mode === 'crowd' && Math.random() < dt * 8) {
@@ -3914,7 +3971,7 @@
       if (haze > 0.01 && mainP) { var hz = g.createRadialGradient(mainP.x, mainP.y, 4, mainP.x, mainP.y, W * 0.8); hz.addColorStop(0, 'rgba(255,200,130,' + haze * 0.2 + ')'); hz.addColorStop(1, 'rgba(255,200,130,0)'); g.fillStyle = hz; g.fillRect(0, 0, W, H); }
 
       // Floor rings, then every dancer and garbo sorted far to near
-      var items = [], beatPh = 0, b = opts.beats && opts.beats();
+      var items = [], beatPh = 0, b = opts.beats && opts.beats(), gDepth = depth(0, 0);
       if (b) beatPh = ((t - b.anchor) / b.period) % 2; else beatPh = T * 1.8;
       L.circles.forEach(function (c, ci) {
         c.shown = !(ci > 1 && (ci - 1) / L.circles.length > (st.density * QD));
@@ -3927,6 +3984,11 @@
           d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2); d.clapK = clapNear(d, t);
           var at = walkMe.on ? walkMe : walkMe.park, slot = at && d.coupleRole ? { x: at.x + (d.coupleRole === 'w' ? -0.35 : 0.35), z: at.z } : dancerWorld(c, d, T, ctr), w = travel(d, slot, dt);
           d.wx = w.x; d.wz = w.z;
+          // In the aarti everyone folds their hands and faces the garbo, so those on this side of it turn their backs to
+          // you; across it, facing you, a few in the garbo's own circle carry a thali with a diya
+          var dd0 = depth(w.x, w.z);
+          d.thali = c.main && di % 4 === 2 && !d.coupleRole && dd0 > gDepth + 0.4;
+          d.aartiAway = aartiK > 0.5 && !(d.coupleRole && walkMe.on) && dd0 < gDepth - 0.4;
           if (d.atHome) home++;
           var p = P(w.x, d.sitting ? (d.rest.y || 0) : 0, w.z); d._px = p ? p.x : null;
           var fd = p ? nearFade(p.z) : 0;
@@ -3941,7 +4003,7 @@
       var fillOn = !!st.fill && st.on && !st.dj;
       fillK = reduce ? (fillOn ? 1 : 0) : Math.max(0, Math.min(1, fillK + (fillOn ? 0.8 : -1.6) * dt));
       if (fillK > 0.001) L.fill.forEach(function (c) {
-        if (st.on && !reduce) c.spin += c.w * dt;
+        if (st.on && !reduce) c.spin += c.w * dt * (1 - aartiK);
         var ctr = circleCentre(c, T), k = 1 + (1 - ease(fillK)) * (c.small ? 0.8 : 1.4) / c.R;
         c.dancers.forEach(function (d) {
           var a = Math.max(0, Math.min(1, (fillK - d.delay / 1.8 * 0.4) / 0.6)); d._px = null;
@@ -3949,7 +4011,7 @@
           if (d.clapAt && t >= d.clapAt) { d.flash = 1; d.clapAt = 0; }
           d.flash *= Math.exp(-dt * 7); d.twirl *= Math.exp(-dt * 2.2); d.clapK = clapNear(d, t);
           var w = dancerWorld(c, d, T, ctr), fx = ctr.x + (w.x - ctr.x) * k, fz = ctr.z + (w.z - ctr.z) * k, p = P(fx, 0, fz);
-          d.wx = fx; d.wz = fz; d._px = p ? p.x : null;
+          d.wx = fx; d.wz = fz; d._px = p ? p.x : null; d.aartiAway = aartiK > 0.5 && depth(fx, fz) < gDepth - 0.4;
           if (p && p.z > 2.2 && p.x > -60 && p.x < W + 60) items.push({ z: p.z, kind: 'dancer', p: p, d: d, fade: a * nearFade(p.z) });
         });
         for (var fpi = 0; fpi + 1 < c.dancers.length; fpi += 2) { var fa = c.dancers[fpi], fb = c.dancers[fpi + 1]; if (fa._px != null && fb._px != null) { fa.strikeDir = fb._px >= fa._px ? 1 : -1; fb.strikeDir = -fa.strikeDir; } else { fa.strikeDir = fb.strikeDir = 0; } }
@@ -4009,6 +4071,19 @@
       FOGF = 0;
       if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t);
       droneInSky(t);
+      // The aarti's light: the venue dims to a warm glow, brightest round the garbo's lamp. The screen playing the
+      // recording keeps its own light.
+      if (aartiK > 0.01) {
+        g.save();
+        if (screenAt) { g.beginPath(); g.rect(0, 0, W, H); g.rect(screenAt.x, screenAt.y, screenAt.w, screenAt.h); g.clip('evenodd'); }
+        g.fillStyle = 'rgba(30,12,4,' + (0.3 * aartiK) + ')'; g.fillRect(0, 0, W, H);
+        if (lightAt && lightAt.x > -W * 0.2 && lightAt.x < W * 1.2) {
+          var alr = Math.max(W, H) * 0.35, alg = g.createRadialGradient(lightAt.x, lightAt.y, 0, lightAt.x, lightAt.y, alr);
+          alg.addColorStop(0, 'rgba(255,176,80,' + 0.34 * aartiK + ')'); alg.addColorStop(0.35, 'rgba(255,140,50,' + 0.12 * aartiK + ')'); alg.addColorStop(1, 'rgba(255,140,50,0)');
+          g.globalCompositeOperation = 'lighter'; g.fillStyle = alg; g.fillRect(0, 0, W, H);
+        }
+        g.restore();
+      }
       walkOverlay(L, t);
       // Your label always sits on top, so you can find yourself in the crowd
       // Each tag rests on its own head. If the two would overlap, your partner's is lifted above yours with a line down to their head.
@@ -4064,6 +4139,11 @@
       if (fade && fadeA > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = fadeA; g.drawImage(fade, 0, 0); g.globalAlpha = 1; fadeA -= dt * (reduce ? 10 : 2); g.setTransform(DPR, 0, 0, DPR, 0, 0); }
       if (opts.overlay) opts.overlay(g, W, H);
       if (opts.onFrame) opts.onFrame(lampAt);
+      // Where the stage screen is left clear for the recording, in CSS pixels of the canvas, told only when it changes
+      if (opts.onScreen) {
+        var sKey = screenAt ? [screenAt.x, screenAt.y, screenAt.w, screenAt.h].map(Math.round).join(',') : '';
+        if (sKey !== screenSent) { screenSent = sKey; opts.onScreen(screenAt ? { x: Math.round(screenAt.x), y: Math.round(screenAt.y), w: Math.round(screenAt.w), h: Math.round(screenAt.h) } : null); }
+      }
       if (!opts.manual) requestAnimationFrame(frame);
     }
 

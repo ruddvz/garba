@@ -680,6 +680,27 @@ html.explore-open, html.explore-open body { overflow: hidden; }
 }
 .garbo-prototype-overlay[hidden] { display: none !important; }
 .garbo-prototype-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #0b0605; }
+/* An aarti in Immersive: the song's own YouTube player sits in the stage screen, behind the see-through scene, and
+   the rest of the window stays the venue's ink */
+html.garba-stage-screen .garbo-prototype-overlay,
+html.garba-stage-screen .garbo-prototype-frame { background: transparent; }
+html.garba-stage-screen body #youtubeStage.youtube-dock.open {
+  position: fixed !important; z-index: 1199 !important; inset: auto !important;
+  left: var(--stage-screen-x) !important; top: var(--stage-screen-y) !important;
+  width: var(--stage-screen-w) !important; height: var(--stage-screen-h) !important; max-width: none !important; max-height: none !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important;
+  opacity: 1 !important; visibility: visible !important; transform: none !important; transition: none !important; pointer-events: none !important;
+  background: #000 !important; box-shadow: 0 0 0 200vmax #0b0605 !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html.garba-stage-screen body #youtubeStage.youtube-dock.open::before,
+html.garba-stage-screen body #youtubeStage.youtube-dock.open .provider-media::after { display: none !important; }
+html.garba-stage-screen body #youtubeStage.youtube-dock.open .provider-dock-bar { display: none !important; }
+html.garba-stage-screen body #youtubeStage.youtube-dock.open .provider-media {
+  position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important;
+  width: var(--stage-screen-vw) !important; height: var(--stage-screen-vh) !important; min-width: 0 !important; min-height: 0 !important; max-height: none !important;
+}
+html.garba-stage-screen body #youtubeStage.youtube-dock.open .provider-media iframe { width: 100% !important; height: 100% !important; min-width: 0 !important; min-height: 0 !important; max-height: none !important; }
 
 /* The top bar keeps only what each screen needs; the rest lives in More.
    Phones and iPad: Search, Up next and More. Desktop: Search, Garba Circle, My Garba, Up next and More. */

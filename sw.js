@@ -22,7 +22,7 @@ const CORE_SHELL = [
   './catalogue/listening-library.js',
   './assets/runtime/explore-search.js',
   './assets/runtime/immersive-atmosphere.js',
-  './assets/runtime/immersive-view.js?v=20260928-6',
+  './assets/runtime/immersive-view.js?v=20260929-1',
   './assets/runtime/morphicons.js',
   './assets/runtime/live-station.js',
   './assets/runtime/garba-circle.js',
