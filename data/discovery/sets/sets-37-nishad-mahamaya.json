@@ -1,0 +1,129 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-nishad-soni-mahamaya-2026",
+      "title": "MAHAMAYA By Nishad Soni | Nonstop Garba 2026",
+      "displayTitle": "Mahamaya | Nonstop Garba 2026",
+      "artists": [
+        "Nishad Soni"
+      ],
+      "year": 2026,
+      "categories": [
+        "traditional",
+        "modern-gujarati-garba"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "a6FyIel2Gj0",
+        "url": "https://www.youtube.com/watch?v=a6FyIel2Gj0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1891,
+      "segmentRouting": "metadata-only",
+      "chapterStatus": "published-complete",
+      "segments": [
+        {
+          "title": "intro",
+          "startSeconds": 0,
+          "routingEligible": false
+        },
+        {
+          "title": "Ganapati aayo baapa",
+          "startSeconds": 33,
+          "routingEligible": false
+        },
+        {
+          "title": "Tu kaali ne kalyani",
+          "startSeconds": 100,
+          "routingEligible": false
+        },
+        {
+          "title": "Amba aavo to ramie",
+          "startSeconds": 262,
+          "routingEligible": false
+        },
+        {
+          "title": "Dhany dhany kutchh ni dharti",
+          "startSeconds": 422,
+          "routingEligible": false
+        },
+        {
+          "title": "Rude garbe rame chhe",
+          "startSeconds": 554,
+          "routingEligible": false
+        },
+        {
+          "title": "Aapna malak na",
+          "startSeconds": 676,
+          "routingEligible": false
+        },
+        {
+          "title": "Ghumto ghumto jaay",
+          "startSeconds": 808,
+          "routingEligible": false
+        },
+        {
+          "title": "Adal sonaran",
+          "startSeconds": 931,
+          "routingEligible": false
+        },
+        {
+          "title": "Chando ugyo chok ma",
+          "startSeconds": 1050,
+          "routingEligible": false
+        },
+        {
+          "title": "Arji suni ne aai",
+          "startSeconds": 1118,
+          "routingEligible": false
+        },
+        {
+          "title": "Mogal ma re mari",
+          "startSeconds": 1216,
+          "routingEligible": false
+        },
+        {
+          "title": "Lembuda zhule",
+          "startSeconds": 1290,
+          "routingEligible": false
+        },
+        {
+          "title": "Madi tara mandiriya ma",
+          "startSeconds": 1357,
+          "routingEligible": false
+        },
+        {
+          "title": "Madi aakash patal chhand",
+          "startSeconds": 1503,
+          "routingEligible": false
+        },
+        {
+          "title": "Zhanzharvaali tara bhajan",
+          "startSeconds": 1561,
+          "routingEligible": false
+        },
+        {
+          "title": "Khamma khamma khodiyar",
+          "startSeconds": 1631,
+          "routingEligible": false
+        },
+        {
+          "title": "Ugamna rath jodya",
+          "startSeconds": 1705,
+          "routingEligible": false
+        },
+        {
+          "title": "31:37 Mahamaya dakla",
+          "startSeconds": 1780,
+          "routingEligible": false
+        }
+      ],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The official YouTube page lists these 19 chapter markers. Its runtime is 31:31, while the separate 19-track Amazon album sums to 34:04; chapter titles are preserved as source metadata and are not routed to album tracks. The final published chapter starts at 29:40 and is literally titled “31:37 Mahamaya dakla,” later than the video runtime; that source inconsistency is preserved without treating it as a valid boundary."
+    }
+  ]
+}

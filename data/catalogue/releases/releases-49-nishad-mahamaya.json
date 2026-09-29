@@ -1,0 +1,39 @@
+[
+  {
+    "id": "nishad-mahamaya-2026",
+    "title": "Mahamaya",
+    "artist": "Nishad Soni",
+    "releaseDate": "2026-08-27",
+    "originalReleaseYear": 2026,
+    "label": "Nishad Soni Official",
+    "description": "A 19-track 2026 Gujarati Garba album by Nishad Soni, released August 27, 2026.",
+    "categories": [
+      "modern-gujarati-garba"
+    ],
+    "visualGenre": "traditional",
+    "entryType": "album",
+    "songCount": 19,
+    "durationSeconds": 2044,
+    "series": null,
+    "volume": null,
+    "live": {
+      "isLive": false,
+      "venue": null
+    },
+    "sources": [
+      {
+        "platform": "Amazon Music",
+        "url": "https://music.amazon.es/albums/B0HGV5QY1Q",
+        "kind": "official-streaming-catalogue"
+      }
+    ],
+    "nonstopSetId": "set-nishad-soni-mahamaya-2026",
+    "trackImportComplete": true,
+    "rightsStatus": "commercial-catalogue",
+    "audioBundled": false,
+    "metadataStatus": "verified",
+    "audioAvailability": "external-source-only",
+    "durationPrecision": "track-sum",
+    "notes": "Amazon Music lists 19 tracks with a 34:04 combined track duration. The related official YouTube nonstop recording is a separate 31:31 performance edition and is catalogued separately."
+  }
+]
