@@ -1,5 +1,5 @@
 {
-  "version": "0.20.5",
+  "version": "0.20.6",
   "updated": "2026-09-29",
   "chunks": [
     "sets-01.json",
@@ -44,7 +44,8 @@
     "sets-41-falguni-event-programmes.json",
     "sets-42-jigrra-kirtidan-fullsets.json",
     "sets-43-ragatip-garba-performances.json",
-    "sets-44-aditya-label-nonstop.json"
+    "sets-44-aditya-label-nonstop.json",
+    "sets-45-kirtidan-aditya-supplied-masters.json"
   ],
   "policy": {
     "officialityOrder": [

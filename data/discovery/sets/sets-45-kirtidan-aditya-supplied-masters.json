@@ -1,0 +1,60 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-kirtidan-tahukar-2-original-2016-upload",
+      "title": "Kirtidan Gadhvi No Tahukar 2 | DJ Mix Garba | Nonstop Garba 2016",
+      "artists": ["Kirtidan Gadhvi"],
+      "year": 2016,
+      "series": "Tahukar",
+      "volume": "2",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "_ppOIk7wXMw",
+        "url": "https://www.youtube.com/watch?v=_ppOIk7wXMw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "32m 46s",
+      "durationSeconds": 1966,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "32M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Studio Saraswati Official's 2016 Tahukar 2 DJ Mix Garba upload, surfaced directly by the user. This 32:46 programme is distinct from the already catalogued 1:14:00 full-audio Tahukar 2 upload; they are separate YouTube masters and are not combined or treated as track chapters. The verified channel page displayed 32M views on 2026-09-29. No track-level timestamps are inferred."
+    },
+    {
+      "id": "set-aditya-gadhvi-mor-bani-nonstop-dandiya",
+      "title": "Aditya Gadhavi | Non Stop Dandiya | Mor Bani Thanghat",
+      "artists": ["Aditya Gadhvi"],
+      "categories": ["dandiya", "traditional-garba", "modern-gujarati-garba"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "oMWFr20KpvM",
+        "url": "https://www.youtube.com/watch?v=oMWFr20KpvM",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 04m 54s",
+      "durationSeconds": 3894,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "84K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One continuous Dandiya programme from StudioRhythm Rajkot's verified channel; the exact video title credits Aditya Gadhavi and Mor Bani Thanghat. The watch page displayed 84K views and 1:04:54 runtime on 2026-09-29. Added from the user's exact link. This is one full-set record, not a set of separate song rows; no unverified album year or chapter timestamps are inferred."
+    }
+  ]
+}
