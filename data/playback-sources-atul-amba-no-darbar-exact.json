@@ -1,16 +1,122 @@
 {
-  "version": "0.2.0",
-  "updated": "2026-09-08",
-  "note": "Issue #240 YouTube-only reconciliation for Atul Purohit, Himali Vora and Kairavi Buch's 2022 Amba No Darbar release. Two exact Official Artist Channel auto-generated album tracks were directly recovered: Bheete Chitreli Vasaladi Ma and Chatki Re Timali. Their descriptions identify the same album, performers, 2022 Rutumbhara Entertainment copyright and 2022-07-11 release. The other seven exact Amazon tracks remain provenance-only because indexed YouTube results did not expose directly verifiable watch URLs for these exact 13-19 minute album masters; similarly titled Fagan Aayo, Chundadi Re, older Tara Vina Shyam and live United Way recordings are not substituted.",
+  "version": "0.3.0",
+  "updated": "2026-09-29",
+  "note": "Issue #240 & #1855 YouTube-only reconciliation for Atul Purohit, Himali Vora and Kairavi Buch's 2022 Amba No Darbar release. Seven exact Official Artist Channel auto-generated album tracks are verified: Bheete Chitreli Vasaladi Ma (WxekxIoRMrY), Haiye Rakhi Hom (7m3ZaNFw0PY), Medo Marvaad No (AS4bhvpXcdE), Tara Vina Shyam (D1m7JvacOcI), Kunj Bhiari Pitambar Dhari (GvGJa-dG9VY), Ke Hove Hove (YRRAox0wx40), and Chatki Re Timali (qpVu6dvbXBc) from official album playlist OLAK5uy_nnpSGzscAnMrM5XUZzUO-lqVcM_b5lj7Y. The remaining two exact Amazon tracks (1 and 3) remain provenance-only until exact YouTube watch URLs are directly recovered.",
   "songSources": {
-    "atul-amba-no-darbar-2022-01":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6J23C6D","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":1,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-02":{"provider":"youtube","videoId":"WxekxIoRMrY","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=WxekxIoRMrY","sourceType":"official-artist-channel","releaseId":"atul-amba-no-darbar-2022","trackNumber":2,"evidenceType":"official-youtube-auto-generated-album-track"},
-    "atul-amba-no-darbar-2022-03":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6J13H6W","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":3,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-04":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6J1DVG2","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":4,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-05":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6HXXT53","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":5,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-06":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6J5WLJM","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":6,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-07":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6J17WV4","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":7,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-08":{"provider":"amazon-music","sourceUrl":"https://music.amazon.es/tracks/B0B6HYN9VM","sourceType":"verified-track-source","releaseId":"atul-amba-no-darbar-2022","trackNumber":8,"evidenceType":"official-amazon-music-album-track-link","playbackRole":"provenance-only","youtubeMigrationStatus":"unresolved"},
-    "atul-amba-no-darbar-2022-09":{"provider":"youtube","videoId":"qpVu6dvbXBc","startSeconds":0,"sourceUrl":"https://www.youtube.com/watch?v=qpVu6dvbXBc","sourceType":"official-artist-channel","releaseId":"atul-amba-no-darbar-2022","trackNumber":9,"evidenceType":"official-youtube-auto-generated-album-track"}
+    "atul-amba-no-darbar-2022-01": {
+      "provider": "amazon-music",
+      "sourceUrl": "https://music.amazon.es/tracks/B0B6J23C6D",
+      "sourceType": "verified-track-source",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 1,
+      "evidenceType": "official-amazon-music-album-track-link",
+      "playbackRole": "provenance-only",
+      "youtubeMigrationStatus": "unresolved"
+    },
+    "atul-amba-no-darbar-2022-02": {
+      "provider": "youtube",
+      "videoId": "WxekxIoRMrY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=WxekxIoRMrY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-album-track"
+    },
+    "atul-amba-no-darbar-2022-03": {
+      "provider": "amazon-music",
+      "sourceUrl": "https://music.amazon.es/tracks/B0B6J13H6W",
+      "sourceType": "verified-track-source",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 3,
+      "evidenceType": "official-amazon-music-album-track-link",
+      "playbackRole": "provenance-only",
+      "youtubeMigrationStatus": "unresolved"
+    },
+    "atul-amba-no-darbar-2022-04": {
+      "provider": "youtube",
+      "videoId": "7m3ZaNFw0PY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=7m3ZaNFw0PY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 4,
+      "evidenceType": "official-youtube-auto-generated-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.es/tracks/B0B6J1DVG2",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-amba-no-darbar-2022-05": {
+      "provider": "youtube",
+      "videoId": "AS4bhvpXcdE",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=AS4bhvpXcdE",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 5,
+      "evidenceType": "official-youtube-auto-generated-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.es/tracks/B0B6HXXT53",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-amba-no-darbar-2022-06": {
+      "provider": "youtube",
+      "videoId": "D1m7JvacOcI",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=D1m7JvacOcI",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 6,
+      "evidenceType": "official-youtube-auto-generated-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.es/tracks/B0B6J5WLJM",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-amba-no-darbar-2022-07": {
+      "provider": "youtube",
+      "videoId": "GvGJa-dG9VY",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=GvGJa-dG9VY",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 7,
+      "evidenceType": "official-youtube-auto-generated-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.es/tracks/B0B6J17WV4",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-amba-no-darbar-2022-08": {
+      "provider": "youtube",
+      "videoId": "YRRAox0wx40",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=YRRAox0wx40",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 8,
+      "evidenceType": "official-youtube-auto-generated-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.es/tracks/B0B6HYN9VM",
+        "sourceType": "verified-track-source"
+      }
+    },
+    "atul-amba-no-darbar-2022-09": {
+      "provider": "youtube",
+      "videoId": "qpVu6dvbXBc",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=qpVu6dvbXBc",
+      "sourceType": "official-artist-channel",
+      "releaseId": "atul-amba-no-darbar-2022",
+      "trackNumber": 9,
+      "evidenceType": "official-youtube-auto-generated-album-track"
+    }
   }
 }
