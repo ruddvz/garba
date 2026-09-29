@@ -1,5 +1,5 @@
 {
-  "version": "0.20.11",
+  "version": "0.20.12",
   "updated": "2026-09-29",
   "chunks": [
     "sets-01.json",
@@ -48,7 +48,8 @@
     "sets-45-kirtidan-aditya-supplied-masters.json",
     "sets-46-aditya-user-supplied-fullsets.json",
     "sets-47-bandish-dakla-mixes.json",
-    "sets-48-kirtidan-playlist-masters.json"
+    "sets-48-kirtidan-playlist-masters.json",
+    "sets-49-ishtar-khelaiya-popular.json"
   ],
   "policy": {
     "officialityOrder": [
