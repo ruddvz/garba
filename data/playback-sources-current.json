@@ -1,6 +1,6 @@
 {
   "version": "0.6.3",
-  "updated": "2026-09-26",
+  "updated": "2026-09-29",
   "note": "Current exact playback overrides. Ramzat 2 additions use exact YouTube auto-generated tracks for the original 2018 Sur Sagar album only. Ramzat 5 additions use independently verified exact split recordings tied directly to the 2024 Sur Sagar album. Ramzat 2017 now includes twelve independently verified split recordings from Sur Sagar label uploads or Official Artist Channel/distributor album tracks. Continuous Ramzat masters remain discovery/full-release evidence only; no continuous-set chapter timestamp is promoted to a split track.",
   "songSources": {
     "khalasi-coke-studio-bharat-2023": {
@@ -989,6 +989,81 @@
       "trackNumber": 4,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
+    "atul-ramjo-re-2026-01": {
+      "provider": "youtube",
+      "videoId": "wHu3ZhE953Q",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=wHu3ZhE953Q",
+      "sourceType": "official-topic",
+      "releaseId": "atul-ramjo-re-2026",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "atul-ramjo-re-2026-02": {
+      "provider": "youtube",
+      "videoId": "eRinAOZH1Bo",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=eRinAOZH1Bo",
+      "sourceType": "official-topic",
+      "releaseId": "atul-ramjo-re-2026",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "atul-ramjo-re-2026-03": {
+      "provider": "youtube",
+      "videoId": "p12xH3y3ues",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=p12xH3y3ues",
+      "sourceType": "official-topic",
+      "releaseId": "atul-ramjo-re-2026",
+      "trackNumber": 3,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "atul-ramjo-re-2026-04": {
+      "provider": "youtube",
+      "videoId": "tQaGZ1ne4Js",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=tQaGZ1ne4Js",
+      "sourceType": "official-topic",
+      "releaseId": "atul-ramjo-re-2026",
+      "trackNumber": 4,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "atul-ramjo-re-2026-05": {
+      "provider": "youtube",
+      "videoId": "pozqzsjIp3o",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=pozqzsjIp3o",
+      "sourceType": "official-topic",
+      "releaseId": "atul-ramjo-re-2026",
+      "trackNumber": 5,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
     "atul-ramjo-re-2026-06": {
       "provider": "youtube",
       "videoId": "3SOoJYkA8D0",
@@ -997,7 +1072,12 @@
       "sourceType": "official-topic",
       "releaseId": "atul-ramjo-re-2026",
       "trackNumber": 6,
-      "evidenceType": "official-youtube-auto-generated-original-album-track"
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/album/3IxFhuJggZ3tRtTu9Pwul2",
+        "sourceType": "official-streaming-catalogue"
+      }
     },
     "apexa-be-taali-2025-01-non-stop-garba-be-taali-01": {
       "provider": "youtube",
@@ -1462,6 +1542,81 @@
         "provider": "apple-music",
         "sourceUrl": "https://music.apple.com/us/album/moraliyu-koyaldi-2-0/1647145150",
         "sourceType": "stream-store"
+      }
+    },
+    "zankaar2-2023-25": {
+      "provider": "youtube",
+      "videoId": "1NSJZ8fvrhQ",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=1NSJZ8fvrhQ",
+      "sourceType": "official-topic",
+      "releaseId": "zankaar2-album-2023",
+      "trackNumber": 25,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.ca/albums/B0CJKF2XTL",
+        "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "dj-rock-dandiya-2024-01-dj-rock-dandiya-nonstop-garba": {
+      "provider": "youtube",
+      "videoId": "gql61EtHeLo",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=gql61EtHeLo",
+      "sourceType": "official-topic",
+      "releaseId": "dj-rock-dandiya-2024",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/album/dj-rock-dandiya-nonstop-garba/1770289708",
+        "sourceType": "stream-store"
+      }
+    },
+    "apexa-be-taali-hour-2025-01-non-stop-garba-be-taali-1-hr-non-stop": {
+      "provider": "youtube",
+      "videoId": "rGPdgpDJ-z4",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=rGPdgpDJ-z4",
+      "sourceType": "official-topic",
+      "releaseId": "apexa-be-taali-hour-2025",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.com/tracks/B0FV8WVNY6",
+        "sourceType": "stream"
+      }
+    },
+    "diwaliben-koyal-digital-01-koyal-bethi-aambaliya-ni-dal": {
+      "provider": "youtube",
+      "videoId": "aRF6mKN9OSo",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=aRF6mKN9OSo",
+      "sourceType": "official-topic",
+      "releaseId": "diwaliben-koyal-digital",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "apple-music",
+        "sourceUrl": "https://music.apple.com/us/song/1566136266",
+        "sourceType": "stream"
+      }
+    },
+    "tari-madh-mithi-jigardan-gadhavi-2021": {
+      "provider": "youtube",
+      "videoId": "Jiojq6_676s",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=Jiojq6_676s",
+      "sourceType": "official-topic",
+      "releaseId": "tari-madh-mithi-jigardan-gadhavi-2021",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "spotify",
+        "sourceUrl": "https://open.spotify.com/track/6k0xnvHw4ZUZZDmITYkmPR",
+        "sourceType": "stream"
       }
     }
   }
