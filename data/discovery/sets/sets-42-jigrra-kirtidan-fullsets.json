@@ -1,0 +1,199 @@
+{
+  "updated": "2026-09-29",
+  "sets": [
+    {
+      "id": "set-jigrra-vrindavan-nonstop-raas-garba",
+      "title": "Vrindavan | Jigardan Gadhavi | Nonstop Raas-Garba",
+      "artists": [
+        "Jigardan Gadhavi"
+      ],
+      "categories": [
+        "traditional-garba",
+        "raas-dandiya",
+        "modern-gujarati-garba"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "_hjWm7MSV8k",
+        "url": "https://www.youtube.com/watch?v=_hjWm7MSV8k",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "29m 09s",
+      "durationSeconds": 1749,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "5.7M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Jigrra Official Artist Channel full nonstop Raas-Garba upload. The YouTube watch page displayed 5.7M views and 29:09 runtime on 2026-09-29. The oEmbed request returned HTTP 401 during verification, so this record links to the YouTube watch page and is not presented as in-app embeddable. One continuous programme; no chapter rows are created."
+    },
+    {
+      "id": "set-jigrra-khamkaro-2023",
+      "title": "Khamkaro (Non Stop Garba) | Jigardan Gadhavi | Maulik Mehta | Navratri Special 2023",
+      "artists": [
+        "Jigardan Gadhavi",
+        "Maulik Mehta"
+      ],
+      "year": 2023,
+      "categories": [
+        "traditional-garba",
+        "raas-dandiya",
+        "modern-gujarati-garba"
+      ],
+      "setType": "label-nonstop-performance",
+      "officiality": "label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "2UM6ksbxTvs",
+        "url": "https://www.youtube.com/watch?v=2UM6ksbxTvs",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "36m 11s",
+      "durationSeconds": 2171,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "3.1M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Amdavadi Beats upload; its description identifies this as a presentation by Amdavadi Beats, an initiative by Jay Bhojak. The channel is not verified, so this is kept as an external YouTube discovery link pending stronger publisher identity evidence. The watch page displayed 3.1M views and 36:11 runtime on 2026-09-29. One continuous programme; no chapter rows are created."
+    },
+    {
+      "id": "set-jigrra-shakti-nonstop-2021",
+      "title": "Shakti NonStop Garba | Jigardan Gadhavi | Navratri Special Album | Navratri 2021",
+      "artists": [
+        "Jigardan Gadhavi"
+      ],
+      "year": 2021,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional",
+        "modern-gujarati-garba"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "vW0hUKYhQdQ",
+        "url": "https://www.youtube.com/watch?v=vW0hUKYhQdQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "41m 24s",
+      "durationSeconds": 2484,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "2.7M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Zen Music Gujarati full nonstop album upload. YouTube displayed 2.7M views and 41:24 runtime on 2026-09-29. One continuous programme; no chapter rows are created."
+    },
+    {
+      "id": "set-jigrra-gokul-ni-ramzat-2",
+      "title": "Gokul Ni Ramzat 2 Non Stop Garba",
+      "artists": [
+        "Jigardan Gadhavi"
+      ],
+      "categories": [
+        "traditional-garba",
+        "raas-dandiya"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "6Pc-oagENzc",
+        "url": "https://www.youtube.com/watch?v=6Pc-oagENzc",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "53m 31s",
+      "durationSeconds": 3211,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "479K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Jigrra Official Artist Channel Topic release, attributed by YouTube to YD Music. The rendered watch page displayed 479K views and 53:31 runtime on 2026-09-29. One continuous programme; no chapter rows are created."
+    },
+    {
+      "id": "set-kirtidan-all-time-hits-2021",
+      "title": "Kirtidan Gadhvi All Time Hits | Non Stop Garba | Navratri Special 2021",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "year": 2021,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "CxGJEY-5tnU",
+        "url": "https://www.youtube.com/watch?v=CxGJEY-5tnU",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "2h 47m 33s",
+      "durationSeconds": 10053,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "30M",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati verified full-length continuous Garba collection. YouTube displayed 30M views and 2:47:33 runtime on 2026-09-29. This exact video ID was absent from the set registry despite being described as indexed in earlier research notes. One master programme; no chapter rows are created."
+    },
+    {
+      "id": "set-kirtidan-virtual-navratri-2020-day-4",
+      "title": "Live: Virtual Navratri 2020 — Day 4",
+      "artists": [
+        "Kirtidan Gadhvi",
+        "Aditya Gadhvi",
+        "Nisha Barot",
+        "Dev Bhatt"
+      ],
+      "year": 2020,
+      "series": "Virtual Navratri",
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "XBxDeuQju1w",
+        "url": "https://www.youtube.com/watch?v=XBxDeuQju1w",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "1h 04m 24s",
+      "durationSeconds": 3864,
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "167K",
+        "checkedAt": "2026-09-29"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Kirtidan Gadhvi Official Artist Channel multi-artist virtual Navratri event programme. YouTube displayed 167K views and 1:04:24 runtime on 2026-09-29. Kept as one live programme, separate from studio album counts; no chapter rows are created."
+    }
+  ]
+}
