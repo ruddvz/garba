@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "updated": "2026-09-27",
+  "updated": "2026-09-28",
   "policy": "Photographic artist artwork requires identity verification and explicit reusable licensing. Generated portrait illustrations may be shown only when explicitly marked as illustrations and must not be treated as licensed photography. Missing entries fall back to the existing visual system rather than guessing or hotlinking unverified images.",
   "artists": {
     "aditya-gadhvi": {
@@ -285,6 +285,10 @@
     },
     "rupal-doshi": {
       "illustrationUrl": "/garbo/prototype/singers/rupal-doshi.webp",
+      "illustrationType": "ai-generated-stylized-portrait"
+    },
+    "rekha-trivedi": {
+      "illustrationUrl": "/garbo/prototype/singers/rekha-trivedi.webp",
       "illustrationType": "ai-generated-stylized-portrait"
     }
   }

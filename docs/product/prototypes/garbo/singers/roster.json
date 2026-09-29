@@ -1,8 +1,8 @@
 {
   "rosterSource": "data/discovery/artists-2026-01.json",
-  "updated": "2026-09-27",
-  "rosterEntryCount": 63,
-  "humanPortraitCount": 59,
+  "updated": "2026-09-28",
+  "rosterEntryCount": 64,
+  "humanPortraitCount": 60,
   "excludedGroupActs": [
     "Aghori Muzik",
     "Bandish Projekt",
@@ -700,6 +700,19 @@
         "https://timesofindia.indiatimes.com/videos/entertainment/music/gujarati/gujarati-dandiya-garba-songs-non-stop-dandiya-raas/videoshow/66161445.cms"
       ],
       "portraitNotes": "Also billed as Rupal Doshi Shah. AI-generated stylized face-only portrait guided by the singer feature collage; the music credits confirm singer identity, and reference imagery is not a license."
+    },
+    {
+      "artist": "Rekha Trivedi",
+      "artistId": "rekha-trivedi",
+      "tier": "legacy-core",
+      "songCount": 11,
+      "portrait": "rekha-trivedi.webp",
+      "sourceReferences": [
+        "https://music.apple.com/us/artist/rekha-trivedi/1194024219",
+        "https://www.baps.org/Publications/Audios/Kirtan/Garbe-Ghumie-Sang-Harine-99.aspx",
+        "https://www.youtube.com/watch?v=vKhuMEfrVrI"
+      ],
+      "portraitNotes": "AI-generated stylized face-only illustration based on the labeled singer photo and verified performer/repertoire sources; references guide likeness and are not licenses."
     }
   ]
 }
