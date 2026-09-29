@@ -233,7 +233,7 @@ function playCollections() {
     byArtist.get(key).songs.push(song);
   }));
   const artists = [...byArtist.entries()].map(([key, entry]) => ({ id: `artist:${key}`, kind: 'artist', title: entry.name, ids: entry.songs.map((song) => song.id), playable: entry.songs.filter(canExecuteSong).length }))
-    .filter((list) => list.playable >= ARTIST_MIN_SONGS)
+    .filter((list) => list.playable >= ARTIST_MIN_SONGS || list.ids.length >= ARTIST_MIN_SONGS)
     .sort((a, b) => b.playable - a.playable || a.title.localeCompare(b.title));
   const list = [...steps, ...artists];
   playCollectionsCache = { songs: state.songs, broken: brokenVideos.size, list };
@@ -2526,12 +2526,17 @@ async function fetchCatalogue() {
   if (window.GARBA_FAST_BOOT?.hydrate && !window.GARBA_FAST_BOOT.hydrated) {
     try { await window.GARBA_FAST_BOOT.hydrate(); } catch {}
   }
-  const [genresResponse, songsResponse] = await Promise.all([
+  const [genresResponse, songsResponse, releasesResponse] = await Promise.all([
     fetch('data/genres.json', { cache: 'no-store' }),
     fetch('data/songs.json', { cache: 'no-store' }),
+    fetch('data/releases.json', { cache: 'no-store' }).catch(() => null),
   ]);
   if (!genresResponse.ok || !songsResponse.ok) throw new Error('Failed to load catalogue');
-  const [genres, allSongs] = await Promise.all([genresResponse.json(), songsResponse.json()]);
+  const [genres, allSongs, releases] = await Promise.all([
+    genresResponse.json(),
+    songsResponse.json(),
+    releasesResponse && releasesResponse.ok ? releasesResponse.json() : [],
+  ]);
   const songs = [];
   const presentationRedirects = new Map();
   for (const song of allSongs) {
@@ -2539,7 +2544,7 @@ async function fetchCatalogue() {
     if (role === 'catalogue') songs.push(song);
     else if (song?.id) presentationRedirects.set(song.id, song);
   }
-  return { genres, songs, presentationRedirects };
+  return { genres, songs, presentationRedirects, releases: Array.isArray(releases) ? releases : [] };
 }
 
 function makeCatalogueSignature(genres, songs) {
@@ -2557,6 +2562,8 @@ async function refreshCatalogue({ quiet = false } = {}) {
     state.genres = next.genres;
     state.songs = withMySongs(next.songs, { reload: true });
     state.presentationRedirects = next.presentationRedirects;
+    state.releases = next.releases || [];
+    state.releaseById = new Map((state.releases || []).map((r) => [r.id, r]));
     if (state.releaseContextId && !releaseContextMatch(state.releaseContextId, state.releaseContextSongId || state.songId)) {
       clearReleaseContext();
     }
@@ -2713,6 +2720,8 @@ async function init() {
     state.genres = catalogue.genres;
     state.songs = withMySongs(catalogue.songs, { reload: true });
     state.presentationRedirects = catalogue.presentationRedirects;
+    state.releases = catalogue.releases || [];
+    state.releaseById = new Map((state.releases || []).map((r) => [r.id, r]));
     reconcilePresentationFavourites();
     sanitiseManualQueue();
     state.catalogueSignature = makeCatalogueSignature(state.genres, catalogue.songs);
@@ -3260,15 +3269,18 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
       nonstop: window.GARBA_NONSTOP?.activeSet ? {
         id: window.GARBA_NONSTOP.activeSet.id,
         title: window.GARBA_NONSTOP.activeSet.title,
+        artists: window.GARBA_NONSTOP.activeSet.artists || [],
       } : null,
     };
     if (includeCatalogue) {
       snapshot.genres = state.genres.map(({ id, name, label }) => ({ id, name, label }));
       const order = playableOrder();
       const ordered = order ? order.order(state.songs) : state.songs;
+      const releaseMap = state.releaseById || new Map();
       snapshot.songs = ordered.map((item) => {
         const vid = youtubeVideoId(item);
         const tier = order ? order.tier(item) : PLAYABLE_TIER.UNAVAILABLE;
+        const rel = releaseMap.get(item.releaseId);
         return {
           id: item.id,
           title: item.title,
@@ -3281,6 +3293,7 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
           isChapter: tier === PLAYABLE_TIER.CHAPTER,
           // Searching "aarti" finds the songs tagged as one, not only those with the word in their title
           aarti: Array.isArray(item.styles) && item.styles.some((style) => String(style).toLowerCase() === 'aarti'),
+          release: rel ? { id: rel.id, title: rel.title, year: rel.originalReleaseYear || null } : null,
         };
       });
       snapshot.collections = playCollections().map(({ id, kind, title, ids, playable }) => ({ id, kind, title, ids, playable }));

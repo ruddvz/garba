@@ -202,6 +202,30 @@
         "https://open.spotify.com/artist/1JG9IqksUz2jJw6J6Rku0o",
         "https://timesofindia.indiatimes.com/entertainment/gujarati/music/vikram-thakor-singer/actor-ready-with-new-religious-album/articleshow/39536877.cms"
       ]
+    },
+    {
+      "id": "nishad-soni",
+      "name": "Nishad Soni",
+      "aliases": [],
+      "tier": "emerging-current",
+      "garbaFootprint": [
+        "modern-garba",
+        "navratri",
+        "nonstop"
+      ],
+      "notable": [
+        "Mahamaya",
+        "Mahamaya Dakla"
+      ],
+      "signals": [
+        "official-artist-channel",
+        "current-release-2026"
+      ],
+      "sources": [
+        "https://www.youtube.com/watch?v=a6FyIel2Gj0",
+        "https://music.amazon.es/albums/B0HGV5QY1Q",
+        "https://music.apple.com/us/artist/nishad-soni/1462936934"
+      ]
     }
   ]
 }
