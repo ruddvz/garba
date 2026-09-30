@@ -1,0 +1,44 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-falguni-pathak-non-stop-garba-topic-2025",
+      "title": "Falguni Pathak Non Stop Garba",
+      "artists": [
+        "Falguni Pathak",
+        "Tushaar Trivedi",
+        "Kanchan Soni",
+        "Bindu Sailor",
+        "Bhavisha Vora"
+      ],
+      "year": 2025,
+      "series": "Non Stop Garba",
+      "setType": "official-streaming-nonstop",
+      "officiality": "official-topic",
+      "source": {
+        "provider": "youtube",
+        "videoId": "P9WYJZUR8sQ",
+        "url": "https://www.youtube.com/watch?v=P9WYJZUR8sQ",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Garba Songs",
+          "url": "https://www.youtube.com/playlist?list=OLAK5uy_lCPuDcZLLMM7Sm9ed2SSmqwzjLhfhIb08"
+        }
+      ],
+      "linkedReleaseId": null,
+      "durationSeconds": 4616,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "sourceRuntimeDisplay": "1h 16m 56s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "140,237",
+        "checkedAt": "2026-09-30"
+      },
+      "notes": "Official Media Nova YouTube Topic upload. The rendered page identifies the 2025 release date, ℗ 2025 Music Nova, and one auto-generated Music entry; the playback duration is 1:16:56 and the page displayed 140,237 views on 2026-09-30. The title resembles catalogue Falguni Pathak Non Stop Garba releases, but the catalogue 2023 entry has a 45-minute platform-summary duration and a different release year. Exact release/master identity is unresolved, so this is kept as one standalone full-set discovery record with no linkedReleaseId and no song-level route."
+    }
+  ]
+}
