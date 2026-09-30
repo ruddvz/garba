@@ -1,0 +1,45 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-falguni-pathak-hits-non-stop-garba-2017-topic",
+      "title": "Hits Of Falguni Pathak Non Stop Garba 2017",
+      "displayTitle": "Hits Of Falguni Pathak Nonstop Garba 2017",
+      "artists": [
+        "Falguni Pathak",
+        "Kishore Manraja",
+        "Hema Pandit",
+        "Jayshree Bhojjavia",
+        "Pallav Pandya"
+      ],
+      "categories": ["traditional-garba"],
+      "year": 2017,
+      "series": "Non Stop Garba",
+      "setType": "official-streaming-nonstop",
+      "officiality": "official-topic",
+      "source": {
+        "provider": "youtube",
+        "videoId": "T80Ff9th_Mo",
+        "url": "https://www.youtube.com/watch?v=T80Ff9th_Mo",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "Hits Of Falguni Pathak Non Stop Garba 2017",
+          "url": "https://www.youtube.com/playlist?list=OLAK5uy_m2rMYgQmruIn8mSB6CmH-kU-Fbo1lVf5U"
+        }
+      ],
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "sourceRuntimeDisplay": "48 minutes",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "209K",
+        "checkedAt": "2026-09-30"
+      },
+      "notes": "Official Falguni Pathak - Topic upload. The YouTube description says it was provided to YouTube by Super Cassettes Industries Private Limited and credits Falguni Pathak, Kishore Manraja, Hema Pandit, Jayshree Bhojjavia and Pallav Pandya. The rendered YouTube page displayed 209K views; YouTube search showed a 48-minute runtime on 2026-09-30. YouTube Music exposes this one-item album playlist. No matching catalogue release identity was established, so it is recorded as one full-set master with no song-level routes or linkedReleaseId."
+    }
+  ]
+}
