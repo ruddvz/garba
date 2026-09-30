@@ -1,0 +1,58 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-rangoli-tahuko-15-2023-soor-mandir",
+      "title": "રંગોલી | Rangoli | Tahuko 15 | Nonstop Navratri Garba | Hemant Chauhan, Pamela Jain | Garba Songs",
+      "artists": ["Hemant Chauhan", "Pamela Jain", "Shailendra Bharti"],
+      "year": 2023,
+      "series": "Tahuko",
+      "volume": "15",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "MJy-eAf2Bm4",
+        "url": "https://www.youtube.com/watch?v=MJy-eAf2Bm4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "sourceRuntimeDisplay": "59m 45s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "157,951",
+        "checkedAt": "2026-09-30"
+      },
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {"title": "Tu Kali Ne Kalyani Re", "startSeconds": 0},
+        {"title": "Taro Hariyo Dungar", "startSeconds": 272},
+        {"title": "He Madi Mari Ramva", "startSeconds": 453},
+        {"title": "Dholida Tu Aevo Te Dhhol", "startSeconds": 589},
+        {"title": "Aabhlani Odhi Maa", "startSeconds": 756},
+        {"title": "Mari Ambaye Odhi Rang", "startSeconds": 897},
+        {"title": "Bar Bar Mahine Aavya", "startSeconds": 1033},
+        {"title": "Pawama Pava Vage Mata", "startSeconds": 1171},
+        {"title": "Hazara Hajur Chhe Aa Kaljug", "startSeconds": 1366},
+        {"title": "Chhod Chhod Re Patai Maro", "startSeconds": 1515},
+        {"title": "Chamunda Chhe Ranchandi", "startSeconds": 1614},
+        {"title": "Nortani Rat Chhe", "startSeconds": 1793},
+        {"title": "Garbe Ramta Gaje Trilok", "startSeconds": 1942},
+        {"title": "Kesariyo Rang Tane", "startSeconds": 2120},
+        {"title": "Mare Aangde Amba Aaya", "startSeconds": 2283},
+        {"title": "Garbe Rame Ambe Garbe", "startSeconds": 2427},
+        {"title": "Kali Matwali Mari Maa", "startSeconds": 2588},
+        {"title": "Ponch Entono Pawagadh", "startSeconds": 2758},
+        {"title": "Tehu Tehu Moraliyo", "startSeconds": 2932},
+        {"title": "Chakkaradi Bhammardi", "startSeconds": 3048},
+        {"title": "Jay Jay Ambe Jay Jay Ambe", "startSeconds": 3184},
+        {"title": "Devi Brahmani Rudhrani", "startSeconds": 3357},
+        {"title": "Sarva Mangal", "startSeconds": 3498}
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "One continuous Rangoli / Tahuko 15 Navratri Garba recording from Soor Mandir Audio Jukebox's verified label channel. The rendered watch page confirmed the 59:45 duration, 157,951 views, and an Oct 4, 2023 upload date; its description credits Hemant Chauhan, Pamela Jain, Shailendra Bharti, music by Brij Joshi, traditional lyrics, Gujarati language, devotional genre, and Soor Mandir. All 23 source-published chapter starts are retained as metadata inside this one full-set item; none has a separate playback route. The description's untimed text list includes an additional title not present in the 23 timed chapters, so it is not assigned an invented start. No exact canonical release record was found, so linkedReleaseId remains null."
+    }
+  ]
+}
