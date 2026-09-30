@@ -1,0 +1,32 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-uwb-2024-day2",
+      "title": "Atul Purohit - United Way 2024 - Day 2",
+      "artists": ["Atul Purohit", "Jigna Dashputre"],
+      "year": 2024,
+      "series": "United Way of Baroda Garba Mahotsav",
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "PWhKIfRiSDo",
+        "url": "https://www.youtube.com/watch?v=PWhKIfRiSDo",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit Official artist-channel live recording. The description credits singers Atul Purohit and Jigna Dashputre, music by Iqbal Meer, and rhythm/chorus by Rutumbhara Group. The watch page displayed 196K views and a 1:39:16 runtime, and playback started (checked 2026-09-30). Preserved as one event programme with no song or chapter rows inferred.",
+      "sourceRuntimeDisplay": "1h 39m 16s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "196K",
+        "checkedAt": "2026-09-30"
+      },
+      "durationSeconds": 5956
+    }
+  ]
+}

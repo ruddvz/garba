@@ -1,5 +1,5 @@
 {
-  "version": "0.20.26",
+  "version": "0.20.27",
   "updated": "2026-09-30",
   "chunks": [
     "sets-01.json",
@@ -72,7 +72,8 @@
     "sets-69-tahuko18-19.json",
     "sets-70-tahuko16.json",
     "sets-71-atul-uwb2022-day1.json",
-    "sets-72-uwb2022-days4-6.json"
+    "sets-72-uwb2022-days4-6.json",
+    "sets-73-atul-uwb2024-day2.json"
   ],
   "policy": {
     "officialityOrder": [
