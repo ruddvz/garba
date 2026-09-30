@@ -1,0 +1,57 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-falguni-pathak-garba-nights-tips",
+      "title": "Falguni Pathak Garba Songs | Garba Nights | Nonstop Gujarati Garba Hits | Dandiya Songs",
+      "artists": ["Falguni Pathak"],
+      "categories": ["traditional-garba", "raas-dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "l8B1cJLOZB0",
+        "url": "https://www.youtube.com/watch?v=l8B1cJLOZB0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3696,
+      "sourceRuntimeDisplay": "1h 1m 36s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "67K",
+        "checkedAt": "2026-09-30"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Tips Gujarati's verified channel page identifies the upload as a Garba medley and describes traditional Gujarati Garba compositions; the rendered watch page displayed 67K views and the search result showed a 1:01:36 runtime on 2026-09-30. The expanded description credits Falguni Pathak as singer, additional vocals by Tushar Trivedi, Vivian Richard and Parth Pandya, chorus by Kanchan Soni, Bindu Sailor and Bhavisha Vora, music programming by Vivian Richard, and rhythm arrangement/conducting by Jatin Pansaniya. YouTube Music associates one item, ‘Garba Nights with Falguni Pathak.’ No exact catalogue release identity or source playlist URL was established, so this remains one continuous full-set discovery entry without chapter or song routes."
+    },
+    {
+      "id": "set-falguni-pathak-nonstop-garba-tips-2024-title",
+      "title": "Navratri Special - Falguni Pathak Hits | The Queen of Dandiya | Falguni Pathak's Non-Stop Garba 2024",
+      "artists": ["Falguni Pathak"],
+      "categories": ["traditional-garba", "raas-dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "7VcZ7FtJ6S4",
+        "url": "https://www.youtube.com/watch?v=7VcZ7FtJ6S4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3232,
+      "sourceRuntimeDisplay": "53m 52s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "397,486",
+        "checkedAt": "2026-09-30"
+      },
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Tips Gujarati's verified channel watch page displayed 397,486 views, a 53:52 runtime and an upload date of 2024-10-05 on 2026-09-30. Its title calls it Non-Stop Garba 2024, while the description says 2023 and the YouTube Music panel labels the one-item audio jukebox as ‘Nonstop Garba Songs | Falguni Pathak Audio Jukebox’ by Various. The conflicting release-year/artist presentation is preserved; no release year, exact catalogue match or separate song routes are asserted. Kept as one continuous set."
+    }
+  ]
+}

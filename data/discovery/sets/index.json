@@ -1,6 +1,6 @@
 {
   "version": "0.20.19",
-  "updated": "2026-09-29",
+  "updated": "2026-09-30",
   "chunks": [
     "sets-01.json",
     "sets-02.json",
@@ -56,7 +56,8 @@
     "sets-53-sursagar-ultimate-playlist.json",
     "sets-54-popular-longform-masters.json",
     "sets-55-falguni-navratri-2023.json",
-    "sets-56-falguni-topic-master.json"
+    "sets-56-falguni-topic-master.json",
+    "sets-57-falguni-tips-gujarati-masters.json"
   ],
   "policy": {
     "officialityOrder": [
