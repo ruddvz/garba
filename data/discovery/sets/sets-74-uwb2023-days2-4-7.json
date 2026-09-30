@@ -1,0 +1,86 @@
+{
+  "updated": "2026-09-30",
+  "sets": [
+    {
+      "id": "set-uwb-2023-day2",
+      "title": "Atul Purohit - United Way 2023 - Day 2",
+      "artists": ["Atul Purohit"],
+      "year": 2023,
+      "series": "United Way of Baroda Garba Mahotsav",
+      "setType": "live-full-set",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "KTsGVuznOQY",
+        "url": "https://www.youtube.com/watch?v=KTsGVuznOQY",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official Atul Purohit Official artist-channel full-night recording. The watch page displayed 111K views and a 2:50:02 runtime; playback started (checked 2026-09-30). Preserved as one continuous live programme with no song or chapter rows inferred.",
+      "sourceRuntimeDisplay": "2h 50m 02s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "111K",
+        "checkedAt": "2026-09-30"
+      },
+      "durationSeconds": 10202
+    },
+    {
+      "id": "set-uwb-2023-day4",
+      "title": "United Way Of Baroda - Garba Mahotsav 2023 By Atul Purohit - Day 4",
+      "artists": ["Atul Purohit"],
+      "year": 2023,
+      "series": "United Way of Baroda Garba Mahotsav",
+      "setType": "live-full-set",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "sUwwV6Xxoj4",
+        "url": "https://www.youtube.com/watch?v=sUwwV6Xxoj4",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official United Way of Baroda event-channel recording. The watch page displayed 379K views and the player reported a 3:16:56 runtime; playback started (checked 2026-09-30). Preserved as one continuous live-night programme with no song or chapter rows inferred.",
+      "sourceRuntimeDisplay": "3h 16m 56s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "379K",
+        "checkedAt": "2026-09-30"
+      },
+      "durationSeconds": 11816
+    },
+    {
+      "id": "set-uwb-2023-day7",
+      "title": "United Way Of Baroda - Garba Mahotsav 2023 By Atul Purohit - Day 7",
+      "artists": ["Atul Purohit"],
+      "year": 2023,
+      "series": "United Way of Baroda Garba Mahotsav",
+      "setType": "live-full-set",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "6kau8bDY7_k",
+        "url": "https://www.youtube.com/watch?v=6kau8bDY7_k",
+        "embeddable": false
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-external-visible",
+      "notes": "Official United Way of Baroda event-channel recording. The watch page displayed 274K views and the player reported a 3:08:37 runtime; playback started (checked 2026-09-30). Preserved as one continuous live-night programme with no song or chapter rows inferred.",
+      "sourceRuntimeDisplay": "3h 08m 37s",
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "274K",
+        "checkedAt": "2026-09-30"
+      },
+      "durationSeconds": 11317
+    }
+  ]
+}
