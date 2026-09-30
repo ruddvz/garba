@@ -386,10 +386,31 @@
         "embeddable": true
       },
       "linkedReleaseId": null,
-      "segments": [],
-      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "segments": [
+        { "title": "Chhand", "startSeconds": 0, "endSeconds": 111 },
+        { "title": "Maa Pava Te Gadh Thi", "startSeconds": 111, "endSeconds": 372 },
+        { "title": "Mane Panche Te Garba", "startSeconds": 372, "endSeconds": 620 },
+        { "title": "Patai Raja Garbadiya", "startSeconds": 620, "endSeconds": 923 },
+        { "title": "Aavi Asho Sud Aajwadi", "startSeconds": 923, "endSeconds": 1154 },
+        { "title": "Aadhyashakti Tuj Ne Namu", "startSeconds": 1154, "endSeconds": 1428 },
+        { "title": "Chehar Ma Garbe Ramva", "startSeconds": 1428, "endSeconds": 1589 },
+        { "title": "Moraliyo", "startSeconds": 1589, "endSeconds": 1791 },
+        { "title": "Amar Tu Rakhaje Maa", "startSeconds": 1791, "endSeconds": 2006 },
+        { "title": "Dhire Dhire Chundadi Ae Rang", "startSeconds": 2006, "endSeconds": 2200 },
+        { "title": "Lavo Kankuliyane Chokhaliya", "startSeconds": 2200, "endSeconds": 2397 },
+        { "title": "Shu Bethi Maa Pag Upar Pag", "startSeconds": 2397, "endSeconds": 2568 },
+        { "title": "Aevo Rudo Ne Rupado", "startSeconds": 2568, "endSeconds": 2825 },
+        { "title": "Maiya Mangu Tari Paas", "startSeconds": 2825, "endSeconds": 2964 },
+        { "title": "Kanku Bhareli Re", "startSeconds": 2964, "endSeconds": 3224 },
+        { "title": "Martoli Dakla Vagya", "startSeconds": 3224, "endSeconds": 3312 },
+        { "title": "Mari Mahisagar Ni Aare", "startSeconds": 3312, "endSeconds": 3392 },
+        { "title": "Tahuka Karto Jay Mataji", "startSeconds": 3392, "endSeconds": 3604 }
+      ],
+      "segmentRouting": "metadata-only",
+      "chapterStatus": "published-complete",
+      "viewSnapshot": { "provider": "youtube", "displayed": "10,334,288", "checkedAt": "2026-09-30" },
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Verified label-channel continuous set. YouTube watch-page snapshot on 2026-09-29 showed 10M views. Kept as one full-set item; no chapter starts are routed."
+      "notes": "Verified Soor Mandir Audio Jukebox continuous set. The official description publishes 18 chapter starts, preserved as metadata-only navigation within this single full-set item; none are separate playable song routes. Watch-page snapshot: 10,334,288 views on 2026-09-30. Description credits Kanu Patel (singer), Appu (music), and Soor Mandir (label). No exact canonical release match was verified, so linkedReleaseId remains null."
     },
     {
       "id": "set-zhanjar-nonstop-gujarati-garba",
