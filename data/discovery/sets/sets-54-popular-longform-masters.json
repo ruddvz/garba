@@ -4,14 +4,29 @@
     {
       "id": "set-soor-mandir-rang-dholi-nonstop",
       "title": "Soor Mandir NonStop Garba",
-      "artists": ["Hemant Chauhan", "Pamela Jain"],
-      "categories": ["traditional-garba", "tran-taali"],
+      "artists": [
+        "Hemant Chauhan",
+        "Pamela Jain"
+      ],
+      "categories": [
+        "traditional-garba",
+        "tran-taali"
+      ],
       "setType": "verified-label-nonstop",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "CT2A0fuDbsA", "url": "https://www.youtube.com/watch?v=CT2A0fuDbsA", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "CT2A0fuDbsA",
+        "url": "https://www.youtube.com/watch?v=CT2A0fuDbsA",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "2 hours, 3 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "1.9M", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "1.9M",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -21,13 +36,26 @@
       "id": "set-soor-mandir-thanganat-live-gori-tu-garbe-haal-re",
       "title": "Soor Mandir Nonstop Garba | Gori Tu Garbe Haal Re | Thanganat for live",
       "artists": [],
-      "categories": ["traditional-garba", "live-garba", "tran-taali"],
+      "categories": [
+        "traditional-garba",
+        "live-garba",
+        "tran-taali"
+      ],
       "setType": "live-full-set",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "inP6R9pTNJc", "url": "https://www.youtube.com/watch?v=inP6R9pTNJc", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "inP6R9pTNJc",
+        "url": "https://www.youtube.com/watch?v=inP6R9pTNJc",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "2 hours, 21 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "65K", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "65K",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -37,13 +65,25 @@
       "id": "set-soor-mandir-tran-taali-best-of-nonstop",
       "title": "Tran Tali Nonstop Garba | Best Of Soor Mandir Garba | Non Stop Navratri Garba",
       "artists": [],
-      "categories": ["traditional-garba", "tran-taali"],
+      "categories": [
+        "traditional-garba",
+        "tran-taali"
+      ],
       "setType": "verified-label-nonstop",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "KVFy1ck9qgo", "url": "https://www.youtube.com/watch?v=KVFy1ck9qgo", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "KVFy1ck9qgo",
+        "url": "https://www.youtube.com/watch?v=KVFy1ck9qgo",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "1 hour, 26 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "1.5M", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "1.5M",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -53,13 +93,25 @@
       "id": "set-soor-mandir-tahukaar-sone-ki-chhadi",
       "title": "Soor Mandir Garba | Tahukaar | Sone Ki Chhadi | Navratri Nonstop Garba",
       "artists": [],
-      "categories": ["traditional-garba", "mataji-devotional"],
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
       "setType": "verified-label-nonstop",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "XCWKZtKGmzc", "url": "https://www.youtube.com/watch?v=XCWKZtKGmzc", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "XCWKZtKGmzc",
+        "url": "https://www.youtube.com/watch?v=XCWKZtKGmzc",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "2 hours, 1 minute",
-      "viewSnapshot": {"provider": "youtube", "displayed": "427K", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "427K",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -68,14 +120,31 @@
     {
       "id": "set-soor-mandir-o-gori-fusion-garba-jukebox",
       "title": "ઓ ગોરી | O Gori Garba | Nonstop Fusion Garba Audio Jukebox | Appu, Suchita, Nila | Navratri Songs",
-      "artists": ["Appu", "Suchita", "Nila"],
-      "categories": ["fusion", "modern-gujarati-garba", "raas-dandiya"],
+      "artists": [
+        "Appu",
+        "Suchita",
+        "Nila"
+      ],
+      "categories": [
+        "fusion",
+        "modern-gujarati-garba",
+        "raas-dandiya"
+      ],
       "setType": "verified-label-audio-jukebox",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "0jXVxbkXfwo", "url": "https://www.youtube.com/watch?v=0jXVxbkXfwo", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "0jXVxbkXfwo",
+        "url": "https://www.youtube.com/watch?v=0jXVxbkXfwo",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "51 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "10M", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "10M",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -84,16 +153,35 @@
     {
       "id": "set-soor-mandir-ramto-bhamto-jay-part-3",
       "title": "Ramto Bhamto Jay Part 3 | Hemant Chauhan | Non Stop Garba | New Trending Gujarati Garba 2024",
-      "artists": ["Hemant Chauhan"],
+      "artists": [
+        "Hemant Chauhan"
+      ],
       "year": 2024,
-      "categories": ["traditional-garba", "mataji-devotional"],
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
       "setType": "verified-label-nonstop",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "Woj61wUyj1M", "url": "https://www.youtube.com/watch?v=Woj61wUyj1M", "embeddable": true},
-      "sourcePlaylists": [{"title": "New Raas - Garba - Gujarati Song", "url": "https://www.youtube.com/playlist?list=PLiOkCwQzPydzmW7YUiJsg_RUZB0J94GZf"}],
+      "source": {
+        "provider": "youtube",
+        "videoId": "Woj61wUyj1M",
+        "url": "https://www.youtube.com/watch?v=Woj61wUyj1M",
+        "embeddable": true
+      },
+      "sourcePlaylists": [
+        {
+          "title": "New Raas - Garba - Gujarati Song",
+          "url": "https://www.youtube.com/playlist?list=PLiOkCwQzPydzmW7YUiJsg_RUZB0J94GZf"
+        }
+      ],
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "50 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "346K", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "346K",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "full-set-only-no-chapter-evidence",
       "playbackPolicy": "youtube-embed-visible",
@@ -103,17 +191,59 @@
       "id": "set-ivy-meshwa-prachin-devotional-garba",
       "title": "Prachin Garba | Gujarati Devotional Garba |",
       "artists": [],
-      "categories": ["traditional-garba", "devotional", "mataji-devotional"],
+      "categories": [
+        "traditional-garba",
+        "devotional",
+        "mataji-devotional"
+      ],
       "setType": "verified-label-audio-jukebox",
       "officiality": "verified-label-channel",
-      "source": {"provider": "youtube", "videoId": "TWkXlZgbFYo", "url": "https://www.youtube.com/watch?v=TWkXlZgbFYo", "embeddable": true},
+      "source": {
+        "provider": "youtube",
+        "videoId": "TWkXlZgbFYo",
+        "url": "https://www.youtube.com/watch?v=TWkXlZgbFYo",
+        "embeddable": true
+      },
       "linkedReleaseId": null,
       "sourceRuntimeDisplay": "3 hours, 13 minutes",
-      "viewSnapshot": {"provider": "youtube", "displayed": "2.6M", "checkedAt": "2026-09-29"},
+      "viewSnapshot": {
+        "provider": "youtube",
+        "displayed": "2.6M",
+        "checkedAt": "2026-09-29"
+      },
       "segments": [],
       "chapterStatus": "source-tracklist-no-timestamps",
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Rendered YouTube watch/search results identify the verified IVY Meshwa Films channel and show 2.6M views and a 3-hour-13-minute runtime on 2026-09-29. The title and description identify this as Gujarati devotional/Mataji Garba. Search results surfaced 27 chapter labels, but their timestamps were not verified here; the labels are not separate set/song records and no chapter routes are inferred. Performer credits and release year are omitted because they were not established."
+      "notes": "Rendered YouTube search results identify the verified IVY Meshwa Films channel and show 2.6M views and a 3-hour-13-minute runtime on 2026-09-29. The title and description identify this as Gujarati devotional/Mataji Garba. The same rendered result exposed 27 chapter labels, preserved in tracklist metadata below; exact start timestamps were not verified, so no chapter routes are inferred. The tracklist remains inside this one continuous master and does not create separate set/song records. Performer credits and release year are omitted because they were not established.",
+      "tracklist": [
+        "આદ્યશક્તિ તુજને નમું રે બહુચરા",
+        "એવું પડવેથી પહેલું માનું નોરતું",
+        "આતો મારા માડીનો રથનો રણકાર",
+        "કુમકુમ કેરા પગલે માડી ગરબે રમવા",
+        "તું કાળીને કલ્યાણી રે માં",
+        "આવ્યા દિવડીએ ઝગમગતા માંના નોરતા",
+        "કુમકુમનાં પગલા પડયા",
+        "સાચી રે મારી સત રે ભવાની",
+        "ઘોર અંધારી રે રાતલડીમાં",
+        "માં પાવા તે ગઢથી",
+        "માંનો ગરબો રે રમે રાજને દરબાર",
+        "હે રૂડે ગરબે રે રમે દેવી અંબિકા રે",
+        "રમે અંબે ચાચરના ચોકમાં",
+        "આજ ગગનથી ચંદન ઢોળાય રે",
+        "કોઈ આરાસુર જઈને મનાવો",
+        "આરાસુરે અંબા બિરાજે",
+        "માંએ ગરબો કોરાવ્યો ગગન ગોખમાં",
+        "આવી આસોની રઢિયાળી રાત મોરીમાં",
+        "બિરદાળી બહુચરબાળી શંખલપુરવાળી",
+        "માંનો ગરબો કોરાવ્યો ચાચર ચોકમાં",
+        "ચાચર ચોકમાં ગરબો જામ્યો",
+        "મેંતો શણગાર્યો ચાચર ચોક",
+        "શંખલપુરની શેરીઓ માં અંબામાંને કાજે",
+        "છુમમક છુમમક થાય માડીનું ઝાંઝર",
+        "જય આધ્યાશક્તિ (આરતી)",
+        "વિશ્વંભરી સ્તુતિ",
+        "આરાસુરનાં અંબેમાં જમવા વહેલા (થાળ)"
+      ]
     }
   ]
 }
