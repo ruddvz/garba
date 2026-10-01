@@ -78,7 +78,7 @@
     {
       "id": "deployment",
       "label": "Hosting, deployment and canonical domain",
-      "keywords": ["deploy", "deployment", "production", "github pages", "vercel", "dns", "domain", "cname", "hosting", "live site"],
+      "keywords": ["deploy", "deployment", "production", "github pages", "dns", "domain", "cname", "hosting", "live site"],
       "truthSources": ["docs/operations/**", "CNAME", ".github/workflows/**"],
       "likelyFiles": ["CNAME", ".github/workflows/**", "docs/operations/**"],
       "risks": ["wrong canonical domain", "deployment drift", "production verification gap"]

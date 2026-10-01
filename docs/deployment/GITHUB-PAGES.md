@@ -28,4 +28,4 @@ GitHub's current custom-domain guidance is the source of truth for Pages DNS and
 
 Before changing DNS, verify the default Pages URL serves `/`, `/explore/`, all supporting pages, `manifest.webmanifest`, `sw.js`, `robots.txt`, `sitemap.xml`, and the generated social preview. After DNS propagation, verify the same paths on the apex, that `www` redirects, and that the retired `live` host no longer serves a second application.
 
-The Vercel project is not part of the production path. Keep it only as a temporary rollback reference until the Pages custom domain, DNS, HTTPS certificate and browser smoke checks are all green; then disconnect its repository integration without deleting unrelated account data.
+GitHub Pages is the only configured production host. The repository does not retain a secondary deployment or preview path.

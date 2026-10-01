@@ -38,7 +38,6 @@ const requiredRootFiles = new Set([
   'styles.css',
   'sw.js',
   'TRADEMARKS.md',
-  'vercel.json',
   'youtube-player-runtime.js',
 ]);
 const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
@@ -78,6 +77,13 @@ const styleEntry = await read('styles.css');
 const expectedImports = styleLayers.map((file) => `@import url("styles/${file}");`).join('\n') + '\n';
 if (styleEntry !== expectedImports) fail('styles.css import order does not match the semantic layer contract');
 
+for (const file of [
+  'vercel.json',
+  '.github/workflows/vercel-preview-validate.yml',
+  'scripts/build-vercel-site.mjs',
+  'scripts/lib/validate-vercel-site.mjs',
+]) if (await exists(file)) fail(`Retired Vercel deployment scaffolding must not remain: ${file}`);
+
 if (!await exists('assets/backgrounds/garba15-2k.zip')) fail('Canonical artwork pack assets/backgrounds/garba15-2k.zip is missing');
 if (await exists('assets/backgrounds/garba15-2k-q82.zip')) fail('Legacy artwork alias garba15-2k-q82.zip must not coexist with the canonical filename');
 
@@ -107,7 +113,6 @@ const expectedScriptEntrypoints = [
   'audit-direct-host-health.mjs',
   'audit-youtube-health.mjs',
   'build-catalogue.mjs',
-  'build-vercel-site.mjs',
   'enforce-protected-main.mjs',
   'enrich-runtime-songs.mjs',
   'generate-licensing-request.mjs',
@@ -307,5 +312,5 @@ ok('catalogue is one crawlable page with in-page collection, release and song st
 ok('verified album-artwork manifest is required and fake artwork is not part of the contract');
 ok('standalone song/release SEO page generation is retired and guarded against');
 ok('Pages deployment uses explicit runtime and stylesheet contracts');
-ok('Vercel preview configuration is repository-approved while Pages remains canonical');
+ok('GitHub Pages is the only production host and retired Vercel deployment scaffolding is absent');
 ok('single Pages artifact serves the player at the apex with legacy compatibility paths');

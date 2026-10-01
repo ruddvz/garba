@@ -16,25 +16,15 @@ const exists = async (file) => {
 const read = (file) => readFile(path.join(root, file), 'utf8');
 const readJson = async (file) => JSON.parse(await read(file));
 
-export function classifyHostOwnership({
-  cnameContent = '',
-  hasVercelConfig = false,
-  hasVercelMetadata = false,
-} = {}) {
+export function classifyHostOwnership({ cnameContent = '' } = {}) {
   const cname = String(cnameContent || '').trim();
   const errors = [];
-
-  if (hasVercelMetadata) {
-    errors.push('.vercel/ must not remain in the production source');
-  }
 
   if (cname && cname !== 'playgarba.com') {
     errors.push(`CNAME must be playgarba.com while GitHub Pages owns the canonical domain, got ${cname}`);
   }
 
-  if (!cname && !hasVercelConfig) {
-    errors.push('no production hosting source is declared: CNAME is absent and vercel.json is missing');
-  }
+  if (!cname) errors.push('CNAME must declare playgarba.com while GitHub Pages is the only production host');
 
   if (errors.length) {
     return {
@@ -45,28 +35,10 @@ export function classifyHostOwnership({
     };
   }
 
-  if (cname === 'playgarba.com' && hasVercelConfig) {
-    return {
-      ok: true,
-      state: 'pages-canonical-vercel-preview',
-      canonicalSource: 'github-pages',
-      errors: [],
-    };
-  }
-
-  if (cname === 'playgarba.com') {
-    return {
-      ok: true,
-      state: 'pages-only',
-      canonicalSource: 'github-pages',
-      errors: [],
-    };
-  }
-
   return {
     ok: true,
-    state: 'vercel-source',
-    canonicalSource: 'vercel',
+    state: 'pages-only',
+    canonicalSource: 'github-pages',
     errors: [],
   };
 }
@@ -74,11 +46,7 @@ export function classifyHostOwnership({
 function hostStateMessage(hostState) {
   switch (hostState.state) {
     case 'pages-only':
-      return 'GitHub Pages owns the canonical PlayGarba source at playgarba.com; no Vercel source config is present';
-    case 'pages-canonical-vercel-preview':
-      return 'GitHub Pages still owns playgarba.com while Vercel preview configuration is staged; source state does not claim DNS cutover';
-    case 'vercel-source':
-      return 'Vercel owns the repository production source after Pages CNAME removal; external custom-domain and HTTPS verification are still required';
+      return 'GitHub Pages is the only production host for PlayGarba at playgarba.com';
     default:
       return 'production hosting source state is invalid';
   }
@@ -89,11 +57,7 @@ export async function validateHostOwnership() {
   const fail = (message) => { console.error(`✗ ${message}`); failed = true; };
 
   const cnameContent = (await exists('CNAME')) ? await read('CNAME') : '';
-  const hostState = classifyHostOwnership({
-    cnameContent,
-    hasVercelConfig: await exists('vercel.json'),
-    hasVercelMetadata: await exists('.vercel'),
-  });
+  const hostState = classifyHostOwnership({ cnameContent });
 
   for (const error of hostState.errors) fail(error);
   if (hostState.ok) console.log(`✓ hosting source state: ${hostStateMessage(hostState)}`);

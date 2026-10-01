@@ -74,7 +74,7 @@ The old “choose a host/provider/domain” work is no longer an open roadmap de
 - `playgarba.com` is the canonical production origin.
 - The player lives at `/`; Explore lives at `/explore/`.
 - Pages assembles source-native runtime/style files into the deployed artifact and now emits `/build-info.json` so audits can identify the exact shipped revision and key artifact digests.
-- DNS/hosting architecture changes require their own explicitly claimed infrastructure issue; playback/catalogue agents must not revive a Vercel/host split incidentally.
+- DNS/hosting architecture changes require their own explicitly claimed infrastructure issue; playback/catalogue agents must not introduce a second host incidentally.
 
 Remaining launch-quality work is verification rather than another hosting migration:
 

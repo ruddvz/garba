@@ -3,33 +3,18 @@ import { classifyHostOwnership } from './validate-host-ownership.mjs';
 
 const cases = [
   {
-    name: 'Pages-only production remains valid before Vercel preparation',
-    input: { cnameContent: 'playgarba.com\n', hasVercelConfig: false, hasVercelMetadata: false },
+    name: 'GitHub Pages is the only valid production host',
+    input: { cnameContent: 'playgarba.com\n' },
     expected: { ok: true, state: 'pages-only', canonicalSource: 'github-pages' },
   },
   {
-    name: 'Pages stays canonical while Vercel preview config is staged',
-    input: { cnameContent: 'playgarba.com\n', hasVercelConfig: true, hasVercelMetadata: false },
-    expected: { ok: true, state: 'pages-canonical-vercel-preview', canonicalSource: 'github-pages' },
-  },
-  {
-    name: 'Vercel source ownership is valid only after Pages CNAME removal',
-    input: { cnameContent: '', hasVercelConfig: true, hasVercelMetadata: false },
-    expected: { ok: true, state: 'vercel-source', canonicalSource: 'vercel' },
-  },
-  {
-    name: 'missing both hosting declarations fails closed',
-    input: { cnameContent: '', hasVercelConfig: false, hasVercelMetadata: false },
+    name: 'missing Pages custom domain fails closed',
+    input: { cnameContent: '' },
     expected: { ok: false, state: 'invalid', canonicalSource: null },
   },
   {
     name: 'unexpected Pages CNAME fails closed',
-    input: { cnameContent: 'www.playgarba.com', hasVercelConfig: true, hasVercelMetadata: false },
-    expected: { ok: false, state: 'invalid', canonicalSource: null },
-  },
-  {
-    name: 'local Vercel metadata is never committed as hosting ownership evidence',
-    input: { cnameContent: 'playgarba.com', hasVercelConfig: true, hasVercelMetadata: true },
+    input: { cnameContent: 'www.playgarba.com' },
     expected: { ok: false, state: 'invalid', canonicalSource: null },
   },
 ];
@@ -43,4 +28,4 @@ for (const testCase of cases) {
   console.log(`✓ ${testCase.name}`);
 }
 
-console.log(`✓ hosting source transition policy regression tests passed (${cases.length} cases)`);
+console.log(`✓ Pages-only hosting policy regression tests passed (${cases.length} cases)`);
