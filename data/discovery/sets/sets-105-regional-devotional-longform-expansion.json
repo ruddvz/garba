@@ -1,0 +1,1393 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-ashok-sound-maa-taro-garbo-2025",
+      "displayTitle": "Maa Taro Garbo · Navratri Nonstop (2025)",
+      "series": "Maa Taro Garbo",
+      "year": 2025,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "title": "Maa Taro Garbo | Navratri Nonstop Garba 2025 | Best Gujarati Garba Dandiya Song | Ashok Sound",
+      "artists": [
+        "Vijya Vaghela",
+        "Pravinaben Rajput",
+        "Manhar Gadhvi",
+        "Meena Patel",
+        "Suresh Raval",
+        "Jayshree Bhojaviya",
+        "Maheshsinh Solanki"
+      ],
+      "durationSeconds": 2763,
+      "sourceRuntimeDisplay": "46:03",
+      "tracklist": [
+        "Ghume Ghume Ranjang Ni Mai",
+        "Saheli Nu Bedlu",
+        "Garbo Jamyo Re Chuvad Vadi",
+        "Maa Chotila Dungare Thi Utarya",
+        "Asamana Rang Ni Chundadi"
+      ],
+      "segments": [
+        {
+          "title": "Ghume Ghume Ranjang Ni Mai",
+          "startSeconds": 0,
+          "endSeconds": 846
+        },
+        {
+          "title": "Saheli Nu Bedlu",
+          "startSeconds": 846,
+          "endSeconds": 1238
+        },
+        {
+          "title": "Garbo Jamyo Re Chuvad Vadi",
+          "startSeconds": 1238,
+          "endSeconds": 1775
+        },
+        {
+          "title": "Maa Chotila Dungare Thi Utarya",
+          "startSeconds": 1775,
+          "endSeconds": 2264
+        },
+        {
+          "title": "Asamana Rang Ni Chundadi",
+          "startSeconds": 2264,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ashok Sound's 2025-09-20 description publishes five named track starts and credits each song's performers and music contributors. It identifies the album artists as Vijya Vaghela, Pravinaben Rajput, Manhar Gadhvi, Meena Patel, Suresh Raval, Jayshree Bhojaviya and Maheshsinh Solanki; album-wide music credits name Jaydip Patel, Pankaj Bhatt and Prabhat Barot, and the label is Ashok Sound. The source labels the upload Navratri Nonstop Garba; no choreography is inferred. On 2026-10-02 the watch page reported 2,763 seconds (46:03), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "tA1_ETjPIg4",
+        "url": "https://www.youtube.com/watch?v=tA1_ETjPIg4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-rdc-gujarati-devotional-navratri-special-garba-2024",
+      "displayTitle": "Navratri Special Garba · Mataji Na Garba (2024)",
+      "series": "Navratri Special Garba",
+      "year": 2024,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "verified-distributor-nonstop",
+      "officiality": "verified-distributor-channel",
+      "title": "Navratri Special Garba 2024 | Non Stop Garba | Mataji Na Garba | New Gujarati Garba 2024",
+      "artists": [
+        "Pragati Chauhan",
+        "Kiran Prajapati",
+        "Vijay Chauhan",
+        "Bhasker Shukla",
+        "Navneet Shukla",
+        "Pallavi Jambucha"
+      ],
+      "durationSeconds": 2209,
+      "sourceRuntimeDisplay": "36:49",
+      "tracklist": [
+        "જય આદ્યાશક્તિની આરતી (Jay Adhyashakti Ni Aarti)",
+        "અમર તુ રાખજે માં ચૂડી ને ચાંદલો (Amar Tu Rakhje Maa Chudi Ne Chandlo)",
+        "બુટ ભવાની માં નો ગરબો (But Bhavani Maa No Garbo)",
+        "ચામુંડ માં જમવા આવો રે (Chamund Maa Jamva Aavo Re)",
+        "ગઢથી ઉતરો રે મારી દેવી દયાળી (Gadh Thi Utaro Re Mari Devi Dayali)",
+        "કિનખાબી કપડા ની કોર (Kinkhabi Kapda Ni Kor)",
+        "ઓલા ડુંગરવાળા ડોશી મને લાડ લડાવે (Ola Dungarvala Doshi Mane Laad Ladave)"
+      ],
+      "segments": [
+        {
+          "title": "જય આદ્યાશક્તિની આરતી (Jay Adhyashakti Ni Aarti)",
+          "startSeconds": 2,
+          "endSeconds": 784
+        },
+        {
+          "title": "અમર તુ રાખજે માં ચૂડી ને ચાંદલો (Amar Tu Rakhje Maa Chudi Ne Chandlo)",
+          "startSeconds": 784,
+          "endSeconds": 1047
+        },
+        {
+          "title": "બુટ ભવાની માં નો ગરબો (But Bhavani Maa No Garbo)",
+          "startSeconds": 1047,
+          "endSeconds": 1355
+        },
+        {
+          "title": "ચામુંડ માં જમવા આવો રે (Chamund Maa Jamva Aavo Re)",
+          "startSeconds": 1355,
+          "endSeconds": 1560
+        },
+        {
+          "title": "ગઢથી ઉતરો રે મારી દેવી દયાળી (Gadh Thi Utaro Re Mari Devi Dayali)",
+          "startSeconds": 1560,
+          "endSeconds": 1923
+        },
+        {
+          "title": "કિનખાબી કપડા ની કોર (Kinkhabi Kapda Ni Kor)",
+          "startSeconds": 1923,
+          "endSeconds": 2066
+        },
+        {
+          "title": "ઓલા ડુંગરવાળા ડોશી મને લાડ લડાવે (Ola Dungarvala Doshi Mane Laad Ladave)",
+          "startSeconds": 2066,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati Devotional's 2024-09-26 description labels the upload a nonstop Mataji Garba, publishes seven title/start pairs, and credits singers on each track. The album metadata credits Koo Koo TV Entertainment Pvt. Ltd. and lists RDC Media Pvt. Ltd. as digital partner. Chapter metadata remains non-routable; the Aarti is a repertoire segment, not a dance-step label. On 2026-10-02 the watch page reported 2,209 seconds (36:49), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "yN-Y9fq92DI",
+        "url": "https://www.youtube.com/watch?v=yN-Y9fq92DI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-soor-mandir-umang-nonstop-raas-garba",
+      "displayTitle": "Umang · Nonstop Dandiya Raas Garba",
+      "series": "Umang",
+      "categories": [
+        "raas-dandiya",
+        "mataji-devotional",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional",
+        "devotional",
+        "dandiya"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "title": "ઉમંગ | Umang - Non Stop Dandiya Raas Garba Songs | Navratri Special Jukebox",
+      "artists": [
+        "Foram Maheta",
+        "Hemant Chauhan",
+        "Suchita Vaz",
+        "Sachin Limaye",
+        "Manoj Dave",
+        "Appu"
+      ],
+      "durationSeconds": 3602,
+      "sourceRuntimeDisplay": "1:00:02",
+      "segments": [
+        {
+          "title": "Aaj Gagan Thi Chandan",
+          "startSeconds": 0,
+          "endSeconds": 71
+        },
+        {
+          "title": "Ha Re Maa Aarasur Thi",
+          "startSeconds": 71,
+          "endSeconds": 321
+        },
+        {
+          "title": "Tara Vina Shyam Mune",
+          "startSeconds": 321,
+          "endSeconds": 548
+        },
+        {
+          "title": "Hu To Patan Sehar Ni",
+          "startSeconds": 548,
+          "endSeconds": 733
+        },
+        {
+          "title": "Mahendi Te Vavi Mandve",
+          "startSeconds": 733,
+          "endSeconds": 878
+        },
+        {
+          "title": "Mara Te Chhit No Chhor",
+          "startSeconds": 878,
+          "endSeconds": 1049
+        },
+        {
+          "title": "Suna Sarvariya Ne",
+          "startSeconds": 1049,
+          "endSeconds": 1272
+        },
+        {
+          "title": "He Mune Gamto Kanudo",
+          "startSeconds": 1272,
+          "endSeconds": 1449
+        },
+        {
+          "title": "Dholaji Halya Chakri Re",
+          "startSeconds": 1449,
+          "endSeconds": 1669
+        },
+        {
+          "title": "Lebuda Na Lila Pila",
+          "startSeconds": 1669,
+          "endSeconds": 1803
+        },
+        {
+          "title": "Venu Vagadto Venu",
+          "startSeconds": 1803,
+          "endSeconds": 2052
+        },
+        {
+          "title": "Garbo Gham Ghamto Mano",
+          "startSeconds": 2052,
+          "endSeconds": 2206
+        },
+        {
+          "title": "Sharad Poonam Ni Raatma",
+          "startSeconds": 2206,
+          "endSeconds": 2404
+        },
+        {
+          "title": "Me To Shangaryo Chachar Chock",
+          "startSeconds": 2404,
+          "endSeconds": 2594
+        },
+        {
+          "title": "Valam Ni Vansadi Vagi",
+          "startSeconds": 2594,
+          "endSeconds": 2818
+        },
+        {
+          "title": "Mu Ne Ekli Jani Ne",
+          "startSeconds": 2818,
+          "endSeconds": 3054
+        },
+        {
+          "title": "O Gori Cham Cham",
+          "startSeconds": 3054,
+          "endSeconds": 3235
+        },
+        {
+          "title": "Fagan Foramto Aayo",
+          "startSeconds": 3235,
+          "endSeconds": 3321
+        },
+        {
+          "title": "Hu To Gaiti Mede",
+          "startSeconds": 3321,
+          "endSeconds": 3442
+        },
+        {
+          "title": "Hu To Sol Varasni Sundari",
+          "startSeconds": 3442,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Soor Mandir Audio Jukebox published this upload on 2026-08-28. Its verified channel description calls the release “Umang (Non Stop Raas Garba)” and credits singers Foram Maheta, Hemant Chauhan, Suchita Vaz, Sachin Limaye, Manoj Dave and Appu; music Appu & Brij Joshi; language Gujarati; genre “Devotional Raas - Garba”; label Soor Mandir. The description publishes 20 timestamp/title pairs. On 2026-10-02 the watch page reported 3,602 seconds (1:00:02) and playabilityStatus OK; the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true. Chapter labels are metadata only, not choreography or separate song routes.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "d0RPXw_aWzA",
+        "url": "https://www.youtube.com/watch?v=d0RPXw_aWzA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-soor-mandir-sone-ki-chhadi-tahuko-21",
+      "displayTitle": "Sone Ki Chhadi · Tahuko 21 · Nonstop Garba",
+      "series": "Tahuko",
+      "volume": "21",
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "title": "Sone Ki Chhadi - Tahuko 21 | સોને કી છડી | Non Stop Garba | Hemant Chauhan & Pamela Jain",
+      "artists": [
+        "Hemant Chauhan",
+        "Pamela Jain",
+        "Kailash Kher",
+        "Sonu Kakkad"
+      ],
+      "durationSeconds": 3682,
+      "sourceRuntimeDisplay": "1:01:22",
+      "segments": [
+        {
+          "title": "Chadi, Chhand",
+          "startSeconds": 0,
+          "endSeconds": 116
+        },
+        {
+          "title": "Uncha Uncha Re Mari Madina",
+          "startSeconds": 116,
+          "endSeconds": 356
+        },
+        {
+          "title": "Maa No Garbo Re Rame",
+          "startSeconds": 356,
+          "endSeconds": 564
+        },
+        {
+          "title": "Me To Shangaryo Chachar Chok",
+          "startSeconds": 564,
+          "endSeconds": 771
+        },
+        {
+          "title": "Chachar Chowkma",
+          "startSeconds": 771,
+          "endSeconds": 930
+        },
+        {
+          "title": "Chanda Re Mori Chithiya Leja",
+          "startSeconds": 930,
+          "endSeconds": 1057
+        },
+        {
+          "title": "Dhara Nagarthi Utarya",
+          "startSeconds": 1057,
+          "endSeconds": 1249
+        },
+        {
+          "title": "Sachi Re Mari Sat Re",
+          "startSeconds": 1249,
+          "endSeconds": 1437
+        },
+        {
+          "title": "Rame Ambemaa Chachar",
+          "startSeconds": 1437,
+          "endSeconds": 1651
+        },
+        {
+          "title": "Aarasur Ma Amba Kare Re Killol",
+          "startSeconds": 1651,
+          "endSeconds": 1835
+        },
+        {
+          "title": "Lal Re Gulab",
+          "startSeconds": 1835,
+          "endSeconds": 2042
+        },
+        {
+          "title": "Jai Jai Bolo Anande",
+          "startSeconds": 2042,
+          "endSeconds": 2222
+        },
+        {
+          "title": "O Gori Cham Cham",
+          "startSeconds": 2222,
+          "endSeconds": 2363
+        },
+        {
+          "title": "Ghammar Ghughari Re",
+          "startSeconds": 2363,
+          "endSeconds": 2577
+        },
+        {
+          "title": "Avli Savli Ambaliyani",
+          "startSeconds": 2577,
+          "endSeconds": 2696
+        },
+        {
+          "title": "Chummak Chummak Thay",
+          "startSeconds": 2696,
+          "endSeconds": 2846
+        },
+        {
+          "title": "Hu Re Ghumu Ne Maro",
+          "startSeconds": 2846,
+          "endSeconds": 2966
+        },
+        {
+          "title": "Baje Payal Cham Cham",
+          "startSeconds": 2966,
+          "endSeconds": 3091
+        },
+        {
+          "title": "Ude Re Gulal",
+          "startSeconds": 3091,
+          "endSeconds": 3296
+        },
+        {
+          "title": "Mari Mahisagarni Aare",
+          "startSeconds": 3296,
+          "endSeconds": 3448
+        },
+        {
+          "title": "Tahuka Karto Jay, Shanti Karan",
+          "startSeconds": 3448,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Soor Mandir Audio Jukebox published this upload on 2026-09-28. The verified channel describes the album as “Sone Ki Chhadi (Non Stop Garba)” and credits singers Hemant Chauhan, Pamela Jain, Kailash Kher and Sonu Kakkad; music Appu and Anil Mohile; language Gujarati; genre “Devotional Mataji Song”; label Soor Mandir. The description publishes 21 timestamp/title pairs. On 2026-10-02 the watch page reported 3,682 seconds (1:01:22) and playabilityStatus OK; the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true. Chapter labels are metadata only.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "9roiUeM8aaQ",
+        "url": "https://www.youtube.com/watch?v=9roiUeM8aaQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-kaushik-bharwad-dj-rami-lyo-tetudo-2024",
+      "displayTitle": "DJ Rami Lyo Tetudo · Titoda Garba (2024)",
+      "series": "DJ Rami Lyo Tetudo",
+      "year": 2024,
+      "categories": [
+        "traditional-garba",
+        "dj-remix"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "verified-distributor-nonstop",
+      "officiality": "verified-distributor-channel",
+      "title": "Kaushik Bharwad - DJ Rami Lyo Tetudo | DJ Non Stop Garba 2024 | Titoda Garba | Gujarati Garba 2024",
+      "artists": [
+        "Kaushik Bharwad"
+      ],
+      "durationSeconds": 3617,
+      "sourceRuntimeDisplay": "1:00:17",
+      "tracklist": [
+        "Tan Man Dhan Thi Antari Yaad Karu Maa",
+        "Fulo Bhareli Mani Chhabadi",
+        "Tu Chhe Kul Ni Kuldevi",
+        "Mara Dhadakta Dil No Tu Chhe Dhabkar",
+        "Lage Rudu Maru Gomadu",
+        "Meto Peli Najar Ma Bhali Dil Hu To Hari Gayo",
+        "Farte Sagar Ne Vachma Betho Kaliyo Thakar",
+        "Kori Gagar Ne Gagar Ma Divo",
+        "Yaar Chhe Tu Maro Jigarjaan",
+        "Jug Jug Jiyo Mara Madi Jaya Vir",
+        "Mara Maa Baap Mara Chhe Bhagwan",
+        "Ramdev Ranuja Na Ray",
+        "Tran Tali Na Taal Ma Rami Lyo Tetudo",
+        "Mara Kul Nu Ajavalu Maro Dikaro",
+        "Ghanu Sahan Karyu Have Chhello Divas Taro",
+        "Bhathiji Tame Rakhyu Rathod Kul Nu Nom",
+        "Divo Laine Gotu Toye Nai Male Tara Jevi",
+        "Mare Aathe Kor Aanand Ne Sukh Ni Vela",
+        "Ame Rangila Raja"
+      ],
+      "segments": [
+        {
+          "title": "Tan Man Dhan Thi Antari Yaad Karu Maa",
+          "startSeconds": 11,
+          "endSeconds": 248
+        },
+        {
+          "title": "Fulo Bhareli Mani Chhabadi",
+          "startSeconds": 248,
+          "endSeconds": 480
+        },
+        {
+          "title": "Tu Chhe Kul Ni Kuldevi",
+          "startSeconds": 480,
+          "endSeconds": 674
+        },
+        {
+          "title": "Mara Dhadakta Dil No Tu Chhe Dhabkar",
+          "startSeconds": 674,
+          "endSeconds": 906
+        },
+        {
+          "title": "Lage Rudu Maru Gomadu",
+          "startSeconds": 906,
+          "endSeconds": 1033
+        },
+        {
+          "title": "Meto Peli Najar Ma Bhali Dil Hu To Hari Gayo",
+          "startSeconds": 1033,
+          "endSeconds": 1213
+        },
+        {
+          "title": "Farte Sagar Ne Vachma Betho Kaliyo Thakar",
+          "startSeconds": 1213,
+          "endSeconds": 1386
+        },
+        {
+          "title": "Kori Gagar Ne Gagar Ma Divo",
+          "startSeconds": 1386,
+          "endSeconds": 1531
+        },
+        {
+          "title": "Yaar Chhe Tu Maro Jigarjaan",
+          "startSeconds": 1531,
+          "endSeconds": 1703
+        },
+        {
+          "title": "Jug Jug Jiyo Mara Madi Jaya Vir",
+          "startSeconds": 1703,
+          "endSeconds": 1911
+        },
+        {
+          "title": "Mara Maa Baap Mara Chhe Bhagwan",
+          "startSeconds": 1911,
+          "endSeconds": 2098
+        },
+        {
+          "title": "Ramdev Ranuja Na Ray",
+          "startSeconds": 2098,
+          "endSeconds": 2271
+        },
+        {
+          "title": "Tran Tali Na Taal Ma Rami Lyo Tetudo",
+          "startSeconds": 2271,
+          "endSeconds": 2484
+        },
+        {
+          "title": "Mara Kul Nu Ajavalu Maro Dikaro",
+          "startSeconds": 2484,
+          "endSeconds": 2729
+        },
+        {
+          "title": "Ghanu Sahan Karyu Have Chhello Divas Taro",
+          "startSeconds": 2729,
+          "endSeconds": 2921
+        },
+        {
+          "title": "Bhathiji Tame Rakhyu Rathod Kul Nu Nom",
+          "startSeconds": 2921,
+          "endSeconds": 3140
+        },
+        {
+          "title": "Divo Laine Gotu Toye Nai Male Tara Jevi",
+          "startSeconds": 3140,
+          "endSeconds": 3293
+        },
+        {
+          "title": "Mare Aathe Kor Aanand Ne Sukh Ni Vela",
+          "startSeconds": 3293,
+          "endSeconds": 3497
+        },
+        {
+          "title": "Ame Rangila Raja",
+          "startSeconds": 3497,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati published this verified-channel upload on 2024-10-09. The title identifies a 2024 DJ Non Stop Garba and Titoda Garba; the description credits Kaushik Bharwad, music label/copyright Jigar Studio, and digital partner RDC Media Pvt. Ltd. It publishes 19 timestamp/title pairs. The source album is named DJ Rami Lyo Tetudo. The watch page reported 3,617 seconds (1:00:17) and playabilityStatus OK; the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true. Chapter labels are metadata only and do not establish choreography.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "1eF57346pIs",
+        "url": "https://www.youtube.com/watch?v=1eF57346pIs",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-pooja-krishna-no-rankar-nonstop-garba-2026",
+      "displayTitle": "No Rankar · Pooja Krishna (2026)",
+      "series": "No Rankar",
+      "year": 2026,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional",
+        "krishna-garba",
+        "dakla"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "artist-channel",
+      "title": "POOJA KRISHNA NO RANKAR  ||  NONSTOP GARBA  ||  GARBA 2026  || NEW GARBA 2026 || NAVRATRI GARBA 2026",
+      "artists": [
+        "Pooja Krishna"
+      ],
+      "durationSeconds": 4120,
+      "sourceRuntimeDisplay": "1:08:40",
+      "segments": [
+        {
+          "title": "Duho",
+          "startSeconds": 82,
+          "endSeconds": 83
+        },
+        {
+          "title": "Adhya shakti",
+          "startSeconds": 83,
+          "endSeconds": 279
+        },
+        {
+          "title": "Tame Hincho to",
+          "startSeconds": 279,
+          "endSeconds": 459
+        },
+        {
+          "title": "Gokul Gadh Thi Govalan",
+          "startSeconds": 459,
+          "endSeconds": 625
+        },
+        {
+          "title": "Maa Amba Te Ramva",
+          "startSeconds": 625,
+          "endSeconds": 823
+        },
+        {
+          "title": "Navla Te Nav Di Na Norta",
+          "startSeconds": 823,
+          "endSeconds": 1045
+        },
+        {
+          "title": "Tamtam Ta Tarla",
+          "startSeconds": 1045,
+          "endSeconds": 1224
+        },
+        {
+          "title": "Maa Tu Pavani Patrani",
+          "startSeconds": 1224,
+          "endSeconds": 1436
+        },
+        {
+          "title": "Sayba Sadku Bandhav",
+          "startSeconds": 1436,
+          "endSeconds": 1599
+        },
+        {
+          "title": "Arasur Bethi Mari Amba Mavdi",
+          "startSeconds": 1599,
+          "endSeconds": 1805
+        },
+        {
+          "title": "Aavi Norta Ni Raat",
+          "startSeconds": 1805,
+          "endSeconds": 1987
+        },
+        {
+          "title": "Patan Thi Patola",
+          "startSeconds": 1987,
+          "endSeconds": 2173
+        },
+        {
+          "title": "He Maro Saybo",
+          "startSeconds": 2173,
+          "endSeconds": 2334
+        },
+        {
+          "title": "Chheto Chheto Ho Nand na Chhokra",
+          "startSeconds": 2334,
+          "endSeconds": 2491
+        },
+        {
+          "title": "Ame Rangaya Roma Tara Rang Ma",
+          "startSeconds": 2491,
+          "endSeconds": 2684
+        },
+        {
+          "title": "Yamuna Na Pani",
+          "startSeconds": 2684,
+          "endSeconds": 2833
+        },
+        {
+          "title": "Tu Korat Kaydo",
+          "startSeconds": 2833,
+          "endSeconds": 3065
+        },
+        {
+          "title": "Dakor Na Thakor",
+          "startSeconds": 3065,
+          "endSeconds": 3270
+        },
+        {
+          "title": "Evi Rudi Ne Rangeeli",
+          "startSeconds": 3270,
+          "endSeconds": 3355
+        },
+        {
+          "title": "Der Mari Anguthdi No Chor",
+          "startSeconds": 3355,
+          "endSeconds": 3448
+        },
+        {
+          "title": "Chandan Talavdi",
+          "startSeconds": 3448,
+          "endSeconds": 3654
+        },
+        {
+          "title": "Lebuda Ni Dalo Ma",
+          "startSeconds": 3654,
+          "endSeconds": 3700
+        },
+        {
+          "title": "Dakla",
+          "startSeconds": 3700,
+          "endSeconds": 3953
+        },
+        {
+          "title": "Krishna Teri Murali",
+          "startSeconds": 3953,
+          "endSeconds": 4026
+        },
+        {
+          "title": "Aai Giri",
+          "startSeconds": 4026,
+          "endSeconds": 4082
+        },
+        {
+          "title": "Jaykara",
+          "startSeconds": 4082,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Pooja Krishna official published this upload on 2026-09-21. The source title names a 2026 Navratri nonstop Garba release; its description credits Pooja Krishna official as label/copyright owner, Vijay Patel as producer, and Vivek Gajjar for music. It publishes 26 timestamp/title pairs, including source entries titled Dakla and Krishna Teri Murali. The channel identifies itself as Pooja Krishna official; no YouTube verification badge or Official Artist Channel marker was found. On 2026-10-02 the watch page reported 4,120 seconds (1:08:40) and playabilityStatus OK; the privacy-enhanced embed returned HTTP 200 and was playable. Chapter labels are metadata only.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "-736zRKZW2k",
+        "url": "https://www.youtube.com/watch?v=-736zRKZW2k",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-mittal-rabari-dwarka-garbo-nonstop-2026",
+      "displayTitle": "Garbo Nonstop · Mittal Rabari Dwarka (2026)",
+      "series": "Garbo Nonstop",
+      "year": 2026,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional",
+        "krishna-garba"
+      ],
+      "genres": [
+        "traditional",
+        "devotional",
+        "folk"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "artist-channel",
+      "title": "Garbo Nonstop | Mittal Rabari Dwarka | Gujarati Garba Song | New Gujarati Song 2026",
+      "artists": [
+        "Mittal Rabari"
+      ],
+      "durationSeconds": 3732,
+      "sourceRuntimeDisplay": "1:02:12",
+      "segments": [
+        {
+          "title": "Chhand",
+          "startSeconds": 0,
+          "endSeconds": 90
+        },
+        {
+          "title": "Pratham Ganpatinu Naam",
+          "startSeconds": 90,
+          "endSeconds": 278
+        },
+        {
+          "title": "Ma Pava Te Gadh Thi Utarya",
+          "startSeconds": 278,
+          "endSeconds": 457
+        },
+        {
+          "title": "Maa Ye Garbo Koravyo Gagan Gokhman Re",
+          "startSeconds": 457,
+          "endSeconds": 615
+        },
+        {
+          "title": "Amba Abhay Pad Dayani Re",
+          "startSeconds": 615,
+          "endSeconds": 743
+        },
+        {
+          "title": "Khamma Mara Nandji Na Lal",
+          "startSeconds": 743,
+          "endSeconds": 880
+        },
+        {
+          "title": "Ame Maiyara Re Gokul Gaam Na",
+          "startSeconds": 880,
+          "endSeconds": 1050
+        },
+        {
+          "title": "Rude Garbe Rame Che Devi Ambika",
+          "startSeconds": 1050,
+          "endSeconds": 1180
+        },
+        {
+          "title": "Madi Tara Mandiriya Ma Ghantarav Vage",
+          "startSeconds": 1180,
+          "endSeconds": 1350
+        },
+        {
+          "title": "Antar Ma Atiyu Chadeli",
+          "startSeconds": 1350,
+          "endSeconds": 1496
+        },
+        {
+          "title": "Chando Ugyo Chok Ma Ghayal",
+          "startSeconds": 1496,
+          "endSeconds": 1614
+        },
+        {
+          "title": "Dhan Dhan Kutch Ni Dharti Ma",
+          "startSeconds": 1614,
+          "endSeconds": 1751
+        },
+        {
+          "title": "Pruthvima Pavagadh Motu Re",
+          "startSeconds": 1751,
+          "endSeconds": 1863
+        },
+        {
+          "title": "Maniyaro",
+          "startSeconds": 1863,
+          "endSeconds": 1967
+        },
+        {
+          "title": "Sona No Garbo",
+          "startSeconds": 1967,
+          "endSeconds": 2091
+        },
+        {
+          "title": "Lao Kankudiya Ne Chokhaliya",
+          "startSeconds": 2091,
+          "endSeconds": 2271
+        },
+        {
+          "title": "Pidi Matudi",
+          "startSeconds": 2271,
+          "endSeconds": 2357
+        },
+        {
+          "title": "Navlaakhaai Lobadiyaliyu",
+          "startSeconds": 2357,
+          "endSeconds": 2471
+        },
+        {
+          "title": "Hu Gokul No Govaliyo",
+          "startSeconds": 2471,
+          "endSeconds": 2605
+        },
+        {
+          "title": "Pethalpurma Pavo Vagyo",
+          "startSeconds": 2605,
+          "endSeconds": 2721
+        },
+        {
+          "title": "Dholida - LiLi Limbdi Re",
+          "startSeconds": 2721,
+          "endSeconds": 2906
+        },
+        {
+          "title": "Parvati Na Pagma Jeri Vichudo",
+          "startSeconds": 2906,
+          "endSeconds": 3000
+        },
+        {
+          "title": "Khamma Khamma Vankol Ma Jogmaya",
+          "startSeconds": 3000,
+          "endSeconds": 3231
+        },
+        {
+          "title": "He Jantar Vage",
+          "startSeconds": 3231,
+          "endSeconds": 3508
+        },
+        {
+          "title": "Channd - Mahishasura Mardini",
+          "startSeconds": 3508,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mittal Rabari Dwarka published this upload on 2026-09-26. The exact title identifies a 2026 Gujarati Garba song; the channel About page describes Mittal as a Gujarati folk singer, and the video says “Mittal Rabari Dwarka Presents,” credits singer Mittal Rabari and producer Yash Rabari. The channel had no YouTube verification badge or Official Artist Channel marker, so it is classified as an artist-channel source without a verification claim. The description publishes 25 timestamp/title pairs. On 2026-10-02 the watch page reported 3,732 seconds (1:02:12) and playabilityStatus OK; the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true. Chapter labels are metadata only.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "kLQQYDgVPKc",
+        "url": "https://www.youtube.com/watch?v=kLQQYDgVPKc",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-kinjal-rabari-navraat-nonstop-garba-2025",
+      "displayTitle": "Navraat · Kinjal Rabari (2025)",
+      "series": "Navraat",
+      "year": 2025,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional",
+        "dakla",
+        "krishna-garba"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "title": "નવરાત || NAVRAAT || NONSTOP GARBA || KINJAL RABARI || ગરબા 2025",
+      "artists": [
+        "Kinjal Rabari"
+      ],
+      "durationSeconds": 2873,
+      "sourceRuntimeDisplay": "47:53",
+      "segments": [
+        {
+          "title": "intro",
+          "startSeconds": 0,
+          "endSeconds": 111
+        },
+        {
+          "title": "Adhyshakti tujne namu ma bauchara",
+          "startSeconds": 111,
+          "endSeconds": 312
+        },
+        {
+          "title": "maa pava te gadh thi utarya",
+          "startSeconds": 312,
+          "endSeconds": 495
+        },
+        {
+          "title": "Sonal garbo sire",
+          "startSeconds": 495,
+          "endSeconds": 646
+        },
+        {
+          "title": "Hinglaj hajra hajur",
+          "startSeconds": 646,
+          "endSeconds": 782
+        },
+        {
+          "title": "sava basher nu maru datardu lol",
+          "startSeconds": 782,
+          "endSeconds": 855
+        },
+        {
+          "title": "Jivanji nai re java dau aaj",
+          "startSeconds": 855,
+          "endSeconds": 981
+        },
+        {
+          "title": "Patai raja",
+          "startSeconds": 981,
+          "endSeconds": 1097
+        },
+        {
+          "title": "Sonavatakdi re",
+          "startSeconds": 1097,
+          "endSeconds": 1218
+        },
+        {
+          "title": "Van ma chandaliyo ugyo ne",
+          "startSeconds": 1218,
+          "endSeconds": 1288
+        },
+        {
+          "title": "Kanuda vraj ma velo aay",
+          "startSeconds": 1288,
+          "endSeconds": 1423
+        },
+        {
+          "title": "Dwarika valo duniya jitade",
+          "startSeconds": 1423,
+          "endSeconds": 1567
+        },
+        {
+          "title": "Rang bhini radha",
+          "startSeconds": 1567,
+          "endSeconds": 1683
+        },
+        {
+          "title": "Saybo re govaliyo",
+          "startSeconds": 1683,
+          "endSeconds": 1798
+        },
+        {
+          "title": "Maniyaro",
+          "startSeconds": 1798,
+          "endSeconds": 1890
+        },
+        {
+          "title": "ranuja valo",
+          "startSeconds": 1890,
+          "endSeconds": 1950
+        },
+        {
+          "title": "Unjha ni umiya maa",
+          "startSeconds": 1950,
+          "endSeconds": 2015
+        },
+        {
+          "title": "Bhagudavali aai mogal",
+          "startSeconds": 2015,
+          "endSeconds": 2085
+        },
+        {
+          "title": "amaro adhar tu mavaldi re",
+          "startSeconds": 2085,
+          "endSeconds": 2138
+        },
+        {
+          "title": "Sikotar sahay karje",
+          "startSeconds": 2138,
+          "endSeconds": 2229
+        },
+        {
+          "title": "mari sadhi maa e vat rakhyo",
+          "startSeconds": 2229,
+          "endSeconds": 2290
+        },
+        {
+          "title": "Meldi no bharoso",
+          "startSeconds": 2290,
+          "endSeconds": 2369
+        },
+        {
+          "title": "Jahu zopdi 2 buno",
+          "startSeconds": 2369,
+          "endSeconds": 2452
+        },
+        {
+          "title": "Gogji nono bal",
+          "startSeconds": 2452,
+          "endSeconds": 2513
+        },
+        {
+          "title": "kuldevi aai krupa karva",
+          "startSeconds": 2513,
+          "endSeconds": 2579
+        },
+        {
+          "title": "Zina mor bole jogni na raj ma",
+          "startSeconds": 2579,
+          "endSeconds": 2640
+        },
+        {
+          "title": "Khodiyar chhe jogmaya",
+          "startSeconds": 2640,
+          "endSeconds": 2706
+        },
+        {
+          "title": "Chotile dakla vagya",
+          "startSeconds": 2706,
+          "endSeconds": 2779
+        },
+        {
+          "title": "Gandevtay",
+          "startSeconds": 2779,
+          "endSeconds": 2820
+        },
+        {
+          "title": "Moragadhvali Momai maa",
+          "startSeconds": 2820,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Kinjal Rabari Official published this upload on 2025-08-19. The Official Artist Channel description credits Kinjal Rabari as singer and producer, Chirag Goswami for music, traditional lyrics with additional lyrics/arrangement by Maulik Desai, and channel management by Kiran Desai. The source description publishes 30 timestamp entries (intro plus 29 songs), all increasing and within the 2,873-second runtime. On 2026-10-02 the watch page reported playabilityStatus OK and the privacy-enhanced embed was playable. Source chapter labels are metadata only and do not establish choreography.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "0Ftnc7eyrcw",
+        "url": "https://www.youtube.com/watch?v=0Ftnc7eyrcw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-raghav-digital-gujarati-garba-dandiya-remix-2026",
+      "displayTitle": "Gujarati Garba Dandiya · Raghav Digital (2026)",
+      "series": "Gujarati Garba Dandiya",
+      "year": 2026,
+      "categories": [
+        "dj-remix",
+        "raas-dandiya",
+        "modern-gujarati-garba"
+      ],
+      "genres": [
+        "dandiya",
+        "folk"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "title": "Gujarati Garba Dandiya 2026 🔥 Nonstop Dandiya Remix | 40+ Gujarati Hit Songs | Raghav Digital",
+      "artists": [
+        "DJ Hari Surat",
+        "Sonu Charan",
+        "Geeta Rabari",
+        "Umesh Barot",
+        "Parth Chaudhary",
+        "Rajal Barot",
+        "Kavita Das",
+        "Kinjal Dave",
+        "Rakesh Barot",
+        "Nitin Barot",
+        "Jignesh Barot",
+        "Jigar Thakor",
+        "Riddhi Vyas",
+        "Vijay Suvada",
+        "Rahul Raval",
+        "Hiral Raval",
+        "Tejal Thakor",
+        "Shahenaz Shekh",
+        "Sejalba Gadhavi"
+      ],
+      "durationSeconds": 3070,
+      "sourceRuntimeDisplay": "51:10",
+      "segments": [
+        {
+          "title": "Ma Tara Ashirvad 2 - Sonu Charan",
+          "startSeconds": 21,
+          "endSeconds": 108
+        },
+        {
+          "title": "Ma Tara Ashirvad - Geeta Rabari",
+          "startSeconds": 108,
+          "endSeconds": 168
+        },
+        {
+          "title": "Rona She Ma - Geeta Rabari",
+          "startSeconds": 168,
+          "endSeconds": 271
+        },
+        {
+          "title": "Akha Hind Ma Hetali - Geeta Rabari",
+          "startSeconds": 271,
+          "endSeconds": 420
+        },
+        {
+          "title": "Baby Ne Bournvita Pivdavu - Umesh Barot",
+          "startSeconds": 420,
+          "endSeconds": 501
+        },
+        {
+          "title": "Chogada Chel - Geeta Rabari",
+          "startSeconds": 501,
+          "endSeconds": 529
+        },
+        {
+          "title": "Thakar Vase Bharwado Na - Geeta Rabari",
+          "startSeconds": 529,
+          "endSeconds": 622
+        },
+        {
+          "title": "Gomda Nu Dil - Parth Chaudhary",
+          "startSeconds": 622,
+          "endSeconds": 713
+        },
+        {
+          "title": "Gamdu Chodi Ne Sher Ma Aya - Rajal Barot",
+          "startSeconds": 713,
+          "endSeconds": 764
+        },
+        {
+          "title": "Harni Havaj No Sikar - Umesh Barot",
+          "startSeconds": 764,
+          "endSeconds": 858
+        },
+        {
+          "title": "Ganpati Mara Deva Re - Kavita Das",
+          "startSeconds": 858,
+          "endSeconds": 900
+        },
+        {
+          "title": "Eklo Rabari - Geeta Rabari",
+          "startSeconds": 900,
+          "endSeconds": 1010
+        },
+        {
+          "title": "Khava Mate Pizza - Kinjal Dave",
+          "startSeconds": 1010,
+          "endSeconds": 1095
+        },
+        {
+          "title": "Moj Ma - Kinjal Dave",
+          "startSeconds": 1095,
+          "endSeconds": 1184
+        },
+        {
+          "title": "Ja Bewafa Ja - Rakesh Barot",
+          "startSeconds": 1184,
+          "endSeconds": 1252
+        },
+        {
+          "title": "Bhailu Halya Jaan Ma - Kinjal Dave",
+          "startSeconds": 1252,
+          "endSeconds": 1355
+        },
+        {
+          "title": "Hath Ma Chhe Whisky - Jignesh Barot",
+          "startSeconds": 1355,
+          "endSeconds": 1437
+        },
+        {
+          "title": "Pardesi Pal Ma Bhuli Jase - Nitin Barot",
+          "startSeconds": 1437,
+          "endSeconds": 1551
+        },
+        {
+          "title": "Vat Pade Che Gujarat Ma - Geeta Rabari",
+          "startSeconds": 1551,
+          "endSeconds": 1673
+        },
+        {
+          "title": "Tali Pado To Mara Ramni - Kinjal Dave",
+          "startSeconds": 1673,
+          "endSeconds": 1722
+        },
+        {
+          "title": "Mogal Aape Ae Thodu - Sejalba Gadhavi",
+          "startSeconds": 1722,
+          "endSeconds": 1834
+        },
+        {
+          "title": "Bairu Gayu Piyar - Rakesh Barot",
+          "startSeconds": 1834,
+          "endSeconds": 1893
+        },
+        {
+          "title": "Gogo Ladko Re - Rajal Barot",
+          "startSeconds": 1893,
+          "endSeconds": 1955
+        },
+        {
+          "title": "Patel Na Dikra Ni Chatris - Riddhi Vyas",
+          "startSeconds": 1955,
+          "endSeconds": 2018
+        },
+        {
+          "title": "Jigar Jaan - Vijay Suvada",
+          "startSeconds": 2018,
+          "endSeconds": 2093
+        },
+        {
+          "title": "Yaad Tari - Rahul Raval",
+          "startSeconds": 2093,
+          "endSeconds": 2140
+        },
+        {
+          "title": "Ven Bole Mari Mata Khotu - Vijay Suvada",
+          "startSeconds": 2140,
+          "endSeconds": 2170
+        },
+        {
+          "title": "Be Gay Vato To Tamne Khabar - Hiral Raval",
+          "startSeconds": 2170,
+          "endSeconds": 2241
+        },
+        {
+          "title": "Man Na Manorath - Tejal Thakor",
+          "startSeconds": 2241,
+          "endSeconds": 2300
+        },
+        {
+          "title": "Saiyaan - Shahenaz Shekh",
+          "startSeconds": 2300,
+          "endSeconds": 2350
+        },
+        {
+          "title": "Taro Maro Jhagdo - Vijay Suvada",
+          "startSeconds": 2350,
+          "endSeconds": 2438
+        },
+        {
+          "title": "Baby Taro Babu Levay - Vijay Suvada",
+          "startSeconds": 2438,
+          "endSeconds": 2506
+        },
+        {
+          "title": "Bhakkam Vagad Vira - Rajal Barot",
+          "startSeconds": 2506,
+          "endSeconds": 2580
+        },
+        {
+          "title": "Janudi Che Aapdi - Jigar Thakor",
+          "startSeconds": 2580,
+          "endSeconds": 2703
+        },
+        {
+          "title": "Vadvala Na Desh Ma - Geeta Rabari",
+          "startSeconds": 2703,
+          "endSeconds": 2706
+        },
+        {
+          "title": "Mardo Na Mamla - Hiral Raval",
+          "startSeconds": 2706,
+          "endSeconds": 2760
+        },
+        {
+          "title": "Dariya Kinare - Tejal Thakor",
+          "startSeconds": 2760,
+          "endSeconds": 2857
+        },
+        {
+          "title": "Tane Ram Ram - Rakesh Barot",
+          "startSeconds": 2857,
+          "endSeconds": 2919
+        },
+        {
+          "title": "Desi Dhol Vage Mari Mogal - Geeta Rabari",
+          "startSeconds": 2919,
+          "endSeconds": 3000
+        },
+        {
+          "title": "Mari Ni Aarati - Kinjal Dave",
+          "startSeconds": 3000,
+          "endSeconds": null
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Raghav Digital published this verified-channel upload on 2026-10-02. The title and description label it a Gujarati Garba/Dandiya DJ remix; the description credits DJ Hari Surat for the remix and Raghav Digital as label. It publishes 40 timestamp/title pairs, including performer names in the source titles. The description lists “Mardo Na Mamla - Hiral Raval” at 45:06 before “Vadvala Na Desh Ma - Geeta Rabari” at 45:03; both exact source values are retained and segments are ordered by their numeric starts for navigation. On 2026-10-02 the watch page reported 3,070 seconds (51:10), playabilityStatus OK, and the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true. The source credits are not a choreography map.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "994jiKxYqro",
+        "url": "https://www.youtube.com/watch?v=994jiKxYqro",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "id": "set-mogal-films-bhavya-raas-utsav-2026",
+      "displayTitle": "Bhavya Raas Utsav · Rashmita Rabari & Uday Dhadhal (2026)",
+      "series": "Bhavya Raas Utsav",
+      "year": 2026,
+      "categories": [
+        "traditional-garba",
+        "raas-dandiya"
+      ],
+      "genres": [
+        "traditional",
+        "dandiya"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "title": "ભવ્ય રાસ ઉત્સવ 2026 | Rashmita Rabari & Uday Dhadhal | Nonstop Raas Garba",
+      "artists": [
+        "Rashmita Rabari",
+        "Uday Dhadhal"
+      ],
+      "durationSeconds": 15925,
+      "sourceRuntimeDisplay": "4:25:25",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "segmentRouting": "metadata-only",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mogal Films Official published this upload on 2026-05-15. Its verified channel description says Mogal Films presents the Bhavya Raas Utsav album, credits singers Rashmita Rabari and Uday Dhadhal, names Mogal Films as producer, and reserves rights to Mogal Films. The source calls it nonstop Raas Garba and traditional Gujarati Raas Garba; it publishes no tracklist or chapter starts. On 2026-10-02 the watch page reported 15,925 seconds (4:25:25) and playabilityStatus OK; the privacy-enhanced embed reported previewPlayabilityStatus OK and playableInEmbed true.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "DtjxmFK9f34",
+        "url": "https://www.youtube.com/watch?v=DtjxmFK9f34",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    }
+  ]
+}
