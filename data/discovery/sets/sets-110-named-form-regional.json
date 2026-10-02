@@ -1,0 +1,334 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-ashok-sound-norta-3-tali-part-2",
+      "title": "\"NORTA\" Gujarati Garba | 3-Tali Garba | Navratri Garba[Part 2]",
+      "displayTitle": "Norta · 3-Tali Garba · Ashok Sound",
+      "series": "Meldi Maa Na Norta",
+      "artists": [
+        "Kiran Prajapati",
+        "Viren Prajapati"
+      ],
+      "categories": [
+        "tran-taali",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "styles": [
+        "tran-taali"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "F4RQPCxOd04",
+        "url": "https://www.youtube.com/watch?v=F4RQPCxOd04",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1804,
+      "sourceRuntimeDisplay": "30:04",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ashok Sound Official Channel published this source on 2016-10-03. The title explicitly says NORTA and 3-Tali Garba; its description names the album Meldi Maa Na Norta, artists Kiran Prajapati and Viren Prajapati, music by Manoj-Vimal and Ashok Sound as label. It publishes no tracklist or chapter starts, so none are inferred. The 3-Tali label is source metadata, not a claim about choreography. Checked 2026-10-02: watch page reported 1,804 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-ashok-sound-tran-tali-nonstop-garba-2024",
+      "title": "Tran Tali Non Stop Garba | Navratri Garba | Gujarati Garba 2024 | Dandiya Raas | Ashok Sound",
+      "displayTitle": "Tran Tali Nonstop Garba · Ashok Sound (2024)",
+      "series": "Tran Tali Non Stop Garba",
+      "year": 2024,
+      "artists": [
+        "Damyanti Barot"
+      ],
+      "categories": [
+        "tran-taali",
+        "traditional-garba",
+        "raas-dandiya"
+      ],
+      "genres": [
+        "traditional",
+        "dandiya"
+      ],
+      "styles": [
+        "tran-taali"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "SeooZ4B-kx4",
+        "url": "https://www.youtube.com/watch?v=SeooZ4B-kx4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1804,
+      "sourceRuntimeDisplay": "30:04",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ashok Sound Official Channel published this 2024 Tran Tali nonstop Garba on 2024-09-25. Its description names the Tran Tali Non Stop Garba album, singer Damyanti Barot, music by Pankaj Bhatt, lyrics by Santram Desani and Ashok Sound as label. The source title also names Dandiya Raas; these source labels do not establish choreography. No source chapter starts are published. Checked 2026-10-02: watch page reported 1,804 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-jhankar-music-rangtali-three-tali-nonstop",
+      "title": "Rangtali - Pt -1 & 2 Nonstop | Mataji Na Garba | Rangtali | Sanjay Oja Garba | Vaishali Mehta Garba",
+      "displayTitle": "Rangtali · Three Tali Garba · Jhankar Music Bhakti Sagar",
+      "series": "Rangtali - Pt -1 & 2 Nonstop",
+      "artists": [
+        "Sanjay Oja",
+        "Vaishali Mehta"
+      ],
+      "categories": [
+        "tran-taali",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "styles": [
+        "tran-taali"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "M59Y3ckm9a0",
+        "url": "https://www.youtube.com/watch?v=M59Y3ckm9a0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3607,
+      "sourceRuntimeDisplay": "1:00:07",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Jhankar Music Bhakti Sagar published this Rangtali compilation on 2015-10-12. The description explicitly labels the album Three Tali Garba and credits singers Sanjay Oja and Vaishali Mehta, music by Suresh Soni, lyrics by Kishor Thakkar and Jhankar Music as label. No timed starts are published. Three Tali is retained as the source’s form wording and is not a choreography claim. Checked 2026-10-02: watch page reported 3,607 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-mogal-films-purvi-patel-hinch-dandiya-2020",
+      "title": "Purvi Patel: Hinch Dandiya | Nonstop Garba | Navratri 2020",
+      "displayTitle": "Hinch Dandiya · Purvi Patel (2020)",
+      "series": "Hinch Dandiya",
+      "year": 2020,
+      "artists": [
+        "Purvi Patel"
+      ],
+      "categories": [
+        "hinch",
+        "raas-dandiya",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional",
+        "dandiya"
+      ],
+      "styles": [
+        "hinch"
+      ],
+      "setType": "verified-label-nonstop",
+    "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "o0fTk5SbapI",
+        "url": "https://www.youtube.com/watch?v=o0fTk5SbapI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2159,
+      "sourceRuntimeDisplay": "35:59",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mogal Films Official published this source on 2020-10-19. The title and description identify Hinch Dandiya and singer Purvi Patel; the description also credits B K Sound Botad for sound and Mogal Films as producer. No tracklist or starts are published. Hinch is retained as a source label without inferring step details. Checked 2026-10-02: watch page reported 2,159 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-red-ribbon-sanedo-navratri-2025",
+      "title": "Sanedo Navratri 2025 | Lalitya Munshaw & Kishore Manraja | Ultimate Gujarati Garba Hits | Red Ribbon",
+      "displayTitle": "Sanedo Navratri · Lalitya Munshaw & Kishore Manraja (2025)",
+      "series": "Sanedo Navratri 2025",
+      "year": 2025,
+      "artists": [
+        "Lalitya Munshaw",
+        "Kishore Manraja"
+      ],
+      "categories": [
+        "sanedo",
+        "folk",
+        "dandiya"
+      ],
+      "genres": [
+        "sanedo",
+        "folk"
+      ],
+      "styles": [
+        "sanedo"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "4p7lYT4oy7Q",
+        "url": "https://www.youtube.com/watch?v=4p7lYT4oy7Q",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1081,
+      "sourceRuntimeDisplay": "18:01",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Red Ribbon Gujarati published this label-presented Sanedo recording on 2025-09-18. The description names the track Sanedo and credits singers Lalitya Munshaw and Kishore Manraja and Red Ribbon Entertainment as music label. Its 18:01 runtime exceeds the requested 10-minute minimum; no chapter starts are published. Sanedo is retained from the source label without choreography claims. Checked 2026-10-02: watch page reported 1,081 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-rajpath-club-ahmedabad-navratri-2025-day-9",
+      "title": "LIVE: RAJPATH CLUB GARBA | Navratri Celebration | Day 9 | 2025",
+      "displayTitle": "Rajpath Club Garba · Ahmedabad · Day 9 (2025)",
+      "series": "Rajpath Club Garba",
+      "year": 2025,
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "9DGTq-VhGIg",
+        "url": "https://www.youtube.com/watch?v=9DGTq-VhGIg",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 14700,
+      "sourceRuntimeDisplay": "4:05:00",
+      "tags": [
+        "ahmedabad",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Rajpath Club Limited published this Navratri Garba event stream on 2025-09-30. Its title names Day 9 of the 2025 celebration and its description states the event date as 2025-09-29 at Rajpath Club, Ahmedabad. The source publishes no performer list, song tracklist or starts; this remains one full event recording without inferred chapters or city-specific step claims. Checked 2026-10-02: watch page reported 14,700 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-suvarn-navratri-surat-purva-mantri-day-9-2025",
+      "title": "LIVE || SUVARN NAVRATRI SURAT|| PURVA MANTRI || DAY 09 ||",
+      "displayTitle": "Suvarn Navratri · Surat · Purva Mantri · Day 9 (2025)",
+      "series": "Suvarn Navratri Surat",
+      "year": 2025,
+      "artists": [
+        "Purva Mantri"
+      ],
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "O9lEdDKNLp0",
+        "url": "https://www.youtube.com/watch?v=O9lEdDKNLp0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 18902,
+      "sourceRuntimeDisplay": "5:15:02",
+      "tags": [
+        "surat",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The Suvarn Navratri channel published this Day 09 event stream on 2025-09-30. Its title names Surat and Purva Mantri; the description also names Surat and references Weone Entertainers. No song list or chapter starts are published, so the set remains an event recording with no inferred boundaries or Surat-specific dance style. Checked 2026-10-02: watch page reported 18,902 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-vadodara-navratri-festival-2025-day-8",
+      "title": "Vadodara Navratri Festival 2025 | Navratri Nonstop Garba Live | Day 8",
+      "displayTitle": "Vadodara Navratri Festival · Day 8 (2025)",
+      "series": "Vadodara Navratri Festival",
+      "year": 2025,
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "qkCAj0fEKU0",
+        "url": "https://www.youtube.com/watch?v=qkCAj0fEKU0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 16563,
+      "sourceRuntimeDisplay": "4:36:03",
+      "tags": [
+        "vadodara",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Vadodara Navratri Festival Official published this Day 8 live Garba stream on 2025-09-29. The channel title identifies the festival and day; its description names the Garba ground in Vadodara. It publishes no individual performers, tracklist or song starts, so this remains a full event recording without inferred chapter boundaries. Checked 2026-10-02: watch page reported 16,563 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-sk-group-anand-vrundavan-live-garba-2025",
+      "title": "SK GROUP ANAND LIVE GARBA VRUNDAVAN (VRYM) 24/09/2025",
+      "displayTitle": "Vrundavan Live Garba · Anand (2025)",
+      "series": "Live Garba Vrundavan (VRYM)",
+      "year": 2025,
+      "artists": [
+        "Juket",
+        "Vasant Patel"
+      ],
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "hPXeq8XU_pI",
+        "url": "https://www.youtube.com/watch?v=hPXeq8XU_pI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 16180,
+      "sourceRuntimeDisplay": "4:29:40",
+      "tags": [
+        "anand",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "SK GROUP ANAND published this live Garba recording on 2025-09-24. The description calls it the third Navratri day, identifies organizer Vidyanagar Road Yuvak Mandal and live telecast by SK Group Anand, and names singers “Juket” and Vasant Patel; “Juket” preserves the source spelling. The source identifies Anand, Gujarat, and publishes no song starts. This remains one event set without inferred chapter boundaries or city-specific choreography. Checked 2026-10-02: watch page reported 16,180 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    }
+  ]
+}
