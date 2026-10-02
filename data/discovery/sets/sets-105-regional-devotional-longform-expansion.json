@@ -601,7 +601,7 @@
       ],
       "setType": "official-nonstop",
       "officiality": "artist-channel",
-      "title": "POOJA KRISHNA NO RANKAR  ||  NONSTOP GARBA  ||  GARBA 2026  || NEW GARBA 2026 || NAVRATRI GARBA 2026",
+      "title": "POOJA KRISHNA NO RANKAR || NONSTOP GARBA || GARBA 2026 || NEW GARBA 2026 || NAVRATRI GARBA 2026",
       "artists": [
         "Pooja Krishna"
       ],
@@ -742,7 +742,7 @@
       "chapterStatus": "published-complete",
       "segmentRouting": "metadata-only",
       "playbackPolicy": "youtube-embed-visible",
-      "notes": "Pooja Krishna official published this upload on 2026-09-21. The source title names a 2026 Navratri nonstop Garba release; its description credits Pooja Krishna official as label/copyright owner, Vijay Patel as producer, and Vivek Gajjar for music. It publishes 26 timestamp/title pairs, including source entries titled Dakla and Krishna Teri Murali. The channel identifies itself as Pooja Krishna official; no YouTube verification badge or Official Artist Channel marker was found. On 2026-10-02 the watch page reported 4,120 seconds (1:08:40) and playabilityStatus OK; the privacy-enhanced embed returned HTTP 200 and was playable. Chapter labels are metadata only.",
+      "notes": "Pooja Krishna official published this upload on 2026-09-21. The oEmbed title source-publishes `POOJA KRISHNA NO RANKAR  ||  NONSTOP GARBA  ||  GARBA 2026  || NEW GARBA 2026 || NAVRATRI GARBA 2026`; the title field collapses repeated whitespace for catalogue stability while preserving its words and order. The description credits Pooja Krishna official as label/copyright owner, Vijay Patel as producer, and Vivek Gajjar for music. It publishes 26 timestamp/title pairs, including source entries titled Dakla and Krishna Teri Murali. The channel identifies itself as Pooja Krishna official; no YouTube verification badge or Official Artist Channel marker was found. On 2026-10-02 the watch page reported 4,120 seconds (1:08:40) and playabilityStatus OK; the privacy-enhanced embed returned HTTP 200 and was playable. Chapter labels are metadata only.",
       "source": {
         "provider": "youtube",
         "videoId": "-736zRKZW2k",
