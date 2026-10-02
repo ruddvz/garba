@@ -1,0 +1,105 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-united-way-baroda-garba-mahotsav-2025-day3",
+      "title": "United Way Of Baroda - Garba Mahotsav 2025 By Atul Purohit - Day 3",
+      "displayTitle": "United Way of Baroda Garba Mahotsav · Day 3 · Atul Purohit (2025)",
+      "series": "United Way of Baroda Garba Mahotsav",
+      "volume": "Day 3",
+      "year": 2025,
+      "artists": ["Atul Purohit"],
+      "categories": ["live-garba"],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "vSRfoEP3mIA",
+        "url": "https://www.youtube.com/watch?v=vSRfoEP3mIA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 11411,
+      "sourceRuntimeDisplay": "3:10:11",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The United Way of Baroda channel published this on 2025-09-24. The title identifies Garba Mahotsav 2025, Day 3, and credits Atul Purohit. Baroda identifies the event organizer; no city-specific choreography style is inferred. Checked 2026-10-02: the watch page reported 11,411 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. The description publishes no tracklist or chapter starts."
+    },
+    {
+      "id": "set-news18-gujarati-surat-garba-night-2024-day5",
+      "title": "🟠Gujarat Navratri 2024 LIVE | સુરતમાં ગરબાની રમઝટ, પાંચમા નોરતે \"થનગનાટ\" | Surat Garba Night LIVE",
+      "displayTitle": "Surat Garba Night LIVE · Fifth Night · News18 Gujarati (2024)",
+      "series": "Surat Garba Night 2024",
+      "volume": "Fifth night",
+      "year": 2024,
+      "artists": ["Kinjal Dave", "Osman Mir", "Jignesh Kaviraj"],
+      "categories": ["live-garba"],
+      "setType": "live-event-recording",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "BDCf9_ujMsI",
+        "url": "https://www.youtube.com/watch?v=BDCf9_ujMsI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 28790,
+      "sourceRuntimeDisplay": "7:59:50",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "News18 Gujarati published this on 2024-10-07. Its title identifies Surat Garba Night LIVE during the fifth Navratri night; the description calls it nonstop live Garba and names Kinjal Dave, Osman Mir and Jignesh Kaviraj. These are event-level source labels, not claims about a citywide dance style. Checked 2026-10-02: the watch page reported 28,790 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. The description publishes no song tracklist or chapter starts."
+    },
+    {
+      "id": "set-abtak-surbhi-rasotsav-rajkot-2024-day7",
+      "title": "LIVE | Day-7 | ABTAK SURBHI RASOTSAV 2024",
+      "displayTitle": "Abtak Surbhi Rasotsav · Day 7 · Rajkot (2024)",
+      "series": "Abtak Surbhi Rasotsav 2024",
+      "volume": "Day 7",
+      "year": 2024,
+      "artists": [],
+      "categories": ["live-garba"],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "eAOzZtm-VAg",
+        "url": "https://www.youtube.com/watch?v=eAOzZtm-VAg",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 17323,
+      "sourceRuntimeDisplay": "4:48:43",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Abtak Media published this on 2024-10-09. The title identifies Day 7 of Abtak Surbhi Rasotsav 2024; the description tags include #rajkot and #surbhiclub but also a generic #day1 tag, so the Day-7 title is retained and the tag conflict remains visible. Abtak's event coverage describes the recurring Rasotsav at Rajkot's Racecourse Ground (https://www.abtakmedia.com/the-abtak-surbhi-rasotsav-will-once-again-captivate-revelers-at-the-racecourse/); this does not establish a venue for this specific 2024 video. No individual performer list, tracklist or chapter starts are published. Checked 2026-10-02: the watch page reported 17,323 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-lvp-heritage-garba-2025-day1-vadodara",
+      "title": "🔴 LIVE : Lukshmi Vilas Palace Heritage Garba 2025 | Navratri Nonstop Garba | Navratri 2025 | DAY 1",
+      "displayTitle": "LVP Heritage Garba · Day 1 · Vadodara (2025)",
+      "series": "Lukshmi Vilas Palace Heritage Garba",
+      "volume": "Day 1",
+      "year": 2025,
+      "artists": [],
+      "categories": ["live-garba"],
+      "setType": "live-event-recording",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "okhHVx16HqQ",
+        "url": "https://www.youtube.com/watch?v=okhHVx16HqQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 15220,
+      "sourceRuntimeDisplay": "4:13:40",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Shemaroo Gujarati Bhakti published this on 2025-09-22. The title identifies Lukshmi Vilas Palace Heritage Garba 2025, Navratri and Day 1; the description names Vadodara and the palace venue. It mentions Sachin Limaye in generic event copy but does not establish his appearance in this specific recording, so no performer credit is set. The description also contains 2024 references; the title's 2025 year is retained. Checked 2026-10-02: the watch page reported 15,220 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No tracklist or chapter starts are published."
+    }
+  ]
+}
