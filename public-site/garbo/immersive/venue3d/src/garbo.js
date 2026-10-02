@@ -1,7 +1,8 @@
 // The garbo at the centre of the circle, in 3D: a perforated clay pot on a draped stand with a diya burning on its
 // mouth and light spilling out through the holes; the rangoli under it and a ring of diyas; and the mandvi (the
 // carved canopy) over it. The pot is scaled up a little (as the 2D scene draws it) so it reads as the lamp at the
-// heart of the dance from where you stand; the mandvi is at real size.
+// heart of the dance from where you stand; the mandvi is at real size. A venue can ask for it bare (Pandora): the
+// lit pot on its stand and a ring of diyas only, no rangoli and no mandvi, the floor's own inlay round it.
 //
 // Its shape is mirrored in venue-scene.js (garboHole), which cuts the garbo's outline out of the dancers drawn behind
 // it, so the far side of the circle passes behind the pot and pillars. Keep the two in step when changing sizes here.
@@ -83,7 +84,7 @@ function beads(parent, pts, radius) {
   return m;
 }
 
-export function buildGarbo(kit, { small, flags }) {
+export function buildGarbo(kit, { small, flags, bare }) {
   const root = new THREE.Group(), S = GARBO.potScale, { r, top } = GARBO.mandvi(small);
   const tex = potTextures();
 
@@ -93,9 +94,10 @@ export function buildGarbo(kit, { small, flags }) {
   const rTex = new THREE.CanvasTexture(rCanvas); rTex.colorSpace = THREE.SRGBColorSpace; rTex.anisotropy = 4;
   const rangoli = new THREE.Mesh(new THREE.CircleGeometry(2.1, 48), new THREE.MeshStandardMaterial({ map: rTex, roughness: 0.95, transparent: true, polygonOffset: true, polygonOffsetFactor: -2 }));
   rangoli.rotation.x = -Math.PI / 2; rangoli.position.y = 0.012; rangoli.receiveShadow = true;
-  root.add(rangoli);
+  if (!bare) root.add(rangoli);
   // (real flames: each flickers on its own, and lights the ground round it in the flame layer)
-  for (let i = 0; i < 12; i++) { const a = (i + 0.5) / 12 * TAU; kit.flames.add(Math.cos(a) * 1.95, 0.012, Math.sin(a) * 1.95, { s: 0.06, k: 0.32 }); }
+  const nd = bare ? 8 : 12, rd = bare ? 1.75 : 1.95;
+  for (let i = 0; i < nd; i++) { const a = (i + 0.5) / nd * TAU; kit.flames.add(Math.cos(a) * rd, 0.012, Math.sin(a) * rd, { s: 0.06, k: 0.32 }); }
 
   // The garbo itself, scaled as one
   const g = new THREE.Group(); g.scale.setScalar(S); root.add(g);
@@ -116,6 +118,8 @@ export function buildGarbo(kit, { small, flags }) {
   const flame = new THREE.Mesh(flameGeo, glowMat('#ffd27a', 4)); flame.position.y = 0.575 + 0.63; flame.userData.dynamic = true; g.add(flame);
   const flameCore = new THREE.Mesh(flameGeo, glowMat('#fff4d0', 7)); flameCore.scale.setScalar(0.5); flameCore.position.y = 0.575 + 0.64; flameCore.userData.dynamic = true; g.add(flameCore);
 
+  let flag = null;
+  if (!bare) {
   // The mandvi: four carved pillars, a scalloped dome with a smaller one above, a kalash and a flag
   const pillar = new THREE.CylinderGeometry(0.06, 0.075, top, 10), pMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: pillarTexture(), roughness: 0.6, metalness: 0.15 }), 0.28, 'flame');
   [[-r, -r], [r, -r], [r, r], [-r, r]].forEach(([x, z]) => {
@@ -132,7 +136,7 @@ export function buildGarbo(kit, { small, flags }) {
   const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.8), std('#3a2413')); mast.position.y = top + 1.8; root.add(mast);
   const flagGeo = new THREE.BufferGeometry();
   flagGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0.55, -0.12, 0, 0, -0.3, 0], 3)); flagGeo.computeVertexNormals();
-  const flag = new THREE.Mesh(flagGeo, std('#d8453a', 0.8, 0, { side: THREE.DoubleSide })); flag.position.y = top + 2.18; flag.userData.dynamic = true; root.add(flag);
+  flag = new THREE.Mesh(flagGeo, std('#d8453a', 0.8, 0, { side: THREE.DoubleSide })); flag.position.y = top + 2.18; flag.userData.dynamic = true; root.add(flag);
   const slab = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.32, r * 1.32, 0.08, 32), std('#e8b04b', 0.35, 0.7, { emissive: '#3a2406', emissiveIntensity: 0.5 })); slab.position.y = top; root.add(slab);
   // Bulbs round the scalloped edge (festive), and a toran of flags in the night's colours
   for (let k = 0; k < 24; k++) {
@@ -146,6 +150,7 @@ export function buildGarbo(kit, { small, flags }) {
     for (let k = 0; k <= 16; k++) garland.push(sag([a[0], top - 0.1, a[1]], [b[0], top - 0.1, b[1]], 0.5, k / 16));
   });
   beads(root, garland, 0.045);
+  }
 
   // It can be faded out as you walk right past it, so it isn't baked with the venue; its still parts are baked
   // together within it instead (the flame and the flag keep moving)
@@ -164,7 +169,7 @@ export function buildGarbo(kit, { small, flags }) {
       flame.scale.set(1 + (reduce ? 0 : 0.06 * Math.sin(t * 17)), f * (0.85 + (reduce ? 0 : 0.15 * Math.sin(t * 9))), 1);
       flame.rotation.z = reduce ? 0 : Math.sin(t * 5) * 0.08;
       flameCore.scale.set(0.5, 0.5 * f, 0.5);
-      flag.rotation.y = reduce ? 0 : Math.sin(t * 2.2) * 0.35;
+      if (flag) flag.rotation.y = reduce ? 0 : Math.sin(t * 2.2) * 0.35;
     }
   };
 }
