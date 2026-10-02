@@ -1,5 +1,5 @@
 {
-  "version": "0.20.40",
+  "version": "0.20.41",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -88,7 +88,8 @@
     "sets-85-jigar-studio-jagdish-ramzat1.json",
     "sets-86-longform-navdurga-raas.json",
     "sets-87-community-timli-tarpa.json",
-    "sets-88-chaitra-navratri-2025.json"
+    "sets-88-chaitra-navratri-2025.json",
+    "sets-89-longform-genre-mixes.json"
   ],
   "policy": {
     "officialityOrder": [

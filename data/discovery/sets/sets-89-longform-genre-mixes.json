@@ -1,0 +1,160 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-rdc-bhakti-sagar-aarti-nonstop-2025",
+      "title": "Nonstop Garba 2025 | Mataji Na Garba | Navratri Special Gujarati | Non Garba Ni Dhun",
+      "displayTitle": "Mataji Na Garba & Aarti · Nonstop Garba (2025)",
+      "artists": ["Bhasker Shukla", "Vidita Shukla", "Vishalsinh Vaghela", "Navneet Shukla", "Pallavi Jambucha", "Kiran Prajapati", "Vijay Chauhan"],
+      "year": 2025,
+      "categories": ["traditional-garba", "mataji-devotional", "aarti"],
+      "genres": ["traditional", "devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Z_HxC4kdhuI",
+        "url": "https://www.youtube.com/watch?v=Z_HxC4kdhuI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3337,
+      "sourceRuntimeDisplay": "0:55:37",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Ambe Maa Ni Aarti", "sourceTitle": "અંબેમાંની આરતી (Ambe Maa Ni Aarti)", "artists": ["Bhasker Shukla", "Vidita Shukla"], "startSeconds": 2 },
+        { "title": "Aarasur Na Ambe Maa", "sourceTitle": "આરાસુરના અંબે માં (Aarasur Na Ambe Maa)", "artists": ["Vishalsinh Vaghela"], "startSeconds": 392 },
+        { "title": "Tara Dungare Thi Utaryo Vagh Re", "sourceTitle": "તારા ડુંગરે થી ઉતર્યો વાઘ રે (Tara Dungare Thi Utaryo Vagh Re)", "artists": ["Vishalsinh Vaghela"], "startSeconds": 602 },
+        { "title": "Shu Bethi Maa Pag Upar Pag Chadavi", "sourceTitle": "શું બેઠી માં પગ ઉપર પગ ચડાવી (Shu Bethi Maa Pag Upar Pag Chadavi)", "artists": ["Vishalsinh Vaghela"], "startSeconds": 868 },
+        { "title": "Jagdamba Maa Stuti", "sourceTitle": "જગદંબા માં સ્તુતિ (Jagdamba Maa Stuti)", "artists": ["Bhasker Shukla", "Vidita Shukla"], "startSeconds": 1183 },
+        { "title": "He Jag Janani Maa", "sourceTitle": "હે જગ જનની માં (He Jag Janani Maa)", "artists": ["Navneet Shukla"], "startSeconds": 1485 },
+        { "title": "He Jagdamba Sharno Ma Rakhje", "sourceTitle": "હે જગદંબા શરણોમા રાખજે (He Jagdamba Sharno Ma Rakhje)", "artists": ["Navneet Shukla"], "startSeconds": 2112 },
+        { "title": "Kaya Name Maa Karvi Bhakti", "sourceTitle": "કયા નામે માં કરવી ભક્તિ (Kaya Name Maa Karvi Bhakti)", "artists": ["Pallavi Jambucha"], "startSeconds": 2438 },
+        { "title": "Maa Tara Hetala Hath", "sourceTitle": "માં તારા હેતાળા હાથ (Maa Tara Hetala Hath)", "artists": ["Kiran Prajapati"], "startSeconds": 2764 },
+        { "title": "Madi Taru Kanku Kharyu Ne Suraj Ugyo", "sourceTitle": "માડી તારું કંકુ ખર્યું ને સુરજ ઉગ્યો (Madi Taru Kanku Kharyu Ne Suraj Ugyo)", "artists": ["Vijay Chauhan"], "startSeconds": 3010 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Published 2025-09-17 by the verified RDC Bhakti Sagar channel. The description credits Koo Koo TV Entertainment Pvt. Ltd. and RDC Media as digital partner, and publishes all ten chapter starts and singer credits. The watch page reported playable status and 3,337 seconds (55:37); the embed page returned HTTP 200. Chapter labels remain metadata-only and are not mapped to canonical song routes."
+    },
+    {
+      "id": "set-dj-mln-nonstop-garba-mix-2025",
+      "title": "Nonstop Garba Mix 2025 | 2 Hours Navratri Special | Latest Gujarati Garba Songs | DJ MLN",
+      "displayTitle": "Nonstop Garba Mix · DJ MLN (2025)",
+      "artists": ["DJ MLN"],
+      "year": 2025,
+      "categories": ["traditional-garba", "mataji-devotional", "dj-remix"],
+      "genres": ["traditional", "devotional", "fusion"],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "J8NnnDZ2fLw",
+        "url": "https://www.youtube.com/watch?v=J8NnnDZ2fLw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 7454,
+      "sourceRuntimeDisplay": "2:04:14",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Uploaded by DJ MLN on 2025-09-26. The description presents a Gujarati nonstop Garba DJ mix and references Amba Maa and songs from 2021–2024, but supplies no tracklist or chapter starts. The page reported playable status and 7,454 seconds (2:04:14); the embed page returned HTTP 200. The description's disclaimer assigns original copyrights to their companies, artists, or labels; no individual song identity or rights claim is inferred."
+    },
+    {
+      "id": "set-dj-akki-remix-garba-dandiya-2025",
+      "title": "Gujarati Garba Nonstop 2025 | Garba Nonstop Dj Song 2025 | Navratri Mashup 2025 | Dandiya 2025 Songs",
+      "displayTitle": "Gujarati Garba & Dandiya Nonstop · DJ Akki ReMix (2025)",
+      "artists": ["Dj Akki ReMix"],
+      "year": 2025,
+      "categories": ["raas-dandiya", "dj-remix"],
+      "genres": ["dandiya", "fusion"],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "N1ILGudPXs8",
+        "url": "https://www.youtube.com/watch?v=N1ILGudPXs8",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3635,
+      "sourceRuntimeDisplay": "1:00:35",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Published 2025-10-01 by Dj Akki ReMix. The title and description identify a Garba/Dandiya remix and the description includes Gujarati, Hindi, and Marathi search terms, but no tracklist or chapter starts. Although it also contains a Dodhiya hashtag, no Dodhiyu classification is inferred without track-level evidence. The page reported playable status and 3,635 seconds (1:00:35); the embed page returned HTTP 200."
+    },
+    {
+      "id": "set-h2o-brothers-hiren-raas-rangarang-2-2025",
+      "title": "GARBA NONSTOP 2025 | RAAS RANGARANG 2.0 | DANDIYA NAVRATRI DJ SONG | DODHIYA DHOLIDA | HIREN | H2O",
+      "displayTitle": "Raas Rangarang 2.0 · H2O Brothers & Hiren Chawda",
+      "artists": ["H2O Brothers", "Hiren Chawda"],
+      "year": 2025,
+      "categories": ["raas-dandiya", "dodhiyu", "dj-remix"],
+      "genres": ["dandiya", "fusion"],
+      "setType": "community-nonstop",
+      "officiality": "artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "06nnLUQ6qns",
+        "url": "https://www.youtube.com/watch?v=06nnLUQ6qns",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2920,
+      "sourceRuntimeDisplay": "0:48:40",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Published 2025-09-26 by the H2O Brothers channel. The description credits H2O Brothers and Hiren Chawda on Raas Rangarang 2.0 and identifies remix contributors; it publishes no tracklist or chapter starts. The title includes Dodhiya Dholida, so Raas/Dandiya and Dodhiyu are retained as discovery categories. The page reported playable status and 2,920 seconds (48:40); the embed page returned HTTP 200. The description asks others not to reuse the recording without permission; this entry makes no rights claim."
+    },
+    {
+      "id": "set-vdj-tushar-dakla-nonstop-2025",
+      "title": "ULTIMATE NONSTOP GUJARATI GARBA 2025 | Dakla, Geeta Rabari, Kinjal Dave, Aishwarya FAST | VDJ Tushar",
+      "displayTitle": "Nonstop Gujarati Garba · VDJ Tushar (2025)",
+      "artists": ["VDJ Tushar"],
+      "year": 2025,
+      "categories": ["dakla", "dj-remix", "raas-dandiya"],
+      "genres": ["fusion", "dandiya"],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "MuSfpatq5lM",
+        "url": "https://www.youtube.com/watch?v=MuSfpatq5lM",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2394,
+      "sourceRuntimeDisplay": "0:39:54",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Uploaded by VDJ Tushar on 2025-09-23. The description identifies a Gujarati DJ Garba mix and Dakla among its styles, but provides no tracklist, singer credits per segment, or chapter starts. The page reported playable status and 2,394 seconds (39:54); the embed page returned HTTP 200. References to other singers in the promotional description are not treated as verified track credits."
+    },
+    {
+      "id": "set-dj-karan-bilimora-nonstop-timli",
+      "title": "New Non Stop Timli Garba 2025 | Nonstop Timli Mix 2025 | Dance Special Non Stop Timli Garba 2025",
+      "displayTitle": "Nonstop Timli Mix · DJ Karan Bilimora",
+      "artists": ["Dj Karan Bilimora Official", "Dj Satis Bilimora"],
+      "categories": ["timli", "dj-remix"],
+      "genres": ["folk", "fusion"],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "1wHnDeL3CKg",
+        "url": "https://www.youtube.com/watch?v=1wHnDeL3CKg",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1906,
+      "sourceRuntimeDisplay": "0:31:46",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The channel description credits DJ Satis Bilimora with the remix and gives a date of 2024-01-27; the watch page has the same 2024-01-27 publish date, while the source title says 2025. No year is assigned to the set because those source fields conflict. The description gives no tracklist or chapter starts. The page reported playable status and 1,906 seconds (31:46); the embed page returned HTTP 200."
+    }
+  ]
+}
