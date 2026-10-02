@@ -1,0 +1,95 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "videoId": "VvD2ICSgsa0",
+      "id": "set-priyanka-kher-garbo-2-2024",
+      "displayTitle": "Garbo 2.0 · Priyanka Kher (2024)",
+      "series": "Garbo",
+      "volume": "2.0",
+      "categories": [
+        "traditional-garba"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "title": "Garbo 2.0",
+      "year": 2024,
+      "artists": [
+        "Priyanka Kher"
+      ],
+      "durationSeconds": 3319,
+      "sourceRuntimeDisplay": "55:19",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Priyanka Kher Garbo-series full-length recording from the user-supplied playlist. Apple Music dates the one-track Garbo 2.0 release to 2024-09-24 and reports 55:19. No source-backed chapter starts were imported, so the recording remains a single Nonstop set.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "VvD2ICSgsa0",
+        "url": "https://www.youtube.com/watch?v=VvD2ICSgsa0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "videoId": "6M9Bpp2Inls",
+      "id": "set-priyanka-kher-garbo-3-2025",
+      "displayTitle": "Garbo 3.0 · Priyanka Kher (2025)",
+      "series": "Garbo",
+      "volume": "3.0",
+      "categories": [
+        "traditional-garba"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "title": "Garbo 3.0",
+      "year": 2025,
+      "artists": [
+        "Priyanka Kher"
+      ],
+      "durationSeconds": 1878,
+      "sourceRuntimeDisplay": "31:18",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Priyanka Kher Garbo-series full-length recording. The repository's YouTube research already identifies this video as Priyanka Kher's official artist-channel Garbo 3.0 upload; Amazon Music dates the one-track release to 2025-08-25 and reports 31:18. No source-backed chapter starts were imported.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "6M9Bpp2Inls",
+        "url": "https://www.youtube.com/watch?v=6M9Bpp2Inls",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    },
+    {
+      "videoId": "JuQpTfDZ2gw",
+      "id": "set-priyanka-kher-garbo-4-2026",
+      "displayTitle": "Garbo 4.0 · Priyanka Kher (2026)",
+      "series": "Garbo",
+      "volume": "4.0",
+      "categories": [
+        "traditional-garba"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "title": "Garbo 4.0",
+      "year": 2026,
+      "artists": [
+        "Priyanka Kher"
+      ],
+      "durationSeconds": 2647,
+      "sourceRuntimeDisplay": "44:07",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Priyanka Kher Garbo-series full-length recording. The repository's YouTube research identifies this video as Priyanka Kher's official artist-channel Garbo 4.0 upload; Apple Music dates the one-track release to 2026-07-11 and current public video indexing reports 44:07. No source-backed chapter starts were imported.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "JuQpTfDZ2gw",
+        "url": "https://www.youtube.com/watch?v=JuQpTfDZ2gw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null
+    }
+  ]
+}
