@@ -1,5 +1,5 @@
 {
-  "version": "0.20.43",
+  "version": "0.20.44",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -91,7 +91,8 @@
     "sets-88-chaitra-navratri-2025.json",
     "sets-89-longform-genre-mixes.json",
     "sets-90-betali-hinch-dakla.json",
-    "sets-91-style-expansion.json"
+    "sets-91-style-expansion.json",
+    "sets-92-longform-style-expansion.json"
   ],
   "policy": {
     "officialityOrder": [
