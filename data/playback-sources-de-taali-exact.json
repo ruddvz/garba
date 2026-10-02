@@ -1,7 +1,7 @@
 {
   "version": "0.3.0",
   "updated": "2026-09-26",
-  "note": "All 20 catalogued tracks of De Taali (1999) now have exact verified Sony Music / Falguni Pathak - Topic YouTube track routes.",
+  "note": "Twenty of the 26 De Taali (1999) programme tracks have exact individual YouTube routes from verified Sony Topic or official artist-channel uploads. The six added tracks remain metadata-only until exact route evidence is verified.",
   "songSources": {
     "de-taali-1999-01-pethalpur-ma-gujarati-garba-song": {
       "provider": "youtube",
@@ -10,7 +10,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=jhdOOaEoFT4",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 1,
+      "trackNumber": 7,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-02-aavo-to-ramvane-gujarati-garba-song": {
@@ -20,7 +20,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=DE8sP3cOqcI",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 2,
+      "trackNumber": 1,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-03-mathe-matu-mahini-gujarati-garba-song": {
@@ -30,7 +30,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=3zWBwo5sG3s",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 3,
+      "trackNumber": 4,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-04-nahi-melure-gujarati-garba-song": {
@@ -40,7 +40,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=nUyL5oVer1U",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 4,
+      "trackNumber": 5,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-05-kaun-halave-limbdi-gujarati-garba-song": {
@@ -50,7 +50,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=LQhDueSZNrM",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 5,
+      "trackNumber": 6,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-06-pani-gayatare-gujarati-garba-song": {
@@ -60,7 +60,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=9UFLPlUOMmc",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 6,
+      "trackNumber": 8,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-07-sawaa-man-sonu-gujarati-garba-song": {
@@ -70,7 +70,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=5cItKWdiKnQ",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 7,
+      "trackNumber": 9,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-08-hadke-pepdo-gujarati-garba-song": {
@@ -80,7 +80,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=MuWbhu0vp2A",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 8,
+      "trackNumber": 10,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-09-sora-chayo-chayo-gayoto-gujarati-garba-song": {
@@ -90,7 +90,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=aiWIzyeBeIs",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 9,
+      "trackNumber": 11,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-10-nadi-kinare-naliyeri-gujarati-garba-song": {
@@ -100,7 +100,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=kdp_LCFWfQQ",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 10,
+      "trackNumber": 12,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-11-he-ji-re-riddhi-de-siddhi-de-gujarati-garba-song": {
@@ -110,7 +110,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=3wgFjzruXV8",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 11,
+      "trackNumber": 13,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-12-rame-ambe-maa-gujarati-garba-song": {
@@ -120,7 +120,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=ATxg8zmm-QU",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 12,
+      "trackNumber": 14,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-13-saathiaa-puravo-dware-gujarati-garba-song": {
@@ -130,7 +130,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=Bx9HLq7Gw_s",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 13,
+      "trackNumber": 15,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-14-chhanu-ne-chhapnu-gujarati-garba-song": {
@@ -140,7 +140,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=gAx0xUCu2SA",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 14,
+      "trackNumber": 16,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-15-oonchi-talavdi-ni-kor-gujarati-garba-song": {
@@ -150,7 +150,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=yq9uv6cs_ss",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 15,
+      "trackNumber": 17,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-16-morli-to-chali-gujarati-garba-song": {
@@ -160,7 +160,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=hJGVFeb_n4w",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 16,
+      "trackNumber": 18,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-17-chhailaji-re-gujarati-garba-song": {
@@ -170,7 +170,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=2R5j3-5iooY",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 17,
+      "trackNumber": 19,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-18-najar-na-jaam-gujarati-garba-song": {
@@ -180,7 +180,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=LrLINtIoxgs",
       "sourceType": "official-topic",
       "releaseId": "de-taali-1999",
-      "trackNumber": 18,
+      "trackNumber": 20,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-19-taliyo-na-taale-gujarati-garba-song": {
@@ -190,7 +190,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=M5EwBOAUc5w",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 19,
+      "trackNumber": 21,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     },
     "de-taali-1999-20-mari-mahisagar-ne-aare-gujarati-garba-song": {
@@ -200,7 +200,7 @@
       "sourceUrl": "https://www.youtube.com/watch?v=av80juzfcQI",
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
-      "trackNumber": 20,
+      "trackNumber": 25,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     }
   }
