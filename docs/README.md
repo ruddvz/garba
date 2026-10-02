@@ -88,6 +88,13 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`product/ux-polish-pass.md`](product/ux-polish-pass.md): product polish notes and remaining UX work
 - [`product/design-qa.md`](product/design-qa.md): visual review of the warm editorial guide pages across desktop and phone layouts
 
+## Dance and movement
+
+- [`dance/README.md`](dance/README.md): dance movement research overview and guide
+- [`dance/step-catalog.md`](dance/step-catalog.md): catalog of named steps, counts, and regional variants
+- [`dance/motion-sync-contract.md`](dance/motion-sync-contract.md): beat-relative phase, looping, and synchronization contract
+- [`dance/sources.md`](dance/sources.md): practitioner tutorials, channel archives, and source evidence
+
 ## Rights and partnerships
 
 - [`rights/catalogue-partnership-strategy.md`](rights/catalogue-partnership-strategy.md)
