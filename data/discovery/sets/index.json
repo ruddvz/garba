@@ -1,5 +1,5 @@
 {
-  "version": "0.20.72",
+  "version": "0.20.73",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -121,7 +121,8 @@
     "sets-119-regional-full-video-batch5.json",
     "sets-120-aarti-full-video-batch6.json",
     "sets-121-folk-longform-batch7.json",
-    "sets-122-user-requested-songs.json"
+    "sets-122-user-requested-songs.json",
+    "sets-125-priyanka-kher-garbo.json"
   ],
   "policy": {
     "officialityOrder": [
