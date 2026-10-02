@@ -1,0 +1,48 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-jigar-studio-jagdish-ramzat-1-2014",
+      "title": "Navratri NonStop 1 hour Gujarati Garba | Jagdish Thakor",
+      "artists": ["Jagdish Thakor", "Jigisha Patel"],
+      "series": "Jagdish Thakor Ni Ramzat",
+      "volume": "Part-1",
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Kaq5XjAucfI",
+        "url": "https://www.youtube.com/watch?v=Kaq5XjAucfI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3637,
+      "sourceRuntimeDisplay": "1:00:37",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Pratham Parvatina Putrane Paye Namu", "startSeconds": 3 },
+        { "title": "Maari Sherima Tej Apaar", "startSeconds": 298 },
+        { "title": "Shu Pehre Ambikane Su Pere Bahuchara", "startSeconds": 481 },
+        { "title": "Mahalaxmi Re Shubh Lakshami", "startSeconds": 707 },
+        { "title": "Zulo Zule Jognimaa", "startSeconds": 873 },
+        { "title": "Maa Tu Pavama Pragtani", "startSeconds": 1071 },
+        { "title": "Pili Matuli Lavya Re", "startSeconds": 1560 },
+        { "title": "Kalkama Ae Aapya Vadna Bij", "startSeconds": 1709 },
+        { "title": "Gabbarna Gokhwali", "startSeconds": 1852 },
+        { "title": "Kukado Bolyo Bahuchar Maano", "startSeconds": 2042 },
+        { "title": "Aasona Nav Norata", "startSeconds": 2223 },
+        { "title": "Chhoto Chhoto Madi Ne Man Moto", "startSeconds": 2436 },
+        { "title": "Ambika Ne Bahuchara Be Ben", "startSeconds": 2633 },
+        { "title": "Gabbar Ma Bandhyo Hinchako", "startSeconds": 2778 },
+        { "title": "Dak Dammar Vagya", "startSeconds": 2958 },
+        { "title": "Vage Zanzar Ambamana Pagma", "startSeconds": 3107 },
+        { "title": "Kaliya Bhil Ni Devi", "startSeconds": 3266 },
+        { "title": "Dammar Vage", "startSeconds": 3410 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Jigar Studio label-channel upload. The official YouTube description identifies the programme as traditional Garba for Navratri, names the album Jagdish Thakor Ni Ramzat Part-1, singers Jagdish Thakor and Jigisha Patel, music director Yogesh Purabiya, and label Jigar Studio. The watch page was checked on 2026-10-02: playback available, embeddable, and 3,637 seconds (1:00:37). The source description publishes these 18 chapter starts. They remain metadata-only navigation inside one continuous set; no separate split-track release or per-chapter performer credits were verified. The YouTube upload date is 2014-09-19; this is not asserted as the original commercial release year. No exact canonical release row was verified, so linkedReleaseId remains null."
+    }
+  ]
+}

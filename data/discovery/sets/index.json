@@ -1,6 +1,6 @@
 {
-  "version": "0.20.36",
-  "updated": "2026-09-30",
+  "version": "0.20.37",
+  "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
     "sets-02.json",
@@ -84,7 +84,8 @@
     "sets-81-uwb-2017-day9.json",
     "sets-82-uwb-2017-nights.json",
     "sets-83-uwb-2018-nights.json",
-    "sets-84-uwb-2023-missing-nights.json"
+    "sets-84-uwb-2023-missing-nights.json",
+    "sets-85-jigar-studio-jagdish-ramzat1.json"
   ],
   "policy": {
     "officialityOrder": [
