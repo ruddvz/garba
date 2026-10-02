@@ -1,5 +1,5 @@
 {
-  "version": "0.20.58",
+  "version": "0.20.59",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -106,7 +106,8 @@
     "sets-103-longform-artist-devotional-expansion.json",
     "sets-104-regional-form-longform-expansion.json",
     "sets-105-regional-devotional-longform-expansion.json",
-    "sets-106-regional-live-form-expansion.json"
+    "sets-106-regional-live-form-expansion.json",
+    "sets-107-regional-live-form-expansion.json"
   ],
   "policy": {
     "officialityOrder": [
