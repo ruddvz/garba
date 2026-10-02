@@ -40,7 +40,7 @@ const requiredRootFiles = new Set([
   'TRADEMARKS.md',
   'youtube-player-runtime.js',
 ]);
-const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
+const allowedRootDirs = new Set(['.github', '.raas', 'assets', 'data', 'docs', 'public-site', 'research', 'scripts', 'src', 'styles', '.worktrees', 'dist']);
 
 for (const entry of await readdir(root, { withFileTypes: true })) {
   if (entry.name === '.git' || entry.name === 'node_modules') continue;
