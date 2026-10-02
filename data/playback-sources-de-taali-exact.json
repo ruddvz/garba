@@ -1,7 +1,7 @@
 {
   "version": "0.3.0",
-  "updated": "2026-09-26",
-  "note": "Twenty of the 26 De Taali (1999) programme tracks have exact individual YouTube routes from verified Sony Topic or official artist-channel uploads. The six added tracks remain metadata-only until exact route evidence is verified.",
+  "updated": "2026-10-02",
+  "note": "Twenty-two of the 26 De Taali (1999) programme tracks have exact individual YouTube routes from verified Sony Topic or official artist-channel uploads. Four added tracks remain metadata-only until exact route evidence is verified.",
   "songSources": {
     "de-taali-1999-01-pethalpur-ma-gujarati-garba-song": {
       "provider": "youtube",
@@ -201,6 +201,26 @@
       "sourceType": "official-artist-channel",
       "releaseId": "de-taali-1999",
       "trackNumber": 25,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "de-taali-1999-02-pankhida-pankhida-gujarati-garba-song": {
+      "provider": "youtube",
+      "videoId": "SpLsOg8qlZM",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=SpLsOg8qlZM",
+      "sourceType": "official-topic",
+      "releaseId": "de-taali-1999",
+      "trackNumber": 2,
+      "evidenceType": "official-youtube-auto-generated-original-album-track"
+    },
+    "de-taali-1999-22-dham-dhammak-dham-gujarati-garba-song": {
+      "provider": "youtube",
+      "videoId": "oiB4qC9l85k",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=oiB4qC9l85k",
+      "sourceType": "official-topic",
+      "releaseId": "de-taali-1999",
+      "trackNumber": 22,
       "evidenceType": "official-youtube-auto-generated-original-album-track"
     }
   }
