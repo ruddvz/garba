@@ -1,0 +1,3185 @@
+{
+  "schema_version": 1,
+  "title": "Garba venue visual reference library",
+  "source_archive": {
+    "name": "Oct 02 - 03_48.zip",
+    "user_approved": true,
+    "imported_image_count": 160,
+    "preserved_original_jpegs": true,
+    "note": "Each ZIP image is retained at its original dimensions and bytes. Original ZIP filenames are preserved in metadata."
+  },
+  "priority_order": [],
+  "state_storage": "Browser local storage plus downloadable JSON export from index.html",
+  "concepts": [
+    {
+      "id": "obsidian-fern-basin",
+      "title": "Obsidian Fern Basin",
+      "setting": "Open-air alien-world arena",
+      "palette": "Basalt · ultraviolet flora · ember gold",
+      "summary": "Ringed-planet night sky, volcanic dark stone, luminous alien ferns and an open circular Garba floor. The sky and planet stay visible; this is not an enclosed dome.",
+      "capacity": "Flexible; scale from intimate to festival-size in the concept only.",
+      "images": [
+        {
+          "id": "zip-001",
+          "path": "images/obsidian-fern-basin/zip-001-image.png_20261002043221.jpg",
+          "title": "Obsidian Fern Basin · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1177804,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-054",
+          "path": "images/obsidian-fern-basin/zip-054-VIP_pods_in_venue_20261002043223.jpg",
+          "title": "Vip pods in venue",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_pods_in_venue_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 921926,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-059",
+          "path": "images/obsidian-fern-basin/zip-059-Architectural_floor_plan_of_venue_20261002043223.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 736695,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-060",
+          "path": "images/obsidian-fern-basin/zip-060-Alien_planet_lighting_master_shot_20261002043223.jpg",
+          "title": "Alien planet lighting master shot",
+          "role": "Lighting and decor detail",
+          "original_filename": "Alien_planet_lighting_master_shot_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 836860,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-071",
+          "path": "images/obsidian-fern-basin/zip-071-Glowing_crystal_pillars_close-up_20261002043223.jpg",
+          "title": "Glowing crystal pillars close-up",
+          "role": "Lighting and decor detail",
+          "original_filename": "Glowing_crystal_pillars_close-up_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 882862,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-077",
+          "path": "images/obsidian-fern-basin/zip-077-Garba_venue_on_alien_planet_20261002043223.jpg",
+          "title": "Garba venue on alien planet",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_on_alien_planet_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 966129,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-080",
+          "path": "images/obsidian-fern-basin/zip-080-Alien_horizon_from_arena_20261002043223.jpg",
+          "title": "Alien horizon from arena",
+          "role": "Reference detail",
+          "original_filename": "Alien_horizon_from_arena_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 789111,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-083",
+          "path": "images/obsidian-fern-basin/zip-083-Purple_flora_with_bioluminescent…_20261002043223.jpg",
+          "title": "Purple flora with bioluminescent",
+          "role": "Reference detail",
+          "original_filename": "Purple_flora_with_bioluminescent…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 854146,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-091",
+          "path": "images/obsidian-fern-basin/zip-091-Architectural_floor_plan_of_arena_20261002043224.jpg",
+          "title": "Architectural floor plan of arena",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_arena_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 890594,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-105",
+          "path": "images/obsidian-fern-basin/zip-105-Grand_entrance_gate_to_venue_20261002043224.jpg",
+          "title": "Grand entrance gate to venue",
+          "role": "Arrival and circulation",
+          "original_filename": "Grand_entrance_gate_to_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 885906,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-113",
+          "path": "images/obsidian-fern-basin/zip-113-Alien_planet_lighting_atmosphere…_20261002043224.jpg",
+          "title": "Alien planet lighting atmosphere",
+          "role": "Lighting and decor detail",
+          "original_filename": "Alien_planet_lighting_atmosphere…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 899132,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-118",
+          "path": "images/obsidian-fern-basin/zip-118-Alien_landscape_from_obsidian_floor_20261002043224.jpg",
+          "title": "Alien landscape from obsidian floor",
+          "role": "Scene view",
+          "original_filename": "Alien_landscape_from_obsidian_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 837159,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-124",
+          "path": "images/obsidian-fern-basin/zip-124-Purple_alien_flora_glowing_textures_20261002043224.jpg",
+          "title": "Purple alien flora glowing textures",
+          "role": "Structure or material detail",
+          "original_filename": "Purple_alien_flora_glowing_textures_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 840821,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-125",
+          "path": "images/obsidian-fern-basin/zip-125-Alien_landscape_viewed_from_danc…_20261002043224.jpg",
+          "title": "Alien landscape viewed from danc",
+          "role": "Reference detail",
+          "original_filename": "Alien_landscape_viewed_from_danc…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 852105,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-127",
+          "path": "images/obsidian-fern-basin/zip-127-Storyboard_grid_showing_alien_venue_20261002043224.jpg",
+          "title": "Obsidian Fern Basin · scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_showing_alien_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1031041,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-141",
+          "path": "images/obsidian-fern-basin/zip-141-Storyboard_grid_showing_venue_an…_20261002043224.jpg",
+          "title": "Obsidian Fern Basin · multi-view storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_showing_venue_an…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 999297,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-144",
+          "path": "images/obsidian-fern-basin/zip-144-Glowing_crystal_pillars_glowing_20261002043224.jpg",
+          "title": "Glowing crystal pillars glowing",
+          "role": "Lighting and decor detail",
+          "original_filename": "Glowing_crystal_pillars_glowing_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 876168,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-146",
+          "path": "images/obsidian-fern-basin/zip-146-Ringed_planet_from_alien_horizon_20261002043224.jpg",
+          "title": "Ringed planet from alien horizon",
+          "role": "Reference detail",
+          "original_filename": "Ringed_planet_from_alien_horizon_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 913681,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-147",
+          "path": "images/obsidian-fern-basin/zip-147-Garba_venue_on_alien_planet_20261002043224.jpg",
+          "title": "Garba venue on alien planet",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_on_alien_planet_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 948973,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-obsidian-fern-basin",
+          "path": "images/obsidian-fern-basin/prior-favorite-obsidian-fern-basin.png",
+          "title": "Obsidian Fern Basin",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/14-obsidian-fern-basin.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3488856
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 20,
+      "scale_fit": [
+        "Private gathering adaptable",
+        "Mid-size",
+        "Large event"
+      ]
+    },
+    {
+      "id": "jyot-shikhar-light-tower",
+      "title": "Jyot Shikhar · Light Tower",
+      "setting": "Open-air ceremonial landmark",
+      "palette": "Blackened metal · warm gold · diya light",
+      "summary": "A freestanding tiered perforated tower, treated as a light sculpture that casts a mandala across the floor. Preserve it as a distinct prop direction; elephant figures are not a default motif.",
+      "capacity": "Standalone element or focal point for a larger circle.",
+      "images": [
+        {
+          "id": "zip-002",
+          "path": "images/jyot-shikhar-light-tower/zip-002-image.png_20261002043221_2.jpg",
+          "title": "Jyot Shikhar · tower study board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1312,
+            "height": 1199
+          },
+          "bytes": 854164,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-051",
+          "path": "images/jyot-shikhar-light-tower/zip-051-Perforated_metal_detail_shot_20261002043222.jpg",
+          "title": "Perforated metal detail shot",
+          "role": "Reference detail",
+          "original_filename": "Perforated_metal_detail_shot_20261002043222.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 657091,
+          "batch": "20261002043222"
+        },
+        {
+          "id": "zip-052",
+          "path": "images/jyot-shikhar-light-tower/zip-052-Metal_tiers_stacked_symmetrically_20261002043223.jpg",
+          "title": "Metal tiers stacked symmetrically",
+          "role": "Reference detail",
+          "original_filename": "Metal_tiers_stacked_symmetrically_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 625571,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-076",
+          "path": "images/jyot-shikhar-light-tower/zip-076-Shadows_cast_on_dance_floor_20261002043223.jpg",
+          "title": "Shadows cast on dance floor",
+          "role": "Scene view",
+          "original_filename": "Shadows_cast_on_dance_floor_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 752011,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-081",
+          "path": "images/jyot-shikhar-light-tower/zip-081-Illuminated_metal_structure_at_v…_20261002043223.jpg",
+          "title": "Illuminated metal structure at v",
+          "role": "Reference detail",
+          "original_filename": "Illuminated_metal_structure_at_v…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 775566,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-097",
+          "path": "images/jyot-shikhar-light-tower/zip-097-Storyboard_of_Garba_venue_angles_20261002043224.jpg",
+          "title": "Jyot Shikhar · multi-angle storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_of_Garba_venue_angles_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 855292,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-106",
+          "path": "images/jyot-shikhar-light-tower/zip-106-Metal_structure_architectural_vi…_20261002043224.jpg",
+          "title": "Metal structure architectural vi",
+          "role": "Reference detail",
+          "original_filename": "Metal_structure_architectural_vi…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 874879,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-152",
+          "path": "images/jyot-shikhar-light-tower/zip-152-VIP_lounge_pod_overview_20261002043224.jpg",
+          "title": "Vip lounge pod overview",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_lounge_pod_overview_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 835736,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-jyot-shikhar-light-tower",
+          "path": "images/jyot-shikhar-light-tower/prior-favorite-jyot-shikhar-light-tower.png",
+          "title": "Jyot Shikhar Light Tower",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/element-jyot-shikhar-light-tower.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1312,
+            "height": 1199
+          },
+          "bytes": 2491443
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 9,
+      "scale_fit": [
+        "Standalone prop",
+        "Private gathering",
+        "Large focal point"
+      ]
+    },
+    {
+      "id": "resham-textile-pavilion",
+      "title": "Resham Pavilion · Full-span Ribbon Canopy",
+      "setting": "Open-air textile pavilion",
+      "palette": "Deep red · antique brass · candle gold",
+      "summary": "The approved correction uses a very large open canopy illusion made by radiating suspended fabric strips. The upper treatment spans the full dance space; it is not a solid dome and not a small partial canopy.",
+      "capacity": "Small private gathering through large open dance floor; scale is illustrative.",
+      "images": [
+        {
+          "id": "zip-003",
+          "path": "images/resham-textile-pavilion/zip-003-image.png_20261002043221_3.jpg",
+          "title": "Full-span red canopy · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_3.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1004597,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-064",
+          "path": "images/resham-textile-pavilion/zip-064-Red_canopy_material_detail_shot_20261002043223.jpg",
+          "title": "Red canopy material detail shot",
+          "role": "Lighting and decor detail",
+          "original_filename": "Red_canopy_material_detail_shot_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 840388,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-065",
+          "path": "images/resham-textile-pavilion/zip-065-Garba_venue_with_red_ribbons_20261002043223.jpg",
+          "title": "Garba venue with red ribbons",
+          "role": "Lighting and decor detail",
+          "original_filename": "Garba_venue_with_red_ribbons_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1075286,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-066",
+          "path": "images/resham-textile-pavilion/zip-066-Architectural_floor_plan_of_pavi…_20261002043223.jpg",
+          "title": "Architectural floor plan of pavi",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_pavi…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 663581,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-073",
+          "path": "images/resham-textile-pavilion/zip-073-Dance_floor_plaza_architecture_view_20261002043223.jpg",
+          "title": "Dance floor plaza architecture view",
+          "role": "Structure or material detail",
+          "original_filename": "Dance_floor_plaza_architecture_view_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1043525,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-084",
+          "path": "images/resham-textile-pavilion/zip-084-Lighting_red_canopy_venue_20261002043223.jpg",
+          "title": "Lighting red canopy venue",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lighting_red_canopy_venue_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 752005,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-093",
+          "path": "images/resham-textile-pavilion/zip-093-Lighting_illuminating_textile_dr…_20261002043224.jpg",
+          "title": "Lighting illuminating textile dr",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lighting_illuminating_textile_dr…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 914155,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-094",
+          "path": "images/resham-textile-pavilion/zip-094-Pavilion_ceiling_structural_refe…_20261002043224.jpg",
+          "title": "Pavilion ceiling structural refe",
+          "role": "Structure or material detail",
+          "original_filename": "Pavilion_ceiling_structural_refe…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 958013,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-101",
+          "path": "images/resham-textile-pavilion/zip-101-Textiles_and_bells_texture_20261002043224.jpg",
+          "title": "Textiles and bells texture",
+          "role": "Structure or material detail",
+          "original_filename": "Textiles_and_bells_texture_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 886124,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-123",
+          "path": "images/resham-textile-pavilion/zip-123-Storyboard_showing_Garba_venue_a…_20261002043224.jpg",
+          "title": "Resham Pavilion · scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_showing_Garba_venue_a…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 972863,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-129",
+          "path": "images/resham-textile-pavilion/zip-129-VIP_seating_area_with_furniture_20261002043224.jpg",
+          "title": "Vip seating area with furniture",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_seating_area_with_furniture_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 966129,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-131",
+          "path": "images/resham-textile-pavilion/zip-131-Grand_entrance_gate_to_festival_20261002043224.jpg",
+          "title": "Grand entrance gate to festival",
+          "role": "Arrival and circulation",
+          "original_filename": "Grand_entrance_gate_to_festival_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 944836,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-142",
+          "path": "images/resham-textile-pavilion/zip-142-Garba_venue_with_marble_floor_20261002043224.jpg",
+          "title": "Garba venue with marble floor",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_with_marble_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1007077,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-143",
+          "path": "images/resham-textile-pavilion/zip-143-VIP_lounge_interior_view_20261002043224.jpg",
+          "title": "Vip lounge interior view",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_lounge_interior_view_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1020461,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-145",
+          "path": "images/resham-textile-pavilion/zip-145-Storyboard_grid_showing_venue_an…_20261002043224_2.jpg",
+          "title": "Resham Pavilion · full-span open canopy storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_showing_venue_an…_20261002043224_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1008073,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-148",
+          "path": "images/resham-textile-pavilion/zip-148-Pavilion_arches_and_dance_floor_20261002043224.jpg",
+          "title": "Pavilion arches and dance floor",
+          "role": "Scene view",
+          "original_filename": "Pavilion_arches_and_dance_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1013751,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-150",
+          "path": "images/resham-textile-pavilion/zip-150-image.png_20261002043224.jpg",
+          "title": "Multi-view concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1448,
+            "height": 1086
+          },
+          "bytes": 1069229,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-160",
+          "path": "images/resham-textile-pavilion/zip-160-Looking_upward_at_red_ribbons_20261002043224.jpg",
+          "title": "Looking upward at red ribbons",
+          "role": "Lighting and decor detail",
+          "original_filename": "Looking_upward_at_red_ribbons_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1016114,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-corrected-full-span-red-open-canopy",
+          "path": "images/resham-textile-pavilion/prior-favorite-corrected-full-span-red-open-canopy.png",
+          "title": "Corrected Full-span Red Open Canopy",
+          "role": "Previously selected favorite",
+          "original_filename": "archive/05-corrected-red-open-canopy.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 2814451
+        },
+        {
+          "id": "prior-favorite-resham-textile-pavilion",
+          "path": "images/resham-textile-pavilion/prior-favorite-resham-textile-pavilion.png",
+          "title": "Resham Textile Pavilion",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/05-resham-textile-pavilion.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1448,
+            "height": 1086
+          },
+          "bytes": 2872365
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 20,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size",
+        "Large open floor"
+      ]
+    },
+    {
+      "id": "voltage-yard",
+      "title": "Voltage Yard",
+      "setting": "Indoor industrial warehouse",
+      "palette": "Midnight steel · electric cyan · magenta",
+      "summary": "A modern industrial hall with exposed trusses, precise LED architecture, a clear circular dance floor, stage, perimeter circulation and an elevated lounge. Keep the Garba floor readable amid the cyberpunk lighting.",
+      "capacity": "Medium to large indoor event; diagrams are visual concepts, not measured plans.",
+      "images": [
+        {
+          "id": "zip-004",
+          "path": "images/voltage-yard/zip-004-image.png_20261002043221_4.jpg",
+          "title": "Voltage Yard · warehouse concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_4.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1264972,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-022",
+          "path": "images/voltage-yard/zip-022-Garba_venue_in_industrial_warehouse_20261002043221.jpg",
+          "title": "Garba venue in industrial warehouse",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_in_industrial_warehouse_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 952297,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-023",
+          "path": "images/voltage-yard/zip-023-Storyboard_grid_showing_industri…_20261002043221.jpg",
+          "title": "Voltage Yard · warehouse storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_showing_industri…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 921563,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-024",
+          "path": "images/voltage-yard/zip-024-People_dancing_in_warehouse_20261002043221.jpg",
+          "title": "People dancing in warehouse",
+          "role": "Reference detail",
+          "original_filename": "People_dancing_in_warehouse_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 879206,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-025",
+          "path": "images/voltage-yard/zip-025-Industrial_venue_architectural_f…_20261002043221.jpg",
+          "title": "Industrial venue architectural f",
+          "role": "Scene view",
+          "original_filename": "Industrial_venue_architectural_f…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 587061,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-026",
+          "path": "images/voltage-yard/zip-026-Industrial_materials_texture_detail_20261002043221.jpg",
+          "title": "Industrial materials texture detail",
+          "role": "Structure or material detail",
+          "original_filename": "Industrial_materials_texture_detail_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 731576,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-027",
+          "path": "images/voltage-yard/zip-027-Neon_lighting_and_industrial_tru…_20261002043221.jpg",
+          "title": "Neon lighting and industrial tru",
+          "role": "Lighting and decor detail",
+          "original_filename": "Neon_lighting_and_industrial_tru…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 732881,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-028",
+          "path": "images/voltage-yard/zip-028-Mezzanine_lounge_overlooking_Gar…_20261002043221.jpg",
+          "title": "Mezzanine lounge overlooking gar",
+          "role": "Lounge and hospitality",
+          "original_filename": "Mezzanine_lounge_overlooking_Gar…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 896555,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-029",
+          "path": "images/voltage-yard/zip-029-Industrial_festival_entrance_por…_20261002043221.jpg",
+          "title": "Industrial festival entrance por",
+          "role": "Arrival and circulation",
+          "original_filename": "Industrial_festival_entrance_por…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 897039,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-030",
+          "path": "images/voltage-yard/zip-030-Lighting_and_atmosphere_in_wareh…_20261002043221.jpg",
+          "title": "Lighting and atmosphere in wareh",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lighting_and_atmosphere_in_wareh…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 932421,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-031",
+          "path": "images/voltage-yard/zip-031-Architectural_elevation_view_of_…_20261002043221.jpg",
+          "title": "Architectural elevation view of",
+          "role": "Structure or material detail",
+          "original_filename": "Architectural_elevation_view_of_…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 550347,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-032",
+          "path": "images/voltage-yard/zip-032-Architectural_floor_plan_of_venue_20261002043221_2.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043221_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 818058,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-033",
+          "path": "images/voltage-yard/zip-033-Luxury_VIP_lounge_pod_interior_20261002043221.jpg",
+          "title": "Luxury vip lounge pod interior",
+          "role": "Lounge and hospitality",
+          "original_filename": "Luxury_VIP_lounge_pod_interior_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1126434,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-050",
+          "path": "images/voltage-yard/zip-050-Futuristic_materials_at_Garba_venue_20261002043222.jpg",
+          "title": "Futuristic materials at garba venue",
+          "role": "Structure or material detail",
+          "original_filename": "Futuristic_materials_at_Garba_venue_20261002043222.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 777625,
+          "batch": "20261002043222"
+        },
+        {
+          "id": "zip-092",
+          "path": "images/voltage-yard/zip-092-Indoor_Garba_arena_with_LED_20261002043224.jpg",
+          "title": "Indoor garba arena with led",
+          "role": "Scene view",
+          "original_filename": "Indoor_Garba_arena_with_LED_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1064017,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-095",
+          "path": "images/voltage-yard/zip-095-Industrial_Garba_plaza_entrance_…_20261002043224.jpg",
+          "title": "Industrial garba plaza entrance",
+          "role": "Arrival and circulation",
+          "original_filename": "Industrial_Garba_plaza_entrance_…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 791494,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-110",
+          "path": "images/voltage-yard/zip-110-Neon_lighting_inside_high_tech_20261002043224.jpg",
+          "title": "Neon lighting inside high tech",
+          "role": "Lighting and decor detail",
+          "original_filename": "Neon_lighting_inside_high_tech_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 978678,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-111",
+          "path": "images/voltage-yard/zip-111-Performance_stage_with_LED_displays_20261002043224.jpg",
+          "title": "Performance stage with led displays",
+          "role": "Reference detail",
+          "original_filename": "Performance_stage_with_LED_displays_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1020338,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-122",
+          "path": "images/voltage-yard/zip-122-LED_dance_floor_texture_detail_20261002043224.jpg",
+          "title": "Led dance floor texture detail",
+          "role": "Structure or material detail",
+          "original_filename": "LED_dance_floor_texture_detail_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1073723,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-128",
+          "path": "images/voltage-yard/zip-128-Entrance_portal_to_festival_20261002043224.jpg",
+          "title": "Entrance portal to festival",
+          "role": "Arrival and circulation",
+          "original_filename": "Entrance_portal_to_festival_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1043936,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-133",
+          "path": "images/voltage-yard/zip-133-VIP_lounge_overlooking_dance_floor_20261002043224.jpg",
+          "title": "Vip lounge overlooking dance floor",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_lounge_overlooking_dance_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 895428,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-151",
+          "path": "images/voltage-yard/zip-151-image.png_20261002043224_2.jpg",
+          "title": "Voltage Yard · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043224_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1122063,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-154",
+          "path": "images/voltage-yard/zip-154-Storyboard_showing_indoor_venue_…_20261002043224.jpg",
+          "title": "Voltage Yard · indoor scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_showing_indoor_venue_…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1098000,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-159",
+          "path": "images/voltage-yard/zip-159-Arena_ceiling_trusses_and_lights_20261002043224.jpg",
+          "title": "Arena ceiling trusses and lights",
+          "role": "Lighting and decor detail",
+          "original_filename": "Arena_ceiling_trusses_and_lights_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 987084,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-voltage-yard-first-pass",
+          "path": "images/voltage-yard/prior-favorite-voltage-yard-first-pass.png",
+          "title": "Voltage Yard · First Pass",
+          "role": "Previously selected favorite",
+          "original_filename": "archive/cyberpunk-first-pass/20-voltage-yard-first-pass.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3194634
+        },
+        {
+          "id": "prior-favorite-voltage-yard",
+          "path": "images/voltage-yard/prior-favorite-voltage-yard.png",
+          "title": "Voltage Yard",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/20-voltage-yard.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3432919
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 26,
+      "scale_fit": [
+        "Indoor",
+        "Mid-size",
+        "Large event"
+      ]
+    },
+    {
+      "id": "deep-jyot-chowk",
+      "title": "Deep-Jyot Chowk",
+      "setting": "Temple-inspired open courtyard",
+      "palette": "Terracotta · marigold · brass · diya amber",
+      "summary": "A carved, devotional courtyard framed by arches, suspended mandala lanterns, oil lamps and a central dance circle. Treat sacred imagery with care and keep the floor clear for dancing.",
+      "capacity": "Intimate courtyard to larger event; no measured capacity established.",
+      "images": [
+        {
+          "id": "zip-005",
+          "path": "images/deep-jyot-chowk/zip-005-image.png_20261002043221_5.jpg",
+          "title": "Deep-Jyot Chowk · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_5.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1448,
+            "height": 1086
+          },
+          "bytes": 1187886,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-056",
+          "path": "images/deep-jyot-chowk/zip-056-Decorative_pillar_architectural_…_20261002043223.jpg",
+          "title": "Decorative pillar architectural",
+          "role": "Lighting and decor detail",
+          "original_filename": "Decorative_pillar_architectural_…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 940236,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-057",
+          "path": "images/deep-jyot-chowk/zip-057-Architectural_floor_plan_of_temp…_20261002043223.jpg",
+          "title": "Architectural floor plan of temp",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_temp…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 509668,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-058",
+          "path": "images/deep-jyot-chowk/zip-058-Temple_entrance_view_from_dancef…_20261002043223.jpg",
+          "title": "Temple entrance view from dancef",
+          "role": "Arrival and circulation",
+          "original_filename": "Temple_entrance_view_from_dancef…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 854914,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-063",
+          "path": "images/deep-jyot-chowk/zip-063-Copper_and_brass_textures_20261002043223.jpg",
+          "title": "Copper and brass textures",
+          "role": "Structure or material detail",
+          "original_filename": "Copper_and_brass_textures_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 696947,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-069",
+          "path": "images/deep-jyot-chowk/zip-069-Garba_festival_entrance_portal_20261002043223.jpg",
+          "title": "Garba festival entrance portal",
+          "role": "Arrival and circulation",
+          "original_filename": "Garba_festival_entrance_portal_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 959501,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-070",
+          "path": "images/deep-jyot-chowk/zip-070-Architectural_floor_plan_of_venue_20261002043223_2.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043223_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 730875,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-074",
+          "path": "images/deep-jyot-chowk/zip-074-Garba_venue_in_palace_courtyard_20261002043223.jpg",
+          "title": "Garba venue in palace courtyard",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_in_palace_courtyard_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1113018,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-082",
+          "path": "images/deep-jyot-chowk/zip-082-Decorative_lanterns_and_oil_lamps_20261002043223.jpg",
+          "title": "Decorative lanterns and oil lamps",
+          "role": "Lighting and decor detail",
+          "original_filename": "Decorative_lanterns_and_oil_lamps_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 873839,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-087",
+          "path": "images/deep-jyot-chowk/zip-087-Colorful_lanterns_hanging_in_temple_20261002043224.jpg",
+          "title": "Colorful lanterns hanging in temple",
+          "role": "Lighting and decor detail",
+          "original_filename": "Colorful_lanterns_hanging_in_temple_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 877484,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-090",
+          "path": "images/deep-jyot-chowk/zip-090-Temple_gate_entrance_at_festival_20261002043224.jpg",
+          "title": "Temple gate entrance at festival",
+          "role": "Arrival and circulation",
+          "original_filename": "Temple_gate_entrance_at_festival_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1071594,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-107",
+          "path": "images/deep-jyot-chowk/zip-107-Temple_floor_patterns_and_oil_20261002043224.jpg",
+          "title": "Temple floor patterns and oil",
+          "role": "Scene view",
+          "original_filename": "Temple_floor_patterns_and_oil_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 986529,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-109",
+          "path": "images/deep-jyot-chowk/zip-109-Temple_lit_by_lanterns_and_20261002043224.jpg",
+          "title": "Temple lit by lanterns and",
+          "role": "Lighting and decor detail",
+          "original_filename": "Temple_lit_by_lanterns_and_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 911658,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-112",
+          "path": "images/deep-jyot-chowk/zip-112-VIP_seating_area_in_temple_20261002043224.jpg",
+          "title": "Vip seating area in temple",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_seating_area_in_temple_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 962882,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-121",
+          "path": "images/deep-jyot-chowk/zip-121-Garba_venue_at_night_temple_20261002043224.jpg",
+          "title": "Garba venue at night temple",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_at_night_temple_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 960640,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-134",
+          "path": "images/deep-jyot-chowk/zip-134-Storyboard_grid_of_temple_venue_20261002043224.jpg",
+          "title": "Deep-Jyot Chowk · scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_of_temple_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 976480,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-135",
+          "path": "images/deep-jyot-chowk/zip-135-Marble_dance_floor_at_venue_20261002043224.jpg",
+          "title": "Marble dance floor at venue",
+          "role": "Scene view",
+          "original_filename": "Marble_dance_floor_at_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1003682,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-158",
+          "path": "images/deep-jyot-chowk/zip-158-Garba_venue_decor_details_20261002043224.jpg",
+          "title": "Garba venue decor details",
+          "role": "Lighting and decor detail",
+          "original_filename": "Garba_venue_decor_details_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 768,
+            "height": 1376
+          },
+          "bytes": 1204669,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-deep-jyot-chowk",
+          "path": "images/deep-jyot-chowk/prior-favorite-deep-jyot-chowk.png",
+          "title": "Deep-Jyot Chowk",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/11-deep-jyot-chowk.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1448,
+            "height": 1086
+          },
+          "bytes": 3097843
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 19,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    },
+    {
+      "id": "chandra-van",
+      "title": "Chandra Van",
+      "setting": "Bioluminescent banyan garden",
+      "palette": "Jade · moonlit blue · lantern amber",
+      "summary": "A lush open garden threaded with banyan roots, floating lanterns, low-lit paths and a moonlit canopy. Preserve organic variation and a visible night sky; keep futuristic flora subtle here.",
+      "capacity": "Private garden gathering to mid-size event.",
+      "images": [
+        {
+          "id": "zip-006",
+          "path": "images/chandra-van/zip-006-image.png_20261002043221_6.jpg",
+          "title": "Chandra Van · glowing forest board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_6.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1281009,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-034",
+          "path": "images/chandra-van/zip-034-Lighting_forest_venue_lanterns_20261002043221.jpg",
+          "title": "Lighting forest venue lanterns",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lighting_forest_venue_lanterns_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1052098,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-035",
+          "path": "images/chandra-van/zip-035-Garba_dance_floor_near_banyan_20261002043221.jpg",
+          "title": "Garba dance floor near banyan",
+          "role": "Scene view",
+          "original_filename": "Garba_dance_floor_near_banyan_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1042141,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-036",
+          "path": "images/chandra-van/zip-036-Carved_marble_and_tree_bark_20261002043221.jpg",
+          "title": "Carved marble and tree bark",
+          "role": "Reference detail",
+          "original_filename": "Carved_marble_and_tree_bark_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 939114,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-037",
+          "path": "images/chandra-van/zip-037-Architectural_floor_plan_of_venue_20261002043221_3.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043221_3.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1179191,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-038",
+          "path": "images/chandra-van/zip-038-Garba_venue_illuminated_by_diyas_20261002043221.jpg",
+          "title": "Garba venue illuminated by diyas",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_illuminated_by_diyas_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1086570,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-039",
+          "path": "images/chandra-van/zip-039-Starry_sky_visible_through_trees_20261002043221.jpg",
+          "title": "Starry sky visible through trees",
+          "role": "Reference detail",
+          "original_filename": "Starry_sky_visible_through_trees_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1052277,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-040",
+          "path": "images/chandra-van/zip-040-Storyboard_grid_of_venue_camera_20261002043221.jpg",
+          "title": "Chandra Van · camera-view storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_of_venue_camera_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1082613,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-053",
+          "path": "images/chandra-van/zip-053-Forest_venue_glowing_flora_details_20261002043223.jpg",
+          "title": "Forest venue glowing flora details",
+          "role": "Scene view",
+          "original_filename": "Forest_venue_glowing_flora_details_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 838337,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-098",
+          "path": "images/chandra-van/zip-098-People_dancing_in_forest_venue_20261002043224.jpg",
+          "title": "People dancing in forest venue",
+          "role": "Scene view",
+          "original_filename": "People_dancing_in_forest_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1042262,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-104",
+          "path": "images/chandra-van/zip-104-Garba_venue_in_forest_20261002043224.jpg",
+          "title": "Garba venue in forest",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_in_forest_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1063935,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-chandra-van-bioluminescent-jungle",
+          "path": "images/chandra-van/prior-favorite-chandra-van-biolu-jungle.png",
+          "title": "Chandra Van · Bioluminescent Jungle",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/10-chandra-van-biolu-jungle.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3727745
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 12,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    },
+    {
+      "id": "lotus-amphitheatre",
+      "title": "Lotus Amphitheatre",
+      "setting": "Open-air stepped arena",
+      "palette": "Indigo · lotus rose · warm stone",
+      "summary": "A circular amphitheatre with broad stepped seating, a luminous lotus floor and a clear open sky. Focus on legible tiers and safe movement routes around the dance circle.",
+      "capacity": "Large event concept; seating counts and geometry remain illustrative.",
+      "images": [
+        {
+          "id": "zip-007",
+          "path": "images/lotus-amphitheatre/zip-007-image.png_20261002043221_7.jpg",
+          "title": "Lotus Amphitheatre · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_7.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1228407,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-049",
+          "path": "images/lotus-amphitheatre/zip-049-Architectural_floor_plan_of_venue_20261002043222.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043222.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 527247,
+          "batch": "20261002043222"
+        },
+        {
+          "id": "zip-075",
+          "path": "images/lotus-amphitheatre/zip-075-Storyboard_showing_amphitheater_…_20261002043223.jpg",
+          "title": "Lotus Amphitheatre · scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_showing_amphitheater_…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 993649,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-078",
+          "path": "images/lotus-amphitheatre/zip-078-Lotus_dance_floor_night_view_20261002043223.jpg",
+          "title": "Lotus dance floor night view",
+          "role": "Scene view",
+          "original_filename": "Lotus_dance_floor_night_view_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 844244,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-088",
+          "path": "images/lotus-amphitheatre/zip-088-Garba_venue_at_night_20261002043224.jpg",
+          "title": "Garba venue at night",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_at_night_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1027896,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-096",
+          "path": "images/lotus-amphitheatre/zip-096-Architectural_floor_plan_of_venue_20261002043224.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1013624,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-108",
+          "path": "images/lotus-amphitheatre/zip-108-Lotus_floor_projection_texture_20261002043224.jpg",
+          "title": "Lotus floor projection texture",
+          "role": "Structure or material detail",
+          "original_filename": "Lotus_floor_projection_texture_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 792411,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-114",
+          "path": "images/lotus-amphitheatre/zip-114-Architectural_floor_plan_of_arena_20261002043224_2.jpg",
+          "title": "Architectural floor plan of arena",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_arena_20261002043224_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 848075,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-116",
+          "path": "images/lotus-amphitheatre/zip-116-VIP_seating_overlooking_dance_floor_20261002043224.jpg",
+          "title": "Vip seating overlooking dance floor",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_seating_overlooking_dance_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 896805,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-140",
+          "path": "images/lotus-amphitheatre/zip-140-Lanterns_illuminate_amphitheater…_20261002043224.jpg",
+          "title": "Lanterns illuminate amphitheater",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lanterns_illuminate_amphitheater…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 920513,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-153",
+          "path": "images/lotus-amphitheatre/zip-153-Stair_lights_on_stone_tiers_20261002043224.jpg",
+          "title": "Stair lights on stone tiers",
+          "role": "Lighting and decor detail",
+          "original_filename": "Stair_lights_on_stone_tiers_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 727481,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-155",
+          "path": "images/lotus-amphitheatre/zip-155-Grand_entrance_portal_to_amphith…_20261002043224.jpg",
+          "title": "Grand entrance portal to amphith",
+          "role": "Arrival and circulation",
+          "original_filename": "Grand_entrance_portal_to_amphith…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 844103,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-156",
+          "path": "images/lotus-amphitheatre/zip-156-Architectural_floor_plan_of_amph…_20261002043224.jpg",
+          "title": "Architectural floor plan of amph",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_amph…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 938748,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-157",
+          "path": "images/lotus-amphitheatre/zip-157-Amphitheater_with_lotus_dance_floor_20261002043224.jpg",
+          "title": "Amphitheater with lotus dance floor",
+          "role": "Scene view",
+          "original_filename": "Amphitheater_with_lotus_dance_floor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 864326,
+          "batch": "20261002043224"
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 14,
+      "scale_fit": [
+        "Mid-size",
+        "Large event"
+      ]
+    },
+    {
+      "id": "violet-lantern-garden",
+      "title": "Violet Lantern Grove",
+      "setting": "Tree-lined private garden",
+      "palette": "Violet · woven rattan · warm amber",
+      "summary": "A garden route and dance clearing under mature trees, with handwoven conical lanterns, bark uplights and a quiet lounge pod. The lighting should reveal the trees rather than flatten them.",
+      "capacity": "Small private gathering to mid-size garden event.",
+      "images": [
+        {
+          "id": "zip-008",
+          "path": "images/violet-lantern-garden/zip-008-image.png_20261002043221_8.jpg",
+          "title": "Violet Lantern Grove · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_8.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1142608,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-012",
+          "path": "images/violet-lantern-garden/zip-012-Garba_venue_in_garden_park_20261002043221.jpg",
+          "title": "Garba venue in garden park",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_in_garden_park_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1007915,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-013",
+          "path": "images/violet-lantern-garden/zip-013-Architectural_floor_plan_of_venue_20261002043221.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 812844,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-014",
+          "path": "images/violet-lantern-garden/zip-014-Woven_lanterns_glowing_in_garden_20261002043221.jpg",
+          "title": "Woven lanterns glowing in garden",
+          "role": "Lighting and decor detail",
+          "original_filename": "Woven_lanterns_glowing_in_garden_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 811810,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-015",
+          "path": "images/violet-lantern-garden/zip-015-Storyboard_grid_of_park_venue_20261002043221.jpg",
+          "title": "Violet Lantern Grove · scene storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_of_park_venue_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1006052,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-016",
+          "path": "images/violet-lantern-garden/zip-016-Purple_lights_on_tree_bark_20261002043221.jpg",
+          "title": "Purple lights on tree bark",
+          "role": "Lighting and decor detail",
+          "original_filename": "Purple_lights_on_tree_bark_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 805013,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-017",
+          "path": "images/violet-lantern-garden/zip-017-Illuminated_garden_path_to_dance_20261002043221.jpg",
+          "title": "Illuminated garden path to dance",
+          "role": "Arrival and circulation",
+          "original_filename": "Illuminated_garden_path_to_dance_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1025649,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-018",
+          "path": "images/violet-lantern-garden/zip-018-Luxury_garden_VIP_pod_in_20261002043221.jpg",
+          "title": "Luxury garden vip pod in",
+          "role": "Lounge and hospitality",
+          "original_filename": "Luxury_garden_VIP_pod_in_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 854596,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-019",
+          "path": "images/violet-lantern-garden/zip-019-Festival_entrance_gate_floral_in…_20261002043221.jpg",
+          "title": "Festival entrance gate floral in",
+          "role": "Arrival and circulation",
+          "original_filename": "Festival_entrance_gate_floral_in…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1076708,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-020",
+          "path": "images/violet-lantern-garden/zip-020-Lantern_lights_illuminating_park…_20261002043221.jpg",
+          "title": "Lantern lights illuminating park",
+          "role": "Lighting and decor detail",
+          "original_filename": "Lantern_lights_illuminating_park…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1069010,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-021",
+          "path": "images/violet-lantern-garden/zip-021-Looking_upward_at_lantern_canopy_20261002043221.jpg",
+          "title": "Looking upward at lantern canopy",
+          "role": "Lighting and decor detail",
+          "original_filename": "Looking_upward_at_lantern_canopy_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1013593,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-103",
+          "path": "images/violet-lantern-garden/zip-103-Garba_venue_architectural_layout…_20261002043224.jpg",
+          "title": "Garba venue architectural layout",
+          "role": "Plan study",
+          "original_filename": "Garba_venue_architectural_layout…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 768,
+            "height": 1376
+          },
+          "bytes": 766641,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-violet-garden-lantern-study",
+          "path": "images/violet-lantern-garden/prior-favorite-violet-garden-lantern-study.png",
+          "title": "Violet Garden Lantern Study",
+          "role": "Previously selected favorite",
+          "original_filename": "archive/04-violet-garden-lantern-study.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3441543
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 13,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    },
+    {
+      "id": "cyberpunk-city-plaza",
+      "title": "Cyberpunk City Plaza",
+      "setting": "Elevated urban festival plaza",
+      "palette": "Electric violet · cyan · wet-stone black",
+      "summary": "A city-scale open plaza among neon facades and elevated transit, with a distinct arrival lane and circular dance zone. Keep the skyline and urban infrastructure as a backdrop instead of filling the floor with screens.",
+      "capacity": "Large public event concept; no real site or measured capacity implied.",
+      "images": [
+        {
+          "id": "zip-009",
+          "path": "images/cyberpunk-city-plaza/zip-009-image.png_20261002043221_9.jpg",
+          "title": "Cyberpunk City Plaza · concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_9.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1406072,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-055",
+          "path": "images/cyberpunk-city-plaza/zip-055-VIP_lounge_overlooking_Garba_fes…_20261002043223.jpg",
+          "title": "Vip lounge overlooking garba fes",
+          "role": "Lounge and hospitality",
+          "original_filename": "VIP_lounge_overlooking_Garba_fes…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 896203,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-062",
+          "path": "images/cyberpunk-city-plaza/zip-062-Digital_LED_facades_and_deity_20261002043223.jpg",
+          "title": "Digital led facades and deity",
+          "role": "Reference detail",
+          "original_filename": "Digital_LED_facades_and_deity_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 965720,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-067",
+          "path": "images/cyberpunk-city-plaza/zip-067-Holographic_decorations_in_futur…_20261002043223.jpg",
+          "title": "Holographic decorations in futur",
+          "role": "Lighting and decor detail",
+          "original_filename": "Holographic_decorations_in_futur…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1086473,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-068",
+          "path": "images/cyberpunk-city-plaza/zip-068-Crowd_facing_massive_digital_facade_20261002043223.jpg",
+          "title": "Crowd facing massive digital facade",
+          "role": "Reference detail",
+          "original_filename": "Crowd_facing_massive_digital_facade_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1065587,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-079",
+          "path": "images/cyberpunk-city-plaza/zip-079-Futuristic_festival_storyboard_grid_20261002043223.jpg",
+          "title": "Cyberpunk city festival storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Futuristic_festival_storyboard_grid_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1124396,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-100",
+          "path": "images/cyberpunk-city-plaza/zip-100-Architectural_floor_plan_of_plaza_20261002043224.jpg",
+          "title": "Architectural floor plan of plaza",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_plaza_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 853115,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-120",
+          "path": "images/cyberpunk-city-plaza/zip-120-Futuristic_city_plaza_lighting_r…_20261002043224.jpg",
+          "title": "Futuristic city plaza lighting r",
+          "role": "Lighting and decor detail",
+          "original_filename": "Futuristic_city_plaza_lighting_r…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1066725,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-126",
+          "path": "images/cyberpunk-city-plaza/zip-126-Garba_plaza_and_urban_infrastruc…_20261002043224.jpg",
+          "title": "Garba plaza and urban infrastruc",
+          "role": "Scene view",
+          "original_filename": "Garba_plaza_and_urban_infrastruc…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1114191,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-132",
+          "path": "images/cyberpunk-city-plaza/zip-132-Futuristic_Garba_venue_in_neon_20261002043224.jpg",
+          "title": "Futuristic garba venue in neon",
+          "role": "Scene view",
+          "original_filename": "Futuristic_Garba_venue_in_neon_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1093476,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-137",
+          "path": "images/cyberpunk-city-plaza/zip-137-Grand_entrance_gate_to_venue_20261002043224_2.jpg",
+          "title": "Grand entrance gate to venue",
+          "role": "Arrival and circulation",
+          "original_filename": "Grand_entrance_gate_to_venue_20261002043224_2.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 871578,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-139",
+          "path": "images/cyberpunk-city-plaza/zip-139-Futuristic_plaza_entrance_view_20261002043224.jpg",
+          "title": "Futuristic plaza entrance view",
+          "role": "Arrival and circulation",
+          "original_filename": "Futuristic_plaza_entrance_view_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 996181,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-neon-vav-first-pass",
+          "path": "images/cyberpunk-city-plaza/prior-favorite-neon-vav-first-pass.png",
+          "title": "Neon Vav · First Pass",
+          "role": "Previously selected favorite",
+          "original_filename": "archive/cyberpunk-first-pass/18-neon-vav-first-pass.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3466240
+        },
+        {
+          "id": "prior-favorite-cyberpunk-city-plaza",
+          "path": "images/cyberpunk-city-plaza/prior-favorite-cyberpunk-city-plaza.png",
+          "title": "Cyberpunk City Plaza",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/21-cyberpunk-city-plaza.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3707853
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 14,
+      "scale_fit": [
+        "Large city-scale concept"
+      ]
+    },
+    {
+      "id": "tideglass-terrace",
+      "title": "Tideglass Terrace",
+      "setting": "Open-air seaside terrace",
+      "palette": "Deep ocean blue · turquoise · moon silver",
+      "summary": "A sea-facing circular dance terrace with a visible horizon, moonlit water, coastal planting, musician platform and separate lounge pockets. Keep wind and open sky central to the scene.",
+      "capacity": "Private to mid-size coastal celebration concept.",
+      "images": [
+        {
+          "id": "zip-010",
+          "path": "images/tideglass-terrace/zip-010-image.png_20261002043221_10.jpg",
+          "title": "Tideglass Terrace · seaside concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_10.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1289634,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-061",
+          "path": "images/tideglass-terrace/zip-061-Architectural_floor_plan_of_terrace_20261002043223.jpg",
+          "title": "Architectural floor plan of terrace",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_terrace_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 693674,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-072",
+          "path": "images/tideglass-terrace/zip-072-Illuminated_pathways_and_floral_…_20261002043223.jpg",
+          "title": "Illuminated pathways and floral",
+          "role": "Arrival and circulation",
+          "original_filename": "Illuminated_pathways_and_floral_…_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 915984,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-085",
+          "path": "images/tideglass-terrace/zip-085-Musicians_stage_at_Garba_festival_20261002043223.jpg",
+          "title": "Musicians stage at garba festival",
+          "role": "Scene view",
+          "original_filename": "Musicians_stage_at_Garba_festival_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 954946,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-086",
+          "path": "images/tideglass-terrace/zip-086-image.png_20261002043223.jpg",
+          "title": "Multi-view concept board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043223.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 1289634,
+          "batch": "20261002043223"
+        },
+        {
+          "id": "zip-099",
+          "path": "images/tideglass-terrace/zip-099-People_dancing_Garba_at_seaside_20261002043224.jpg",
+          "title": "People dancing garba at seaside",
+          "role": "Scene view",
+          "original_filename": "People_dancing_Garba_at_seaside_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 893948,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-102",
+          "path": "images/tideglass-terrace/zip-102-Terrace_overlooking_sea_at_night_20261002043224.jpg",
+          "title": "Terrace overlooking sea at night",
+          "role": "Reference detail",
+          "original_filename": "Terrace_overlooking_sea_at_night_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 941820,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-115",
+          "path": "images/tideglass-terrace/zip-115-Moonlight_reflecting_on_water_an…_20261002043224.jpg",
+          "title": "Moonlight reflecting on water an",
+          "role": "Lighting and decor detail",
+          "original_filename": "Moonlight_reflecting_on_water_an…_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 975634,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-119",
+          "path": "images/tideglass-terrace/zip-119-Storyboard_grid_of_seaside_venue_20261002043224.jpg",
+          "title": "Tideglass Terrace · seaside storyboard",
+          "role": "Multi-view concept board",
+          "original_filename": "Storyboard_grid_of_seaside_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1018981,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-136",
+          "path": "images/tideglass-terrace/zip-136-Garba_venue_on_seaside_terrace_20261002043224.jpg",
+          "title": "Garba venue on seaside terrace",
+          "role": "Scene view",
+          "original_filename": "Garba_venue_on_seaside_terrace_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 958813,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-149",
+          "path": "images/tideglass-terrace/zip-149-Materials_at_seaside_venue_20261002043224.jpg",
+          "title": "Materials at seaside venue",
+          "role": "Structure or material detail",
+          "original_filename": "Materials_at_seaside_venue_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 776179,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-tideglass-terrace",
+          "path": "images/tideglass-terrace/prior-favorite-tideglass-terrace.png",
+          "title": "Tideglass Terrace",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/12-tideglass-terrace.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1536,
+            "height": 1024
+          },
+          "bytes": 3702290
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 12,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    },
+    {
+      "id": "chitra-aangan",
+      "title": "Chitra Aangan",
+      "setting": "Devotional-art tree courtyard",
+      "palette": "Painted jewel tones · leaf green · diya gold",
+      "summary": "A courtyard where devotional painted panels, mature trees, small warm lights and a central gathering area form the visual identity. Art panels should read as intentional cultural references, not generic backdrop graphics.",
+      "capacity": "Small private gathering to mid-size courtyard event.",
+      "images": [
+        {
+          "id": "zip-011",
+          "path": "images/chitra-aangan/zip-011-image.png_20261002043221_11.jpg",
+          "title": "Chitra Aangan · art garden board",
+          "role": "Multi-view concept board",
+          "original_filename": "image.png_20261002043221_11.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "bytes": 1244922,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-117",
+          "path": "images/chitra-aangan/zip-117-Dancing_at_courtyard_celebration_20261002043224.jpg",
+          "title": "Dancing at courtyard celebration",
+          "role": "Reference detail",
+          "original_filename": "Dancing_at_courtyard_celebration_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 768,
+            "height": 1376
+          },
+          "bytes": 1005567,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-130",
+          "path": "images/chitra-aangan/zip-130-Garba_venue_with_traditional_decor_20261002043224.jpg",
+          "title": "Garba venue with traditional decor",
+          "role": "Lighting and decor detail",
+          "original_filename": "Garba_venue_with_traditional_decor_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 768,
+            "height": 1376
+          },
+          "bytes": 1027755,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "zip-138",
+          "path": "images/chitra-aangan/zip-138-Modern_luxury_Garba_venue_design_20261002043224.jpg",
+          "title": "Modern luxury garba venue design",
+          "role": "Scene view",
+          "original_filename": "Modern_luxury_Garba_venue_design_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 979362,
+          "batch": "20261002043224"
+        },
+        {
+          "id": "prior-favorite-chitra-aangan-art-garden",
+          "path": "images/chitra-aangan/prior-favorite-chitra-aangan-art-garden.png",
+          "title": "Chitra Aangan Art Garden",
+          "role": "Previously selected favorite",
+          "original_filename": "assets/06-chitra-aangan-art-garden.png",
+          "source": "previous_review_favorite",
+          "user_approved": true,
+          "favorite": true,
+          "prior_favorite": true,
+          "dimensions": {
+            "width": 1024,
+            "height": 1536
+          },
+          "bytes": 3522297
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 5,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    },
+    {
+      "id": "vrindavan-sandstone-courtyard",
+      "title": "Vrindavan Sandstone Courtyard",
+      "setting": "Historic-inspired carved stone courtyard",
+      "palette": "Sandstone · flame amber · muted vermilion",
+      "summary": "Carved stone arcades, temple-gate references, low lamps, torch glow and shaded bench edges define this separate heritage-inspired direction. It is a generated visual study, not a measured existing venue.",
+      "capacity": "Intimate to mid-size courtyard concept.",
+      "images": [
+        {
+          "id": "zip-041",
+          "path": "images/vrindavan-sandstone-courtyard/zip-041-Architectural_floor_plan_of_venue_20261002043221_4.jpg",
+          "title": "Architectural floor plan of venue",
+          "role": "Plan study",
+          "original_filename": "Architectural_floor_plan_of_venue_20261002043221_4.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 677072,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-042",
+          "path": "images/vrindavan-sandstone-courtyard/zip-042-Ancient_Vrindavan_sandstone_text…_20261002043221.jpg",
+          "title": "Ancient vrindavan sandstone text",
+          "role": "Reference detail",
+          "original_filename": "Ancient_Vrindavan_sandstone_text…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1054434,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-043",
+          "path": "images/vrindavan-sandstone-courtyard/zip-043-Earthen_oil_lamps_burning_torches_20261002043221.jpg",
+          "title": "Earthen oil lamps burning torches",
+          "role": "Lighting and decor detail",
+          "original_filename": "Earthen_oil_lamps_burning_torches_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1056782,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-044",
+          "path": "images/vrindavan-sandstone-courtyard/zip-044-Stone_arches_and_dance_floor_20261002043221.jpg",
+          "title": "Stone arches and dance floor",
+          "role": "Scene view",
+          "original_filename": "Stone_arches_and_dance_floor_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 941881,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-045",
+          "path": "images/vrindavan-sandstone-courtyard/zip-045-Prachin_Vrindavan_entrance_porta…_20261002043221.jpg",
+          "title": "Prachin vrindavan entrance porta",
+          "role": "Arrival and circulation",
+          "original_filename": "Prachin_Vrindavan_entrance_porta…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1065163,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-046",
+          "path": "images/vrindavan-sandstone-courtyard/zip-046-Stone-bench_seating_area_in_cour…_20261002043221.jpg",
+          "title": "Stone-bench seating area in cour",
+          "role": "Lounge and hospitality",
+          "original_filename": "Stone-bench_seating_area_in_cour…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1133045,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-047",
+          "path": "images/vrindavan-sandstone-courtyard/zip-047-Temple_shikhara_and_starry_night_20261002043221.jpg",
+          "title": "Temple shikhara and starry night",
+          "role": "Reference detail",
+          "original_filename": "Temple_shikhara_and_starry_night_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 1060009,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-048",
+          "path": "images/vrindavan-sandstone-courtyard/zip-048-Torches_illuminate_ancient_stone…_20261002043221.jpg",
+          "title": "Torches illuminate ancient stone",
+          "role": "Reference detail",
+          "original_filename": "Torches_illuminate_ancient_stone…_20261002043221.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 783301,
+          "batch": "20261002043221"
+        },
+        {
+          "id": "zip-089",
+          "path": "images/vrindavan-sandstone-courtyard/zip-089-Temple_arcade_perspective_shot_20261002043224.jpg",
+          "title": "Temple arcade perspective shot",
+          "role": "Reference detail",
+          "original_filename": "Temple_arcade_perspective_shot_20261002043224.jpg",
+          "source": "user_zip",
+          "user_approved": true,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1376,
+            "height": 768
+          },
+          "bytes": 899415,
+          "batch": "20261002043224"
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 9,
+      "scale_fit": [
+        "20–40 guest layout",
+        "Mid-size"
+      ]
+    }
+  ],
+  "research_references": [
+    {
+      "id": "aekal-raatri-2025",
+      "name": "Aekal Raatri",
+      "setting": "Sargam Farm, Ahmedabad",
+      "source_url": "https://dflevents.com/portfolio/aekal-raatri",
+      "source_type": "DFL event-production story",
+      "map_url": "https://www.google.com/maps/search/?api=1&query=Sargam+Farm+Ahmedabad",
+      "note": "Published 2025 production cues; not a measured site survey."
+    },
+    {
+      "id": "dfl-garba-nights-2025",
+      "name": "Garba Nights",
+      "setting": "Unnamed private garden, Ahmedabad",
+      "source_url": "https://dflevents.com/portfolio/garba-nights",
+      "source_type": "DFL event-production story",
+      "map_url": null,
+      "note": "The exact garden is not named; no venue pin is asserted."
+    },
+    {
+      "id": "sanedo-2025",
+      "name": "Sanedo Mandali Garba",
+      "setting": "Pleasant Party Plot, Ognaj, Ahmedabad",
+      "source_url": "https://sanedomandaligarba.com/",
+      "source_type": "Organizer site",
+      "map_url": "https://www.google.com/maps/search/?api=1&query=Sanedo+Mandali+Garba+Pleasant+Party+Plot+Ognaj+Ahmedabad",
+      "user_supplied_map_links": [
+        "https://maps.app.goo.gl/3seLGhC8tUbbigYi9",
+        "https://maps.app.goo.gl/y67srdzM5uKiWPYKA",
+        "https://maps.app.goo.gl/Y1F84647FfdGrnea7",
+        "https://maps.app.goo.gl/NmJBnpBBQupJdshD6"
+      ],
+      "note": "Four user-supplied short links were checked and all resolve to the same Sanedo Mandali Garba place/photo listing."
+    }
+  ]
+}
