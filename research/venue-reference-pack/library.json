@@ -20,7 +20,8 @@
     "cyberpunk-city-plaza",
     "deep-jyot-chowk",
     "tideglass-terrace",
-    "jyot-shikhar-light-tower"
+    "jyot-shikhar-light-tower",
+    "kutch-white-rann"
   ],
   "state_storage": "Browser local storage plus downloadable JSON export from index.html",
   "concepts": [
@@ -3196,7 +3197,7 @@
           "source": "generated_concept",
           "generated_by": "OpenAI image generation",
           "user_approved": false,
-          "favorite": false,
+          "favorite": true,
           "prior_favorite": false,
           "dimensions": {
             "width": 1672,
@@ -3230,7 +3231,7 @@
           "source": "generated_concept",
           "generated_by": "OpenAI image generation",
           "user_approved": false,
-          "favorite": false,
+          "favorite": true,
           "prior_favorite": false,
           "dimensions": {
             "width": 1536,
@@ -3239,8 +3240,8 @@
           "bytes": 2747738
         }
       ],
-      "priority_rank": null,
-      "build_status": "unranked",
+      "priority_rank": 13,
+      "build_status": "prioritized",
       "approved_image_count": 0,
       "scale_fit": [
         "Small private gathering",
@@ -3273,6 +3274,94 @@
           "use": "Garment references; dress and embroidery styles vary among communities."
         }
       ]
+    },
+    {
+      "id": "nabha-orbital-garba",
+      "title": "Nabha Orbital · Glasswing Garba",
+      "setting": "Fictional orbital shuttle interior with panoramic space glazing",
+      "palette": "Ceramic white · brushed titanium · nebula violet · warm amber",
+      "summary": "A Garba gathering inside an original, functional-looking orbital shuttle: a broad sealed panoramic window wall frames a vivid nebula, a distant ringed world and small escort craft. The cabin keeps visible pressure frames, handrails, an airlock, bridge consoles and practical seating around a central dance circle. An original gyroscopic Garbo lamp anchors the floor; Gujarati Navratri dress and textile cues warm the spacecraft. This is speculative concept art, not a real venue or franchise craft.",
+      "capacity": "Fictional design study; no passenger or event capacity is claimed.",
+      "images": [
+        {
+          "id": "orbital-garba-cabin-hero",
+          "path": "images/nabha-orbital-garba/nabha-orbital-cabin-hero.png",
+          "title": "Cabin hero · Garba circle and panoramic pressure glass",
+          "role": "Hero scene",
+          "original_filename": "nabha-orbital-cabin-hero.png",
+          "source": "generated_concept",
+          "generated_by": "OpenAI image generation",
+          "user_approved": false,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1672,
+            "height": 941
+          },
+          "bytes": 2912299
+        },
+        {
+          "id": "orbital-garba-exterior-orbit",
+          "path": "images/nabha-orbital-garba/nabha-orbital-exterior-orbit.png",
+          "title": "Orbital exterior · nebula, planet and escort craft",
+          "role": "Exterior scene",
+          "original_filename": "nabha-orbital-exterior-orbit.png",
+          "source": "generated_concept",
+          "generated_by": "OpenAI image generation",
+          "user_approved": false,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1672,
+            "height": 941
+          },
+          "bytes": 3045080
+        },
+        {
+          "id": "orbital-garba-multiview",
+          "path": "images/nabha-orbital-garba/nabha-orbital-multiview-board.png",
+          "title": "Six-view board · plan, cabin, elevations and airlock",
+          "role": "Multi-view concept board",
+          "original_filename": "nabha-orbital-multiview-board.png",
+          "source": "generated_concept",
+          "generated_by": "OpenAI image generation",
+          "user_approved": false,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1672,
+            "height": 941
+          },
+          "bytes": 3061484
+        },
+        {
+          "id": "orbital-garba-material-study",
+          "path": "images/nabha-orbital-garba/nabha-orbital-costume-material-prop-study.png",
+          "title": "Wardrobe, textiles, Garbo lamp, materials and cabin details",
+          "role": "Clothing, material and prop study",
+          "original_filename": "nabha-orbital-costume-material-prop-study.png",
+          "source": "generated_concept",
+          "generated_by": "OpenAI image generation",
+          "user_approved": false,
+          "favorite": false,
+          "prior_favorite": false,
+          "dimensions": {
+            "width": 1672,
+            "height": 941
+          },
+          "bytes": 3112413
+        }
+      ],
+      "priority_rank": null,
+      "build_status": "unranked",
+      "approved_image_count": 0,
+      "scale_fit": [
+        "Intimate gathering concept",
+        "Adaptable concept"
+      ],
+      "concept_type": "generated_design_concept",
+      "research_sources": [],
+      "provenance_note": "Original generated speculative shuttle design. Broad space-adventure mood only; no existing film spacecraft, name, logo, or franchise design is reproduced. All four images are unapproved and unranked until reviewed."
     }
   ],
   "research_references": [
