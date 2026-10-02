@@ -1,0 +1,704 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-geeta-rabari-borivali-mumbai-navratri-2025-day1",
+      "displayTitle": "Geeta Rabari Garba · Day 1 · Borivali, Mumbai (2025)",
+      "title": "🔴 LIVE | Geeta Rabari Garba 2025 | Day 1 Borivali Mumbai | Navratri Special Nonstop Garba",
+      "artists": [
+        "Geeta Rabari"
+      ],
+      "year": 2025,
+      "categories": [
+        "live-garba"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-artist-channel",
+      "durationSeconds": 7298,
+      "sourceRuntimeDisplay": "2:01:38",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The artist channel description calls this the official live Garba night and identifies Day 1 at Borivali, Mumbai. The location describes this recording only; no Mumbai-specific Garba step style is inferred. The 2026-10-02 watch-page check reported 7,298 seconds (2:01:38), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No source-published tracklist or chapter starts were found.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "_Mnbp3O0_go",
+        "url": "https://www.youtube.com/watch?v=_Mnbp3O0_go",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Geeta Rabari Navratri Garba",
+      "volume": "Day 1",
+      "chapterStatus": "full-set-only-no-chapter-evidence"
+    },
+    {
+      "id": "set-news18-gujarati-surat-garba-night-2025",
+      "displayTitle": "Surat Garba Night LIVE · News18 Gujarati (2025)",
+      "title": "🟠Surat Garba Night LIVE | ગરબાનો આરંભ થઈ ગયો, સુરતથી લાઈવ | Pre Navratri | Gujarati Singers | News18",
+      "artists": [
+        "Kinjal Dave",
+        "Osman Mir",
+        "Jignesh Kaviraj"
+      ],
+      "year": 2025,
+      "categories": [
+        "live-garba"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "verified-distributor-channel",
+      "durationSeconds": 35790,
+      "sourceRuntimeDisplay": "9:56:30",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "News18 Gujarati describes this as nonstop live Garba and its title says the broadcast is live from Surat. The description names Kinjal Dave, Osman Mir and Jignesh Kaviraj. This records the source event location only; it does not assert a Surat-wide step style. On 2026-10-02 the watch page reported 35,790 seconds (9:56:30), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No song tracklist or chapter starts were published.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "lP6ZoK72PJ8",
+        "url": "https://www.youtube.com/watch?v=lP6ZoK72PJ8",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "News18 Gujarati Surat Garba Night",
+      "chapterStatus": "full-set-only-no-chapter-evidence"
+    },
+    {
+      "id": "set-doordarshan-gmdc-ahmedabad-navratri-2024",
+      "displayTitle": "Vibrant Navratri Garba · GMDC Ground, Ahmedabad (2024)",
+      "title": "LIVE - Celebration Of Vibrant Navratri Garba At GMDC Ground, Ahmedabad, Gujarat | 7th October 2024",
+      "artists": [],
+      "year": 2024,
+      "categories": [
+        "live-garba"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "verified-distributor-channel",
+      "durationSeconds": 6846,
+      "sourceRuntimeDisplay": "1:54:06",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Doordarshan National identifies GMDC Ground, Ahmedabad, and describes traditional Garba dances and live music. The venue and city describe this broadcast only; no Ahmedabad-specific step style is inferred. The 2026-10-02 watch-page check reported 6,846 seconds (1:54:06), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No performer credits, tracklist or chapter starts were published.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "RivJt-RJznU",
+        "url": "https://www.youtube.com/watch?v=RivJt-RJznU",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Vibrant Navratri Garba",
+      "volume": "7 October 2024",
+      "chapterStatus": "full-set-only-no-chapter-evidence"
+    },
+    {
+      "id": "set-sahiyar-rasotsav-rajkot-2024-day4",
+      "displayTitle": "Sahiyar Club Rasotsav · Day 4 · Rajkot (2024)",
+      "title": "Sahiyar Club Live 2024 Day 4 | EE ... Sahiyar Ho | Rahul Mehta | Apexa Pandya | Navratri 2024 Live",
+      "artists": [
+        "Rahul Mehta",
+        "Apexa Pandya",
+        "Tejas Shishangiya"
+      ],
+      "year": 2024,
+      "categories": [
+        "live-garba",
+        "raas-dandiya"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "durationSeconds": 15966,
+      "sourceRuntimeDisplay": "4:26:06",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sahiyar Club identifies this as the full Day 4 live event at Racecourse Ground, Rajkot, and credits Rahul Mehta, Apexa Pandya and anchor/singer Tejas Shishangiya. The description lists five song-title snippets but no start times; the list is not presented as a complete setlist. This source location does not establish a Rajkot-wide step style. On 2026-10-02 the watch page reported 15,966 seconds (4:26:06), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "zVgI8-_3wl0",
+        "url": "https://www.youtube.com/watch?v=zVgI8-_3wl0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Sahiyar Rasotsav",
+      "volume": "Day 4",
+      "tracklist": [
+        "E Sahiyar Ho",
+        "Haa Em...",
+        "Ude Toj Haa ....",
+        "Jukega Nahi...",
+        "Ee.. Maro Kalejo ..."
+      ],
+      "chapterStatus": "source-tracklist-no-timestamps"
+    },
+    {
+      "id": "set-united-way-baroda-garba-mahotsav-2025-day1",
+      "displayTitle": "United Way of Baroda Garba Mahotsav · Day 1 · Atul Purohit (2025)",
+      "title": "United Way Of Baroda - Garba Mahotsav 2025 By Atul Purohit - Day 1",
+      "artists": [
+        "Atul Purohit"
+      ],
+      "year": 2025,
+      "categories": [
+        "live-garba"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "durationSeconds": 4717,
+      "sourceRuntimeDisplay": "1:18:37",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The United Way of Baroda channel identifies its Garba Mahotsav 2025 and Day 1; the title credits Atul Purohit. Baroda identifies the event organizer and does not imply a city-specific step style. On 2026-10-02 the watch page reported 4,717 seconds (1:18:37), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. The source description has no tracklist or chapter starts.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Z5NhWGTP4ro",
+        "url": "https://www.youtube.com/watch?v=Z5NhWGTP4ro",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "United Way of Baroda Garba Mahotsav",
+      "volume": "Day 1",
+      "chapterStatus": "full-set-only-no-chapter-evidence"
+    },
+    {
+      "id": "set-radha-sound-bechar-thakor-tran-taali-2024",
+      "displayTitle": "Prachin Tran Taali Garba · Bechar Thakor (2024)",
+      "title": "Bechar Thakor Tran Taali Garba | માતાજીના ત્રણ તાલી ગરબા | old tran Tali garba non stop",
+      "artists": [
+        "Bechar Thakor",
+        "Parul Ravat"
+      ],
+      "year": 2024,
+      "categories": [
+        "tran-taali",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "label-nonstop-performance",
+      "officiality": "label-channel",
+      "durationSeconds": 2161,
+      "sourceRuntimeDisplay": "36:01",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The source description calls this “Nonstop Prachin Tran Taali Garba,” says it contains 18 popular three-taali Navratri Garbas, credits singers Bechar Thakor and Parul Ravat, and self-identifies Radha Sound Official as the label. It publishes 18 song titles but no start times. The video and description label the repertoire; no dance-step sequence is inferred. On 2026-10-02 the watch page reported 2,161 seconds (36:01), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Wq0Jwb6cKaQ",
+        "url": "https://www.youtube.com/watch?v=Wq0Jwb6cKaQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "tracklist": [
+        "Sathiya puravo dware",
+        "Sachi re mari sat re Bhavani maa",
+        "Mano garbo re rame Raj ne darbar",
+        "Baliya Bapji re",
+        "Rame ambema chachar na chokma",
+        "Laving keri lakadiye",
+        "Ek lal Darvaje",
+        "Chhalkatu Aave Bedlu",
+        "Rudi ne rangili re",
+        "Arasurma amba kare re killol",
+        "Poch into no pavagadh",
+        "Kanku bhareli kanka vati",
+        "Mata sol sharad nav norta",
+        "Lili lebadi re",
+        "Ek jad mathe jumkhadu",
+        "Chakkardi bhammardi",
+        "Ghor andhari re rataldi",
+        "Khel khel re Bhavani maa"
+      ],
+      "chapterStatus": "source-tracklist-no-timestamps"
+    },
+    {
+      "id": "set-santvani-trivedi-aavo-maa-ramva-2024",
+      "displayTitle": "Aavo Maa Ramva · Santvani Trivedi (2024)",
+      "title": "Aavo Maa Ramva | Santvani Trivedi | Navratri Special Nonstop Garba | Navratri 2024",
+      "artists": [
+        "Santvani Trivedi"
+      ],
+      "year": 2024,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "durationSeconds": 3408,
+      "sourceRuntimeDisplay": "56:48",
+      "segments": [
+        {
+          "title": "Paratham Samru",
+          "startSeconds": 0,
+          "endSeconds": 270
+        },
+        {
+          "title": "Maadi Vina Garbo",
+          "startSeconds": 270,
+          "endSeconds": 415
+        },
+        {
+          "title": "Aavo Maa Ramva",
+          "startSeconds": 415,
+          "endSeconds": 579
+        },
+        {
+          "title": "Ali Rasamani",
+          "startSeconds": 579,
+          "endSeconds": 648
+        },
+        {
+          "title": "Aasamana Rang Ni",
+          "startSeconds": 648,
+          "endSeconds": 790
+        },
+        {
+          "title": "Tu Kaali Ne Kalyani Re",
+          "startSeconds": 790,
+          "endSeconds": 944
+        },
+        {
+          "title": "Odhi Navrangi",
+          "startSeconds": 944,
+          "endSeconds": 1076
+        },
+        {
+          "title": "Dhire Dhire Chundadiye",
+          "startSeconds": 1076,
+          "endSeconds": 1190
+        },
+        {
+          "title": "Chapti Bhari Chokha",
+          "startSeconds": 1190,
+          "endSeconds": 1317
+        },
+        {
+          "title": "Kesariyo Rang",
+          "startSeconds": 1317,
+          "endSeconds": 1424
+        },
+        {
+          "title": "Mare Todle Betho",
+          "startSeconds": 1424,
+          "endSeconds": 1528
+        },
+        {
+          "title": "Vaa Vaya Ne Vadal",
+          "startSeconds": 1528,
+          "endSeconds": 1634
+        },
+        {
+          "title": "Navlakhay Lobadiyaliyu",
+          "startSeconds": 1634,
+          "endSeconds": 1752
+        },
+        {
+          "title": "Chora Chyo Chyo Jyo To",
+          "startSeconds": 1752,
+          "endSeconds": 1858
+        },
+        {
+          "title": "Vichhudo",
+          "startSeconds": 1858,
+          "endSeconds": 1933
+        },
+        {
+          "title": "Chotile Dakla Vagya",
+          "startSeconds": 1933,
+          "endSeconds": 2045
+        },
+        {
+          "title": "Mogal Rahejo Raji",
+          "startSeconds": 2045,
+          "endSeconds": 2141
+        },
+        {
+          "title": "Dholida Dhol Re Vagad",
+          "startSeconds": 2141,
+          "endSeconds": 2223
+        },
+        {
+          "title": "Maro Sonano Ghadulo Re",
+          "startSeconds": 2223,
+          "endSeconds": 2344
+        },
+        {
+          "title": "Nadi Kinare Nariyeli Re",
+          "startSeconds": 2344,
+          "endSeconds": 2460
+        },
+        {
+          "title": "Ek Vaar Bolu Ke Be Vaar",
+          "startSeconds": 2460,
+          "endSeconds": 2580
+        },
+        {
+          "title": "Maar To Mede",
+          "startSeconds": 2580,
+          "endSeconds": 2666
+        },
+        {
+          "title": "Bahuchar Maa Na Dera",
+          "startSeconds": 2666,
+          "endSeconds": 2797
+        },
+        {
+          "title": "Radha Govaladi",
+          "startSeconds": 2797,
+          "endSeconds": 2908
+        },
+        {
+          "title": "Sharad Poonam Ni Raat",
+          "startSeconds": 2908,
+          "endSeconds": 2982
+        },
+        {
+          "title": "Chakkaradi Bhammaradi",
+          "startSeconds": 2982,
+          "endSeconds": 3070
+        },
+        {
+          "title": "Khamma Khamma",
+          "startSeconds": 3070,
+          "endSeconds": 3146
+        },
+        {
+          "title": "Amba Rame Jagdamba Rame",
+          "startSeconds": 3146,
+          "endSeconds": null
+        }
+      ],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Santvani Trivedi’s artist channel calls this her first nonstop Garba album and credits her as producer and singer. The description publishes all 28 title/start pairs, including “Chotile Dakla Vagya” at 32:13. Start markers remain source metadata only; no choreography or city-specific style is inferred. On 2026-10-02 the watch page reported 3,408 seconds (56:48), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "9_UXOHYaqPI",
+        "url": "https://www.youtube.com/watch?v=9_UXOHYaqPI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segmentRouting": "metadata-only",
+      "chapterStatus": "published-complete"
+    },
+    {
+      "id": "set-jyoti-vanjara-mataji-na-garba-aarti-stuti-thad-2021",
+      "displayTitle": "Mataji Na Garba · Aarti, Stuti, Thad · Jyoti Vanjara (2021)",
+      "title": "Mataji Na Garba |Jyoti Vanjara | Gujarati Garba 2021 | Aarti,Stuti,Thad | Meshwa Films|",
+      "artists": [
+        "Jyoti Vanjara"
+      ],
+      "year": 2021,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "label-nonstop-performance",
+      "officiality": "label-channel",
+      "durationSeconds": 5235,
+      "sourceRuntimeDisplay": "1:27:15",
+      "segments": [
+        {
+          "title": "આવી રે આવી નવલી નવરાતડી",
+          "startSeconds": 1,
+          "endSeconds": 43
+        },
+        {
+          "title": "આદ્યાશક્તિ તુજને નમુ રે અંબા",
+          "startSeconds": 43,
+          "endSeconds": 309
+        },
+        {
+          "title": "માં અંબા તે રમવા નિસર્યા",
+          "startSeconds": 309,
+          "endSeconds": 584
+        },
+        {
+          "title": "ચામુંડા માં ના ઊંચા મંદિર નીચા મોલ",
+          "startSeconds": 584,
+          "endSeconds": 775
+        },
+        {
+          "title": "ધન્ય માં તુ જોગણી ધન્ય માં ભવાની",
+          "startSeconds": 775,
+          "endSeconds": 992
+        },
+        {
+          "title": "સોનલ ગરબો શીરે અંબેમાં",
+          "startSeconds": 992,
+          "endSeconds": 1171
+        },
+        {
+          "title": "પુરા કરજો માં અમારા અરમાન",
+          "startSeconds": 1171,
+          "endSeconds": 1417
+        },
+        {
+          "title": "ચુડલો શોભે આશાપુરા ના હાથમાં",
+          "startSeconds": 1417,
+          "endSeconds": 1626
+        },
+        {
+          "title": "તુ તો કાળીને કલ્યાણી રે માં",
+          "startSeconds": 1626,
+          "endSeconds": 1905
+        },
+        {
+          "title": "ઊંચા ઊંચા માડી તારા ડુંગરા",
+          "startSeconds": 1905,
+          "endSeconds": 2157
+        },
+        {
+          "title": "મારી હરસિધ્ધીમાં ના રથડા આવ્યા રે",
+          "startSeconds": 2157,
+          "endSeconds": 2368
+        },
+        {
+          "title": "અંબાજી હિંચકે ઝુલે રે લોલ",
+          "startSeconds": 2368,
+          "endSeconds": 2548
+        },
+        {
+          "title": "હો હો રે માંની ચુંદલડી લહેરાય",
+          "startSeconds": 2548,
+          "endSeconds": 2757
+        },
+        {
+          "title": "રંગે રમે આનંદે રમે",
+          "startSeconds": 2757,
+          "endSeconds": 2945
+        },
+        {
+          "title": "પાવલી લઈને હુ તો પાવાગઢ ગઇતી",
+          "startSeconds": 2945,
+          "endSeconds": 3106
+        },
+        {
+          "title": "માડી તારા મંદિરીયે રે ઘુંઘરા ઘમકે છે",
+          "startSeconds": 3106,
+          "endSeconds": 3224
+        },
+        {
+          "title": "મહીસાગરના આરે ઢોલ વાગે છે",
+          "startSeconds": 3224,
+          "endSeconds": 3315
+        },
+        {
+          "title": "ઘોર અંધારી રે રાતલડીમાં નિસર્યા ચાર અસવાર",
+          "startSeconds": 3315,
+          "endSeconds": 3526
+        },
+        {
+          "title": "જય આદ્યશક્તિ આરતી",
+          "startSeconds": 3526,
+          "endSeconds": 4362
+        },
+        {
+          "title": "કર્પૂર ગૌરમ",
+          "startSeconds": 4362,
+          "endSeconds": 4422
+        },
+        {
+          "title": "વિશ્વંભરી સ્તુતિ",
+          "startSeconds": 4422,
+          "endSeconds": 4801
+        },
+        {
+          "title": "અંબે માં નો થાળ",
+          "startSeconds": 4801,
+          "endSeconds": null
+        }
+      ],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "IVY Meshwa Films publishes this Meshwa Electronics album and identifies Jyoti Vanjara as singer, Navdurga as deity, and the programme as Gujarati Garba. Its title and description explicitly group Garba, Aarti, Stuti and Thad; the description provides 22 exact chapter starts. These are song/repertoire labels, not dance-step mappings. On 2026-10-02 the watch page reported 5,235 seconds (1:27:15), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "wUHKZ_4Cqws",
+        "url": "https://www.youtube.com/watch?v=wUHKZ_4Cqws",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Mataji Na Garba - Aarti, Stuti, Thad",
+      "segmentRouting": "metadata-only",
+      "chapterStatus": "published-complete"
+    },
+    {
+      "id": "set-geeta-rabari-zankaar-4-0-nonstop-2026",
+      "displayTitle": "Zankaar 4.0 · Geeta Rabari (2026)",
+      "title": "Zankaar 4.0 | ઝણકાર 4.0 | Geeta Rabari | Nonstop Garba 2026 | New Gujarati Garba",
+      "artists": [
+        "Geeta Rabari"
+      ],
+      "year": 2026,
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "official-nonstop",
+      "officiality": "official-artist-channel",
+      "durationSeconds": 2775,
+      "sourceRuntimeDisplay": "46:15",
+      "segments": [
+        {
+          "title": "Jagdamba Maari Amba",
+          "startSeconds": 0,
+          "endSeconds": 220
+        },
+        {
+          "title": "Mata Sol Sharade Nav Norta",
+          "startSeconds": 220,
+          "endSeconds": 400
+        },
+        {
+          "title": "Ashopalav Na Hethe Chhogado",
+          "startSeconds": 400,
+          "endSeconds": 530
+        },
+        {
+          "title": "Vaale Vagadyu Evu Vajintar",
+          "startSeconds": 530,
+          "endSeconds": 640
+        },
+        {
+          "title": "Maa Aave Re Khodiyar Utavali",
+          "startSeconds": 640,
+          "endSeconds": 749
+        },
+        {
+          "title": "Kalka Maa No Rathdo",
+          "startSeconds": 749,
+          "endSeconds": 890
+        },
+        {
+          "title": "Jenu Jagat Chhode Saath",
+          "startSeconds": 890,
+          "endSeconds": 985
+        },
+        {
+          "title": "Gaam Na Goradiya Mahadev",
+          "startSeconds": 985,
+          "endSeconds": 1130
+        },
+        {
+          "title": "Kaana Re Maara Ghar Pachhvade",
+          "startSeconds": 1130,
+          "endSeconds": 1261
+        },
+        {
+          "title": "Ambe Meri Maiya",
+          "startSeconds": 1261,
+          "endSeconds": 1420
+        },
+        {
+          "title": "Ghamar Ghooghri Re",
+          "startSeconds": 1420,
+          "endSeconds": 1580
+        },
+        {
+          "title": "Thara Deval Maa Baaja",
+          "startSeconds": 1580,
+          "endSeconds": 1667
+        },
+        {
+          "title": "Thumak Thumak Kar chal bhava ni",
+          "startSeconds": 1667,
+          "endSeconds": 1810
+        },
+        {
+          "title": "Fagan Foram To Aavyo",
+          "startSeconds": 1810,
+          "endSeconds": 1895
+        },
+        {
+          "title": "Devi Brahmani Rudrani",
+          "startSeconds": 1895,
+          "endSeconds": 1958
+        },
+        {
+          "title": "Odhi Alaukik Odhani",
+          "startSeconds": 1958,
+          "endSeconds": 2074
+        },
+        {
+          "title": "Ramti Gori",
+          "startSeconds": 2074,
+          "endSeconds": 2190
+        },
+        {
+          "title": "Gheeno Devo",
+          "startSeconds": 2190,
+          "endSeconds": 2340
+        },
+        {
+          "title": "Hajara Hajur Chotila Ni Chamunda",
+          "startSeconds": 2340,
+          "endSeconds": 2610
+        },
+        {
+          "title": "Amba Rame Jagdamba Rame",
+          "startSeconds": 2610,
+          "endSeconds": null
+        }
+      ],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Geeta Rabari’s official artist channel credits her as singer and Maulik Mehta for composition. The description publishes 20 starts. One source-order anomaly is preserved: it lists “Hajara Hajur Chotila Ni Chamunda” at 39:00 and then “Devi Brahmani Rudrani” at 31:35. The catalogue sorts the timestamp records numerically for seeking while retaining both exact source values and noting the anomaly; neither value is silently corrected. On 2026-10-02 the watch page reported 2,775 seconds (46:15), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. Song markers are metadata-only; no choreography is inferred.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "STkJ41iKvlQ",
+        "url": "https://www.youtube.com/watch?v=STkJ41iKvlQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Zankaar",
+      "volume": "4.0",
+      "segmentRouting": "metadata-only",
+      "chapterStatus": "published-complete",
+      "tracklist": [
+        "Jagdamba Maari Amba",
+        "Mata Sol Sharade Nav Norta",
+        "Ashopalav Na Hethe Chhogado",
+        "Vaale Vagadyu Evu Vajintar",
+        "Maa Aave Re Khodiyar Utavali",
+        "Kalka Maa No Rathdo",
+        "Jenu Jagat Chhode Saath",
+        "Gaam Na Goradiya Mahadev",
+        "Kaana Re Maara Ghar Pachhvade",
+        "Ambe Meri Maiya",
+        "Ghamar Ghooghri Re",
+        "Thara Deval Maa Baaja",
+        "Thumak Thumak Kar chal bhava ni",
+        "Fagan Foram To Aavyo",
+        "Odhi Alaukik Odhani",
+        "Ramti Gori",
+        "Gheeno Devo",
+        "Hajara Hajur Chotila Ni Chamunda",
+        "Devi Brahmani Rudrani",
+        "Amba Rame Jagdamba Rame"
+      ]
+    },
+    {
+      "id": "set-hemant-chauhan-mataji-na-garba-dakla-topic",
+      "displayTitle": "Mataji Na Garba · Navratri Nonstop Dakla · Hemant Chauhan",
+      "title": "Mataji Na Garba (Navratri Nonstop Garba Dakla)",
+      "artists": [
+        "Hemant Chauhan"
+      ],
+      "year": 2021,
+      "categories": [
+        "dakla",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "setType": "official-streaming-nonstop",
+      "officiality": "official-topic",
+      "durationSeconds": 2986,
+      "sourceRuntimeDisplay": "49:46",
+      "segments": [],
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "This YouTube Topic upload was delivered by TuneCore and credits Hemant Chauhan, the release Lok Dayro, Vol. 1, ℗ 2023 Shree Kalika Design Studio, and a release date of 2021-04-11. The source title explicitly labels the long recording “Navratri Nonstop Garba Dakla.” The generated description contains no internal tracklist or chapter starts. On 2026-10-02 the watch page reported 2,986 seconds (49:46), playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200.",
+      "source": {
+        "provider": "youtube",
+        "videoId": "1e9NsILoBQ0",
+        "url": "https://www.youtube.com/watch?v=1e9NsILoBQ0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "series": "Lok Dayro, Vol. 1",
+      "chapterStatus": "source-no-published-chapters"
+    }
+  ]
+}
