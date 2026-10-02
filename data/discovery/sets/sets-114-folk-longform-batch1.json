@@ -1,0 +1,565 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-studio-sangeeta-old-gujarati-folk-golden-collection-2020",
+      "title": "Old Gujarati Songs - GOLDEN COLLECTION",
+      "displayTitle": "Old Gujarati Songs · Golden Collection · Studio Sangeeta (2020)",
+      "series": "Old Gujarati Songs - GOLDEN COLLECTION",
+      "year": 2020,
+      "categories": [
+        "folk-lokgeet",
+        "roots-archive"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "FRACuUcOIV4",
+        "url": "https://www.youtube.com/watch?v=FRACuUcOIV4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 8108,
+      "sourceRuntimeDisplay": "2:15:08",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Ho Rang Rasiya.. Kya Rami Aavya Raas Jo..", "startSeconds": 0 },
+        { "title": "Sava Basher Nu Daatardu Lol..", "startSeconds": 567 },
+        { "title": "Sona Vaatakdi Re Kesar", "startSeconds": 1305 },
+        { "title": "Chandaliyo Ugyo Re.. Chando Maro Ruple", "startSeconds": 1716 },
+        { "title": "Mehandi Te Vavi Maarve.. Eno Rang Gayo Gujarat Re..", "startSeconds": 2007 },
+        { "title": "Zalawadi Dhol Jane Jaanjar Vaage", "startSeconds": 2328 },
+        { "title": "Limbuda Jhule Tara Bag Ma", "startSeconds": 2898 },
+        { "title": "Indhana Vinva Gayi Ti Mori Saiya", "startSeconds": 3308 },
+        { "title": "Ame Mahiyara Re.. Gokul Gaam Na..", "startSeconds": 3638 },
+        { "title": "Mathe Matukdi.. Mahi Ni Gori..", "startSeconds": 4107 },
+        { "title": "Kan Kunvar Halya.. Mathura Na Marge..", "startSeconds": 4516 },
+        { "title": "Maniyaro Te", "startSeconds": 4942 },
+        { "title": "Rudi Ne Rangili Re.. Vala Tari Vaasdi Re Lol..", "startSeconds": 5501 },
+        { "title": "Lili Lemdi Re.. Lila Naagarvel Na Pan", "startSeconds": 6216 },
+        { "title": "Dholida Dhol Re Vagaad.. Mare Hinch Levi Che..", "startSeconds": 6833 },
+        { "title": "Odhani Odhu Odhu Ne Udi Jaai..", "startSeconds": 7230 },
+        { "title": "Mare Todle Betho Re Mor Kya Bole", "startSeconds": 7685 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Studio Sangeeta published this source on 2020-06-03. The description calls it Traditional Folk Famous Gujarati Songs, credits multiple singers, Traditional lyricist and Studio Sangeeta as label, and publishes the 17 starts retained here. The chapter list remains metadata-only because the description does not assign a performer to each title. Checked 2026-10-02: watch page reported 8,108 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-superhit-gujarati-geet-folk-garba-lokgeet-2025",
+      "title": "Gujarati Folk, Garba & Lokgeet 🎵 Superhit Gujarati Songs | Nonstop Gujarati Hits",
+      "displayTitle": "Gujarati Folk, Garba & Lokgeet · Superhit Gujarati Geet (2025)",
+      "series": "Gujarati Folk, Garba & Lokgeet",
+      "year": 2025,
+      "categories": [
+        "folk-lokgeet",
+        "traditional-garba"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "i7vrAiPc3lE",
+        "url": "https://www.youtube.com/watch?v=i7vrAiPc3lE",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3563,
+      "sourceRuntimeDisplay": "59:23",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Superhit Gujarati Geet published this source on 2025-12-13. Its description explicitly labels Gujarati folk songs, Garba Geet, Lokgeet and traditional Gujarati music and includes an untimed track list; no exact chapter starts are inferred. Checked 2026-10-02: watch page reported 3,563 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-ishtar-41-non-stop-dhamal-vol1-2014",
+      "title": "41 Non Stop Dhamal : Vol - 1 | Popular Gujarati Garba Songs | 2016 Songs",
+      "displayTitle": "41 Non Stop Dhamal · Vol. 1 · Ishtar Regional (2014)",
+      "series": "41 Non Stop Dhamal",
+      "volume": "1",
+      "year": 2014,
+      "artists": [
+        "Damayanti Bardai",
+        "Karsan Sagathia"
+      ],
+      "categories": [
+        "traditional-garba",
+        "roots-archive"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "iYkWowC3DoU",
+        "url": "https://www.youtube.com/watch?v=iYkWowC3DoU",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3470,
+      "sourceRuntimeDisplay": "57:50",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ishtar Regional published this 41 Non Stop Dhamal source on 2014-09-29. The description credits Damayanti Bardai and Karsan Sagathia and identifies the lyric credit as Traditional; no timestamped chapters are exposed. The title says 2016 Songs while the page upload is 2014-09-29; that wording is preserved without asserting a separate release year. Checked 2026-10-02: watch page reported 3,470 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-vt-production-gujarati-folk-all-hits-2026",
+      "title": "Gujarati Folk Song All Hits Mix | Best Gujarati Lokgeet Collection 2026 | Nonstop Gujarati Folk Song",
+      "displayTitle": "Gujarati Folk Song All Hits Mix · VT Production (2026)",
+      "series": "Gujarati Folk Song All Hits Mix",
+      "year": 2026,
+      "artists": [
+        "Arati Thakor",
+        "Vanaji Thakor"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "1htLkqzhq9M",
+        "url": "https://www.youtube.com/watch?v=1htLkqzhq9M",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2909,
+      "sourceRuntimeDisplay": "48:29",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "VT PRODUCTION published this source on 2026-07-12. The description credits Arati Thakor and Vanaji Thakor, music by Vanaji Thakor and VT Production as label; no timestamped chapters are exposed. It is retained as a folk/Lokgeet source without inferring choreography or a broader regional style. Checked 2026-10-02: watch page reported 2,909 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-studio-sangeeta-gujarati-lokgeet-nonstop-2021",
+      "title": "GUJARATI LOKGEET NONSTOP",
+      "displayTitle": "Gujarati Lokgeet Nonstop · Studio Sangeeta (2021)",
+      "series": "Gujarati Lokgeet Nonstop",
+      "year": 2021,
+      "artists": [
+        "Suresh Raval",
+        "Damyanti Bardayi"
+      ],
+      "categories": [
+        "folk-lokgeet",
+        "roots-archive"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "22wwgvf8ym4",
+        "url": "https://www.youtube.com/watch?v=22wwgvf8ym4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1801,
+      "sourceRuntimeDisplay": "30:01",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Studio Sangeeta published this Gujarati Lokgeet nonstop source on 2021-08-22. The description credits Suresh Raval and Damyanti Bardayi, Traditional lyricist, Prabhat Barot for music and Studio Sangeeta as label; no timestamped chapters are exposed. Checked 2026-10-02: watch page reported 1,801 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-meena-patel-topic-super-hit-gujarati-nonstop-lok-geet-1995",
+      "title": "Super Hit Gujarati Nonstop Lok Geet",
+      "displayTitle": "Super Hit Gujarati Nonstop Lok Geet · Meena Patel (1995)",
+      "series": "Super Hit Gujarati Nonstop Lok Geet",
+      "year": 1995,
+      "artists": [
+        "Meena Patel"
+      ],
+      "categories": [
+        "folk-lokgeet",
+        "roots-archive"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "setType": "official-streaming-nonstop",
+      "officiality": "official-topic",
+      "source": {
+        "provider": "youtube",
+        "videoId": "6ocZQTk7E_E",
+        "url": "https://www.youtube.com/watch?v=6ocZQTk7E_E",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1686,
+      "sourceRuntimeDisplay": "28:06",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Meena Patel - Topic published this source on 2021-11-17. YouTube Music metadata credits Meena Patel, Studio Siddharth and ℗ Studio Siddharth, with a 1995-09-24 release date and Traditional lyricist; no timestamped chapters are exposed. The year follows the source release metadata, while the upload date remains 2021-11-17. Checked 2026-10-02: watch page reported 1,686 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-ram-audio-kamlesh-barot-misscall-na-mar-chhori-2015",
+      "title": "Misscall Na Mar Chhori || Lokgeet ||Kamlesh Barot",
+      "displayTitle": "Misscall Na Mar Chhori · Kamlesh Barot (2015)",
+      "series": "Misscall Na Mar Chhori",
+      "year": 2015,
+      "artists": [
+        "Kamlesh Barot"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "himwzgVIr3M",
+        "url": "https://www.youtube.com/watch?v=himwzgVIr3M",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1844,
+      "sourceRuntimeDisplay": "30:44",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ram Audio published this long single Lokgeet recording on 2015-04-10. Its source metadata credits Kamlesh Barot as singer/artist, Vikaram Chauhan for lyrics and Ajay Vagheshvari for music; no chapters are exposed. This is retained as one long recording rather than a fabricated nonstop tracklist. Checked 2026-10-02: watch page reported 1,844 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-jhankar-music-timli-gafuli-2017",
+      "title": "New Gujarati Timli-Gafuli 2017 | Nonstop Timli Song | Ranjit Suvan Kishor Patel Arjun Patel",
+      "displayTitle": "Gujarati Timli-Gafuli · Nonstop Timli Song (2017)",
+      "series": "Gujarati Timli-Gafuli",
+      "year": 2017,
+      "artists": [
+        "Ranjit Suvan",
+        "Kishor Patel",
+        "Arjun Patel"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "styles": [
+        "timli"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "fFUJrhpdfBU",
+        "url": "https://www.youtube.com/watch?v=fFUJrhpdfBU",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3816,
+      "sourceRuntimeDisplay": "1:03:36",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Jhankar Music Timli published this source on 2017-05-03. The description credits Ranjit Suvan, Kishor Patel and Arjun Patel, music by Jayesh Patel and Jitu Prajapati, and Musicaa as label; no timestamped chapters are exposed. Timli and Gafuli are retained as source labels without inferring step details. Checked 2026-10-02: watch page reported 3,816 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-dj-battle-remix-timli-2-2023",
+      "title": "Dj Timli 2 | Gujarati & Hindi Song |Nonstop Timli Garba | Piano Ped Mix | Mix Song | Hit Timli 2k23",
+      "displayTitle": "DJ Timli 2 · Nonstop Timli Garba (2023)",
+      "series": "DJ Timli 2",
+      "year": 2023,
+      "artists": [
+        "DJ Ajay",
+        "DJ Jaydip",
+        "DJ Nikunj"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet",
+        "dj-remix"
+      ],
+      "genres": [
+        "folk",
+        "fusion"
+      ],
+      "styles": [
+        "timli",
+        "dj-remix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "uFdCrDAur2g",
+        "url": "https://www.youtube.com/watch?v=uFdCrDAur2g",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2258,
+      "sourceRuntimeDisplay": "37:38",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Lamb Lamb kes", "startSeconds": 0 },
+        { "title": "Lagan ma nacvu", "startSeconds": 172 },
+        { "title": "Hath ma daru", "startSeconds": 372 },
+        { "title": "Sajan teri meri baat", "startSeconds": 458 },
+        { "title": "Ek naate dosti", "startSeconds": 544 },
+        { "title": "Don bapu don", "startSeconds": 707 },
+        { "title": "O juvaniya (Timli)", "startSeconds": 767 },
+        { "title": "O bhaya (timli)", "startSeconds": 880 },
+        { "title": "Kadvi limdi", "startSeconds": 945 },
+        { "title": "Music", "startSeconds": 980 },
+        { "title": "Patli kamar", "startSeconds": 1080 },
+        { "title": "Tur ne tale nachura", "startSeconds": 1260 },
+        { "title": "Music", "startSeconds": 1365 },
+        { "title": "Bewafa (hindi)", "startSeconds": 1425 },
+        { "title": "Hindi track", "startSeconds": 1490 },
+        { "title": "Hindi 1", "startSeconds": 1521 },
+        { "title": "Hindi 2", "startSeconds": 1650 },
+        { "title": "Hindi 3", "startSeconds": 1885 },
+        { "title": "Hindi 4", "startSeconds": 2005 },
+        { "title": "Hindi 5", "startSeconds": 2150 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "DJ BATTLE REMIX published this Timli mix on 2023-02-22. The description credits DJ Ajay and DJ Jaydip for remix, DJ Nikunj and DJ Battle for mixing, and BDS Official for presentation; performer credits are incomplete. Twenty source-published starts are retained as metadata-only navigation; the final `37:30 End` marker is not treated as a song chapter. Checked 2026-10-02: watch page reported 2,258 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-sachin-gohil-juni-timli-adivasi-2026",
+      "title": "Juni Timli Non-stop Gujarati Timli 2026 Mashup Song New Style Mix",
+      "displayTitle": "Juni Timli · Adivasi Mashup (2026)",
+      "series": "Juni Timli",
+      "year": 2026,
+      "artists": [
+        "Sachin Gohil"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "styles": [
+        "timli"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "FRpbXxoBySw",
+        "url": "https://www.youtube.com/watch?v=FRpbXxoBySw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1975,
+      "sourceRuntimeDisplay": "32:55",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sachin Gohil published this source on 2026-06-21. The description labels it an Aadiwasi Tribal Song in Gujarati, gives BPM 115 and credits Sachin Gohil for mixing; it says the underlying recordings are separate/various and publishes no chapters. Timli and Adivasi wording are preserved as source metadata without inferring a single original performer or choreography. Checked 2026-10-02: watch page reported 1,975 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-nsk-music-tur-tone-adivasi-timli-2026",
+      "title": "NON STOP TUR TONE 2026 🔥 | Gujarati Timli Nonstop 2026 | DJ NILU VANSDA | NSK MUSIC",
+      "displayTitle": "Nonstop Tur Tone · Gujarati Adivasi Timli (2026)",
+      "series": "Non Stop Tur Tone",
+      "year": 2026,
+      "artists": [
+        "DJ Nilu Vansda"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "styles": [
+        "timli"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "DUzbBjRdZ_M",
+        "url": "https://www.youtube.com/watch?v=DUzbBjRdZ_M",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1386,
+      "sourceRuntimeDisplay": "23:06",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "NSK MUSIC published this source on 2026-06-24. The description identifies DJ Nilu Vansda, NSK Music, Gujarati Adivasi Timli and a nonstop mix; no tracklist or chapters are published. Checked 2026-10-02: watch page reported 1,386 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-dj-mgb-adivasi-timli-remix-2026",
+      "title": "NONSTOP TIMLI 2026 🔥 | Aadiwasi Song | Aadiwasi Timli Remix | DJ MGB MUSIC",
+      "displayTitle": "Nonstop Timli · Adivasi Remix · DJ MGB Music (2026)",
+      "series": "Nonstop Timli 2026",
+      "year": 2026,
+      "categories": [
+        "timli",
+        "folk-lokgeet",
+        "dj-remix"
+      ],
+      "genres": [
+        "folk",
+        "fusion"
+      ],
+      "styles": [
+        "timli",
+        "dj-remix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "dx3IpesMIoY",
+        "url": "https://www.youtube.com/watch?v=dx3IpesMIoY",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2524,
+      "sourceRuntimeDisplay": "42:04",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "DJ MGB MUSIC published this source on 2026-09-29. The description is a keyword-heavy Adivasi/tribal Timli remix listing with no named performer, tracklist or chapters; provenance remains low-confidence until a more specific credit is available. Checked 2026-10-02: watch page reported 2,524 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-dj-tom-garba-timli-tarpa-mixing-2025",
+      "title": "NONSTOP GARBA, TIMLI, TARPA MIXING. | LIVE RECORDED BY DJ TOM |",
+      "displayTitle": "Nonstop Garba, Timli & Tarpa Mixing · DJ TOM (2025)",
+      "series": "Garba, Timli, Tarpa Mixing",
+      "year": 2025,
+      "artists": [
+        "DJ TOM"
+      ],
+      "categories": [
+        "folk-lokgeet",
+        "timli",
+        "tarpa",
+        "dj-remix"
+      ],
+      "genres": [
+        "folk",
+        "fusion"
+      ],
+      "styles": [
+        "timli",
+        "tarpa",
+        "dj-remix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "s3RSs_uo6tA",
+        "url": "https://www.youtube.com/watch?v=s3RSs_uo6tA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 4432,
+      "sourceRuntimeDisplay": "1:13:52",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "DJ TOM published this recorded DJ mix on 2025-06-23. The title says LIVE RECORDED, but the page does not identify an event, venue or live stream; it is retained as a recorded Garba, Timli and Tarpa mix with that uncertainty explicit. No chapters are published. Checked 2026-10-02: watch page reported 4,432 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-dj-smit-s21-slow-timli-2026",
+      "title": "ADIWASI NONSTOP SLOW TIMLI 2026 🔥 | FEEL THE BASS | DJ SMIT S21 #AdivasiTimli #SlowTimli #DJSMITS21",
+      "displayTitle": "Adivasi Nonstop Slow Timli · DJ SMIT S21 (2026)",
+      "series": "Adivasi Nonstop Slow Timli",
+      "year": 2026,
+      "artists": [
+        "DJ SMIT S21"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet",
+        "dj-remix"
+      ],
+      "genres": [
+        "folk",
+        "fusion"
+      ],
+      "styles": [
+        "timli",
+        "dj-remix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "source": {
+        "provider": "youtube",
+        "videoId": "OR4CGlCEpCA",
+        "url": "https://www.youtube.com/watch?v=OR4CGlCEpCA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1441,
+      "sourceRuntimeDisplay": "24:01",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "DJ SMIT S21 published this source on 2026-10-02. The description identifies Adivasi Timli, slow Timli and a tabla mix and the channel includes a copyright-removal contact request; no named tracklist or chapters are published. It remains lower-confidence source metadata. Checked 2026-10-02: watch page reported 1,441 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-studio-sharda-rajal-barot-nonstop-dj-garba-2018",
+      "title": "Rajal Barot - New Gujarati Nonstop DJ Garba - Rajal Barot No Rang #studiosharda",
+      "displayTitle": "Rajal Barot No Rang · Nonstop DJ Garba (2018)",
+      "series": "Rajal Barot No Rang",
+      "year": 2018,
+      "artists": [
+        "Rajal Barot"
+      ],
+      "categories": [
+        "folk-lokgeet",
+        "traditional-garba",
+        "dj-remix"
+      ],
+      "genres": [
+        "folk",
+        "traditional",
+        "fusion"
+      ],
+      "styles": [
+        "dj-remix"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "KNo38WE719g",
+        "url": "https://www.youtube.com/watch?v=KNo38WE719g",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3128,
+      "sourceRuntimeDisplay": "52:08",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Studio Sharda published this Rajal Barot nonstop DJ Garba source on 2018-10-04. The description credits Rajal Barot, Jeet Vaghela for lyrics, Mayur Nadia for music and Studio Sharda as label; the publisher describes its channel as carrying Lokgeet, so the source is retained as folk-adjacent until its full track content is reviewed. No chapters are published. Checked 2026-10-02: watch page reported 3,128 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    }
+  ]
+}
