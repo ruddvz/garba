@@ -1,5 +1,5 @@
 {
-  "version": "0.20.41",
+  "version": "0.20.42",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -89,7 +89,8 @@
     "sets-86-longform-navdurga-raas.json",
     "sets-87-community-timli-tarpa.json",
     "sets-88-chaitra-navratri-2025.json",
-    "sets-89-longform-genre-mixes.json"
+    "sets-89-longform-genre-mixes.json",
+    "sets-90-betali-hinch-dakla.json"
   ],
   "policy": {
     "officialityOrder": [

@@ -1,0 +1,79 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-apexa-pandya-sur-taal-be-taali-2025",
+      "title": "Sur Taal - Be Taali Non Stop Garba (Official Video) | Apexa Pandya | Non Stop Garba 2025 | AP Music",
+      "displayTitle": "Sur Taal · Be Taali Nonstop Garba (2025)",
+      "artists": ["Apexa Pandya"],
+      "series": "Sur Taal",
+      "year": 2025,
+      "categories": ["be-taali", "traditional-garba", "mataji-devotional"],
+      "genres": ["traditional", "devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "cBZerhEoQHo",
+        "url": "https://www.youtube.com/watch?v=cBZerhEoQHo",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2679,
+      "sourceRuntimeDisplay": "0:44:39",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Jay Jay He Mahishasur Mardini", "sourceTitle": "Jay Jay He Mahishasur Mardini..", "startSeconds": 8 },
+        { "title": "Garbe Ramva Ne Vahela Avjo Re Lol", "sourceTitle": "Garbe Ramva Ne Vahela Avjo Re Lol ..", "startSeconds": 94 },
+        { "title": "He Ma Ae Garbo Koravyo Gagan Gokh Ma Re", "sourceTitle": "He Ma ae Garbo Koravyo Gagan Gokh Ma Re ..", "startSeconds": 258 },
+        { "title": "Ma Pava Te Gadh Thi Utarya Mahakali Re", "sourceTitle": "Ma Pava Te Gadh Thi Utarya Mahakali Re ..", "startSeconds": 406 },
+        { "title": "Sonano Garbo Ma Ni Rupala Indhoni", "sourceTitle": "Sonano Garbo Ma Ni Rupala Indhoni ..", "startSeconds": 591 },
+        { "title": "Mari Umiya Ma Na Madhma", "sourceTitle": "Mari Umiya Ma Na Madhma ..", "startSeconds": 757 },
+        { "title": "Kanji Tari Ma Kese", "sourceTitle": "Kanji Tari Ma Kese ..", "startSeconds": 888 },
+        { "title": "Ashapura Taro Re Adhar", "sourceTitle": "Ashapura Taro Re Adhar ..", "startSeconds": 969 },
+        { "title": "Khamma Mari Khodiyar Ma Rathda Kya Rokana", "sourceTitle": "Khamma Mari Khodiyar Ma Rathda Kya Rokana ..", "startSeconds": 1101 },
+        { "title": "Pili Mantudi Laviya", "sourceTitle": "Pili Mantudi Laviya ..", "startSeconds": 1206 },
+        { "title": "Lavo Kankudiya Ne Chokhaliya", "sourceTitle": "Lavo Kankudiya Ne Chokhaliya ..", "startSeconds": 1350 },
+        { "title": "Vaa Vaya Ne Vadal", "sourceTitle": "Vaa Vaya Ne Vadal ..", "startSeconds": 1482 },
+        { "title": "Amba Avo To Ramiye", "sourceTitle": "Amba Avo To Ramiye ..", "startSeconds": 1598 },
+        { "title": "Chhelda Ho Chhelda Makhan Na Chhelda", "sourceTitle": "Chhelda Ho Chhelda Makhan Na Chhelda ..", "startSeconds": 1733 },
+        { "title": "Madi Tare Mandiriye Re", "sourceTitle": "Madi Tare Mandiriye Re ..", "startSeconds": 1837 },
+        { "title": "Parvati Na Pag Ma Zery Venchhudo Re Venchhudo", "sourceTitle": "Parvati Na Pag Ma Zery Venchhudo Re Venchhudo ..", "startSeconds": 1980 },
+        { "title": "Kon Hajjur Ni Morli", "sourceTitle": "Kon Hajjur Ni Morli ..", "startSeconds": 2030 },
+        { "title": "Jago Jago Hare Tripurari", "sourceTitle": "Jago Jago Hare Tripurari ..", "startSeconds": 2146 },
+        { "title": "Mataji Toli Daak Vage", "sourceTitle": "Mataji Toli Daak Vage ..", "startSeconds": 2252 },
+        { "title": "Mari Meldi Ne Dakla Vhala Lage", "sourceTitle": "Mari Meldi Ne Dakla Vhala Lage ..", "startSeconds": 2330 },
+        { "title": "Khamma Khamma Khamma Pir Ne", "sourceTitle": "Khamma Khamma Khamma Pir ne ..", "startSeconds": 2360 },
+        { "title": "Mari Mahisagar Ne Aare Dhol Vage Se", "sourceTitle": "Mari Mahisagar Ne Aare Dhol Vage Se ..", "startSeconds": 2485 },
+        { "title": "Nav Nav Naganiyu No Rafdo", "sourceTitle": "Nav Nav Naganiyu No Rafdo ..", "startSeconds": 2595 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Published 2025-09-12 by the Apexa Pandya Official Artist Channel. The description identifies Be Taali Garba, credits Apexa Pandya as singer, lists 23 published track starts, names AP Music as music label, and reserves copyright to AP Music. The page reported playable status and 2,679 seconds (44:39); the embed page returned HTTP 200. No individual chapter performer credits are published, so all chapter labels remain metadata-only and are not mapped to canonical song routes."
+    },
+    {
+      "id": "set-rdc-kiran-prajapati-hinch-dakla-nonstop-2025",
+      "title": "Kiran Prajapati Na Nonstop Garba 2025 | નવરાત્રી સુપરહિટ ગરબા | New Gujarati Songs",
+      "displayTitle": "Kiran Prajapati · Hinch and Dakla Garba (2025)",
+      "artists": ["Kiran Prajapati", "Vijay Chauhan"],
+      "year": 2025,
+      "categories": ["hinch", "dakla", "traditional-garba"],
+      "genres": ["dandiya", "fusion", "traditional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "XyJ6FK-6CTw",
+        "url": "https://www.youtube.com/watch?v=XyJ6FK-6CTw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1454,
+      "sourceRuntimeDisplay": "0:24:14",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Published 2025-09-16 by the verified RDC Gujarati Music channel. The description identifies the upload as a Hinch album with Kiran Prajapati as singer, Vijay Chauhan for Dakla, NK Music as label, and RDC Media as digital partner. It publishes no tracklist or chapter starts. The page reported playable status and 1,454 seconds (24:14); the embed page returned HTTP 200."
+    }
+  ]
+}
