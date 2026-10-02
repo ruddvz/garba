@@ -1,5 +1,5 @@
 {
-  "version": "0.20.45",
+  "version": "0.20.46",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -93,7 +93,8 @@
     "sets-90-betali-hinch-dakla.json",
     "sets-91-style-expansion.json",
     "sets-92-longform-style-expansion.json",
-    "sets-93-longform-style-expansion.json"
+    "sets-93-longform-style-expansion.json",
+    "sets-94-longform-regional-style-expansion.json"
   ],
   "policy": {
     "officialityOrder": [
