@@ -3235,10 +3235,15 @@ window.GARBA_IMMERSIVE_PLAYER = Object.freeze({
         title: set.title,
         artists: Array.isArray(set.artists) ? set.artists : [],
         year: Number.isFinite(set.year) ? set.year : null,
+        videoId: set.videoId || null,
+        startSeconds: 0,
         durationSeconds: durationSeconds || null,
         chapters,
       };
-    }).filter((set) => typeof set.id === 'string' && set.id && typeof set.title === 'string' && set.chapters.length);
+    }).filter((set) => typeof set.id === 'string' && set.id
+      && typeof set.title === 'string' && set.title
+      && typeof set.videoId === 'string' && set.videoId
+      && (set.chapters.length || set.durationSeconds));
   },
   snapshot({ includeCatalogue = false } = {}) {
     const nonstopSet = window.GARBA_NONSTOP?.activeSet || null;
