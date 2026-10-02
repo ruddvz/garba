@@ -1,5 +1,5 @@
 {
-  "version": "0.20.53",
+  "version": "0.20.54",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -101,7 +101,8 @@
     "sets-98-style-and-regional-expansion.json",
     "sets-99-fusion-and-form-expansion.json",
     "sets-100-regional-event-live-expansion.json",
-    "sets-101-longform-genre-tracklist-expansion.json"
+    "sets-101-longform-genre-tracklist-expansion.json",
+    "sets-102-community-traditional-devotional-expansion.json"
   ],
   "policy": {
     "officialityOrder": [
