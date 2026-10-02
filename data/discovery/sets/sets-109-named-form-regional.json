@@ -1,0 +1,731 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-rdc-bhakti-sagar-norta-ni-ramzat-2025",
+      "title": "Norta Ni Ramzat | Nonstop Garba 2025 | Mataji Na Garba | Navratri Special Garba | New Gujarati Garba",
+      "displayTitle": "Norta Ni Ramzat · RDC Bhakti Sagar (2025)",
+      "series": "Norta Ni Ramzat",
+      "year": 2025,
+      "artists": [
+        "Navneet Shukla",
+        "Sonal Aacharya",
+        "Vishalsinh Vaghela"
+      ],
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "setType": "verified-distributor-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "OrX6EMYjmMA",
+        "url": "https://www.youtube.com/watch?v=OrX6EMYjmMA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2683,
+      "sourceRuntimeDisplay": "44:43",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {
+          "title": "Navrat Naveli Bani Albeli",
+          "startSeconds": 2
+        },
+        {
+          "title": "Pratham Samru Saraswati Ne",
+          "startSeconds": 86
+        },
+        {
+          "title": "Maa Ae Garbo Koravyo Gagan Gokhma",
+          "startSeconds": 350
+        },
+        {
+          "title": "Kumkum Na Pagla Padya",
+          "startSeconds": 563
+        },
+        {
+          "title": "Maa Pava Te Gadh Thi Utarya",
+          "startSeconds": 859
+        },
+        {
+          "title": "Madi Tara Mandiriya Ma",
+          "startSeconds": 1100
+        },
+        {
+          "title": "Kesariyo ang Tane Lagyo Re Garba",
+          "startSeconds": 1338
+        },
+        {
+          "title": "Tu Kali Ne Kalyani Re Maa",
+          "startSeconds": 1638
+        },
+        {
+          "title": "Bahuchar Maa Na Dera Pachhal",
+          "startSeconds": 1970
+        },
+        {
+          "title": "Madi Tara Mandiriye Ghughra",
+          "startSeconds": 2219
+        },
+        {
+          "title": "Ek Vanzari Zulan Zulatiti",
+          "startSeconds": 2355
+        },
+        {
+          "title": "Tahuka Karto Jaay",
+          "startSeconds": 2447
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Bhakti Sagar published this source on 2025-09-10. The title and album identify Norta Ni Ramzat; its description credits singers Navneet Shukla, Sonal Aacharya and Vishalsinh Vaghela, music by Navneet Shukla, traditional lyrics and RDC Media as digital partner, and publishes these 12 timed titles. The source label is retained without inferring choreography or canonical song routes. Checked 2026-10-02: watch page reported 2,683 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-rdc-gujarati-jignesh-barot-maa-na-norta-2025",
+      "title": "Jignesh Barot | માં ના નોરતા | Maa Na Norta | Navratri 2025 Non Stop Garba | Jignesh Barot Garba",
+      "displayTitle": "Maa Na Norta · Jignesh Barot (2025)",
+      "series": "Maa Na Norta",
+      "year": 2025,
+      "artists": [
+        "Jignesh Barot",
+        "Nayana Sarma"
+      ],
+      "categories": [
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "setType": "verified-distributor-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "95uUtJ6G3aQ",
+        "url": "https://www.youtube.com/watch?v=95uUtJ6G3aQ",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3657,
+      "sourceRuntimeDisplay": "1:00:57",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {
+          "title": "Chhand",
+          "startSeconds": 7
+        },
+        {
+          "title": "Dhanya Maa Tu Jogani",
+          "startSeconds": 113
+        },
+        {
+          "title": "Ammar Tu Rakhje Maa",
+          "startSeconds": 283
+        },
+        {
+          "title": "Olya Vanrate Van Na O Pankhida",
+          "startSeconds": 441
+        },
+        {
+          "title": "Mane Mavtar Made To Meladi Jeva Madjo",
+          "startSeconds": 583
+        },
+        {
+          "title": "Van Ma Chandaliyo Ugyo",
+          "startSeconds": 744
+        },
+        {
+          "title": "Amba Bahuchar Khodal Chehar Chamund Rame",
+          "startSeconds": 968
+        },
+        {
+          "title": "Maa Ne Ponche Te Garba Mangamta",
+          "startSeconds": 1176
+        },
+        {
+          "title": "Morla Udi Jaje Ambe Maa Na Desh Ma",
+          "startSeconds": 1384
+        },
+        {
+          "title": "Dhan Dhan Kachchh Ni Dharti Maa",
+          "startSeconds": 1568
+        },
+        {
+          "title": "Meladi Mari Mojma Bole Re",
+          "startSeconds": 1715
+        },
+        {
+          "title": "Rasiyo Rupado",
+          "startSeconds": 1861
+        },
+        {
+          "title": "Phool Gajaro Re Maro",
+          "startSeconds": 1981
+        },
+        {
+          "title": "Ame Avya Ramva Ne Raas",
+          "startSeconds": 2137
+        },
+        {
+          "title": "Amba Tara Page Tu Mane Padva De",
+          "startSeconds": 2292
+        },
+        {
+          "title": "Dham Dhame Nagada Khodal Na Dham Ma",
+          "startSeconds": 2492
+        },
+        {
+          "title": "Chanda Suraj Thi Pyari Ambe Maat Chhe",
+          "startSeconds": 2673
+        },
+        {
+          "title": "Rame Ambe Maa Chachar Na Chowk Ma",
+          "startSeconds": 2892
+        },
+        {
+          "title": "Meera Mahel Thi Utarya",
+          "startSeconds": 3127
+        },
+        {
+          "title": "Ghor Andhari Re",
+          "startSeconds": 3292
+        },
+        {
+          "title": "Amba Aavone Garbe Ramva",
+          "startSeconds": 3457
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati HD published this 2025 Maa Na Norta nonstop Garba. The description credits singers Jignesh Barot and Nayana Sarma, music Appu, producer Ramesh Patel, Ekta Sound as label and RDC Media as digital partner; it publishes the 21 starts retained here. Additional on-screen names are not treated as singer credits. Chapter labels remain metadata only. Checked 2026-10-02: watch page reported 3,657 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-ishtar-mataji-na-tran-taali-garba",
+      "title": "Mataji Na Tran Taali Garba | માતાજી ના ત્રણ તાળી ગરબા | JUKEBOX | Latest Gujarati Garba Songs",
+      "displayTitle": "Mataji Na Tran Taali Garba · Ishtar Gujarati",
+      "series": "Mataji Na Tran Taali Garba",
+      "artists": [
+        "Nisha Upadhyay",
+        "Dipali Somaiya",
+        "Rekha Trivedi"
+      ],
+      "categories": [
+        "tran-taali",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "styles": [
+        "tran-taali"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Wct9SsTbGTs",
+        "url": "https://www.youtube.com/watch?v=Wct9SsTbGTs",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3129,
+      "sourceRuntimeDisplay": "52:09",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {
+          "title": "Maaro Garbo Re",
+          "startSeconds": 0
+        },
+        {
+          "title": "Kumkum Kera Pagale",
+          "startSeconds": 369
+        },
+        {
+          "title": "Saathiya Puravo",
+          "startSeconds": 650
+        },
+        {
+          "title": "He Ke Laal Darwaje",
+          "startSeconds": 902
+        },
+        {
+          "title": "Ghor Andhari Re",
+          "startSeconds": 1151
+        },
+        {
+          "title": "Taali Ona Taale",
+          "startSeconds": 1368
+        },
+        {
+          "title": "Amba Aavoto Ramiye",
+          "startSeconds": 1685
+        },
+        {
+          "title": "Sharad Punamani Raatadi",
+          "startSeconds": 1899
+        },
+        {
+          "title": "Rame Ambe Maa Chancharna",
+          "startSeconds": 2079
+        },
+        {
+          "title": "Sachi Re Maari Sat Re",
+          "startSeconds": 2365
+        },
+        {
+          "title": "Rangtali Rangtali",
+          "startSeconds": 2590
+        },
+        {
+          "title": "Khel Khel Re Bhawani Maa",
+          "startSeconds": 2792
+        },
+        {
+          "title": "Duhaa-Chhand",
+          "startSeconds": 2962
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ishtar Gujarati published this Tran Taali jukebox on 2017-12-10. Its description credits Nisha Upadhyay, Dipali Somaiya and Rekha Trivedi, music by Kirti and Girish, and traditional lyrics; it publishes the 13 starts retained here. Tran Taali is used because it is explicit in the source title, not as a claim about a particular choreography. Chapters are metadata only. Checked 2026-10-02: watch page reported 3,129 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-soor-mandir-2-tali-nonstop-garba-2021",
+      "title": "2 Tali Non Stop Garba 2021 | All Time Hit Gujarati Garba Songs 2021| Soor Mandir Garba",
+      "displayTitle": "2 Tali Non Stop Garba · Soor Mandir (2021)",
+      "series": "2 Tali Non Stop Garba",
+      "year": 2021,
+      "artists": [
+        "Hemant Chauhan",
+        "Pamela Jain",
+        "Kailash Kher",
+        "Kirtidan Gadhavi",
+        "Osman Mir",
+        "Sadhana Sargam",
+        "Shankar Mahadevan"
+      ],
+      "categories": [
+        "be-taali",
+        "traditional-garba",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "traditional",
+        "devotional"
+      ],
+      "styles": [
+        "be-taali"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "o-lSTIRxEQA",
+        "url": "https://www.youtube.com/watch?v=o-lSTIRxEQA",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 5547,
+      "sourceRuntimeDisplay": "1:32:27",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {
+          "title": "Mane Mavtar Male to Maa",
+          "startSeconds": 0
+        },
+        {
+          "title": "He tame kum kum pagliya pado",
+          "startSeconds": 250
+        },
+        {
+          "title": "Maa Taro Garbo Zakamzol",
+          "startSeconds": 462
+        },
+        {
+          "title": "Amar Tu Rakhaje",
+          "startSeconds": 755
+        },
+        {
+          "title": "Khodiyar mari mavdi",
+          "startSeconds": 914
+        },
+        {
+          "title": "Galdhare Thi Maji",
+          "startSeconds": 1094
+        },
+        {
+          "title": "Zule Zule Chhe",
+          "startSeconds": 1318
+        },
+        {
+          "title": "Kachi Mati No",
+          "startSeconds": 1504
+        },
+        {
+          "title": "Sonano Garbo",
+          "startSeconds": 1686
+        },
+        {
+          "title": "Madi Tara Mandiriyama",
+          "startSeconds": 1820
+        },
+        {
+          "title": "Shu Bethi Maa Pag Upar Pag",
+          "startSeconds": 2039
+        },
+        {
+          "title": "Gabbar Ma Ghughara Vage",
+          "startSeconds": 2229
+        },
+        {
+          "title": "Kumkumna Pagla Padya",
+          "startSeconds": 2407
+        },
+        {
+          "title": "Maane Panch Te Garba Mangamta",
+          "startSeconds": 2599
+        },
+        {
+          "title": "Zule Zule Chhe",
+          "startSeconds": 2827
+        },
+        {
+          "title": "Ramto Bhamto Jay",
+          "startSeconds": 3015
+        },
+        {
+          "title": "Sonal Garbo Shire Ambe Maa",
+          "startSeconds": 3208
+        },
+        {
+          "title": "Tara Dungre Thi Utaryo",
+          "startSeconds": 3381
+        },
+        {
+          "title": "Lakh Lakh Divdan",
+          "startSeconds": 3548
+        },
+        {
+          "title": "Ek Vanzari Zulan",
+          "startSeconds": 3716
+        },
+        {
+          "title": "Patai Raja Garbadiyo Koravo",
+          "startSeconds": 3888
+        },
+        {
+          "title": "Hu To Fularo Garbo",
+          "startSeconds": 4050
+        },
+        {
+          "title": "Dhan Dhan Chhe Kutch Ni Dharti",
+          "startSeconds": 4179
+        },
+        {
+          "title": "Taro Ghadh Re Chotilo",
+          "startSeconds": 4314
+        },
+        {
+          "title": "Pela dungarvala doshi",
+          "startSeconds": 4464
+        },
+        {
+          "title": "Garbe Ramta Gaje Trilok",
+          "startSeconds": 4563
+        },
+        {
+          "title": "Hazara Hajur Chhe Aa Kaljug",
+          "startSeconds": 4767
+        },
+        {
+          "title": "Chhod Chhod Re Patai Maro",
+          "startSeconds": 4916
+        },
+        {
+          "title": "Ali O Garbo",
+          "startSeconds": 5015
+        },
+        {
+          "title": "O Madi Re Aevi Garbe",
+          "startSeconds": 5120
+        },
+        {
+          "title": "Amba Aavo To Ramiye",
+          "startSeconds": 5200
+        },
+        {
+          "title": "Ugamana Rath Jodya Re Lol",
+          "startSeconds": 5319
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Soor Mandir published this 2 Tali nonstop Garba in 2021. “2 Tali” is retained from its title and mapped to the catalogue’s Be Taali taxonomy alias; this does not establish choreography or city-specific steps. The description names singers including the seven credited here and publishes these 32 starts. Multi-artist chapter labels remain metadata only. Checked 2026-10-02: watch page reported 5,547 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-maa-radio-hinch-na-tale-2023",
+      "title": "HINCH NA TALE || GUJARATI NON-STOP GARBA 2023| | PAYAL VAKHARIYA || MAA RADIO",
+      "displayTitle": "Hinch Na Tale · Payal Vakhariya (2023)",
+      "series": "Hinch Na Tale",
+      "year": 2023,
+      "artists": [
+        "Payal Vakhariya"
+      ],
+      "categories": [
+        "hinch",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "styles": [
+        "hinch"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "9C71clA94Xg",
+        "url": "https://www.youtube.com/watch?v=9C71clA94Xg",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3779,
+      "sourceRuntimeDisplay": "1:02:59",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Maa Radio published this Gujarati nonstop Garba on 2023-10-05. Its description says “Produce & Present By Maa Radio - Patan,” credits Payal Vakhariya as singer/artist, Raju Prajapati and Aryan Prajapati as producers, Payal Vakhariya Music Group for music, and Maa Radio as label. Hinch is retained from the source title; no choreography is inferred. No song starts are published. Checked 2026-10-02: watch page reported 3,779 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-lokdhun-gujarati-ambe-ma-no-sanedo",
+      "title": "અંબે મા નો સાનેદો - Ambe Ma No Sanedo - Gujarati Garba Song - Navratri Special",
+      "displayTitle": "Ambe Ma No Sanedo · Lokdhun Gujarati",
+      "series": "Ambe Ma Ni Garbi",
+      "artists": [
+        "Vishnu Maldhari"
+      ],
+      "year": 2018,
+      "categories": [
+        "sanedo",
+        "folk-lokgeet",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "sanedo",
+        "folk",
+        "devotional"
+      ],
+      "styles": [
+        "sanedo"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-distributor-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "spDvoz68d_I",
+        "url": "https://www.youtube.com/watch?v=spDvoz68d_I",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1841,
+      "sourceRuntimeDisplay": "30:41",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Lokdhun Gujarati published this Sanedo-labeled Garba song on 2018-10-08. The description names album Ambe Ma Ni Garbi, singer Vishnu Maldhari, music Aarvind Nadariya, Komal Studio as label and Lokdhun as digital partner; its Song Name field is blank and it publishes no song starts. Sanedo follows the title label; no step pattern is inferred. Checked 2026-10-02: watch page reported 1,841 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-hardik-dave-garbi-3-non-stop-2026",
+      "title": "Garbi 3 Non Stop",
+      "displayTitle": "Garbi 3 Non Stop · Hardik Dave (2026)",
+      "series": "Garbi 3",
+      "year": 2026,
+      "artists": [
+        "Hardik Dave",
+        "Rahul Munjariya"
+      ],
+      "categories": [
+        "garbi",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "styles": [
+        "garbi"
+      ],
+      "setType": "official-streaming-nonstop",
+      "officiality": "official-topic",
+      "source": {
+        "provider": "youtube",
+        "videoId": "kMo8Hpowtco",
+        "url": "https://www.youtube.com/watch?v=kMo8Hpowtco",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1847,
+      "sourceRuntimeDisplay": "30:47",
+      "segments": [],
+      "chapterStatus": "source-no-published-chapters",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "The Hardik Dave - Topic page credits Hardik Dave and Rahul Munjariya, says provided by ABC Digital Distribution, ℗ 2026 Sur Sagar, names Rahul Munjariya as producer/composer, lyricists Pratik Ahir and Traditional, and Sur Sagar as publisher. The Topic upload date is 2026-09-25; the description separately says “Released on: 2026-09-26,” and both dates are preserved rather than normalized. Garbi is explicit in the title; no chapters are published. Checked 2026-10-02: watch page reported 1,847 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-ashok-sound-mataji-ni-aarti-part-1-2025",
+      "title": "Mataji Ni Aarti Part - 1 | Chaitra Navratri Special Song 2025 | Jay Adhyashakti Aarti | Ashok Sound",
+      "displayTitle": "Mataji Ni Aarti Part 1 · Ashok Sound (2025)",
+      "series": "Jay Adhyashakti Aarti",
+      "year": 2025,
+      "artists": [
+        "Rakesh Raval",
+        "Khushi Variya"
+      ],
+      "categories": [
+        "aarti",
+        "mataji-devotional"
+      ],
+      "genres": [
+        "devotional"
+      ],
+      "styles": [
+        "aarti"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "w8qydYKlZnk",
+        "url": "https://www.youtube.com/watch?v=w8qydYKlZnk",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 4674,
+      "sourceRuntimeDisplay": "1:17:54",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        {
+          "title": "Jay Adhyashakti Aarti",
+          "startSeconds": 0
+        },
+        {
+          "title": "Lakh Lakh Divda Ni Chamund Maa Ni Aarti",
+          "startSeconds": 1292
+        },
+        {
+          "title": "Khodiyar Maa Ni Aarti Utaro",
+          "startSeconds": 1682
+        },
+        {
+          "title": "But Maa Na Mandiriya Ma",
+          "startSeconds": 2424
+        },
+        {
+          "title": "Maa Aashapura Ni Aarti Madh Game Thay",
+          "startSeconds": 2914
+        },
+        {
+          "title": "Koyla Dungar Taru Dham",
+          "startSeconds": 3323
+        },
+        {
+          "title": "Aarti Momai Maa Ni Thay",
+          "startSeconds": 3820
+        },
+        {
+          "title": "Bahuchar Maa Ni Aarti",
+          "startSeconds": 4369
+        }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Ashok Sound Official Channel published this Chaitra Navratri devotional item on 2025-03-30. The description identifies the Jay Adhyashakti Aarti album, credits artists Rakesh Raval and Khushi Variya, music by Nimesh Variya and Ashok Sound as label, and publishes eight timed titles with separate per-title credits. No chapter performer is assigned without matching that title-level credit; the starts are metadata only. Checked 2026-10-02: watch page reported 4,674 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-gujarat-tourism-vibrant-navratri-2025-ahmedabad",
+      "title": "Abhijeet Rao and Payal Vakharia Live at Vibrant Navratri Festival 2025 | Gujarat Tourism",
+      "displayTitle": "Vibrant Navratri Festival · Ahmedabad · Day 5 (2025)",
+      "series": "Vibrant Navratri Festival",
+      "year": 2025,
+      "artists": [
+        "Abhijeet Rao",
+        "Payal Vakharia"
+      ],
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "gUTbki05_-I",
+        "url": "https://www.youtube.com/watch?v=gUTbki05_-I",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 9516,
+      "sourceRuntimeDisplay": "2:38:36",
+      "tags": [
+        "ahmedabad",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Gujarat Tourism published this live performance on 2025-10-01. Its title credits Abhijeet Rao and Payal Vakharia; the description identifies Day 5, the festival window 2025-09-22 through 2025-10-01, and Gujarat University Ground, Ahmedabad. No song tracklist or starts are published, so this remains a full event set without inferred boundaries. Checked 2026-10-02: watch page reported 9,516 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    },
+    {
+      "id": "set-khodaldham-navratri-2025-rajkot-day-4",
+      "title": "DAY 04 || KHODALDHAM NAVRATRI 2025 NORTH ZONE RAJKOT || LIVE KDNORTHZONE",
+      "displayTitle": "Khodaldham Navratri · Rajkot · Day 4 (2025)",
+      "series": "Khodaldham Navratri 2025 North Zone",
+      "year": 2025,
+      "artists": [
+        "Dev Bhatt",
+        "Hari Gadhavi",
+        "Kittu Shinde"
+      ],
+      "categories": [
+        "live-garba",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "official-event-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Du-oG8BbpDw",
+        "url": "https://www.youtube.com/watch?v=Du-oG8BbpDw",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 11508,
+      "sourceRuntimeDisplay": "3:11:48",
+      "tags": [
+        "rajkot",
+        "live-event",
+        "navratri-2025"
+      ],
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "KHODALDHAM NORTH ZONE RAJKOT IMS published this Day 04 live event on 2025-09-26. Its description names Rajkot, singers Dev Bhatt, Hari Gadhavi and Kittu Shinde, orchestra Milan Gohil (Megastar Orchestra), anchor Jenisha Patel and video Mates Mania Production. No song starts are published; this remains a full event set with no inferred chapter boundaries or city-specific dance classification. Checked 2026-10-02: watch page reported 11,508 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200."
+    }
+  ]
+}
