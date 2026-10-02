@@ -1,5 +1,5 @@
 {
-  "version": "0.20.39",
+  "version": "0.20.40",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -87,7 +87,8 @@
     "sets-84-uwb-2023-missing-nights.json",
     "sets-85-jigar-studio-jagdish-ramzat1.json",
     "sets-86-longform-navdurga-raas.json",
-    "sets-87-community-timli-tarpa.json"
+    "sets-87-community-timli-tarpa.json",
+    "sets-88-chaitra-navratri-2025.json"
   ],
   "policy": {
     "officialityOrder": [
