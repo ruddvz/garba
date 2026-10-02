@@ -1,6 +1,6 @@
 {
-  "version": "0.6.4",
-  "updated": "2026-09-29",
+  "version": "0.6.5",
+  "updated": "2026-10-02",
   "note": "Current exact playback overrides. Ramzat 2 additions use exact YouTube auto-generated tracks for the original 2018 Sur Sagar album only. Ramzat 5 additions use independently verified exact split recordings tied directly to the 2024 Sur Sagar album. Ramzat 2017 now includes twelve independently verified split recordings from Sur Sagar label uploads or Official Artist Channel/distributor album tracks. Continuous Ramzat masters remain discovery/full-release evidence only; no continuous-set chapter timestamp is promoted to a split track. Standalone single releases include verified Official Artist Channel and label uploads with original commercial URLs preserved in alternate blocks.",
   "songSources": {
     "khalasi-coke-studio-bharat-2023": {
@@ -1723,6 +1723,21 @@
         "provider": "spotify",
         "sourceUrl": "https://open.spotify.com/album/2bMAOrim5RIJ7Gb7NjmD4Z",
         "sourceType": "official-streaming-catalogue"
+      }
+    },
+    "gaman-rang-lagyo-nonstop-garba-2023": {
+      "provider": "youtube",
+      "videoId": "ywyBW1PfRUg",
+      "startSeconds": 0,
+      "sourceUrl": "https://www.youtube.com/watch?v=ywyBW1PfRUg",
+      "sourceType": "official-topic",
+      "releaseId": "gaman-rang-lagyo-nonstop-garba-2023",
+      "trackNumber": 1,
+      "evidenceType": "official-youtube-auto-generated-original-album-track",
+      "alternate": {
+        "provider": "amazon-music",
+        "sourceUrl": "https://music.amazon.in/albums/B0CKNR8MMP",
+        "sourceType": "stream"
       }
     }
   }
