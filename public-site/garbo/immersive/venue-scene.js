@@ -47,8 +47,23 @@
   var CAMS = {
     outdoors: { circle: [0, 4.4, -12.5], far: [0, 2.8, -20.4], stage: [0, 3.2, 39.2] },
     stadium: { circle: [0, 4.6, -12.5], far: [0, 8.22, -25.1], stage: [0, 3.1, 28.8] },
-    sheri: { circle: [0, 4, -11.5], far: [-2.3, 2.5, -14.6], stage: [0, 3.3, 58.8] }
+    sheri: { circle: [0, 4, -11.5], far: [-2.3, 2.5, -14.6], stage: [0, 3.3, 58.8] },
+    pandora: { circle: [0, 4.4, -12.5], far: [0, 2.95, -26.55], stage: [0, 3.0, 13.8] }
   };
+  // Pandora (venue3d/src/venues/pandora.js has the same plan): an obsidian floor of radius `floor`, and round it
+  // terraces on sixteen straight sides, each step's front a0 + k × tread from the centre and rise higher than the last;
+  // the far sides are open to the stage and the view. From far off you sit on the fourth step facing the stage.
+  var PANDORA = { floor: 19, sides: 16, a0: 21.8, tread: 1.3, rise: 0.45, tiers: 5, top: 31.5, open: [8, 8], low: [6, 10], lowTiers: 2, stairs: [5, 11] };
+  function pandoraSide(j) { var p = -Math.PI / 2 + j * TAU / PANDORA.sides; return { n: [Math.cos(p), Math.sin(p)], u: [-Math.sin(p), Math.cos(p)] }; }
+  function pandoraAt(j, a, t) { var s = pandoraSide(j); return [s.n[0] * a + s.u[0] * t, s.n[1] * a + s.u[1] * t]; }
+  // Where people walk and dance: anywhere in most venues; in Pandora, on the obsidian and the open ground before the stage
+  // Venues whose garbo stands bare, without the mandvi over it (venue3d/src/venue.js: bareGarbo)
+  var BARE_GARBO = { pandora: true };
+  function onGround(id, x, z, r) {
+    if (id !== 'pandora') return true;
+    r = r || 0;
+    return Math.hypot(x, z) < PANDORA.floor - 1.2 - r;
+  }
   // The stadium's near stand (venue3d/src/util.js has the same): rows rising from the floor's edge at z0, a seat every
   // pitch metres across but for an aisle at ±aisle; from far off you sit in row cam, the two of you in the row in front
   var NSTAND = { z0: -15, tread: 1.5, y0: 1.3, rise: 0.95, rows: 11, cam: 6, aisle: 14, pitch: 0.62 };
@@ -57,7 +72,7 @@
   var FRAMES = {
     // (the sheri's mandap is small, so its stage view closes in on it)
     circle: { hor: 0.3, lens: 1 }, stage: { hor: 0.44, lens: 0.92, sheri: { hor: 0.47, lens: 1.12 } },
-    far: { outdoors: { hor: 0.46, lens: 0.8 }, stadium: { hor: 0.42, lens: 0.76 }, sheri: { hor: 0.44, lens: 0.8 } }
+    far: { outdoors: { hor: 0.46, lens: 0.8 }, stadium: { hor: 0.42, lens: 0.76 }, sheri: { hor: 0.44, lens: 0.8 }, pandora: { hor: 0.42, lens: 0.78 } }
   };
   function frameFor(id, listener) { var f = FRAMES[listener] || FRAMES.circle; return f[id] || f; }
 
@@ -65,7 +80,9 @@
   // front of the LED screen, which runs full height from the riser's floor behind them to just under the truss
   var STAGE3D = {
     outdoors: { x0: -11.5, x1: 11.5, z: 46, h: 1.6, depth: 4.4, screenBottom: 2.0, screenTop: 9.9, truss: 12.0, arrays: 13.5, sponsors: 5, sideScreens: true },
-    stadium: { x0: -8.5, x1: 8.5, z: 35.5, h: 1.4, depth: 4.4, screenBottom: 1.8, screenTop: 8.3, truss: 9.6, arrays: 10.5 }
+    stadium: { x0: -8.5, x1: 8.5, z: 35.5, h: 1.4, depth: 4.4, screenBottom: 1.8, screenTop: 8.3, truss: 9.6, arrays: 10.5 },
+    // Pandora's dais of basalt, its hologram screen hung between two monoliths
+    pandora: { x0: -4.6, x1: 4.6, z: 20.4, h: 0.9, depth: 5.3, screenBottom: 2.6, screenTop: 5, truss: 6, arrays: 7 }
   };
   // The band with the 3D stage: six players (four in the sheri) each at their own place: u across the stage from its
   // left, d back from the front of the riser, sit how high they sit. Their fixed instruments (the drum kit, the
@@ -89,7 +106,7 @@
   };
 
   // The DJ's booth beside the stage, where you walk to pick the next song. The camera stands in front of the table.
-  var DJ = { outdoors: { x: 19.5, z: 22 }, stadium: { x: 15.5, z: 17 }, sheri: { x: 4.4, z: 60.6 } };
+  var DJ = { outdoors: { x: 19.5, z: 22 }, stadium: { x: 15.5, z: 17 }, sheri: { x: 4.4, z: 60.6 }, pandora: { x: 8.6, z: 19.6 } };
   // The booth and the space in front of it, where you stand to pick songs, stay clear
   function clearOfBooth(id, x, z, r) { var b = DJ[id]; return !b || (Math.hypot(b.x - x, b.z - z) > r + 3.2 && Math.hypot(b.x - x, b.z - 2.4 - z) > r + 2.6); }
   function djCam(id) { var b = DJ[id] || DJ.outdoors; return [b.x, 1.62, b.z - 2.35]; }
@@ -231,12 +248,12 @@
       // One garbo at the centre of the venue. Rings grow around it, and people start their own circles anywhere.
       var main = makeCircle(0, 0, id === 'sheri' ? 4.4 : 5.6, true), circles = [main];
       if (id !== 'sheri') circles.push(makeCircle(0, 0, 9.4, false, main));
-      if (id === 'outdoors') circles.push(makeCircle(0, 0, 13.2, false, main));
+      if (id === 'outdoors' || id === 'pandora') circles.push(makeCircle(0, 0, 13.2, false, main));
       if (id === 'sheri') {
         circles.push(makeCircle(lerp(-0.8, 0.8, rnd()), 17 + rnd() * 2, 3 + rnd() * 0.5, false));
         circles.push(makeCircle(lerp(-1, 1, rnd()), 29 + rnd() * 2, 2.6 + rnd() * 0.5, false));
         circles.push(makeCircle(lerp(-1, 1, rnd()), 41 + rnd() * 3, 2.8 + rnd() * 0.5, false));
-      } else {
+      } else if (id !== 'pandora') {
         var base = circles.length, want = id === 'outdoors' ? 7 + Math.floor(rnd() * 3) : 5 + Math.floor(rnd() * 2), box = id === 'outdoors' ? [-25, 25, -2, 40] : [-20, 20, 2, 32], tries = 0;
         while (circles.length < want + base && tries++ < 900) {
           var R = rnd() < 0.4 ? 1.6 + rnd() * 1.2 : 2.8 + rnd() * (id === 'outdoors' ? 3 : 2), x = lerp(box[0] + R, box[1] - R, rnd()), z = lerp(box[2] + R, box[3] - R, rnd());
@@ -245,10 +262,10 @@
         }
       }
       // Around the edges: pairs spinning together and a few dancing alone
-      var nPairs = id === 'outdoors' ? 9 : id === 'stadium' ? 6 : 3, bx0 = BOUNDS[id], ptries = 0, placed = 0;
+      var nPairs = id === 'outdoors' ? 9 : id === 'stadium' || id === 'pandora' ? 6 : 3, bx0 = BOUNDS[id], ptries = 0, placed = 0;
       while (placed < nPairs && ptries++ < 400) {
         var solo = rnd() < 0.3, pr = solo ? 0.3 : 0.55, px = lerp(bx0[0] + 1, bx0[1] - 1, rnd()), pz = lerp(Math.max(bx0[2], 1), bx0[3] - 1, rnd());
-        if (clearOfBooth(id, px, pz, pr) && circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
+        if (clearOfBooth(id, px, pz, pr) && onGround(id, px, pz, pr + 0.4) && circles.every(function (c) { return Math.hypot(c.x0 - px, c.z0 - pz) > c.R + pr + 1.6; })) { var pc = makeCircle(px, pz, pr, false, null, solo ? 1 : 2); pc.w = (solo ? 2.4 : 1.8) * (rnd() < 0.5 ? 1 : 1.2); pc.small = true; circles.push(pc); placed++; }
       }
       // Life around the dancing: people stopped at the edge of a circle to watch, clusters chatting further off,
       // and phones held up to record
@@ -257,11 +274,11 @@
         if (c.small || ci === 1) return;
         var n = ci === 0 ? 0 : 1 + Math.floor(rnd() * 3), outer = ci === 0 && circles[1] && circles[1].parent ? (circles[2] && circles[2].parent ? circles[2].R : circles[1].R) : c.R;
         if (ci === 0) n = id === 'sheri' ? 4 : 10;
-        for (var k = 0; k < n; k++) { var a = rnd() * TAU, rr = outer + 1.6 + rnd() * 1.6, sx = c.x0 + Math.cos(a) * rr, sz = c.z0 + Math.sin(a) * rr; if (sz < BOUNDS[id][2] - 2 || Math.abs(sx) > (id === 'sheri' ? 6.4 : 26) || !clearOfBooth(id, sx, sz, 0)) continue; standers.push(person({ x: sx, z: sz, stander: true, phone: rnd() < 0.3, sway: rnd() * TAU })); }
+        for (var k = 0; k < n; k++) { var a = rnd() * TAU, rr = outer + 1.6 + rnd() * 1.6, sx = c.x0 + Math.cos(a) * rr, sz = c.z0 + Math.sin(a) * rr; if (sz < BOUNDS[id][2] - 2 || Math.abs(sx) > (id === 'sheri' ? 6.4 : 26) || !clearOfBooth(id, sx, sz, 0) || !onGround(id, sx, sz, 0.3)) continue; standers.push(person({ x: sx, z: sz, stander: true, phone: rnd() < 0.3, sway: rnd() * TAU })); }
       });
       for (var gi = 0; gi < (id === 'sheri' ? 3 : 7); gi++) {
         var bx1 = BOUNDS[id], gx = lerp(bx1[0] + 2, bx1[1] - 2, rnd()), gz = lerp(Math.max(bx1[2], 0), bx1[3] - 2, rnd());
-        if (!clearOfBooth(id, gx, gz, 1) || !circles.every(function (c) { return Math.hypot(c.x0 - gx, c.z0 - gz) > c.R + 2.4; })) continue;
+        if (!clearOfBooth(id, gx, gz, 1) || !onGround(id, gx, gz, 1) || !circles.every(function (c) { return Math.hypot(c.x0 - gx, c.z0 - gz) > c.R + 2.4; })) continue;
         var m = 2 + Math.floor(rnd() * 3);
         for (var j = 0; j < m; j++) { var aj = j / m * TAU + rnd() * 0.5; standers.push(person({ x: gx + Math.cos(aj) * 0.7, z: gz + Math.sin(aj) * 0.55, stander: true, chat: true, phone: rnd() < 0.15, sway: rnd() * TAU, kid: rnd() < 0.15 })); }
       }
@@ -287,7 +304,8 @@
     var FILL = {
       outdoors: { ring: 7.7, groups: [[-9.2, -14.6, 1.5], [9.0, -14.4, 1.4], [0.3, -14.3, 0.55, 2]] },
       stadium: { ring: 7.7, groups: [] },
-      sheri: { ring: 0, groups: [[-3.1, -7.4, 1.5], [3.2, -7.8, 1.6], [2.4, -16.4, 1.2], [0.3, -19.7, 0.55, 2]] }
+      sheri: { ring: 0, groups: [[-3.1, -7.4, 1.5], [3.2, -7.8, 1.6], [2.4, -16.4, 1.2], [0.3, -19.7, 0.55, 2]] },
+      pandora: { ring: 7.7, groups: [[-8.6, -14.8, 1.4], [8.4, -14.6, 1.3], [0.3, -16.2, 0.55, 2]] }
     };
     function fillFor(id, main) {
       // The ring is a little looser than the others, so it costs fewer figures to draw
@@ -295,7 +313,7 @@
       f.groups.forEach(function (q) { var c = makeCircle(q[0], q[1], q[2], false, null, q[3]); if (q[3]) { c.small = true; c.w = 1.8; } out.push(c); });
       // By the stage the space the player covered is the crowd in front of the stage: it makes room on either side of
       // the middle, and two small circles dance there, leaving the view up the middle to the stage open
-      var sz = { outdoors: 46, stadium: 35.5, sheri: 64.5 }[id] || 46, sx = id === 'sheri' ? 2.8 : 3.7;
+      var sz = { outdoors: 46, stadium: 35.5, sheri: 64.5, pandora: 20.4 }[id] || 46, sx = id === 'sheri' || id === 'pandora' ? 2.8 : 3.7;
       [[-sx, sz - 3.2, id === 'sheri' ? 1 : 1.2], [sx + 0.1, sz - 3.35, id === 'sheri' ? 0.95 : 1.15]].forEach(function (q) { var c = makeCircle(q[0], q[1], q[2], false); c.stageFill = true; c.baseX = q[0]; c.baseR = q[2]; out.push(c); });
       return out;
     }
@@ -303,7 +321,7 @@
     function stallsFor(id) {
       var list = id === 'outdoors' ? [[-26.5, 11, 'ચા', '#b8312b', 'Chai'], [-26.5, 18.5, 'દાબેલી', '#2f6fa8', 'Dabeli'], [-26.5, 26, 'પાણીપુરી', '#2f8f5b', 'Pani puri'], [26.5, 14, 'પાણી', '#2f6fa8', 'Water'], [26.5, 22, 'આઈસ્ક્રીમ', '#8e44ad', 'Ice cream'], [26.5, 30, 'નાસ્તો', '#e67e22', 'Snacks']]
         : id === 'stadium' ? [[-20.5, 33.5, 'ચા', '#b8312b', 'Chai'], [20.5, 33.5, 'નાસ્તો', '#e67e22', 'Snacks']]
-          : [[-6.2, 9, 'પાણીપુરી', '#2f8f5b', 'Pani puri']];
+          : id === 'sheri' ? [[-6.2, 9, 'પાણીપુરી', '#2f8f5b', 'Pani puri']] : [];
       return list.map(function (a) {
         var side = a[0] < 0 ? -1 : 1, facing = id === 'stadium' ? 'camera' : 'inward';
         var st0 = { x: a[0], z: a[1], sign: a[2], col: a[3], en: a[4], w: id === 'sheri' ? 1.8 : 3.4, depth: id === 'sheri' ? 0.9 : 2.2, cart: id === 'sheri' };
@@ -314,17 +332,17 @@
       });
     }
     // Where people walk; kept clear of the space right in front of the camera
-    var BOUNDS = { outdoors: [-23, 23, -5, 40], stadium: [-21, 21, -5, 32], sheri: [-6, 6, -10, 60] };
+    var BOUNDS = { outdoors: [-23, 23, -5, 40], stadium: [-21, 21, -5, 32], sheri: [-6, 6, -10, 60], pandora: [-17, 17, -17, 17] };
     function freeSpot(id, L) {
       var bx = BOUNDS[id];
       for (var k = 0; k < 40; k++) {
         var x = lerp(bx[0], bx[1], rnd()), z = lerp(bx[2], bx[3], rnd());
-        if (clearOfBooth(id, x, z, 0) && L.circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + 1.8; })) return { x: x, z: z };
+        if (clearOfBooth(id, x, z, 0) && onGround(id, x, z, 0.4) && L.circles.every(function (c) { return Math.hypot(c.x0 - x, c.z0 - z) > c.R + 1.8; })) return { x: x, z: z };
       }
-      return { x: bx[0], z: bx[3] };
+      return id === 'pandora' ? { x: 0, z: -16 } : { x: bx[0], z: bx[3] };
     }
     function walkersFor(id, L) {
-      var n = { outdoors: 32, stadium: 18, sheri: 14 }[id], out = [];
+      var n = { outdoors: 32, stadium: 18, sheri: 14, pandora: 24 }[id], out = [];
       for (var i = 0; i < n; i++) {
         var p = freeSpot(id, L), kid = rnd() < 0.22, photo = !kid && rnd() < 0.14;
         var w = person({ x: p.x, z: p.z, tx: p.x, tz: p.z, wait: rnd() * 4, speed: kid ? 1.7 + rnd() * 0.9 : 0.9 + rnd() * 0.6, step: rnd() * TAU, walker: true, kid: kid, photo: photo, snap: 0 });
@@ -332,7 +350,7 @@
         out.push(w);
       }
       // Couples out for the evening: they stroll together, and while the music plays they stop to dance as a pair
-      for (var pi = 0; pi < { outdoors: 4, stadium: 2, sheri: 2 }[id]; pi++) {
+      for (var pi = 0; pi < { outdoors: 4, stadium: 2, sheri: 2, pandora: 3 }[id]; pi++) {
         var q = freeSpot(id, L), pr = { on: false, move: 'tali', until: 0, ang: Math.PI, r: 0.34, cx: q.x, cz: q.z };
         var lead = person({ x: q.x - 0.34, z: q.z, tx: q.x, tz: q.z, wait: rnd() * 3, speed: 0.85 + rnd() * 0.3, step: rnd() * TAU, walker: true, man: true, moustache: rnd() < 0.6, h: 1.66 + rnd() * 0.12, snap: 0, pair: pr });
         var mate = person({ x: q.x + 0.34, z: q.z, tx: q.x, tz: q.z, wait: 0, speed: 1.3, step: rnd() * TAU, walker: true, man: false, moustache: false, h: 1.54 + rnd() * 0.1, snap: 0, pair: pr, lead: lead });
@@ -483,7 +501,7 @@
         [-1, 1].forEach(function (sd) { for (var k = 0; k < 3; k++) out.push({ x: sd * (6.2 + k * 0.5), y: 0, z: -17.6 + k * 0.4, kind: 'stand', who: person({ stander: true, phone: k === 1, sway: rnd() * TAU }) }); });
       }
       // By the stage: a standing crowd seen from behind, lots of phones up, and the two of you at the front
-      var sz0 = { outdoors: 46, stadium: 35.5, sheri: 64.5 }[id], hw = id === 'sheri' ? 5.5 : 8;
+      var sz0 = { outdoors: 46, stadium: 35.5, sheri: 64.5, pandora: 20.4 }[id], hw = id === 'sheri' ? 5.5 : id === 'pandora' ? 5.2 : 8;
       // Rows behind you thin out in the middle so you look over shoulders, not into backs
       for (var rz = 0; rz < 4; rz++) for (var cx0 = -hw; cx0 <= hw; cx0 += 0.62 + rnd() * 0.3) {
         var zz = sz0 - 2.3 - rz * 0.9 + (rnd() - 0.5) * 0.3, aisle = rz < 2 ? 1.5 : 0.9 + rz * 0.5;
@@ -527,6 +545,33 @@
         [[-3.3, -11.4], [-1.6, -11.2], [0.9, -11.5]].forEach(function (k) { out.push({ x: k[0], y: 0, z: k[1], kind: 'ground', who: person({ sitting: true, kid: true, h: 1.05 + rnd() * 0.25, rest: { y: 0 } }) }); });
         out.push({ x: 2.6, y: 0, z: -12.1, kind: 'stand', who: person({ stander: true, phone: true, sway: 0.5 }) });
         [[-8.6, 0.55, 0], [-8.1, 0.48, 0.6], [-7.2, 0.4, 2.1]].forEach(function (k) { out.push({ x: 0, y: 0, z: k[0], kind: 'runner', view: 'far', cx: -0.5, amp: 3.4, sp: k[1], ph: k[2], who: person({ kid: true, h: 0.95 + rnd() * 0.25, walker: true, moving: true, step: 0 }) }); });
+      } else if (id === 'pandora') {
+        // The near terraces, built in 3D: you sit on the fourth step facing the stage, the two of you on the step below,
+        // neighbours along the steps either side. Each step leaves its outline in short lengths, so it hides the lower
+        // half of whoever sits just beyond it, as the stadium's rows do.
+        var PA = PANDORA, HF = Math.tan(Math.PI / PA.sides);
+        [15, 0, 1].forEach(function (j) {
+          for (var k = 0; k <= 3; k++) {
+            var a0 = PA.a0 + k * PA.tread, a1 = a0 + PA.tread, yk = (k + 1) * PA.rise, h0 = a0 * HF, n = Math.ceil(2 * h0 / 2.4);
+            for (var q = 0; q < n; q++) {
+              var t0 = -h0 + 2 * h0 * q / n, t1 = -h0 + 2 * h0 * (q + 1) / n, sol = [];
+              [[a0, t0], [a0, t1], [a1, t1 * a1 / a0], [a1, t0 * a1 / a0]].forEach(function (c) { var p = pandoraAt(j, c[0], c[1]); sol.push(p[0], 0, p[1], p[0], yk, p[1]); });
+              var mid = pandoraAt(j, a0, (t0 + t1) / 2);
+              out.push({ x: mid[0], y: yk, z: mid[1], kind: 'riser', solid: sol, pandora: true });
+            }
+            if (k === 3) continue;
+            var as = a0 + 0.85;
+            for (var t = -as * HF + 0.4; t < as * HF - 0.3; t += 0.66) {
+              if (j === 0 && k === 2 && Math.abs(t) < 0.75) continue;
+              var sp = pandoraAt(j, as, t + (rnd() - 0.5) * 0.06);
+              if (rnd() < (j === 0 && Math.abs(t) < 6 ? 0.82 : 0.6)) sitter(sp[0], yk, sp[1], 'bench', null);
+            }
+          }
+        });
+        sitter(-0.31, 3 * PA.rise, -(PA.a0 + 2 * PA.tread + 0.85), 'bench', 'w'); sitter(0.31, 3 * PA.rise, -(PA.a0 + 2 * PA.tread + 0.85), 'bench', 'm');
+        // A child coming down the steps with a phone up, another on the floor's edge
+        out.push({ x: -3.6, y: 2 * PA.rise, z: -(PA.a0 + PA.tread + 0.5), kind: 'stand', who: person({ stander: true, phone: true, sway: 1 }) });
+        out.push({ x: 4.2, y: 0, z: -18.2, kind: 'stand', who: person({ stander: true, kid: true, h: 1.1, sway: 2 }) });
       }
       return out;
     }
@@ -541,6 +586,23 @@
             else out.push({ kind: 'ground', x: sd * (5.6 + rnd() * 0.6), y: 0, z: z, side: sd, who: person({ sitting: true, kid: rnd() < 0.5, h: 1.2 + rnd() * 0.4, rest: { y: 0 } }) });
           }
         });
+        return out;
+      }
+      if (id === 'pandora') {
+        // On the steps round the floor, on cushions (the 3D venue puts one under each), the older folk lower down
+        var PA = PANDORA, HF = Math.tan(Math.PI / PA.sides);
+        for (var j = 0; j < PA.sides; j++) {
+          if ((j >= PA.open[0] && j <= PA.open[1]) || j === 15 || j === 0 || j === 1) continue;
+          for (var k = 0; k < (PA.low.indexOf(j) >= 0 ? PA.lowTiers : PA.tiers); k++) {
+            var a = PA.a0 + k * PA.tread + 0.8, y = (k + 1) * PA.rise, hl = a * HF, stair = PA.stairs.indexOf(j) >= 0;
+            for (var t = -hl + 0.6; t < hl - 0.5; t += 0.72) {
+              if (stair && Math.abs(t) < 2.6) continue;
+              if (rnd() > (k === 4 ? 0.22 : 0.42)) continue;
+              var p = pandoraAt(j, a, t + (rnd() - 0.5) * 0.1);
+              out.push({ kind: 'terrace', x: p[0], y: y, z: p[1], who: person({ sitting: true, older: k < 2 && rnd() < 0.5, rest: { y: y } }) });
+            }
+          }
+        }
         return out;
       }
       if (id !== 'outdoors') return out;
@@ -713,6 +775,14 @@
       }
       if (ga.kind === 'riser') {
         if (BD) { cutSolids([ga.solid]); return; }
+        if (ga.pandora) {
+          // (corners: front-left, front-right, back-right, back-left, each at the ground and the step's top)
+          var sl = ga.solid, cn = function (i, top) { var o = i * 6 + (top ? 3 : 0); return [sl[o], sl[o + 1], sl[o + 2]]; };
+          fillPoly([cn(0, 1), cn(1, 1), cn(2, 1), cn(3, 1)], '#26222c');
+          fillPoly([cn(0, 0), cn(1, 0), cn(1, 1), cn(0, 1)], '#141118');
+          var e0 = cn(0, 1), e1 = cn(1, 1); fillPoly([[e0[0], e0[1] - 0.06, e0[2]], [e1[0], e1[1] - 0.06, e1[2]], [e1[0], e1[1] - 0.03, e1[2]], [e0[0], e0[1] - 0.03, e0[2]]], 'rgba(255,176,74,.85)');
+          return;
+        }
         fillPoly([[ga.x - ga.w, ga.y, ga.z - NSTAND.tread], [ga.x + ga.w, ga.y, ga.z - NSTAND.tread], [ga.x + ga.w, ga.y, ga.z], [ga.x - ga.w, ga.y, ga.z]], '#2a2433');
         fillPoly([[ga.x - ga.w, ga.y, ga.z], [ga.x + ga.w, ga.y, ga.z], [ga.x + ga.w, ga.y - NSTAND.rise, ga.z], [ga.x - ga.w, ga.y - NSTAND.rise, ga.z]], '#17131c');
         fillPoly([[ga.x - ga.w, ga.y + 0.004, ga.z - 0.06], [ga.x + ga.w, ga.y + 0.004, ga.z - 0.06], [ga.x + ga.w, ga.y + 0.004, ga.z], [ga.x - ga.w, ga.y + 0.004, ga.z]], 'rgba(138,122,90,.6)');
@@ -972,6 +1042,19 @@
       b.restore(); b.restore();
     }
 
+    // Pandora's ringed planet: teal bands lit from the upper left, its rings tilted across it
+    function drawPlanet(b, x, y, R) {
+      var ring = function (front) {
+        b.save(); b.translate(x, y); b.rotate(-0.24); b.scale(1, 0.27); b.beginPath(); b.rect(-R * 3, front ? 0 : -R * 3, R * 6, R * 3); b.clip();
+        [[1.24, 1.52, 0.5], [1.55, 1.75, 0.38]].forEach(function (q) { b.fillStyle = 'rgba(232,222,255,' + q[2] + ')'; b.beginPath(); b.arc(0, 0, q[1] * R, 0, TAU); b.arc(0, 0, q[0] * R, 0, TAU, true); b.fill('evenodd'); });
+        b.restore();
+      };
+      ring(false);
+      var pg = b.createRadialGradient(x - R * 0.4, y - R * 0.45, R * 0.1, x, y, R * 1.05); pg.addColorStop(0, '#a8e6ea'); pg.addColorStop(0.5, '#5aaabd'); pg.addColorStop(0.85, '#1f4a6a'); pg.addColorStop(1, '#0b1a30');
+      b.fillStyle = pg; b.beginPath(); b.arc(x, y, R, 0, TAU); b.fill();
+      ring(true);
+    }
+
     /* ---------- the fixed sky, cached ---------- */
     function sky(id) {
       var key = id + W + 'x' + H + '@' + Math.round(HOR / 3) + ':' + BX + ',' + BY + 'm' + Math.round(moonAge() * 4); if (statics[key]) return statics[key];
@@ -984,6 +1067,14 @@
         b.fillStyle = roof; b.fillRect(0, 0, W, HOR + 1);
         var fl = b.createLinearGradient(0, HOR, 0, H); fl.addColorStop(0, '#2a1d14'); fl.addColorStop(1, '#130c08');
         b.fillStyle = fl; b.fillRect(0, HOR, W, H - HOR);
+      } else if (id === 'pandora') {
+        var ps = b.createLinearGradient(0, 0, 0, HOR); ps.addColorStop(0, '#05061a'); ps.addColorStop(0.45, '#1c1440'); ps.addColorStop(0.8, '#3a2466'); ps.addColorStop(0.95, '#b8507a'); ps.addColorStop(1, '#f08a5a');
+        b.fillStyle = ps; b.fillRect(0, 0, W, HOR + 1);
+        for (i = 0; i < 200; i++) { b.fillStyle = 'rgba(240,235,255,' + (0.2 + r2() * 0.6) + ')'; b.fillRect(r2() * W, r2() * HOR * 0.85, 1.2, 1.2); }
+        drawPlanet(b, BX + BW * 0.42, BY + (HOR - BY) * 0.36, Math.max(14, BW * 0.085));
+        // the mountains and spires far off, and the stone of the basin
+        b.fillStyle = '#2a1f3a'; b.beginPath(); b.moveTo(0, HOR); for (var mx = 0; mx <= W; mx += W / 40) b.lineTo(mx, HOR - HOR * (0.03 + 0.05 * Math.abs(Math.sin(mx * 0.013)) + 0.03 * Math.sin(mx * 0.051))); b.lineTo(W, HOR); b.fill();
+        var pg = b.createLinearGradient(0, HOR, 0, H); pg.addColorStop(0, '#1a1622'); pg.addColorStop(1, '#09080d'); b.fillStyle = pg; b.fillRect(0, HOR, W, H - HOR);
       } else {
         var s = b.createLinearGradient(0, 0, 0, HOR); s.addColorStop(0, '#04051a'); s.addColorStop(0.62, '#140f33'); s.addColorStop(1, id === 'sheri' ? '#2a1b36' : '#3d1f1a');
         b.fillStyle = s; b.fillRect(0, 0, W, HOR + 1);
@@ -1026,6 +1117,30 @@
       stage({ x0: -11, x1: 11, z: 46, h: 1.6, screenTop: 8.5, truss: 10.5, arrays: 13, sponsors: 3, sideScreens: true }, t, 'outdoors');
       // Delay speaker towers halfway down the ground, so the back of the crowd hears the band on time
       [-21, 21].forEach(function (x) { speakerPole(x, 16, 6); });
+    }
+    function pandoraBack(t) {
+      // The band on its stone platform (no screen here)
+      if (BD) { bandOn('pandora', 0.9, 21.4, { x0: -4.6, x1: 4.6, bandFront: 21.3 }); return; }
+      var PA = PANDORA, HF = Math.tan(Math.PI / PA.sides);
+      // the obsidian floor and its gold rings
+      var disc = []; for (var i = 0; i < 48; i++) { var a = i / 48 * TAU; disc.push([Math.cos(a) * PA.floor, 0, Math.sin(a) * PA.floor]); }
+      fillPoly(disc, '#0d0b12');
+      g.strokeStyle = 'rgba(255,180,90,' + (0.35 + 0.25 * bright) + ')'; g.lineWidth = 1.2;
+      [18.85, 15.2, 11.3, 7.5].forEach(function (rr) { groundRing(0, 0, rr, 0, TAU, 64); g.stroke(); });
+      // the terraces round it, far sides first, a gold line along each step
+      for (var j = 0; j < PA.sides; j++) {
+        if (j >= PA.open[0] && j <= PA.open[1]) continue;
+        for (var k = PA.tiers - 1; k >= 0; k--) {
+          var a0 = PA.a0 + k * PA.tread, a1 = k === PA.tiers - 1 ? PA.top : a0 + PA.tread, y = (k + 1) * PA.rise, p0 = pandoraAt(j, a0, -a0 * HF), p1 = pandoraAt(j, a0, a0 * HF), p2 = pandoraAt(j, a1, a1 * HF), p3 = pandoraAt(j, a1, -a1 * HF);
+          fillPoly([[p0[0], y, p0[1]], [p1[0], y, p1[1]], [p2[0], y, p2[1]], [p3[0], y, p3[1]]], '#24202b');
+          fillPoly([[p0[0], y - PA.rise, p0[1]], [p1[0], y - PA.rise, p1[1]], [p1[0], y, p1[1]], [p0[0], y, p0[1]]], '#15121a');
+          fillPoly([[p0[0], y - 0.06, p0[1]], [p1[0], y - 0.06, p1[1]], [p1[0], y - 0.03, p1[1]], [p0[0], y - 0.03, p0[1]]], 'rgba(255,176,74,.8)');
+        }
+        // a crystal at each corner of the top step
+        var c = pandoraAt(j, PA.a0 + 4 * PA.tread + 0.6, -(PA.a0 + 4 * PA.tread + 0.6) * HF * 0.98), cp = P(c[0], 2.25 + 1.2, c[1]);
+        if (cp) glow(cp.x, cp.y, Math.max(1.5, Math.min(9, cp.s * 0.35)), '#ffa245', 0.7 * bright + 0.2);
+      }
+      stage(STAGE3D.pandora, t, 'pandora');
     }
     function groundMarks(id) {
       // Scuffed earth, stones and footprints: fixed in the world so they move with the view
@@ -1504,7 +1619,7 @@
        spinning while her neighbours clap, the couple marked you and yours, and a tilted fly-over. Each place has its
        own airspace: high sweeping passes outdoors, low under the shamiana indoors, and between the houses along the
        lane in the sheri. The same shot places the drone itself in the sky, lights blinking, so you can see it filming. */
-    var DRONE_AIR = { outdoors: { lo: 8.5, hi: 11.5, k: 4, back: 16, dir: [0.3, 0.95] }, stadium: { lo: 7.4, hi: 9.2, k: 3, back: 14, dir: [0.25, 0.97] }, sheri: { lo: 6.8, hi: 9, k: 3, back: 11, dir: [0, 1] } };
+    var DRONE_AIR = { outdoors: { lo: 8.5, hi: 11.5, k: 4, back: 16, dir: [0.3, 0.95] }, stadium: { lo: 7.4, hi: 9.2, k: 3, back: 14, dir: [0.25, 0.97] }, sheri: { lo: 6.8, hi: 9, k: 3, back: 11, dir: [0, 1] }, pandora: { lo: 9, hi: 12.5, k: 4, back: 15, dir: [0.25, 0.97] } };
     function shotAt(id, t) {
       var L = layout(id), c0 = L.circles[0], ctr = circleCentre(c0, T), sheri = id === 'sheri';
       var groups = L.circles.filter(function (c) { return !c.small && !c.parent && c.shown; });
@@ -1535,7 +1650,7 @@
         { dur: 8, at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 3, tilt: 0.25, spin: 0.02 } : { x: nearAt.x, z: nearAt.z, zoom: 1.3, tilt: 0, spin: 0.02 }; } },
         // Down at ground level: a child running through, the lead singer, a dancer as she turns, the two of you
         { dur: 5, close: 'kid', at: function () { return runner ? { x: runner.x, z: runner.z, zoom: 5, tilt: 0.8, spin: 0 } : { x: nearAt.x, z: nearAt.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
-        { dur: 6, close: 'singer', at: function () { return { x: 0, z: id === 'stadium' ? 35.5 : 46, zoom: 5, tilt: 0.8, spin: 0 }; } },
+        { dur: 6, close: 'singer', at: function () { return { x: 0, z: STAGE3D[id] ? STAGE3D[id].z : 46, zoom: 5, tilt: 0.8, spin: 0 }; } },
         { dur: 8, at: function (u) { return { x: lerp(nearAt.x + near.R + 2, nearAt.x - near.R - 2, ease(u)), z: nearAt.z, zoom: 2.2, tilt: 0.3, spin: 0 }; } },
         { dur: 6, close: 'star', at: function () { return star && star.wx != null ? { x: star.wx, z: star.wz, zoom: 5, tilt: 0.8, spin: 0, star: star } : { x: ctr.x, z: ctr.z, zoom: 5, tilt: 0.8, spin: 0 }; } },
         { dur: 7, at: function (u) { return you ? { x: you.wx, z: you.wz, zoom: 3.4 - 0.4 * u, tilt: 0.3, spin: 0.03 } : { x: ctr.x, z: ctr.z, zoom: 1.6, tilt: 0.2, spin: 0.03 }; } },
@@ -1618,6 +1733,9 @@
       else if (id === 'outdoors') {
         quad([[-60, -60], [60, -60], [60, 90], [-60, 90]], '#1d2616'); quad([[-27, -8], [27, -8], [27, 44], [-27, 44]], '#3a2a1b');
         L.trees.forEach(function (tr) { var m = M(tr.x, tr.z); g.fillStyle = '#16301b'; g.beginPath(); g.arc(m[0], m[1], 2.2 * k, 0, TAU); g.fill(); });
+      } else if (id === 'pandora') {
+        quad([[-48, -48], [48, -48], [48, 52], [-48, 52]], '#1d1a24');
+        var oc = []; for (var oi = 0; oi < 40; oi++) { var oa = oi / 40 * TAU; oc.push([Math.cos(oa) * PANDORA.floor, Math.sin(oa) * PANDORA.floor]); } quad(oc, '#0d0b12');
       } else if (id === 'stadium') {
         quad([[-34, -46], [34, -46], [34, 54], [-34, 54]], '#231b2b');
         for (var r0 = 0; r0 < 8; r0++) { var e = 25 + r0 * 1.5; g.strokeStyle = r0 % 2 ? 'rgba(90,70,110,.8)' : 'rgba(60,48,76,.8)'; g.lineWidth = Math.max(1, 1.2 * k); g.beginPath(); var q0 = M(-e, -34), q1 = M(-e, 42 + r0 * 1.5), q2 = M(e, 42 + r0 * 1.5), q3 = M(e, -34); g.moveTo(q0[0], q0[1]); g.lineTo(q1[0], q1[1]); g.lineTo(q2[0], q2[1]); g.lineTo(q3[0], q3[1]); g.stroke(); }
@@ -1627,7 +1745,7 @@
         if (!real) L.houses.forEach(function (h) { var X = h.side * 8, X2 = h.side * 16; quad([[X, h.z1], [X2, h.z1], [X2, h.z2], [X, h.z2]], h.col); quad([[X, h.z1], [X + h.side * 0.5, h.z1], [X + h.side * 0.5, h.z2], [X, h.z2]], 'rgba(0,0,0,.35)'); });
       }
       // Stage and stalls as rooftops
-      var sz = { outdoors: [46, -11, 11], stadium: [35.5, -8, 8], sheri: [63.9, -3.4, 3.4] }[id];
+      var sz = { outdoors: [46, -11, 11], stadium: [35.5, -8, 8], sheri: [63.9, -3.4, 3.4], pandora: [20.4, -4.6, 4.6] }[id];
       quad([[sz[1], sz[0]], [sz[2], sz[0]], [sz[2], sz[0] + 2.2], [sz[1], sz[0] + 2.2]], '#161016');
       L.stalls.forEach(function (sl) { var hw = sl.w / 2, dp = sl.depth; quad([[sl.x - sl.U[0] * hw, sl.z - sl.U[1] * hw], [sl.x + sl.U[0] * hw, sl.z + sl.U[1] * hw], [sl.x + sl.U[0] * hw + sl.V[0] * dp, sl.z + sl.U[1] * hw + sl.V[1] * dp], [sl.x - sl.U[0] * hw + sl.V[0] * dp, sl.z - sl.U[1] * hw + sl.V[1] * dp]], sl.col); });
       // Keep the lamp and rangoli as a warm anchor while the camera drifts through the crowd.
@@ -1770,7 +1888,7 @@
     }
     function bandOn(id, y, z, o) {
       if (!band[id]) {
-        var w = (o.x1 - o.x0), plan = BD && BAND[id === 'sheri' ? 'sheri' : 'big'];
+        var w = (o.x1 - o.x0), plan = BD && BAND[id === 'sheri' || id === 'pandora' ? 'sheri' : 'big'];
         if (plan) band[id] = plan.map(function (q, qi) { var m = { man: true, flash: 0, ph: 0.3 + qi * 0.61 }; for (var k in q) m[k] = q[k]; m.x = o.x0 + w * q.u; if (q.sitting) m.rest = { y: 0 }; return m; });
         else band[id] = [
           { role: 'dhol', x: o.x0 + w * 0.2, man: true, col: '#f3e6d0', top: '#b8312b', pagdi: '#e67e22', h: 1.72, ph: 0.3, flash: 0 },
@@ -3340,11 +3458,14 @@
     function garboHole(ctr) {
       var small = st.venue === 'sheri', r = small ? 0.78 : 1.0, top = small ? 2.4 : 2.85, S = opts.lampScale || 1.35, cx = ctr.x, cz = ctr.z;
       g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
-      [[-r, -r], [r, -r], [r, r], [-r, r]].forEach(function (q) { if (poly([[cx + q[0] - 0.08, 0, cz + q[1]], [cx + q[0] + 0.08, 0, cz + q[1]], [cx + q[0] + 0.065, top, cz + q[1]], [cx + q[0] - 0.065, top, cz + q[1]]])) g.fill(); });
-      revolvedHole(cx, cz, top - 0.04, [[1.32 * r, 0], [1.32 * r, 0.08]], 1, 1);
-      revolvedHole(cx, cz, top, MANDVI_DOME, r, 1);
-      revolvedHole(cx, cz, top + 0.8, MANDVI_DOME2, r, 1);
-      var kp = P(cx, top + 1.36, cz); if (kp) { g.beginPath(); g.arc(kp.x, kp.y, kp.s * 0.09, 0, TAU); g.fill(); }
+      // (Pandora's garbo stands bare, with no mandvi over it)
+      if (!BARE_GARBO[st.venue]) {
+        [[-r, -r], [r, -r], [r, r], [-r, r]].forEach(function (q) { if (poly([[cx + q[0] - 0.08, 0, cz + q[1]], [cx + q[0] + 0.08, 0, cz + q[1]], [cx + q[0] + 0.065, top, cz + q[1]], [cx + q[0] - 0.065, top, cz + q[1]]])) g.fill(); });
+        revolvedHole(cx, cz, top - 0.04, [[1.32 * r, 0], [1.32 * r, 0.08]], 1, 1);
+        revolvedHole(cx, cz, top, MANDVI_DOME, r, 1);
+        revolvedHole(cx, cz, top + 0.8, MANDVI_DOME2, r, 1);
+        var kp = P(cx, top + 1.36, cz); if (kp) { g.beginPath(); g.arc(kp.x, kp.y, kp.s * 0.09, 0, TAU); g.fill(); }
+      }
       revolvedHole(cx, cz, 0, [[0.34, 0], [0.34, 0.28], [0.5, 0.28], [0.44, 0.56], [0.44, 0.575]], S, S);
       // The pot, the diya on its mouth and the flame over it with its glow, so a dancer behind the garbo never covers the
       // flame while the pot stays in front of them
@@ -3984,6 +4105,11 @@
         taps = v.ir.taps;
         if (taps[0]) { out.push({ x: 0, y: 5, z: 46, d: taps[0][0], l: taps[0][1] * 1.8 }); out.push({ x: -27, y: 5, z: listener.z, d: taps[0][0] * 0.7, l: taps[0][1] * 1.5 }); out.push({ x: 27, y: 5, z: listener.z, d: taps[0][0] * 0.72, l: taps[0][1] * 1.5 }); }
         if (taps[1]) { out.push({ x: -20, y: 6, z: 46, d: taps[1][0], l: taps[1][1] * 1.8 }); out.push({ x: 20, y: 6, z: 46, d: taps[1][0] + 0.01, l: taps[1][1] * 1.8 }); }
+      } else if (st.venue === 'pandora') {
+        taps = v.ir.taps;
+        if (taps[0]) { out.push({ x: -21, y: 1.5, z: listener.z, d: taps[0][0], l: taps[0][1] * 2 }); out.push({ x: 21, y: 1.5, z: listener.z, d: taps[0][0] + 0.004, l: taps[0][1] * 2 }); }
+        if (taps[1]) out.push({ x: 0, y: 3, z: 34, d: taps[1][0], l: taps[1][1] * 2 });
+        for (i = 2; i < taps.length; i++) out.push({ x: (i % 2 ? -1 : 1) * 40, y: 8, z: 30 + i * 6, d: taps[i][0], l: taps[i][1] * 2 });
       } else if (v.ir.flutter) {
         var fl = v.ir.flutter;
         for (i = 0; i < 6; i++) out.push({ x: i % 2 ? 8 : -8, y: 3, z: listener.z + 1.5, d: fl.period * (i + 1), l: fl.first * Math.pow(fl.decay, i) * 2 });
@@ -4009,6 +4135,11 @@
         if (r < 0.6) return { x: side * 6.85, z: lerp(-4, 56, rnd()), y: 0.45, sit: true };
         return { x: side * lerp(5, 6.3, rnd()), z: lerp(-2, 58, rnd()) };
       }
+      if (id === 'pandora') {
+        var jr = 2 + Math.floor(rnd() * 3) + (rnd() < 0.5 ? 0 : 9), ar = PANDORA.a0 + 0.75, tr = (rnd() - 0.5) * ar * Math.tan(Math.PI / PANDORA.sides) * 1.6, pr = pandoraAt(jr, ar, tr);
+        if (r < 0.5) return { x: pr[0], z: pr[1], y: PANDORA.rise, sit: true };
+        var aa = rnd() * TAU; return r < 0.8 ? { x: Math.cos(aa) * 16.4, z: Math.sin(aa) * 16.4 } : { x: (rnd() < 0.5 ? -1 : 1) * lerp(9.5, 14.5, rnd()), z: lerp(12, 18, rnd()) };
+      }
       if (L.stalls.length && r < 0.3) { var sl = L.stalls[Math.floor(rnd() * L.stalls.length)]; return { x: sl.front.x + (rnd() - 0.5) * 2.4, z: sl.front.z + (rnd() - 0.5) * 2.4 }; }
       if (id === 'stadium') return { x: side * lerp(19.5, 23.5, rnd()), z: lerp(-4, 32, rnd()), sit: rnd() < 0.35 };
       if (r < 0.45) return { x: side * lerp(16, 23, rnd()), z: lerp(0, 36, rnd()), sit: rnd() < 0.3 };
@@ -4016,16 +4147,16 @@
     }
     // Walking about on a laptop: the arrow keys (or WASD) take the two of you out of the circle with the view following,
     // walking up to a stall brings the seller's call, and Escape walks you back to your place in the circle
-    var WALK_BOUNDS = { outdoors: [-25.5, 25.5, -8, 40], stadium: [-21, 21, -8, 33], sheri: [-5.4, 5.4, -10, 60] };
+    var WALK_BOUNDS = { outdoors: [-25.5, 25.5, -8, 40], stadium: [-21, 21, -8, 33], sheri: [-5.4, 5.4, -10, 60], pandora: [-16, 16, -17, 21.5] };
     var STALL_CALLS = { Chai: 'Cutting chai?', Dabeli: 'Garam dabeli!', 'Pani puri': 'Pani puri, teekha?', Water: 'Thandu paani!', 'Ice cream': 'Kulfi, kesar pista!', Snacks: 'Fafda jalebi!' };
     var walkMe = { on: false, x: 0, z: 0, vx: 0, vz: 0, keys: {}, stick: null, used: false, shownAt: 0, frame: 0, park: null, parkT: 0 };
     var canWalk = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
     // Walking, the view follows from just behind the two of you, centred: this far back and this high
-    var FOLLOW = { outdoors: [6.4, 3.5], stadium: [6.4, 3.6], sheri: [5.4, 3.1] };
+    var FOLLOW = { outdoors: [6.4, 3.5], stadium: [6.4, 3.6], sheri: [5.4, 3.1], pandora: [6.4, 3.5] };
     function followCam(id) { var f = FOLLOW[id] || FOLLOW.outdoors; return [walkMe.x, f[1], walkMe.z - f[0]]; }
     // Walk up to the stage and you're standing by it: past this line (and within this far either side of the middle)
     // the view changes to By the stage on its own, as picking it in View does
-    var STAGE_LINE = { outdoors: [35.5, 12], stadium: [26, 9], sheri: [55, 6] };
+    var STAGE_LINE = { outdoors: [35.5, 12], stadium: [26, 9], sheri: [55, 6], pandora: [15, 5] };
     // The player owns which place you stand in, so a change made by walking is asked of it; without one to ask, walking
     // stays in the circle
     function askListener(id) {
@@ -4199,7 +4330,7 @@
         waves.push({ kind: 'echo', x: r.x, y: r.y, z: r.z, t0: s0, a: Math.min(0.5, 0.1 + r.l), lim: dr * 1.05, aim: Math.atan2(you.z - r.z, you.x - r.x) });
         arrivals.push({ t: bt + r.d, g: Math.min(0.55, r.l * 1.4) });
       });
-      haze = Math.min(1, haze + ({ outdoors: 0.05, sheri: 0.12, stadium: 0.22 }[st.venue] || 0.1) * (far ? 1.3 : 1));
+      haze = Math.min(1, haze + ({ outdoors: 0.05, sheri: 0.12, stadium: 0.22, pandora: 0.06 }[st.venue] || 0.1) * (far ? 1.3 : 1));
       pulse = 1;
     }
     // With no clap sound playing, the circle still claps as it dances, silently, on every other beat of its own step
@@ -4422,10 +4553,10 @@
         return;
       }
       if (BD) g.clearRect(0, 0, W, H); else g.drawImage(sky(st.venue), 0, 0, W, H);
-      if (st.venue === 'outdoors') outdoorsBack(t); else if (st.venue === 'stadium') stadiumBack(t); else sheriBack(t);
+      if (st.venue === 'outdoors') outdoorsBack(t); else if (st.venue === 'stadium') stadiumBack(t); else if (st.venue === 'pandora') pandoraBack(t); else sheriBack(t);
 
       // Reverb haze: how long the venue keeps ringing after each clap
-      haze *= Math.exp(-dt / (({ outdoors: 0.5, sheri: 0.9, stadium: 2.2 }[st.venue] || 1) / 2.5));
+      haze *= Math.exp(-dt / (({ outdoors: 0.5, sheri: 0.9, stadium: 2.2, pandora: 0.6 }[st.venue] || 1) / 2.5));
       var mainP = P(0, 0, 0);
       if (haze > 0.01 && mainP) { var hz = g.createRadialGradient(mainP.x, mainP.y, 4, mainP.x, mainP.y, W * 0.8); hz.addColorStop(0, 'rgba(255,200,130,' + haze * 0.2 + ')'); hz.addColorStop(1, 'rgba(255,200,130,0)'); g.fillStyle = hz; g.fillRect(0, 0, W, H); }
 
@@ -4526,9 +4657,9 @@
             if (!nearLayer) nearLayer = document.createElement('canvas');
             if (nearLayer.width !== canvas.width || nearLayer.height !== canvas.height) { nearLayer.width = canvas.width; nearLayer.height = canvas.height; }
             var lc0 = nearLayer.getContext('2d'), live0 = g; lc0.setTransform(DPR, 0, 0, DPR, 0, 0); lc0.clearRect(0, 0, W, H); g = lc0;
-            try { mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); } finally { g = live0; }
+            try { if (!BARE_GARBO[st.venue]) mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (!BARE_GARBO[st.venue]) mandvi(it.ctr, 'front', t); } finally { g = live0; }
             g.save(); g.globalAlpha = lampA; g.drawImage(nearLayer, 0, 0, W, H); g.restore();
-          } else { mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); mandvi(it.ctr, 'front', t); }
+          } else { if (!BARE_GARBO[st.venue]) mandvi(it.ctr, 'back', t); garbo(lp2, it.main ? lit : lit * 0.8, t, it.main); if (!BARE_GARBO[st.venue]) mandvi(it.ctr, 'front', t); }
           it.p = lp2; if (it.main) lampAt = { x: it.p.x / W, y: (it.p.y - it.p.s * 0.9) / H, r: it.p.s * 0.9 / W }; }
         else if (it.kind === 'stall') stall(it.sl, t);
         else if (it.kind === 'tree') drawTree(it.tr, t);
@@ -4543,7 +4674,7 @@
 
       while (fi < FOG.length) fogBand(FOG[fi++]);
       FOGF = 0;
-      if (!BD) { if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else sheriOver(t); }
+      if (!BD) { if (st.venue === 'outdoors') outdoorsOver(t); else if (st.venue === 'stadium') stadiumOver(t); else if (st.venue !== 'pandora') sheriOver(t); }
       droneInSky(t);
       // The aarti's light: the venue dims to a warm glow, brightest round the garbo's lamp. The screen playing the
       // recording keeps its own light.

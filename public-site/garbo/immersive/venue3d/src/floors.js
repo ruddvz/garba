@@ -14,9 +14,9 @@
 import * as THREE from 'three';
 import { TAU, seeded } from './util.js';
 
-function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+export function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 // Draw something so it wraps across a tile's edges, so the tile repeats without a seam
-function wrap(w, h, x, y, r, fn) {
+export function wrap(w, h, x, y, r, fn) {
   for (const ox of [0, -w, w]) for (const oy of [0, -h, h]) {
     if (ox && (x + ox < -r || x + ox > w + r)) continue;
     if (oy && (y + oy < -r || y + oy > h + r)) continue;
@@ -24,7 +24,7 @@ function wrap(w, h, x, y, r, fn) {
   }
 }
 // A bump (height) canvas into a tangent-space normal map
-function normalMap(hc, strength) {
+export function normalMap(hc, strength) {
   const w = hc.width, h = hc.height, src = hc.getContext('2d').getImageData(0, 0, w, h).data, out = canvas(w, h), og = out.getContext('2d'), id = og.createImageData(w, h), d = id.data;
   const H = (x, y) => src[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -34,7 +34,7 @@ function normalMap(hc, strength) {
   og.putImageData(id, 0, 0);
   return out;
 }
-function tex(c, repeat, linear) {
+export function tex(c, repeat, linear) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = linear ? THREE.NoColorSpace : THREE.SRGBColorSpace; t.anisotropy = 8;
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]);
   return t;

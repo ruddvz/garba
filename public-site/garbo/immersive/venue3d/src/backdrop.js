@@ -9,8 +9,9 @@
 // (the context is lost), when the 2D scene draws its own venue instead.
 //
 // opts.furnish(id) gives the 2D scene's layout for a venue (stalls, props, seats, the DJ), so the stalls, chairs and
-// vehicles built here stand exactly where the 2D scene puts the people at them. Once the first venue is up, the
-// other two are built and compiled in the background, so switching venues never waits.
+// vehicles built here stand exactly where the 2D scene puts the people at them. Each venue's code is its own file,
+// fetched when that venue is first wanted. Once the first venue is up, its neighbours in the venue list are built in
+// the background, up to what the device can hold (KEEP); past that, the venue left longest ago is let go.
 
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -18,16 +19,17 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { clamp, THEMES } from './util.js';
-import { buildVenue } from './venues.js';
+import { buildVenue, venueModule, venueFailed, knownVenue, VENUE_IDS } from './venue.js';
 import { Levels } from './lighting.js';
 import { updateLit } from './kit.js';
 import { buildDrone, aimFeed, aimClose } from './drone.js';
 
 // What the device can afford: a pixel budget, real-time shadows, how finely the bloom is drawn, and how many lights
+// (keep: how many venues it holds built at once, the one you're in included)
 const TIERS = {
-  phone: { name: 'phone', pixels: 0.9e6, shadows: false, shadowSize: 0, bloomScale: 0.35, spots: 0, points: 2, samples: 0 },
-  tablet: { name: 'tablet', pixels: 1.6e6, shadows: false, shadowSize: 0, bloomScale: 0.45, spots: 2, points: 4, samples: 2 },
-  desktop: { name: 'desktop', pixels: 1.8e6, shadows: true, shadowSize: 2048, bloomScale: 0.5, spots: 2, points: 5, samples: 2 }
+  phone: { name: 'phone', pixels: 0.9e6, shadows: false, shadowSize: 0, bloomScale: 0.35, spots: 0, points: 2, samples: 0, keep: 1 },
+  tablet: { name: 'tablet', pixels: 1.6e6, shadows: false, shadowSize: 0, bloomScale: 0.45, spots: 2, points: 4, samples: 2, keep: 2 },
+  desktop: { name: 'desktop', pixels: 1.8e6, shadows: true, shadowSize: 2048, bloomScale: 0.5, spots: 2, points: 5, samples: 2, keep: 3 }
 };
 
 export function supported() {
@@ -139,48 +141,85 @@ export function create(canvas, opts = {}) {
     gl.style.clipPath = r ? `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${r.x}px ${r.y}px, ${r.x + r.w}px ${r.y}px, ${r.x + r.w}px ${r.y + r.h}px, ${r.x}px ${r.y + r.h}px, ${r.x}px ${r.y}px)` : '';
   }
 
-  /* ---------- venues: built on first visit, compiled off the main thread ---------- */
-  const venues = {};
-  let V = null, themeApplied = null, W = 1, H = 1, QP = 1, cropKey = '', lastTheme = 'traditional';
+  /* ---------- venues: fetched and built on first visit, compiled off the main thread ---------- */
+  // (WAITING stands for a venue whose code is still on its way; a venue whose code can't be had isn't drawn at all, so
+  // the 2D scene draws its own instead)
+  const venues = {}, broken = {}, WAITING = { ready: false };
+  let V = null, themeApplied = null, W = 1, H = 1, QP = 1, cropKey = '', lastTheme = 'traditional', stamp = 0;
   function venue(id, theme) {
+    if (!knownVenue(id)) return null;
     if (!venues[id]) {
-      const t0 = performance.now(), v = buildVenue(id, TIER, theme, opts.furnish ? opts.furnish(id) : null);
+      const mod = venueModule(id, () => settle());
+      if (mod === false || broken[id]) return null;
+      if (!mod) return WAITING;
+      // (a venue that fails to build is never tried again, and never takes the others down with it)
+      let v; const t0 = performance.now();
+      try { v = buildVenue(id, mod, TIER, theme, opts.furnish ? opts.furnish(id) : null); } catch (e) { broken[id] = true; if (window.console) console.error('3D venue ' + id + ' failed to build', e); return null; }
       v.buildMs = Math.round(performance.now() - t0);
+      reflections(v);
       v.ready = false; v.root.visible = false; world.add(v.root);
       const done = () => { v.ready = true; settle(); warmNext(); };
       settle();
       (renderer.compileAsync ? renderer.compileAsync(v.root, camera, scene) : Promise.resolve(renderer.compile(v.root, camera, scene))).then(done, done);
       venues[id] = v;
     }
+    venues[id].used = ++stamp;
     return venues[id];
   }
-  // The other venues, built one at a time when the page is idle, so switching is instant. Not on a phone: it builds
-  // only the venue you're in (a switch fades through a moment's wait instead) and lets go of the one you left.
-  const ALL = ['outdoors', 'stadium', 'sheri'];
+  // The venues next to yours in the list, built one at a time when the page is idle, so switching to them is instant;
+  // never more than the device can hold (a phone holds only the venue you're in: a switch fades through a moment's
+  // wait instead)
   let warming = false;
   function warmNext() {
-    if (warming || lost || TIER.name === 'phone') return;
-    const next = ALL.find((id) => !venues[id]);
-    if (!next || !V) return;
+    if (warming || lost || !V || Object.keys(venues).length >= TIER.keep) return;
+    const at = VENUE_IDS.indexOf(V.id), n = VENUE_IDS.length;
+    let next = null;
+    for (let d = 1; d < n && !next; d++) [at + d, at - d].forEach((i) => { const id = VENUE_IDS[(i % n + n) % n]; if (!next && !venues[id] && !broken[id] && !venueFailed(id)) next = id; });
+    if (!next) return;
     warming = true;
-    const go = () => { warming = false; settle(); if (!venues[next] && !lost) venue(next, lastTheme); };
+    // (its code is fetched first, if it hasn't come yet; then it's built when the page is next idle)
+    const go = () => {
+      if (lost || venues[next]) { warming = false; return; }
+      const mod = venueModule(next, () => { warming = false; warmNext(); });
+      if (mod === null) return;
+      warming = false; settle(); if (mod) venue(next, lastTheme);
+      if (broken[next]) warmNext();
+    };
     if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 600);
+  }
+  // What a polished surface reflects: a venue can give a small scene of its own surroundings (envScene), which is
+  // turned into a blurred environment once, and given to the materials it marked (userData.env: how strongly each
+  // reflects), before its shaders are compiled. Only those: materials shared with other venues are left as they are.
+  function reflections(v) {
+    if (!v.envScene) return;
+    const pm = new THREE.PMREMGenerator(renderer);
+    v.environment = pm.fromScene(v.envScene, 0.04).texture; pm.dispose();
+    v.root.traverse((o) => (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => {
+      if (m.userData.env == null || m.envMap === v.environment) return;
+      m.envMap = v.environment; m.envMapIntensity = m.userData.env; m.needsUpdate = true;
+    }));
   }
   // A venue let go: out of the scene, its buffers and pictures freed (shared ones are uploaded again when next used)
   function drop(id) {
     const v = venues[id]; if (!v) return;
     world.remove(v.root); delete venues[id];
+    if (v.environment) v.environment.dispose();
     v.root.traverse((o) => {
       if (o.geometry) o.geometry.dispose();
       (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach((m) => ['map', 'emissiveMap', 'normalMap', 'alphaMap'].forEach((k) => m[k] && m[k].dispose()));
     });
     if (v.lightMaps && v.lightMaps.dispose) v.lightMaps.dispose();
   }
+  // Past what the device can hold, the venues left longest ago are let go (once the switch has faded through)
+  function trim() {
+    const held = Object.keys(venues).map((id) => venues[id]).filter((v) => v !== V && v.ready).sort((a, b) => a.used - b.used);
+    while (held.length && Object.keys(venues).length > TIER.keep) drop(held.shift().id);
+  }
   function show(v) {
     settle(1500);
     if (V) V.root.visible = false;
-    if (V && TIER.name === 'phone') { const old = V.id; setTimeout(() => { if (V && V.id !== old) drop(old); }, 1200); }
     V = v; V.root.visible = true;
+    setTimeout(trim, 1200);
     scene.fog = V.fog; V.fogBase = V.fog.density;
     applyRig(V);
     themeApplied = null;
@@ -249,6 +288,7 @@ export function create(canvas, opts = {}) {
     if (lost) return false;
     lastTheme = s.theme;
     const want = venue(s.venue, s.theme);
+    if (!want) return false;
     if (!want.ready) { if (!V) { renderer.setRenderTarget(null); renderer.clear(); } return 'wait'; }
     if (V !== want) { show(want); warmNext(); }
     const ck = (canvas.style.width || '') + '|' + (canvas.style.height || '');
@@ -292,7 +332,7 @@ export function create(canvas, opts = {}) {
     if (V.furnish) V.furnish.update(s.T, { ...ctx, beat: s.beat || 0 });
     drone.update(s.drone, s.T, s.reduce);
     feed(V, s.aerial, s.drone ? s.drone.y : 10);
-    rig.points.forEach((l, i) => { l.light.intensity = i === 0 ? ({ sheri: 10, stadium: 6.5 }[V.id] || 13) * L.garbo : l.base * L[l.layer]; });
+    rig.points.forEach((l, i) => { l.light.intensity = i === 0 ? V.garboK * L.garbo : l.base * L[l.layer]; });
     rig.spots.forEach((l) => { l.light.intensity = l.base * L[l.layer]; });
     rig.hemi.intensity = rig.hemi.userData.base * L.ambient;
     rig.moon.intensity = rig.moon.userData.base * L.ambient;
