@@ -1,0 +1,86 @@
+{
+  "updated": "2026-10-02",
+  "sets": [
+    {
+      "id": "set-soormandir-navdurga-nonstop-garba-2022",
+      "title": "નવદુર્ગા | Navdurga Nonstop Garba I Chaitra Navratri Garba | Hemant Chauhan Garba | Soormandir",
+      "artists": ["Hemant Chauhan", "Pamela Jain"],
+      "series": "Navdurga Nonstop Garba",
+      "year": 2022,
+      "categories": ["traditional-garba", "mataji-devotional"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "ZFpS0WcMEss",
+        "url": "https://www.youtube.com/watch?v=ZFpS0WcMEss",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3748,
+      "sourceRuntimeDisplay": "1:02:28",
+      "segmentRouting": "metadata-only",
+      "segments": [
+        { "title": "Kali Bhadarkali Benadi", "startSeconds": 0 },
+        { "title": "Khodiyar Khamma Khamma", "startSeconds": 360 },
+        { "title": "Chotilani Dungre Bethi", "startSeconds": 1063 },
+        { "title": "Birdali Bahuchar Baadi", "startSeconds": 1498 },
+        { "title": "Randal Aavjo Re", "startSeconds": 1802 },
+        { "title": "Tu Chhe Dindayali Maa Amba", "startSeconds": 1961 },
+        { "title": "Unjavali Aasro Taro", "startSeconds": 2387 },
+        { "title": "Ashapura Devi Asharo", "startSeconds": 2759 },
+        { "title": "Vena Jantar Vage Mana Madhara", "startSeconds": 3363 },
+        { "title": "Mel Vira Mel Maro Maragado", "startSeconds": 3538 }
+      ],
+      "chapterStatus": "published-complete",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Soor Mandir label-channel upload, published 2022-04-01. The official description names Hemant Chauhan and Pamela Jain and publishes these ten chapter starts in both Gujarati and Latin script. The watch page was checked on 2026-10-02: playback available, embeddable, and 3,748 seconds (1:02:28). Chapters remain metadata-only navigation within one continuous set because the description does not assign performers to individual songs or establish separate canonical release rows."
+    },
+    {
+      "id": "set-ishtar-bamboo-beats-raas-garba-2023",
+      "title": "Non-Stop: Bamboo Beats Raas Garba | Ishtar Gujarati | Best Evergreen Garba Songs | Navratri 2023",
+      "artists": [],
+      "series": "Bamboo Beats Raas Garba",
+      "year": 2023,
+      "categories": ["traditional-garba", "raas-dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "Oz55CXl3XBc",
+        "url": "https://www.youtube.com/watch?v=Oz55CXl3XBc",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 7699,
+      "sourceRuntimeDisplay": "2:08:19",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Ishtar Gujarati label-channel upload, published 2023-10-08. The source title identifies this as a continuous Raas Garba programme. The watch page was checked on 2026-10-02: playback available, embeddable, and 7,699 seconds (2:08:19). The checked description publishes no song order, performer credits, or chapter starts, so none are inferred."
+    },
+    {
+      "id": "set-ishtar-bamboo-beats-raas-garba-2024",
+      "title": "Non-Stop: Bamboo Beats Raas Garba | Ishtar Gujarati | Best Evergreen Garba Songs | Navratri 2024",
+      "artists": [],
+      "series": "Bamboo Beats Raas Garba",
+      "year": 2024,
+      "categories": ["traditional-garba", "raas-dandiya"],
+      "setType": "verified-label-nonstop",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "hCw1Q1niOVc",
+        "url": "https://www.youtube.com/watch?v=hCw1Q1niOVc",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 1690,
+      "sourceRuntimeDisplay": "0:28:10",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Verified Ishtar Gujarati label-channel upload, published 2024-10-05. The source title identifies this as a continuous Raas Garba programme. The watch page was checked on 2026-10-02: playback available, embeddable, and 1,690 seconds (0:28:10). The checked description publishes no song order, performer credits, or chapter starts, so none are inferred."
+    }
+  ]
+}
