@@ -14,9 +14,10 @@ This directory houses the authoritative genre definitions, playback distribution
 | [`04-dakla.md`](04-dakla.md) | **Dakla** | `fusion` | Hypnotic trance percussion on sacred *Dak* drum (Maa Mogal, Meldi, Chamunda) | 13 | Sachin-Jigar (*Mogal Aave*), Kirtidan Gadhvi, Pravin Luni |
 | [`05-raas-dandiya.md`](05-raas-dandiya.md) | **Raas & Dandiya** | `dandiya` | Strict 4/4 or 6/8 meter paired with wooden stick clacking | 78 | Falguni Pathak, Preety & Pinky, Khelaiya, Bollywood crossovers |
 | [`06-traditional-garba.md`](06-traditional-garba.md) | **Traditional Garba** | `traditional` | Tran Taali (3-clap) and Be Taali (2-clap) hand clapping in sacred circles | 768 | Atul Purohit (United Way), Hemant Chauhan, Prachin Garbi |
-| [`07-folk-lokgeet.md`](07-folk-lokgeet.md) | **Folk & Lokgeet** | `folk` | Dayro oral storytelling, Saurashtra/Kutch ballads, Dohas & Chhands | 114 | Jhaverchand Meghani, Diwaliben Bhil, Aditya Gadhvi, Osman Mir |
+| [`07-folk-lokgeet.md`](07-folk-lokgeet.md) | **Folk & Lokgeet** | `folk` | Regional folk songs, Saurashtra/Kutch ballads, Dohas & Chhands | 114 | Jhaverchand Meghani, Diwaliben Bhil, Aditya Gadhvi, Osman Mir |
 | [`08-devotional-garba.md`](08-devotional-garba.md) | **Devotional Garba** | `devotional` | Sacred Mataji invocations (Aarti, Stuti) and playful Krishna Raas | 610 | *Jai Adhya Shakti* Aarti, *Vishwambhari Stuti*, Krishna Bhakti |
 | [`09-fusion-modern.md`](09-fusion-modern.md) | **Fusion & Modern Garba**| `fusion` | Electronic synthesis, DJ club remixes, Gujarati hip-hop, Bollywood film garba | 124 | Coke Studio Bharat (*Khalasi*), *Chogada*, *Dholida*, *Kamariya* |
+| [`10-dayro.md`](10-dayro.md) | **Dayro / Dayra** | `folk` | Long-form Gujarati folk performance and oral-literary programme format | Not yet added as canonical songs | Bhikhudan Gadhvi, Mayabhai Ahir, Osman Mir, Farida Mir, Sairam Dave, Rajbha Gadhvi and other verified programme artists |
 
 ---
 

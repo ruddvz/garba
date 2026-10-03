@@ -17,11 +17,15 @@ A song has one primary visual world for player presentation. Explore may also su
 
 ## Music taxonomy
 
-`data/taxonomy.json` contains the 19 catalogue categories, including Roots / Archive, Traditional Garba, Tran Taali, Be Taali, Raas / Dandiya, Dodhiyu, Hinch, Dakla, Sanedo, Mataji / Devotional, Krishna Garba, Folk / Lokgeet, Live Garba, Modern Gujarati Garba, Hip-hop Garba, Electronic / Fusion, DJ / Remix, Bollywood / Filmi and Instrumental / Cinematic.
+`data/taxonomy.json` contains the 24 catalogue categories, including Roots / Archive, Traditional Garba, Tran Taali, Be Taali, Raas / Dandiya, Dodhiyu, Hinch, Dakla, Sanedo, Mataji / Devotional, Krishna Garba, Folk / Lokgeet, Timli, Tarpa, Live Garba, Modern Gujarati Garba, Hip-hop Garba, Electronic / Fusion, DJ / Remix, Bollywood / Filmi, Instrumental / Cinematic and Dayro / Dayra.
 
-Aliases preserve spelling variants such as Tran Taali, Teen Taali, Dodhiya and Dodiyo.
+`dayro` is a distinct long-form folk-performance/programme category, separate from Garba and Dandiya dance forms. It maps to the existing `folk` visual world for presentation; it does not add a seventh player presentation world. Apply it only when the source explicitly identifies a Dayro/Dayra or the programme’s format is otherwise verified. Mixed Lok Sahitya, poetry, bhajan and Santvani events may retain additional taxonomy when supported by the source.
+
+Aliases preserve spelling variants such as Tran Taali, Teen Taali, Dodhiya, Dodiyo, Dayra and Dayaro.
 
 Explore category membership should use `category` and `taxonomyStyles[]` first. Free-text title, artist or release matching is only a fallback for a concept that does not yet have a canonical taxonomy ID.
+
+Explore's current taxonomy-specific cards use an explicit style-collection registry; adding a taxonomy entry alone does not create a dedicated card there. The Nonstop browser has its own explicit recording filters. Keep those browse surfaces in sync when adding a category.
 
 ## Canonical names and editorial metadata
 

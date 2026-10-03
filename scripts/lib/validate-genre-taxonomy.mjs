@@ -94,8 +94,19 @@ for (const set of nonstop) {
 if (!playerRuntime.includes('song.taxonomyStyles')) {
   fail('Main player search must index taxonomyStyles[]');
 }
+if (!playerRuntime.includes("taxonomyTerms.push('dayra', 'dayaro', 'lok dayro', 'ડાયરો', 'દાયરો', 'ડાયરા', 'દાયરા')")) {
+  fail('Main player search must resolve Dayra/Dayaro spelling aliases for Dayro taxonomy');
+}
 if (!catalogueRuntime.includes('song.taxonomyStyles')) {
   fail('Explore search must index taxonomyStyles[]');
+}
+
+const dayro = taxonomyById.get('dayro');
+if (!dayro || dayro.label !== 'Dayro / Dayra' || dayro.visualGenre !== 'folk') {
+  fail('Dayro must be a distinct canonical taxonomy category mapped to the Folk visual world');
+}
+if (!dayro?.aliases?.includes('dayra') || !dayro?.aliases?.includes('dayaro')) {
+  fail('Dayro taxonomy must keep common Dayra/Dayaro aliases searchable');
 }
 
 // The player is a presentation/play-context surface: its genre rail must stay keyed

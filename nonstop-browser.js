@@ -146,6 +146,7 @@
     ['dandiya', 'Dandiya / Raas'],
     ['devotional', 'Devotional'],
     ['folk', 'Folk / Lok'],
+    ['dayro', 'Dayro'],
     ['sanedo', 'Sanedo'],
     ['fusion', 'Fusion'],
     ['live', 'Live'],
@@ -376,18 +377,31 @@
   }
 
   function searchRecordForSet(set) {
+    const dayroTerms = [
+      set.title,
+      set.displayTitle,
+      set.setType,
+      ...(Array.isArray(set.categories) ? set.categories : []),
+      ...(Array.isArray(set.styles) ? set.styles : []),
+      ...(Array.isArray(set.tags) ? set.tags : []),
+    ]
+      .filter(Boolean).join(' ').toLowerCase();
+    const taxonomyTerms = [
+      set.series,
+      set.setType,
+      ...(Array.isArray(set.categories) ? set.categories : []),
+      ...(Array.isArray(set.tags) ? set.tags : []),
+      ...(Array.isArray(set.genres) ? set.genres : []),
+      ...(Array.isArray(set.styles) ? set.styles : []),
+    ].filter(Boolean);
+    if (/\bdayro\b|\bdayra\b|\bdayaro\b|ડાયરો|દાયરો|ડાયરા|દાયરા/i.test(dayroTerms)) {
+      taxonomyTerms.push('dayro', 'dayra', 'dayaro', 'lok dayro', 'ડાયરો', 'દાયરો', 'ડાયરા', 'દાયરા');
+    }
     return {
       id: set.id,
       title: set.title,
       artist: set.artistsText,
-      taxonomyTerms: [
-        set.series,
-        set.setType,
-        ...(Array.isArray(set.categories) ? set.categories : []),
-        ...(Array.isArray(set.tags) ? set.tags : []),
-        ...(Array.isArray(set.genres) ? set.genres : []),
-        ...(Array.isArray(set.styles) ? set.styles : []),
-      ].filter(Boolean),
+      taxonomyTerms,
       releaseTerms: [
         set.volume,
         ...(Array.isArray(set.segments) ? set.segments.slice(0, 20).map((segment) => segment.title) : []),
@@ -449,7 +463,10 @@
     ['dj-remix', 'fusion'],
     ['bollywood-filmi', 'dandiya'],
     ['instrumental-cinematic', 'fusion'],
+    ['dayro', 'folk'],
   ]);
+
+  const dayroPattern = /\bdayro\b|\bdayra\b|\bdayaro\b|ડાયરો|દાયરો|ડાયરા|દાયરા/i;
 
   function structuredBrowseTokens(set) {
     return new Set([
@@ -474,6 +491,7 @@
       if (visualBrowseCategories.has(token)) categories.add(token);
       const mappedVisual = taxonomyVisualCategory.get(token);
       if (mappedVisual) categories.add(mappedVisual);
+      if (token === 'dayro') categories.add('dayro');
       if (token === 'live' || token === 'live-garba') categories.add('live');
     }
   }
@@ -509,6 +527,12 @@
     } else {
       addLegacyFallbackCategories(categories, fallbackText, String(set.setType || '').toLowerCase());
     }
+
+    // Dayro is its own browse/filter taxonomy while staying in the Folk visual world.
+    // Use only explicit set-level metadata; do not classify from chapter or artist names.
+    const dayroText = [set.title, set.displayTitle, set.setType, ...(Array.isArray(set.tags) ? set.tags : [])]
+      .filter(Boolean).join(' ');
+    if (dayroPattern.test(dayroText)) categories.add('dayro');
 
     if (!categories.size) categories.add('other');
     return categories;
@@ -904,6 +928,7 @@
       ['mataji-devotional', 'devotional'],
       ['folk', 'folk'],
       ['folk-lokgeet', 'folk'],
+      ['dayro', 'folk'],
       ['sanedo', 'sanedo'],
       ['fusion', 'fusion'],
       ['electronic-fusion', 'fusion'],
