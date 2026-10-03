@@ -14,8 +14,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).lotus = {
     label: 'Lotus Amphitheatre',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // An open bowl of stone tiers: many short echoes off the steps all round, the sky open above
     sound: {
       desc: 'An open bowl of stone tiers under the night sky. Short echoes off the steps all round, nothing overhead.',
