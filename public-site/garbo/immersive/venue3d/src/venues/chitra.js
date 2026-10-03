@@ -179,7 +179,7 @@ function chitra(kit, root, tier, TH, r, data) {
   const st = new THREE.Group(); root.add(st);
   const deck = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0, S.h, S.depth), std('#6a4424', 0.6, 0.05)); deck.position.set((S.x0 + S.x1) / 2, S.h / 2, S.z + S.depth / 2); st.add(deck);
   D.rug((S.x0 + S.x1) / 2, S.z + 1.5, S.x1 - S.x0 - 0.5, 2.2, 0, rugTexture('stripe', ['#7a1424', '#1e5a6a', '#d6a64a', '#f3e6d0']), S.h + 0.006);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffc890' });
   [S.x0 - 0.8, S.x1 + 0.8].forEach((x) => {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.7, 6), std('#1a1a1c', 0.5, 0.6)); pole.position.set(x, 0.85, S.z + 0.4); st.add(pole);
     const spk = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.62, 0.36), std('#0e0e10', 0.6)); spk.position.set(x, 1.95, S.z + 0.4); st.add(spk);

@@ -200,7 +200,7 @@ function resham(kit, root, tier, TH, r, data) {
   kit.pools.add(0, S.h + 3, zB - 0.02, (S.x1 - S.x0) * 0.5, 3, '#ff3a40', 0.12, { vertical: true, layer: 'show' });
   kit.pools.add(0, 0.02, S.z - 2.5, 8, 4, '#ff6a50', 0.1, { layer: 'show' });
   [-1, 1].forEach((sd) => { [0, 0.62].forEach((y) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 0.6), std('#0e0c0c', 0.7)); b.position.set(sd * (S.x1 + 1.6), y + 0.3, S.z + 0.6); st.add(b); }); });
-  const bandHoles = buildBand(kit, st, BAND.big, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h });
+  const bandHoles = buildBand(kit, st, BAND.big, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, back: S.z + S.depth, wash: '#ff5a4a' });
 
   /* the gate on the near side, past the lounges (the storyboards' entrance): carved posts of dark wood and a lintel,
      a row of the embroidered panels under it with bells, marigold strings down the posts, lanterns and palms at its feet */

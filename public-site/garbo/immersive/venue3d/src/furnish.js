@@ -536,6 +536,20 @@ function djBooth(ctx, holder) {
   hold(lathe(grp, [[0, 0], [0.065, 0.005], [0.07, 0.04], [0.058, 0.16], [0.05, 0.19], [0.056, 0.205]], -0.62, th, -0.05, steel));
   const hdl = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.006, 4, 10, Math.PI), steel); hdl.position.set(-0.55, th + 0.11, -0.05); hdl.rotation.z = -Math.PI / 2; grp.add(hdl);
   hold(cyl(grp, 0.045, 0.034, 0.14, -0.45, th + 0.07, -0.18, std('#f4efe4', 0.7), 10));
+  // Headphones put down by the controller, a mic by the laptop, a flight case behind, and the speakers' leads down
+  // their stands and across to the table
+  const hpM = std('#141418', 0.45, 0.4);
+  const hb = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.011, 6, 18, Math.PI), hpM); hb.rotation.x = -Math.PI / 2; hb.position.set(0.3, th + 0.012, 0.21); grp.add(hb);
+  [-1, 1].forEach((sd) => { cyl(grp, 0.042, 0.042, 0.03, 0.3 + sd * 0.075, th + 0.015, 0.21, hpM, 14); cyl(grp, 0.034, 0.034, 0.004, 0.3 + sd * 0.075, th + 0.032, 0.21, std('#3a3a40', 0.8), 14); });
+  const mic = new THREE.Group(); mic.position.set(-0.56, th + 0.018, 0.2); mic.rotation.y = 0.5; grp.add(mic);
+  cyl(mic, 0.016, 0.012, 0.16, 0, 0, 0, hpM, 10, 0, 0, Math.PI / 2);
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 8), std('#9aa0a6', 0.4, 0.8)); ball.position.set(-0.1, 0.004, 0); mic.add(ball);
+  const caseM = std('#1a1a1e', 0.6, 0.2), edge = std('#a7acb3', 0.35, 0.8);
+  box(grp, 0.5, 0.42, 0.4, -0.78, 0.21, 0.74, caseM);
+  [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([sx, sz]) => box(grp, 0.02, 0.43, 0.02, -0.78 + sx * 0.25, 0.215, 0.74 + sz * 0.2, edge));
+  box(grp, 0.52, 0.02, 0.42, -0.78, 0.425, 0.74, edge);
+  const leadM = std('#0c0c0e', 0.55, 0.2);
+  [-1, 1].forEach((sd) => { const pts = [[sd * 1.28, 1.2, 0.38], [sd * 1.27, 0.6, 0.38], [sd * 1.25, 0.03, 0.42], [sd * 1.0, 0.012, 0.42], [sd * 0.78, 0.012, 0.3], [sd * 0.74, 0.3, 0.3]].map(([a, b, c]) => new THREE.Vector3(a, b, c)); grp.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.009, 4, false), leadM)); });
   // The stool
   cyl(grp, 0.17, 0.16, 0.04, 0, 0.62, 0.55, std('#3a2a1c', 0.7), 14);
   [0, 1, 2].forEach((k) => { const a = k / 3 * TAU + 0.5; cyl(grp, 0.015, 0.018, 0.64, Math.cos(a) * 0.12, 0.31, 0.55 + Math.sin(a) * 0.12, std('#2a1e14', 0.6, 0.3), 5, Math.sin(a) * 0.18, 0, -Math.cos(a) * 0.18); });

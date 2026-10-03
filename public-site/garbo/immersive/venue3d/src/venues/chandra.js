@@ -152,7 +152,7 @@ function chandra(kit, root, tier, TH, r, data) {
   const pc = [0, S.z + S.depth / 2];
   for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, b = a + Math.PI * 0.9; if (Math.sin(a) < -0.5) continue; woods.arch([pc[0] + Math.cos(a) * 4.6, 0, pc[1] + Math.sin(a) * 2.2], [pc[0] + Math.cos(b) * 4.6, 0, pc[1] + Math.sin(b) * 2.2], 5.2, 2, 0.1); }
   [-2.4, 0, 2.4].forEach((x) => lanterns.push([x, 3.4, S.z + 1.8, 0.9, AMBER]));
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#9affe8' });
   kit.pools.add(0, 0.02, S.z - 1.4, 4.5, 2.4, AMBER, 0.12, { layer: 'show' });
 
   /* the lanterns: oval paper lanterns, each a lamp, their light on the ground below */

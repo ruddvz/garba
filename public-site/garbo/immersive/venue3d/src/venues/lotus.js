@@ -144,7 +144,7 @@ function lotus(kit, root, tier, TH, r, data) {
   const stoneM = std('#3a3640', 0.7, 0.05), zB = S.z + S.depth;
   const deck = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 4, S.h, S.depth + 1.2), stoneM); deck.position.set(0, S.h / 2, S.z + S.depth / 2 + 0.4); st.add(deck);
   strips.grid([S.x0 - 2, S.h - 0.07, S.z - 0.21], [S.x1 + 2, S.h - 0.07, S.z - 0.21], [S.x1 + 2, S.h - 0.03, S.z - 0.21], [S.x0 - 2, S.h - 0.03, S.z - 0.21], 1, 1, [0, 0, -1], () => [0, 0]);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#40e4ff' });
   const backWall = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 4, 6.2, 0.3), std('#1a1822', 0.8)); backWall.position.set(0, S.h + 3.1, zB + 0.6); st.add(backWall);
   for (let i = 0; i < 9; i++) { const x = lerp(S.x0 - 1, S.x1 + 1, i / 8), bar = new THREE.Mesh(new THREE.BoxGeometry(0.16, 5.4, 0.08), kit.glow(i % 2 ? '#7a5aff' : '#3a8aff', 1.6, 'show')); bar.position.set(x, S.h + 3.0, zB + 0.42); st.add(bar); }
   for (let i = 0; i < 4; i++) { const x = lerp(S.x0 - 0.2, S.x1 + 0.2, (i + 0.5) / 4), j = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 4.2), jaliMat); j.position.set(x, S.h + 2.9, zB + 0.4); j.rotation.y = Math.PI; st.add(j); }

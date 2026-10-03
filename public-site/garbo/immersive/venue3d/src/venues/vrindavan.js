@@ -217,7 +217,7 @@ function vrindavan(kit, root, tier, TH, r, data) {
   add(metreUV(new THREE.BoxGeometry(S.x1 - S.x0, S.h, S.depth), 2.4), M((S.x0 + S.x1) / 2, S.h / 2, S.z + S.depth / 2));
   add(metreUV(new THREE.BoxGeometry(S.x1 - S.x0 - 1, S.h / 2, 0.5), 2.4), M((S.x0 + S.x1) / 2, S.h / 4, S.z - 0.25));
   D.rug((S.x0 + S.x1) / 2, S.z + 1.6, S.x1 - S.x0 - 0.6, 2.4, 0, rugTexture('stripe', ['#7a1a14', '#1e3a6a', '#d6a64a', '#f0e0c0']), S.h + 0.006);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffb050' });
   [S.x0 + 0.3, S.x1 - 0.3].forEach((x) => { D.lantern(x, S.h, S.z + 0.25, 1); src(x, S.h + 0.5, S.z + 0.25, LIGHT.tungsten, 0.4, 3); });
   kit.pools.add(0, 0.02, S.z - 1.6, 4.5, 2.4, LIGHT.warm, 0.12, { layer: 'show' });
   diyaRow(kit, [S.x0 + 0.2, S.h, S.z + 0.08], [S.x1 - 0.2, S.h, S.z + 0.08], 0.45, 0.04);

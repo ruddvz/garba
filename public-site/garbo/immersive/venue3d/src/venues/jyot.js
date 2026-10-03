@@ -146,7 +146,7 @@ function jyot(kit, root, tier, TH, r, data) {
   const st = new THREE.Group(); root.add(st);
   box(S.x0, 0, S.z, S.x1, S.h, S.z + S.depth); box(S.x0 + 0.5, 0, S.z - 0.5, S.x1 - 0.5, S.h / 2, S.z);
   D.rug((S.x0 + S.x1) / 2, S.z + 1.6, S.x1 - S.x0 - 0.6, 2.4, 0, rugTexture('persian', ['#8a1424', '#1e5a3a', '#d6a64a', '#f3e6d0']), S.h + 0.006);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffb040' });
   diyaRow(kit, [S.x0 + 0.2, S.h, S.z + 0.08], [S.x1 - 0.2, S.h, S.z + 0.08], 0.36, 0.04);
   kit.pools.add(0, 0.02, S.z - 1.6, 4.5, 2.4, LIGHT.warm, 0.12, { layer: 'show' });
 

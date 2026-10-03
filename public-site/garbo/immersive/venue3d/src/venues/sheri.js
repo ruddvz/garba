@@ -204,7 +204,7 @@ function sheri(kit, root, tier, TH, r, data) {
   durrie.rotation.x = -Math.PI / 2; durrie.position.set(0, 0.605, 64.95); root.add(durrie);
   [-4.6, 4.6].forEach((x) => speakerPole(root, x, 64, 1.8));
   // The band's gear on the takht: the tabla on its gaddi, the keyboard on its stand, a small guitar amp
-  const bandHoles = buildBand(kit, root, BAND.sheri, { x0: -3.2, x1: 3.2, front: 63.9, floor: 0.6, small: true });
+  const bandHoles = buildBand(kit, root, BAND.sheri, { x0: -3.2, x1: 3.2, front: 63.9, floor: 0.6, small: true, singers: false, back: 66.0, wash: '#ffb46a' });
   const mandapHoles = sheriMandap(kit, root, TH);
   // Chandarvo canopies of printed cloth across the lane, wires, strings of bulbs and bunting, and lanterns
   [12, 21, 34].forEach((z, ci) => {

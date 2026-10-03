@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { TAU, lerp, canvasTexture, sag, hsl, seeded, face, solidOf, LIGHT, creative, sharpCreative } from './util.js';
 import { std, glowMat, Beam } from './kit.js';
-import { buildBand } from './band.js';
+import { buildBand, monitorWedge } from './band.js';
 import { feedMaterial } from './drone.js';
 
 let latticeTex = null;
@@ -264,10 +264,10 @@ export function buildStage(kit, o) {
   // Gear on the deck. Wedge monitors along the front, angled up at the singers, with their cables taped back across
   // the deck; the band's amps at the back of the riser on a rug. The wedges stand between you and the singers' feet,
   // so they leave the 2D scene their outlines (stageFront) to cut after it draws the band.
-  const stageFront = [], wedge = std('#1c1c20', 0.5, 0.25), tape = std('#0b0b0c', 0.9);
+  const stageFront = [], tape = std('#0b0b0c', 0.9);
   [-0.34, -0.12, 0.12, 0.34].forEach((f) => {
-    const x = cx + f * W, wg = add(new THREE.BoxGeometry(0.6, 0.3, 0.42), wedge, x, o.h + 0.16, zF + 0.2);
-    wg.rotation.x = -0.45; stageFront.push(solidOf(wg));
+    const x = cx + f * W, wg = monitorWedge(root, x, o.h, zF + 0.2, 1.3);
+    stageFront.push(solidOf(wg));
     add(new THREE.BoxGeometry(0.03, 0.01, depth * 0.55), tape, x + 0.22, o.h + 0.025, zF + 0.4 + depth * 0.275);
     kit.bulbs.add(x + 0.22, o.h + 0.1, zF - 0.02, 0, { color: '#5aa8ff', k: 0.5, s: 0.25, twinkle: 0, layer: 'show' });
   });
@@ -275,7 +275,7 @@ export function buildStage(kit, o) {
   let bandHoles = null;
   if (o.band) {
     [0.2, 0.8].forEach((u) => { const rug = add(new THREE.PlaneGeometry(W * 0.3, (zB - rz0) * 0.7), new THREE.MeshStandardMaterial({ map: rugTexture(), roughness: 1 }), o.x0 + W * u, o.h + rH + 0.006, rz0 + (zB - rz0) * 0.45); rug.rotation.x = -Math.PI / 2; });
-    bandHoles = buildBand(kit, root, o.band, { x0: o.x0, x1: o.x1, front: rz0, floor: o.h + rH });
+    bandHoles = buildBand(kit, root, o.band, { x0: o.x0, x1: o.x1, front: rz0, back: zB, floor: o.h + rH, singers: false });
   }
   // Par cans hung between the moving heads on the front beam, their lenses the bulbs under the beam
   for (let k = 0; k < 10; k += 2) {

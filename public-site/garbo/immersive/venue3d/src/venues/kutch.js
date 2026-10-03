@@ -147,7 +147,7 @@ function kutch(kit, root, tier, TH, r, data) {
   const st = new THREE.Group(); root.add(st);
   const dais = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 0.6, S.h, S.depth + 0.6), std('#d8ccb6', 0.6)); dais.position.set((S.x0 + S.x1) / 2, S.h / 2, S.z + S.depth / 2); st.add(dais);
   const durrie = new THREE.Mesh(new THREE.PlaneGeometry(S.x1 - S.x0, S.depth), new THREE.MeshStandardMaterial({ map: cloth(INDIGO), roughness: 1 })); durrie.rotation.x = -Math.PI / 2; durrie.position.set((S.x0 + S.x1) / 2, S.h + 0.005, S.z + S.depth / 2); st.add(durrie);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffd8a0' });
   [[S.x0, S.z], [S.x1, S.z], [S.x0, S.z + S.depth], [S.x1, S.z + S.depth]].forEach(([x, z]) => D.lantern(x, S.h, z, 0.9));
   kit.pools.add((S.x0 + S.x1) / 2, 0.02, S.z - 1.4, 3.6, 2.2, AMBER, 0.12, { layer: 'show' });
 
