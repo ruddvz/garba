@@ -13,7 +13,7 @@
 
 ## Timeline samples
 
-I viewed the lesson at 1.5× and sampled the displayed player timeline, then watched the opening practice section at normal speed from approximately 1:35 to 1:48. The video alternates between the instructor addressing the group, short demonstrations, and group practice. The samples below describe visible moments; they do not establish every transition between them.
+I viewed the lesson at 1.5× and sampled the displayed player timeline, then confirmed the YouTube player was set to Normal and watched short sections around 1:35–1:48, 5:47–6:00, 10:59–11:17 and 18:00–18:04. The video alternates between the instructor addressing the group, short demonstrations, and group practice. The samples below describe visible moments; they do not establish every transition between them.
 
 | Approx. source time | Visible sample | Limits |
 | --- | --- | --- |
@@ -23,19 +23,19 @@ I viewed the lesson at 1.5× and sampled the displayed player timeline, then wat
 | 2:57 | The teacher faces the group from a wide stance and extends an arm while the learners wait. | Instruction gesture, not evidence of the routine's hand sequence. |
 | 4:09 | The teacher is front-facing in a wide stance and gestures near the chest/face; the learners remain mostly in place. | Likely explanation/reset; no step boundary is visible. |
 | 5:00 | The teacher turns partly sideways, extends one arm, and keeps the other nearer the hip; one learner holds a wide stance. | A pose sample; the transition and hand laterality are unclear. |
-| 5:56 | Several dancers lean or angle their torsos with hands held behind the lower back; their feet are narrow or offset, with one leg crossing-looking in the sampled frame. | The exact crossing foot, support foot and weight transfer are not established. |
+| 5:47–6:00 | In group practice, several dancers travel with hands held behind the lower back and narrow or offset feet. At 5:56, one leg reaches or crosses-looking; by 6:00 the teacher has stopped the movement and is addressing the group. | Brief segment only; exact foot order, support leg, contacts and count are unclear. |
 | 7:31 | The group is again in a soft-kneed, offset stance with arms low or held behind the body. | Similar visual motif to 5:56, but repetition and count are unverified. |
 | 8:59 | The teacher and learners hold a broad stance with hands low/behind the hips; knees are flexed. | The still does not resolve a step order or travel direction. |
-| 11:01 | The teacher leans forward with hands behind the lower back and one leg crossing or reaching across; learners stand behind him. | Possible traveling cross-step motif only; no complete cycle or side role. |
+| 10:59–11:17 | At 10:59, the teacher is foregrounded with hands behind his back and one offset/crossing-looking leg position while learners mostly wait behind him. By 11:17, he is closer to the camera, gesturing with his hands in front as learners continue watching. | This changes from a brief demonstration to instruction; it does not establish a repeated group phrase, exact foot order or side role. |
 | 12:59 | The teacher raises both arms overhead while demonstrating; learners wait behind him. | May be an explanation or pose; no associated foot event is clear. |
 | 15:10 | The camera frames mostly the legs: the teacher has a wide stance with one foot extended laterally. | Low crop hides the upper-body action and obscures heel/toe contact. |
 | 16:30 | The teacher faces forward in a wide stance and gestures near his chest/face; the group is behind him. | Teaching gesture, not a named movement. |
-| 18:00 | Teacher and group show a bent-knee crossing-looking position while keeping hands behind the lower back. | Visually resembles the earlier motif, but the sequence and beat placement remain unknown. |
+| 18:00–18:04 | The teacher faces the learners and gestures with hands near his chest; one leg extends diagonally behind him while the group watches from mostly stationary stances. | This is an instruction/demo moment and does not repeat the earlier hands-behind-back group sample. No step boundary or beat placement is visible. |
 | 20:01 | The group returns to a wide front-facing stance while the teacher addresses the camera. | Closing/explanation pose; not a verified final step. |
 
 ## Movement candidates and unknowns
 
-The sampled practice sections suggest a source-specific motif worth a denser review: soft knees, a narrow or crossing-looking traveling foot position, torso inclined forward, and hands held behind the lower back. Other sampled moments show wide lateral stances and overhead arm poses. These are visual candidates only; do not label them as named traditional steps from this video alone.
+Samples at 5:47–6:00, 7:31, 8:59 and 10:59 show low or behind-the-back arm positions alongside narrow, offset or wide foot placements. The 18:00–18:04 sample is a separate instruction/demo moment with the teacher's hands in front, so it does not independently confirm that the earlier motif repeats. Other samples show wide lateral stances and overhead arm poses. These are visual candidates only; do not label them as named traditional steps from this video alone.
 
 The samples do not establish step-by-step boundaries, a twelve-item enumeration, lead/support foot, heel or toe contacts, weight-transfer order, hand contacts, travel around a circle, facing changes through a full cycle, or teacher count cues. Captions were unavailable, and no score was derived from the audio.
 
