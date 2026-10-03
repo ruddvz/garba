@@ -34,7 +34,7 @@
     stage: { x0: -5.4, x1: 5.4, z: 14.6, h: 0.75, depth: 3.4, band: 'sheri', bandFront: 15.3, crowd: 4.2, fillX: 2.6 },
     dj: { x: 9.2, z: 13.4 },
     rings: [5.4, 9.0], pairs: 4, walkers: 16, couples: 2, kids: 8,
-    garbo: 'bare',
+    garbo: 'full',
     floorR: VR.floor,
     // the drone's view (View → Aerial)
     aerialCam: { r: 22, h: 30, cz: 3 },

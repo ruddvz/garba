@@ -284,4 +284,5 @@ function vrindavan(kit, root, tier, TH, r, data) {
     update(t, ctx) { glow.value = 0.85 * (0.35 + 0.65 * Math.max(ctx.lv.flame || 0, ctx.lv.practical || 0)); }
   };
 }
-export default { seed: 909, sky: nightSky, garbo: 'bare', garboK: 8, build: vrindavan };
+// (the garbo stands under a sandstone chhatri: the mandvi's outline, so 'full')
+export default { seed: 909, sky: nightSky, garbo: 'full', garboK: 8, build: vrindavan };
