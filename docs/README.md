@@ -97,6 +97,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`dance/routine-reviews.md`](dance/routine-reviews.md): timestamped, source-specific tutorial observations and animation readiness
 - [`dance/motion-sync-contract.md`](dance/motion-sync-contract.md): beat-relative phase, looping, and synchronization contract
 - [`dance/sources.md`](dance/sources.md): practitioner tutorials, channel archives, and source evidence
+- [`dance/akshay-bhosale-five-basic-steps.md`](dance/akshay-bhosale-five-basic-steps.md): timestamped pose observations from Akshay Bhosale's five basic Garba lesson
 
 ## Rights and partnerships
 
