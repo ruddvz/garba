@@ -14,8 +14,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).chitra = {
     label: 'Chitra Aangan',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // A courtyard: a quick slap off the panel wall and the low walls, leaves above soaking up the rest
     sound: {
       desc: 'A garden courtyard under great trees. A quick echo off the painted wall, the leaves soak up the rest.',

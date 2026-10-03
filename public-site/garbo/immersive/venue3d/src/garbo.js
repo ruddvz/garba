@@ -267,7 +267,8 @@ export function buildGarbo(kit, { small, flags, bare, look }) {
   // The pot: a lathe from the base up through the shoulder to the neck
   const prof = GARBO_POT.map(([rr, y]) => new THREE.Vector2(rr, y));
   const potMat = new THREE.MeshStandardMaterial({ map: tex.clay, emissiveMap: tex.holes, emissive: L ? L.glow : '#ffb45a', emissiveIntensity: 0, roughness: L && L.rough != null ? L.rough : 0.82, metalness: L && L.metal ? L.metal : 0, transparent: !!(L && L.glass), opacity: L && L.glass ? 0.92 : 1 });
-  const pot = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), potMat); pot.position.y = 0.575; pot.castShadow = true; g.add(pot);
+  // (it casts no shadow: the key light's hard shadow of it across the floor read as a hole in front of you)
+  const pot = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), potMat); pot.position.y = 0.575; g.add(pot);
   const neckBeads = []; for (let i = 0; i < 22; i++) { const a = i / 22 * TAU; neckBeads.push([Math.cos(a) * 0.19, 0.575 + 0.47 + 0.03 * Math.cos(a), Math.sin(a) * 0.19]); }
   beads(g, neckBeads, 0.028);
   // The diya on the mouth and its flame

@@ -45,8 +45,8 @@ function floorDecal(rect, res, CA) {
 
 /* ---------- the panels ----------
    The owner's own artwork goes on these panels: images listed in venue-art/chitra/panels.json (beside the player's
-   page), one per panel in order, are loaded onto them as they arrive. Until then each carries a plain textile pattern
-   (bandhani dots, mirror-work diamonds, block-printed rosettes) in the courtyard's jewel colours, with no figures. */
+   page), one per panel in order, are loaded onto them as they arrive. Until then each is painted in a folk tradition
+   (folkPanel, below); patternPanel's plain textiles are kept for a venue that wants them. */
 const PANEL_PALS = [['#7a1424', '#e8b04b', '#f3e6d0'], ['#1e3a6a', '#e8b04b', '#c2185b'], ['#4a1a5a', '#f0c24b', '#2f8f5b'], ['#8a3a14', '#f3e6d0', '#1e5a6a'], ['#183a2a', '#e8b04b', '#b8312b']];
 function patternPanel(i, res) {
   const W = res, H = res * 2, pal = PANEL_PALS[i % PANEL_PALS.length], kind = i % 3;
@@ -61,6 +61,109 @@ function patternPanel(i, res) {
       else { g.strokeStyle = pal[1]; g.lineWidth = u * 0.05; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; g.beginPath(); g.ellipse(Math.cos(a) * u * 0.2, Math.sin(a) * u * 0.2, u * 0.16, u * 0.07, a, 0, TAU); g.stroke(); } g.fillStyle = pal[2]; g.beginPath(); g.arc(0, 0, u * 0.08, 0, TAU); g.fill(); }
       g.restore();
     }
+  });
+}
+// Until the owner's artwork arrives, each panel is painted in one of the folk traditions the courtyard draws on, with
+// no deity on it (those are for the owner's own art): a Warli garba circle, a Madhubani peacock, a Pichwai lotus pond
+// with a cow, a tiger in the Pattachitra manner, a Kalamkari tree of life with birds, a sun and moon in the colours of
+// a Mata ni Pachedi. Each has its painted border and a little age on it.
+function folkPanel(i, res) {
+  const W = res, H = res * 2, kind = i % 6, u = W / 512;
+  return canvasTexture(W, H, (g) => {
+    const rnd = seeded(91 + i * 13);
+    const border = (bg, line, accent) => {
+      g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = line; g.lineWidth = 10 * u; g.strokeRect(14 * u, 14 * u, W - 28 * u, H - 28 * u);
+      g.lineWidth = 3 * u; g.strokeRect(34 * u, 34 * u, W - 68 * u, H - 68 * u);
+      g.fillStyle = accent; for (let y = 44 * u; y < H - 40 * u; y += 22 * u) { g.beginPath(); g.moveTo(24 * u, y); g.lineTo(30 * u, y + 8 * u); g.lineTo(24 * u, y + 16 * u); g.fill(); g.beginPath(); g.moveTo(W - 24 * u, y); g.lineTo(W - 30 * u, y + 8 * u); g.lineTo(W - 24 * u, y + 16 * u); g.fill(); }
+    };
+    const stick = (x, y, s, col, arms) => {
+      // a Warli figure: two triangles meeting at the waist, a round head, stick limbs
+      g.fillStyle = col; g.strokeStyle = col; g.lineWidth = 3 * u * s;
+      g.beginPath(); g.moveTo(x - 9 * u * s, y - 22 * u * s); g.lineTo(x + 9 * u * s, y - 22 * u * s); g.lineTo(x, y - 8 * u * s); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(x - 9 * u * s, y + 6 * u * s); g.lineTo(x + 9 * u * s, y + 6 * u * s); g.lineTo(x, y - 8 * u * s); g.closePath(); g.fill();
+      g.beginPath(); g.arc(x, y - 29 * u * s, 6 * u * s, 0, TAU); g.fill();
+      g.beginPath(); g.moveTo(x - 5 * u * s, y + 6 * u * s); g.lineTo(x - 9 * u * s, y + 20 * u * s); g.moveTo(x + 5 * u * s, y + 6 * u * s); g.lineTo(x + 9 * u * s, y + 20 * u * s);
+      g.moveTo(x - 8 * u * s, y - 20 * u * s); g.lineTo(x - 18 * u * s, y - (arms ? 30 : 10) * u * s); g.moveTo(x + 8 * u * s, y - 20 * u * s); g.lineTo(x + 18 * u * s, y - (arms ? 30 : 10) * u * s); g.stroke();
+    };
+    if (kind === 0) {
+      // Warli: a garba circle of dancers on terracotta round a drummer, the sun and moon over them, trees below
+      border('#8e3a1c', '#f3e6d0', '#f3e6d0');
+      const cx = W / 2, cy = H * 0.5;
+      [[150, 18], [100, 13]].forEach(([R, n], ring) => { for (let k = 0; k < n; k++) { const a = k / n * TAU; stick(cx + Math.cos(a) * R * u, cy + Math.sin(a) * R * u * 1.05, ring ? 0.8 : 1, '#f6efe0', true); } });
+      stick(cx, cy + 12 * u, 1.1, '#f6efe0', false); g.strokeStyle = '#f6efe0'; g.lineWidth = 3 * u; g.beginPath(); g.ellipse(cx, cy + 4 * u, 14 * u, 8 * u, 0, 0, TAU); g.stroke();
+      g.fillStyle = '#f6efe0'; g.beginPath(); g.arc(W * 0.3, H * 0.14, 34 * u, 0, TAU); g.fill(); for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; g.fillRect(W * 0.3 + Math.cos(a) * 46 * u - 3 * u, H * 0.14 + Math.sin(a) * 46 * u - 3 * u, 6 * u, 6 * u); }
+      g.beginPath(); g.arc(W * 0.72, H * 0.14, 28 * u, 0, TAU); g.fill(); g.fillStyle = '#8e3a1c'; g.beginPath(); g.arc(W * 0.76, H * 0.13, 25 * u, 0, TAU); g.fill();
+      g.fillStyle = '#f6efe0'; g.strokeStyle = '#f6efe0';
+      for (let t = 0; t < 5; t++) { const x = W * (0.16 + t * 0.17), y0 = H * 0.92, h = 120 * u; g.lineWidth = 4 * u; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y0 - h); g.stroke(); for (let b = 0; b < 7; b++) { const yy = y0 - h * 0.25 - b * 12 * u; g.beginPath(); g.moveTo(x, yy); g.lineTo(x - (22 - b * 2) * u, yy + 10 * u); g.lineTo(x + (22 - b * 2) * u, yy + 10 * u); g.closePath(); g.fill(); } }
+    } else if (kind === 1) {
+      // Madhubani: a peacock in double black outline, its fan of eyes filling the panel, a border of hatching and fish
+      border('#f2e4c4', '#1a1410', '#c0392b');
+      const cx = W / 2, cy = H * 0.62;
+      for (let k = 0; k < 15; k++) { const a = -Math.PI * 0.95 + k / 14 * Math.PI * 0.9, L = 260 * u; const x = cx + Math.cos(a) * L, y = cy - 60 * u + Math.sin(a) * L * 1.15;
+        g.strokeStyle = '#1a1410'; g.lineWidth = 2.5 * u; g.beginPath(); g.moveTo(cx, cy - 40 * u); g.lineTo(x, y); g.stroke();
+        g.fillStyle = '#2a8a5a'; g.beginPath(); g.ellipse(x, y, 30 * u, 42 * u, a + Math.PI / 2, 0, TAU); g.fill(); g.stroke();
+        g.fillStyle = '#1e5aa8'; g.beginPath(); g.ellipse(x, y, 17 * u, 24 * u, a + Math.PI / 2, 0, TAU); g.fill(); g.stroke();
+        g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(x, y, 7 * u, 0, TAU); g.fill(); g.fillStyle = '#1a1410'; g.beginPath(); g.arc(x, y, 3.5 * u, 0, TAU); g.fill(); }
+      g.fillStyle = '#1e5aa8'; g.strokeStyle = '#1a1410'; g.lineWidth = 4 * u;
+      g.beginPath(); g.ellipse(cx, cy + 20 * u, 62 * u, 90 * u, 0, 0, TAU); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(cx - 14 * u, cy - 60 * u); g.quadraticCurveTo(cx - 40 * u, cy - 160 * u, cx - 6 * u, cy - 210 * u); g.lineTo(cx + 14 * u, cy - 200 * u); g.quadraticCurveTo(cx - 10 * u, cy - 150 * u, cx + 18 * u, cy - 60 * u); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#f2e4c4'; g.beginPath(); g.arc(cx, cy - 196 * u, 5 * u, 0, TAU); g.fill(); g.fillStyle = '#e8b04b'; g.beginPath(); g.moveTo(cx + 12 * u, cy - 200 * u); g.lineTo(cx + 34 * u, cy - 192 * u); g.lineTo(cx + 12 * u, cy - 188 * u); g.fill();
+      for (let k = 0; k < 3; k++) { g.strokeStyle = '#1a1410'; g.lineWidth = 2 * u; g.beginPath(); g.moveTo(cx - 4 * u + k * 6 * u, cy - 212 * u); g.lineTo(cx - 10 * u + k * 8 * u, cy - 236 * u); g.stroke(); g.fillStyle = '#c0392b'; g.beginPath(); g.arc(cx - 10 * u + k * 8 * u, cy - 238 * u, 4 * u, 0, TAU); g.fill(); }
+      g.strokeStyle = '#c0392b'; g.lineWidth = 2 * u; for (let y = cy + 20 * u; y < cy + 100 * u; y += 10 * u) { g.beginPath(); g.moveTo(cx - 50 * u, y); g.lineTo(cx + 50 * u, y); g.stroke(); }
+      g.strokeStyle = '#1a1410'; g.lineWidth = 4 * u; g.beginPath(); g.moveTo(cx - 20 * u, cy + 108 * u); g.lineTo(cx - 28 * u, cy + 160 * u); g.moveTo(cx + 20 * u, cy + 108 * u); g.lineTo(cx + 28 * u, cy + 160 * u); g.stroke();
+      for (let x = 60 * u; x < W - 60 * u; x += 40 * u) { g.fillStyle = '#c0392b'; g.beginPath(); g.ellipse(x, H - 70 * u, 14 * u, 7 * u, 0, 0, TAU); g.fill(); g.fillStyle = '#1a1410'; g.beginPath(); g.arc(x + 7 * u, H - 71 * u, 2 * u, 0, TAU); g.fill(); }
+    } else if (kind === 2) {
+      // Pichwai: night-blue water thick with pink lotuses and round leaves, a white cow among them, a toran of flowers
+      border('#14244a', '#e8b04b', '#e8b04b');
+      for (let k = 0; k < 14; k++) { const x = (60 + (k * 97) % 400) * u, y = H * 0.12 + (k % 2) * 16 * u; g.fillStyle = k % 2 ? '#f08a24' : '#f6efe0'; g.beginPath(); g.arc(x, y, 9 * u, 0, TAU); g.fill(); }
+      for (let k = 0; k < 46; k++) { const x = (50 + rnd() * 412) * u, y = H * (0.5 + rnd() * 0.42); g.fillStyle = rnd() < 0.5 ? '#2a6a3a' : '#1e5a32'; g.beginPath(); g.ellipse(x, y, 30 * u, 13 * u, 0, 0, TAU); g.fill(); g.strokeStyle = '#4a9a5a'; g.lineWidth = 1.5 * u; g.stroke(); }
+      for (let k = 0; k < 18; k++) { const x = (60 + rnd() * 392) * u, y = H * (0.48 + rnd() * 0.44); for (let p = 0; p < 7; p++) { const a = -Math.PI / 2 + (p - 3) * 0.32; g.fillStyle = p % 2 ? '#f39ac0' : '#e8609a'; g.beginPath(); g.ellipse(x + Math.cos(a) * 12 * u, y + Math.sin(a) * 12 * u, 6 * u, 15 * u, a + Math.PI / 2, 0, TAU); g.fill(); } g.fillStyle = '#e8b04b'; g.beginPath(); g.arc(x, y, 4 * u, 0, TAU); g.fill(); }
+      const cx = W * 0.5, cy = H * 0.4; g.fillStyle = '#f6efe0'; g.strokeStyle = '#2a2018'; g.lineWidth = 3 * u;
+      g.beginPath(); g.ellipse(cx, cy, 110 * u, 52 * u, 0, 0, TAU); g.fill(); g.stroke();
+      g.beginPath(); g.ellipse(cx - 118 * u, cy - 38 * u, 34 * u, 26 * u, -0.4, 0, TAU); g.fill(); g.stroke();
+      [[-70, 0], [-40, 0], [50, 0], [80, 0]].forEach(([dx]) => { g.beginPath(); g.rect(cx + dx * u - 6 * u, cy + 40 * u, 12 * u, 70 * u); g.fill(); g.stroke(); });
+      g.fillStyle = '#c0392b'; g.beginPath(); g.ellipse(cx - 20 * u, cy - 6 * u, 40 * u, 18 * u, 0, 0, TAU); g.fill(); g.fillStyle = '#e8b04b'; for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(cx - 50 * u + k * 12 * u, cy + 8 * u, 3 * u, 0, TAU); g.fill(); }
+      g.strokeStyle = '#2a2018'; g.beginPath(); g.moveTo(cx - 132 * u, cy - 60 * u); g.lineTo(cx - 146 * u, cy - 84 * u); g.moveTo(cx - 108 * u, cy - 62 * u); g.lineTo(cx - 100 * u, cy - 86 * u); g.stroke();
+    } else if (kind === 3) {
+      // a tiger in the Pattachitra manner: an orange face filling an ochre ground, black stripes, a white muzzle, red border
+      border('#d8a040', '#7a1414', '#7a1414');
+      const cx = W / 2, cy = H * 0.46, R = 190 * u;
+      g.fillStyle = '#e8701a'; g.strokeStyle = '#1a1008'; g.lineWidth = 5 * u;
+      [[-1], [1]].forEach(([sd]) => { g.beginPath(); g.arc(cx + sd * R * 0.72, cy - R * 0.82, 44 * u, 0, TAU); g.fill(); g.stroke(); g.fillStyle = '#f6efe0'; g.beginPath(); g.arc(cx + sd * R * 0.72, cy - R * 0.82, 22 * u, 0, TAU); g.fill(); g.fillStyle = '#e8701a'; });
+      g.beginPath(); g.ellipse(cx, cy, R, R * 1.05, 0, 0, TAU); g.fill(); g.stroke();
+      g.fillStyle = '#1a1008'; for (let k = 0; k < 7; k++) { const y = cy - R * 0.85 + k * 18 * u; g.beginPath(); g.moveTo(cx - 6 * u, y); g.lineTo(cx, y + 30 * u); g.lineTo(cx + 6 * u, y); g.fill(); }
+      [-1, 1].forEach((sd) => { for (let k = 0; k < 5; k++) { const y = cy - R * 0.4 + k * 40 * u; g.beginPath(); g.moveTo(cx + sd * R * 0.98, y); g.quadraticCurveTo(cx + sd * R * 0.6, y + 8 * u, cx + sd * R * 0.45, y + 22 * u); g.lineTo(cx + sd * R * 0.65, y + 6 * u); g.closePath(); g.fill(); } });
+      g.fillStyle = '#f6efe0'; g.beginPath(); g.ellipse(cx, cy + R * 0.45, R * 0.55, R * 0.4, 0, 0, TAU); g.fill(); g.stroke();
+      [-1, 1].forEach((sd) => { g.fillStyle = '#f6e04a'; g.beginPath(); g.ellipse(cx + sd * R * 0.38, cy - R * 0.12, 34 * u, 22 * u, sd * 0.2, 0, TAU); g.fill(); g.stroke(); g.fillStyle = '#1a1008'; g.beginPath(); g.ellipse(cx + sd * R * 0.38, cy - R * 0.12, 8 * u, 18 * u, 0, 0, TAU); g.fill(); });
+      g.fillStyle = '#c0392b'; g.beginPath(); g.moveTo(cx - 30 * u, cy + R * 0.2); g.lineTo(cx + 30 * u, cy + R * 0.2); g.lineTo(cx, cy + R * 0.38); g.closePath(); g.fill(); g.stroke();
+      g.strokeStyle = '#1a1008'; g.lineWidth = 3 * u; [-1, 1].forEach((sd) => { for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(cx + sd * 40 * u, cy + R * 0.48 + k * 12 * u); g.lineTo(cx + sd * 150 * u, cy + R * 0.4 + k * 22 * u); g.stroke(); } });
+      for (let x = 70 * u; x < W - 60 * u; x += 46 * u) { g.fillStyle = '#7a1414'; for (let p = 0; p < 6; p++) { const a = p / 6 * TAU; g.beginPath(); g.arc(x + Math.cos(a) * 9 * u, H * 0.86 + Math.sin(a) * 9 * u, 5 * u, 0, TAU); g.fill(); } }
+    } else if (kind === 4) {
+      // Kalamkari: a tree of life from a pot, its branches curling with leaves and flowers in madder, indigo and ochre, birds
+      border('#efe0c0', '#5a2a14', '#2a3a6a');
+      const cx = W / 2; g.strokeStyle = '#5a3a1e'; g.lineCap = 'round';
+      const branch = (x, y, a, L, w, d) => { if (d > 6 || L < 14 * u) return; const x2 = x + Math.cos(a) * L, y2 = y + Math.sin(a) * L; g.lineWidth = w; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo((x + x2) / 2 + Math.sin(a) * L * 0.2, (y + y2) / 2, x2, y2); g.stroke();
+        if (d > 2) { const c = ['#a8201e', '#2a3a6a', '#d8902a', '#3a6a3a'][(d + Math.round(x2)) % 4]; g.fillStyle = c; g.beginPath(); g.ellipse(x2, y2, 10 * u, 5 * u, a, 0, TAU); g.fill(); }
+        branch(x2, y2, a - 0.45 - rnd() * 0.2, L * 0.74, w * 0.66, d + 1); branch(x2, y2, a + 0.45 + rnd() * 0.2, L * 0.74, w * 0.66, d + 1); };
+      branch(cx, H * 0.8, -Math.PI / 2, 180 * u, 26 * u, 0);
+      for (let k = 0; k < 12; k++) { const x = (90 + rnd() * 330) * u, y = H * (0.12 + rnd() * 0.45); g.fillStyle = '#a8201e'; for (let p = 0; p < 8; p++) { const a = p / 8 * TAU; g.beginPath(); g.ellipse(x + Math.cos(a) * 9 * u, y + Math.sin(a) * 9 * u, 6 * u, 3 * u, a, 0, TAU); g.fill(); } g.fillStyle = '#d8902a'; g.beginPath(); g.arc(x, y, 5 * u, 0, TAU); g.fill(); }
+      [[0.28, 0.3, 1], [0.7, 0.24, -1], [0.62, 0.5, -1], [0.33, 0.55, 1]].forEach(([fx, fy, sd]) => { const x = W * fx, y = H * fy; g.fillStyle = '#2a3a6a'; g.beginPath(); g.ellipse(x, y, 22 * u, 13 * u, 0, 0, TAU); g.fill(); g.beginPath(); g.arc(x + sd * 20 * u, y - 10 * u, 9 * u, 0, TAU); g.fill(); g.fillStyle = '#d8902a'; g.beginPath(); g.moveTo(x + sd * 28 * u, y - 11 * u); g.lineTo(x + sd * 40 * u, y - 8 * u); g.lineTo(x + sd * 28 * u, y - 6 * u); g.fill(); g.fillStyle = '#a8201e'; g.beginPath(); g.moveTo(x - sd * 20 * u, y); g.lineTo(x - sd * 44 * u, y - 10 * u); g.lineTo(x - sd * 40 * u, y + 8 * u); g.fill(); });
+      g.fillStyle = '#a8201e'; g.strokeStyle = '#5a2a14'; g.lineWidth = 4 * u; g.beginPath(); g.moveTo(cx - 60 * u, H * 0.8); g.quadraticCurveTo(cx - 90 * u, H * 0.88, cx - 40 * u, H * 0.92); g.lineTo(cx + 40 * u, H * 0.92); g.quadraticCurveTo(cx + 90 * u, H * 0.88, cx + 60 * u, H * 0.8); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#d8902a'; g.fillRect(cx - 50 * u, H * 0.835, 100 * u, 8 * u);
+    } else {
+      // a sun and a moon in the colours of a Mata ni Pachedi: maroon and black on white, rows of small figures-free motifs
+      border('#f4ecdc', '#3a0a0e', '#3a0a0e');
+      const cx = W / 2; g.fillStyle = '#7a1414';
+      g.beginPath(); g.arc(cx, H * 0.3, 120 * u, 0, TAU); g.fill();
+      for (let k = 0; k < 24; k++) { const a = k / 24 * TAU; g.beginPath(); g.moveTo(cx + Math.cos(a) * 128 * u, H * 0.3 + Math.sin(a) * 128 * u); g.lineTo(cx + Math.cos(a + 0.08) * 168 * u, H * 0.3 + Math.sin(a + 0.08) * 168 * u); g.lineTo(cx + Math.cos(a + 0.16) * 128 * u, H * 0.3 + Math.sin(a + 0.16) * 128 * u); g.fill(); }
+      g.fillStyle = '#f4ecdc'; g.beginPath(); g.arc(cx, H * 0.3, 92 * u, 0, TAU); g.fill(); g.fillStyle = '#1a0a0a'; for (let r0 = 0; r0 < 3; r0++) for (let k = 0; k < 12 + r0 * 6; k++) { const a = k / (12 + r0 * 6) * TAU; g.beginPath(); g.arc(cx + Math.cos(a) * (30 + r0 * 22) * u, H * 0.3 + Math.sin(a) * (30 + r0 * 22) * u, 4 * u, 0, TAU); g.fill(); }
+      g.fillStyle = '#1a0a0a'; g.beginPath(); g.arc(cx, H * 0.68, 90 * u, 0, TAU); g.fill(); g.fillStyle = '#f4ecdc'; g.beginPath(); g.arc(cx + 34 * u, H * 0.66, 82 * u, 0, TAU); g.fill();
+      for (let y = H * 0.84; y < H * 0.92; y += 26 * u) for (let x = 70 * u; x < W - 60 * u; x += 34 * u) { g.fillStyle = '#7a1414'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 12 * u, y + 18 * u); g.lineTo(x - 12 * u, y + 18 * u); g.closePath(); g.fill(); }
+    }
+    // age: a fine grain and a soft darkening at the edges, as paint on cloth
+    for (let k = 0; k < 1400 * u * u; k++) { g.fillStyle = rnd() < 0.5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.05)'; g.fillRect(rnd() * W, rnd() * H, 2 * u, 2 * u); }
+    const vg = g.createRadialGradient(W / 2, H / 2, W * 0.3, W / 2, H / 2, H * 0.7); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(40,20,10,.35)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
   });
 }
 // The owner's artwork, when it's there: loaded panel by panel onto the materials
@@ -135,15 +238,16 @@ function chitra(kit, root, tier, TH, r, data) {
   for (let i = 0; i < n; i++) {
     const deg = CA.wallFrom + (i + 0.5) * (CA.wallTo - CA.wallFrom) / n, a = deg * Math.PI / 180, x = Math.cos(a) * CA.wall, z = Math.sin(a) * CA.wall, ry = Math.atan2(-Math.cos(a), -Math.sin(a));
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(1.86, 3.66, 0.12), frame); back.position.set(0, 2.08, -0.07); g.add(back);
+    // (tall, as the references' panels are: 4 m of painting on a 4.3 m board)
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.88, 4.3, 0.12), frame); back.position.set(0, 2.41, -0.07); g.add(back);
     const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.26, 0.5), std('#cbbd9e', 0.9)); plinth.position.set(0, 0.13, 0.05); g.add(plinth);
-    const artMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: patternPanel(i, phone ? 128 : 256), roughness: 0.85 }), 0.16, 'architectural'); artMats.push(artMat);
-    const art = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 3.4), artMat);
-    art.position.set(0, 2.08, 0.001); art.scale.x = -1; art.rotation.y = 0; g.add(art);
+    const artMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: folkPanel(i, phone ? 256 : 512), roughness: 0.85 }), 0.16, 'architectural'); artMats.push(artMat);
+    const art = new THREE.Mesh(new THREE.PlaneGeometry(1.74, 3.96), artMat);
+    art.position.set(0, 2.41, 0.001); art.scale.x = -1; art.rotation.y = 0; g.add(art);
     // (the plane faces +z in its group, towards the floor; mirrored so it reads the right way round)
     const ux = Math.sin(ry), uz = Math.cos(ry);
     kit.bigBulbs.add(x + ux * 0.45, 0.32, z + uz * 0.45, 0, { color: LIGHT.amber, k: 0.8, s: 0.35, twinkle: 0, layer: 'architectural' });
-    kit.pools.add(x + ux * 0.08, 1.9, z + uz * 0.08, 0.95, 1.9, LIGHT.amber, 0.22, { vertical: true, ry: ry + Math.PI, layer: 'architectural' });
+    kit.pools.add(x + ux * 0.08, 2.1, z + uz * 0.08, 1.0, 2.3, LIGHT.amber, 0.24, { vertical: true, ry: ry + Math.PI, layer: 'architectural' });
     kit.pools.add(x + ux * 0.8, 0.02, z + uz * 0.8, 1.2, 0.9, LIGHT.amber, 0.12, { layer: 'architectural' });
     for (let k = 0; k < 18; k++) { const t = (k / 17 - 0.5) * 1.7; kit.bulbs.add(x + Math.cos(ry) * t + ux * 0.32, 0.32 + Math.abs(Math.sin(k)) * 0.08, z - Math.sin(ry) * t + uz * 0.32, 0, { color: k % 3 ? '#f08a24' : '#f6c342', k: 0.18, s: 0.9, twinkle: 0, layer: 'architectural' }); }
     if (i % 3 === 1) D.palm(x + ux * 0.9 + Math.cos(ry) * 1.0, z + uz * 0.9 - Math.sin(ry) * 1.0, 0.8);
@@ -241,7 +345,7 @@ function chitra(kit, root, tier, TH, r, data) {
   const rig = {
     hemi: ['#3a3a48', '#2a1a0c', 0.36, 0.58], moon: 1,
     spots: [{ pos: [-6, 12, -6], to: [0, 0, 3], color: '#ffe0b8', base: 30, distance: 40, angle: 0.6, layer: 'key' }, { pos: [(S.x0 + S.x1) / 2, 5.5, S.z - 4], to: [(S.x0 + S.x1) / 2, S.h + 1.1, S.z + 1.5], color: '#ffe4c4', base: 70, distance: 14, angle: 0.55, layer: 'show' }],
-    points: [{ pos: [0, 6.5, 2], color: '#ffd08a', base: 24, distance: 18, layer: 'festive' }, { pos: [10, 2.2, 9], color: LIGHT.amber, base: 26, distance: 10, layer: 'architectural' }, { pos: [-8, 3.5, -8], color: '#ffd08a', base: 26, distance: 14, layer: 'festive' }, { pos: [0, 2, -13], color: LIGHT.tungsten, base: 18, distance: 10, layer: 'flame' }]
+    points: [{ pos: [0, 6.5, 2], color: '#ffd08a', base: 24, distance: 18, layer: 'festive' }, { pos: [6.2, 4.2, 5.8], color: LIGHT.amber, base: 16, distance: 16, layer: 'architectural' }, { pos: [-8, 3.5, -8], color: '#ffd08a', base: 26, distance: 14, layer: 'festive' }, { pos: [0, 2, -13], color: LIGHT.tungsten, base: 18, distance: 10, layer: 'flame' }]
   };
   return { rig, bandHoles, floor: floorMesh, fog: new THREE.FogExp2('#0c0c0a', 0.012), exposure: 0.98 };
 }
