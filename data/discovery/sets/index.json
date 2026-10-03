@@ -1,5 +1,5 @@
 {
-  "version": "0.20.73",
+  "version": "0.20.74",
   "updated": "2026-10-02",
   "chunks": [
     "sets-01.json",
@@ -112,6 +112,7 @@
     "sets-109-named-form-regional.json",
     "sets-110-named-form-regional.json",
     "sets-111-regional-live-batch16.json",
+    "sets-112-regional-live-batch2.json",
     "sets-113-longform-forms-batch2.json",
     "sets-114-folk-longform-batch1.json",
     "sets-115-aarti-longform-batch2.json",
@@ -122,6 +123,8 @@
     "sets-120-aarti-full-video-batch6.json",
     "sets-121-folk-longform-batch7.json",
     "sets-122-user-requested-songs.json",
+    "sets-123-folk-longform-batch8.json",
+    "sets-124-devotional-folk-longform-batch9.json",
     "sets-125-priyanka-kher-garbo.json"
   ],
   "policy": {
