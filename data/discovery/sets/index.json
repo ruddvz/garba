@@ -1,5 +1,5 @@
 {
-  "version": "0.20.78",
+  "version": "0.20.79",
   "updated": "2026-10-03",
   "chunks": [
     "sets-01.json",
@@ -129,7 +129,8 @@
     "sets-126-folk-aarti-named-forms-batch10.json",
     "sets-127-regional-live-batch11.json",
     "sets-128-folk-aarti-longform-batch12.json",
-    "sets-129-named-forms-fusion-batch13.json"
+    "sets-129-named-forms-fusion-batch13.json",
+    "sets-130-folk-longform-batch14.json"
   ],
   "policy": {
     "officialityOrder": [
