@@ -960,6 +960,199 @@
         "establish a musical beat grid, phrase length and closing boundary",
         "obtain practitioner review before setting a scored or source-faithful animation"
       ]
+    },
+    {
+      "id": "dancefreax-12-and-14-count-garba-visual-review",
+      "catalogueRecordId": null,
+      "relatedCatalogueRecordIds": [
+        "dancefreax-12-count-garba-routine",
+        "dancefreax-14-count-garba-routine"
+      ],
+      "teacherOrChannel": "Nishant Nair / verified Dance FreaX",
+      "title": "2017 Garba Dance Tutorial #2 | 12 step & 14 step by Nishant Nair",
+      "videoUrl": "https://www.youtube.com/watch?v=mGzRifZwSMA",
+      "durationSeconds": 350,
+      "pageSnapshot": {
+        "views": 13029,
+        "likes": 242,
+        "channelSubscribersApprox": 1350000,
+        "displayedRuntime": "5:50",
+        "published": "2017-09-13",
+        "checkedAt": "2026-10-03"
+      },
+      "publisherCountLabel": "The description says the video shows two Garba routines of 12 counts and 14 counts.",
+      "countInterpretation": "These are the publisher’s routine labels. The description and title provide no segment timestamps, and the sampled footage cannot reliably assign either observed section to the 12-count or 14-count candidate. The labels do not establish musical beat counts or phrase lengths.",
+      "transcript": {
+        "closedCaptions": "unavailable",
+        "autoTranscript": "unavailable through the reviewed player page",
+        "use": "visual review only; teaching speech, step names and spoken count cues could not be checked"
+      },
+      "observedIntervals": [
+        {
+          "fromSeconds": 0,
+          "toSeconds": 35,
+          "visualObservations": [
+            "At about 0:02 the solo instructor is in a profile/back-facing angle, feet apart or in a step, with the arms held asymmetrically high and outward. The still does not resolve a foot landing or arm transition.",
+            "At about 0:35 he faces the camera in a narrow stance, with one arm across the torso and the other hand reaching forward/down. The frame does not establish a count cue or clap."
+          ],
+          "unknowns": [
+            "whether these are teaching poses or part of a routine",
+            "foot contacts, lead/support side and weight transfer",
+            "how these samples relate to either publisher-labelled count routine"
+          ]
+        },
+        {
+          "fromSeconds": 70,
+          "toSeconds": 105,
+          "visualObservations": [
+            "Around 1:10–1:15 the instructor shows a narrow/crossed-looking placement and then a diagonal torso lean with one arm reaching outward and the opposite arm bent high beside the head; the exact foot contact is unclear.",
+            "Around 1:21–1:30 he changes between a front-facing narrow/crossed-looking stance and side/back-facing poses with an arm raised or near the face and the feet offset. These are sampled poses, not a verified movement order."
+          ],
+          "unknowns": [
+            "which foot crosses, leads or supports",
+            "turn direction, landing order and travel path",
+            "count, beat and hand-to-foot synchronization"
+          ]
+        },
+        {
+          "fromSeconds": 96,
+          "toSeconds": 165,
+          "visualObservations": [
+            "Samples around 1:36–1:45 show the solo instructor turning through profile/back views and shifting between narrow/crossed-looking foot positions. His arms move between low or side reaches and positions near the chest; the samples do not resolve continuous timing.",
+            "Around 2:20–2:35 he gathers or crosses his hands near the torso, raises the arms overhead in a side-facing stance, then reaches outward with narrow/crossed-looking feet.",
+            "At about 2:45 a low diagonal bend/reach toward the leg or floor is visible. The bent/support leg and direction are not reliably identified."
+          ],
+          "unknowns": [
+            "whether the hand shapes belong to the same phrase as the foot placements",
+            "whether any hands-together shape is a clap",
+            "the order, side assignment, count labels and beat placement"
+          ]
+        },
+        {
+          "fromSeconds": 172,
+          "toSeconds": 182,
+          "visualObservations": [
+            "Around 2:52 the edit changes to four women moving along open circular paths around a central pillar. The sampled views show changing front/profile/back orientations and arms opening sideways or curving overhead; at about 3:02 one performer has a lifted-knee shape.",
+            "The four performers are not captured in identical poses in every still, and skirts and camera distance obscure foot contacts. This is evidence of a group/circle demonstration, not a complete synchronized step sequence."
+          ],
+          "unknowns": [
+            "whether this group passage is the 12-count or 14-count routine",
+            "individual dancers’ foot contacts, lead sides and landing sequence",
+            "circle direction, partner relations and beat synchronization"
+          ]
+        },
+        {
+          "fromSeconds": 210,
+          "toSeconds": 280,
+          "visualObservations": [
+            "By about 3:30 the video has returned to the solo instructor, with a narrow/crossed-looking stance and hands near the chest. Around 4:05 he is again in a teaching/demo setup.",
+            "Around 4:40 he shows crossed-looking feet and hands gathered near the chest. Contact between the hands is not confirmed as a clap."
+          ],
+          "unknowns": [
+            "whether the instructor is explaining, marking or dancing at each sample",
+            "whether these positions repeat either earlier routine",
+            "foot contact, clap sound, beat placement and routine boundary"
+          ]
+        },
+        {
+          "fromSeconds": 315,
+          "toSeconds": 322,
+          "visualObservations": [
+            "Around 5:15–5:22 he moves in profile and then faces more toward camera with a raised-knee/stepping shape and hands near the chest; a nearby sample shows a side lean with one arm high and the other lower. The frames do not reveal a reliable landing or side sequence."
+          ],
+          "unknowns": [
+            "which leg is raised or supporting and how the step lands",
+            "whether this is a repeated phrase, a transition or a separate demonstration",
+            "whether the arm changes align to foot contacts or musical beats"
+          ]
+        }
+      ],
+      "visualSamples": [
+        {
+          "atVideoSeconds": 2,
+          "observation": "Profile/back-facing solo pose with asymmetrically high/outward arms and feet apart or stepping; foot landing and transition are unclear."
+        },
+        {
+          "atVideoSeconds": 35,
+          "observation": "Front-facing narrow stance with one arm across the torso and the opposite hand forward/low."
+        },
+        {
+          "atVideoSeconds": 70,
+          "observation": "Narrow/crossed-looking foot placement; the planted/support foot is unclear."
+        },
+        {
+          "atVideoSeconds": 75,
+          "observation": "Diagonal torso lean with one arm reaching outward and the other bent near the head; leg contact is unresolved."
+        },
+        {
+          "atVideoSeconds": 81,
+          "observation": "Front-facing narrow/crossed-looking stance before the instructor turns away; exact foot order is unknown."
+        },
+        {
+          "atVideoSeconds": 90,
+          "observation": "Side/back-facing pose with one arm raised or near the face and feet offset."
+        },
+        {
+          "atVideoSeconds": 96,
+          "observation": "Profile movement with arms near chest height and a narrow/crossed-looking stance."
+        },
+        {
+          "atVideoSeconds": 105,
+          "observation": "The instructor continues a turning passage; the still does not identify lead foot, turn direction or landing."
+        },
+        {
+          "atVideoSeconds": 140,
+          "observation": "Hands gather/cross near the torso; foot action and whether this is a clap are not established."
+        },
+        {
+          "atVideoSeconds": 155,
+          "observation": "Side-facing overhead arm shape followed by an outward reach with narrow/crossed-looking feet."
+        },
+        {
+          "atVideoSeconds": 165,
+          "observation": "Low diagonal bend/reach toward the leg or floor; support leg and direction are uncertain."
+        },
+        {
+          "atVideoSeconds": 172,
+          "observation": "Four women move around a central pillar in a loose circular path, with different orientations and arm lines."
+        },
+        {
+          "atVideoSeconds": 182,
+          "observation": "Group sample includes open/curved overhead arms and a raised-knee shape; skirts obscure lower-leg contacts."
+        },
+        {
+          "atVideoSeconds": 210,
+          "observation": "The edit has returned to the solo instructor in a narrow/crossed-looking stance with hands near the chest."
+        },
+        {
+          "atVideoSeconds": 245,
+          "observation": "Teaching/demo setup with the instructor facing forward; the frame does not show a named movement count."
+        },
+        {
+          "atVideoSeconds": 280,
+          "observation": "Crossed-looking feet and hands gathered near the chest; a clap is not confirmed."
+        },
+        {
+          "atVideoSeconds": 315,
+          "observation": "Profile stepping with hands near the chest; foot contact is unclear."
+        },
+        {
+          "atVideoSeconds": 320,
+          "observation": "Front/side-facing raised-knee shape followed by a high/low arm contrast; raised/support side and landing are not established."
+        }
+      ],
+      "coverage": "Sparse visual review at half speed with samples distributed from 0:02 through 5:22 of the 5:50 lesson. The edit moves between solo teaching/demonstration, a group passage around a pillar, and solo footage again. No captions, chapter list or segment timestamps were available, and the samples do not locate the boundary between the publisher-labelled 12-count and 14-count routines.",
+      "phraseLengthBeats": null,
+      "animationStatus": "sampled-not-scoreable",
+      "animationScore": null,
+      "openQuestions": [
+        "locate the exact 12-count and 14-count sections from teacher speech or additional source evidence",
+        "transcribe each complete routine in order at normal speed and identify the source's movement names",
+        "verify foot contacts, lead/support sides, travel, facing changes and landings",
+        "verify whether hands-together poses are claps and establish any clap placement",
+        "establish a song beat grid and foot/hand/body synchronization without equating the count labels to beats",
+        "obtain Garba practitioner review before creating a source-faithful animation score"
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Source-specific Garba tutorial reviews
 
-This notebook records what can be verified in individual lessons before any movement is turned into a character animation. The companion [`routine-reviews.json`](../../data/dance/routine-reviews.json) keeps the observations machine-readable and links each lesson to a known catalogue record where possible.
+This notebook records what can be verified in individual lessons before any movement is turned into a character animation. The companion [`routine-reviews.json`](../../data/dance/routine-reviews.json) keeps the observations machine-readable and links each review to a known catalogue record where possible; a shared video may instead name related candidate records when its sections cannot be mapped individually.
 
 ## Review rules
 
@@ -72,6 +72,16 @@ At 6:13 and 6:54 the instructor turns to or addresses the line with hand gesture
 **Useful for motion prototyping:** preserve the observed wide, flexed stance; diagonal torso hinge; asymmetric high/low arm reach; later side/back-facing view with arms projecting forward; and the distinction between instruction, group demonstration and end-screen. These are visual candidates from this instructor’s lesson, not a complete step score or canonical Garba vocabulary. The video does not visibly enumerate fourteen distinct movements with reliable count labels.
 
 **Readiness:** not scoreable. Exact foot contacts, left/right assignment, clap or prop contacts, turn direction, transitions, phrase boundaries, beat positions and hand/foot synchronization remain unknown. Keep `phraseLengthBeats` and `animationScore` null. A normal-speed close review, a verified beat grid and practitioner review are needed before creating a source-faithful score. This research record does not grant permission to display or redistribute the video; stage-screen use requires rights-holder approval for the intended public display and soundtrack.
+
+### Dance FreaX / Nishant Nair: “2017 Garba Dance Tutorial #2 | 12 step & 14 step”
+
+[Open the lesson](https://www.youtube.com/watch?v=mGzRifZwSMA). On 3 October 2026, the YouTube page showed 5:50, 13,029 views, 242 likes and 1.35M channel subscribers. These are a dated platform snapshot, not a measure of teaching quality. The description says the lesson shows two Garba routines of “12 counts and 14 counts” with technique and footwork. It does not give section timestamps or list the movements, and captions were unavailable.
+
+I sampled the video at half speed from the opening through 5:22. The solo instructor shows narrow or crossed-looking foot positions, profile/back turns, short reaches, a diagonal lean, hands moving near the chest, an overhead arm shape and low bends toward the leg or floor. Around 2:52 the edit changes to four women moving along open circular paths around a central pillar. Their sampled poses include changing front/profile/back orientations, arms opening or curving overhead and a raised-knee shape. The edit returns to solo instructor footage by about 3:30, with later samples around 4:05–5:22 mixing teaching/demo framing with crossed-looking stances, hands gathered near the chest and a raised-knee/stepping shape.
+
+These are source-observed motifs that may guide later pose research: narrow/crossed-looking placements, turning and diagonal travel, high/low arm contrast, curved or raised arm lines, low reaches, knee-lift shapes and group travel around a centre. Still samples do not establish the movement order, whether the group passage is one of the two labelled routines, or which section is the 12-count versus 14-count routine. They also do not resolve lead/support foot, heel/toe contact, landings, turn direction, claps, the beat grid or how arms synchronize to footwork. The JSON review links both existing Dance FreaX candidate records because the available source evidence does not justify assigning the observed sections to either one individually.
+
+**Readiness:** not scoreable. The advertised counts remain teacher/source labels, not musical phrase lengths. Keep `phraseLengthBeats` and `animationScore` null until each complete routine is identified, transcribed against verified beats and reviewed by a Garba practitioner. This review does not grant permission to display or redistribute the lesson; stage-screen use requires approval from the rights holder for the intended public display and soundtrack.
 
 ## Next review pass
 
