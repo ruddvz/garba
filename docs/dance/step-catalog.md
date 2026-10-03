@@ -84,6 +84,8 @@ The [video](https://www.youtube.com/watch?v=Tx1L6AkfoGs) is published by the [ve
 
 The complete 3:17 upload was reviewed at normal speed. The table records one timestamped pose per numbered overlay; it is a visual index across all 21 examples, not a full event-by-event movement transcription.
 
+I also checked the transition at 1:45–1:46 at 0.5× playback. After the side-facing pose for example 13, the dancer returns to a front-facing neutral stance with feet together and arms lowering before the next numbered example. The reset is visible, but its count and phrase relation are not.
+
 The following table logs one sampled pose under each visible number. Directional descriptions use screen-left/right where body laterality cannot be confirmed. These pose snapshots help distinguish visual motifs, but do not give enough information to animate a complete, beat-accurate step.
 
 | Overlay | Sample | What is visible in the sampled frame |

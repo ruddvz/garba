@@ -181,7 +181,7 @@
       "sourceIds": ["AKSHAY-BHOSALE-GARBA-LESSONS"],
       "visualReview": {
         "status": "partial",
-        "sourceTimesSeconds": [15, 25, 30, 40, 45, 50, 60, 65, 75, 85, 90, 100, 105, 115, 125, 135, 145, 160, 170, 180, 185],
+        "sourceTimesSeconds": [15, 25, 30, 40, 45, 50, 60, 65, 75, 85, 90, 100, 105, 106, 115, 125, 135, 145, 160, 170, 180, 185],
         "observations": [
           {"sourceTimeSeconds": 15, "view": "full-body solo example 1", "note": "Facing the camera, the dancer balances on one leg with the other foot lifted/crossed in front; both arms open high to either side with soft elbows. The frame does not show the preceding footfall or a clap."},
           {"sourceTimeSeconds": 25, "view": "full-body solo example 2", "note": "The dancer faces mostly forward in a wide stance with the arms extended in opposite directions around shoulder height. The frame is a pose, not a footfall sequence."},
@@ -196,6 +196,7 @@
           {"sourceTimeSeconds": 90, "view": "full-body solo example 11", "note": "A wide, bent-knee stance with one arm raised and bent above shoulder level and the other hand near the chest. No clap contact is visible."},
           {"sourceTimeSeconds": 100, "view": "full-body solo example 12", "note": "One knee lifts as the dancer brings the arms across the upper body near the face, with one forearm passing in front. The still does not establish the hand contact, movement direction, preceding step or landing."},
           {"sourceTimeSeconds": 105, "view": "full-body solo example 13", "note": "The dancer faces side-on with the trailing leg extended behind and both hands raised together near the head. The still does not establish a clap, turn pathway or footfall sequence."},
+          {"sourceTimeSeconds": 106, "view": "full-body transition; no number overlay visible", "note": "Checked at 0.5× immediately after the 1:45 side-on pose: the dancer returns to a front-facing neutral stance with feet together and arms lowering. This reset is visible, but its count, foot sequence and phrase relation are unknown."},
           {"sourceTimeSeconds": 115, "view": "full-body solo example 14", "note": "The dancer faces mostly forward in a narrow/offset stance; one arm is raised while the other opens to the side. The frame does not show the steps into or out of this pose."},
           {"sourceTimeSeconds": 125, "view": "full-body solo example 15", "note": "The dancer faces side-on with knees softly bent and hands gathered together in front of the chest. Contact is not verified, so this is not labeled a clap."},
           {"sourceTimeSeconds": 135, "view": "full-body solo example 16", "note": "The dancer faces away from the camera with feet offset and both hands at the hips. The single frame does not establish the turn direction or pathway."},
@@ -205,7 +206,7 @@
           {"sourceTimeSeconds": 180, "view": "full-body solo example 20", "note": "The mostly forward-facing dancer lifts one knee while both elbows bend and the hands rise near the head. The frame does not reveal the entry, timing or landing."},
           {"sourceTimeSeconds": 185, "view": "full-body solo example 21", "note": "The dancer holds a wide stance with knees bent and arms low beside the body. The frame does not establish a side-opening step, phrase ending or count."}
         ],
-        "limitations": ["The complete 3:17 upload was reviewed at normal speed; this record retains one representative timestamped pose for each of the 21 numbered overlays, not a continuous event-by-event movement transcription.", "The upload provides no captions or spoken movement instructions and gives no individual step names.", "A frame cannot establish lead/support foot, footfall order, clap contact, turn direction, repetition, circle travel or phrase boundaries.", "The musical track is identified as Chogada, but no recording-specific beat grid or movement-to-beat alignment was measured.", "No practitioner review has confirmed terminology, regional scope or whether the examples are distinct traditional patterns versus choreography variations."]
+        "limitations": ["The complete 3:17 upload was reviewed at normal speed; one representative timestamped pose is retained for each of the 21 numbered overlays, with one additional reset check at 0.5×, not a continuous event-by-event movement transcription.", "The upload provides no captions or spoken movement instructions and gives no individual step names.", "A frame cannot establish lead/support foot, footfall order, clap contact, turn direction, repetition, circle travel or phrase boundaries.", "The musical track is identified as Chogada, but no recording-specific beat grid or movement-to-beat alignment was measured.", "No practitioner review has confirmed terminology, regional scope or whether the examples are distinct traditional patterns versus choreography variations."]
       },
       "animationStatus": "complete normal-speed viewing with one representative pose documented for each numbered example; no event sequence or beat score",
       "animationScore": null
