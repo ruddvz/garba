@@ -10,16 +10,17 @@
 
 ### 1.1 What is Gujarati Folk & Lokgeet?
 Lokgeet (લોકગીત) encompasses the deep oral, regional, and seasonal musical folklore of Gujarat. Spanning Saurashtra (Kathiyawad), Kutch, North Gujarat, and the tribal belts, Lokgeet is fundamentally story-driven. It includes:
-- **Dayro (ડાયરો):** Communal gatherings of story-singers (*Charans*, *Barots*, and *Gadhvis*) narrating tales of valor, chivalry, renunciation, and divine grace.
 - **Rasa & Duha-Chhand:** Lyrical poetry celebrating nature, monsoon rain (*Megh*), separation of lovers (*Viraha*), and historical heroes.
 - **Folk Ballads:** Songs of bridal departure (*Kanyaviday*), seasonal harvests, and village humor.
 
 ### 1.2 Invariants: What belongs here vs. elsewhere
-- **MUST have:** Sourced regional folklore, traditional Dayro narrative, or acoustic Kathiyawadi/Kutchi acoustic instrumentation.
+- **MUST have:** Sourced regional folklore or acoustic Kathiyawadi/Kutchi instrumentation.
 - **DO NOT mix with:**
   - Fast-paced commercial dance tracks (`fusion`, `dj-remix`).
   - Strict circular 3-clap dance hymns (`tran-taali`).
   - Couplet call-and-response refrain (`sanedo`).
+
+Dayro/Dayra programmes have their own taxonomy ID (`dayro`) and directory entry in [`10-dayro.md`](10-dayro.md). They share the Folk visual world but are not synonyms for the broader Folk / Lokgeet song category.
 
 ---
 

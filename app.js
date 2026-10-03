@@ -1100,7 +1100,7 @@ function selectGenre(genreId) {
 }
 
 function playerSearchRecord(song) {
-  return {
+  const record = {
     id: song.id,
     title: [song.title, song.displayTitle].filter(Boolean),
     titleAliases: song.aliases,
@@ -1114,6 +1114,10 @@ function playerSearchRecord(song) {
     ],
     song,
   };
+  if (record.taxonomyTerms.some((term) => String(term || '').toLowerCase() === 'dayro')) {
+    record.taxonomyTerms.push('dayra', 'dayaro', 'lok dayro', 'ડાયરો', 'દાયરો', 'ડાયરા', 'દાયરા');
+  }
+  return record;
 }
 
 function rankPlayerSongs(songs, query) {
