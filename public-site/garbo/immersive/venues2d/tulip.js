@@ -15,8 +15,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).tulip = {
     label: 'Tulip Grove',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // Open air among trees: the leaves soften everything, a short, dark tail
     sound: {
       desc: 'A garden clearing under old trees hung with woven lanterns. The leaves soften the sound; a short, dark tail.',

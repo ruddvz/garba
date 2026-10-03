@@ -122,7 +122,9 @@ function violet(kit, root, tier, TH, r, data) {
   });
   tips.forEach((p, i) => { if (i % (phone ? 4 : 2)) return; if (Math.hypot(p[0], p[2]) < VG.floor + 1) return; const drop = 0.4 + (i % 4) * 0.3; kit.wires.line(p, [p[0], p[1] - drop, p[2]]); cone(p[0], p[1] - drop, p[2], 0.75 + (i % 3) * 0.12); });
   const leafMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: leafTexture(['#2a1e4a', '#3a2a5e', '#24402a', '#4a3a6a', '#1e3a24'], 19), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.75 }), 0.24, 'architectural');
-  woods.build(root, new THREE.MeshStandardMaterial({ map: barkTexture(15, ['#3a3040', '#5a4a5e']), roughness: 0.9 }), leafMat, ['#c8b0ff', '#ffd8a0']);
+  // the bark itself holds the violet light washed up it (zip-016): trunk and boughs glow, the grain showing through
+  const barkM = kit.selfLit(new THREE.MeshStandardMaterial({ map: barkTexture(15, ['#4a3a58', '#6a5a7a']), roughness: 0.9 }), 0.42, 'architectural'); barkM.emissive.set('#9a6aff');
+  woods.build(root, barkM, leafMat, ['#c8b0ff', '#ffd8a0']);
 
   /* the tulip lamps: each bloom hangs open side down from a short green stem, lit from within in its colour */
   const bloom = tulipGeometry(), hung = bloom.clone(); hung.rotateX(Math.PI); hung.translate(0, -0.06, 0);
@@ -160,7 +162,7 @@ function violet(kit, root, tier, TH, r, data) {
   }
 
   /* the woven lounge pods among the trees: a round sofa under a dome of rattan, open towards the floor, lit within */
-  const podMat = kit.litMap(weaveTexture(), 0.45, 'practical', { alphaTest: 0.35, side: THREE.DoubleSide, transparent: false });
+  const podMat = kit.litMap(weaveTexture(), 0.85, 'practical', { alphaTest: 0.35, side: THREE.DoubleSide, transparent: false });
   VG.pods.forEach(([x, z]) => {
     const face = Math.atan2(-x, -z), dome = new THREE.Mesh(new THREE.SphereGeometry(2.3, 24, 12, face + 0.9, TAU - 1.8, 0, Math.PI / 2), podMat);
     dome.scale.y = 1.15; dome.position.set(x, 0, z); root.add(dome);
