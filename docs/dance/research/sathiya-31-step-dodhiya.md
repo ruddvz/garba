@@ -20,12 +20,13 @@ treated as 31 beats, 31 bars, or a confirmed complete inventory of 31 unique
 traditional steps.
 
 The video was checked in the YouTube player at normal speed using sparse
-checkpoints distributed over its full timeline. The checkpoint log was written
-to [research issue #2257](https://github.com/ruddvz/garba/issues/2257). Some
-rapid seeks rendered a frame a few seconds behind the displayed seek time, so
-times below are approximate ranges. The pass is not frame-by-frame: it cannot
-establish every foot contact, the complete order, left/right lead, clap contact,
-or beat placement.
+checkpoints distributed over its full timeline, with denser follow-up samples at
+3:25–5:56, 8:32–10:25, 11:17–13:52, 15:02–15:07, 16:17–16:22 and
+17:27–18:37. The checkpoint log was written to [research issue #2257](https://github.com/ruddvz/garba/issues/2257).
+Some rapid seeks rendered a frame a few seconds behind the displayed seek time,
+so times below are approximate ranges. This is still not a frame-by-frame pass:
+it cannot establish every foot contact, the complete order, left/right lead,
+clap contact, or beat placement.
 
 ## Timestamped visual observations
 
@@ -35,15 +36,19 @@ facts stay unknown.
 | Approx. video time | Directly observed | Still unverified |
 | --- | --- | --- |
 | 0:02–1:30 | Instructor introduces/explains; participants mostly stand in a line. | Spoken labels/counts and the exact start of the first movement. |
+| Around 3:31–5:38 | At 3:31 dancers face away and travel in a line with raised/open arm shapes. Around 4:31 the group faces front in an asymmetric pose with one arm overhead and the other bent near the torso, then the instructor returns to explaining and participants move/reset by 4:59–5:38. These are separated snapshots, not a confirmed continuous phrase. | Whether these snapshots show the same step or different steps, exact arm laterality/shape, foot order, path, count, repeat structure, and beat placement. |
 | 5:54–6:15 | Group briefly moves together with soft knee flexion and side-to-side weight shifts; arms sweep upward, then the view returns to a held/reset pose. | Lead foot, whether the arm sweep repeats each cycle, count, and beat placement. |
 | 7:17–7:47 | Wide base and lateral step/lunge; arms open sideways and move between higher and lower positions. Participants intermittently mirror the instructor; coaching pauses occur. | Direction labels, full foot pattern, movement boundary, and count. |
 | 7:57–8:17 | One hand appears raised while the opposite forearm crosses the torso; instructor returns to explanation/reset. | Hand shape, laterality, whether the feet cross or only narrow into the pose. |
-| Around 8:47–10:07 | A knee-lift/step-under shape appears with a raised arm; later checkpoints show the instructor speaking and the group waiting. | Full repeated phrase, alternate side, count, and any source-named step. |
-| 11:37–12:32 | Short forward/crossing-looking travel with bent forearms is followed by a wide stance with arms roughly at shoulder height. | Foot order and whether the open-arm pose is a hold or transition. |
-| 13:17–13:52 | Low lateral lunge with one arm diagonally high and the other low, then an upright explanation pose. | Travel direction, full cycle, beat placement, and variant boundary. |
-| 15:02–15:07 | Group leans back/upward into a high reach with bent knees, then recovers toward a short forward step; some dancers hold hands near the waist. | Whether the lean is part of the step or a styling accent; foot contacts and count. |
-| Around 16:17 | Narrow/crossed-looking foot position with a chest-height, clap-like hand gesture. | Whether hands make contact or a clap lands on a musical beat; sequence before/after. |
-| 17:27–18:37 | Group demonstrates traveling side movement with bent knees and curved/high-low arm shapes, then pauses for coaching. | Continuous pattern, count, and direction around the circle. |
+| Around 8:32–9:02 | The held/demo shape has one arm overhead and the opposite forearm across the torso. In normal-speed playback around 8:48, the line moves forward on a low diagonal with bent knees and a crossing-looking step; arms sweep down/across the torso. By 9:02 the instructor turns back to explain while the line resets. | Exact foot order, lead foot, whether the knees lift or the feet cross, hand contact, count, repetition, and any source-named step. |
+| Around 9:43 | Participants stand in line while the instructor speaks and gestures; no group dance phrase is underway in this sample. | Whether a distinct phrase begins between this sample and 10:18. |
+| Around 10:18–10:25 | In a separate brief sample, dancers face side/back as they travel with flexed knees and a low forward arm reach; by 10:25 most raise both hands into a rounded/meeting shape over the head. The group changes facing during the passage. | Exact turn direction and foot sequence; whether the raised hands touch or clap; count, repetition, and phrase boundary. |
+| Around 11:17–11:42 | A high/low arm shape and crossing-looking feet are visible around 11:17–11:37; by 11:42 the instructor is speaking and participants are standing/resetting. | Whether the earlier shape belongs to a complete repeated phrase; foot order, count, and beat placement. |
+| Around 12:32 | Group holds or passes through a wide stance with both arms extended sideways around shoulder height. | Whether this is a distinct step, a transition, or the end of a phrase. |
+| 13:17–13:52 | Around 13:17 dancers stand wide with hands near the chest; by 13:22–13:27 they widen and lower/open the arms. Around 13:32 the group turns away in a wide base with forearms near the chest; by 13:52 the instructor is explaining and the group has reset. | Whether the samples belong to one phrase, turn direction, foot sequence, beat placement, and variant boundary. |
+| 15:02–15:07 | At 15:02 the group bends the knees and leans back/upward into an overhead reach, with the other arm low on a diagonal. By 15:07 the instructor is explaining. | Foot contacts, count, whether the reach is a step or styling accent, and phrase boundary. |
+| 16:17–16:22 | At 16:17 the instructor gestures near the chest while the group stands; at 16:22 the instructor hinges forward with hands together near the lower torso as participants mostly watch. | Whether this is only instruction or includes a performed movement; no dance count, hand contact, or clap is established. |
+| 17:27–18:37 | At 17:27 the line travels along a curved floor boundary with flexed knees, one arm rounded overhead and the other low/diagonal; a trailing foot appears lifted. By 18:37 the instructor is explaining and participants stand/reset. | Foot sequence, travel direction around the circle, count, repeat structure, and phrase boundary. |
 | 19:47–20:02 | Closing instruction/end card; no new phrase established in these checkpoints. | Whether a recap occurs outside the sampled frames. |
 
 ## Provisional motion motifs
@@ -53,15 +58,18 @@ labels:
 
 - wide lateral lunge with arms opening;
 - high/low or cross-body arm sweep;
-- knee lift with raised arm;
-- forward/crossing travel with chest-level hands;
+- crossing-looking travel with a raised arm and low diagonal sweep;
+- side/back travel with a low forward reach and an overhead rounded hand shape;
 - back lean with upward reach;
 - traveling side step with curved arms.
 
 The footage alternates instruction, held poses, brief group practice and reset.
 Do not animate the complete 20-minute upload as one continuous routine. The
 motifs are pose/movement research leads only; this pass does not establish how
-they repeat or connect.
+they repeat or connect. The 8:48 crossing travel and 10:18–10:25 side/back
+travel with an overhead hand shape are separate observed passages; the
+available samples do not establish whether either is one of the title's
+numbered steps.
 
 ## Counted routines and names: keep source labels attached
 
