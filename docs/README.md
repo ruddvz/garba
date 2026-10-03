@@ -5,6 +5,7 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 ## Catalogue
 
 - [`catalogue/status.md`](catalogue/status.md): current catalogue coverage and known gaps
+- [`catalogue/priyanka-kher-garbo-sync-2026-10-02.md`](catalogue/priyanka-kher-garbo-sync-2026-10-02.md): source-backed sync of Priyanka Kher Garbo 2.0/3.0/4.0 into Nonstop discovery
 - [`catalogue/schema.md`](catalogue/schema.md): canonical song/release schema
 - [`catalogue/rights.md`](catalogue/rights.md): source, licensing and redistribution policy
 - [`catalogue/content-sources.md`](catalogue/content-sources.md): source guidance
