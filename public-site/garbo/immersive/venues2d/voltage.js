@@ -19,8 +19,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).voltage = {
     label: 'Voltage Lab',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // A big hall of brick and steel: a long bright reverb, a slap off the far wall, the roof's metal ringing a little
     sound: {
       desc: 'A warehouse of brick and steel. A long, bright reverb and a slap back off the far wall.',
