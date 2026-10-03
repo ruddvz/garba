@@ -1,0 +1,385 @@
+{
+  "updated": "2026-10-03",
+  "sets": [
+    {
+      "id": "set-batch22-he-odhaji-aishwarya-majmudar-4mkv",
+      "title": "He Odhaji | હે ઓધાજી મારા વ્હાલાને | Singer: Aishwarya Majmudar | Music: Gaurang Vyas",
+      "displayTitle": "He Odhaji · Aishwarya Majmudar",
+      "year": 2017,
+      "artists": [
+        "Aishwarya Majmudar"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Gujarati Folk",
+        "Traditional Gujarati Folk",
+        "Aishwarya Majmudar",
+        "Gaurang Vyas"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "4mKvTgpcrLI",
+        "url": "https://www.youtube.com/watch?v=4mKvTgpcrLI",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 437,
+      "sourceRuntimeDisplay": "7:17",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sur Sagar Music published this track on 2017-02-14. The video title credits singer Aishwarya Majmudar and music by Gaurang Vyas; Aishwarya Majmudar's official discography classifies it as a traditional Gujarati folk masterpiece. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 437 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-lado-mari-ladakvayi-aishwarya-majmudar-edp",
+      "title": "Lado Mari Ladakvayi",
+      "displayTitle": "Lado Mari Ladakvayi · Gujarati Lagna Geet",
+      "year": 2024,
+      "artists": [
+        "Aishwarya Majmudar",
+        "Gaurav Dhola",
+        "DJ Kwid",
+        "Algaar"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Wedding Song",
+        "Aishwarya Majmudar",
+        "Festive Single"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "official-streaming-catalogue",
+      "source": {
+        "provider": "youtube",
+        "videoId": "edpPjdgWF5w",
+        "url": "https://www.youtube.com/watch?v=edpPjdgWF5w",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 243,
+      "sourceRuntimeDisplay": "4:03",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Aishwarya Majmudar - Topic published this official Super Cassettes release on 2024-03-10. YouTube's release metadata credits Aishwarya Majmudar, Gaurav Dhola, DJ Kwid and Algaar; ℗ Super Cassettes Industries. Aishwarya Majmudar's official discography identifies it as a Gujarati Lagna Geet. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 243 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-honsh-thi-vadhavi-aishwarya-majmudar-5brz",
+      "title": "Honsh Thi Vadhavi",
+      "displayTitle": "Honsh Thi Vadhavi · Gujarati Lagna Geet",
+      "year": 2018,
+      "artists": [
+        "Aishwarya Majmudar"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Wedding Song",
+        "Traditional Lyrics",
+        "Aishwarya Majmudar",
+        "Brij Joshi"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "official-streaming-catalogue",
+      "source": {
+        "provider": "youtube",
+        "videoId": "5_bRz-37M8c",
+        "url": "https://www.youtube.com/watch?v=5_bRz-37M8c",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 294,
+      "sourceRuntimeDisplay": "4:54",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Aishwarya Majmudar - Topic published this Sur Sagar release on 2018-08-16. The release credits Aishwarya Majmudar, traditional lyrics, composer Brij Joshi and producer Sur Sagar Music; it appears on Lagna Geet - Gujarati Wedding Songs. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 294 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-manglashtak-sur-sagar-0rz",
+      "title": "Manglashtak (Gujarati Lagna Geet) | મંગળાષ્ટક (લગ્નગીત) | Music: Brij Joshi",
+      "displayTitle": "Manglashtak · Gujarati Lagna Geet",
+      "year": 2017,
+      "artists": [
+        "Chorus"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Wedding Song",
+        "Gujarati Chorus",
+        "Brij Joshi",
+        "Sur Sagar"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "0_RzPxUTkfs",
+        "url": "https://www.youtube.com/watch?v=0_RzPxUTkfs",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 342,
+      "sourceRuntimeDisplay": "5:42",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sur Sagar Music published this Gujarati Lagna Geet on 2017-10-10. The label description credits chorus vocals, music by Brij Joshi, and Sur Sagar for publishing. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 342 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-sita-ne-toran-ram-sur-sagar-cuow",
+      "title": "Sita Ne Toran Ram (Gujarati Lagna Geet) | સીતાને તોરણ રામ (લગ્નગીત) | Garima Khiste | Brij Joshi",
+      "displayTitle": "Sita Ne Toran Ram · Gujarati Lagna Geet",
+      "year": 2017,
+      "artists": [
+        "Garima Khiste"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Wedding Song",
+        "Traditional Lyrics",
+        "Garima Khiste",
+        "Brij Joshi"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "CuowTLwDA3g",
+        "url": "https://www.youtube.com/watch?v=CuowTLwDA3g",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 282,
+      "sourceRuntimeDisplay": "4:42",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sur Sagar Music published this Gujarati Lagna Geet on 2017-10-10. The label description credits singer Garima Khiste, composer Brij Joshi and Sur Sagar for publishing; traditional lyrics are corroborated by the Gujarati lyric listing for this song. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 282 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-pahelu-re-pahelu-lagna-geet-chorus-sojug",
+      "title": "Pahelu Re Pahelu",
+      "displayTitle": "Pahelu Re Pahelu · Gujarati Lagna Geet",
+      "year": 2018,
+      "artists": [
+        "Lagna Geet Chorus"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Wedding Song",
+        "Lagna Geet Chorus",
+        "Sur Sagar"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "official-streaming-catalogue",
+      "source": {
+        "provider": "youtube",
+        "videoId": "sOjUG9PCoA0",
+        "url": "https://www.youtube.com/watch?v=sOjUG9PCoA0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 327,
+      "sourceRuntimeDisplay": "5:27",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Lagna Geet Chorus - Topic published this individual Sur Sagar track on 2018-08-16 from Lagna Geet - Gujarati Wedding Songs. Kept narrowly as a standalone Gujarati wedding/Lagna Geet; no further performer or production credits are inferred. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 327 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-mangal-phera-geeta-rabari-tbak",
+      "title": "Mangal Phera (મંગળ ફેરા) | Geeta Rabari | New Gujarati Wedding Song 2025 | Official Video",
+      "displayTitle": "Mangal Phera · Geeta Rabari",
+      "year": 2025,
+      "artists": [
+        "Geeta Rabari"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Lagna Geet",
+        "Gujarati Traditional Wedding Song",
+        "Geeta Rabari",
+        "Maulik Mehta"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "tbAKXFSKUa4",
+        "url": "https://www.youtube.com/watch?v=tbAKXFSKUa4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 327,
+      "sourceRuntimeDisplay": "5:27",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "GeetaBen Rabari's Official Artist Channel published Mangal Phera on 2025-12-22. The artist describes it as a traditional Gujarati wedding song/Lagna Geet and credits singer Geeta Rabari, music by Maulik Mehta and traditional lyrics. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 327 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-tari-dholi-dhaja-farke-herry-nakum-l2zy",
+      "title": "Tari Dholi Dhaja Farke | Herry Nakum | New Gujarati Song 2025 | (Official Music Video)",
+      "displayTitle": "Tari Dholi Dhaja Farke · Herry Nakum",
+      "year": 2025,
+      "artists": [
+        "Herry Nakum"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk"
+      ],
+      "tags": [
+        "Gujarati Folk",
+        "Modern Folk Reimagining",
+        "Maniyaro",
+        "Herry Nakum",
+        "HN Production House"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "official-artist-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "l2zyC3Kpz5M",
+        "url": "https://www.youtube.com/watch?v=l2zyC3Kpz5M",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 249,
+      "sourceRuntimeDisplay": "4:09",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Herry Nakum's Official Artist Channel published this source on 2025-05-30 and describes it as a Gujarati folk song reimagined with modern melodies and rhythms. Credits: singer Herry Nakum; music Darshan-Pinak; benjo Ranjit Gohil; chorus Priyanshi Kumbhani, Prachi Shah, Narendra Maniya and Sanket Vaishnav; production HN Production House. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 249 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-goral-re-gorande-gopal-rinku-jigar-lobt",
+      "title": "Goral Re Gorande Mari Re - 4K Video - Gopal Bharwad - Rinku Bharwad - Jigar Studio",
+      "displayTitle": "Goral Re Gorande Mari Re · Gopal & Rinku Bharwad",
+      "year": 2026,
+      "artists": [
+        "Gopal Bharwad",
+        "Rinku Bharwad"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Gujarati Folk",
+        "Folk Duet",
+        "Gopal Bharwad",
+        "Rinku Bharwad",
+        "Jigar Studio"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "LobtldvBcVY",
+        "url": "https://www.youtube.com/watch?v=LobtldvBcVY",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 506,
+      "sourceRuntimeDisplay": "8:26",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Jigar Studio published this song on 2026-09-13; its official release page describes it as a Gujarati folk duet rooted in pastoral tradition. Credits: vocals Gopal Bharwad and Rinku Bharwad; composition/music Vinit Barochiya; lyrics Gopal Rathod; label Jigar Studio. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 506 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-batch22-garbe-ghumishu-parth-aishwarya-mggc",
+      "title": "Garbe Ghumishu | Parth Doshi | Aishwarya Majmudar (Lyrical Garba Video)",
+      "displayTitle": "Garbe Ghumishu · Jalso Garba",
+      "year": 2018,
+      "artists": [
+        "Parth Doshi",
+        "Aishwarya Majmudar"
+      ],
+      "categories": [
+        "traditional-garba",
+        "folk-lokgeet"
+      ],
+      "genres": [
+        "folk",
+        "traditional"
+      ],
+      "tags": [
+        "Garba",
+        "Traditional Garba",
+        "Gujarati Folk Dance",
+        "Parth Doshi",
+        "Aishwarya Majmudar",
+        "Tejas Dave"
+      ],
+      "setType": "single-song-performance",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "mGGc109oY1g",
+        "url": "https://www.youtube.com/watch?v=mGGc109oY1g",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 340,
+      "sourceRuntimeDisplay": "5:40",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Jalso Gujarati Music App published this standalone Garba on 2018-09-27. Jalso's description credits singers Parth Doshi and Aishwarya Majmudar, composition by Parth Doshi and lyrics by Tejas Dave. Classified specifically as Garba/folk-dance crossover, not generic folk. Checked 2026-10-03: YouTube watch returned HTTP 200 with playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter markers are added; play the full source from 0 through 340 seconds. Public availability does not establish redistribution rights."
+    }
+  ]
+}
