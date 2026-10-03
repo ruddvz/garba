@@ -98,6 +98,8 @@ Documentation is grouped by responsibility so product work, catalogue policy, ri
 - [`dance/motion-sync-contract.md`](dance/motion-sync-contract.md): beat-relative phase, looping, and synchronization contract
 - [`dance/sources.md`](dance/sources.md): practitioner tutorials, channel archives, and source evidence
 - [`dance/akshay-bhosale-five-basic-steps.md`](dance/akshay-bhosale-five-basic-steps.md): timestamped pose observations from Akshay Bhosale's five basic Garba lesson
+- [`dance/research/README.md`](dance/research/README.md): index of source-specific movement investigations
+- [`dance/research/sathiya-31-step-dodhiya.md`](dance/research/sathiya-31-step-dodhiya.md): partial timestamped audit of Sathiya Garba International's 31-step Dodhiya tutorial
 
 ## Rights and partnerships
 
