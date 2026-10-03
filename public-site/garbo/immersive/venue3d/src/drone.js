@@ -79,7 +79,7 @@ export function buildDrone(parent) {
       gimbal.rotation.x = Math.atan2(s.y, dist) - body.rotation.x;
       rotors.forEach((r, i) => { r.blade.rotation.y = reduce ? i : t * 90 * r.dir; });
       const ph = t % 1, blink = reduce ? 1 : (ph < 0.08 || (ph > 0.18 && ph < 0.26)) ? 1 : 0, flash = reduce ? 0 : (t % 1.6) < 0.05 ? 1 : 0;
-      setLight(port, 3); setLight(starboard, 3); setLight(nose, 2.2); setLight(beacon, 5 * blink); setLight(strobe, 8 * flash);
+      setLight(port, 3); setLight(starboard, 3); setLight(nose, 2.2); setLight(beacon, 3 * blink); setLight(strobe, 2.6 * flash); // (bright enough to blink in the night, never a white disc when it passes near the camera)
       setLight(rec, 3 * (Math.floor(t * 1.5) % 2 === 0 || reduce ? 1 : 0.3));
     }
   };

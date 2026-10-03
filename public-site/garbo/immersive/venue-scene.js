@@ -3817,7 +3817,7 @@
       }
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
       if (d.stander && d.phone) { var sk = phoneK(d); g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = sk > 0.5 ? 'rgba(200,225,255,.9)' : '#1d2230'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (sk > 0.5) glow(rh[0], rh[1] - h * 0.02, Math.min(3.5, Math.max(0.8, h * 0.03)), '#eaf3ff', 0.3 * sk); }
-      if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
+      if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.min(9, Math.max(1.5, h * 0.06 * (1 + d.snap))), '#ffffff', d.snap * 0.85); }
       if (d.role === 'dj' && h > 50) {
         // Up close the DJ has a face: eyes, brows, and a grin that opens when he talks
         var fy = y - h * 0.885, ink = '#1f130d';
@@ -3863,6 +3863,9 @@
       }
     }
     function fogBand(f) {
+      // With the 3D venue behind, its own fog does this: a band painted over it would lay a second haze on the 3D
+      // (on the sheri, a hard-edged rectangle the width of the lane across the mandap's canopy)
+      if (BD) return;
       var s0 = F / f.z, yG = HOR + cam.y * s0, yT = Math.max(0, HOR + (cam.y - 11) * s0), yB = Math.min(H, yG + (yG - HOR) * 0.25 + 6);
       if (yG < 0 || yT >= H) return;
       var col = st.venue === 'stadium' ? '26,19,28' : st.venue === 'sheri' ? '22,17,32' : '20,15,30';
@@ -3935,7 +3938,10 @@
       var tw = g.measureText(text).width, fd = face ? z.hh * 0.74 : 0;
       return { tw: tw, fd: fd, w: face ? fs * 0.4 + fd + fs * 0.35 + tw + fs * 0.55 : Math.max(fs * 1.9, tw + fs * 1.1) };
     }
+    // While a panel is open over the venue its words have the screen: no tags or hints drawn over them
+    function panelOpen() { var c = document.documentElement.classList; return c.contains('panel-open') || c.contains('covered'); }
     function tag(x, y, h, you, T0, compact, lead, face) {
+      if (panelOpen()) return;
       var text = coupleWord(you), z = tagSize(h, compact), fs = z.fs, lay = tagLayout(text, z, face);
       g.textAlign = 'center';
       var w = lay.w, hh = z.hh, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 1.5, top = y - hh - z.tip - 3 + bob, head = x;
@@ -4312,7 +4318,7 @@
         g.fillStyle = 'rgba(11,6,5,.62)'; roundRect(W / 2 - pw / 2, py, pw, 28, 14); g.fill();
         g.fillStyle = '#f6e7c8'; g.fillText(ptx, W / 2, py + 14); g.restore();
       }
-      if (canWalk && !stillShot && !walkMe.used && st.listener === 'circle' && !st.dj && !reduce) {
+      if (canWalk && !stillShot && !walkMe.used && st.listener === 'circle' && !st.dj && !reduce && !panelOpen()) {
         if (!walkMe.shownAt) walkMe.shownAt = t;
         var age = t - walkMe.shownAt;
         if (age > 1.5 && age < 11) {
@@ -4445,7 +4451,9 @@
        itself, rotors spinning, lights blinking), never a black screen. Once the venue is up the view drops in, once per
        page: down through the clouds onto the outdoor ground and between the sheri's rooftops, and in through the
        stadium's carved doors. Reduced motion cuts straight in. */
-    var STARS = null, intro = { pending: !reduce, running: false, t0: 0, dur: 3.4 }, introK = 0;
+    // (with the page's cloud gate up, the drop-in waits at the top for the gate to let it go: releaseIntro())
+    var gateEl = document.getElementById('cloudGate');
+    var STARS = null, intro = { pending: !reduce, running: false, t0: 0, dur: 3.4, held: !!gateEl && !gateEl.hidden }, introK = 0;
     function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
     function skyClouds(t, alpha, rise) {
       for (var i = 0; i < 7; i++) {
@@ -4818,7 +4826,7 @@
       if (introK > 0.001) { if (st.venue === 'stadium') stadiumDoors(introK); else skyClouds(t, Math.min(1, introK * 1.6), 1 - introK); }
       if (revealA < 1) { revealA = reduce ? 1 : Math.min(1, revealA + dt * 2.2); loaderSky(t, 1 - ease(revealA)); }
       // The venue's first frame is drawn: now the drop-in plays
-      if (intro.pending) { intro.pending = false; intro.running = true; intro.t0 = t; }
+      if (intro.pending && !intro.held) { intro.pending = false; intro.running = true; intro.t0 = t; }
       if (fade && fadeA > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = fadeA; g.drawImage(fade, 0, 0); g.globalAlpha = 1; fadeA -= dt * (reduce ? 10 : 2); g.setTransform(DPR, 0, 0, DPR, 0, 0); }
       if (opts.overlay) opts.overlay(g, W, H);
       if (opts.onFrame) opts.onFrame(lampAt);
@@ -4944,6 +4952,8 @@
       sponsors: function (t, id) { return sponsorPlan(t, id || st.venue); },
       // The singers' next move, as Shift does it; returns the move's name
       cueSingers: cueSingers,
+      // The cloud gate lets the drop-in go (it waits at the top while the gate is up)
+      releaseIntro: function () { intro.held = false; },
       stop: function () { running = false; }
     });
   }

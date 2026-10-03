@@ -461,7 +461,7 @@ function pandora(kit, root, tier, TH, r, data) {
   edge([S.x0, S.z], [S.x1, S.z], S.h, [0, 0, 1]);
   const durrie = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.6, 2.6), new THREE.MeshStandardMaterial({ map: canvasTexture(256, 96, (g, w, h) => { g.fillStyle = '#2a1650'; g.fillRect(0, 0, w, h); g.strokeStyle = '#c99a4a'; g.lineWidth = 4; g.strokeRect(6, 6, w - 12, h - 12); for (let i = 0; i < 12; i++) { g.fillStyle = i % 2 ? '#7a2a6a' : '#1e5a6a'; g.fillRect(18 + i * 19, 24, 12, 48); } }), roughness: 1 }));
   durrie.rotation.x = -Math.PI / 2; durrie.position.set(0, S.h + 0.006, S.z + 1.9); st.add(durrie);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.z + 0.9, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.z + 0.9, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffa245' });
   [-1, 1].forEach((sd) => {
     columns(sd * (S.x1 + 0.9), 0, S.z + 1.2, 4, 0.5, 1.0, 1.9); cluster(sd * (S.x1 + 0.7), 0, S.z + 0.7, 2.6, 3);
     cluster(sd * (S.x1 + 0.4), 0, S.z - 0.3, 1.8, 3); bed(sd * (S.x1 + 0.9), 0, S.z - 0.6, true);

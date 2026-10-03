@@ -34,7 +34,7 @@ import { newKit, buildKit } from './kit.js';
 import { groundLayers } from './lighting.js';
 import { buildSky } from './sky.js';
 import { bake } from './bake.js';
-import { buildGarbo } from './garbo.js';
+import { buildGarbo, GARBO_LOOKS } from './garbo.js';
 import { buildFurnish } from './furnish.js';
 
 // Each venue's module, fetched the first time it's wanted (the build splits each into its own file)
@@ -87,9 +87,10 @@ export function buildVenue(id, mod, tier, themeName, furnishData) {
   const furnish = furnishData ? buildFurnish(kit, root, id, furnishData) : null;
   if (furnishData && furnishData.stage) furnishData.stage.hole3d = { front: built.stage ? built.stage.stageFront : [], band: built.stage ? built.stage.bandHoles : built.bandHoles, mandap: built.mandapHoles || [] };
   // The garbo at the centre of the circle, and the warm pool its lamp throws on the ground round it
-  // (a venue can have the garbo bare, or none: Resham's mast stands where it would, with its own diyas round it)
+  // (a venue can have the garbo bare, or none: Resham's mast stands where it would, with its own diyas round it; each
+  // newer venue has its own look of it, GARBO_LOOKS in garbo.js)
   const small = !!mod.small, kind = mod.garbo || 'full';
-  const garbo = kind === 'none' ? { root: new THREE.Group(), update() {}, setTheme() {} } : buildGarbo(kit, { small, flags: TH.flags, bare: kind === 'bare' });
+  const garbo = kind === 'none' ? { root: new THREE.Group(), update() {}, setTheme() {} } : buildGarbo(kit, { small, flags: TH.flags, bare: kind === 'bare', look: GARBO_LOOKS[id] });
   root.add(garbo.root);
   kit.pools.add(0, 0.02, 0, small ? 3.6 : 4.4, small ? 3.6 : 4.4, '#ffae5c', 0.2, { layer: 'garbo', live: true });
   // Paint every lamp's light on the ground into the ground's light maps, one per layer (the flames' too)

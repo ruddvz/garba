@@ -81,6 +81,20 @@ function lanternTexture() {
     g.strokeStyle = 'rgba(90,50,20,.7)'; g.lineWidth = 2; for (let x = 0; x < w; x += 8) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 10; y < h; y += 20) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
   });
 }
+// A pierced brass lantern (zip-053, zip-104): dark metal, its cut-outs (stars, drops, dots) lit from within
+function filigreeTexture() {
+  return canvasTexture(128, 128, (g, w, h) => {
+    g.fillStyle = '#3a2610'; g.fillRect(0, 0, w, h);
+    const lit = (x, y, k) => { const gr = g.createRadialGradient(x, y, 0, x, y, k * 1.6); gr.addColorStop(0, '#fff2c8'); gr.addColorStop(0.5, '#ffc060'); gr.addColorStop(1, 'rgba(255,170,80,0)'); g.fillStyle = gr; g.beginPath(); g.arc(x, y, k * 1.6, 0, TAU); g.fill(); };
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
+      const x = (col + 0.5 + (row % 2) * 0.5) * w / 4, y = (row + 0.5) * h / 4;
+      g.save(); g.translate(x, y); g.fillStyle = '#ffd890';
+      if ((row + col) % 2) { for (let k = 0; k < 8; k++) { g.rotate(TAU / 8); g.beginPath(); g.ellipse(0, 6, 2, 5, 0, 0, TAU); g.fill(); } } else { g.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, rr = k % 2 ? 4 : 9; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); }
+      g.restore(); lit(x, y, 6);
+    }
+    g.fillStyle = '#c8963a'; g.fillRect(0, 0, w, 4); g.fillRect(0, h - 4, w, 4);
+  });
+}
 function moonTexture(res) {
   const r = seeded(4);
   return canvasTexture(res, res, (g, w) => {
@@ -152,7 +166,7 @@ function chandra(kit, root, tier, TH, r, data) {
   const pc = [0, S.z + S.depth / 2];
   for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, b = a + Math.PI * 0.9; if (Math.sin(a) < -0.5) continue; woods.arch([pc[0] + Math.cos(a) * 4.6, 0, pc[1] + Math.sin(a) * 2.2], [pc[0] + Math.cos(b) * 4.6, 0, pc[1] + Math.sin(b) * 2.2], 5.2, 2, 0.1); }
   [-2.4, 0, 2.4].forEach((x) => lanterns.push([x, 3.4, S.z + 1.8, 0.9, AMBER]));
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#9affe8' });
   kit.pools.add(0, 0.02, S.z - 1.4, 4.5, 2.4, AMBER, 0.12, { layer: 'show' });
 
   /* the lanterns: oval paper lanterns, each a lamp, their light on the ground below */
@@ -173,12 +187,22 @@ function chandra(kit, root, tier, TH, r, data) {
   trees(kit, root, bg);
   const leafMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: leafTexture(['#0e2a1c', '#14382a', '#1e4a34', '#0a2016'], 23), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.8 }), 0.06, 'festive');
   woods.build(root, new THREE.MeshStandardMaterial({ map: barkTexture(9, ['#2a2620', '#4a4236']), roughness: 0.9 }), leafMat, ['#a8c8b8', '#d0e8d8']);
+  /* pierced brass lanterns hung from the banyans' branches at every height round the floor (zip-053, zip-104), a
+     brass cap and finial on each, their light through the holes and a little on the ground under the low ones */
+  { const fil = [];
+    tips.forEach((p, i) => { if (p[1] < 4.4 || i % (phone ? 3 : 2)) return; const d = Math.hypot(p[0], p[2]); if (d > 27) return; const L = 0.7 + ((i * 37) % 10) / 10 * 2.6; kit.wires.line(p, [p[0], p[1] - L, p[2]]); fil.push([p[0], p[1] - L - 0.4, p[2], 0.75 + ((i * 13) % 7) / 12]); });
+    const fgeo = new THREE.LatheGeometry([[0, -0.55], [0.12, -0.5], [0.26, -0.3], [0.3, -0.05], [0.24, 0.2], [0.12, 0.36], [0.05, 0.48], [0, 0.5]].map(([a, b]) => new THREE.Vector2(a, b)), 12);
+    const fim = new THREE.InstancedMesh(fgeo, kit.litMap(filigreeTexture(), 1.3, 'practical'), fil.length), capG = new THREE.ConeGeometry(0.16, 0.22, 10), capM = std('#c8963a', 0.3, 0.85);
+    const cim = new THREE.InstancedMesh(capG, capM, fil.length), fmx = new THREE.Matrix4(), fq = new THREE.Quaternion();
+    fil.forEach(([x, y, z, s], i) => { fim.setMatrixAt(i, fmx.compose(new THREE.Vector3(x, y, z), fq.identity(), new THREE.Vector3(s, s, s))); cim.setMatrixAt(i, fmx.compose(new THREE.Vector3(x, y + 0.56 * s, z), fq.identity(), new THREE.Vector3(s, s, s))); kit.bigBulbs.add(x, y, z, i, { color: '#ffb860', k: 0.45, s: 0.45 * s, twinkle: 0.12, layer: 'practical' }); if (y < 6.5) kit.pools.add(x, 0.02, z, 1.6, 1.6, '#ffb060', 0.06, { layer: 'practical' }); });
+    root.add(fim); root.add(cim);
+  }
 
   /* the glowing garden: giant teal leaves, violet bell flowers, glowing mushrooms */
   const leaves = [], bells = [], caps = [], flowers = [], spikes = [];
   const bed = (x, z, big) => {
     for (let k = 0; k < (big ? 7 : 4); k++) { const a = r() * TAU, s = (big ? 1.6 : 1.0) * (0.7 + r() * 0.5); leaves.push([x + Math.cos(a) * 0.3, z + Math.sin(a) * 0.3, a, 0.5 + r() * 0.5, s]); }
-    if (r() < 0.55) for (let k = 0; k < 2; k++) flowers.push([x + (r() - 0.5) * 1.6, z + (r() - 0.5) * 1.6, 0.28 + r() * 0.2]);
+    if (r() < 0.85) for (let k = 0; k < 3; k++) flowers.push([x + (r() - 0.5) * 1.6, z + (r() - 0.5) * 1.6, 0.28 + r() * 0.24]);
     if (r() < 0.35) spikes.push([x + (r() - 0.5) * 1.2, z + (r() - 0.5) * 1.2, 0.8 + r() * 0.6]);
     for (let k = 0; k < 6; k++) bells.push([x + (r() - 0.5) * 1.4, 0.5 + r() * 1.2, z + (r() - 0.5) * 1.4]);
     if (r() < 0.6) for (let k = 0; k < 4; k++) caps.push([x + (r() - 0.5) * 1.2, z + (r() - 0.5) * 1.2, 0.1 + r() * 0.16]);

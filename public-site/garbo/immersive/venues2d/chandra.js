@@ -15,8 +15,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).chandra = {
     label: 'Chandra Van',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // A garden among great trees: the leaves take the highs and the echoes, a soft short tail, water close by
     sound: {
       desc: 'A moonlit garden among great trees. The leaves soften everything; a soft, short tail.',

@@ -32,7 +32,7 @@ function concrete(res) {
 function brick(res) {
   const r = seeded(51);
   return canvasTexture(res, res, (g, w, h) => {
-    g.fillStyle = '#2a1a16'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#3a2620'; g.fillRect(0, 0, w, h);
     const bh = h / 16, bw = w / 6;
     for (let row = 0; row < 16; row++) for (let k = -1; k < 7; k++) { const x = k * bw + (row % 2) * bw / 2, t = 92 + r() * 56; g.fillStyle = `rgb(${t},${t * 0.48},${t * 0.36})`; g.fillRect(x + 2, row * bh + 2, bw - 4, bh - 4); g.fillStyle = `rgba(0,0,0,${r() * 0.25})`; g.fillRect(x + 2, row * bh + 2, bw - 4, bh - 4); }
   }, { repeat: [1, 1] });
@@ -40,8 +40,9 @@ function brick(res) {
 function cityWindow() {
   const r = seeded(8);
   return canvasTexture(128, 256, (g, w, h) => {
-    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0a1430'); gr.addColorStop(1, '#1a2448'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 70; i++) { g.fillStyle = r() < 0.6 ? 'rgba(255,200,120,.75)' : 'rgba(150,200,255,.6)'; g.fillRect(r() * w, h * 0.45 + r() * h * 0.55, 2 + r() * 3, 2 + r() * 4); }
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1a1a4a'); gr.addColorStop(0.55, '#3a2a6a'); gr.addColorStop(1, '#5a3a7a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#120e28'; for (let x = 0; x < w; x += 10) { const bh0 = h * (0.25 + r() * 0.4); g.fillRect(x, h - bh0, 9, bh0); }
+    for (let i = 0; i < 160; i++) { g.fillStyle = r() < 0.6 ? 'rgba(255,200,120,.75)' : 'rgba(150,200,255,.6)'; g.fillRect(r() * w, h * 0.45 + r() * h * 0.55, 2 + r() * 3, 2 + r() * 4); }
     g.strokeStyle = '#141018'; g.lineWidth = 5; g.strokeRect(0, 0, w, h); for (let x = w / 3; x < w; x += w / 3) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = h / 6; y < h; y += h / 6) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
   });
 }
@@ -96,12 +97,13 @@ function voltage(kit, root, tier, TH, r, data) {
   const wall = (x0, z0, x1, z1, h) => { const len = Math.hypot(x1 - x0, z1 - z0), t = bt.clone(); t.needsUpdate = true; t.repeat.set(len / 3, h / 3); const w = new THREE.Mesh(new THREE.PlaneGeometry(len, h), new THREE.MeshStandardMaterial({ map: t, roughness: 0.92, side: THREE.DoubleSide })); w.position.set((x0 + x1) / 2, h / 2, (z0 + z1) / 2); w.rotation.y = Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2; root.add(w); return w; };
   [-1, 1].forEach((sd) => wall(sd * X, Z0, sd * X, Z1, ROOF));
   wall(-X, Z1, X, Z1, ROOF); wall(-X, Z0, X, Z0, ROOF);
-  const winMat = kit.litMap(cityWindow(), 0.75, 'ambient', { side: THREE.DoubleSide });
+  const winMat = kit.litMap(cityWindow(), 1.15, 'ambient', { side: THREE.DoubleSide });
   const arch = (w, h) => { const sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(w / 2, h - w / 2); sh.absarc(0, h - w / 2, w / 2, 0, Math.PI, false); sh.lineTo(-w / 2, 0); const geo = new THREE.ShapeGeometry(sh, 12); const uv = geo.attributes.uv, p = geo.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i) / w + 0.5, p.getY(i) / h); return geo; };
   [-1, 1].forEach((sd) => { for (let z = Z0 + 5; z < Z1 - 3; z += 6) { [[0.8, 3.6, 2.4], [6.6, 7.4, 3.0]].forEach(([y, h, w]) => { const m = new THREE.Mesh(arch(w, h), winMat); m.position.set(sd * (X - 0.03), y, z + 3); m.rotation.y = -sd * Math.PI / 2; root.add(m); const fr = new THREE.Mesh(new THREE.BoxGeometry(0.2, h + 0.3, w + 0.3), std('#16121a', 0.6, 0.4)); fr.position.set(sd * (X - 0.06), y + h / 2, z + 3); root.add(fr); }); } });
 
   [-1, 1].forEach((sd) => { for (let z = Z0 + 3; z <= Z1 - 2; z += 6) {
-    kit.pools.add(sd * (X - 0.08), ROOF * 0.42, z, 1.6, ROOF * 0.42, LIGHT.amber, 0.55, { vertical: true, ry: -sd * Math.PI / 2, layer: 'architectural' });
+    kit.pools.add(sd * (X - 0.08), ROOF * 0.42, z, 2.4, ROOF * 0.45, LIGHT.amber, 0.6, { vertical: true, ry: -sd * Math.PI / 2, layer: 'architectural' });
+    kit.pools.add(sd * (X - 0.1), ROOF * 0.78, z + 3, 2.8, ROOF * 0.24, NEON[(Math.round((z - Z0) / 6) + (sd > 0 ? 1 : 0)) % 2 ? 1 : 0], 0.32, { vertical: true, ry: -sd * Math.PI / 2, layer: 'show' });
     kit.bigBulbs.add(sd * (X - 0.35), 0.25, z, 0, { color: LIGHT.amber, k: 0.9, s: 0.35, twinkle: 0, layer: 'architectural' });
   } });
   for (let x = -X + 4; x < X - 2; x += 6) kit.pools.add(x, ROOF * 0.4, Z1 - 0.08, 1.6, ROOF * 0.4, LIGHT.amber, 0.45, { vertical: true, ry: Math.PI, layer: 'architectural' });
@@ -139,6 +141,8 @@ function voltage(kit, root, tier, TH, r, data) {
     const slope = new THREE.Mesh(new THREE.PlaneGeometry(2 * X, Math.hypot(6, 2.6)), std('#16141c', 0.8, 0.3, { side: THREE.DoubleSide })); slope.position.set(0, ROOF + 1.3, z + 3); slope.rotation.x = -Math.PI / 2 + Math.atan2(2.6, 6); root.add(slope);
     const sky = new THREE.Mesh(new THREE.PlaneGeometry(2 * X, 2.6), kit.litMap(canvasTexture(64, 32, (g, w, h) => { g.fillStyle = '#0c1630'; g.fillRect(0, 0, w, h); g.fillStyle = '#16244a'; for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 6, h); }), 0.6, 'ambient', { side: THREE.DoubleSide })); sky.position.set(0, ROOF + 1.3, z + 6); root.add(sky);
   }
+  // long tubes down the length of the hall, drawing the eye to the stage (zip-024, zip-030)
+  [[-12, 0], [-6, 1], [6, 1], [12, 0]].forEach(([x, c]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, Z1 - Z0 - 8), new THREE.MeshBasicMaterial({ color: '#ffffff' })); m.position.set(x, ROOF - 2.0, (Z0 + Z1) / 2 + 1); m.userData.dynamic = true; root.add(m); neon.push({ m: m.material, c, k: 1.6 }); });
   // long diagonal tubes across the ceiling, as the references hang them
   [[-18, -10, 14, 30, 2], [18, -6, -12, 34, 1], [-20, 14, 20, 20, 0]].forEach(([x0, z0, x1, z1, c]) => { const len = Math.hypot(x1 - x0, z1 - z0), m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.08, 0.08), new THREE.MeshBasicMaterial({ color: '#ffffff' })); m.position.set((x0 + x1) / 2, ROOF - 2.4, (z0 + z1) / 2); m.rotation.y = -Math.atan2(z1 - z0, x1 - x0); m.userData.dynamic = true; root.add(m); neon.push({ m: m.material, c, k: 1.5 }); });
 
@@ -167,12 +171,12 @@ function voltage(kit, root, tier, TH, r, data) {
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(20, 9), new THREE.MeshBasicMaterial({ color: new THREE.Color('#c060ff').multiplyScalar(2) })); scr.position.set(0, 6, 32); scr.rotation.y = Math.PI; env.add(scr);
 
   const rig = {
-    hemi: ['#4a3a72', '#221622', 0.62, 0.9], moon: 0,
+    hemi: ['#5a4a8a', '#2a1a2a', 0.72, 1.0], moon: 0,
     spots: [{ pos: [0, ROOF - 1, -4], to: [0, 0, 6], color: '#e8d8ff', base: 80, distance: 40, angle: 0.62, layer: 'key' }, { pos: stage.wash.pos, to: stage.wash.to, color: '#ffe4c4', base: 130, distance: 28, angle: 0.55, layer: 'show' }],
     points: [{ pos: [-14, 8, 6], color: '#ff3ad0', base: 46, distance: 26, layer: 'show' }, { pos: [14, 8, 6], color: '#38d8ff', base: 46, distance: 26, layer: 'show' }, { pos: [0, 3, 0], color: '#c060ff', base: 30, distance: 18, layer: 'show' }, { pos: [0, 9, -18], color: LIGHT.tungsten, base: 30, distance: 16, layer: 'practical' }]
   };
   return {
-    rig, stage, feedScreen: stage.feedScreen, floor: floorMesh, fog: new THREE.FogExp2('#2a1642', 0.013), exposure: 1.08, envScene: env,
+    rig, stage, feedScreen: stage.feedScreen, floor: floorMesh, fog: new THREE.FogExp2('#2a1642', 0.011), exposure: 1.18, envScene: env,
     update(t, ctx) {
       const { TH, pulse, reduce, lv } = ctx, tt = reduce ? 0 : t;
       leds.forEach((l) => { l.m.uniforms.uT.value = tt; l.m.uniforms.uK.value = l.k * (0.35 + 0.65 * lv.show); l.m.uniforms.uPulse.value = pulse; l.m.uniforms.uHue.value = (TH.hues[0] || 0) / 360 * 0.2; });

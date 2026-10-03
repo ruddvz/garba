@@ -163,9 +163,20 @@ function shikhar(kit, root, tier, TH, r, data) {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
     const base = new THREE.Mesh(new THREE.BoxGeometry(w, 0.6, d), stone); base.position.y = 0.3; g.add(base);
     if (!open) { const front = new THREE.Mesh(new THREE.PlaneGeometry(w - 1, 2.8), glassM); front.position.set(0, 2.0, d / 2 - 0.4); g.add(front); const back = new THREE.Mesh(new THREE.BoxGeometry(w - 0.6, 3, 0.3), stone); back.position.set(0, 2.1, -d / 2 + 0.4); g.add(back); }
+    if (open) {
+      // the band's pavilion: a back wall of teak slats lit warm from behind, brightest behind the band
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w - 0.4, 3.1, 0.25), std('#3a2a1c', 0.7)); wall.position.set(0, 2.15, -d / 2 + 0.35); g.add(wall);
+      const slats = canvasTexture(512, 128, (c, cw, ch) => {
+        const gr = c.createRadialGradient(cw / 2, ch * 0.55, 10, cw / 2, ch * 0.55, cw * 0.55); gr.addColorStop(0, '#ffd89a'); gr.addColorStop(0.6, '#e09a4a'); gr.addColorStop(1, '#6a3a18');
+        c.fillStyle = gr; c.fillRect(0, 0, cw, ch); c.fillStyle = '#2a1a0e'; for (let x = 0; x < cw; x += 14) c.fillRect(x, 0, 6, ch); c.fillRect(0, 0, cw, 5); c.fillRect(0, ch - 5, cw, 5);
+      });
+      const glowWall = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.8, 2.8), kit.litMap(slats, 0.85, 'architectural')); glowWall.position.set(0, 2.1, -d / 2 + 0.48); g.add(glowWall);
+    }
     const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 2, 0.35, d + 2), roofM); roof.position.y = 3.9; g.add(roof);
     const fascia = new THREE.Mesh(new THREE.BoxGeometry(w + 2.05, 0.06, 0.06), kit.glow(GOLD, 1.3, 'architectural')); fascia.position.set(0, 3.7, d / 2 + 1.0); g.add(fascia);
-    for (let k = 0; k < Math.round(w / 2.4) + 1; k++) { const cx = -w / 2 + k * w / Math.round(w / 2.4); [-1, 1].forEach((s2) => { const col = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.3, 8), std('#c8c0b4', 0.4, 0.4)); col.position.set(cx, 2.25, s2 * (d / 2 + 0.6)); g.add(col); }); }
+    // (the band's pavilion keeps only its corner columns on the side towards the circle, so none stands before a singer)
+    const nCol = Math.round(w / 2.4);
+    for (let k = 0; k < nCol + 1; k++) { const cx = -w / 2 + k * w / nCol; [-1, 1].forEach((s2) => { if (open && s2 > 0 && k > 0 && k < nCol) return; const col = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.3, 8), std('#c8c0b4', 0.4, 0.4)); col.position.set(cx, 2.25, s2 * (d / 2 + 0.6)); g.add(col); }); }
     for (let k = 0; k < Math.round(w * 2.5); k++) { const s3 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, d + 1.6), slat); s3.position.set(-w / 2 - 0.5 + k * (w + 1) / Math.round(w * 2.5), 3.48, 0); g.add(s3); }
     kit.pools.add(x + Math.sin(ry) * (d / 2 + 2), 0.02, z + Math.cos(ry) * (d / 2 + 2), w * 0.6, 3, '#ffc88a', 0.12, { layer: 'practical' });
     return g;
@@ -173,10 +184,18 @@ function shikhar(kit, root, tier, TH, r, data) {
   SH.pavilions.forEach(([x, z, ry]) => pavilion(x, z, ry, 7.2, 5.2, false));
   // the band's pavilion at the far side, open towards the circle
   pavilion(0, S.z + S.depth / 2, Math.PI, S.x1 - S.x0 + 3, S.depth + 2.4, true);
+  // pendant lamps over the band, each a brass shade on its cord, their light on the boards
+  const shade = kit.glow('#ffc070', 1.5, 'practical');
+  [-4.2, -1.6, 1.6, 4.2].forEach((x) => {
+    const zz = S.z + S.depth * 0.55, lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.26, 0.24, 16, 1, true), std('#8a6a3a', 0.35, 0.8, { side: THREE.DoubleSide })); lamp.position.set(x, 3.05, zz); root.add(lamp);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), shade); bulb.position.set(x, 2.96, zz); root.add(bulb);
+    kit.wires.line([x, 3.17, zz], [x, 3.72, zz]);
+    kit.pools.add(x, S.h + 0.03, zz, 1.4, 1.4, '#ffc070', 0.12, { layer: 'practical', live: true });
+  });
   const st = new THREE.Group(); root.add(st);
   const deck = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0, S.h, S.depth), std('#4a3a2a', 0.6, 0.05)); deck.position.set(0, S.h / 2 + 0.01, S.z + S.depth / 2); st.add(deck);
   D.rug(0, S.z + 1.6, S.x1 - S.x0 - 0.6, 2.4, 0, rugTexture('stripe', ['#2a1a10', '#c89a4a', '#7a3a1a', '#f0e0c0']), S.h + 0.012);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffc46a' });
   kit.pools.add(0, 0.02, S.z - 1.6, 5, 2.6, LIGHT.warm, 0.12, { layer: 'show' });
 
   /* trees in round stone planters between the pavilions, uplit; floodlights on tall masts at the corners */

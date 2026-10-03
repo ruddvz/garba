@@ -35,7 +35,7 @@ for (const marker of [
 for (const marker of [
   'Standalone mode uses the sample catalogue',
   'the embedded venue receives the production catalogue',
-  'src="garbo.js?v=20261003-8"',
+  'src="garbo.js?v=20261003-21"',
   'src="venue3d/venue3d.js?v=',
 ]) has(page, marker, '3D page');
 
@@ -118,11 +118,11 @@ has(player, "setMode(snapshot.loading ? 'loading'", '3D provider state handling'
 
 for (const key of ["k === 'j'", "k === 'l'", "k === 'k'", "k === 'N'", "k === 'P'"]) has(player, key, '3D keyboard controls');
 for (const marker of [
-  "const CACHE_NAME = `${CACHE_PREFIX}v46`",
-  "'./assets/runtime/immersive-view.js?v=20261002-2'",
+  "const CACHE_NAME = `${CACHE_PREFIX}v47`",
+  "'./assets/runtime/immersive-view.js?v=20261003-1'",
   "'/assets/runtime/immersive-view.js'",
 ]) has(serviceWorker, marker, 'PWA runtime cache');
-has(home, 'assets/runtime/immersive-view.js?v=20261002-2', 'Homepage runtime');
+has(home, 'assets/runtime/immersive-view.js?v=20261003-1', 'Homepage runtime');
 has(runtime, '20261002-2', 'Immersive validator cache contract');
 has(pages, 'public-site/garbo', 'Pages deployment');
 has(host, "document.documentElement.classList.toggle('garba-immersive', view === 'immersive')", 'Immersive view state');

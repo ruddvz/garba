@@ -19,7 +19,7 @@ import { TAU, lerp, canvasTexture, seeded, BAND, LIGHT } from '../util.js';
 import { std } from '../kit.js';
 import { buildBand } from '../band.js';
 import { canvas, wrap, normalMap, tex } from '../floors.js';
-import { ground, glowInto, glowStone } from './common.js';
+import { ground, glowInto, glowStone, DISCS, discTexture } from './common.js';
 import { newDecor, rugTexture, newWoods, barkTexture, leafTexture } from './decor.js';
 import { sandstoneTexture, metreUV, arcade, shikhara, pillarGeo, torch, fireBowl, diyaRow, nightSky, mergeAll, portal } from './heritage.js';
 import { forestBelt, townBelt, horizonRidge } from './surround.js';
@@ -83,6 +83,33 @@ function borderTexture(seed) {
   });
 }
 // One peacock feather (mor pankh) drawn on a canvas: its quill from (x, y) along angle a, `len` long, the eye at its tip
+// The murals on the arcade's back walls (zip-046, zip-042), in the Rajasthani manner: a red and gold border round a
+// flat-coloured scene on an ochre ground. Four scenes in turn: the raas, gopis in a circle round the flute player
+// under a kadamba; peacocks and cows by the trees; the flute player with a cow, crowned with a peacock feather; a
+// lotus pond with swans. Figures stay simple and flat, as the old walls paint them.
+function muralTexture(kind, res) {
+  const W = res, H = Math.round(res * 0.78), u = W / 512;
+  return canvasTexture(W, H, (g) => {
+    const rr = seeded(300 + kind * 7);
+    g.fillStyle = '#7a1414'; g.fillRect(0, 0, W, H); g.fillStyle = '#d6a64a'; g.fillRect(10 * u, 10 * u, W - 20 * u, H - 20 * u); g.fillStyle = '#7a1414'; g.fillRect(16 * u, 16 * u, W - 32 * u, H - 32 * u);
+    for (let x = 24 * u; x < W - 20 * u; x += 18 * u) { g.fillStyle = '#e8c070'; g.beginPath(); g.arc(x, 20 * u, 3 * u, 0, TAU); g.fill(); g.beginPath(); g.arc(x, H - 20 * u, 3 * u, 0, TAU); g.fill(); }
+    const X0 = 28 * u, Y0 = 28 * u, WW = W - 56 * u, HH = H - 56 * u;
+    const sky = g.createLinearGradient(0, Y0, 0, Y0 + HH); sky.addColorStop(0, '#2a3a6a'); sky.addColorStop(0.45, '#d8a860'); sky.addColorStop(1, '#c89048'); g.fillStyle = sky; g.fillRect(X0, Y0, WW, HH);
+    g.fillStyle = '#5a7a3a'; g.fillRect(X0, Y0 + HH * 0.72, WW, HH * 0.28);
+    const tree = (x, y, s) => { g.fillStyle = '#4a2a14'; g.fillRect(x - 5 * u * s, y - 70 * u * s, 10 * u * s, 70 * u * s); g.fillStyle = '#2a5a2a'; for (let k = 0; k < 9; k++) { g.beginPath(); g.arc(x + (rr() - 0.5) * 70 * u * s, y - 90 * u * s + (rr() - 0.5) * 40 * u * s, 22 * u * s, 0, TAU); g.fill(); } g.fillStyle = '#f0c040'; for (let k = 0; k < 14; k++) { g.beginPath(); g.arc(x + (rr() - 0.5) * 80 * u * s, y - 90 * u * s + (rr() - 0.5) * 50 * u * s, 4 * u * s, 0, TAU); g.fill(); } };
+    const gopi = (x, y, s, skirt, arm) => { g.fillStyle = skirt; g.beginPath(); g.moveTo(x - 6 * u * s, y - 34 * u * s); g.lineTo(x + 6 * u * s, y - 34 * u * s); g.lineTo(x + 18 * u * s, y); g.lineTo(x - 18 * u * s, y); g.closePath(); g.fill(); g.fillStyle = '#d8a060'; g.beginPath(); g.arc(x, y - 44 * u * s, 6 * u * s, 0, TAU); g.fill(); g.fillStyle = '#e8c070'; g.fillRect(x - 6 * u * s, y - 38 * u * s, 12 * u * s, 6 * u * s); g.fillStyle = '#1a1010'; g.beginPath(); g.arc(x, y - 47 * u * s, 6 * u * s, Math.PI, TAU); g.fill(); g.strokeStyle = '#d8a060'; g.lineWidth = 2.5 * u * s; g.beginPath(); g.moveTo(x - 5 * u * s, y - 34 * u * s); g.lineTo(x - 16 * u * s, y - (arm ? 50 : 26) * u * s); g.moveTo(x + 5 * u * s, y - 34 * u * s); g.lineTo(x + 16 * u * s, y - (arm ? 50 : 26) * u * s); g.stroke(); };
+    const flute = (x, y, s) => { g.fillStyle = '#f0c030'; g.fillRect(x - 9 * u * s, y - 30 * u * s, 18 * u * s, 30 * u * s); g.fillStyle = '#2a4aa8'; g.fillRect(x - 6 * u * s, y - 44 * u * s, 12 * u * s, 16 * u * s); g.beginPath(); g.arc(x, y - 52 * u * s, 7 * u * s, 0, TAU); g.fill(); g.fillStyle = '#f0c030'; g.beginPath(); g.moveTo(x - 7 * u * s, y - 58 * u * s); g.lineTo(x, y - 66 * u * s); g.lineTo(x + 7 * u * s, y - 58 * u * s); g.fill(); g.fillStyle = '#1e7a5a'; g.beginPath(); g.ellipse(x + 4 * u * s, y - 72 * u * s, 3 * u * s, 8 * u * s, 0.4, 0, TAU); g.fill(); g.fillStyle = '#1e3a8a'; g.beginPath(); g.arc(x + 5 * u * s, y - 74 * u * s, 2 * u * s, 0, TAU); g.fill(); g.strokeStyle = '#8a5a2a'; g.lineWidth = 2.5 * u * s; g.beginPath(); g.moveTo(x - 4 * u * s, y - 50 * u * s); g.lineTo(x + 26 * u * s, y - 44 * u * s); g.stroke(); };
+    const cow = (x, y, s) => { g.fillStyle = '#f2ece0'; g.beginPath(); g.ellipse(x, y - 16 * u * s, 26 * u * s, 12 * u * s, 0, 0, TAU); g.fill(); g.beginPath(); g.ellipse(x - 28 * u * s, y - 22 * u * s, 9 * u * s, 7 * u * s, -0.3, 0, TAU); g.fill(); g.fillRect(x - 18 * u * s, y - 8 * u * s, 4 * u * s, 10 * u * s); g.fillRect(x + 14 * u * s, y - 8 * u * s, 4 * u * s, 10 * u * s); g.fillStyle = '#c0392b'; g.fillRect(x - 10 * u * s, y - 22 * u * s, 20 * u * s, 6 * u * s); };
+    const peacock = (x, y, s) => { g.fillStyle = '#1e7a5a'; g.beginPath(); g.moveTo(x, y - 10 * u * s); g.lineTo(x + 60 * u * s, y + 4 * u * s); g.lineTo(x + 50 * u * s, y - 18 * u * s); g.closePath(); g.fill(); g.fillStyle = '#1e4aa8'; g.beginPath(); g.ellipse(x, y - 14 * u * s, 10 * u * s, 8 * u * s, 0, 0, TAU); g.fill(); g.fillRect(x - 6 * u * s, y - 36 * u * s, 6 * u * s, 22 * u * s); g.beginPath(); g.arc(x - 3 * u * s, y - 38 * u * s, 5 * u * s, 0, TAU); g.fill(); for (let k = 0; k < 4; k++) { g.fillStyle = '#f0c040'; g.beginPath(); g.arc(x + (18 + k * 12) * u * s, y - (4 - k) * u * s, 3 * u * s, 0, TAU); g.fill(); } };
+    const ground = Y0 + HH * 0.86;
+    if (kind === 0) { tree(X0 + WW * 0.5, Y0 + HH * 0.5, 1.1); const cx = X0 + WW * 0.5, cols = ['#c0392b', '#1e7a3a', '#e8a020', '#8a2a8a', '#c0392b', '#1e5aa8']; for (let k = 0; k < 10; k++) { const a = k / 10 * TAU, x = cx + Math.cos(a) * WW * 0.34, y = ground - 10 * u + Math.sin(a) * HH * 0.08; gopi(x, y, 0.85, cols[k % cols.length], k % 2); } flute(cx, ground - 6 * u, 1); }
+    else if (kind === 1) { tree(X0 + WW * 0.22, Y0 + HH * 0.6, 1); tree(X0 + WW * 0.8, Y0 + HH * 0.58, 0.9); peacock(X0 + WW * 0.35, ground - 30 * u, 1.1); peacock(X0 + WW * 0.62, ground - 40 * u, 0.9); cow(X0 + WW * 0.5, ground + 4 * u, 1); }
+    else if (kind === 2) { tree(X0 + WW * 0.75, Y0 + HH * 0.62, 1.1); flute(X0 + WW * 0.42, ground, 1.5); cow(X0 + WW * 0.7, ground + 2 * u, 1.1); for (let k = 0; k < 6; k++) { g.fillStyle = '#f0c040'; g.beginPath(); g.arc(X0 + WW * (0.1 + k * 0.05), Y0 + HH * 0.2, 2.5 * u, 0, TAU); g.fill(); } }
+    else { g.fillStyle = '#2a5a8a'; g.fillRect(X0, Y0 + HH * 0.6, WW, HH * 0.4); for (let k = 0; k < 9; k++) { const x = X0 + WW * (0.1 + k * 0.1), y = Y0 + HH * (0.75 + (k % 2) * 0.1); g.fillStyle = '#3a7a3a'; g.beginPath(); g.ellipse(x, y, 16 * u, 6 * u, 0, 0, TAU); g.fill(); if (k % 2) { g.fillStyle = '#f080b0'; for (let p = 0; p < 5; p++) { const a = -Math.PI / 2 + (p - 2) * 0.4; g.beginPath(); g.ellipse(x + Math.cos(a) * 8 * u, y - 6 * u + Math.sin(a) * 8 * u, 3 * u, 8 * u, a + Math.PI / 2, 0, TAU); g.fill(); } } } [[0.3, 0.66], [0.62, 0.7]].forEach(([fx, fy]) => { const x = X0 + WW * fx, y = Y0 + HH * fy; g.fillStyle = '#f6f2ea'; g.beginPath(); g.ellipse(x, y, 18 * u, 8 * u, 0, 0, TAU); g.fill(); g.fillRect(x - 16 * u, y - 22 * u, 4 * u, 18 * u); g.beginPath(); g.arc(x - 14 * u, y - 24 * u, 5 * u, 0, TAU); g.fill(); g.fillStyle = '#e8902a'; g.fillRect(x - 22 * u, y - 25 * u, 6 * u, 3 * u); }); tree(X0 + WW * 0.85, Y0 + HH * 0.55, 0.8); }
+    // age: a little flaking and soot, as old walls have
+    for (let k = 0; k < 900 * u * u; k++) { g.fillStyle = rr() < 0.6 ? 'rgba(60,30,10,.12)' : 'rgba(255,240,200,.1)'; g.fillRect(rr() * W, rr() * H, 2 * u + rr() * 3 * u, 2 * u); }
+  });
+}
 function featherAt(g, x, y, a, len) {
   const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len, nx = -Math.sin(a), ny = Math.cos(a);
   g.strokeStyle = '#8a7a3a'; g.lineWidth = Math.max(1, len * 0.03); g.beginPath(); g.moveTo(x, y); g.lineTo(ex, ey); g.stroke();
@@ -159,15 +186,27 @@ function vrindavan(kit, root, tier, TH, r, data) {
   });
   // in each bay: a brass lantern hanging from the arch, a painted border on the back wall, and (every other bay) a
   // torch before the pillar
-  const borders = [borderTexture(3), borderTexture(5)].map((t) => kit.litMap(t, 0.14, 'practical'));
+  const borders = [0, 1, 2, 3].map((k) => kit.litMap(muralTexture(k, phone ? 256 : 512), 0.42, 'practical'));
   bays.forEach((b, i) => {
     const hx = b.x + b.nx * 1.4, hz = b.z + b.nz * 1.4;
     kit.wires.line([hx, 4.15, hz], [hx, 3.1, hz]); D.lantern(hx, 2.75, hz, 0.85); src(hx, 3, hz, LIGHT.tungsten, 0.4, 3.6);
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.0), borders[i % 2]); wall.position.set(b.x + b.nx * 3.2, 2.7, b.z + b.nz * 3.2); wall.rotation.y = Math.atan2(-b.nx, -b.nz); root.add(wall);
+    // the mural on the back wall, lit by the bay's lantern (zip-046)
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(2.7, 2.1), borders[i % 4]); wall.position.set(b.x + b.nx * 3.18, 2.35, b.z + b.nz * 3.18); wall.rotation.y = Math.atan2(-b.nx, -b.nz); wall.scale.x = -1; root.add(wall);
+    kit.pools.add(b.x + b.nx * 3.1, 2.3, b.z + b.nz * 3.1, 1.5, 1.2, '#ffc890', 0.12, { vertical: true, ry: Math.atan2(-b.nx, -b.nz), layer: 'practical', live: true });
     if (i % 2 === 0) { const tx = b.x - b.nx * 0.95, tz = b.z - b.nz * 0.95; torch(kit, root, iron, tx, tz); src(tx, 2.2, tz, TORCH, 0.9, 5); kit.pools.add(tx, 0.02, tz, 3.2, 3.2, TORCH, 0.12, { layer: 'flame' }); }
     // diyas along the plinth's edge
     diyaRow(kit, [b.x - b.nx * 0.42 - b.nz * 1.2, 0.36, b.z - b.nz * 0.42 + b.nx * 1.2], [b.x - b.nx * 0.42 + b.nz * 1.2, 0.36, b.z - b.nz * 0.42 - b.nx * 1.2], 0.6, 0.04);
   });
+
+  /* round paper lanterns (zip-089): a string along the front of each side arcade and three across the court over the
+     dancing (none between the band and you), rings of colour lit from within, each turned a little its own way */
+  { const discs = DISCS.map(() => []), rr = seeded(919), mx2 = new THREE.Matrix4(), q2 = new THREE.Quaternion(), e2 = new THREE.Euler();
+    const string = (A, B, gap, sag, s0) => { kit.wires.cable(A, B, sag, 14); const len = Math.hypot(B[0] - A[0], B[2] - A[2]), n = Math.max(2, Math.floor(len / gap)); for (let k = 1; k < n; k++) { const u = k / n, y = lerp(A[1], B[1], u) - sag * 4 * u * (1 - u), x = lerp(A[0], B[0], u), z = lerp(A[2], B[2], u), drop = 0.25 + rr() * 0.45; kit.wires.line([x, y, z], [x, y - drop + s0 * 0.5, z]); discs[Math.floor(rr() * DISCS.length)].push([x, y - drop, z, s0 * (0.85 + rr() * 0.3), Math.atan2(-x, -z) + (rr() - 0.5) * 0.6]); } };
+    [-1, 1].forEach((sd) => string([sd * (VR.arcX - 0.9), 4.6, VR.arcZ0 + 1.5], [sd * (VR.arcX - 0.9), 4.6, VR.arcZ1 - 1.5], phone ? 3 : 2.1, 0.7, 0.42));
+    [-6, 0, 6].forEach((z) => string([-VR.arcX + 1, 5.6, z], [VR.arcX - 1, 5.6, z], phone ? 4.4 : 3.3, 0.9, 0.38));
+    const dg = new THREE.CylinderGeometry(1, 1, 0.14, 32); dg.rotateX(Math.PI / 2);
+    discs.forEach((list, k) => { if (!list.length) return; const im = new THREE.InstancedMesh(dg, kit.litMap(discTexture(DISCS[k], 31 + k), 1.1, 'festive'), list.length); list.forEach(([x, y, z, s0, ry], i) => im.setMatrixAt(i, mx2.compose(new THREE.Vector3(x, y, z), q2.setFromEuler(e2.set(0, ry, 0)), new THREE.Vector3(s0, s0, s0)))); root.add(im); });
+  }
 
   /* mor pankh: a fan of peacock feathers hung in each arch, eyes down */
   const feathers = [];
@@ -217,7 +256,7 @@ function vrindavan(kit, root, tier, TH, r, data) {
   add(metreUV(new THREE.BoxGeometry(S.x1 - S.x0, S.h, S.depth), 2.4), M((S.x0 + S.x1) / 2, S.h / 2, S.z + S.depth / 2));
   add(metreUV(new THREE.BoxGeometry(S.x1 - S.x0 - 1, S.h / 2, 0.5), 2.4), M((S.x0 + S.x1) / 2, S.h / 4, S.z - 0.25));
   D.rug((S.x0 + S.x1) / 2, S.z + 1.6, S.x1 - S.x0 - 0.6, 2.4, 0, rugTexture('stripe', ['#7a1a14', '#1e3a6a', '#d6a64a', '#f0e0c0']), S.h + 0.006);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#ffb050' });
   [S.x0 + 0.3, S.x1 - 0.3].forEach((x) => { D.lantern(x, S.h, S.z + 0.25, 1); src(x, S.h + 0.5, S.z + 0.25, LIGHT.tungsten, 0.4, 3); });
   kit.pools.add(0, 0.02, S.z - 1.6, 4.5, 2.4, LIGHT.warm, 0.12, { layer: 'show' });
   diyaRow(kit, [S.x0 + 0.2, S.h, S.z + 0.08], [S.x1 - 0.2, S.h, S.z + 0.08], 0.45, 0.04);
@@ -284,4 +323,5 @@ function vrindavan(kit, root, tier, TH, r, data) {
     update(t, ctx) { glow.value = 0.85 * (0.35 + 0.65 * Math.max(ctx.lv.flame || 0, ctx.lv.practical || 0)); }
   };
 }
-export default { seed: 909, sky: nightSky, garbo: 'bare', garboK: 8, build: vrindavan };
+// (the garbo stands under a sandstone chhatri: the mandvi's outline, so 'full')
+export default { seed: 909, sky: nightSky, garbo: 'full', garboK: 8, build: vrindavan };

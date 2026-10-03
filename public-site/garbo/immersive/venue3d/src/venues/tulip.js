@@ -10,7 +10,7 @@
 // The plan is the 2D scene's (venues2d/violet.js), handed in as data.spec.
 
 import * as THREE from 'three';
-import { TAU, lerp, canvasTexture, seeded, BAND, LIGHT } from '../util.js';
+import { TAU, lerp, canvasTexture, seeded, face, BAND, LIGHT } from '../util.js';
 import { std } from '../kit.js';
 import { buildBand } from '../band.js';
 import { canvas, normalMap, tex } from '../floors.js';
@@ -122,15 +122,21 @@ function violet(kit, root, tier, TH, r, data) {
   });
   tips.forEach((p, i) => { if (i % (phone ? 4 : 2)) return; if (Math.hypot(p[0], p[2]) < VG.floor + 1) return; const drop = 0.4 + (i % 4) * 0.3; kit.wires.line(p, [p[0], p[1] - drop, p[2]]); cone(p[0], p[1] - drop, p[2], 0.75 + (i % 3) * 0.12); });
   const leafMat = kit.selfLit(new THREE.MeshStandardMaterial({ map: leafTexture(['#2a1e4a', '#3a2a5e', '#24402a', '#4a3a6a', '#1e3a24'], 19), alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.75 }), 0.24, 'architectural');
-  woods.build(root, new THREE.MeshStandardMaterial({ map: barkTexture(15, ['#3a3040', '#5a4a5e']), roughness: 0.9 }), leafMat, ['#c8b0ff', '#ffd8a0']);
+  // the bark itself holds the violet light washed up it (zip-016): trunk and boughs glow, the grain showing through
+  const barkM = kit.selfLit(new THREE.MeshStandardMaterial({ map: barkTexture(15, ['#4a3a58', '#6a5a7a']), roughness: 0.9 }), 0.42, 'architectural'); barkM.emissive.set('#9a6aff');
+  woods.build(root, barkM, leafMat, ['#c8b0ff', '#ffd8a0']);
 
   /* the tulip lamps: each bloom hangs open side down from a short green stem, lit from within in its colour */
   const bloom = tulipGeometry(), hung = bloom.clone(); hung.rotateX(Math.PI); hung.translate(0, -0.06, 0);
   const petalMat = kit.litMap(petalTexture(), 1.5, 'festive', { side: THREE.DoubleSide });
-  const cm = new THREE.InstancedMesh(hung, petalMat, cones.length), mx = new THREE.Matrix4(), q = new THREE.Quaternion(), tc = new THREE.Color();
-  cones.forEach(([x, y, z, s], i) => { const col = TULIPS[(i * 5 + Math.floor(x * 3)) % TULIPS.length & 7 % TULIPS.length]; cm.setMatrixAt(i, mx.compose(new THREE.Vector3(x, y, z), q.setFromEuler(new THREE.Euler(0, i * 0.7, 0)), new THREE.Vector3(s * 1.15, s * 1.15, s * 1.15))); cm.setColorAt(i, tc.set(TULIPS[i % TULIPS.length])); kit.bigBulbs.add(x, y - 0.32 * s, z, i, { color: '#ffe2c0', k: 0.8, s: 0.4 * s, twinkle: 0.05, layer: 'festive' }); void col; });
-  root.add(cm);
-  const stems = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 5), std('#3a7a2a', 0.7), cones.length); cones.forEach(([x, y, z], i) => stems.setMatrixAt(i, mx.makeTranslation(x, y, z))); root.add(stems);
+  const mx = new THREE.Matrix4(), q = new THREE.Quaternion(), tc = new THREE.Color();
+  // (built once every lamp is placed, the stage's too: see hangTulips() below)
+  const hangTulips = () => {
+    const cm = new THREE.InstancedMesh(hung, petalMat, cones.length);
+    cones.forEach(([x, y, z, s], i) => { const col = TULIPS[(i * 5 + Math.floor(x * 3)) % TULIPS.length & 7 % TULIPS.length]; cm.setMatrixAt(i, mx.compose(new THREE.Vector3(x, y, z), q.setFromEuler(new THREE.Euler(0, i * 0.7, 0)), new THREE.Vector3(s * 1.15, s * 1.15, s * 1.15))); cm.setColorAt(i, tc.set(TULIPS[i % TULIPS.length])); kit.bigBulbs.add(x, y - 0.32 * s, z, i, { color: '#ffe2c0', k: 0.8, s: 0.4 * s, twinkle: 0.05, layer: 'festive' }); void col; });
+    root.add(cm);
+    const stems = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.012, 0.012, 0.12, 5), std('#3a7a2a', 0.7), cones.length); cones.forEach(([x, y, z], i) => stems.setMatrixAt(i, mx.makeTranslation(x, y, z))); root.add(stems);
+  };
   kit.pools.add(0, 0.02, 0, VG.floor + 1, VG.floor + 1, AMBER, 0.07, { layer: 'festive' });
 
   /* the beds: shrubs of broad leaves and violet flowers along the paths and round the trees; low lamps along the paths */
@@ -156,7 +162,7 @@ function violet(kit, root, tier, TH, r, data) {
   }
 
   /* the woven lounge pods among the trees: a round sofa under a dome of rattan, open towards the floor, lit within */
-  const podMat = kit.litMap(weaveTexture(), 0.45, 'practical', { alphaTest: 0.35, side: THREE.DoubleSide, transparent: false });
+  const podMat = kit.litMap(weaveTexture(), 0.85, 'practical', { alphaTest: 0.35, side: THREE.DoubleSide, transparent: false });
   VG.pods.forEach(([x, z]) => {
     const face = Math.atan2(-x, -z), dome = new THREE.Mesh(new THREE.SphereGeometry(2.3, 24, 12, face + 0.9, TAU - 1.8, 0, Math.PI / 2), podMat);
     dome.scale.y = 1.15; dome.position.set(x, 0, z); root.add(dome);
@@ -171,10 +177,26 @@ function violet(kit, root, tier, TH, r, data) {
   const st = new THREE.Group(); root.add(st);
   const deck = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 1, S.h, S.depth + 0.6), std('#6a4424', 0.65, 0.05)); deck.position.set(0, S.h / 2, S.z + S.depth / 2); st.add(deck);
   D.rug(0, S.z + 1.6, S.x1 - S.x0 - 0.6, 2.4, 0, rugTexture('stripe', ['#3a2a6a', '#c89a4a', '#7a4aba', '#e6dccb']), S.h + 0.006);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#c080ff' });
   [[S.x0 - 0.3, S.z + 0.2], [S.x1 + 0.3, S.z + 0.2], [S.x0 - 0.3, S.z + S.depth], [S.x1 + 0.3, S.z + S.depth]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 4.6, 8), iron); p.position.set(x, 2.3, z); st.add(p); });
   [[S.x0 - 0.3, S.x1 + 0.3, S.z + 0.2], [S.x0 - 0.3, S.x1 + 0.3, S.z + S.depth]].forEach(([x0, x1, z]) => { kit.wires.cable([x0, 4.55, z], [x1, 4.55, z], 0.3, 10); for (let x = x0 + 0.8; x < x1 - 0.5; x += 1.0) cone(x, 4.1, z, 0.75); });
   kit.pools.add(0, 0.02, S.z - 1.6, 4.5, 2.4, AMBER, 0.12, { layer: 'show' });
+  // behind the band a screen of woven cane, glowing violet and pink through the weave, tulip lamps along its top
+  const weave = canvasTexture(512, 256, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h * 0.75, 20, w / 2, h * 0.75, w * 0.6); gr.addColorStop(0, '#ffb0e0'); gr.addColorStop(0.45, '#b060f0'); gr.addColorStop(1, '#2a1450');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#3a2416'; g.lineWidth = 7;
+    for (let k = -h; k < w + h; k += 22) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + h, h); g.stroke(); g.beginPath(); g.moveTo(k + h, 0); g.lineTo(k, h); g.stroke(); }
+    g.lineWidth = 12; g.strokeRect(0, 0, w, h);
+  });
+  const BW = S.x1 - S.x0 + 0.6, bz = S.z + S.depth + 0.12;
+  const screen = face(new THREE.Mesh(new THREE.PlaneGeometry(BW, 3.2), kit.litMap(weave, 0.8, 'architectural'))); screen.position.set(0, S.h + 1.6, bz); st.add(screen);
+  const frameM = std('#4a3020', 0.7);
+  [[0, S.h + 3.24, BW + 0.2, 0.12], [0, S.h + 0.05, BW + 0.2, 0.1]].forEach(([x, y, w, hh]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.14), frameM); b.position.set(x, y, bz + 0.04); st.add(b); });
+  for (let x = -BW / 2 + 0.5; x <= BW / 2 - 0.4; x += 0.9) cone(x, S.h + 3.0, bz - 0.12, 0.55);
+  kit.pools.add(0, S.h + 1.6, bz - 0.05, BW * 0.45, 1.8, '#c080ff', 0.12, { vertical: true, layer: 'architectural' });
+
+  hangTulips();
 
   /* sofas round the floor */
   (VG.seats || []).forEach((sf) => {

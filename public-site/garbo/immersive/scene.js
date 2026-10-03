@@ -402,12 +402,15 @@
   // Keep the player legible over the venue: one soft shade centred behind it and nowhere else, so the venue shows
   // round it. Where the canvas is cropped (phones and tablets) the venue also fades into the page's ink at its edge.
   VenueStage.prototype.drawScrim = function (ctx, W, H) {
-    var b = this.shade;
-    if (!b || this.dj) return;
-    var cx = (b.l + b.r) / 2, cy = (b.t + b.b) / 2, rx = (b.r - b.l) / 2 + 160, ry = (b.b - b.t) / 2 + 110;
+    var b = this.shade, hc = document.documentElement.classList;
+    // (while a panel is open the player steps back, and its shade with it)
+    if (!b || this.dj || hc.contains('panel-open') || hc.contains('covered')) return;
+    // a gentle, wide fall-off rather than a dark disc, which read as a hole on a pale floor; the words carry their own
+    // soft shadow for the rest
+    var cx = (b.l + b.r) / 2, cy = (b.t + b.b) / 2, rx = (b.r - b.l) / 2 + 260, ry = (b.b - b.t) / 2 + 170;
     ctx.save(); ctx.translate(cx, cy); ctx.scale(rx, ry);
     var sg = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-    sg.addColorStop(0, 'rgba(11,6,5,.84)'); sg.addColorStop(0.5, 'rgba(11,6,5,.7)'); sg.addColorStop(0.8, 'rgba(11,6,5,.3)'); sg.addColorStop(1, 'rgba(11,6,5,0)');
+    sg.addColorStop(0, 'rgba(11,6,5,.6)'); sg.addColorStop(0.35, 'rgba(11,6,5,.5)'); sg.addColorStop(0.6, 'rgba(11,6,5,.3)'); sg.addColorStop(0.82, 'rgba(11,6,5,.11)'); sg.addColorStop(1, 'rgba(11,6,5,0)');
     ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(0, 0, 1, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     var c = this.crop, fg;

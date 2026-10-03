@@ -26,7 +26,7 @@
       room: { level: 0.05, cut: 800 }, night: 1, roomTone: 0.01
     },
     plan: KR,
-    cams: { circle: [0, 4.2, -10.2], far: [0, 2.0, -14.6], stage: [-9.2, 2.6, 6.4] },
+    cams: { circle: [0, 4.2, -10.2], far: [0, 2.0, -14.6], stage: [-11.4, 2.4, 7.0] },
     frames: { far: { hor: 0.46, lens: 0.8 }, stage: { hor: 0.47, lens: 1.08 } },
     // The musicians on a low dais to the left of the circle, facing it
     stage: { x0: -14.2, x1: -8.6, z: 10.8, h: 0.3, depth: 2.8, band: 'sheri', bandFront: 11.4, crowd: 3.6, fillX: 2.2 },

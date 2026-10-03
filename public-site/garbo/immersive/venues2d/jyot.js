@@ -17,8 +17,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).jyot = {
     label: 'Jyot Chowk',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // A walled stone court: bright slaps off the terraces and arcades, the jharokha wall throwing one back from the far end
     sound: {
       desc: 'A courtyard of carved stone lit by thousands of diyas. Bright echoes off the terraces and the far wall.',
@@ -65,7 +63,7 @@
       [-1, 1].forEach(function (sd) { out.shapes.push({ k: 'line', pts: [[sd * DJ.terrX, DJ.terrNear], [sd * DJ.terrX, DJ.farZ]], s: 'step' }); out.shapes.push({ k: 'line', pts: [[sd * DJ.arcX, DJ.arcNear], [sd * DJ.arcX, DJ.farZ]], s: 'wall' }); });
       out.shapes.push({ k: 'line', pts: [[-DJ.terrX, DJ.terrNear], [-DJ.gate, DJ.terrNear]], s: 'step' }); out.shapes.push({ k: 'line', pts: [[DJ.gate, DJ.terrNear], [DJ.terrX, DJ.terrNear]], s: 'step' });
       out.shapes.push({ k: 'ring', x: DJ.stambh[0], z: DJ.stambh[1], r: 1.6, s: 'post' }); out.shapes.push({ k: 'line', pts: [[-DJ.arcX, DJ.backZ], [DJ.arcX, DJ.backZ]], s: 'wall' });
-      [130, 160, 190, 220, 250, 290, 320, 350, 20, 50].forEach(function (d) { var a = d * Math.PI / 180; out.shapes.push({ k: 'ring', x: Math.cos(a) * 12.4, z: Math.sin(a) * 12.4, r: 0.25, s: 'post' }); });
+      [130, 160, 190, 220, 240, 300, 320, 350, 20, 50].forEach(function (d) { var a = d * Math.PI / 180; out.shapes.push({ k: 'ring', x: Math.cos(a) * 12.4, z: Math.sin(a) * 12.4, r: 0.25, s: 'post' }); });
       seats.forEach(function (sf) { var c0 = Math.cos(sf.ry), s0 = Math.sin(sf.ry), h = sf.len / 2; out.shapes.push({ k: 'line', pts: [[sf.x - c0 * h, sf.z + s0 * h], [sf.x + c0 * h, sf.z - s0 * h]], s: 'step' }); });
     },
     seats: function (h) { return K.seats(h, seats, 0.65); },

@@ -256,10 +256,11 @@ function bowlGeometry() {
 }
 export class Flames {
   constructor() { this.list = []; }
-  // s: the bowl's radius in metres (a small diya is about 0.045); bowl: 'clay', 'brass' or null (a wick in a lamp)
+  // s: the bowl's radius in metres (a small diya is about 0.045); bowl: 'clay', 'brass' or null (a wick in a lamp);
+  // pool: false when the lamp's own light is laid some other way (a tower of lamps, whose pools would stack up it)
   add(x, y, z, opts = {}) {
     const s = opts.s || 0.045;
-    this.list.push({ x, y, z, s, bowl: opts.bowl === undefined ? 'clay' : opts.bowl, layer: opts.layer || 'flame', ph: opts.ph != null ? opts.ph : x * 5.3 + z * 2.9 + y * 7.1, k: opts.k || 1 });
+    this.list.push({ x, y, z, s, bowl: opts.bowl === undefined ? 'clay' : opts.bowl, layer: opts.layer || 'flame', ph: opts.ph != null ? opts.ph : x * 5.3 + z * 2.9 + y * 7.1, k: opts.k || 1, pool: opts.pool !== false });
   }
   build(parent, kit) {
     const n = this.list.length;
@@ -285,6 +286,7 @@ export class Flames {
     // cell lights it, a little brighter and wider for the others)
     const taken = new Map();
     this.list.forEach((f) => {
+      if (!f.pool) return;
       const r = f.s * 20, live = f.y >= 0.1;
       if (live) {
         const key = Math.round(f.x / 0.9) + ',' + Math.round(f.y * 4) + ',' + Math.round(f.z / 0.9);

@@ -50,12 +50,12 @@ function lotusLight(res, R) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return { t, W };
 }
 // A jali: a stone screen pierced in a lattice of eight-pointed stars
-function jaliTexture() {
+function jaliTexture(holesOnly) {
   return canvasTexture(128, 256, (g, w, h) => {
-    g.fillStyle = '#d8cdb8'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#000';
+    g.fillStyle = holesOnly ? '#000' : '#d8cdb8'; g.fillRect(0, 0, w, h);
+    g.fillStyle = holesOnly ? '#fff' : '#000';
     for (let y = 16; y < h - 8; y += 20) for (let x = 12 + ((y / 20) % 2) * 10; x < w - 6; x += 20) { g.beginPath(); for (let k = 0; k < 16; k++) { const a = k / 16 * TAU, rr = k % 2 ? 4 : 7.5; if (k) g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); else g.moveTo(x + rr, y); } g.closePath(); g.fill(); }
-    g.strokeStyle = '#b8ab92'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    if (!holesOnly) { g.strokeStyle = '#b8ab92'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6); }
   });
 }
 
@@ -71,7 +71,7 @@ function lotus(kit, root, tier, TH, r, data) {
   const gr = granite(phone ? 512 : 1024);
   const floorMesh = ground(root, { map: gr.map, normalMap: gr.normal, normalScale: 0.3, roughness: 0.4, decal: null, decalRect: null }, 110, 110, 4, tier.shadows);
   floorMesh.material.userData.env = 0.7;
-  const ll = lotusLight(phone ? 1024 : 2048, LO.floor), lotusMat = kit.litMap(ll.t, 1.0, 'show', { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), lotusM = new THREE.Mesh(new THREE.PlaneGeometry(ll.W, ll.W), lotusMat);
+  const ll = lotusLight(phone ? 1024 : 2048, LO.floor), lotusMat = kit.litMap(ll.t, 1.45, 'show', { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), lotusM = new THREE.Mesh(new THREE.PlaneGeometry(ll.W, ll.W), lotusMat);
   lotusM.rotation.x = -Math.PI / 2; lotusM.position.y = 0.008; lotusM.renderOrder = 1; lotusM.userData.dynamic = true; root.add(lotusM);
   kit.pools.add(0, 0.02, 0, LO.floor + 2, LO.floor + 2, '#a050ff', 0.06, { layer: 'show' });
 
@@ -87,7 +87,7 @@ function lotus(kit, root, tier, TH, r, data) {
         tiers.grid([A[0], y1, A[1]], [B[0], y1, B[1]], [C[0], y1, C[1]], [Dd[0], y1, Dd[1]], 1, 1, [0, 1, 0], (p) => [p[0] / 2.4, p[2] / 2.4]);
         tiers.grid([A[0], y0, A[1]], [B[0], y0, B[1]], [B[0], y1, B[1]], [A[0], y1, A[1]], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], (p) => [Math.hypot(p[0], p[2]) * rad(dm) / 2.4, p[1] / 2.4]);
         const e = 0.012, ia = [A[0] * (1 - e / r0), A[1] * (1 - e / r0)], ib = [B[0] * (1 - e / r0), B[1] * (1 - e / r0)];
-        strips.grid([ia[0], y1 - 0.06, ia[1]], [ib[0], y1 - 0.06, ib[1]], [ib[0], y1 - 0.025, ib[1]], [ia[0], y1 - 0.025, ia[1]], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], () => [0, 0]);
+        strips.grid([ia[0], y1 - 0.09, ia[1]], [ib[0], y1 - 0.09, ib[1]], [ib[0], y1 - 0.025, ib[1]], [ia[0], y1 - 0.025, ia[1]], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], () => [0, 0]);
       } else {
         // two half-steps up to this tier
         [[0, 0.5], [0.5, 1]].forEach(([f0, f1]) => {
@@ -95,7 +95,7 @@ function lotus(kit, root, tier, TH, r, data) {
           const a1 = P(d, ra), b1 = P(d + STEP, ra), c1 = P(d + STEP, rb), d1 = P(d, rb);
           tiers.grid([a1[0], yb, a1[1]], [b1[0], yb, b1[1]], [c1[0], yb, c1[1]], [d1[0], yb, d1[1]], 1, 1, [0, 1, 0], (p) => [p[0] / 2.4, p[2] / 2.4]);
           tiers.grid([a1[0], ya, a1[1]], [b1[0], ya, b1[1]], [b1[0], yb, b1[1]], [a1[0], yb, a1[1]], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], (p) => [Math.hypot(p[0], p[2]) * rad(dm) / 2.4, p[1] / 2.4]);
-          strips.grid([a1[0] * 0.999, yb - 0.05, a1[1] * 0.999], [b1[0] * 0.999, yb - 0.05, b1[1] * 0.999], [b1[0] * 0.999, yb - 0.02, b1[1] * 0.999], [a1[0] * 0.999, yb - 0.02, a1[1] * 0.999], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], () => [0, 0]);
+          strips.grid([a1[0] * 0.999, yb - 0.08, a1[1] * 0.999], [b1[0] * 0.999, yb - 0.08, b1[1] * 0.999], [b1[0] * 0.999, yb - 0.02, b1[1] * 0.999], [a1[0] * 0.999, yb - 0.02, a1[1] * 0.999], 1, 1, [-Math.cos(rad(dm)), 0, -Math.sin(rad(dm))], () => [0, 0]);
         });
         if (k === LO.tiers - 1) { const a2 = P(d, r0 + LO.tread), b2 = P(d + STEP, r0 + LO.tread), c2 = P(d + STEP, r1), d2 = P(d, r1); tiers.grid([a2[0], y1, a2[1]], [b2[0], y1, b2[1]], [c2[0], y1, c2[1]], [d2[0], y1, d2[1]], 1, 1, [0, 1, 0], (p) => [p[0] / 2.4, p[2] / 2.4]); }
       }
@@ -122,6 +122,8 @@ function lotus(kit, root, tier, TH, r, data) {
   /* the jali screens round the top, lit from below; trees behind them */
   const jaliMat = new THREE.MeshStandardMaterial({ map: jaliTexture(), alphaTest: 0.5, roughness: 0.85, side: THREE.DoubleSide, transparent: false });
   jaliMat.map.colorSpace = THREE.SRGBColorSpace;
+  // the lanterns behind each screen show through its stars, warm (zip-088, zip-140)
+  jaliMat.emissiveMap = jaliTexture(true); jaliMat.emissive.set('#ffb060'); kit.selfLit(jaliMat, 1.3, 'architectural');
   const jg = new THREE.PlaneGeometry(1.7, 3.8); jg.translate(0, 1.9, 0);
   const jaliList = [];
   for (let d = LO.stageTo + 3; d < LO.stageFrom + 357; d += 6) {
@@ -144,7 +146,7 @@ function lotus(kit, root, tier, TH, r, data) {
   const stoneM = std('#3a3640', 0.7, 0.05), zB = S.z + S.depth;
   const deck = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 4, S.h, S.depth + 1.2), stoneM); deck.position.set(0, S.h / 2, S.z + S.depth / 2 + 0.4); st.add(deck);
   strips.grid([S.x0 - 2, S.h - 0.07, S.z - 0.21], [S.x1 + 2, S.h - 0.07, S.z - 0.21], [S.x1 + 2, S.h - 0.03, S.z - 0.21], [S.x0 - 2, S.h - 0.03, S.z - 0.21], 1, 1, [0, 0, -1], () => [0, 0]);
-  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true });
+  const bandHoles = buildBand(kit, st, BAND.sheri, { x0: S.x0, x1: S.x1, front: S.bandFront, floor: S.h, small: true, back: S.z + S.depth, wash: '#40e4ff' });
   const backWall = new THREE.Mesh(new THREE.BoxGeometry(S.x1 - S.x0 + 4, 6.2, 0.3), std('#1a1822', 0.8)); backWall.position.set(0, S.h + 3.1, zB + 0.6); st.add(backWall);
   for (let i = 0; i < 9; i++) { const x = lerp(S.x0 - 1, S.x1 + 1, i / 8), bar = new THREE.Mesh(new THREE.BoxGeometry(0.16, 5.4, 0.08), kit.glow(i % 2 ? '#7a5aff' : '#3a8aff', 1.6, 'show')); bar.position.set(x, S.h + 3.0, zB + 0.42); st.add(bar); }
   for (let i = 0; i < 4; i++) { const x = lerp(S.x0 - 0.2, S.x1 + 0.2, (i + 0.5) / 4), j = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 4.2), jaliMat); j.position.set(x, S.h + 2.9, zB + 0.4); j.rotation.y = Math.PI; st.add(j); }
@@ -173,7 +175,7 @@ function lotus(kit, root, tier, TH, r, data) {
   glowInto(geo, sources);
   const t = sandstoneTexture(['#c8c0b4', '#a8a094'], 21); t.wrapS = t.wrapT = THREE.RepeatWrapping;
   const stone = new THREE.Mesh(geo, glowStone({ map: t, roughness: 0.82 }, glow, 'lotus-stone')); stone.receiveShadow = !!tier.shadows; root.add(stone);
-  const stripMat = kit.glow(CYAN, 1.7, 'architectural'); root.add(new THREE.Mesh(strips.geometry(), stripMat));
+  const stripMat = kit.glow(CYAN, 1.85, 'architectural'); root.add(new THREE.Mesh(strips.geometry(), stripMat));
 
   // two screens of clear glass, each carried by a pair of drones, over the upper tiers either side
   const drones = [-1, 1].map((sd, i) => droneScreen(kit, root, { x: sd * 14, y: 7.6, z: 8, ry: Math.atan2(-sd * 14, -8), w: 5.6, i }));

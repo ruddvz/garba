@@ -611,6 +611,9 @@
         }
         return;
       }
+      // Kukdu or Private Garba Circle open over the venue from the page round this one: the player steps back as it
+      // does for this page's own panels
+      if (message.type === 'cover') { document.documentElement.classList.toggle('covered', !!message.on); return; }
       if (message.type !== 'state') return;
       applyLiveState(message.snapshot);
     });
@@ -618,6 +621,22 @@
       window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'ready' }, location.origin);
     }, { once: true });
   }
+
+  /* ---------- a panel open ----------
+     While any panel is open (View, Sound, More and the rest) the page carries panel-open: the venue's own words step
+     back (the name tags over the two of you, the walking hint), and the page round this one hides its start hint */
+  (function () {
+    var panels = document.querySelectorAll('.side-card, .sheet, .about, #cloudGate'), panelWas = null;
+    var tellPanel = function () {
+      var open = Array.prototype.some.call(panels, function (p) { return !p.hidden; });
+      if (open === panelWas) return;
+      panelWas = open; document.documentElement.classList.toggle('panel-open', open);
+      if (LIVE_SITE) window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'panel', open: open }, location.origin);
+    };
+    var panelWatch = new MutationObserver(tellPanel);
+    Array.prototype.forEach.call(panels, function (p) { panelWatch.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+    tellPanel();
+  })();
 
   /* ---------- standalone YouTube audio/video player ---------- */
   var ytPlayer = null, ytReady = false, ytApiLoading = false, ytCurrentVideo = null, ytCurrentStart = 0;
@@ -2088,6 +2107,7 @@
   });
   // Private Garba Circle lives in the player that owns playback: its tile in More opens it
   function openCircle() {
+    closeSheet(true);
     if (requestLiveAction('circle')) return;
     var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     window.location.href = isLocalDev ? '/#circle' : '../../../../#circle';
@@ -2312,13 +2332,15 @@
   // The still of a venue (venue-art/posters/, made by venue3d/posters.mjs) covers the screen while that venue is built,
   // from the page's first moment (index.html picks it before anything else loads), and fades once the live one shows
   var poster = $('venuePoster'), posterAt = performance.now(), posterFading = 0;
+  // (the stills carry the page's own version, as the first one does)
+  var POSTER_V = ((poster && /[?&]v=([^&]+)/.exec(poster.getAttribute('src') || '')) || [])[1] || '1';
   function posterFor(v) {
     if (!poster) return;
     var ready = venuesReady();
     if (ready && ready.indexOf(v) >= 0) return;
     clearTimeout(posterFading); posterFading = 0; posterAt = performance.now();
     poster.hidden = false; poster.dataset.venue = v;
-    poster.src = 'venue-art/posters/' + v + '-' + (A.listener === 'stage' ? 'stage' : 'circle') + (window.innerHeight > window.innerWidth * 1.1 ? '-tall' : '') + '.webp?v=20261003-3';
+    poster.src = 'venue-art/posters/' + v + '-' + (A.listener === 'stage' ? 'stage' : 'circle') + (window.innerHeight > window.innerWidth * 1.1 ? '-tall' : '') + '.webp?v=' + POSTER_V;
     poster.classList.remove('gone');
   }
   if (poster) {
@@ -2331,6 +2353,92 @@
   }
   // Which venues the 3D has built (null where there's no 3D, so no loader is ever shown there)
   function venuesReady() { try { var V3 = window.GarbaVenue3D; return V3 && V3.debug ? V3.debug().ready : null; } catch (e) { return null; } }
+  /* ---------- the way in: through the clouds ----------
+     Each visit opens above dense, slow, moonlit clouds while the venue builds below. A tap (or Enter) starts the music
+     and drops you through them: the clouds rush up past you, the nearest swelling as you pass, and once the venue is
+     built they thin and part, and the venue's own drop-in carries you down to your place. A venue not built yet keeps
+     you falling through cloud until it is. The clouds are a dozen soft puffs drawn once and a small canvas (half
+     resolution or less: cloud is soft), so a phone spends little on them. */
+  (function () {
+    var gate = $('cloudGate'); if (!gate || gate.hidden) return;
+    var cv = $('cloudCanvas'), cx = cv.getContext('2d'), load = $('gateLoad'), reduce = reducedQuery.matches;
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches, RES = coarse ? 0.45 : 0.6, W = 0, H = 0;
+    function size() { var d = Math.min(2, window.devicePixelRatio || 1) * RES; W = Math.max(1, Math.round(innerWidth * d)); H = Math.max(1, Math.round(innerHeight * d)); cv.width = W; cv.height = H; }
+    size(); window.addEventListener('resize', size);
+    // A puff: overlapping soft rounds, lit from the moon above and shadowed violet underneath
+    function puff(seed) {
+      var c = document.createElement('canvas'), w = 360, h = 220; c.width = w; c.height = h; var g = c.getContext('2d'), r = seed;
+      var rnd = function () { r = (r * 9301 + 49297) % 233280; return r / 233280; };
+      for (var i = 0; i < 22; i++) {
+        var x = w * (0.18 + 0.64 * rnd()), y = h * (0.42 + 0.3 * rnd()) - (1 - Math.abs(x / w - 0.5) * 2) * h * 0.18, rr = h * (0.16 + 0.2 * rnd());
+        var gr = g.createRadialGradient(x, y - rr * 0.25, rr * 0.1, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.55, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, Math.PI * 2); g.fill();
+      }
+      g.globalCompositeOperation = 'source-atop';
+      var sh = g.createLinearGradient(0, 0, 0, h); sh.addColorStop(0, 'rgba(226,218,250,1)'); sh.addColorStop(0.32, 'rgba(150,138,204,1)'); sh.addColorStop(0.7, 'rgba(78,66,138,1)'); sh.addColorStop(1, 'rgba(34,28,70,1)');
+      g.fillStyle = sh; g.fillRect(0, 0, w, h);
+      return c;
+    }
+    var PUFFS = [1, 7, 13, 29, 41].map(puff), clouds = [], N = coarse ? 26 : 30, STARS = [];
+    for (var si0 = 0; si0 < 120; si0++) STARS.push([Math.random(), Math.random() * 0.7, 0.8 + Math.random() * 1.6, 0.35 + Math.random() * 0.6]);
+    function spawn(i, below) {
+      var layer = i % 3, s = (0.55 + Math.random() * 0.5) * (layer === 0 ? 0.5 : layer === 1 ? 0.85 : 1.35);
+      // (the clouds sit low and in banks, so the sky shows above them and through their gaps)
+      return { x: Math.random() * 1.3 - 0.15, y: below ? 1.05 + Math.random() * 0.5 : 0.3 + Math.pow(Math.random(), 0.7) * 0.85, s: s, layer: layer, p: PUFFS[i % PUFFS.length], v: (0.004 + Math.random() * 0.008) * (layer + 1), ph: Math.random() * 6.28 };
+    }
+    for (var i = 0; i < N; i++) clouds.push(spawn(i));
+    clouds.sort(function (a, b) { return a.layer - b.layer; });
+    var falling = false, fall = 0, fallT = 0, last = 0, opened = false, done = false;
+    function ready() { var r = venuesReady(); return !r || r.indexOf(A.venue) >= 0; }
+    function draw(ms) {
+      if (done) return;
+      var dt = last ? Math.min(0.05, (ms - last) / 1000) : 0.016; last = ms;
+      if (falling) { fallT += dt; fall = Math.min(2.6, fall + dt * 2.4); }
+      cx.clearRect(0, 0, W, H);
+      // the night between the clouds: stars, and the moon's glow over the cloud tops
+      for (var si = 0; si < STARS.length; si++) { var q = STARS[si]; cx.globalAlpha = q[3] * (reduce ? 0.8 : 0.6 + 0.4 * Math.sin(ms / 700 + q[2] * 9)); cx.fillStyle = '#fff6e2'; cx.fillRect(q[0] * W, q[1] * H, q[2], q[2]); }
+      cx.globalAlpha = 1;
+      var mg = cx.createRadialGradient(W * 0.5, H * 0.16, 0, W * 0.5, H * 0.16, Math.max(W, H) * 0.42); mg.addColorStop(0, 'rgba(255,246,226,.22)'); mg.addColorStop(1, 'rgba(255,246,226,0)'); cx.fillStyle = mg; cx.fillRect(0, 0, W, H);
+      var thin = opened ? Math.min(1, fallT * 0.9) : 0;
+      for (var k = 0; k < clouds.length; k++) {
+        var c = clouds[k], par = 0.55 + c.layer * 0.55;
+        if (!reduce) { c.x += c.v * dt * (falling ? 0.4 : 1); if (c.x > 1.2) c.x -= 1.45; }
+        if (falling && !reduce) { c.y -= fall * dt * par; if (c.layer === 2) c.s *= 1 + dt * 0.5 * fall; }
+        var w = Math.max(W, H * 0.95) * 0.62 * c.s, h = w * 0.61, x = c.x * W - w / 2, y = c.y * H - h / 2 + (reduce ? 0 : Math.sin(ms / 2600 + c.ph) * H * 0.006);
+        if (y + h < -H * 0.1) { if (!opened) { clouds[k] = spawn(k, true); clouds[k].layer = c.layer; } continue; }
+        cx.globalAlpha = (c.layer === 0 ? 0.42 : c.layer === 1 ? 0.7 : 0.9) * (1 - thin * (c.layer === 0 ? 1 : 0.6));
+        cx.drawImage(c.p, x, y, w, h);
+      }
+      cx.globalAlpha = 1;
+      if (load && ready()) load.classList.add('done');
+      // Falling and the venue's built: the clouds part, the gate fades, and the venue's own drop-in begins under them
+      if (falling && !opened && ready() && fallT > (reduce ? 0 : 1.1)) {
+        opened = true; fallT = 0;
+        if (window.GarbaVenueLive && window.GarbaVenueLive.releaseIntro) window.GarbaVenueLive.releaseIntro();
+        gate.classList.add('gone'); window.garboLandAt = performance.now() + (reduce ? 300 : 3600);
+        setTimeout(function () { done = true; gate.hidden = true; window.removeEventListener('resize', size); }, reduce ? 250 : 950);
+      }
+      // (never more than a few seconds of falling: if the venue can't be built, the scene's own night takes over)
+      if (falling && !opened && fallT > 9) { load && load.classList.add('done'); opened = true; if (window.GarbaVenueLive && window.GarbaVenueLive.releaseIntro) window.GarbaVenueLive.releaseIntro(); gate.classList.add('gone'); setTimeout(function () { done = true; gate.hidden = true; }, 950); }
+      if (!document.hidden) requestAnimationFrame(draw); else setTimeout(function () { requestAnimationFrame(draw); }, 300);
+    }
+    requestAnimationFrame(draw);
+    function go(e) {
+      if (falling) return;
+      if (e && e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+      if (e && e.type === 'keydown') e.preventDefault();
+      falling = true; gate.classList.add('falling'); gate.setAttribute('aria-label', 'Going down into the venue');
+      // the music: on the site its own first-tap handler starts it from this tap (a key press it doesn't see, so that
+      // asks for it here); on its own page, here
+      var idle = S.mode !== 'playing' && S.mode !== 'live' && S.mode !== 'loading';
+      if (idle && LIVE_SITE && e && e.type === 'keydown') requestLiveAction('play');
+      else if (idle && !LIVE_SITE) play();
+    }
+    gate.addEventListener('pointerdown', go);
+    gate.addEventListener('keydown', go);
+    try { gate.focus({ preventScroll: true }); } catch (e) { /* not focusable yet */ }
+  })();
+
   /* ---------- the board on a venue still being finished ----------
      A venue whose spec says soon (venues2d/<id>.js) can be danced in already; the first time you're in it in a visit, a
      signboard swings down under the top bar for a few seconds to say it's still being built. */
@@ -2338,7 +2446,7 @@
   var soonTimer = 0;
   function soonHide() { var b = $('soonBoard'); if (!b || b.hidden) return; clearTimeout(soonTimer); b.classList.add('away'); setTimeout(function () { b.hidden = true; b.classList.remove('away'); }, reducedQuery.matches ? 0 : 320); }
   function soonCheck() {
-    var b = $('soonBoard'), v = A.venue, info = E && E.VENUES[v]; if (!b || !info || !info.soon || soonSeen[v] || !b.hidden || openCardId === 'viewCard') return;
+    var b = $('soonBoard'), v = A.venue, info = E && E.VENUES[v]; if (!b || !info || !info.soon || soonSeen[v] || !b.hidden || openCardId === 'viewCard' || ($('cloudGate') && !$('cloudGate').hidden) || performance.now() < (window.garboLandAt || 0)) return;
     var ready = venuesReady(); if (ready && ready.indexOf(v) < 0) return;
     soonSeen[v] = 1; try { sessionStorage.setItem('garbo-soon', JSON.stringify(soonSeen)); } catch (e) { /* storage unavailable */ }
     $('soonName').textContent = info.label; b.hidden = false; clearTimeout(soonTimer); soonTimer = setTimeout(soonHide, 7000);

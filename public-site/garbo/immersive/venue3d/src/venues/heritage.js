@@ -226,7 +226,11 @@ export function portal(kit, root, add, M, z, hw, H, o = {}) {
     const pts = [], top = hs + ow / 2 - 0.1;
     for (let x = -ow / 2 + 0.1; x <= ow / 2 - 0.1; x += 0.16) { const L = 0.6 + 0.5 * Math.pow(Math.abs(x) / (ow / 2), 2) + (Math.round(x * 10) % 3) * 0.12; for (let d = 0; d < L; d += 0.085) pts.push([x, top - d * (1 + Math.abs(x) / ow), z - 0.1]); }
     [-1, 1].forEach((sd) => { for (let k = 0; k < 4; k++) { const x = sd * (ow / 2 + 0.05 + k * 0.14); for (let y = 0.3; y < top; y += 0.085) pts.push([x, y, z - 0.35]); } });
-    const fm = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.055, 0), std('#ffffff', 0.85), pts.length), mx = new THREE.Matrix4(), c = new THREE.Color();
+    // (they hold a little of the fires' glow in their own colours, so they read against the night beyond the gate)
+    const fmM = kit.selfLit(std('#ffffff', 0.85), 0.32, 'flame');
+    fmM.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance *= vColor.rgb;'); };
+    fmM.customProgramCacheKey = () => 'marigolds';
+    const fm = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.055, 0), fmM, pts.length), mx = new THREE.Matrix4(), c = new THREE.Color();
     pts.forEach(([x, y, zz], i) => { fm.setMatrixAt(i, mx.makeTranslation(x, y, zz)); fm.setColorAt(i, c.set(i % 5 === 2 ? '#ffd24a' : i % 9 === 4 ? '#fff4e0' : '#f08a1a')); }); root.add(fm);
   }
   return fires;

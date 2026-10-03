@@ -201,7 +201,10 @@ function vadodara(kit, root, tier, TH, r, data) {
   const bollards = [];
   for (let i = 0; i < 24; i++) { const a = (i + 0.5) / 24 * TAU, rr = CY.floor + 1.6; bollards.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
   for (let z = -22; z < -12; z += 2.5) [-3.2, 3.2].forEach((x) => bollards.push([x, z]));
-  { const bm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 0.55, 0.32), kit.glow('#ffcf8a', 1.2, 'practical'), bollards.length); bollards.forEach(([x, z], i) => bm.setMatrixAt(i, mx.makeTranslation(x, 0.28, z))); root.add(bm); }
+  // (each a post of dark metal with a frosted cap lit warm, and its light on the stone at its foot)
+  { const bm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.3, 0.46, 0.3), std('#1a1822', 0.35, 0.7), bollards.length), cm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 0.12, 0.32), kit.glow('#ffcf8a', 1.5, 'practical'), bollards.length);
+    bollards.forEach(([x, z], i) => { bm.setMatrixAt(i, mx.makeTranslation(x, 0.23, z)); cm.setMatrixAt(i, mx.makeTranslation(x, 0.52, z)); kit.pools.add(x, 0.02, z, 0.9, 0.9, '#ffcf8a', 0.1, { layer: 'practical' }); });
+    root.add(bm); root.add(cm); }
   kit.pools.add(0, 0.02, 0, CY.floor + 2.2, CY.floor + 2.2, '#ffcf8a', 0.05, { layer: 'practical' });
 
   /* the stage: its screen between tall LED panels of nested diamonds, magenta neon pillars, a lotus in neon over it */

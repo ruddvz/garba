@@ -16,8 +16,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).vadodara = {
     label: 'Vadodara Vision 2047',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // An open plaza between glass towers: hard echoes off the facades, late and spread, the city humming under it
     sound: {
       desc: 'An open plaza among the towers of a city at night. Hard echoes off the glass, late and wide.',
