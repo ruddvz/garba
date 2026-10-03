@@ -1155,6 +1155,167 @@
         "establish a song beat grid and foot/hand/body synchronization without equating the count labels to beats",
         "obtain Garba practitioner review before creating a source-faithful animation score"
       ]
+    },
+    {
+      "id": "akshay-bhosale-level-1-day-1-visual-review",
+      "catalogueRecordId": "akshay-bhosale-beginner-course",
+      "teacherOrChannel": "Akshay Bhosale / verified Akshay Bhosale",
+      "title": "Garba Dance Course | Beginners | Level 1 | DAY 1 | Step by Step",
+      "videoUrl": "https://www.youtube.com/watch?v=6MB2L5uUV_U",
+      "durationSeconds": 790,
+      "pageSnapshot": {
+        "viewsApprox": 701000,
+        "likes": 14874,
+        "channelSubscribersApprox": 270000,
+        "displayedRuntime": "13:10",
+        "checkedAt": "2026-10-03"
+      },
+      "publisherCountLabel": "The title labels this Level 1 / Day 1 of a beginner course; the description says Level 2 will be out tomorrow.",
+      "countInterpretation": "The course level/day identifies this lesson in a series, not a number of movements or musical beats. The page description supplies no movement list, count cues, chapters or routine names.",
+      "transcript": {
+        "closedCaptions": "unavailable",
+        "autoTranscript": "unavailable through the reviewed player page",
+        "use": "visual review only; narration, movement names and spoken count cues were not transcribed or verified"
+      },
+      "observedIntervals": [
+        {
+          "fromSeconds": 66,
+          "toSeconds": 143,
+          "visualObservations": [
+            "At about 1:06 the instructor faces forward with feet close and arms lifted/open beside the shoulders; at about 2:23 his feet are together and his hands are joined at chest height during the teaching setup.",
+            "These opening samples are instruction or held poses, not evidence of a named step, clap, foot-contact order or counted phrase."
+          ],
+          "unknowns": [
+            "whether the opening gestures demonstrate a movement or address the camera",
+            "foot contacts, weight transfer, lead/support side and beat placement",
+            "whether joined hands make a clap"
+          ]
+        },
+        {
+          "fromSeconds": 215,
+          "toSeconds": 246,
+          "visualObservations": [
+            "A slower 0.5× review from about 3:35–4:06 shows a solo full-body demonstration that alternates with a tighter foot crop. Around 3:35 the instructor stands wide with soft knees and forearms bent forward; by 3:41 he advances in a narrow/offset stance with one hand near the chest and the other lower at the hip.",
+            "Around 3:50 the foot-focused crop shows one foot lifted or reaching low/outward beside the planted leg; around 3:57 the feet draw close in a back-facing view. By 4:06 he faces more toward camera in another offset step with hands gathered low near the abdomen. This is a sequence of sampled positions from the passage, not a verified count-by-count score."
+          ],
+          "unknowns": [
+            "which anatomical foot leads or supports in the cropped/moving views",
+            "heel/toe contact, landing order, weight transfer and exact travel vector",
+            "whether gathered hands clap and how the arm changes align to foot events",
+            "the musical beat grid, movement name, repeat boundary and phrase length"
+          ]
+        },
+        {
+          "fromSeconds": 374,
+          "toSeconds": 447,
+          "visualObservations": [
+            "At about 6:14 the instructor is side-on with flexed knees, one foot stepped behind and its rear heel raised; his hands are gathered near face/chest level. At about 7:27 he is front-facing with feet together and hands gathered at the chest, a held teaching/reset pose."
+          ],
+          "unknowns": [
+            "which foot is behind, its landing/contact and the direction of travel",
+            "whether hands touch as a clap or are simply held together",
+            "whether either sample belongs to a complete repeating phrase"
+          ]
+        },
+        {
+          "fromSeconds": 488,
+          "toSeconds": 654,
+          "visualObservations": [
+            "The lesson resumes at about 8:08 after an inserted second-of-two advertisement was skipped; the interruption spans roughly 7:27–8:08, so no movement continuity is claimed across it. At 8:08 the instructor is in a wide stance with elbows bent and hands raised near the shoulders.",
+            "At 9:43 he is back-facing in a wide stance, one arm reaching sideways while the other bends across the body. Around 10:54 he shows a low lifted/reaching leg in front or outward while his forearms/hands are raised across the upper torso. These are observed poses; the frames do not establish which leg moves, how it lands or whether the shapes form one repeated unit."
+          ],
+          "unknowns": [
+            "step order and continuity across the ad interruption",
+            "lead/support side, foot contact and exact facing/travel path",
+            "hand-to-foot synchronization, clap timing and beat position"
+          ]
+        },
+        {
+          "fromSeconds": 718,
+          "toSeconds": 790,
+          "visualObservations": [
+            "At about 11:58 the instructor holds a close/crossed-looking stance with elbows bent and hands raised near shoulder level. At about 12:53 he stands front-facing with feet together and hands joined at chest height while addressing the camera; playback reaches the 13:10 end. The ending hand shape is not confirmed as a clap or dance event."
+          ],
+          "unknowns": [
+            "whether the final held positions belong to the demonstrated routine or its explanation/outro",
+            "closing movement, cadence, count, beat and phrase boundary"
+          ]
+        }
+      ],
+      "visualSamples": [
+        {
+          "atVideoSeconds": 66,
+          "observation": "Front-facing, feet close, arms lifted/open beside the shoulders during the early lesson setup."
+        },
+        {
+          "atVideoSeconds": 143,
+          "observation": "Feet together and hands joined at chest height; this held pose does not confirm a clap."
+        },
+        {
+          "atVideoSeconds": 215,
+          "observation": "Wide, soft-kneed stance with forearms bent forward at the beginning of the slower reviewed demonstration passage."
+        },
+        {
+          "atVideoSeconds": 221,
+          "observation": "Advancing/offset stance with one hand near the chest and the other lower near the hip; anatomical side is not assigned."
+        },
+        {
+          "atVideoSeconds": 230,
+          "observation": "Foot-focused crop shows one foot lifted or reaching low/outward beside the planted leg; contact and laterality are unclear."
+        },
+        {
+          "atVideoSeconds": 237,
+          "observation": "Feet close in a back-facing lower-body crop; exact crossing/contact is not resolved."
+        },
+        {
+          "atVideoSeconds": 246,
+          "observation": "Front/side-facing offset step with hands gathered low near the abdomen."
+        },
+        {
+          "atVideoSeconds": 374,
+          "observation": "Profile stance with flexed knees, one foot behind with rear heel raised, and hands gathered near the face/chest."
+        },
+        {
+          "atVideoSeconds": 447,
+          "observation": "Front-facing feet-together reset with hands gathered at the chest, immediately before the inserted advertisement."
+        },
+        {
+          "atVideoSeconds": 488,
+          "observation": "After the skipped ad, wide stance with bent elbows and hands near the shoulders."
+        },
+        {
+          "atVideoSeconds": 583,
+          "observation": "Back-facing wide stance; one arm reaches sideways while the other bends across the torso."
+        },
+        {
+          "atVideoSeconds": 654,
+          "observation": "Low lifted/reaching leg with the upper arms/hands gathered across the torso; moving foot and landing are unknown."
+        },
+        {
+          "atVideoSeconds": 718,
+          "observation": "Close/crossed-looking stance with elbows bent and hands raised near shoulder height."
+        },
+        {
+          "atVideoSeconds": 773,
+          "observation": "Front-facing outro/reset, feet together and hands joined at chest height."
+        },
+        {
+          "atVideoSeconds": 790,
+          "observation": "The lesson reaches its displayed 13:10 end."
+        }
+      ],
+      "coverage": "Playback was run through the complete 13:10 lesson at normal speed with sparse timed visual samples. The 3:35–4:06 active passage was additionally reviewed at 0.5×. A second-of-two inserted mid-roll advertisement was skipped from about 7:27 to 8:08; the lesson resumes at 8:08, and continuity across that gap is unknown. Samples distinguish static instruction/reset poses from movement and are not a continuous event transcription.",
+      "phraseLengthBeats": null,
+      "animationStatus": "sampled-not-scoreable",
+      "animationScore": null,
+      "openQuestions": [
+        "transcribe the teacher's spoken movement names or count cues from audio and verify them against visible demonstrations",
+        "identify whether the 3:35–4:06 passage is a named/repeating step or a transitional demonstration",
+        "review each complete demonstrated passage at normal and slower speed with reliable foot contacts, anatomical laterality, travel, facing and landing order",
+        "verify whether gathered-hand poses include claps and map arm events to foot events",
+        "establish a recording-specific beat grid and phrase boundaries without treating Level 1 / Day 1 as a step or beat count",
+        "obtain Garba practitioner review before creating a source-faithful animation score"
+      ]
     }
   ]
 }
