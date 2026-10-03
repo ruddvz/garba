@@ -436,17 +436,18 @@
           ],
           "unknowns": ["which foot lifts or crosses", "whether hands make contact", "lead side", "circle direction versus screen direction", "exact travel path", "whether this excerpt is the complete twelve-unit sequence", "partner synchronization", "beat positions", "phrase boundary"]
         },
-    {
-      "fromSeconds": 163,
-      "toSeconds": 185,
-      "visualObservations": [
-        "Around 166.5 seconds, the man lowers into a diagonal forward/crossed-looking stance with a low arm sweep while the woman makes a low forward reach; exact foot contacts and sides are unclear.",
-        "Around 170.5 seconds, both raise their arms into diagonal/overhead lines as the woman pivots with visible skirt flare; the man's bent-knee action is visible, but its side and landing are not established.",
-        "At about 172.5 seconds, one dancer travels toward the edge of the frame with one arm raised and the other extended to the side.",
-        "Around 174.2 seconds, the pair travels across the frame with high/low arm lines.",
-        "Around 174.5 seconds, the pair travels toward frame-left with contrasting high/low arm lines; the woman follows with a forward-reaching palm as her skirt turns.",
-        "Around 175.9 seconds, the front dancer turns and sweeps an arm across the torso while the partner pivots behind, with skirt flare visible.",
-        "Around 178.5 seconds, the man passes in the foreground with arms low/outward while the woman pivots behind him; clear hand contact is not visible.",
+        {
+          "fromSeconds": 163,
+          "toSeconds": 185,
+          "visualObservations": [
+            "At about 165 seconds, the man raises a knee while drawing his forearms together across the chest as the woman reaches forward; the lifted side and landing order are not established, and hand contact is not confirmed.",
+            "Around 166.5 seconds, the man lowers into a diagonal forward/crossed-looking stance with a low arm sweep while the woman makes a low forward reach; exact foot contacts and sides are unclear.",
+            "Around 170.5 seconds, both raise their arms into diagonal/overhead lines as the woman pivots with visible skirt flare; the man's bent-knee action is visible, but its side and landing are not established.",
+            "At about 172.5 seconds, one dancer travels toward the edge of the frame with one arm raised and the other extended to the side.",
+            "Around 174.2 seconds, the pair travels across the frame with high/low arm lines.",
+            "Around 174.5 seconds, the pair travels toward frame-left with contrasting high/low arm lines; the woman follows with a forward-reaching palm as her skirt turns.",
+            "Around 175.9 seconds, the front dancer turns and sweeps an arm across the torso while the partner pivots behind, with skirt flare visible.",
+            "Around 178.5 seconds, the man passes in the foreground with arms low/outward while the woman pivots behind him; clear hand contact is not visible.",
             "Around 179.4 seconds, the front dancer lifts a knee as the arms open low/outward while the partner continues a turn behind.",
             "Around 181.1–184.5 seconds, the pair changes to a partner-facing pivot/reach; one dancer turns away from the camera while the other extends an arm, then their arms rise into contrasting levels."
           ],
@@ -512,6 +513,7 @@
     {"atVideoSeconds": 160.6, "observation": "Both face away with one arm overhead while continuing the turn; exact step contacts are unclear."},
     {"atVideoSeconds": 161.6, "observation": "The pair turns back toward camera with open high/low arm lines and forward travel."},
     {"atVideoSeconds": 162.2, "observation": "The woman pivots away as the man moves toward her and sweeps an arm; hand contact is not visible."},
+    {"atVideoSeconds": 165, "observation": "The man raises a knee while drawing his forearms together across the chest; the woman reaches both arms forward. The lifted side and landing are unclear, and hand contact is not confirmed."},
     {"atVideoSeconds": 166.5, "observation": "The man lowers into a diagonal forward/crossed-looking stance with a low arm sweep while the woman makes a low forward reach; exact foot contacts and sides are unclear."},
     {"atVideoSeconds": 168, "observation": "Both show a raised arm line as the man advances in a broad diagonal stride and the woman pivots; skirt flare and motion blur obscure her foot contacts, and lead sides remain unclear."},
     {"atVideoSeconds": 170.5, "observation": "Both raise their arms into diagonal/overhead lines as the woman pivots with skirt flare; the man's bent-knee action is visible, but its side and landing are not established."},
