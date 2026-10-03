@@ -1,0 +1,412 @@
+{
+  "updated": "2026-10-03",
+  "sets": [
+    {
+      "id": "set-mogal-films-lathidad-lok-dayro-2bahrd8xsu4",
+      "title": "LIVE: Bhavya Lok Dayro Lathidad | Kirtidan Gadhvi | Mayabhai Ahir | Alpa Patel | Sukhdev Dhameliya",
+      "displayTitle": "Lathidad · Bhavya Lok Dayro",
+      "artists": [
+        "Kirtidan Gadhvi",
+        "Mayabhai Ahir",
+        "Alpa Patel",
+        "Sukhdev Dhameliya",
+        "Kamo Kothariya"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lok Dayro",
+        "Lathidad",
+        "Live"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "verified-label-channel",
+      "durationSeconds": 19986,
+      "sourceRuntimeDisplay": "5:33:06",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "2bAHRD8XSu4",
+        "url": "https://www.youtube.com/watch?v=2bAHRD8XSu4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mogal Films published this source at 2025-09-16T14:17:27-07:00. Mogal Films names Kirtidan Gadhvi, Mayabhai Ahir, Alpa Patel, Sukhdev Dhameliya and Kamo Kothariya; the event is at Lathidad. Source classifies it as live Gujarati Lok Dayro / Lok Sangeet and Santvani, not a specific Garba style. Checked 2026-10-03: YouTube reported 19986 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 19986 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-mogal-films-botad-bhavya-lok-dayro-wvcnrrb46jo",
+      "title": "🔴 LIVE: Bhavya Lok Dayro | Kirtidan Gadhvi | Kamo Kothariya | Botad 🎶🔥",
+      "displayTitle": "Botad · Bhavya Lok Dayro",
+      "artists": [
+        "Kirtidan Gadhvi",
+        "Kamo Kothariya"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lok Dayro",
+        "Botad",
+        "Live"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "verified-label-channel",
+      "durationSeconds": 20025,
+      "sourceRuntimeDisplay": "5:33:45",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "wVcNRrB46jo",
+        "url": "https://www.youtube.com/watch?v=wVcNRrB46jo",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mogal Films published this source at 2025-12-26T13:29:15-08:00. Mogal Films names Kirtidan Gadhvi and Kamo Kothariya and places the event in Botad. The description presents a mixed Lok Dayro with folk songs, bhajans and ras-garba vibes; keep it classified as a mixed event, not pure Garba. Checked 2026-10-03: YouTube reported 20025 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 20025 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-sadvidya-tv-thangadh-lok-dayro-okulfecrgcg",
+      "title": "Bhavya Lok Dayro - Thangadh || Kirtidan Gadhvi || 10-11-2025 ||",
+      "displayTitle": "Thangadh · Lok Dayro",
+      "artists": [
+        "Kirtidan Gadhvi"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lok Dayro",
+        "Thangadh",
+        "Live"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "community-upload",
+      "durationSeconds": 3648,
+      "sourceRuntimeDisplay": "1:00:48",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "oKULfEcRgcg",
+        "url": "https://www.youtube.com/watch?v=oKULfEcRgcg",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sadvidya TV published this source at 2025-11-11T00:12:23-08:00. The title identifies Kirtidan Gadhvi, Thangadh and the dated event. Classified as a live Lok Dayro / event recording; no city-specific choreography is inferred. Checked 2026-10-03: YouTube reported 3648 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 3648 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-kg-studio-rampara-rajula-dayro-6b3pybcv7qe",
+      "title": "🔴LIVE I Lok Dayro New I Devayat Khavad I Kirtidan Gadhvi I Raj Gadhvi I Rampra-2 Rajula",
+      "displayTitle": "Rampra-2/Rajula · Ramkatha & Lok Dayro",
+      "artists": [
+        "Devayat Khavad",
+        "Kirtidan Gadhvi",
+        "Raj Gadhvi"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lok Dayro",
+        "Ramkatha",
+        "Rajula",
+        "Live"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "community-upload",
+      "durationSeconds": 19160,
+      "sourceRuntimeDisplay": "5:19:20",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "6B3PYBcv7QE",
+        "url": "https://www.youtube.com/watch?v=6B3PYBcv7QE",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "KG STUDIO published this source at 2025-05-15T16:16:46-07:00. The title names Devayat Khavad, Kirtidan Gadhvi, Raj Gadhvi and Rampra-2/Rajula; the description identifies the organizing family’s Ramkatha. Classified as a mixed Ramkatha / live Lok Dayro event, not a pure music set. Checked 2026-10-03: YouTube reported 19160 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 19160 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-mogal-films-lathidad-lok-dayro-2026-nbzbhztitqm",
+      "title": "🔴 LIVE: Dayro 2026 | Kirtidan Gadhvi | Mayabhai Ahir | Alpa Patel | Sukhdev Dhameliya | Lathidad",
+      "displayTitle": "Lathidad · Lok Dayro · 2026",
+      "artists": [
+        "Kirtidan Gadhvi",
+        "Mayabhai Ahir",
+        "Alpa Patel",
+        "Sukhdev Dhameliya",
+        "Kamo Kothariya"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lok Dayro",
+        "Lathidad",
+        "Live",
+        "2026"
+      ],
+      "setType": "live-event-recording",
+      "officiality": "verified-label-channel",
+      "durationSeconds": 20338,
+      "sourceRuntimeDisplay": "5:38:58",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "nbzBhZTiTQM",
+        "url": "https://www.youtube.com/watch?v=nbzBhZTiTQM",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Mogal Films published this source at 2026-06-24T15:13:17-07:00. Mogal Films names Kirtidan Gadhvi, Mayabhai Ahir, Alpa Patel, Sukhdev Dhameliya and Kamo Kothariya at Lathidad. The source describes Lok Sahitya, Dayro, folk songs, Hasya Ras and bhajans; classified as a mixed live Lok Dayro programme. Checked 2026-10-03: YouTube reported 20338 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 20338 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-tuzoomtu-garba-lokgeet-folk-mix-uwbimdgi5q4",
+      "title": "Nonstop Gujarati Garba Lokgeet Mix 2025 | Best Gujarati Folk Songs Mashup 🎶 Garba • Lokgeet • Folk 🔥",
+      "displayTitle": "Garba · Lokgeet Folk Mix",
+      "artists": [
+        "Kailash"
+      ],
+      "categories": [
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Lokgeet",
+        "Garba",
+        "Folk mashup",
+        "Community upload"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "durationSeconds": 7708,
+      "sourceRuntimeDisplay": "2:08:28",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "uwBIMDgi5q4",
+        "url": "https://www.youtube.com/watch?v=uwBIMDgi5q4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Tuzoomtu published this source at 2025-11-23T16:30:56-08:00. The title labels a Garba / Lokgeet / folk mashup. The description lists “Artist: Kailash”, composer Siddharth, lyricist Ansa.P.D., arranger Abid Hussain and other production credits; individual song identities and credits remain unresolved. Classified narrowly as a mixed community-upload mashup. Checked 2026-10-03: YouTube reported 7708 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 7708 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-sunil-vanzara-parul-rathva-timli-ecoeetk5rn8",
+      "title": "Parul Rathva New Timli 2025 ll ધમાકા ઓફ 2025 ll Gujarati trending Timli 2025",
+      "displayTitle": "Parul Rathva · Timli",
+      "artists": [
+        "Parul Rathva"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet",
+        "dj-remix"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Adivasi Timli",
+        "Parul Rathva",
+        "Timli remix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "durationSeconds": 1942,
+      "sourceRuntimeDisplay": "32:22",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "ECOeEtK5rn8",
+        "url": "https://www.youtube.com/watch?v=ECOeEtK5rn8",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sunil Vanzara Official published this source at 2024-11-26T17:45:03-08:00. The description credits singer Parul Rathva, remix Ritesh Bhaliya, music Mukesh Chouhan and recording at Harshidhi Studio Ghoghmba. The title markets it as 2025 while YouTube upload metadata is 2024; the upload timestamp is preserved. Classified as a Timli remix, not a traditional live performance. Checked 2026-10-03: YouTube reported 1942 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 1942 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-rdc-gujarati-hd-parul-rathva-dj-timli-btxbe5guh0",
+      "title": "Nonstop DJ ટિમલી ધમાલ | Parul Rathva | New Gujarati Hit Songs | Superhit Timli Song 2025",
+      "displayTitle": "Parul Rathva · DJ Timli",
+      "artists": [
+        "Parul Rathva"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet",
+        "dj-remix"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Adivasi Timli",
+        "Parul Rathva",
+        "DJ mix"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "verified-label-channel",
+      "durationSeconds": 1202,
+      "sourceRuntimeDisplay": "20:02",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "btXbE5-gUh0",
+        "url": "https://www.youtube.com/watch?v=btXbE5-gUh0",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "RDC Gujarati HD published this source at 2025-06-18T19:00:36-07:00. The description credits singer Parul Rathva, lyrics/composition Mahesh Pandya, music Mukesh Chauhan, producer Manoj N. Jobanputra and Studio Saraswati as music label. Classified as a DJ Timli mix. Checked 2026-10-03: YouTube reported 1202 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 1202 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-ghanshyam-rathva-official-nonstop-timli-p5bjegyyfb8",
+      "title": "ઘનશ્યામ નો ધમાલ‼️Ghanshyam Rathva NewTimli 2025‼️Ghanshyam No Dhamal||Nonstop Timli 2025",
+      "displayTitle": "Ghanshyam Rathva · Nonstop Timli",
+      "artists": [
+        "Ghanshyam Rathva"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Adivasi Timli",
+        "Ghanshyam Rathva",
+        "Nonstop"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "official-artist-channel",
+      "durationSeconds": 1691,
+      "sourceRuntimeDisplay": "28:11",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "P5BjEgYyFb8",
+        "url": "https://www.youtube.com/watch?v=P5BjEgYyFb8",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "GHANSHYAM RATHVA OFFICIAL published this source at 2025-01-12T18:30:06-08:00. The description credits singer Ghanshyam Rathva, music Mayur Rathva and music director Vijay Rathva (Zab). The artist channel labels the recording a nonstop Timli. Checked 2026-10-03: YouTube reported 1691 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 1691 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-avinash-tabla-golu-bhai-adivasi-timli-1xmwn4u228",
+      "title": "New Adivasi Timli Song 2026 | Golu Bhai | Voice King Jalwa 💥 Nonstop live Recording",
+      "displayTitle": "Golu Bhai · Adivasi Timli Live Recording",
+      "artists": [
+        "Golu Bhai"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Adivasi Timli",
+        "Golu Bhai",
+        "Live recording"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "durationSeconds": 3692,
+      "sourceRuntimeDisplay": "1:01:32",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "1X_mwN4u228",
+        "url": "https://www.youtube.com/watch?v=1X_mwN4u228",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "AVINASH TABLA OFFICIAL published this source at 2026-03-12T09:29:07-07:00. The description calls this Adivasi Timli and names Golu Bhai as singer. “Voice King Jalwa” also appears in the title, but the source does not state that person’s role, so no further credit is assigned. Classified as a community-upload Timli live-recording compilation. Checked 2026-10-03: YouTube reported 3692 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 3692 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-dj-ajay-aj-adivasi-lagna-geet-timli-wlusve2dr0u",
+      "title": "Nonstop New Adivasi Lagan Geet | Timli Song 2026 | Gamit Song | DJ AJAY AJ",
+      "displayTitle": "Gamit Lagna Geet · Timli",
+      "artists": [
+        "Bhavin Vasava"
+      ],
+      "categories": [
+        "timli",
+        "folk-lokgeet"
+      ],
+      "tags": [
+        "Gujarati folk",
+        "Adivasi Timli",
+        "Gamit",
+        "Lagna Geet",
+        "Wedding folk"
+      ],
+      "setType": "community-nonstop",
+      "officiality": "community-upload",
+      "durationSeconds": 1620,
+      "sourceRuntimeDisplay": "27:00",
+      "genres": [
+        "folk"
+      ],
+      "source": {
+        "provider": "youtube",
+        "videoId": "WluSVe2dr0U",
+        "url": "https://www.youtube.com/watch?v=WluSVe2dr0U",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "DJ AJAY AJ published this source at 2026-02-24T19:07:41-08:00. The description credits singer Bhavin Vasava, music At Music and Ashish Gamit, mix/mastering DJ AT and DJ Pritesh, and presenter DJ AJAY AJ. Classified as an Adivasi/Gamit wedding-geet Timli mix; kept distinct from general dance Timli. Checked 2026-10-03: YouTube reported 1620 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapter segments are carried; play the full video from 0 through 1620 seconds. Public availability does not establish redistribution rights."
+    }
+  ]
+}
