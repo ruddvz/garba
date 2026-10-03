@@ -78,6 +78,38 @@ The [LiveToDance with Sonali video](https://www.youtube.com/watch?v=M2GO52YmBek)
 
 The inspection also sampled positions inside the chapters, recorded in [`steps.json`](../../data/dance/steps.json). YouTube captions were unavailable and the transcript panel did not provide text. These frames do not establish complete foot/hand sequences, sides, clap contacts, turn paths, partner contact, phrase length or beat placement. A beat map for a particular song and a practitioner review are still needed; the animation score therefore remains null.
 
+### Akshay Bhosale: “21 Garba Dance Steps | Easy to Learn”
+
+The [video](https://www.youtube.com/watch?v=Tx1L6AkfoGs) displays overlays numbered 1 through 21, so the title's count is an on-screen index of examples. It does not name those examples or explain their footwork. The [14-video beginners playlist](https://www.youtube.com/playlist?list=PLFgrB2-4mEqW5XA5Jf_42NEnOari-UA54) is a useful same-creator lesson archive. The video page showed 963,541 views and 16,246 likes on 2026-10-02; reach is a discovery signal, not an evaluation of teaching quality or cultural authority. Its music panel identifies “Chogada” by Darshan Raval and Asees Kaur, but does not provide movement cues or a beat map.
+
+The following table logs one sampled pose under each visible number. Directional descriptions use screen-left/right where body laterality cannot be confirmed. These pose snapshots help distinguish visual motifs, but do not give enough information to animate a complete, beat-accurate step.
+
+| Overlay | Sample | What is visible in the sampled frame |
+| ---: | ---: | --- |
+| 1 | [0:15](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=15s) | Mostly forward-facing balance on one leg, the other foot lifted/crossed in front; arms open high to either side. |
+| 2 | [0:25](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=25s) | One knee lifted; one arm high and the other open near shoulder height. |
+| 3 | [0:30](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=30s) | Bent-knee stance with the other leg reaching diagonally out; torso leans, one arm lifts and the other crosses the chest. |
+| 4 | [0:40](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=40s) | Feet close/crossed-looking; one arm reaches diagonally up while the other lowers outward. |
+| 5 | [0:45](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=45s) | Long diagonal lunge with one leg extended behind; arms gather/reach diagonally above the chest. Hand contact is unclear. |
+| 6 | [0:50](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=50s) | Side-facing narrow/crossed-looking stance with both arms overhead. |
+| 7 | [1:00](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=60s) | Wide, bent-knee stance, hands at hips and torso/hips angled to one side. |
+| 8 | [1:05](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=65s) | Narrower offset stance; one arm opens sideways and the other bends toward the torso. |
+| 9 | [1:15](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=75s) | Low wide stance with torso angled and arms sweeping/gathering low across the body. |
+| 10 | [1:25](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=85s) | Partly side-on with flexed knees and hands at different heights in front of the torso; feet close/offset. |
+| 11 | [1:30](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=90s) | Wide bent-knee stance; one arm raised and bent, the other hand near the chest. |
+| 12 | [1:40](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=100s) | One knee lifted while both arms reach diagonally toward screen-right. |
+| 13 | [1:45](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=105s) | Crossed/staggered feet, torso angled, one hand near the hip and the other forearm across the chest. |
+| 14 | [1:55](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=115s) | Wide bent-knee stance, arms gathered low across center, head and torso angled screen-right. |
+| 15 | [2:05](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=125s) | Partly back-facing with bent knees and hands together near face/chest; clap contact is unverified. |
+| 16 | [2:15](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=135s) | Partly turned away/side-on, feet close/offset; arms blur during motion, so their exact positions are unclear. |
+| 17 | [2:25](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=145s) | Low wide bent-knee stance with both arms opening laterally. |
+| 18 | [2:40](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=160s) | Crossed/staggered legs with arms opening in opposing diagonals. |
+| 19 | [2:50](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=170s) | Slight backward lean, knees flexed and feet staggered; one arm reaches forward across the body. |
+| 20 | [3:00](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=180s) | Offset/crossed feet with a tilted torso; one arm high and the other low/outward. |
+| 21 | [3:05](https://www.youtube.com/watch?v=Tx1L6AkfoGs&t=185s) | Wide side-opening stance with both arms extended laterally. |
+
+These are isolated sampled poses, not 21 verified traditional step definitions or full movement cycles. Captions and spoken movement instructions were unavailable. The exact lead foot, footfall order, clap contacts, repetition, turn path, travel vector and phrase boundaries remain unconfirmed; although the page identifies “Chogada,” no movement event has been aligned to its beats. See the complete observation record and limitations in [`steps.json`](../../data/dance/steps.json). `animationScore` remains null pending continuous movement review, a recording-specific beat map and practitioner review.
+
 ### Dakla illustrates why source attribution matters
 
 The [Kachchh district government page](https://kachchh.nic.in/folk-music-instruments/) lists Daklu as a musical instrument. A recent [HerZindagi beginner article](https://www.herzindagi.com/lite/society-culture/herzindagi-navratri-dance-guide-stepbystep-dance-routine-to-learn-dakla-for-that-perfect-garba-night-article-1069661) separately proposes its own eight-count Dakla practice routine (right diagonal step/clap, left tap/arm sweep, quick taps, pivot). Because the article does not identify a tradition bearer or choreographer, store that only as a candidate routine attributed to that guide. Do not map the bare label `Dakla` to that choreography.
