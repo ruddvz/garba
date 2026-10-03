@@ -1,0 +1,85 @@
+{
+  "updated": "2026-10-03",
+  "sets": [
+    {
+      "id": "set-apexa-pandya-topic-nonstop-be-taali-rgpdgpdjz4",
+      "title": "Non Stop Garba - Be Taali (1 Hr Non Stop)",
+      "displayTitle": "Be Taali · 1 Hr Non Stop",
+      "year": 2025,
+      "artists": [
+        "Apexa Pandya",
+        "Darshan Vaghela"
+      ],
+      "categories": [
+        "be-taali",
+        "traditional-garba"
+      ],
+      "genres": [
+        "traditional"
+      ],
+      "tags": [
+        "Gujarati Garba",
+        "Be Taali / 2 Taali",
+        "Nonstop"
+      ],
+      "setType": "verified-label-nonstop",
+      "officiality": "official-topic",
+      "source": {
+        "provider": "youtube",
+        "videoId": "rGPdgpDJ-z4",
+        "url": "https://www.youtube.com/watch?v=rGPdgpDJ-z4",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 3713,
+      "sourceRuntimeDisplay": "1:01:53",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Apexa Pandya - Topic published this Be Taali nonstop Garba on 2025-10-08. The description identifies delivery by Phonographic Digital Limited, ℗ 2025 AP Music, and credits Apexa Pandya and Darshan Vaghela. The source title names Be Taali; this is a rhythm-labeled Garba set, not a timestamped movement reference. Checked 2026-10-03: YouTube reported 3713 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapters or song boundaries are inferred. Play the full video from 0 through 3713 seconds. Public availability does not establish redistribution rights."
+    },
+    {
+      "id": "set-sur-sagar-music-garba-room-season-2-niu6iwdkuuo",
+      "title": "Garba Room Season 2 | Dance, Music & Fusion Like Never Before | Kushal Chokshi",
+      "displayTitle": "Garba Room Season 2 · Contemporary Fusion",
+      "year": 2025,
+      "artists": [
+        "Kushal Chokshi",
+        "Jigardan Gadhavi",
+        "Jaysinh Gadhavi",
+        "Anushka Pandit",
+        "Vijya Vaghela"
+      ],
+      "categories": [
+        "modern-gujarati-garba",
+        "electronic-fusion"
+      ],
+      "genres": [
+        "fusion"
+      ],
+      "tags": [
+        "Gujarati Garba",
+        "Gujju House",
+        "Gujju Pop",
+        "Timli Pop",
+        "Chalti Trance",
+        "Contemporary fusion"
+      ],
+      "setType": "verified-label-audio-jukebox",
+      "officiality": "verified-label-channel",
+      "source": {
+        "provider": "youtube",
+        "videoId": "NIu6iWdKUUo",
+        "url": "https://www.youtube.com/watch?v=NIu6iWdKUUo",
+        "embeddable": true
+      },
+      "linkedReleaseId": null,
+      "durationSeconds": 2158,
+      "sourceRuntimeDisplay": "35:58",
+      "segments": [],
+      "chapterStatus": "full-set-only-no-chapter-evidence",
+      "playbackPolicy": "youtube-embed-visible",
+      "notes": "Sur Sagar Music published this Garba Room Season 2 album on 2025-09-21. The official description credits composer Kushal Chokshi; singers Kushal Chokshi, Jigardan Gadhavi, Jaysinh Gadhavi, Anushka Pandit and Vijya Vaghela; and lyrics by Pratik Ahir, Janki Gadhavi and Mahesh Pandya. It names Gujju House, Gujju Pop, Timli Pop and Chalti Trance as contemporary album sounds; these are preserved as source/style tags, not traditional dance forms or step names. Checked 2026-10-03: YouTube reported 2158 seconds, playabilityStatus OK and playableInEmbed true; the privacy-enhanced embed returned HTTP 200. No chapters or song boundaries are inferred. Play the full video from 0 through 2158 seconds. Public availability does not establish redistribution rights."
+    }
+  ]
+}
