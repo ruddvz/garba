@@ -111,6 +111,18 @@
     })();
   </script>
 
+  <!-- The way in: dense clouds over the night while the venue builds below them; a tap starts the music and drops you
+       down through them into the venue. Skipped for stills (?still) and checks (?gate=0) -->
+  <div class="cloud-gate" id="cloudGate" role="button" tabindex="0" aria-label="Start the garba">
+    <canvas class="cloud-canvas" id="cloudCanvas" aria-hidden="true"></canvas>
+    <div class="gate-copy">
+      <p class="gate-brand">PlayGarba</p>
+      <p class="gate-tap">Tap anywhere to start the garba</p>
+      <p class="gate-load" id="gateLoad" aria-live="polite">Setting up the venue</p>
+    </div>
+  </div>
+  <script>if (/[?&](still|gate=0)(&|=|$)/.test(location.search)) document.getElementById('cloudGate').hidden = true;</script>
+
   <div class="app" id="app" data-state="ember">
     <header class="topbar">
       <a class="brand" href="../../" aria-label="PlayGarba home">PlayGarba</a>

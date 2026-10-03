@@ -4451,7 +4451,9 @@
        itself, rotors spinning, lights blinking), never a black screen. Once the venue is up the view drops in, once per
        page: down through the clouds onto the outdoor ground and between the sheri's rooftops, and in through the
        stadium's carved doors. Reduced motion cuts straight in. */
-    var STARS = null, intro = { pending: !reduce, running: false, t0: 0, dur: 3.4 }, introK = 0;
+    // (with the page's cloud gate up, the drop-in waits at the top for the gate to let it go: releaseIntro())
+    var gateEl = document.getElementById('cloudGate');
+    var STARS = null, intro = { pending: !reduce, running: false, t0: 0, dur: 3.4, held: !!gateEl && !gateEl.hidden }, introK = 0;
     function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
     function skyClouds(t, alpha, rise) {
       for (var i = 0; i < 7; i++) {
@@ -4824,7 +4826,7 @@
       if (introK > 0.001) { if (st.venue === 'stadium') stadiumDoors(introK); else skyClouds(t, Math.min(1, introK * 1.6), 1 - introK); }
       if (revealA < 1) { revealA = reduce ? 1 : Math.min(1, revealA + dt * 2.2); loaderSky(t, 1 - ease(revealA)); }
       // The venue's first frame is drawn: now the drop-in plays
-      if (intro.pending) { intro.pending = false; intro.running = true; intro.t0 = t; }
+      if (intro.pending && !intro.held) { intro.pending = false; intro.running = true; intro.t0 = t; }
       if (fade && fadeA > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = fadeA; g.drawImage(fade, 0, 0); g.globalAlpha = 1; fadeA -= dt * (reduce ? 10 : 2); g.setTransform(DPR, 0, 0, DPR, 0, 0); }
       if (opts.overlay) opts.overlay(g, W, H);
       if (opts.onFrame) opts.onFrame(lampAt);
@@ -4950,6 +4952,8 @@
       sponsors: function (t, id) { return sponsorPlan(t, id || st.venue); },
       // The singers' next move, as Shift does it; returns the move's name
       cueSingers: cueSingers,
+      // The cloud gate lets the drop-in go (it waits at the top while the gate is up)
+      releaseIntro: function () { intro.held = false; },
       stop: function () { running = false; }
     });
   }

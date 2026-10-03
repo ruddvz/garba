@@ -64,7 +64,8 @@
   function onFirstTap(event) {
     if (view !== 'immersive' || !tapArmed) return;
     var target = event.target;
-    if (target && target.closest && target.closest(CONTROL)) { if (isPlaying()) disarmFirstTap(); return; }
+    // (the Immersive page's cloud gate is a button whose whole job is this first tap: it starts the music too)
+    if (target && target.closest && target.closest(CONTROL) && !target.closest('#cloudGate')) { if (isPlaying()) disarmFirstTap(); return; }
     disarmFirstTap();
     if (!isPlaying()) {
       // This tap has started the music, so its own click doesn't also press whatever lies under it (the garbo's lamp
