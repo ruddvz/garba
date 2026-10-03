@@ -1,5 +1,5 @@
 {
-  "version": "0.20.76",
+  "version": "0.20.77",
   "updated": "2026-10-03",
   "chunks": [
     "sets-01.json",
@@ -127,7 +127,8 @@
     "sets-124-devotional-folk-longform-batch9.json",
     "sets-125-priyanka-kher-garbo.json",
     "sets-126-folk-aarti-named-forms-batch10.json",
-    "sets-127-regional-live-batch11.json"
+    "sets-127-regional-live-batch11.json",
+    "sets-128-folk-aarti-longform-batch12.json"
   ],
   "policy": {
     "officialityOrder": [
