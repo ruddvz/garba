@@ -16,8 +16,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).resham = {
     label: 'Resham Dome',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // Open air under a canopy of cloth: the ribbons soak up the highs, a short soft tail, a little off the towers
     sound: {
       desc: 'An open pavilion under a canopy of red ribbons. The cloth softens the sound; a short, warm tail.',
