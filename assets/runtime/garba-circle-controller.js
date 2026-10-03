@@ -28,6 +28,7 @@ import {
 import { qrSvg } from './qr-code.js';
 import { CIRCLE_FACE_COUNT, circleFaceSvg, circleFaceLabel } from './circle-faces.js';
 import { createSyncCorrector } from './sync-correction.js';
+import { rankSearchRecords } from './search-core.js';
 
 const DRIFT_INTERVAL_MS = 2000;
 const DRIFT_READS = 10;
@@ -38,6 +39,7 @@ const HOST_KEY = 'garba:circle-host';
 const NAME_SETTLE_MS = 350;
 // YouTube errors that mean the video cannot play here at all (removed, embedding disabled).
 const UNPLAYABLE_ERRORS = new Set([100, 101, 150]);
+export const CIRCLE_VOTE_RESULT_LIMIT = 6;
 
 const COPY = {
   lede: 'Everyone who opens your link hears the same song at the same moment, on their own phone. Only people with the link can join. Use earbuds for a silent garba.',
@@ -62,6 +64,32 @@ const COPY = {
 
 // A picked song is the same song whether it came from the catalogue or a pasted link to the same video.
 const itemKey = (item) => (item.kind === 'song' ? `s:${item.id}` : `y:${item.videoId}`);
+
+function circleVoteSearchRecord(song) {
+  return {
+    id: song.id,
+    title: [song.title, song.displayTitle].filter(Boolean),
+    titleAliases: song.aliases,
+    artist: song.artist,
+    artistAliases: song.artistAliases,
+    taxonomyTerms: [
+      song.genre,
+      song.category,
+      ...(song.styles || []),
+      ...(song.taxonomyStyles || []),
+    ],
+    song,
+  };
+}
+
+/** Playable catalogue matches for a local next-track vote, using the player's search ranking. */
+export function circleVoteCandidates(songs, query, { currentSongId = '', limit = CIRCLE_VOTE_RESULT_LIMIT } = {}) {
+  if (!Array.isArray(songs) || !String(query || '').trim()) return [];
+  const eligible = songs.filter((song) => isCatalogueCircleSong(song) && song.id !== currentSongId);
+  return rankSearchRecords(eligible.map(circleVoteSearchRecord), query)
+    .slice(0, Math.max(0, Number.isFinite(limit) ? Math.floor(limit) : CIRCLE_VOTE_RESULT_LIMIT))
+    .map(({ record }) => record.song);
+}
 
 function loadHost() {
   try {
@@ -137,10 +165,16 @@ export function createCircleController(app) {
     // What the host called the circle and the face they gave it. Both travel in the link.
     name: '',
     face: null,
+    // This first voting slice is deliberately local. It does not alter the shared schedule.
+    voteQuery: '',
+    voteSongId: null,
   };
 
   let dialog = null;
+  let immersiveCircleEntry = null;
+  let dialogTrigger = null;
   let lastEyebrow = '';
+  let lastVoteRender = '';
   const parts = {};
 
   const syncedNow = () => localNow() + (circle.clock?.offsetMs || 0);
@@ -162,6 +196,7 @@ export function createCircleController(app) {
 
   // Tell the app to re-render (eyebrow, button state, URL) only when something it shows changed.
   function notify() {
+    syncImmersiveCircleEntry();
     const next = `${circle.status}|${circle.code}|${eyebrow()}|${circle.name}|${circle.face}|${circle.kind}`;
     if (next === lastEyebrow) return;
     lastEyebrow = next;
@@ -330,7 +365,8 @@ export function createCircleController(app) {
 
   // The host chooses how the circle plays before anything starts
   function openSetup() {
-    Object.assign(circle, { status: 'setup', role: 'host', message: '', kind: 'shuffle', items: [], listChanged: false });
+    Object.assign(circle, { status: 'setup', role: 'host', message: '', kind: 'shuffle', items: [], listChanged: false, voteQuery: '', voteSongId: null });
+    lastVoteRender = '';
     openDialog();
   }
 
@@ -537,8 +573,9 @@ export function createCircleController(app) {
     clearTimers();
     corrector.reset();
     Object.assign(circle, {
-      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, lastDriftSeconds: null, name: '', face: null, kind: 'shuffle', items: [], listChanged: false,
+      status: 'idle', role: null, message: '', code: null, startMs: 0, schedule: [], unplayable: new Set(), pendingLoadSongId: null, lastDriftSeconds: null, name: '', face: null, kind: 'shuffle', items: [], listChanged: false, voteQuery: '', voteSongId: null,
     });
+    lastVoteRender = '';
     closeDialog();
     notify();
     if (wasActive && !quiet) app.showToast(COPY.left);
@@ -559,6 +596,61 @@ export function createCircleController(app) {
 
   /* ----------------------------- dialog ----------------------------- */
 
+  function mountImmersiveCircleEntry() {
+    const frame = document.querySelector('iframe[title="Immersive Garbo player"]');
+    const frameDocument = frame?.contentDocument;
+    const bridge = frameDocument?.getElementById('circleBridge');
+    const liveButton = frameDocument?.getElementById('liveBtn');
+    const footer = liveButton?.closest('.foot');
+    if (!bridge || !liveButton || !footer) return;
+
+    let stack = frameDocument.getElementById('circleBottomStack');
+    if (!stack) {
+      stack = frameDocument.createElement('div');
+      stack.id = 'circleBottomStack';
+      stack.style.cssText = 'grid-column:1;justify-self:start;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;pointer-events:auto';
+      footer.insertBefore(stack, liveButton);
+      stack.append(bridge, liveButton);
+    }
+    bridge.className = 'live';
+    bridge.setAttribute('aria-haspopup', 'dialog');
+    const icon = bridge.querySelector('svg');
+    if (icon) icon.replaceWith(frameDocument.createElement('i'));
+
+    immersiveCircleEntry = bridge;
+    syncImmersiveCircleEntry();
+  }
+
+  function syncImmersiveCircleEntry() {
+    if (!immersiveCircleEntry?.isConnected) {
+      immersiveCircleEntry = null;
+      mountImmersiveCircleEntry();
+      if (!immersiveCircleEntry) return;
+    }
+    const ready = circle.status === 'ready';
+    const label = immersiveCircleEntry.querySelector('span');
+    if (label) label.textContent = ready ? 'Join anonymously' : 'Private Garba Circle';
+    immersiveCircleEntry.setAttribute('aria-label', ready ? 'Join anonymously. Join the Circle and vote.' : 'Open Private Garba Circle.');
+    // Once joined, Garbo's original bottom Live control becomes the named Circle control,
+    // including the chosen face. Hide this entry then so the footer never shows two Circles.
+    immersiveCircleEntry.style.display = circle.status === 'active' ? 'none' : '';
+  }
+
+  function watchImmersiveCircleEntry() {
+    window.addEventListener('message', (event) => {
+      if (event.origin !== location.origin) return;
+      const frame = document.querySelector('iframe[title="Immersive Garbo player"]');
+      if (!frame || event.source !== frame.contentWindow) return;
+      const message = event.data;
+      if (!message || message.channel !== 'playgarba:immersive-prototype') return;
+      if (message.type === 'ready') mountImmersiveCircleEntry();
+      if (message.type === 'action' && message.action === 'circle' && immersiveCircleEntry?.isConnected) {
+        dialogTrigger = immersiveCircleEntry;
+      }
+    });
+    mountImmersiveCircleEntry();
+  }
+
   function buildDialog() {
     dialog = document.createElement('dialog');
     dialog.className = 'circle-dialog';
@@ -574,7 +666,7 @@ export function createCircleController(app) {
         </header>
         <p class="circle-lede" id="circleLede"></p>
         <p class="circle-message" data-circle="message" role="alert" hidden></p>
-        <button class="circle-primary" type="button" data-circle="join" hidden>Join circle</button>
+        <button class="circle-primary" type="button" data-circle="join" hidden>Join anonymously</button>
         <div class="circle-setup" data-circle="setup" role="group" aria-label="How the circle plays" hidden>
           <button class="circle-choice" type="button" data-circle="startShuffle"><strong>Keep the music going</strong><span>Starts with this song, then everyone hears the catalogue in one shared order.</span></button>
           <button class="circle-choice" type="button" data-circle="startPicked"><strong>Play your songs</strong><span data-circle="pickedHint">This song, then your Up next.</span></button>
@@ -588,6 +680,19 @@ export function createCircleController(app) {
             </div>
           </div>
           <p class="circle-songs" data-circle="songs" hidden></p>
+          <section class="circle-vote" data-circle="vote" aria-labelledby="circleVoteTitle" hidden>
+            <p class="circle-vote-kicker">Next track</p>
+            <h3 id="circleVoteTitle">Vote for the next track</h3>
+            <p class="circle-vote-help" id="circleVoteHelp">Choose one playable catalogue song. Your choice stays on this device for now.</p>
+            <label class="visually-hidden" for="circleVoteSearch">Search songs or artists</label>
+            <input class="circle-vote-search" id="circleVoteSearch" type="search" data-circle="voteSearch" aria-describedby="circleVoteHelp" autocomplete="off" enterkeyhint="search" placeholder="Search songs or artists" />
+            <div class="circle-vote-selection" data-circle="voteSelection" hidden>
+              <p><span>Your choice on this device</span><strong data-circle="voteSelectionTitle"></strong></p>
+              <button type="button" data-circle="voteRemove">Remove vote</button>
+            </div>
+            <ul class="circle-vote-results" data-circle="voteResults" aria-label="Matching songs"></ul>
+            <p class="circle-vote-empty" data-circle="voteEmpty"></p>
+          </section>
           <div class="circle-qr" data-circle="qr"></div>
           <p class="circle-link"><span class="visually-hidden">Circle link: </span><span data-circle="link"></span></p>
           <div class="circle-actions">
@@ -611,12 +716,31 @@ export function createCircleController(app) {
     parts.copy.addEventListener('click', copyLink);
     parts.share.addEventListener('click', shareLink);
     parts.leave.addEventListener('click', () => leave());
+    parts.voteSearch.addEventListener('input', () => {
+      circle.voteQuery = parts.voteSearch.value;
+      renderVote({ force: true });
+    });
+    parts.voteResults.addEventListener('click', (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-vote-song]') : null;
+      if (!button) return;
+      circle.voteSongId = button.dataset.voteSong;
+      renderVote({ force: true });
+      syncImmersiveCircleEntry();
+      parts.announce.textContent = 'Vote saved on this device.';
+    });
+    parts.voteRemove.addEventListener('click', () => {
+      circle.voteSongId = null;
+      renderVote({ force: true });
+      syncImmersiveCircleEntry();
+      parts.announce.textContent = 'Vote removed from this device.';
+    });
     buildIdentity();
     dialog.addEventListener('click', (event) => { if (event.target === dialog) closeDialog(); });
     dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeDialog(); });
     dialog.addEventListener('close', () => {
       if (circle.status === 'invalid' || circle.status === 'mismatch' || circle.status === 'setup') leaveUnjoined();
-      const trigger = app.trigger();
+      const trigger = dialogTrigger?.isConnected ? dialogTrigger : app.trigger();
+      dialogTrigger = null;
       if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     });
     // Keys inside the dialog belong to the dialog, not to the player's global shortcuts
@@ -712,7 +836,8 @@ export function createCircleController(app) {
   }
 
   function leaveUnjoined() {
-    Object.assign(circle, { status: 'idle', role: null, message: '', code: null, schedule: [], name: '', face: null, kind: 'shuffle', items: [], listChanged: false });
+    Object.assign(circle, { status: 'idle', role: null, message: '', code: null, schedule: [], name: '', face: null, kind: 'shuffle', items: [], listChanged: false, voteQuery: '', voteSongId: null });
+    lastVoteRender = '';
     notify();
   }
 
@@ -754,6 +879,48 @@ export function createCircleController(app) {
     if (parts.next.textContent !== nextText) parts.next.textContent = nextText;
   }
 
+  function renderVote({ force = false } = {}) {
+    if (!dialog) return;
+    const active = circle.status === 'active';
+    parts.vote.hidden = !active;
+    if (!active) return;
+
+    const songs = app.songs() || [];
+    const currentSongId = app.currentSong()?.id || '';
+    let selected = songs.find((song) => song.id === circle.voteSongId && isCatalogueCircleSong(song)) || null;
+    if (circle.voteSongId && !selected) circle.voteSongId = null;
+    const matches = circleVoteCandidates(songs, circle.voteQuery, { currentSongId });
+    const renderKey = JSON.stringify([circle.voteQuery, circle.voteSongId, currentSongId, matches.map((song) => song.id)]);
+    if (!force && renderKey === lastVoteRender) return;
+    lastVoteRender = renderKey;
+
+    if (document.activeElement !== parts.voteSearch && parts.voteSearch.value !== circle.voteQuery) {
+      parts.voteSearch.value = circle.voteQuery;
+    }
+    parts.voteSelection.hidden = !selected;
+    parts.voteSelectionTitle.textContent = selected
+      ? [selected.title || selected.displayTitle, selected.artist].filter(Boolean).join(' · ')
+      : '';
+
+    parts.voteResults.replaceChildren(...matches.map((song) => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      const titleNode = document.createElement('strong');
+      const artistNode = document.createElement('span');
+      button.type = 'button';
+      button.dataset.voteSong = song.id;
+      button.setAttribute('aria-pressed', String(song.id === circle.voteSongId));
+      titleNode.textContent = song.title || song.displayTitle || 'Untitled song';
+      artistNode.textContent = song.artist || 'PlayGarba catalogue';
+      button.append(titleNode, artistNode);
+      item.append(button);
+      return item;
+    }));
+    parts.voteEmpty.textContent = circle.voteQuery.trim()
+      ? (matches.length ? '' : 'No playable Circle songs found. Try another song or artist.')
+      : 'Search the PlayGarba catalogue to choose a song.';
+  }
+
   function renderDialog({ focus = false } = {}) {
     if (!dialog) return;
     const { status } = circle;
@@ -769,7 +936,7 @@ export function createCircleController(app) {
     parts.join.hidden = status !== 'ready';
     if (status === 'ready') {
       parts.join.disabled = false;
-      parts.join.textContent = 'Join circle';
+      parts.join.textContent = 'Join anonymously';
     }
     const setup = status === 'setup';
     parts.setup.hidden = !setup;
@@ -797,6 +964,7 @@ export function createCircleController(app) {
       parts.link.textContent = url;
       parts.qr.innerHTML = qrSvg(url, { title: 'QR code for the Private Garba Circle link' });
     }
+    renderVote();
     renderStatus();
     // Focus the action that matters in this state; also rescue focus from a control that was hidden.
     const focusTarget = status === 'ready' ? parts.join : active ? parts.copy : status === 'setup' ? parts.startShuffle : parts.close;
@@ -851,6 +1019,7 @@ export function createCircleController(app) {
   window.addEventListener('garba:youtube-error', onPlayerError);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') resync(); });
   window.addEventListener('online', resync);
+  watchImmersiveCircleEntry();
 
   return Object.freeze({
     get active() { return circle.status === 'active'; },

@@ -27,6 +27,7 @@ import {
   songHash,
 } from '../../assets/runtime/garba-circle.js';
 import { CIRCLE_FACE_COUNT, circleFaceLabel, circleFaceSvg } from '../../assets/runtime/circle-faces.js';
+import { CIRCLE_VOTE_RESULT_LIMIT, circleVoteCandidates } from '../../assets/runtime/garba-circle-controller.js';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const pass = (message) => console.log(`✓ ${message}`);
@@ -67,6 +68,27 @@ assert.deepEqual(songs.filter(isCircleEligible).map((song) => song.id), eligible
 assert.equal(isCircleEligible(yt('url-only', 180, { youtubeId: '', playbackSourceUrl: 'https://youtu.be/abc' })), true);
 assert.equal(isCircleEligible(null), false);
 pass('eligibility needs a playable YouTube route and a real duration over 10s (no-duration, reference, unchaptered, search-only, alias, direct audio excluded)');
+
+// The first voting UI reuses catalogue search and only offers songs that can actually play in a Circle.
+{
+  const voteSongs = [
+    yt('vote-a', 200, { title: 'Madi Taru Kanku', aliases: ['માડી તારું કંકુ'], artist: 'Asha Bhosle' }),
+    yt('vote-b', 180, { title: 'Khalasi', artist: 'Aditya Gadhvi', artistAliases: ['Aditya Gadhvi'] }),
+    yt('vote-c', 210, { title: 'Khalasi Live', artist: 'Another Artist' }),
+    yt('vote-unavailable', null, { title: 'Khalasi Unavailable', artist: 'Another Artist' }),
+    yt('vote-local', 220, { title: 'Khalasi Local', artist: 'Another Artist', userAdded: true }),
+  ];
+  const originalOrder = voteSongs.map((song) => song.id);
+  assert.deepEqual(circleVoteCandidates(voteSongs, 'આદિત્ય'), [], 'search does not invent transliterations');
+  assert.deepEqual(circleVoteCandidates(voteSongs, 'માડી તારું').map((song) => song.id), ['vote-a']);
+  assert.deepEqual(circleVoteCandidates(voteSongs, 'Aditya').map((song) => song.id), ['vote-b']);
+  assert.deepEqual(circleVoteCandidates(voteSongs, 'Khalasi', { currentSongId: 'vote-b' }).map((song) => song.id), ['vote-c']);
+  assert.deepEqual(circleVoteCandidates(voteSongs, ''), []);
+  assert.deepEqual(circleVoteCandidates(voteSongs, 'Khalasi', { limit: 1 }).map((song) => song.id), ['vote-b']);
+  assert.equal(CIRCLE_VOTE_RESULT_LIMIT, 6);
+  assert.deepEqual(voteSongs.map((song) => song.id), originalOrder, 'voting search does not mutate catalogue order');
+  pass('next-track voting search ranks reviewed song and artist identity, excludes the current/unplayable/local songs, and stays bounded');
+}
 
 // Schedule determinism and seed variation
 const ids = (schedule) => schedule.map((song) => song.id);
