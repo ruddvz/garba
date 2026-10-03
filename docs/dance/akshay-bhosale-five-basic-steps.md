@@ -8,10 +8,11 @@ This note records visible poses and broad movement snapshots from Akshay Bhosale
 
 - Creator/channel: Akshay Bhosale, verified YouTube channel [@AkshayBhosaleDance](https://www.youtube.com/@AkshayBhosaleDance).
 - Main lesson: [5 Basic Garba Dance Steps | Beginners | ABDC](https://www.youtube.com/watch?v=NJWvOmWRnCo), runtime 7:01.
-- Numbered companions: [Step 1](https://www.youtube.com/watch?v=XpcgBbJGaEI), [Step 2](https://www.youtube.com/watch?v=b-oQVBaJ1UU), [Step 3](https://www.youtube.com/watch?v=LNDh-xx50ug), [Step 4](https://www.youtube.com/watch?v=S2y4OxnkiG0), [Step 5](https://www.youtube.com/watch?v=RQKPUiW4HnM).
-- The creator's [beginner playlist](https://www.youtube.com/playlist?list=PLFgrB2-4mEqW5XA5Jf_42NEnOari-UA54) was listed as 14 videos when checked. A separately numbered [Step 6 video](https://www.youtube.com/watch?v=_cx2bUBqJaA) was discovered but was not reviewed for this note.
+- Numbered companions: [Step 1](https://www.youtube.com/watch?v=XpcgBbJGaEI), [Step 2](https://www.youtube.com/watch?v=b-oQVBaJ1UU), [Step 3](https://www.youtube.com/watch?v=LNDh-xx50ug), [Step 4](https://www.youtube.com/watch?v=S2y4OxnkiG0), [Step 5](https://www.youtube.com/watch?v=RQKPUiW4HnM), and the separately numbered [Step 6 video](https://www.youtube.com/watch?v=_cx2bUBqJaA).
+- The creator's [beginner playlist](https://www.youtube.com/playlist?list=PLFgrB2-4mEqW5XA5Jf_42NEnOari-UA54) was listed as 14 videos when checked.
 - The main page's description identifies a five-step beginner lesson but does not name the five patterns, identify a song, or provide counts or timestamps. Captions were unavailable on the reviewed pages.
 - Page counters captured on 2026-10-03: the main lesson showed 5.2M views, 71,921 likes and 270K channel subscribers; companion clips showed 4K/41 (Step 1), 2.2K/17 (Step 2), 3.7K/33 (Step 3), 2.2K/16 (Step 4), and 1.6K/9 (Step 5). View totals were rounded. These are dated visibility snapshots, not a measure of teaching quality or cultural authority.
+- Step 6's page showed a 0:51 runtime, 2.3K views, 20 likes and 270K channel subscribers on 2026-10-03. Captions were unavailable. The clip presents “NORMAL VIEW” and “MIRROR VIEW” side by side, and its description repeats “5 Basic Garba Dance Steps for Beginners.” It was watched through at normal speed; the four timestamps below are sparse samples from that pass, not a continuous movement score.
 
 Detailed source-review findings are recorded in [issue #2221](https://github.com/ruddvz/garba/issues/2221#issuecomment-5965606650).
 
@@ -26,6 +27,7 @@ The reviewer sampled the companion clips at the listed source times. These are v
 | Step 3 | 0:00, 0:10, 0:21, 0:31, 0:42 | Side-leaning stance with hands at hips; feet together and hands around the forehead; side profile with one arm overhead and one across the chest; later samples show low side lunges, hands near one another in front, and a trailing leg extended. The snapshots do not establish a clap. |
 | Step 4 | 0:02, 0:13, 0:29, 0:46 | A hand passes across the upper chest/shoulder; long side-profile stride with arms bent low; feet gather as elbows bend outward and palms face away; then a narrow or crossed-looking stance with asymmetrically raised arms. |
 | Step 5 | 0:08, 0:25, 0:37 | Hands frame the forehead with feet together; then a wide side lunge with one arm curved overhead and the other near the chest; the later sample shifts the travel/weight direction while retaining a similar asymmetric arm shape. |
+| Step 6 | 0:09, 0:23, 0:34, 0:49 | At 0:09 the front-facing dancer has one foot forward in an offset/crossing-looking stance, one hand bent up near the chest and the other lowered. At 0:23 the feet remain close/offset while both hands are lowered in front with relaxed, flexed wrists. At 0:34 the dancer turns to profile, extending one open hand forward around waist height while the other arm stays low. At 0:49 the dancer faces away with both arms opened low on diagonals; the feet are partly cut off by the frame. |
 
 ## Samples from the older combined lesson
 
@@ -47,14 +49,14 @@ These additional samples broaden the observed motif list, but still do not estab
 
 As pose or motion-channel candidates only, the samples support investigating low and raised arm shapes, hands-at-hips, bent elbows, open palms, lateral travel/lunges, offset or crossing-looking foot positions, a forward torso pitch, and changes in facing. They do not specify how long any event lasts or what exact pose follows it. Do not turn the table into a repeating animation cycle without continuous review.
 
-`Normal View` and `Mirror View` are both offered in the numbered clips. Mirroring reverses apparent left and right, so the sampled screens do not consistently establish the dancer's anatomical lead side. The sparse observations also leave exact foot contacts, weight transfers, hand contacts, direction of travel, cycle boundaries, circle path, transitions and dancer-to-dancer formation unknown.
+`Normal View` and `Mirror View` are both offered in the numbered clips, including Step 6. Mirroring reverses apparent left and right, so the sampled screens do not consistently establish the dancer's anatomical lead side. The sparse observations also leave exact foot contacts, weight transfers, hand contacts, direction of travel, cycle boundaries, circle path, transitions and dancer-to-dancer formation unknown.
 
 ## Music synchronization limits
 
-The lesson page does not identify a recording or expose a beat score. The lesson's “five” means five teacher-presented items; it is not five beats. No BPM, beat grid, clap count, musical phrase length, first-beat alignment or movement-to-beat mapping was established in this review.
+The lesson page does not identify a recording or expose a beat score. The lesson's “five” means five teacher-presented items; it is not five beats. The separately titled “Step 6” is also an upload label, not a six-beat phrase. No BPM, beat grid, clap count, musical phrase length, first-beat alignment or movement-to-beat mapping was established in this review.
 
 Before syncing a character to music, review a complete uninterrupted demonstration of the selected numbered clip, record the sequence's events and left/right roles, and map those events against a separately identified music recording and reviewed beat grid. Keep the teacher's lesson count separate from beat and phrase counts. If a chosen track has no reviewed beat map, do not present the motion as precisely synchronized.
 
 ## Reuse and follow-up
 
-This guide links to public videos and does not copy or rehost them. Showing a creator's video on a Garba stage screen requires separate written permission and music-rights review. The next source-specific review can continue through Step 6 and the rest of the creator's playlist; this five-item note does not claim to catalogue all of Akshay's lessons or all Garba movements.
+This guide links to public videos and does not copy or rehost them. Showing a creator's video on a Garba stage screen requires separate written permission and music-rights review. The next source-specific review can continue through Step 7 onward and the rest of the creator's playlist; this note does not claim to catalogue all of Akshay's lessons or all Garba movements.
