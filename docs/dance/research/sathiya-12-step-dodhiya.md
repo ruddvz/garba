@@ -13,7 +13,7 @@
 
 ## Timeline samples
 
-I viewed the lesson at 1.5× and sampled the displayed player timeline, then confirmed the YouTube player was set to Normal and watched short sections around 1:35–1:48, 5:47–6:00, 10:59–11:17 and 18:00–18:04. The video alternates between the instructor addressing the group, short demonstrations, and group practice. The samples below describe visible moments; they do not establish every transition between them.
+I viewed the lesson at 1.5× and sampled the displayed player timeline, then confirmed the YouTube player was set to Normal and watched short sections around 1:35–1:48, 5:47–6:00, 7:27–7:34, 10:59–11:17 and 18:00–18:04. The video alternates between the instructor addressing the group, short demonstrations, and group practice. The samples below describe visible moments; they do not establish every transition between them.
 
 | Approx. source time | Visible sample | Limits |
 | --- | --- | --- |
@@ -24,7 +24,8 @@ I viewed the lesson at 1.5× and sampled the displayed player timeline, then con
 | 4:09 | The teacher is front-facing in a wide stance and gestures near the chest/face; the learners remain mostly in place. | Likely explanation/reset; no step boundary is visible. |
 | 5:00 | The teacher turns partly sideways, extends one arm, and keeps the other nearer the hip; one learner holds a wide stance. | A pose sample; the transition and hand laterality are unclear. |
 | 5:47–6:00 | In group practice, several dancers travel with hands held behind the lower back and narrow or offset feet. At 5:56, one leg reaches or crosses-looking; by 6:00 the teacher has stopped the movement and is addressing the group. | Brief segment only; exact foot order, support leg, contacts and count are unclear. |
-| 7:31 | The group is again in a soft-kneed, offset stance with arms low or held behind the body. | Similar visual motif to 5:56, but repetition and count are unverified. |
+| 7:27 | The teacher demonstrates a lateral reach with a wide, flexed-knee stance and arms held low or behind the lower back; learners wait behind him. | The captured frame does not resolve which foot bears weight, whether the reaching foot lands, or how this relates to the earlier group-practice sample. |
+| 7:34 | The teacher has returned to a broad front-facing stance and gestures with his hands near his chest; the learners remain mostly stationary, several with hands behind their backs. | This is an instruction/demo moment, not evidence that the group repeats a phrase or that the hand gesture belongs to the step. |
 | 8:59 | The teacher and learners hold a broad stance with hands low/behind the hips; knees are flexed. | The still does not resolve a step order or travel direction. |
 | 10:59–11:17 | At 10:59, the teacher is foregrounded with hands behind his back and one offset/crossing-looking leg position while learners mostly wait behind him. By 11:17, he is closer to the camera, gesturing with his hands in front as learners continue watching. | This changes from a brief demonstration to instruction; it does not establish a repeated group phrase, exact foot order or side role. |
 | 12:59 | The teacher raises both arms overhead while demonstrating; learners wait behind him. | May be an explanation or pose; no associated foot event is clear. |
@@ -35,7 +36,7 @@ I viewed the lesson at 1.5× and sampled the displayed player timeline, then con
 
 ## Movement candidates and unknowns
 
-Samples at 5:47–6:00, 7:31, 8:59 and 10:59 show low or behind-the-back arm positions alongside narrow, offset or wide foot placements. The 18:00–18:04 sample is a separate instruction/demo moment with the teacher's hands in front, so it does not independently confirm that the earlier motif repeats. Other samples show wide lateral stances and overhead arm poses. These are visual candidates only; do not label them as named traditional steps from this video alone.
+Samples at 5:47–6:00, 7:27, 7:34, 8:59 and 10:59 show the instructor alternating brief lateral demonstrations and front-facing explanation while learners wait or practice with low/behind-the-back arm positions. These stills do not establish that the same movement phrase repeats across the sections. The 18:00–18:04 sample is another instruction/demo moment with the teacher's hands in front. Other samples show wide lateral stances and overhead arm poses. These are visual candidates only; do not label them as named traditional steps from this video alone.
 
 The samples do not establish step-by-step boundaries, a twelve-item enumeration, lead/support foot, heel or toe contacts, weight-transfer order, hand contacts, travel around a circle, facing changes through a full cycle, or teacher count cues. Captions were unavailable, and no score was derived from the audio.
 
