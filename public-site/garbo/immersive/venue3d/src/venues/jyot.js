@@ -17,13 +17,12 @@ import { TAU, lerp, canvasTexture, seeded, BAND, LIGHT } from '../util.js';
 import { std } from '../kit.js';
 import { buildBand } from '../band.js';
 import { canvas, wrap, normalMap, tex } from '../floors.js';
-import { ground, glowInto, glowStone } from './common.js';
+import { ground, glowInto, glowStone, DISCS, discTexture } from './common.js';
 import { newDecor, rugTexture } from './decor.js';
 import { sandstoneTexture, metreUV, arcade, diyaRow, nightSky, mergeAll, portal } from './heritage.js';
 import { forestBelt, townBelt, horizonRidge } from './surround.js';
 
 const GOLD = '#ffc070';
-const DISCS = [['#e83a8a', '#ffd24a', '#2ab8a8', '#fff0d0'], ['#3ac86a', '#ffb02a', '#e8406a', '#fff0d0'], ['#2ab8c8', '#f0e04a', '#c83ab0', '#fff0d0'], ['#ff8a2a', '#3a7ae8', '#ffe04a', '#fff0d0'], ['#e8402a', '#f0c84a', '#3ab86a', '#fff0d0']];
 
 /* ---------- textures ---------- */
 // Cream stone in big square slabs, each a shade apart, the joints fine
@@ -59,20 +58,6 @@ function floorDecal(rect, res, R) {
   return c;
 }
 // A round lantern's face: rings of petals, triangles and dots in its colours, a pale centre, pierced dots round the rim
-function discTexture(pal, seed) {
-  const r = seeded(seed);
-  return canvasTexture(256, 256, (g, w) => {
-    const c = w / 2; g.fillStyle = pal[3]; g.fillRect(0, 0, w, w);
-    const ring = (r0, r1, col) => { g.fillStyle = col; g.beginPath(); g.arc(c, c, r1, 0, TAU); g.arc(c, c, r0, 0, TAU, true); g.fill('evenodd'); };
-    ring(108, 128, pal[0]); ring(96, 108, pal[1]);
-    for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; g.fillStyle = i % 2 ? pal[0] : pal[2]; g.beginPath(); g.moveTo(c + Math.cos(a - 0.12) * 60, c + Math.sin(a - 0.12) * 60); g.lineTo(c + Math.cos(a) * 95, c + Math.sin(a) * 95); g.lineTo(c + Math.cos(a + 0.12) * 60, c + Math.sin(a + 0.12) * 60); g.closePath(); g.fill(); }
-    ring(44, 58, pal[2]);
-    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; g.fillStyle = pal[1]; g.beginPath(); g.ellipse(c + Math.cos(a) * 30, c + Math.sin(a) * 30, 12, 6, a, 0, TAU); g.fill(); }
-    g.fillStyle = pal[0]; g.beginPath(); g.arc(c, c, 14, 0, TAU); g.fill();
-    g.fillStyle = '#fffaf0'; for (let i = 0; i < 40; i++) { const a = i / 40 * TAU; g.beginPath(); g.arc(c + Math.cos(a) * 118, c + Math.sin(a) * 118, 3, 0, TAU); g.fill(); }
-    for (let i = 0; i < 30; i++) { const a = r() * TAU, d = 62 + r() * 30; g.fillStyle = 'rgba(255,255,240,.5)'; g.beginPath(); g.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, 1.6, 0, TAU); g.fill(); }
-  });
-}
 
 /* ---------- the venue ---------- */
 function jyot(kit, root, tier, TH, r, data) {

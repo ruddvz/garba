@@ -35,7 +35,7 @@ for (const marker of [
 for (const marker of [
   'Standalone mode uses the sample catalogue',
   'the embedded venue receives the production catalogue',
-  'src="garbo.js?v=20261003-16"',
+  'src="garbo.js?v=20261003-17"',
   'src="venue3d/venue3d.js?v=',
 ]) has(page, marker, '3D page');
 

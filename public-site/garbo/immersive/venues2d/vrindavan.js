@@ -17,8 +17,6 @@
 
   (window.GarbaVenueSpecs = window.GarbaVenueSpecs || {}).vrindavan = {
     label: 'Vrindavan Courtyard',
-    // still being finished: View tags it and a board says so the first time you're in it (drop this when it's done)
-    soon: true,
     // Stone all round: quick, bright slaps off the arcades either side, the open sky taking the rest
     sound: {
       desc: 'An old sandstone courtyard under the stars. Quick echoes off the arcades either side, the sky open overhead.',

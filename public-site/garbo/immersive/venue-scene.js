@@ -3817,7 +3817,7 @@
       }
       if (fine && !d.man) { g.strokeStyle = gold; g.lineWidth = Math.max(1, h * 0.02); g.beginPath(); g.moveTo(lh[0], lh[1]); g.lineTo(lerp(le[0], lh[0], 0.8), lerp(le[1], lh[1], 0.8)); g.moveTo(rh[0], rh[1]); g.lineTo(lerp(re[0], rh[0], 0.8), lerp(re[1], rh[1], 0.8)); g.stroke(); }
       if (d.stander && d.phone) { var sk = phoneK(d); g.fillStyle = '#111'; g.fillRect(rh[0] - h * 0.03, rh[1] - h * 0.07, h * 0.06, h * 0.1); g.fillStyle = sk > 0.5 ? 'rgba(200,225,255,.9)' : '#1d2230'; g.fillRect(rh[0] - h * 0.022, rh[1] - h * 0.06, h * 0.044, h * 0.08); if (sk > 0.5) glow(rh[0], rh[1] - h * 0.02, Math.min(3.5, Math.max(0.8, h * 0.03)), '#eaf3ff', 0.3 * sk); }
-      if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.max(1.5, h * 0.06 * (1 + d.snap)), '#ffffff', d.snap); }
+      if (d.photo && !walking) { g.fillStyle = '#151515'; g.fillRect(x - h * 0.07, shy - h * 0.16, h * 0.14, h * 0.08); if (d.snap > 0) glow(x, shy - h * 0.12, Math.min(9, Math.max(1.5, h * 0.06 * (1 + d.snap))), '#ffffff', d.snap * 0.85); }
       if (d.role === 'dj' && h > 50) {
         // Up close the DJ has a face: eyes, brows, and a grin that opens when he talks
         var fy = y - h * 0.885, ink = '#1f130d';
