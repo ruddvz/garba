@@ -41,13 +41,24 @@
     frame = document.createElement('iframe'); frame.className = 'garbo-prototype-frame';
     frame.title = 'Immersive Garbo player'; frame.allow = 'autoplay; clipboard-write; fullscreen'; frame.tabIndex = 0;
     overlay.append(frame); document.body.appendChild(overlay);
-    frame.addEventListener('load', function () { sendSnapshot(true); armFirstTap(); });
+    frame.addEventListener('load', function () { sendSnapshot(true); armFirstTap(); covered = null; tellCover(); });
+    // Ask Kukdu and Private Garba Circle open over the venue from this page: while either is open, the venue's own
+    // player steps back, so their words never sit on the song's title and controls
+    new MutationObserver(tellCover).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'open'] });
+  }
+  var covered = null;
+  function tellCover() {
+    var ask = document.querySelector('.ask-panel'), circle = document.getElementById('circleDialog');
+    var on = !!((ask && !ask.hidden) || (circle && circle.open));
+    if (on === covered || !frame || !frame.contentWindow) return;
+    covered = on;
+    try { frame.contentWindow.postMessage({ channel: CHANNEL, type: 'cover', on: on }, location.origin); } catch (e) { /* frame gone */ }
   }
 
   /* ---------- the first tap starts the music ----------
      Browsers only let sound start from a visitor's own tap. Until the song is playing, the first tap on the page
      that isn't on a control starts it, wherever it lands: on the venue inside the frame or on the page around it. */
-  var tapArmed = false, tapDocs = [], hint = null;
+  var tapArmed = false, tapDocs = [], hint = null, panelOpen = false;
   var CONTROL = 'button, a, input, select, textarea, label, summary, [role="button"], [role="switch"], [role="slider"], [role="tab"], [contenteditable]';
   function isPlaying() { try { return !!window.GARBA_IMMERSIVE_PLAYER.snapshot().playing; } catch (e) { return false; } }
   function onFirstTap(event) {
@@ -79,7 +90,7 @@
         + 'background:rgba(11,6,5,.62);color:#f6e7c8;font:600 15px/1.3 system-ui,sans-serif;letter-spacing:.01em;pointer-events:none;'
         + 'z-index:2;transition:opacity .6s ease;opacity:0;';
       overlay.appendChild(hint);
-      requestAnimationFrame(function () { if (hint) hint.style.opacity = '1'; });
+      requestAnimationFrame(function () { if (hint) hint.style.opacity = panelOpen ? '0' : '1'; });
     } else if (!on && hint) {
       var h = hint; hint = null; h.style.opacity = '0'; setTimeout(function () { h.remove(); }, 650);
     }
@@ -160,6 +171,8 @@
     if (!message || message.channel !== CHANNEL) return;
     if (message.type === 'view') { setView(message.view); return; }
     if (message.type === 'screen') { placeScreen(message.rect || null); return; }
+    // A panel open in the Immersive page (View, Sound, More…): the start hint steps back from its words
+    if (message.type === 'panel') { panelOpen = !!message.open; if (hint) hint.style.opacity = panelOpen ? '0' : '1'; return; }
     if (message.type === 'ready') {
       catalogueSent = false;
       sendSnapshot(true);

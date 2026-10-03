@@ -1135,3 +1135,140 @@ body:has(#soonBoard:not([hidden])) .lamp-tip { visibility: hidden; }
 }
 /* sixteen venues and growing: on a wide screen the rows are compact, so the whole list fits beside the map */
 @media (min-width: 960px) and (min-height: 560px) { #viewCard .venue-row { min-height: 31px; font-size: 15px; } #viewCard .venue-list { gap: 0; } #viewCard .venue-group { margin: 6px 0 2px; padding-top: 7px; } }
+
+/* ===== Every panel as words over the venue =====
+   View set the look and every other panel now shares it: Sound, Ask for a feature, Volume, More and what opens from it
+   (Install, Share, Play YouTube link, Tonight, Lives, Host a live, the video), and What is Garba. No card: the venue
+   dims behind, the player steps back while a panel is open (the song plays on), and the panel is one column of words
+   centred on the screen on its own soft shade, as each of View's parts is. A serif title with its close button on the
+   same line, labels in brass in sentence case, choices as words with a line under the one you're on, an input as a
+   line to write on, the one action as a brass button. On a phone the column runs the width of the screen below the
+   View, Sound and Ideas pill and scrolls up and down only. */
+.side-card.float-panel, .sheet.float-panel {
+  position: fixed; z-index: 12; inset: 0; margin: auto; width: min(560px, calc(100vw - 2 * (var(--pill-w) + var(--pill-right) + 28px))); max-width: none; height: fit-content; max-height: calc(100dvh - 2 * var(--pill-top) - 48px);
+  display: grid; gap: 18px; align-content: start; justify-items: stretch; padding: 22px 26px 26px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  border: 0; border-radius: 26px; background: rgba(6, 4, 4, .34); box-shadow: 0 0 40px 30px rgba(6, 4, 4, .34); backdrop-filter: none; -webkit-backdrop-filter: none;
+  text-align: center; text-shadow: 0 1px 2px rgba(3, 4, 10, .95), 0 0 14px rgba(3, 4, 10, .75); animation: view-fade .26s var(--ease-out);
+}
+.float-panel > *, .float-panel .sheet-body > *, .float-panel .card-body > * { min-width: 0; }
+body:has(.float-panel:not([hidden]))::before { content: ''; position: fixed; z-index: 11; inset: 0; width: auto; background: radial-gradient(120% 90% at 50% 50%, rgba(6, 4, 4, .42), rgba(6, 4, 4, .62)); pointer-events: none; animation: view-fade .26s var(--ease-out); }
+body:has(.sheet.float-panel:not([hidden])) .scrim { background: none; }
+body:has(.float-panel:not([hidden])) .app .stage > :not(.lamp-slot), body:has(.float-panel:not([hidden])) .lamp-tip { opacity: 0; visibility: hidden; pointer-events: none; }
+/* the head: the title centred, its close button at the end of the line */
+.float-panel .sheet-grip, .float-panel .card-badge { display: none; }
+.float-panel .sheet-head, .float-panel .card-head { position: relative; display: flex; justify-content: center; align-items: center; min-height: 44px; padding: 0 48px; height: auto; overflow: visible; }
+.float-panel .sheet-head h2, .float-panel .card-head h2 { margin: 0; font: 600 26px/1.15 var(--display); color: var(--ivory); text-wrap: balance; }
+.float-panel .sheet-head .ib, .float-panel .card-x { position: absolute; right: 0; top: 50%; margin: -22px 0 0; background: none; }
+.float-panel .sheet-body, .float-panel .card-body { display: grid; gap: 18px; padding: 0; overflow: visible; justify-items: center; }
+/* words */
+.float-panel .lead, .float-panel .note, .float-panel .atmo-desc, .float-panel .atmo-note, .float-panel p { text-align: center; margin-inline: auto; max-width: 46ch; text-wrap: pretty; }
+.float-panel .lead { margin: 0; font-size: 16px; color: var(--ivory-2); }
+.float-panel .note, .float-panel .atmo-desc { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ivory-3); }
+.float-panel .card-label, .float-panel .atmo-row h3, .float-panel .lives-h { margin: 0; text-align: center; text-transform: none; letter-spacing: .01em; font: 700 13.5px/1.25 var(--ui); color: var(--brass); }
+.float-panel .atmo-row { display: grid; gap: 10px; justify-items: center; text-align: center; }
+/* the one action */
+.float-panel .primary { width: auto; min-width: 220px; max-width: 100%; padding: 0 30px; justify-self: center; text-shadow: none; box-shadow: 0 8px 22px rgba(0, 0, 0, .35); }
+/* a line to write on */
+.float-panel .host-input, .float-panel .idea-text { width: 100%; border: 0; border-bottom: 1px solid rgba(214, 176, 111, .45); border-radius: 0; background: rgba(246, 236, 215, .04); color: var(--ivory); text-align: left; text-shadow: none; }
+.float-panel .host-input:focus, .float-panel .idea-text:focus { border-bottom-color: var(--brass); background: rgba(246, 236, 215, .07); }
+/* choices are words, the one you're on in brass with a fine line under it (as View's) */
+.float-panel .atmo-seg, .float-panel .install-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.float-panel .atmo-seg button, .float-panel .install-tabs button { position: relative; flex: 0 0 auto; min-width: 0; min-height: 36px; padding: 4px 0; border: 0; border-radius: 0; background: none; box-shadow: none; color: var(--ivory-2); font: 600 15.5px/1.2 var(--ui); cursor: pointer; }
+.float-panel .atmo-seg button:hover, .float-panel .install-tabs button:hover { color: var(--ivory); background: none; }
+.float-panel .atmo-seg button[aria-pressed="true"], .float-panel .install-tabs button[aria-selected="true"] { color: var(--brass); background: none; box-shadow: none; }
+.float-panel .atmo-seg button[aria-pressed="true"]::after, .float-panel .install-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 1.5px; border-radius: 1px; background: currentColor; }
+/* Sound: on and off as a word at the top, the two choices, then the beat round its big tap circle */
+#soundCard.float-panel .atmo-power { justify-content: center; width: auto; justify-self: center; }
+#soundCard.float-panel .atmo-power strong { font: 600 18px/1.2 var(--ui); }
+#soundCard.float-panel .atmo-beat-grid { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; gap: 22px; }
+#soundCard.float-panel .atmo-tap { width: 108px; height: 108px; border-radius: 50%; font: 600 14px/1.2 var(--ui); color: var(--ivory); border: 1.5px solid rgba(214, 176, 111, .6); background: radial-gradient(circle, rgba(214, 176, 111, .16), rgba(214, 176, 111, .04)); text-shadow: inherit; }
+#soundCard.float-panel .atmo-beat-read { display: grid; gap: 6px; justify-items: start; }
+#soundCard.float-panel .atmo-bpm { margin: 0; font: 600 14px/1 var(--ui); color: var(--ivory-3); }
+#soundCard.float-panel .atmo-bpm b { font: 600 34px/1 var(--display); color: var(--ivory); }
+#soundCard.float-panel .atmo-tap-hint, #soundCard.float-panel #atmoTapHint { text-align: left; margin: 0; }
+#soundCard.float-panel .atmo-note a { color: var(--brass); }
+/* Ask for a feature: the form, see-through, the width of the column */
+#ideaCard.float-panel { width: min(600px, calc(100vw - 2 * (var(--pill-w) + var(--pill-right) + 28px))); }
+#ideaCard.float-panel .idea-form, #ideaCard.float-panel .idea-body > * { justify-self: stretch; }
+/* More: its doors as icons over their words, four to a line (three on a phone) */
+.app.more-open { left: 0; right: 0; }
+.more-open .rail, .more-open .view-switch { right: var(--pill-right); }
+#moreSheet.float-panel { top: 0; bottom: 0; left: 0; right: 0; margin: auto; width: min(620px, calc(100vw - 2 * (var(--pill-w) + var(--pill-right) + 28px))); height: fit-content; max-height: calc(100dvh - 2 * var(--pill-top) - 48px); padding: 22px 26px 26px; border: 0; border-radius: 26px; background: rgba(6, 4, 4, .34); animation: view-fade .26s var(--ease-out); }
+#moreSheet.float-panel .sheet-head { padding: 0 48px; }
+#moreSheet.float-panel .sheet-head h2 { font-size: 26px; }
+#moreSheet.float-panel .sheet-body { padding: 0; }
+#moreSheet.float-panel .tiles { width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px 10px; margin: 0; }
+#moreSheet.float-panel .tile { justify-items: center; align-content: start; gap: 10px; padding: 14px 6px 12px; border-radius: 16px; }
+#moreSheet.float-panel .tile svg, #moreSheet.float-panel .tile-kukdu { width: 32px; height: 32px; filter: drop-shadow(0 1px 2px rgba(3, 4, 10, .9)); }
+#moreSheet.float-panel .tile span { font: 600 14.5px/1.25 var(--ui); color: var(--ivory-2); }
+#moreSheet.float-panel .tile:hover { background: rgba(246, 236, 215, .07); }
+#moreSheet.float-panel .proto-states { justify-self: stretch; text-align: left; }
+/* Install */
+#installSheet.float-panel .install-pane { display: grid; gap: 4px; }
+#installSheet.float-panel .install-pane[hidden] { display: none; }
+#installSheet.float-panel .install-pane p { margin: 0 auto; font-size: 16px; line-height: 1.55; }
+/* Share: the card itself is the picture */
+#shareSheet.float-panel .card { width: min(280px, calc((100dvh - 2 * var(--pill-top) - 230px) * 0.8), 100%); border: 0; border-radius: 16px; box-shadow: 0 18px 44px rgba(0, 0, 0, .55); }
+/* Tonight: the night's arc and its five parts, a fine line between them */
+#tonightSheet.float-panel .arc { width: min(100%, 440px); }
+#tonightSheet.float-panel .night { width: 100%; text-align: left; }
+#tonightSheet.float-panel .night li { border-top-color: rgba(214, 176, 111, .16); }
+/* Lives: rows, not boxes */
+.float-panel .live-card { border: 0; border-bottom: 1px solid rgba(214, 176, 111, .16); border-radius: 0; background: none; text-shadow: inherit; }
+/* Play YouTube link and Volume keep their rows, centred */
+#linkCard.float-panel .face-cutout-title { margin: 4px 0 0; text-align: center; font: 700 13.5px/1.25 var(--ui); color: var(--brass); }
+#linkCard.float-panel .card-body { padding: 0 !important; }
+#volumeCard.float-panel { width: min(420px, calc(100vw - 2 * (var(--pill-w) + var(--pill-right) + 28px))); }
+#volumeCard.float-panel .vol-row { justify-content: center; }
+/* On a phone: the width of the screen, below the pill, scrolling up and down only */
+@media (max-width: 600px) {
+  .side-card.float-panel, .sheet.float-panel, #moreSheet.float-panel, #ideaCard.float-panel, #volumeCard.float-panel { left: 0; right: 0; top: auto; bottom: calc(var(--safe-b, 0px) + 6px); width: auto; margin: 0; max-height: calc(100dvh - var(--pill-top) - 142px - var(--safe-b, 0px) - 22px); padding: 14px 16px 20px; border-radius: 0; background: none; box-shadow: none; animation-name: view-fade; }
+  body:has(.float-panel:not([hidden]))::before { background: rgba(6, 4, 4, .84); }
+  .float-panel .sheet-head h2, .float-panel .card-head h2, #moreSheet.float-panel .sheet-head h2 { font-size: 23px; }
+  #moreSheet.float-panel .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #moreSheet.float-panel .tile span { font-size: 13px; }
+  #soundCard.float-panel .atmo-tap { width: 92px; height: 92px; }
+}
+@media (prefers-reduced-motion: reduce) { .float-panel, body:has(.float-panel:not([hidden]))::before { animation: none; } }
+
+/* View on a phone: three venues to a line, each its icon over its name, and nothing wider than the screen, so it
+   scrolls up and down only */
+@media (max-width: 600px) {
+  #viewCard { overflow-x: hidden; touch-action: pan-y; }
+  #viewCard > *, #viewCard .vc-side > * { min-width: 0; max-width: 100%; }
+  #viewCard .venue-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 6px; }
+  #viewCard .venue-row { position: relative; grid-template-columns: 1fr; justify-items: center; align-content: start; gap: 6px; min-height: 0; padding: 8px 2px 8px; border-radius: 12px; text-align: center; font: 600 13px/1.2 var(--ui); }
+  #viewCard .venue-row .venue-ic { width: 26px; height: 26px; }
+  #viewCard .venue-row .venue-name { white-space: normal; overflow: visible; text-wrap: balance; }
+  #viewCard .venue-row .venue-load { position: absolute; top: 6px; right: 8px; }
+  #viewCard .venue-row[aria-pressed="true"] { background: rgba(214, 176, 111, .1); }
+  #viewCard .venue-group { text-align: center; justify-items: center; }
+  #viewCard .venue-group::before { left: 50%; margin-left: -28px; }
+  #viewCard .card-head { justify-content: center; }
+  #viewCard .card-label, #viewCard .map-tip, #viewCard .atmo-desc { text-align: center; }
+  #viewCard .atmo-seg { justify-content: center; }
+  #viewCard .couple-row { justify-content: center; }
+}
+
+/* What is Garba: the guide reads over the darkened venue, its Mata ni Pachedi border drawn in brass and madder */
+.about { background: rgba(8, 5, 4, .9); color: var(--ivory); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.about-border { border-color: rgba(214, 176, 111, .55); }
+.about-close { color: var(--ivory-2); }
+.about-close:hover { color: var(--brass); }
+.about-kicker { color: var(--brass); }
+.about h2 { color: var(--ivory); text-shadow: 0 2px 18px rgba(0, 0, 0, .6); }
+.about-gu { color: var(--ivory-3); }
+.about-cols { border-top-color: rgba(214, 176, 111, .3); }
+.about h3 { color: #e08a5a; }
+.about-icon { color: #e08a5a; }
+.about-cols p { color: var(--ivory-2); }
+.about p.about-note { border-top-color: rgba(214, 176, 111, .25); color: var(--ivory-3); }
+/* View's head on a phone: its name centred, the close button at the end of the line, inside the screen */
+@media (max-width: 600px) {
+  #viewCard .card-head { display: flex; justify-content: center; align-items: center; min-height: 44px; padding: 0 48px; }
+  #viewCard .card-head .card-x { position: absolute; right: 0; top: 50%; margin: -22px 0 0; }
+}
+/* What is Garba covers the player too, and reads on a deeper shade */
+.about { background: rgba(8, 5, 4, .95); }
+/* Kukdu or Private Garba Circle open over the venue from the page round this one: the player steps back the same way */
+html.covered .app .stage > :not(.lamp-slot), html.covered .lamp-tip { opacity: 0; visibility: hidden; pointer-events: none; }

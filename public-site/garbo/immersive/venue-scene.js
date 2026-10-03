@@ -3863,6 +3863,9 @@
       }
     }
     function fogBand(f) {
+      // With the 3D venue behind, its own fog does this: a band painted over it would lay a second haze on the 3D
+      // (on the sheri, a hard-edged rectangle the width of the lane across the mandap's canopy)
+      if (BD) return;
       var s0 = F / f.z, yG = HOR + cam.y * s0, yT = Math.max(0, HOR + (cam.y - 11) * s0), yB = Math.min(H, yG + (yG - HOR) * 0.25 + 6);
       if (yG < 0 || yT >= H) return;
       var col = st.venue === 'stadium' ? '26,19,28' : st.venue === 'sheri' ? '22,17,32' : '20,15,30';
@@ -3935,7 +3938,10 @@
       var tw = g.measureText(text).width, fd = face ? z.hh * 0.74 : 0;
       return { tw: tw, fd: fd, w: face ? fs * 0.4 + fd + fs * 0.35 + tw + fs * 0.55 : Math.max(fs * 1.9, tw + fs * 1.1) };
     }
+    // While a panel is open over the venue its words have the screen: no tags or hints drawn over them
+    function panelOpen() { var c = document.documentElement.classList; return c.contains('panel-open') || c.contains('covered'); }
     function tag(x, y, h, you, T0, compact, lead, face) {
+      if (panelOpen()) return;
       var text = coupleWord(you), z = tagSize(h, compact), fs = z.fs, lay = tagLayout(text, z, face);
       g.textAlign = 'center';
       var w = lay.w, hh = z.hh, bob = reduce ? 0 : Math.sin(T0 * 2.2 + (you ? 0 : 1.3)) * 1.5, top = y - hh - z.tip - 3 + bob, head = x;
@@ -4312,7 +4318,7 @@
         g.fillStyle = 'rgba(11,6,5,.62)'; roundRect(W / 2 - pw / 2, py, pw, 28, 14); g.fill();
         g.fillStyle = '#f6e7c8'; g.fillText(ptx, W / 2, py + 14); g.restore();
       }
-      if (canWalk && !stillShot && !walkMe.used && st.listener === 'circle' && !st.dj && !reduce) {
+      if (canWalk && !stillShot && !walkMe.used && st.listener === 'circle' && !st.dj && !reduce && !panelOpen()) {
         if (!walkMe.shownAt) walkMe.shownAt = t;
         var age = t - walkMe.shownAt;
         if (age > 1.5 && age < 11) {

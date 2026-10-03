@@ -999,3 +999,46 @@ a.more-row { text-decoration: none; box-sizing: border-box; }
   .app[data-sheet-snap="medium"] .live-station-container > button,
   .app[data-sheet-snap="full"] .live-station-container > button { pointer-events: none; }
 }
+
+/* In the Immersive view, Private Garba Circle and Ask Kukdu open the way every Immersive panel does: no card, the
+   venue shaded behind, the words centred over it with a soft shadow of their own (the Simple view keeps its panels) */
+html.garba-immersive .circle-dialog::backdrop { background: radial-gradient(120% 90% at 50% 50%, rgba(6, 4, 4, .48), rgba(6, 4, 4, .7)); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+html.garba-immersive .circle-dialog { width: min(520px, calc(100vw - 32px)); }
+html.garba-immersive .circle-sheet { padding: 22px 24px 24px; border: 0; border-radius: 26px; background: rgba(6, 4, 4, .34); box-shadow: 0 0 40px 30px rgba(6, 4, 4, .34); text-align: center; text-shadow: 0 1px 2px rgba(3, 4, 10, .95), 0 0 14px rgba(3, 4, 10, .75); }
+html.garba-immersive .circle-header { position: relative; justify-content: center; min-height: 44px; padding: 0 48px; }
+html.garba-immersive .circle-header h2 { font-size: 26px; font-weight: 600; }
+html.garba-immersive .circle-dialog .circle-close { position: absolute; right: 0; top: 50%; margin: -22px 0 0; }
+html.garba-immersive .circle-lede, html.garba-immersive .circle-status, html.garba-immersive .circle-next { max-width: 44ch; margin-inline: auto; text-align: center; color: rgba(246, 236, 215, .78); }
+html.garba-immersive .circle-choice { border: 0; border-top: 1px solid rgba(214, 176, 111, .2); border-radius: 0; background: none; box-shadow: none; text-align: center; text-shadow: inherit; }
+html.garba-immersive .circle-choice:last-child { border-bottom: 1px solid rgba(214, 176, 111, .2); }
+html.garba-immersive .circle-choice strong { color: #d6b06f; }
+html.garba-immersive .circle-choice:hover, html.garba-immersive .circle-choice:focus-visible { background: rgba(246, 236, 215, .06); }
+html.garba-immersive .circle-primary { border-radius: 999px; padding-inline: 28px; }
+html.garba-immersive .circle-secondary, html.garba-immersive .circle-leave { border-radius: 999px; }
+html.garba-immersive .circle-name { border: 0; border-bottom: 1px solid rgba(214, 176, 111, .45); border-radius: 0; background: rgba(246, 236, 215, .04); }
+@media (max-width: 700px) {
+  html.garba-immersive .circle-dialog { width: 100%; margin: auto 0 0; }
+  html.garba-immersive .circle-sheet { border-radius: 0; background: none; box-shadow: none; }
+  html.garba-immersive .circle-dialog::backdrop { background: rgba(6, 4, 4, .84); }
+}
+html.garba-immersive .ask-scrim { background: radial-gradient(120% 90% at 50% 50%, rgba(6, 4, 4, .5), rgba(6, 4, 4, .72)); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+html.garba-immersive .ask-panel { left: 0; right: 0; margin: 0 auto; width: min(620px, calc(100vw - 32px)); border: 0; border-radius: 0; background: none; box-shadow: none; text-shadow: 0 1px 2px rgba(3, 4, 10, .95), 0 0 14px rgba(3, 4, 10, .75); }
+@media (min-width: 720px) { html.garba-immersive .ask-panel { top: calc(var(--safe-top, 20px) + 64px); bottom: 24px; height: auto; } }
+@media (max-width: 719.98px) { html.garba-immersive .ask-panel { width: auto; top: calc(var(--safe-top, 20px) + 56px); bottom: 0; height: auto; border-radius: 0; } html.garba-immersive .ask-scrim { background: rgba(6, 4, 4, .86); } }
+html.garba-immersive .ask-grab { display: none; }
+html.garba-immersive .ask-head { justify-content: center; border-bottom: 0; }
+html.garba-immersive .ask-head h2 { font-size: 26px; }
+html.garba-immersive .ask-ib, html.garba-immersive .ask-new { border-color: transparent; background: none; }
+html.garba-immersive .ask-starter { border-color: rgba(214, 176, 111, .32); background: rgba(6, 4, 4, .35); }
+html.garba-immersive .ask-a-content { padding: 4px 0 4px 14px; border: 0; border-left: 1.5px solid rgba(214, 176, 111, .45); border-radius: 0; background: none; }
+html.garba-immersive .ask-q { background: rgba(214, 176, 111, .12); border-color: rgba(214, 176, 111, .28); }
+html.garba-immersive .ask-compose { border-top: 0; background: none; padding-inline: 0; }
+html.garba-immersive .ask-compose input { border: 0; border-bottom: 1px solid rgba(214, 176, 111, .45); border-radius: 0; background: rgba(246, 236, 215, .05); }
+/* (the panel's own glass would blur a box of the venue behind its words; the shade covers the whole screen instead) */
+html.garba-immersive .ask-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+html.garba-immersive .ask-scrim:not([hidden]) { display: block; }
+html.garba-immersive .circle-choice:focus-visible, html.garba-immersive .ask-panel :focus-visible { outline: 2px solid #d6b06f; outline-offset: 2px; }
+@media (max-width: 700px) { html.garba-immersive .circle-header h2 { font-size: 23px; } }
+/* (the Immersive venue is a layer at 1200 of its own, so Kukdu's shade and panel sit over it) */
+html.garba-immersive .ask-scrim { z-index: 1201; }
+html.garba-immersive .ask-panel { z-index: 1202; }

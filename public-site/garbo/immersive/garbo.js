@@ -611,6 +611,9 @@
         }
         return;
       }
+      // Kukdu or Private Garba Circle open over the venue from the page round this one: the player steps back as it
+      // does for this page's own panels
+      if (message.type === 'cover') { document.documentElement.classList.toggle('covered', !!message.on); return; }
       if (message.type !== 'state') return;
       applyLiveState(message.snapshot);
     });
@@ -618,6 +621,21 @@
       window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'ready' }, location.origin);
     }, { once: true });
   }
+
+  /* ---------- a panel open ----------
+     While any panel is open (View, Sound, More and the rest) the page carries panel-open: the venue's own words step
+     back (the name tags over the two of you, the walking hint), and the page round this one hides its start hint */
+  (function () {
+    var panels = document.querySelectorAll('.side-card, .sheet, .about'), panelWas = null;
+    var tellPanel = function () {
+      var open = Array.prototype.some.call(panels, function (p) { return !p.hidden; });
+      if (open === panelWas) return;
+      panelWas = open; document.documentElement.classList.toggle('panel-open', open);
+      if (LIVE_SITE) window.parent.postMessage({ channel: LIVE_CHANNEL, type: 'panel', open: open }, location.origin);
+    };
+    var panelWatch = new MutationObserver(tellPanel);
+    Array.prototype.forEach.call(panels, function (p) { panelWatch.observe(p, { attributes: true, attributeFilter: ['hidden'] }); });
+  })();
 
   /* ---------- standalone YouTube audio/video player ---------- */
   var ytPlayer = null, ytReady = false, ytApiLoading = false, ytCurrentVideo = null, ytCurrentStart = 0;
@@ -2088,6 +2106,7 @@
   });
   // Private Garba Circle lives in the player that owns playback: its tile in More opens it
   function openCircle() {
+    closeSheet(true);
     if (requestLiveAction('circle')) return;
     var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     window.location.href = isLocalDev ? '/#circle' : '../../../../#circle';

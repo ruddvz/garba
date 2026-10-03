@@ -35,7 +35,7 @@ if (!prototypeCss.includes('translate3d(calc(-50% + var(--dial-x, 0px)), var(--d
 for (const marker of ["savedView == null && !navigator.webdriver", "atmo.venue = 'outdoors'; atmo.listener = 'stage'", 'function armFirstTap(', "window.GARBA_IMMERSIVE_PLAYER.action('play')", 'Tap anywhere to start the garba']) {
   if (!runtime.includes(marker)) fail(`immersive-view.js is missing the first-visit marker ${marker}`);
 }
-if (!html.includes('<script src="assets/runtime/immersive-view.js?v=20261002-2" defer></script>')) fail('index.html must load the current versioned immersive-view.js runtime with defer');
+if (!html.includes('<script src="assets/runtime/immersive-view.js?v=20261003-1" defer></script>')) fail('index.html must load the current versioned immersive-view.js runtime with defer');
 if (html.indexOf('assets/runtime/immersive-view.js') < html.indexOf('src="app.js"')) fail('immersive-view.js must load after app.js');
 
 for (const marker of ['id="moreButton"', 'aria-controls="moreCard"', 'id="moreCard"', 'data-view-switch', 'id="immersiveViewStatus"']) {
@@ -58,7 +58,7 @@ if (/#queueButton[^{]*\{\s*display:\s*none/.test(css)) fail('Up next must stay i
 for (const marker of ['.garbo-prototype-overlay', '.garbo-prototype-frame', '.view-switch', '.utilities > .view-switch', '.view-switch-detail', '.view-switch-icon-simple', '.view-switch-icon-immersive', '.more-card', '@media (max-width: 1023px)', '@media (min-width: 1024px)', 'prefers-reduced-motion: reduce', 'forced-colors: active']) {
   if (!css.includes(marker)) fail(`styles/60-runtime-and-provider.css is missing ${marker}`);
 }
-if (!sw.includes("'./assets/runtime/immersive-view.js?v=20261002-2'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache the current immersive-view.js runtime and refresh its path');
+if (!sw.includes("'./assets/runtime/immersive-view.js?v=20261003-1'") || !sw.includes("'/assets/runtime/immersive-view.js'")) fail('sw.js must cache the current immersive-view.js runtime and refresh its path');
 if (!pages.includes('public-site/atmosphere')) fail('Pages must publish public-site/atmosphere so /atmosphere/scene.js exists');
 if (!pages.includes("s#../../../../public-site/atmosphere/scene.js#../../../atmosphere/scene.js#")) fail('Pages must rewrite the canonical source scene URL for the deployed prototype location');
 if (!pages.includes('public-site/garbo')) fail('Pages must publish the public Garbo folders (the Immersive player, the prototypes and their shared assets)');
