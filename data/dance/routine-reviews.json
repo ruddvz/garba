@@ -1316,6 +1316,158 @@
         "establish a recording-specific beat grid and phrase boundaries without treating Level 1 / Day 1 as a step or beat count",
         "obtain Garba practitioner review before creating a source-faithful animation score"
       ]
+    },
+    {
+      "id": "dd-dance-factory-ten-step-hand-movement-routine",
+      "catalogueRecordId": "dd-dance-factory-ten-step-hand-movement-routine",
+      "teacherOrChannel": "DD-The Dance Factory / Khelaiya Group",
+      "title": "10 Steps Dodhiya/Garba Tutorial | Hand Movements For Beginners | DD-The Dance Factory-Khelaiya Group",
+      "videoUrl": "https://www.youtube.com/watch?v=m3bCGwMzA-U",
+      "durationSeconds": 725,
+      "pageSnapshot": {
+        "viewsApprox": 29000,
+        "likes": 620,
+        "channelSubscribersApprox": 73900,
+        "displayedRuntime": "12:05",
+        "checkedAt": "2026-10-03"
+      },
+      "publisherCountLabel": "The title and description call this a 10-step Dodhiya/Garba hand-movement tutorial and say the tutorial series is continuing.",
+      "countInterpretation": "Ten is retained as the publisher’s lesson label. The video samples reviewed here do not identify ten individually numbered movement units, and the label is not interpreted as ten beats or a verified phrase length.",
+      "transcript": {
+        "closedCaptions": "unavailable",
+        "autoTranscript": "unavailable through the reviewed player page",
+        "use": "visual review only; narration, spoken movement names and count cues were not transcribed or verified"
+      },
+      "observedIntervals": [
+        {
+          "fromSeconds": 0,
+          "toSeconds": 280,
+          "visualObservations": [
+            "The opening and sampled early sections primarily show the instructor facing the camera and explaining. Sampled poses include a narrow or offset foot stance, hands gathered near the chest, a side-on wide stance and hand gestures; the frames do not resolve a named dance step or a full-body repeated phrase.",
+            "An isolated finger-count gesture around 2:34 is treated as an instructional gesture only; it does not verify a movement number or beat count."
+          ],
+          "unknowns": [
+            "spoken instruction and whether any held arm shape is a dance pose",
+            "foot contacts and weight transfers between sampled positions",
+            "whether the tutorial enumerates movement units in unsampled portions"
+          ]
+        },
+        {
+          "fromSeconds": 280,
+          "toSeconds": 321,
+          "visualObservations": [
+            "Around 4:52 the first clear full-body moving sample shows side/back-oriented lateral travel in a wide stance while the hands are held together or clasped behind the lower back.",
+            "By about 5:11 the video cuts to a close speaking shot and crops the feet; this is a brief movement sample followed by explanation, not a complete verified step cycle."
+          ],
+          "unknowns": [
+            "left/right lead, heel/toe contact, landing order and amount of travel",
+            "whether the arms-behind-back position is part of this routine or a transition",
+            "musical count, beat alignment and phrase boundary"
+          ]
+        },
+        {
+          "fromSeconds": 321,
+          "toSeconds": 447,
+          "visualObservations": [
+            "Around 5:57 a close instructional view demonstrates a bent arm with the elbow out and the hand/forearm crossing the chest; the feet are cropped, so no hand-to-foot synchronization is visible.",
+            "A later full-body sample around 6:43 shows the instructor front-facing with the hands behind the back. Around 7:27 he looks down in a narrow/offset stance with one arm low and the other bent near his side. These are separated samples, not evidence that the poses form one sequence."
+          ],
+          "unknowns": [
+            "which hand or arm is meant to lead and how the shape changes over time",
+            "footwork during the cropped explanation and the relation between the separated poses",
+            "whether these examples are numbered steps, styling options or demonstrations of hand placement"
+          ]
+        },
+        {
+          "fromSeconds": 494,
+          "toSeconds": 725,
+          "visualObservations": [
+            "Around 8:50 a full-body sample shows a side-oriented, offset stance with an arm reaching forward/outward; the sample is too brief to establish a landing or repeating phrase. Around 9:26 the instructor is again front-facing and gesturing while speaking.",
+            "Around 10:04–10:39 the instructor is mostly front-facing in explanatory/reset poses, with feet close or partly obscured and hand gestures near the chest; no countable foot phrase is verified.",
+            "Around 11:15 a later cut shows a side-facing, bent-knee pose with one arm lifted overhead and the other held lower/forward. Around 11:52 the video cuts to a more distant view in another setting, with an overhead arm shape; lower-body contacts and the relationship to the earlier sample are unclear. Playback reached the 12:05 end."
+          ],
+          "unknowns": [
+            "whether late full-body cuts are examples of the same routine or separate illustrative footage",
+            "anatomical side, foot contacts, direction and step-to-step landings",
+            "hand/foot synchronization, musical beat grid and phrase length",
+            "complete ordered mapping of the publisher-labeled ten units"
+          ]
+        }
+      ],
+      "visualSamples": [
+        {
+          "atVideoSeconds": 38,
+          "observation": "Front-facing explanation with feet apart and hands gathered near chest height; no moving foot phase is established."
+        },
+        {
+          "atVideoSeconds": 115,
+          "observation": "Instructor gestures while speaking in a narrow/offset stance; the gesture is not verified as a numbered movement."
+        },
+        {
+          "atVideoSeconds": 154,
+          "observation": "Side-oriented wide stance and raised hand gesture; the sampled frame does not establish a dance phrase."
+        },
+        {
+          "atVideoSeconds": 194,
+          "observation": "Front-facing narrow/crossed-looking stance with hands near the sides; exact foot contact is unclear."
+        },
+        {
+          "atVideoSeconds": 292,
+          "observation": "Side/back-oriented lateral travel in a wide stance with hands held together or clasped behind the lower back."
+        },
+        {
+          "atVideoSeconds": 311,
+          "observation": "Cut to a close speaking shot with the feet outside the frame."
+        },
+        {
+          "atVideoSeconds": 357,
+          "observation": "Close instructional view of a bent arm crossing the chest with the elbow out; no foot action is visible."
+        },
+        {
+          "atVideoSeconds": 403,
+          "observation": "Front-facing full-body stance with hands behind the lower back; this still does not establish a step cycle."
+        },
+        {
+          "atVideoSeconds": 447,
+          "observation": "Instructor looks down in a narrow/offset stance with one arm lowered and the other bent near the side."
+        },
+        {
+          "atVideoSeconds": 530,
+          "observation": "Side-oriented offset stance with an arm reaching forward/outward; foot contact and travel direction are unclear."
+        },
+        {
+          "atVideoSeconds": 566,
+          "observation": "Front-facing explanatory gesture with the instructor standing mostly in place."
+        },
+        {
+          "atVideoSeconds": 604,
+          "observation": "Front-facing reset/explanation; no complete foot phrase is visible."
+        },
+        {
+          "atVideoSeconds": 639,
+          "observation": "Front-facing speaking pose with hands near chest/face level and feet partly obscured."
+        },
+        {
+          "atVideoSeconds": 675,
+          "observation": "Side-facing, bent-knee pose with one arm overhead and the other lower/forward; sequence and support side are unknown."
+        },
+        {
+          "atVideoSeconds": 712,
+          "observation": "Distant shot in a different setting with an overhead arm line; lower-body movement cannot be read reliably."
+        }
+      ],
+      "coverage": "The complete 12:05 upload was reviewed at normal speed with sparse visual samples. Captions were unavailable. The footage alternates explanation and brief movement examples; this is not a continuous movement transcription. The clearest full-body sample is the short lateral passage around 4:52, and the later overhead-arm shapes are separated by explanation/cuts. The title’s ten-unit count, count order, beat grid and foot/hand synchronization were not verified.",
+      "phraseLengthBeats": null,
+      "animationStatus": "visual review complete; publisher-labeled sequence remains unidentified and unscored",
+      "animationScore": null,
+      "openQuestions": [
+        "What are the source-native names and order of the ten advertised units?",
+        "Which sampled passages are demonstrations of the same routine, and which are instructional gestures or illustrative cuts?",
+        "What are the left/right foot contacts, weight transfers, travel vectors and facing changes for each unit?",
+        "How do hand shapes synchronize with footfalls and any claps or other percussive contacts?",
+        "What beat grid and phrase length apply to the specific music/performance?",
+        "Can a Garba practitioner verify the teacher’s vocabulary and regional/style attribution?"
+      ]
     }
   ]
 }
