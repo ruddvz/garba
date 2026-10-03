@@ -1,5 +1,5 @@
 {
-  "version": "0.20.94",
+  "version": "0.20.96",
   "updated": "2026-10-03",
   "chunks": [
     "sets-01.json",
@@ -139,7 +139,8 @@
     "sets-136-folk-longform-batch18.json",
     "sets-137-folk-longform-batch19.json",
     "sets-138-aarti-devotional-longform-batch10.json",
-    "sets-139-folk-longform-batch20.json"
+    "sets-139-folk-longform-batch20.json",
+    "sets-140-aarti-devotional-longform-batch11.json"
   ],
   "policy": {
     "officialityOrder": [
