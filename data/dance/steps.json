@@ -363,14 +363,15 @@
       "sourceSpellings": ["14 Steps Garba / Dodhiya", "14 Steps Garba Dance"],
       "nameStatus": "instructor-specific routine; not a universal 14-beat pattern",
       "counts": {"clapsPerNamedPattern": null, "namedMovementUnits": 14, "phraseLengthBeats": null},
-      "knownFacts": ["The source title identifies this upload as the 1/2/3 part of a 14-step Garba/Dodhiya series; the title count is kept separate from beats.", "The publisher description credits choreographer Hiren Patel.", "Direct visual review shows an instructor-led class, curved-circle travel, alternating bent-knee weight shifts, high and low arm lines, and a synchronized low forward bend.", "The video page reported captions unavailable during review, and the sampled visuals do not label boundaries between steps 1, 2 and 3."],
+      "knownFacts": ["The source title identifies this upload as the 1/2/3 part of a 14-step Garba/Dodhiya series; the title count is kept separate from beats.", "The publisher description credits choreographer Hiren Patel.", "A full normal-speed visual pass on 2026-10-03 confirms an instructor-led class, curved-circle travel, alternating bent-knee weight shifts, high and low arm lines, and a low forward-bend motif.", "The video page reported captions unavailable during review, and the visible demonstrations do not label boundaries between steps 1, 2 and 3."],
       "unknowns": ["names and boundaries of steps 1, 2 and 3", "complete footfall and weight-transfer order", "exact arm-side assignments through each phrase", "clap contact, if any", "beat positions and phrase length", "whether the low bend belongs to one of these three steps or is a transition/style variation"],
       "sourceIds": ["SATHIYA-14-PLAYLIST"],
       "visualReview": {
         "status": "partial",
-        "sourceTimesSeconds": [38, 58, 78, 98, 119, 137, 139, 154, 174, 194, 195, 214, 229, 249, 269, 286, 315, 335, 356, 376, 396, 416, 436, 456, 476, 482, 496],
+        "sourceTimesSeconds": [38, 48, 58, 78, 98, 119, 137, 139, 154, 174, 194, 195, 214, 229, 249, 269, 286, 315, 335, 356, 376, 396, 416, 436, 454, 476, 484, 496],
         "observations": [
           {"sourceTimeSeconds": 38, "view": "instructor-led group", "note": "Teacher addresses a line of participants arranged along a curved floor marker; feet are grounded and this is a setup, not a movement phrase."},
+          {"sourceTimeSeconds": 48, "view": "instructor-led group practice", "note": "The line travels along the curved floor marker with upright torsos; several dancers lift a bent knee while holding both forearms forward around waist/chest height. The still does not establish which leg leads or how the foot lands."},
           {"sourceTimeSeconds": 58, "view": "instructor-led group", "note": "Participants remain mostly standing while the instructor gestures; one participant mirrors a raised-arm cue. No full phrase is visible."},
           {"sourceTimeSeconds": 78, "view": "instructor demonstration", "note": "Instructor lowers the center with soft knees and demonstrates an offset/lifted foot with one arm raised and the other lower; the frame does not establish a count or lead side."},
           {"sourceTimeSeconds": 98, "view": "instructor-led group", "note": "Instructor and line begin moving diagonally along the curved marker with soft knees and asymmetric bent-arm levels; exact foot contacts are unclear."},
@@ -393,14 +394,14 @@
           {"sourceTimeSeconds": 396, "view": "instructor demonstration", "note": "The instructor demonstrates a forward-offset step while the class watches; the sampled pose does not establish a repeated foot pattern."},
           {"sourceTimeSeconds": 416, "view": "instructor-led group", "note": "Teacher continues explaining with the group standing; no movement event is recorded."},
           {"sourceTimeSeconds": 436, "view": "instructor-led group", "note": "Teacher gestures toward the group and foot placement while participants remain mostly grounded; treat as instruction, not a scoreable step."},
-          {"sourceTimeSeconds": 456, "view": "instructor-led group", "note": "The line performs a low forward bend: knees flex, torsos incline, lower hands reach toward the floor while opposite arms lift. The frame does not show a full entry/recovery cycle."},
+          {"sourceTimeSeconds": 454, "view": "instructor-led group", "note": "During travel, dancers show an upright high/low arm shape with flexed knees and offset feet; the sample does not resolve the lifted/landing foot sequence or lead side."},
           {"sourceTimeSeconds": 476, "view": "instructor-led group", "note": "A motion-blurred transition shows the instructor moving and the group repositioning; no specific foot action is recorded."},
-          {"sourceTimeSeconds": 482, "view": "instructor-led group", "note": "A synchronized low bend is visible with contrasting high/low arm levels; this remains a motif observation, not a named step or beat event."},
+          {"sourceTimeSeconds": 484, "view": "instructor-led group", "note": "The line travels with asymmetric high/low arm reaches over flexed knees and offset or lightly lifted feet; exact limb side, contact order and phrase boundary remain unclear."},
           {"sourceTimeSeconds": 496, "view": "instructor-led group", "note": "The group returns to an upright, grounded reset after the bend; no step count or recovery beat is established."}
         ],
-        "limitations": ["Sparse normal-speed frame samples from a teacher-led lesson; captions were unavailable", "The source title says 1/2/3, but sampled footage does not identify which visible motif belongs to each numbered step", "No full phrase transcription", "Not beat-annotated and no source-specific song beat map", "Foot contacts, side assignments, clap contacts and phrase boundaries remain unknown", "Video framing and motion blur obscure some foot placements"]
+        "limitations": ["Full video pass completed at normal speed on 2026-10-03; selected movement moments are transcribed sparsely; captions were unavailable", "The source title says 1/2/3, but visible demonstrations do not identify which motif belongs to each numbered step", "No full phrase transcription", "Not beat-annotated and no source-specific song beat map", "Foot contacts, side assignments, clap contacts and phrase boundaries remain unknown", "Video framing and motion blur obscure some foot placements"]
       },
-      "animationStatus": "visual sample only; needs full annotation and practitioner review",
+      "animationStatus": "full video visually reviewed; sampled moments only; needs phrase annotation and practitioner review",
       "animationScore": null
     },
     {
